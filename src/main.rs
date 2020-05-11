@@ -1,3 +1,6 @@
+use tokio::sync::{oneshot, mpsc};
+
+
 #[derive(Debug, Clone, Copy)]
 enum Event {
     MouseClick {x_position: i32, y_position: i32},
@@ -15,18 +18,13 @@ enum Action {
 
 impl Action
 {
-    fn propose(proposal: Action, model: &mut Model)
-    {
-        model.submit(proposal);
-    }
-
-    fn handle_event(event: Event, model: &mut Model)
+    fn handle_event(event: Event, model: &mut Model, responder: oneshot::Sender<View>)
     {
         let proposal = match event {
             Event::MouseClick {..} => Action::CreateWidget{widget: Widget{}},
             Event::NothingHappend => Action::CloseWidget{widget: Widget{}},
         };
-        Action::propose(proposal, model);
+        model.submit(proposal, responder);
     }
 }
 
@@ -43,13 +41,13 @@ impl Model
         Model {widgets: Vec::new()}
     }
 
-    fn submit(&mut self, proposal: Action)
+    fn submit(&mut self, proposal: Action, responder: oneshot::Sender<View>)
     {
         match proposal {
             Action::CreateWidget{widget} => self.create_widget(widget),
             Action::CloseWidget{widget} => self.close_widget(widget),
         }
-        State::compute_control_state(self);
+        State::compute_control_state(self, responder);
     }
 
     fn create_widget(&mut self, widget: Widget)
@@ -64,37 +62,59 @@ impl Model
     }
 }
 
+#[derive(Debug)]
+struct View
+{
+    view_str: String,
+}
+
 
 struct State {}
 
 impl State {
 
-    fn compute_control_state(model: &Model)
+    fn compute_control_state(model: &Model, responder: oneshot::Sender<View>)
     {
         if !State::next_action_predicate(model)
         {
-            State::render(model);
+            responder.send(State::render(model)).unwrap();
         }
     }
 
-    fn render(model: &Model)
+    fn render(model: &Model) -> View
     {
-        println!("{:?}", model);
+        View{view_str: format!("{:?}", model)}
     }
 
     fn next_action_predicate(model: &Model) -> bool
     {
+        if model.widgets.len() > 1
+        {
+            println!("Shit thats long");
+        }
         false
     }
 }
 
 
+#[tokio::main]
+async fn main()
+{
+    let (cmd_tx, mut cmd_rx) = mpsc::channel::<(Event, oneshot::Sender<View>)>(100);
 
-fn main() {
     let mut model = Model::new();
 
-    // Sequence of events (might be dynamical based on what State::run did)
-    let events = [
+    tokio::spawn(
+        async move
+        {
+            while let Some((event, responder)) = cmd_rx.recv().await
+            {
+                Action::handle_event(event, &mut model, responder);
+            }
+        }
+    );
+
+    let events = vec![
         Event::NothingHappend,
         Event::NothingHappend,
         Event::MouseClick{x_position: 32, y_position: 45},
@@ -104,8 +124,29 @@ fn main() {
         Event::MouseClick{x_position: 32, y_position: 45},
     ];
 
-    for event in events.iter()
+    let mut join_handles = vec![];
+
+    // Spawn tasks that will send the increment command.
+    for event in events
     {
-        Action::handle_event(*event, &mut model);
+        let mut cmd_tx = cmd_tx.clone();
+
+        join_handles.push(tokio::spawn(
+            async move
+            {
+                let (resp_tx, resp_rx) = oneshot::channel();
+
+                cmd_tx.send((event, resp_tx)).await.ok().unwrap();
+                let res = resp_rx.await.unwrap();
+
+                println!("previous value = {:?}", res);
+            }
+        ));
+    }
+
+    // Wait for all tasks to complete
+    for join_handle in join_handles.drain(..)
+    {
+        join_handle.await.unwrap();
     }
 }

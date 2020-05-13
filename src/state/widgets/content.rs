@@ -13,19 +13,6 @@ use iced::{
     scrollable,
     Text,
 };
-use iced_native::{
-    Hasher,
-    Layout,
-    layout,
-    mouse,
-    Point,
-    Widget,
-};
-use iced_wgpu::{
-    Defaults,
-    Primitive,
-    Renderer,
-};
 
 // Local Imports
 use crate::action::Message;
@@ -126,45 +113,5 @@ impl Content {
             .center_y()
             .style(theme.pane_style(focus.is_some()))
             .into()
-    }
-}
-
-
-impl<Message> Widget<Message, Renderer> for Content
-{
-    fn width(&self) -> Length {
-        Length::Fill
-    }
-
-    fn height(&self) -> Length {
-        Length::Fill
-    }
-
-    fn layout(
-        &self,
-        _renderer: &Renderer,
-        _limits: &layout::Limits,
-    ) -> layout::Node {
-        unimplemented!();
-    }
-
-    fn hash_layout(&self, _state: &mut Hasher) {
-        unimplemented!();
-    }
-
-    fn draw(
-        &self,
-        _renderer: &mut Renderer,
-        _defaults: &Defaults,
-        _layout: Layout<'_>,
-        _cursor_position: Point,
-    ) -> (Primitive, mouse::Interaction) {
-        unimplemented!();
-    }
-}
-
-impl<'a, Message> Into<Element<'a, Message>> for Content {
-    fn into(self) -> Element<'a, Message> {
-        Element::new(self)
     }
 }

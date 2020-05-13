@@ -1,2 +1,2 @@
 pub mod style;
-pub mod content;
+pub mod widgets;

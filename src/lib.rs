@@ -15,14 +15,17 @@ pub mod action;
 pub mod state {
     pub mod content;
     pub mod style;
+    pub mod pane;
 }
 pub mod model;
 pub mod widgets;
 
 use action::{Message, handle_hotkey};
 use state::content::Content;
+use state::style::Theme;
 
 pub struct Damascus {
+    theme: Theme,
     panes: pane_grid::State<Content>,
     panes_created: usize,
 }
@@ -38,7 +41,8 @@ impl Application for Damascus {
 
         (
             Damascus {
-                panes,
+                theme: Theme::default(),
+                panes: panes,
                 panes_created: 1,
             },
             Command::none(),
@@ -51,6 +55,7 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::ThemeChanged(theme) => self.theme = theme,
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(
                     axis,
@@ -104,10 +109,11 @@ impl Application for Damascus {
 
     fn view(&mut self) -> Element<Message> {
         let total_panes = self.panes.len();
+        let theme = self.theme;
 
         let pane_grid =
             PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                content.view(pane, focus, total_panes)
+                content.view(pane, focus, total_panes, theme)
             })
             .width(Length::Fill)
             .height(Length::Fill)
@@ -120,6 +126,7 @@ impl Application for Damascus {
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(2)
+            .style(self.theme)
             .into()
     }
 }

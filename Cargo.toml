@@ -12,6 +12,7 @@ futures = "0.3.4"
 rayon = "1.1"
 
 iced = { path = "../iced", features = ["tokio"] }
+iced_core = { path = "../iced/core"}
 iced_native = { path = "../iced/native" }
 iced_wgpu = { path = "../iced/wgpu" }
 

@@ -13,13 +13,23 @@ use iced::{
     scrollable,
     Text,
 };
-use iced_native::{layout, mouse, Background, Color, Hasher, Layout,
-        Point, Size, Widget,};
-use iced_wgpu::{Defaults, Primitive, Renderer};
+use iced_native::{
+    Hasher,
+    Layout,
+    layout,
+    mouse,
+    Point,
+    Widget,
+};
+use iced_wgpu::{
+    Defaults,
+    Primitive,
+    Renderer,
+};
 
 // Local Imports
 use crate::action::Message;
-use crate::state::style;
+use crate::state::style::{self, Theme};
 
 
 pub struct Content {
@@ -46,6 +56,7 @@ impl Content {
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
         total_panes: usize,
+        theme: Theme,
     ) -> Element<Message> {
         let Content {
             id,
@@ -76,13 +87,17 @@ impl Content {
                 split_horizontally,
                 "Split horizontally",
                 Message::Split(pane_grid::Axis::Horizontal, pane),
-                style::Button::Primary,
+                theme.button_style(
+                    style::Button::Primary,
+                ),
             ))
             .push(button(
                 split_vertically,
                 "Split vertically",
                 Message::Split(pane_grid::Axis::Vertical, pane),
-                style::Button::Primary,
+                theme.button_style(
+                    style::Button::Primary,
+                ),
             ));
 
         if total_panes > 1 {
@@ -90,7 +105,9 @@ impl Content {
                 close,
                 "Close",
                 Message::Close(pane),
-                style::Button::Destructive,
+                theme.button_style(
+                    style::Button::Destructive,
+                ),
             ));
         }
 
@@ -99,28 +116,28 @@ impl Content {
             .spacing(10)
             .align_items(Align::Center)
             .push(Text::new(format!("Pane {}", id)).size(30))
-            .push(controls);
+            .push(controls)
+            .style(theme);
 
         Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(5)
             .center_y()
-            .style(style::Pane {
-                is_focused: focus.is_some(),
-            })
+            .style(theme.pane_style(focus.is_some()))
             .into()
     }
 }
 
+
 impl<Message> Widget<Message, Renderer> for Content
 {
     fn width(&self) -> Length {
-        Length::Shrink
+        Length::Fill
     }
 
     fn height(&self) -> Length {
-        Length::Shrink
+        Length::Fill
     }
 
     fn layout(

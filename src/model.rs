@@ -12,13 +12,13 @@ use iced::{
 
 // Local Imports
 use crate::action::{Message, handle_hotkey};
-use crate::state::widgets::{Content};
+use crate::state::widget::{Panel};
 use crate::state::style::Theme;
 
 
 pub struct Damascus {
     theme: Theme,
-    panes: pane_grid::State<Content>,
+    panes: pane_grid::State<Panel>,
     panes_created: usize,
 }
 
@@ -29,7 +29,7 @@ impl Application for Damascus {
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
-        let (panes, _) = pane_grid::State::new(Content::new(0));
+        let (panes, _) = pane_grid::State::new(Panel::new(0));
 
         (
             Damascus {
@@ -52,7 +52,7 @@ impl Application for Damascus {
                 let _ = self.panes.split(
                     axis,
                     &pane,
-                    Content::new(self.panes_created),
+                    Panel::new(self.panes_created),
                 );
 
                 self.panes_created += 1;
@@ -62,7 +62,7 @@ impl Application for Damascus {
                     let _ = self.panes.split(
                         axis,
                         &pane,
-                        Content::new(self.panes_created),
+                        Panel::new(self.panes_created),
                     );
 
                     self.panes_created += 1;

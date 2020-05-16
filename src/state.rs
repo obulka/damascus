@@ -1,2 +1,3 @@
+pub mod renderer;
 pub mod style;
-pub mod widgets;
+pub mod widget;

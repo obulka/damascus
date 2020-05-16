@@ -11,9 +11,9 @@ use iced::{
     text_input,
 };
 
-pub mod dark;
-pub mod light;
-
+pub mod drop_down;
+pub mod theme;
+use theme::{dark, light};
 
 const BLUE: Color = Color::from_rgb(
     0x00 as f32 / 255.0,
@@ -97,6 +97,15 @@ impl From<Theme> for Box<dyn container::StyleSheet> {
         match theme {
             Theme::Light => Default::default(),
             Theme::Dark => dark::Container.into(),
+        }
+    }
+}
+
+impl From<Theme> for Box<dyn drop_down::StyleSheet> {
+    fn from(theme: Theme) -> Self {
+        match theme {
+            Theme::Light => Default::default(),
+            Theme::Dark => dark::DropDown.into(),
         }
     }
 }

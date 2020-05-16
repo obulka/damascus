@@ -12,6 +12,8 @@ use iced::{
     Vector,
 };
 
+use crate::state::style::drop_down;
+
 const ACCENT: Color = Color::from_rgb(
     0x6F as f32 / 255.0,
     0xFF as f32 / 255.0,
@@ -307,6 +309,41 @@ impl checkbox::StyleSheet for Checkbox {
                 ..if is_checked { ACTIVE } else { SURFACE }
             }),
             ..self.active(is_checked)
+        }
+    }
+}
+
+pub struct DropDown;
+
+impl crate::state::style::drop_down::StyleSheet for DropDown {
+    fn active(&self) -> drop_down::Style {
+        let (background, text_color) =  (Some(ACTIVE), TEXT_COLOR);
+
+        drop_down::Style {
+            text_color,
+            background: background.map(Background::Color),
+            border_radius: 5,
+            shadow_offset: Vector::new(0.0, 0.0),
+            ..drop_down::Style::default()
+        }
+    }
+
+    fn hovered(&self) -> drop_down::Style {
+        let active = self.active();
+
+        let background = Some(HOVERED);
+
+        drop_down::Style {
+            background: background.map(Background::Color),
+            ..active
+        }
+    }
+
+    fn pressed(&self) -> drop_down::Style {
+        drop_down::Style {
+            border_width: 1,
+            border_color: Color::WHITE,
+            ..self.hovered()
         }
     }
 }

@@ -30,12 +30,12 @@ use std::hash::Hash;
 pub struct DropDown<'a, Message, Renderer: self::Renderer> {
     state: &'a mut State,
     content: Element<'a, Message, Renderer>,
-    on_press: Option<Message>,
     width: Length,
     height: Length,
     min_width: u32,
     min_height: u32,
     padding: u16,
+    disabled: bool,
     style: Renderer::Style,
 }
 
@@ -55,12 +55,12 @@ where
         DropDown {
             state,
             content: content.into(),
-            on_press: None,
             width: Length::Shrink,
             height: Length::Shrink,
             min_width: 0,
             min_height: 0,
             padding: Renderer::DEFAULT_PADDING,
+            disabled: false,
             style: Renderer::Style::default(),
         }
     }
@@ -105,14 +105,6 @@ where
         self
     }
 
-    /// Sets the message that will be produced when the [`DropDown`] is pressed.
-    ///
-    /// [`DropDown`]: struct.DropDown.html
-    pub fn on_press(mut self, msg: Message) -> Self {
-        self.on_press = Some(msg);
-        self
-    }
-
     /// Sets the style of the [`DropDown`].
     ///
     /// [`DropDown`]: struct.DropDown.html
@@ -128,6 +120,7 @@ where
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct State {
     is_pressed: bool,
+    is_open: bool,
 }
 
 impl State {
@@ -138,6 +131,7 @@ impl State {
         State::default()
     }
 }
+
 
 impl<'a, Message, Renderer> Widget<Message, Renderer>
     for DropDown<'a, Message, Renderer>
@@ -179,29 +173,29 @@ where
         event: Event,
         layout: Layout<'_>,
         cursor_position: Point,
-        messages: &mut Vec<Message>,
+        _messages: &mut Vec<Message>,
         _renderer: &Renderer,
         _clipboard: Option<&dyn Clipboard>,
     ) {
         match event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                if self.on_press.is_some() {
-                    let bounds = layout.bounds();
-
-                    self.state.is_pressed = bounds.contains(cursor_position);
-                }
+                let bounds = layout.bounds();
+                self.state.is_pressed = bounds.contains(cursor_position);
             }
             Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) => {
-                if let Some(on_press) = self.on_press.clone() {
-                    let bounds = layout.bounds();
+                let bounds = layout.bounds();
 
-                    let is_clicked = self.state.is_pressed
-                        && bounds.contains(cursor_position);
+                let is_clicked = self.state.is_pressed
+                    && bounds.contains(cursor_position);
 
-                    self.state.is_pressed = false;
+                self.state.is_pressed = false;
 
-                    if is_clicked {
-                        messages.push(on_press);
+                if !self.disabled {
+                    if self.state.is_open {
+                        self.state.is_open = false;
+                    }
+                    else if is_clicked {
+                        self.state.is_open = true;
                     }
                 }
             }
@@ -220,7 +214,7 @@ where
             defaults,
             layout.bounds(),
             cursor_position,
-            self.on_press.is_none(),
+            self.disabled,
             self.state.is_pressed,
             &self.style,
             &self.content,

@@ -72,7 +72,7 @@ impl Panel {
             .style(style)
         };
 
-        let drop_down_b = |state, label, message, style| {
+        let drop_down_b = |state, label, style| {
             DropDown::new(
                 state,
                 Text::new(label)
@@ -82,7 +82,6 @@ impl Panel {
             )
             .width(Length::Fill)
             .padding(8)
-            .on_press(message)
             .style(style)
         };
 
@@ -93,7 +92,6 @@ impl Panel {
             .push(drop_down_b(
                 drop_down_state,
                 "Split horizontally",
-                Message::Split(pane_grid::Axis::Horizontal, pane),
                 theme,
             ));
 

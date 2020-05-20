@@ -19,6 +19,7 @@ use iced::{
 use crate::action::Message;
 use crate::state::style::{self, Theme};
 use super::drop_down::{self, DropDown};
+use super::drop_down_menu::{DropDownMenu};
 
 
 pub struct Panel {
@@ -133,6 +134,15 @@ impl Panel {
             .push(tab_bar)
             .push(Text::new(format!("Pane {}", id)).size(30))
             .push(controls)
+            .push(
+                DropDownMenu {
+                    column: Column::new()
+                    .spacing(5)
+                    .max_width(150)
+                    .push(Text::new("Test"))
+                    .push(Text::new("hi"))
+                }
+            )
             .style(theme);
 
         Container::new(content)

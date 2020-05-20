@@ -5,8 +5,17 @@
 //! [`DropDown`]: struct.DropDown.html
 //! [`State`]: struct.State.html
 use iced_native::{
-    layout, mouse, Clipboard, Element, Event, Hasher, Layout, Length, Point,
-    Rectangle, Widget,
+    Clipboard,
+    Element,
+    Event,
+    Layout,
+    layout,
+    Length,
+    Hasher,
+    mouse,
+    Point,
+    Rectangle,
+    Widget,
 };
 use std::hash::Hash;
 
@@ -216,6 +225,7 @@ where
             cursor_position,
             self.disabled,
             self.state.is_pressed,
+            self.state.is_open,
             &self.style,
             &self.content,
             layout.children().next().unwrap(),
@@ -257,6 +267,7 @@ pub trait Renderer: iced_native::Renderer + Sized {
         cursor_position: Point,
         is_disabled: bool,
         is_pressed: bool,
+        is_open: bool,
         style: &Self::Style,
         content: &Element<'_, Message, Self>,
         content_layout: Layout<'_>,

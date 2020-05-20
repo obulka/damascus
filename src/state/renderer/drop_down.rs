@@ -1,6 +1,17 @@
-use iced_wgpu::{defaults, Defaults, Primitive};
+use iced_wgpu::{
+    Defaults,
+    defaults,
+    Primitive,
+};
 use iced_native::{
-    mouse, Background, Color, Element, Layout, Point, Rectangle, Vector,
+    Background,
+    Color,
+    Element,
+    Layout,
+    mouse,
+    Point,
+    Rectangle,
+    Vector,
 };
 use crate::state::{
     widget::drop_down::Renderer,
@@ -14,11 +25,12 @@ impl Renderer for iced_wgpu::Renderer {
 
     fn draw<Message>(
         &mut self,
-        _defaults: &Defaults,
+        defaults: &Defaults,
         bounds: Rectangle,
         cursor_position: Point,
         is_disabled: bool,
         is_pressed: bool,
+        _is_open: bool,
         style: &Box<dyn StyleSheet>,
         content: &Element<'_, Message, Self>,
         content_layout: Layout<'_>,

@@ -45,6 +45,11 @@ const INDIGO: Color = Color::from_rgb(
     0x7D as f32 / 255.0,
 );
 
+const CLOSE: Color = Color::from_rgb(
+    0xE7 as f32 / 255.0,
+    0x5B as f32 / 255.0,
+    0x2B as f32 / 255.0,
+);
 
 pub enum Button {
     Primary,
@@ -90,31 +95,38 @@ impl Theme {
             Theme::Light => light::Pane{is_focused: is_focused}.into(),
         }
     }
+
+    pub fn tab_bar_style(&self) -> Box<dyn container::StyleSheet> {
+        match self {
+            Theme::Dark => dark::TabBar.into(),
+            Theme::Light => light::TabBar.into(),
+        }
+    }
 }
 
 impl From<Theme> for Box<dyn container::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::Container.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
 
-impl From<Theme> for Box<dyn drop_down::StyleSheet> {
-    fn from(theme: Theme) -> Self {
-        match theme {
-            Theme::Light => Default::default(),
-            Theme::Dark => dark::DropDown.into(),
-        }
-    }
-}
+// impl From<Theme> for Box<dyn drop_down::StyleSheet> {
+//     fn from(theme: Theme) -> Self {
+//         match theme {
+//             Theme::Light => Default::default(),
+//             Theme::Dark => dark::DropDown.into(),
+//         }
+//     }
+// }
 
 impl From<Theme> for Box<dyn radio::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::Radio.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
@@ -122,8 +134,8 @@ impl From<Theme> for Box<dyn radio::StyleSheet> {
 impl From<Theme> for Box<dyn text_input::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::TextInput.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
@@ -131,8 +143,8 @@ impl From<Theme> for Box<dyn text_input::StyleSheet> {
 impl From<Theme> for Box<dyn scrollable::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::Scrollable.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
@@ -140,8 +152,8 @@ impl From<Theme> for Box<dyn scrollable::StyleSheet> {
 impl From<Theme> for Box<dyn slider::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::Slider.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
@@ -149,8 +161,8 @@ impl From<Theme> for Box<dyn slider::StyleSheet> {
 impl From<Theme> for Box<dyn progress_bar::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::ProgressBar.into(),
+            Theme::Light => Default::default(),
         }
     }
 }
@@ -158,8 +170,8 @@ impl From<Theme> for Box<dyn progress_bar::StyleSheet> {
 impl From<Theme> for Box<dyn checkbox::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {
-            Theme::Light => Default::default(),
             Theme::Dark => dark::Checkbox.into(),
+            Theme::Light => Default::default(),
         }
     }
 }

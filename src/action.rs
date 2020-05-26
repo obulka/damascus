@@ -34,7 +34,6 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         KeyCode::V => Some(Message::SplitFocused(Axis::Vertical)),
         KeyCode::H => Some(Message::SplitFocused(Axis::Horizontal)),
         KeyCode::W => Some(Message::CloseFocused),
-        KeyCode::T => Some(Message::ThemeChanged(Theme::Light)),
         _ => direction.map(Message::FocusAdjacent),
     }
 }

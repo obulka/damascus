@@ -6,6 +6,20 @@ use iced::{
     Vector,
 };
 
+use crate::state::style::CLOSE;
+
+
+const SECONDARY: Color = Color::from_rgb(
+    0x42 as f32 / 255.0,
+    0x43 as f32 / 255.0,
+    0x3E as f32 / 255.0,
+);
+
+const TERTIARY: Color = Color::from_rgb(
+    0x6D as f32 / 255.0,
+    0x6E as f32 / 255.0,
+    0x6A as f32 / 255.0,
+);
 
 const ACTIVE: Color = Color::from_rgb(
     0x72 as f32 / 255.0,
@@ -21,6 +35,20 @@ const HOVERED: Color = Color::from_rgb(
 
 const TEXT_COLOR: Color = Color::WHITE;
 
+
+pub struct TabBar;
+
+impl container::StyleSheet for TabBar {
+    fn style(&self) -> container::Style {
+        container::Style {
+            background: Some(Background::Color(TERTIARY)),
+            border_width: 1,
+            border_color: Color::TRANSPARENT,
+            ..container::Style::default()
+        }
+    }
+}
+
 pub struct Pane {
     pub is_focused: bool,
 }
@@ -29,7 +57,7 @@ impl container::StyleSheet for Pane {
     fn style(&self) -> container::Style {
         container::Style {
             background: Some(Background::Color(Color::WHITE)),
-            border_width: 2,
+            border_width: 1,
             border_color: Color {
                 a: if self.is_focused { 1.0 } else { 0.3 },
                 ..Color::BLACK
@@ -49,7 +77,7 @@ impl button::StyleSheet for Button {
         let (background, text_color) = match self {
             Button::Primary => (Some(ACTIVE), TEXT_COLOR),
             Button::Destructive => {
-                (None, Color::from_rgb8(0xFF, 0x47, 0x47))
+                (Some(CLOSE), Color::BLACK)
             }
         };
 
@@ -68,8 +96,8 @@ impl button::StyleSheet for Button {
         let background = match self {
             Button::Primary => Some(HOVERED),
             Button::Destructive => Some(Color {
-                a: 0.2,
-                ..active.text_color
+                a: 0.9,
+                ..CLOSE
             }),
         };
 

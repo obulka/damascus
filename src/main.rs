@@ -1,4 +1,5 @@
 // 3rd Party Imports
+extern crate lazy_static;
 use iced::{
     Application,
     Settings,

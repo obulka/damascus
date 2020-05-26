@@ -39,6 +39,7 @@ use std::hash::Hash;
 pub struct DropDown<'a, Message, Renderer: self::Renderer> {
     state: &'a mut State,
     content: Element<'a, Message, Renderer>,
+    menu: Element<'a, Message, Renderer>,
     width: Length,
     height: Length,
     min_width: u32,
@@ -57,13 +58,15 @@ where
     ///
     /// [`DropDown`]: struct.DropDown.html
     /// [`State`]: struct.State.html
-    pub fn new<E>(state: &'a mut State, content: E) -> Self
+    pub fn new<E, M>(state: &'a mut State, content: E, menu: M) -> Self
     where
         E: Into<Element<'a, Message, Renderer>>,
+        M: Into<Element<'a, Message, Renderer>>,
     {
         DropDown {
             state,
             content: content.into(),
+            menu: menu.into(),
             width: Length::Shrink,
             height: Length::Shrink,
             min_width: 0,
@@ -221,13 +224,14 @@ where
     ) -> Renderer::Output {
         renderer.draw(
             defaults,
-            layout.bounds(),
+            layout,
             cursor_position,
             self.disabled,
             self.state.is_pressed,
             self.state.is_open,
             &self.style,
             &self.content,
+            &self.menu,
             layout.children().next().unwrap(),
         )
     }
@@ -263,13 +267,14 @@ pub trait Renderer: iced_native::Renderer + Sized {
     fn draw<Message>(
         &mut self,
         defaults: &Self::Defaults,
-        bounds: Rectangle,
+        layout: Layout<'_>,
         cursor_position: Point,
         is_disabled: bool,
         is_pressed: bool,
         is_open: bool,
         style: &Self::Style,
         content: &Element<'_, Message, Self>,
+        menu: &Element<'_, Message, Self>,
         content_layout: Layout<'_>,
     ) -> Self::Output;
 }

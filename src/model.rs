@@ -12,13 +12,15 @@ use iced::{
 
 // Local Imports
 use crate::action::{Message, handle_hotkey};
-use crate::state::widget::{Panel};
+use crate::state::Config;
+use crate::state::widget::BasePanel;
 use crate::state::style::Theme;
 
 
 pub struct Damascus {
     theme: Theme,
-    panes: pane_grid::State<Panel>,
+    config: Config,
+    panes: pane_grid::State<BasePanel>,
     panes_created: usize,
 }
 
@@ -29,11 +31,13 @@ impl Application for Damascus {
     type Flags = ();
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
-        let (panes, _) = pane_grid::State::new(Panel::new(0));
+        let config = Config::default();
+        let (panes, _) = pane_grid::State::new(BasePanel::new(0));
 
         (
             Damascus {
                 theme: Theme::default(),
+                config: config,
                 panes: panes,
                 panes_created: 1,
             },
@@ -52,7 +56,7 @@ impl Application for Damascus {
                 let _ = self.panes.split(
                     axis,
                     &pane,
-                    Panel::new(self.panes_created),
+                    BasePanel::new(self.panes_created),
                 );
 
                 self.panes_created += 1;
@@ -62,7 +66,7 @@ impl Application for Damascus {
                     let _ = self.panes.split(
                         axis,
                         &pane,
-                        Panel::new(self.panes_created),
+                        BasePanel::new(self.panes_created),
                     );
 
                     self.panes_created += 1;
@@ -102,14 +106,15 @@ impl Application for Damascus {
     fn view(&mut self) -> Element<Message> {
         let total_panes = self.panes.len();
         let theme = self.theme;
+        let config = &self.config;
 
         let pane_grid =
             PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                content.view(pane, focus, total_panes, theme)
+                content.view(pane, focus, total_panes, theme, config)
             })
             .width(Length::Fill)
             .height(Length::Fill)
-            .spacing(2)
+            .spacing(0) // Space between panes
             .on_drag(Message::Dragged)
             .on_resize(Message::Resized)
             .on_key_press(handle_hotkey);
@@ -117,7 +122,7 @@ impl Application for Damascus {
         Container::new(pane_grid)
             .width(Length::Fill)
             .height(Length::Fill)
-            .padding(2)
+            .padding(0) // Space between panes and window edge
             .style(self.theme)
             .into()
     }

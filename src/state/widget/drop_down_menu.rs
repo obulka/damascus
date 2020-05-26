@@ -9,6 +9,7 @@ use iced_native::{
     Hasher,
     Layout,
     layout,
+    mouse,
     Point,
     Clipboard,
     Widget,
@@ -18,14 +19,34 @@ use iced_core::{
 };
 
 
+/// The local state of a [`DropDownMenu`].
+///
+/// [`DropDownMenu`]: struct.DropDownMenu.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct State {
+    is_pressed: bool,
+    is_open: bool,
+}
+
+impl State {
+    /// Creates a new [`State`].
+    ///
+    /// [`State`]: struct.State.html
+    pub fn new() -> State {
+        State::default()
+    }
+}
+
+
 /// A container that distributes its contents vertically.
 ///
 /// A [`Column`] will try to fill the horizontal space of its container.
 ///
 /// [`Column`]: struct.Column.html
 #[allow(missing_debug_implementations)]
-pub struct DropDownMenu<'a, Message, Renderer: self::column::Renderer> {
-    pub column: Column<'a, Message, Renderer>,
+pub struct DropDownMenu<'a, Message, Renderer> {
+    state: &'a mut State,
+    menu: Column<'a, Message, Renderer>,
 }
 
 impl<'a, Message, Renderer> DropDownMenu<'a, Message, Renderer>
@@ -35,9 +56,10 @@ where
     /// Creates an empty [`Column`].
     ///
     /// [`Column`]: struct.Column.html
-    pub fn new(column: Column<'a, Message, Renderer>) -> Self {
+    pub fn new(state: &'a mut State, menu: Column<'a, Message, Renderer>) -> Self {
         DropDownMenu {
-            column: column,
+            state: state,
+            menu: menu,
         }
     }
 
@@ -48,7 +70,7 @@ where
     where
         E: Into<Element<'a, Message, Renderer>>,
     {
-        self.column = self.column.push(child);
+        self.menu = self.menu.push(child);
         self
     }
 }
@@ -60,11 +82,11 @@ where
     Renderer: self::column::Renderer,
 {
     fn width(&self) -> Length {
-        <Column<'a, Message, Renderer> as Widget<Message, Renderer>>::width(&self.column)
+        <Column<'a, Message, Renderer> as Widget<Message, Renderer>>::width(&self.menu)
     }
 
     fn height(&self) -> Length {
-        <Column<'a, Message, Renderer> as Widget<Message, Renderer>>::height(&self.column)
+        <Column<'a, Message, Renderer> as Widget<Message, Renderer>>::height(&self.menu)
     }
 
     fn layout(
@@ -72,7 +94,7 @@ where
         renderer: &Renderer,
         limits: &layout::Limits,
     ) -> layout::Node {
-        self.column.layout(renderer, limits)
+        self.menu.layout(renderer, limits)
     }
 
     fn on_event(
@@ -84,7 +106,30 @@ where
         renderer: &Renderer,
         clipboard: Option<&dyn Clipboard>,
     ) {
-        self.column.on_event(
+        match event {
+            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Right)) => {
+                let bounds = layout.bounds();
+                self.state.is_pressed = bounds.contains(cursor_position);
+            }
+            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Right)) => {
+                let bounds = layout.bounds();
+
+                let is_clicked = self.state.is_pressed
+                    && bounds.contains(cursor_position);
+
+                self.state.is_pressed = false;
+
+                if self.state.is_open {
+                    self.state.is_open = false;
+                }
+                else if is_clicked {
+                    self.state.is_open = true;
+                }
+                println!("Open? {:?}", self.state.is_open);
+            }
+            _ => {}
+        }
+        self.menu.on_event(
             event,
             layout,
             cursor_position,
@@ -101,13 +146,41 @@ where
         layout: Layout<'_>,
         cursor_position: Point,
     ) -> Renderer::Output {
-        self.column.draw(renderer, defaults, layout, cursor_position)
+        self.menu.draw(renderer, defaults, layout, cursor_position)
     }
 
     fn hash_layout(&self, state: &mut Hasher) {
-        self.column.hash_layout(state);
+        self.menu.hash_layout(state);
     }
 }
+
+
+// /// The renderer of a [`Column`].
+// ///
+// /// Your [renderer] will need to implement this trait before being
+// /// able to use a [`Column`] in your user interface.
+// ///
+// /// [`Column`]: struct.Column.html
+// /// [renderer]: ../../renderer/index.html
+// pub trait Renderer: iced_native::Renderer + Sized {
+//     /// Draws a [`Column`].
+//     ///
+//     /// It receives:
+//     /// - the children of the [`Column`]
+//     /// - the [`Layout`] of the [`Column`] and its children
+//     /// - the cursor position
+//     ///
+//     /// [`Column`]: struct.Column.html
+//     /// [`Layout`]: ../layout/struct.Layout.html
+//     fn draw<Message>(
+//         &mut self,
+//         defaults: &Self::Defaults,
+//         menu: &Column<'_, Message, Self>,
+//         layout: Layout<'_>,
+//         cursor_position: Point,
+//     ) -> Self::Output;
+// }
+
 
 
 impl<'a, Message, Renderer> From<DropDownMenu<'a, Message, Renderer>>
@@ -119,6 +192,6 @@ where
     fn from(
         drop_down_menu: DropDownMenu<'a, Message, Renderer>,
     ) -> Element<'a, Message, Renderer> {
-        Element::new(drop_down_menu.column)
+        Element::new(drop_down_menu.menu)
     }
 }

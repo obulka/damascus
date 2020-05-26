@@ -12,7 +12,9 @@ use iced::{
     Vector,
 };
 
-use crate::state::style::drop_down;
+use crate::state::style::CLOSE;
+// use crate::state::style::drop_down;
+
 
 const ACCENT: Color = Color::from_rgb(
     0x6F as f32 / 255.0,
@@ -26,10 +28,22 @@ const HIGHLIGHT: Color = Color::from_rgb(
     0x21 as f32 / 255.0,
 );
 
-const SURFACE: Color = Color::from_rgb(
+const PRIMARY: Color = Color::from_rgb(
     0x28 as f32 / 255.0,
     0x29 as f32 / 255.0,
     0x23 as f32 / 255.0,
+);
+
+const SECONDARY: Color = Color::from_rgb(
+    0x42 as f32 / 255.0,
+    0x43 as f32 / 255.0,
+    0x3E as f32 / 255.0,
+);
+
+const TERTIARY: Color = Color::from_rgb(
+    0x6D as f32 / 255.0,
+    0x6E as f32 / 255.0,
+    0x6A as f32 / 255.0,
 );
 
 const ACTIVE: Color = Color::from_rgb(
@@ -52,8 +66,20 @@ pub struct Container;
 impl container::StyleSheet for Container {
     fn style(&self) -> container::Style {
         container::Style {
-            background: Some(Background::Color(SURFACE)),
-            text_color: Some(Color::WHITE),
+            background: Some(Background::Color(TERTIARY)),
+            ..container::Style::default()
+        }
+    }
+}
+
+pub struct TabBar;
+
+impl container::StyleSheet for TabBar {
+    fn style(&self) -> container::Style {
+        container::Style {
+            background: Some(Background::Color(TERTIARY)),
+            border_width: 1,
+            border_color: Color::TRANSPARENT,
             ..container::Style::default()
         }
     }
@@ -66,8 +92,8 @@ pub struct Pane {
 impl container::StyleSheet for Pane {
     fn style(&self) -> container::Style {
         container::Style {
-            background: Some(Background::Color(SURFACE)),
-            border_width: 2,
+            background: Some(Background::Color(PRIMARY)),
+            border_width: 1,
             border_color: if self.is_focused { HIGHLIGHT } else { Color::BLACK },
             ..Default::default()
         }
@@ -84,7 +110,7 @@ impl button::StyleSheet for Button {
         let (background, text_color) = match self {
             Button::Primary => (Some(ACTIVE), TEXT_COLOR),
             Button::Destructive => {
-                (None, Color::from_rgb8(0xFF, 0x47, 0x47))
+                (Some(CLOSE), Color::BLACK)
             }
         };
 
@@ -103,8 +129,8 @@ impl button::StyleSheet for Button {
         let background = match self {
             Button::Primary => Some(HOVERED),
             Button::Destructive => Some(Color {
-                a: 0.2,
-                ..active.text_color
+                a: 0.6,
+                ..CLOSE
             }),
         };
 
@@ -129,7 +155,7 @@ pub struct Radio;
 impl radio::StyleSheet for Radio {
     fn active(&self) -> radio::Style {
         radio::Style {
-            background: Background::Color(SURFACE),
+            background: Background::Color(PRIMARY),
             dot_color: ACTIVE,
             border_width: 1,
             border_color: ACTIVE,
@@ -138,7 +164,7 @@ impl radio::StyleSheet for Radio {
 
     fn hovered(&self) -> radio::Style {
         radio::Style {
-            background: Background::Color(Color { a: 0.5, ..SURFACE }),
+            background: Background::Color(Color { a: 0.5, ..PRIMARY }),
             ..self.active()
         }
     }
@@ -149,7 +175,7 @@ pub struct TextInput;
 impl text_input::StyleSheet for TextInput {
     fn active(&self) -> text_input::Style {
         text_input::Style {
-            background: Background::Color(SURFACE),
+            background: Background::Color(PRIMARY),
             border_radius: 2,
             border_width: 0,
             border_color: Color::TRANSPARENT,
@@ -191,7 +217,7 @@ pub struct Scrollable;
 impl scrollable::StyleSheet for Scrollable {
     fn active(&self) -> scrollable::Scrollbar {
         scrollable::Scrollbar {
-            background: Some(Background::Color(SURFACE)),
+            background: Some(Background::Color(PRIMARY)),
             border_radius: 2,
             border_width: 0,
             border_color: Color::TRANSPARENT,
@@ -209,8 +235,8 @@ impl scrollable::StyleSheet for Scrollable {
 
         scrollable::Scrollbar {
             background: Some(Background::Color(Color {
-                a: 0.5,
-                ..SURFACE
+                a: 0.9,
+                ..PRIMARY
             })),
             scroller: scrollable::Scroller {
                 color: HOVERED,
@@ -278,7 +304,7 @@ pub struct ProgressBar;
 impl progress_bar::StyleSheet for ProgressBar {
     fn style(&self) -> progress_bar::Style {
         progress_bar::Style {
-            background: Background::Color(SURFACE),
+            background: Background::Color(PRIMARY),
             bar: Background::Color(ACTIVE),
             border_radius: 10,
         }
@@ -293,7 +319,7 @@ impl checkbox::StyleSheet for Checkbox {
             background: Background::Color(if is_checked {
                 ACTIVE
             } else {
-                SURFACE
+                PRIMARY
             }),
             checkmark_color: Color::WHITE,
             border_radius: 2,
@@ -306,44 +332,44 @@ impl checkbox::StyleSheet for Checkbox {
         checkbox::Style {
             background: Background::Color(Color {
                 a: 0.8,
-                ..if is_checked { ACTIVE } else { SURFACE }
+                ..if is_checked { ACTIVE } else { PRIMARY }
             }),
             ..self.active(is_checked)
         }
     }
 }
 
-pub struct DropDown;
+// pub struct DropDown;
 
-impl crate::state::style::drop_down::StyleSheet for DropDown {
-    fn active(&self) -> drop_down::Style {
-        let (background, text_color) =  (Some(ACTIVE), TEXT_COLOR);
+// impl crate::state::style::drop_down::StyleSheet for DropDown {
+//     fn active(&self) -> drop_down::Style {
+//         let (background, text_color) =  (Some(ACTIVE), TEXT_COLOR);
 
-        drop_down::Style {
-            text_color,
-            background: background.map(Background::Color),
-            border_radius: 5,
-            shadow_offset: Vector::new(0.0, 0.0),
-            ..drop_down::Style::default()
-        }
-    }
+//         drop_down::Style {
+//             text_color,
+//             background: background.map(Background::Color),
+//             border_radius: 5,
+//             shadow_offset: Vector::new(0.0, 0.0),
+//             ..drop_down::Style::default()
+//         }
+//     }
 
-    fn hovered(&self) -> drop_down::Style {
-        let active = self.active();
+//     fn hovered(&self) -> drop_down::Style {
+//         let active = self.active();
 
-        let background = Some(HOVERED);
+//         let background = Some(HOVERED);
 
-        drop_down::Style {
-            background: background.map(Background::Color),
-            ..active
-        }
-    }
+//         drop_down::Style {
+//             background: background.map(Background::Color),
+//             ..active
+//         }
+//     }
 
-    fn pressed(&self) -> drop_down::Style {
-        drop_down::Style {
-            border_width: 1,
-            border_color: Color::WHITE,
-            ..self.hovered()
-        }
-    }
-}
+//     fn pressed(&self) -> drop_down::Style {
+//         drop_down::Style {
+//             border_width: 1,
+//             border_color: Color::WHITE,
+//             ..self.hovered()
+//         }
+//     }
+// }

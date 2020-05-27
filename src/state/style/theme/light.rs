@@ -75,7 +75,7 @@ pub enum Button {
 impl button::StyleSheet for Button {
     fn active(&self) -> button::Style {
         let (background, text_color) = match self {
-            Button::Primary => (Some(ACTIVE), TEXT_COLOR),
+            Button::Primary => (Some(SECONDARY), TEXT_COLOR),
             Button::Destructive => {
                 (Some(CLOSE), Color::BLACK)
             }
@@ -94,9 +94,12 @@ impl button::StyleSheet for Button {
         let active = self.active();
 
         let background = match self {
-            Button::Primary => Some(HOVERED),
+            Button::Primary => Some(Color {
+                a: 0.6,
+                ..SECONDARY
+            }),
             Button::Destructive => Some(Color {
-                a: 0.9,
+                a: 0.6,
                 ..CLOSE
             }),
         };

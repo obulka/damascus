@@ -13,15 +13,14 @@ use iced::{
 // Local Imports
 use crate::action::{Message, handle_hotkey};
 use crate::state::Config;
-use crate::state::widget::BasePanel;
+use crate::state::widget::Panel;
 use crate::state::style::Theme;
 
 
 pub struct Damascus {
     theme: Theme,
     config: Config,
-    panes: pane_grid::State<BasePanel>,
-    panes_created: usize,
+    panes: pane_grid::State<Panel>,
 }
 
 
@@ -32,14 +31,13 @@ impl Application for Damascus {
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let config = Config::default();
-        let (panes, _) = pane_grid::State::new(BasePanel::new(0));
+        let (panes, _) = pane_grid::State::new(Panel::new());
 
         (
             Damascus {
                 theme: Theme::default(),
                 config: config,
                 panes: panes,
-                panes_created: 1,
             },
             Command::none(),
         )
@@ -51,25 +49,28 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::AddTabFocused(label) => {
+                if let Some(pane) = self.panes.active() {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        (*panel).add_tab(label);
+                    }
+                }
+            }
             Message::ThemeChanged(theme) => self.theme = theme,
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(
                     axis,
                     &pane,
-                    BasePanel::new(self.panes_created),
+                    Panel::new(),
                 );
-
-                self.panes_created += 1;
             }
             Message::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {
                     let _ = self.panes.split(
                         axis,
                         &pane,
-                        BasePanel::new(self.panes_created),
+                        Panel::new(),
                     );
-
-                    self.panes_created += 1;
                 }
             }
             Message::FocusAdjacent(direction) => {

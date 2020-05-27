@@ -10,9 +10,11 @@ use iced::{
     Length,
     pane_grid,
     Row,
+    Space,
     Text,
     VerticalAlignment,
 };
+use std::collections::HashMap;
 
 // Local Imports
 use crate::action::Message;
@@ -20,22 +22,25 @@ use crate::state::Config;
 use crate::state::style::{self, Theme};
 
 
-pub struct BasePanel {
-    id: usize,
+pub struct Panel {
     split_horizontally: button::State,
     split_vertically: button::State,
     float_pane: button::State, // Not Implemented
     close: button::State,
+    tabs: HashMap<String, button::State>,
 }
 
-impl BasePanel {
-    pub fn new(id: usize) -> Self {
-        BasePanel {
-            id,
+// Next step - ability to add tabs as buttons - then close them - then swap between panels
+// they need to then send the message to open a specific Canvas/ UI Element
+
+impl Panel {
+    pub fn new() -> Self {
+        Panel {
             split_horizontally: button::State::new(),
             split_vertically: button::State::new(),
             float_pane: button::State::new(),
             close: button::State::new(),
+            tabs: HashMap::new(),
         }
     }
 
@@ -47,12 +52,12 @@ impl BasePanel {
         theme: Theme,
         config: &Config,
     ) -> Element<Message> {
-        let BasePanel {
-            id: _,
+        let Panel {
             split_horizontally,
             split_vertically,
             float_pane,
             close,
+            tabs,
         } = self;
 
         let button = |state, label, message, style| {
@@ -101,32 +106,33 @@ impl BasePanel {
             )
             .push(
                 Row::new()
-                .spacing(2)
-                .width(Length::Shrink)
-                .height(Length::Fill)
-                .max_width(config.tab_bar_height)
-                .max_height(config.tab_bar_height)
-                .push(button(
-                    float_pane,
-                    "+",
-                    Message::ThemeChanged(
-                        match theme {
-                            Theme::Dark => Theme::Light,
-                            Theme::Light => Theme::Dark,
-                        }
-                    ),
-                    theme.button_style(
-                        style::Button::Primary,
-                    ),
-                ))
-                .push(button(
-                    split_horizontally,
-                    "─",
-                    Message::Split(pane_grid::Axis::Horizontal, pane),
-                    theme.button_style(
-                        style::Button::Primary,
-                    ),
-                ))
+                    .spacing(2)
+                    .width(Length::Shrink)
+                    .height(Length::Fill)
+                    .max_width(config.tab_bar_height)
+                    .max_height(config.tab_bar_height)
+                    .push(button(
+                        float_pane,
+                        "+",
+                        // Message::ThemeChanged(
+                        //     match theme {
+                        //         Theme::Dark => Theme::Light,
+                        //         Theme::Light => Theme::Dark,
+                        //     }
+                        // ),
+                        Message::AddTabFocused("Fook".to_string()),
+                        theme.button_style(
+                            style::Button::Primary,
+                        ),
+                    ))
+                    .push(button(
+                        split_horizontally,
+                        "─",
+                        Message::Split(pane_grid::Axis::Horizontal, pane),
+                        theme.button_style(
+                            style::Button::Primary,
+                        ),
+                    ))
             );
 
         let tab_bar = Container::new(
@@ -136,6 +142,35 @@ impl BasePanel {
                 .height(Length::Fill)
                 .align_items(Align::Center)
                 .padding(0)
+                .push(
+                    tabs.iter_mut().fold(
+                        Row::new().padding(0).spacing(1),
+                        |row_of_tabs, tab| {
+                            row_of_tabs.push(
+                                Button::new(
+                                    tab.1,
+                                    Text::new(tab.0)
+                                        .width(Length::Shrink)
+                                        .horizontal_alignment(HorizontalAlignment::Left)
+                                        .vertical_alignment(VerticalAlignment::Center)
+                                        .size(10),
+                                )
+                                .width(Length::Shrink)
+                                .padding(1)
+                                .on_press(Message::ThemeChanged(
+                                    match theme {
+                                        Theme::Dark => Theme::Light,
+                                        Theme::Light => Theme::Dark,
+                                    }
+                                ))
+                                .style(theme.button_style(
+                                    style::Button::Primary,
+                                ))
+                            )
+                        },
+                    )
+                )
+                .push(Space::new(Length::Fill, Length::Fill))
                 .push(options)
         )
             .width(Length::Fill)
@@ -156,5 +191,9 @@ impl BasePanel {
             .center_y()
             .style(theme.pane_style(focus.is_some()))
             .into()
+    }
+
+    pub fn add_tab(&mut self, label: String) {
+        self.tabs.insert(label, button::State::new());
     }
 }

@@ -5,8 +5,9 @@ use iced::{pane_grid, keyboard};
 use crate::state::style::Theme;
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Message {
+    AddTabFocused(String),
     ThemeChanged(Theme),
     Split(pane_grid::Axis, pane_grid::Pane),
     SplitFocused(pane_grid::Axis),

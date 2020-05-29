@@ -12,8 +12,7 @@ use iced::{
     Vector,
 };
 
-use crate::state::style::CLOSE;
-// use crate::state::style::drop_down;
+use crate::state::style::{CLOSE, tab};
 
 
 const ACCENT: Color = Color::from_rgb(
@@ -58,7 +57,7 @@ const HOVERED: Color = Color::from_rgb(
     0xC4 as f32 / 255.0,
 );
 
-const TEXT_COLOR: Color = Color::WHITE;
+pub const TEXT_COLOR: Color = Color::WHITE;
 
 
 pub struct Container;
@@ -85,6 +84,22 @@ impl container::StyleSheet for TabBar {
     }
 }
 
+pub struct Tab {
+    pub is_focused: bool,
+}
+
+impl tab::StyleSheet for Tab {
+    fn style(&self) -> tab::Style {
+        tab::Style {
+            background: Some(Background::Color(if self.is_focused {PRIMARY} else {SECONDARY})),
+            border_width: 1,
+            border_color: Color::TRANSPARENT,
+            text_color: TEXT_COLOR,
+            ..tab::Style::default()
+        }
+    }
+}
+
 pub struct Pane {
     pub is_focused: bool,
 }
@@ -107,17 +122,17 @@ pub enum Button {
 
 impl button::StyleSheet for Button {
     fn active(&self) -> button::Style {
-        let (background, text_color) = match self {
-            Button::Primary => (Some(SECONDARY), TEXT_COLOR),
+        let (background, text_color, border_radius) = match self {
+            Button::Primary => (Some(SECONDARY), TEXT_COLOR, 5),
             Button::Destructive => {
-                (Some(CLOSE), Color::BLACK)
-            }
+                (Some(CLOSE), Color::BLACK, 5)
+            },
         };
 
         button::Style {
             text_color,
             background: background.map(Background::Color),
-            border_radius: 5,
+            border_radius: border_radius,
             shadow_offset: Vector::new(0.0, 0.0),
             ..button::Style::default()
         }

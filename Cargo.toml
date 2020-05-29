@@ -15,6 +15,7 @@ iced = { path = "../iced", features = ["tokio"] }
 iced_core = { path = "../iced/core"}
 iced_native = { path = "../iced/native" }
 iced_wgpu = { path = "../iced/wgpu" }
+iced_graphics = { path = "../iced/graphics" }
 
 tokio = { version = "0.2", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["codec"] }

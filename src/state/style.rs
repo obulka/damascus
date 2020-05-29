@@ -11,8 +11,8 @@ use iced::{
     text_input,
 };
 
-pub mod drop_down;
-pub mod theme;
+pub mod tab;
+mod theme;
 use theme::{dark, light};
 
 const BLUE: Color = Color::from_rgb(
@@ -96,10 +96,24 @@ impl Theme {
         }
     }
 
+    pub fn tab_style(&self, is_focused: bool) -> Box<dyn tab::StyleSheet> {
+        match self {
+            Theme::Dark => dark::Tab{is_focused: is_focused}.into(),
+            Theme::Light => light::Tab{is_focused: is_focused}.into(),
+        }
+    }
+
     pub fn tab_bar_style(&self) -> Box<dyn container::StyleSheet> {
         match self {
             Theme::Dark => dark::TabBar.into(),
             Theme::Light => light::TabBar.into(),
+        }
+    }
+
+    pub fn text_color(&self) -> Color {
+        match self {
+            Theme::Dark => dark::TEXT_COLOR,
+            Theme::Light => light::TEXT_COLOR,
         }
     }
 }
@@ -113,7 +127,7 @@ impl From<Theme> for Box<dyn container::StyleSheet> {
     }
 }
 
-// impl From<Theme> for Box<dyn drop_down::StyleSheet> {
+// impl From<Theme> for Box<dyn tab::StyleSheet> {
 //     fn from(theme: Theme) -> Self {
 //         match theme {
 //             Theme::Light => Default::default(),

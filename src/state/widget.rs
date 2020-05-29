@@ -1,5 +1,5 @@
-pub mod content;
 pub mod panel;
+pub mod tab;
 
-pub use content::Content;
 pub use panel::Panel;
+pub use tab::Tab;

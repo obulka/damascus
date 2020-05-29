@@ -49,11 +49,21 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::AddTabFocused(label) => {
+            Message::OpenTabFocused(label) => {
                 if let Some(pane) = self.panes.active() {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).add_tab(label);
+                        (*panel).open_tab(&label);
                     }
+                }
+            }
+            Message::CloseTab(pane, label) => {
+                if let Some(panel) = self.panes.get_mut(&pane) {
+                    (*panel).close_tab(label);
+                }
+            }
+            Message::FocusTab(pane, label) => {
+                if let Some(panel) = self.panes.get_mut(&pane) {
+                    (*panel).focus_tab(label);
                 }
             }
             Message::ThemeChanged(theme) => self.theme = theme,
@@ -93,7 +103,12 @@ impl Application for Damascus {
             }
             Message::Dragged(_) => {}
             Message::Close(pane) => {
-                let _ = self.panes.close(&pane);
+                let panel = self.panes.close(&pane);
+                if panel.is_none() {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        (*panel).close_all_tabs();
+                    }
+                }
             }
             Message::CloseFocused => {
                 if let Some(pane) = self.panes.active() {

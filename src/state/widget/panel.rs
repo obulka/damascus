@@ -1,4 +1,5 @@
 // 3rd Party Imports
+use std::collections::BTreeMap;
 use iced::{
     Align,
     Button,
@@ -14,11 +15,14 @@ use iced::{
     Text,
     VerticalAlignment,
 };
-use std::collections::HashMap;
+
 
 // Local Imports
 use crate::action::Message;
-use crate::state::Config;
+use crate::state::{
+    Config,
+    widget::tab::{self, Tab},
+};
 use crate::state::style::{self, Theme};
 
 
@@ -27,7 +31,8 @@ pub struct Panel {
     split_vertically: button::State,
     float_pane: button::State, // Not Implemented
     close: button::State,
-    tabs: HashMap<String, button::State>,
+    tabs: BTreeMap<String, (tab::State, button::State)>,
+    focused_tab: String,
 }
 
 // Next step - ability to add tabs as buttons - then close them - then swap between panels
@@ -40,7 +45,8 @@ impl Panel {
             split_vertically: button::State::new(),
             float_pane: button::State::new(),
             close: button::State::new(),
-            tabs: HashMap::new(),
+            tabs: BTreeMap::new(),
+            focused_tab: String::new(),
         }
     }
 
@@ -48,7 +54,7 @@ impl Panel {
         &mut self,
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
-        _total_panes: usize,
+        total_panes: usize,
         theme: Theme,
         config: &Config,
     ) -> Element<Message> {
@@ -58,6 +64,7 @@ impl Panel {
             float_pane,
             close,
             tabs,
+            focused_tab,
         } = self;
 
         let button = |state, label, message, style| {
@@ -114,13 +121,7 @@ impl Panel {
                     .push(button(
                         float_pane,
                         "+",
-                        // Message::ThemeChanged(
-                        //     match theme {
-                        //         Theme::Dark => Theme::Light,
-                        //         Theme::Light => Theme::Dark,
-                        //     }
-                        // ),
-                        Message::AddTabFocused("Fook".to_string()),
+                        Message::OpenTabFocused(format!("Fook{}", total_panes)),
                         theme.button_style(
                             style::Button::Primary,
                         ),
@@ -144,28 +145,37 @@ impl Panel {
                 .padding(0)
                 .push(
                     tabs.iter_mut().fold(
-                        Row::new().padding(0).spacing(1),
-                        |row_of_tabs, tab| {
+                        Row::new().padding(0).spacing(2).align_items(Align::End),
+                        |row_of_tabs, (tab_label, (tab_button_state, close_tab_state))| {
                             row_of_tabs.push(
-                                Button::new(
-                                    tab.1,
-                                    Text::new(tab.0)
-                                        .width(Length::Shrink)
-                                        .horizontal_alignment(HorizontalAlignment::Left)
-                                        .vertical_alignment(VerticalAlignment::Center)
-                                        .size(10),
+                                Tab::new(
+                                    tab_button_state,
+                                    Row::new().padding(5).spacing(5)
+                                        .push(
+                                            Text::new(tab_label.to_string())
+                                                .width(Length::Shrink)
+                                                .horizontal_alignment(HorizontalAlignment::Left)
+                                                .vertical_alignment(VerticalAlignment::Center)
+                                                .size(config.font_size)
+                                                .color(theme.text_color())
+                                        )
+                                        .push(
+                                            button(
+                                                close_tab_state,
+                                                "X",
+                                                Message::CloseTab(pane, tab_label.to_string()),
+                                                theme.button_style(
+                                                    style::Button::Destructive,
+                                                ),
+                                            )
+                                            .width(Length::Shrink)
+                                            .min_width(10)
+                                        ),
                                 )
                                 .width(Length::Shrink)
                                 .padding(1)
-                                .on_press(Message::ThemeChanged(
-                                    match theme {
-                                        Theme::Dark => Theme::Light,
-                                        Theme::Light => Theme::Dark,
-                                    }
-                                ))
-                                .style(theme.button_style(
-                                    style::Button::Primary,
-                                ))
+                                .on_press(Message::FocusTab(pane, tab_label.to_string()))
+                                .style(theme.tab_style(*focused_tab == *tab_label))
                             )
                         },
                     )
@@ -193,7 +203,20 @@ impl Panel {
             .into()
     }
 
-    pub fn add_tab(&mut self, label: String) {
-        self.tabs.insert(label, button::State::new());
+    pub fn open_tab(&mut self, label: &String) {
+        self.tabs.insert(label.to_string(), (tab::State::new(), button::State::new()));
+        self.focused_tab = label.to_string();
+    }
+
+    pub fn focus_tab(&mut self, label: String) {
+        self.focused_tab = label;
+    }
+
+    pub fn close_tab(&mut self, label: String) {
+        self.tabs.remove(&label);
+    }
+
+    pub fn close_all_tabs(&mut self) {
+        self.tabs.clear();
     }
 }

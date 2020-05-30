@@ -54,6 +54,7 @@ const CLOSE: Color = Color::from_rgb(
 pub enum Button {
     Primary,
     Destructive,
+    CloseTab,
 }
 
 
@@ -84,6 +85,12 @@ impl Theme {
                 match self {
                     Theme::Dark => dark::Button::Destructive.into(),
                     Theme::Light => light::Button::Destructive.into(),
+                }
+            }
+            Button::CloseTab => {
+                match self {
+                    Theme::Dark => dark::Button::CloseTab.into(),
+                    Theme::Light => light::Button::CloseTab.into(),
                 }
             }
         }

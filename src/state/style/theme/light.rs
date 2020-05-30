@@ -86,15 +86,15 @@ impl container::StyleSheet for Pane {
 pub enum Button {
     Primary,
     Destructive,
+    CloseTab,
 }
 
 impl button::StyleSheet for Button {
     fn active(&self) -> button::Style {
         let (background, text_color, border_radius) = match self {
             Button::Primary => (Some(SECONDARY), TEXT_COLOR, 5),
-            Button::Destructive => {
-                (Some(CLOSE), Color::BLACK, 5)
-            },
+            Button::Destructive => (Some(CLOSE), Color::BLACK, 5),
+            Button::CloseTab => (Some(Color::TRANSPARENT), Color::BLACK, 5),
         };
 
         button::Style {
@@ -114,7 +114,7 @@ impl button::StyleSheet for Button {
                 a: 0.6,
                 ..SECONDARY
             }),
-            Button::Destructive => Some(Color {
+            Button::Destructive | Button::CloseTab => Some(Color {
                 a: 0.6,
                 ..CLOSE
             }),

@@ -11,7 +11,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            font_size: 12,
+            font_size: 13,
             tab_bar_height: 36,
         }
     }

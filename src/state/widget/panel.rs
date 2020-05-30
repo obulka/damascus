@@ -90,7 +90,7 @@ impl Panel {
             .padding(3)
             .push(Row::new()
                 .spacing(2)
-                .width(Length::Shrink)
+                .width(Length::Fill)
                 .height(Length::Fill)
                 .max_width(config.tab_bar_height)
                 .max_height(config.tab_bar_height)
@@ -104,7 +104,7 @@ impl Panel {
                 ))
                 .push(button(
                     close,
-                    "X",
+                    "×",
                     Message::Close(pane),
                     theme.button_style(
                         style::Button::Destructive,
@@ -114,7 +114,7 @@ impl Panel {
             .push(
                 Row::new()
                     .spacing(2)
-                    .width(Length::Shrink)
+                    .width(Length::Fill)
                     .height(Length::Fill)
                     .max_width(config.tab_bar_height)
                     .max_height(config.tab_bar_height)
@@ -138,19 +138,25 @@ impl Panel {
 
         let tab_bar = Container::new(
             Row::new()
-                .spacing(5)
                 .width(Length::Fill)
                 .height(Length::Fill)
-                .align_items(Align::Center)
+                .align_items(Align::End)
+                .spacing(1)
                 .padding(0)
                 .push(
+                    Row::new()
+                        .width(Length::Shrink)
+                        .max_width(1)
+                        .push(Space::with_width(Length::Fill)) // Hack to get space before tab
+                )
+                .push(
                     tabs.iter_mut().fold(
-                        Row::new().padding(0).spacing(2).align_items(Align::End),
+                        Row::new().padding(0).spacing(0),
                         |row_of_tabs, (tab_label, (tab_button_state, close_tab_state))| {
                             row_of_tabs.push(
                                 Tab::new(
                                     tab_button_state,
-                                    Row::new().padding(5).spacing(5)
+                                    Row::new().padding(7).spacing(5).max_width(150)
                                         .push(
                                             Text::new(tab_label.to_string())
                                                 .width(Length::Shrink)
@@ -162,10 +168,10 @@ impl Panel {
                                         .push(
                                             button(
                                                 close_tab_state,
-                                                "X",
+                                                "×",
                                                 Message::CloseTab(pane, tab_label.to_string()),
                                                 theme.button_style(
-                                                    style::Button::Destructive,
+                                                    style::Button::CloseTab,
                                                 ),
                                             )
                                             .width(Length::Shrink)

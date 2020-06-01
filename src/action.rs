@@ -8,8 +8,8 @@ use crate::state::style::Theme;
 #[derive(Debug, Clone)]
 pub enum Message {
     OpenTabFocused(String),
-    CloseTab(pane_grid::Pane, String),
-    FocusTab(pane_grid::Pane, String),
+    CloseTab(pane_grid::Pane, usize),
+    FocusTab(pane_grid::Pane, usize),
     ThemeChanged(Theme),
     Split(pane_grid::Axis, pane_grid::Pane),
     SplitFocused(pane_grid::Axis),

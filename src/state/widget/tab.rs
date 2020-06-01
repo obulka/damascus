@@ -226,7 +226,6 @@ where
                 clipboard,
             );
         }
-
     }
 
     fn draw(

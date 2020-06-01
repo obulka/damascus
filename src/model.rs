@@ -56,14 +56,14 @@ impl Application for Damascus {
                     }
                 }
             }
-            Message::CloseTab(pane, label) => {
+            Message::CloseTab(pane, index) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
-                    (*panel).close_tab(label);
+                    (*panel).close_tab(index);
                 }
             }
-            Message::FocusTab(pane, label) => {
+            Message::FocusTab(pane, index) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
-                    (*panel).focus_tab(label);
+                    (*panel).focus_tab(index);
                 }
             }
             Message::ThemeChanged(theme) => self.theme = theme,

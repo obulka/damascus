@@ -1,5 +1,5 @@
 // 3rd Party Imports
-use std::collections::BTreeMap;
+
 use iced::{
     Align,
     Button,
@@ -31,8 +31,8 @@ pub struct Panel {
     split_vertically: button::State,
     float_pane: button::State, // Not Implemented
     close: button::State,
-    tabs: BTreeMap<String, (tab::State, button::State)>,
-    focused_tab: String,
+    tabs: Vec<(String, tab::State, button::State)>,
+    focused_tab: usize,
 }
 
 // Next step - ability to add tabs as buttons - then close them - then swap between panels
@@ -45,8 +45,8 @@ impl Panel {
             split_vertically: button::State::new(),
             float_pane: button::State::new(),
             close: button::State::new(),
-            tabs: BTreeMap::new(),
-            focused_tab: String::new(),
+            tabs: Vec::new(),
+            focused_tab: 0,
         }
     }
 
@@ -150,9 +150,9 @@ impl Panel {
                         .push(Space::with_width(Length::Fill)) // Hack to get space before tab
                 )
                 .push(
-                    tabs.iter_mut().fold(
+                    tabs.iter_mut().enumerate().fold(
                         Row::new().padding(0).spacing(0),
-                        |row_of_tabs, (tab_label, (tab_button_state, close_tab_state))| {
+                        |row_of_tabs, (index, (tab_label, tab_button_state, close_tab_state))| {
                             row_of_tabs.push(
                                 Tab::new(
                                     tab_button_state,
@@ -169,7 +169,7 @@ impl Panel {
                                             button(
                                                 close_tab_state,
                                                 "×",
-                                                Message::CloseTab(pane, tab_label.to_string()),
+                                                Message::CloseTab(pane, index),
                                                 theme.button_style(
                                                     style::Button::CloseTab,
                                                 ),
@@ -180,8 +180,8 @@ impl Panel {
                                 )
                                 .width(Length::Shrink)
                                 .padding(1)
-                                .on_press(Message::FocusTab(pane, tab_label.to_string()))
-                                .style(theme.tab_style(*focused_tab == *tab_label))
+                                .on_press(Message::FocusTab(pane, index))
+                                .style(theme.tab_style(*focused_tab == index))
                             )
                         },
                     )
@@ -210,16 +210,24 @@ impl Panel {
     }
 
     pub fn open_tab(&mut self, label: &String) {
-        self.tabs.insert(label.to_string(), (tab::State::new(), button::State::new()));
-        self.focused_tab = label.to_string();
+        self.tabs.push((label.to_string(), tab::State::new(), button::State::new()));
+        self.focused_tab = self.tabs.len() - 1;
     }
 
-    pub fn focus_tab(&mut self, label: String) {
-        self.focused_tab = label;
+    pub fn focus_tab(&mut self, index: usize) {
+        self.focused_tab = index;
     }
 
-    pub fn close_tab(&mut self, label: String) {
-        self.tabs.remove(&label);
+    pub fn close_tab(&mut self, index: usize) {
+        let current_focus = self.focused_tab;
+        self.tabs.remove(index);
+
+        let mut new_focus = current_focus;
+        while new_focus >= self.tabs.len() && new_focus >= 1 {
+            new_focus -= 1;
+        }
+
+        self.focus_tab(new_focus);
     }
 
     pub fn close_all_tabs(&mut self) {

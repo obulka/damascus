@@ -21,7 +21,7 @@ use iced::{
 use crate::action::Message;
 use crate::state::{
     Config,
-    widget::tab::{self, Tab},
+    widget::tab::{Tab},
 };
 use crate::state::style::{self, Theme};
 
@@ -31,7 +31,7 @@ pub struct Panel {
     split_vertically: button::State,
     float_pane: button::State, // Not Implemented
     close: button::State,
-    tabs: Vec<(String, tab::State, button::State)>,
+    tabs: Vec<(String, button::State)>,
     focused_tab: usize,
 }
 
@@ -152,10 +152,9 @@ impl Panel {
                 .push(
                     tabs.iter_mut().enumerate().fold(
                         Row::new().padding(0).spacing(0),
-                        |row_of_tabs, (index, (tab_label, tab_button_state, close_tab_state))| {
+                        |row_of_tabs, (index, (tab_label, close_tab_state))| {
                             row_of_tabs.push(
                                 Tab::new(
-                                    tab_button_state,
                                     Row::new().padding(7).spacing(5).max_width(150)
                                         .push(
                                             Text::new(tab_label.to_string())
@@ -180,7 +179,7 @@ impl Panel {
                                 )
                                 .width(Length::Shrink)
                                 .padding(1)
-                                .on_press(Message::FocusTab(pane, index))
+                                .on_press(Message::FocusTab((pane, index)))
                                 .style(theme.tab_style(*focused_tab == index))
                             )
                         },
@@ -210,7 +209,7 @@ impl Panel {
     }
 
     pub fn open_tab(&mut self, label: &String) {
-        self.tabs.push((label.to_string(), tab::State::new(), button::State::new()));
+        self.tabs.push((label.to_string(), button::State::new()));
         self.focused_tab = self.tabs.len() - 1;
     }
 
@@ -218,16 +217,15 @@ impl Panel {
         self.focused_tab = index;
     }
 
-    pub fn close_tab(&mut self, index: usize) {
+    pub fn close_tab(&mut self, index: usize) -> usize {
         let current_focus = self.focused_tab;
         self.tabs.remove(index);
 
-        let mut new_focus = current_focus;
+        let mut new_focus = if current_focus > index {current_focus - 1} else {current_focus};
         while new_focus >= self.tabs.len() && new_focus >= 1 {
             new_focus -= 1;
         }
-
-        self.focus_tab(new_focus);
+        new_focus
     }
 
     pub fn close_all_tabs(&mut self) {

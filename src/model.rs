@@ -58,10 +58,15 @@ impl Application for Damascus {
             }
             Message::CloseTab(pane, index) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
-                    (*panel).close_tab(index);
+                    let new_focus = (*panel).close_tab(index);
+                    return Command::perform(async move {
+                            (pane, new_focus)
+                        },
+                        Message::FocusTab,
+                    );
                 }
             }
-            Message::FocusTab(pane, index) => {
+            Message::FocusTab((pane, index)) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
                     (*panel).focus_tab(index);
                 }
@@ -95,13 +100,13 @@ impl Application for Damascus {
             Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(&split, ratio);
             }
-            Message::Dragged(pane_grid::DragEvent::Dropped {
+            Message::PaneDragged(pane_grid::DragEvent::Dropped {
                 pane,
                 target,
             }) => {
                 self.panes.swap(&pane, &target);
             }
-            Message::Dragged(_) => {}
+            Message::PaneDragged(_) => {}
             Message::Close(pane) => {
                 let panel = self.panes.close(&pane);
                 if panel.is_none() {
@@ -131,7 +136,7 @@ impl Application for Damascus {
             .width(Length::Fill)
             .height(Length::Fill)
             .spacing(0) // Space between panes
-            .on_drag(Message::Dragged)
+            .on_drag(Message::PaneDragged)
             .on_resize(Message::Resized)
             .on_key_press(handle_hotkey);
 

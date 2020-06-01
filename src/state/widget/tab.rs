@@ -37,7 +37,6 @@ use std::hash::Hash;
 /// ```
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: self::Renderer> {
-    state: &'a mut State,
     content: Element<'a, Message, Renderer>,
     on_press: Option<Message>,
     width: Length,
@@ -57,12 +56,11 @@ where
     ///
     /// [`Button`]: struct.Button.html
     /// [`State`]: struct.State.html
-    pub fn new<E>(state: &'a mut State, content: E) -> Self
+    pub fn new<E>(content: E) -> Self
     where
         E: Into<Element<'a, Message, Renderer>>,
     {
         Tab {
-            state,
             content: content.into(),
             on_press: None,
             width: Length::Shrink,
@@ -131,22 +129,6 @@ where
     }
 }
 
-/// The local state of a [`Button`].
-///
-/// [`Button`]: struct.Button.html
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct State {
-    is_pressed: bool,
-}
-
-impl State {
-    /// Creates a new [`State`].
-    ///
-    /// [`State`]: struct.State.html
-    pub fn new() -> State {
-        State::default()
-    }
-}
 
 impl<'a, Message, Renderer> Widget<Message, Renderer>
     for Tab<'a, Message, Renderer>
@@ -192,39 +174,30 @@ where
         renderer: &Renderer,
         clipboard: Option<&dyn Clipboard>,
     ) {
-        match event {
-            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                if self.on_press.is_some() {
-                    let bounds = layout.bounds();
-
-                    self.state.is_pressed = bounds.contains(cursor_position);
-                }
-            }
-            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left)) => {
-                if let Some(on_press) = self.on_press.clone() {
-                    let bounds = layout.bounds();
-
-                    let is_clicked = self.state.is_pressed
-                        && bounds.contains(cursor_position);
-
-                    self.state.is_pressed = false;
-
-                    if is_clicked {
-                        messages.push(on_press);
-                    }
-                }
-            }
-            _ => {}
-        }
-        if let Some(child) = layout.children().next() {
+        // Allows the close tab button to be pressed
+        if let Some(child_layout) = layout.children().next() {
             self.content.on_event(
                 event.clone(),
-                child,
+                child_layout,
                 cursor_position,
                 messages,
                 renderer,
                 clipboard,
             );
+            if let Some(close_layout) = child_layout.children().last() {
+                match event {
+                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
+                        if let Some(on_press) = self.on_press.clone() {
+                            let bounds = layout.bounds();
+
+                            if bounds.contains(cursor_position) && !close_layout.bounds().contains(cursor_position) {
+                                messages.push(on_press);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
     }
 

@@ -189,8 +189,8 @@ where
         layout: Layout<'_>,
         cursor_position: Point,
         messages: &mut Vec<Message>,
-        _renderer: &Renderer,
-        _clipboard: Option<&dyn Clipboard>,
+        renderer: &Renderer,
+        clipboard: Option<&dyn Clipboard>,
     ) {
         match event {
             Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
@@ -216,6 +216,18 @@ where
             }
             _ => {}
         }
+        if let Some(child) = layout.children().next() {
+            // println!("F{:?}", child.children().size_hint());
+            self.content.on_event(
+                event.clone(),
+                child,
+                cursor_position,
+                messages,
+                renderer,
+                clipboard,
+            );
+        }
+
     }
 
     fn draw(

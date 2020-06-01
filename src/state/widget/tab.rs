@@ -184,13 +184,13 @@ where
                 renderer,
                 clipboard,
             );
+            // Do not focus if close button clicked
             if let Some(close_layout) = child_layout.children().last() {
                 match event {
                     Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
                         if let Some(on_press) = self.on_press.clone() {
-                            let bounds = layout.bounds();
-
-                            if bounds.contains(cursor_position) && !close_layout.bounds().contains(cursor_position) {
+                            if layout.bounds().contains(cursor_position)
+                            && !close_layout.bounds().contains(cursor_position) {
                                 messages.push(on_press);
                             }
                         }

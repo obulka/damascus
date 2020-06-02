@@ -1,6 +1,8 @@
 // 3rd Party Imports
 use iced::{
+    Align,
     Application,
+    Column,
     Command,
     Container,
     Element,
@@ -8,17 +10,22 @@ use iced::{
     Length,
     PaneGrid,
     pane_grid,
+    Row,
 };
 
 // Local Imports
-use crate::action::{Message, handle_hotkey};
-use crate::state::Config;
-use crate::state::widget::Panel;
-use crate::state::style::Theme;
+use crate::action::{
+    handle_hotkey,
+    Message,
+};
+
+use crate::state::{
+    Config,
+    widget::Panel,
+};
 
 
 pub struct Damascus {
-    theme: Theme,
     config: Config,
     panes: pane_grid::State<Panel>,
 }
@@ -27,16 +34,14 @@ pub struct Damascus {
 impl Application for Damascus {
     type Message = Message;
     type Executor = executor::Default;
-    type Flags = ();
+    type Flags = Config;
 
-    fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
-        let config = Config::default();
+    fn new(flags: Self::Flags) -> (Self, Command<Message>) {
         let (panes, _) = pane_grid::State::new(Panel::new());
 
         (
             Damascus {
-                theme: Theme::default(),
-                config: config,
+                config: flags,
                 panes: panes,
             },
             Command::none(),
@@ -71,7 +76,7 @@ impl Application for Damascus {
                     (*panel).focus_tab(index);
                 }
             }
-            Message::ThemeChanged(theme) => self.theme = theme,
+            Message::ThemeChanged(theme) => self.config.theme = theme,
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(
                     axis,
@@ -126,25 +131,37 @@ impl Application for Damascus {
 
     fn view(&mut self) -> Element<Message> {
         let total_panes = self.panes.len();
-        let theme = self.theme;
         let config = &self.config;
 
-        let pane_grid =
-            PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                content.view(pane, focus, total_panes, theme, config)
-            })
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .spacing(0) // Space between panes
-            .on_drag(Message::PaneDragged)
-            .on_resize(Message::Resized)
-            .on_key_press(handle_hotkey);
+        let app_content = Column::new()
+            .push(
+                // Toolbar
+                Row::new()
+                    .width(Length::Fill)
+                    .height(Length::Shrink)
+                    .max_height(config.tab_bar_height)
+                    .align_items(Align::End)
+                    .spacing(1)
+                    .padding(0)
+            )
+            .push(
+                // Panes
+                PaneGrid::new(&mut self.panes, |pane, content, focus| {
+                    content.view(pane, focus, total_panes, config)
+                })
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .spacing(0) // Space between panes
+                    .on_drag(Message::PaneDragged)
+                    .on_resize(Message::Resized)
+                    .on_key_press(handle_hotkey)
+            );
 
-        Container::new(pane_grid)
+        Container::new(app_content)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(0) // Space between panes and window edge
-            .style(self.theme)
+            .style(config.theme)
             .into()
     }
 }

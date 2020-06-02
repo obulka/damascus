@@ -23,7 +23,7 @@ use crate::state::{
     Config,
     widget::tab::{Tab},
 };
-use crate::state::style::{self, Theme};
+use crate::state::style;
 
 
 pub struct Panel {
@@ -55,7 +55,6 @@ impl Panel {
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
         total_panes: usize,
-        theme: Theme,
         config: &Config,
     ) -> Element<Message> {
         let Panel {
@@ -98,7 +97,7 @@ impl Panel {
                     split_vertically,
                     "|",
                     Message::Split(pane_grid::Axis::Vertical, pane),
-                    theme.button_style(
+                    config.theme.button_style(
                         style::Button::Primary,
                     ),
                 ))
@@ -106,7 +105,7 @@ impl Panel {
                     close,
                     "×",
                     Message::Close(pane),
-                    theme.button_style(
+                    config.theme.button_style(
                         style::Button::Destructive,
                     ),
                 ))
@@ -122,7 +121,7 @@ impl Panel {
                         float_pane,
                         "+",
                         Message::OpenTabFocused(format!("Fook{}", total_panes)),
-                        theme.button_style(
+                        config.theme.button_style(
                             style::Button::Primary,
                         ),
                     ))
@@ -130,7 +129,7 @@ impl Panel {
                         split_horizontally,
                         "─",
                         Message::Split(pane_grid::Axis::Horizontal, pane),
-                        theme.button_style(
+                        config.theme.button_style(
                             style::Button::Primary,
                         ),
                     ))
@@ -162,14 +161,14 @@ impl Panel {
                                                 .horizontal_alignment(HorizontalAlignment::Left)
                                                 .vertical_alignment(VerticalAlignment::Center)
                                                 .size(config.font_size)
-                                                .color(theme.text_color())
+                                                .color(config.theme.text_color())
                                         )
                                         .push(
                                             button(
                                                 close_tab_state,
                                                 "×",
                                                 Message::CloseTab(pane, index),
-                                                theme.button_style(
+                                                config.theme.button_style(
                                                     style::Button::CloseTab,
                                                 ),
                                             )
@@ -180,7 +179,7 @@ impl Panel {
                                 .width(Length::Shrink)
                                 .padding(1)
                                 .on_press(Message::FocusTab((pane, index)))
-                                .style(theme.tab_style(*focused_tab == index))
+                                .style(config.theme.tab_style(*focused_tab == index))
                             )
                         },
                     )
@@ -191,7 +190,7 @@ impl Panel {
             .width(Length::Fill)
             .max_height(config.tab_bar_height)
             .padding(0)
-            .style(theme.tab_bar_style());
+            .style(config.theme.tab_bar_style());
 
         let content = Column::new()
             .spacing(5)
@@ -204,7 +203,7 @@ impl Panel {
             .height(Length::Fill)
             .padding(0)
             .center_y()
-            .style(theme.pane_style(focus.is_some()))
+            .style(config.theme.pane_style(focus.is_some()))
             .into()
     }
 

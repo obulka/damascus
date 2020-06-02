@@ -11,7 +11,7 @@ num_cpus = "1.0"
 futures = "0.3.4"
 rayon = "1.1"
 
-iced = { path = "../iced", features = ["tokio"] }
+iced = { path = "../iced", features = ["canvas", "tokio", "debug"] }
 iced_core = { path = "../iced/core"}
 iced_native = { path = "../iced/native" }
 iced_wgpu = { path = "../iced/wgpu" }
@@ -40,4 +40,5 @@ actix = "0.10.0-alpha.3"
 actix-rt = "1.1.1"
 
 ron = "*"
-lazy_static = "0.1.*"
+rustc-hash = "1.1"
+itertools = "0.9"

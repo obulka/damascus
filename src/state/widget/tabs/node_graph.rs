@@ -12,13 +12,13 @@ use crate::state::Config;
 use super::TabContent;
 
 
-pub struct Viewer {}
+pub struct NodeGraph {}
 
-impl TabContent for Viewer {
+impl TabContent for NodeGraph {
 
     fn view(&self, config: &Config) -> Element<Message> {
         Container::new(
-            Text::new("Viewer")
+            Text::new("Node Graph")
                 .width(Length::Shrink)
                 .horizontal_alignment(HorizontalAlignment::Left)
                 .vertical_alignment(VerticalAlignment::Center)

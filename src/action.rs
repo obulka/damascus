@@ -26,7 +26,7 @@ pub enum Message {
 
 pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     use keyboard::KeyCode;
-    use pane_grid::{Axis, Direction};
+    use pane_grid::Direction;
 
     let direction = match event.key_code {
         KeyCode::Up => Some(Direction::Up),
@@ -37,8 +37,8 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     };
 
     match event.key_code {
-        KeyCode::V => Some(Message::SplitFocused(Axis::Vertical)),
-        KeyCode::H => Some(Message::SplitFocused(Axis::Horizontal)),
+        KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
+        KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
         KeyCode::W => Some(Message::CloseFocused),
         _ => direction.map(Message::FocusAdjacent),
     }

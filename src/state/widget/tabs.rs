@@ -1,9 +1,12 @@
 use iced::Element;
 
+use crate::state::Config;
+use crate::action::Message;
+
+pub mod node_graph;
 pub mod viewer;
 
-use crate::action::Message;
-use crate::state::Config;
+pub use node_graph::NodeGraph;
 pub use viewer::Viewer;
 
 
@@ -24,4 +27,15 @@ impl From<TabType> for String {
 
 pub trait TabContent {
     fn view(&self, config: &Config) -> Element<Message>;
+}
+
+pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
+    match tab_type {
+        TabType::Viewer => {
+            Box::new(Viewer{})
+        }
+        TabType::NodeGraph => {
+            Box::new(NodeGraph{})
+        }
+    }
 }

@@ -179,20 +179,20 @@ impl Panel {
                                                     style::Button::CloseTab,
                                                 ),
                                             )
-                                            .width(Length::Shrink)
-                                            .min_width(10)
+                                                .width(Length::Shrink)
+                                                .min_width(10)
                                         ),
                                 )
-                                .width(Length::Shrink)
-                                .padding(1)
-                                .on_press(Message::FocusTab((pane, index)))
-                                .style(config.theme.tab_style(focused))
+                                    .width(Length::Shrink)
+                                    .padding(1)
+                                    .on_press(Message::FocusTab((pane, index)))
+                                    .style(config.theme.tab_style(focused))
                             )
                         },
                     )
                 )
-                .push(Space::new(Length::Fill, Length::Fill))
-                .push(options)
+                    .push(Space::new(Length::Fill, Length::Fill))
+                    .push(options)
         )
             .width(Length::Fill)
             .max_height(config.tab_bar_height)

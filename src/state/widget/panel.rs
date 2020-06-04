@@ -25,7 +25,7 @@ use crate::state::{
         Tab,
         TabContent,
         TabType,
-        Viewer,
+        tabs::Viewer,
     },
 };
 use crate::state::style;
@@ -40,9 +40,6 @@ pub struct Panel {
     tab_contents: Vec<Box<dyn TabContent>>,
     focused_tab: usize,
 }
-
-// Next step - ability to add tabs as buttons - then close them - then swap between panels
-// they need to then send the message to open a specific Canvas/ UI Element
 
 impl Panel {
     pub fn new() -> Self {

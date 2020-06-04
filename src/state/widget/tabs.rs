@@ -1,13 +1,11 @@
-use iced::{
-    Container,
-    Element,
-    Text,
-    Length,
-    HorizontalAlignment,
-    VerticalAlignment,
-};
+use iced::Element;
+
+pub mod viewer;
+
 use crate::action::Message;
 use crate::state::Config;
+pub use viewer::Viewer;
+
 
 #[derive(Debug, Clone)]
 pub enum TabType {
@@ -26,20 +24,4 @@ impl From<TabType> for String {
 
 pub trait TabContent {
     fn view(&self, config: &Config) -> Element<Message>;
-}
-
-pub struct Viewer {}
-
-impl TabContent for Viewer {
-
-    fn view(&self, config: &Config) -> Element<Message> {
-        Container::new(
-            Text::new("Test")
-                .width(Length::Shrink)
-                .horizontal_alignment(HorizontalAlignment::Left)
-                .vertical_alignment(VerticalAlignment::Center)
-                .size(config.font_size)
-                .color(config.theme.text_color())
-        ).into()
-    }
 }

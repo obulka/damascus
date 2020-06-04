@@ -14,6 +14,7 @@ pub enum Message {
     CloseTab(pane_grid::Pane, usize),
     FocusTab((pane_grid::Pane, usize)),
     ThemeChanged(Theme),
+    ToggleTheme,
     Split(pane_grid::Axis, pane_grid::Pane),
     SplitFocused(pane_grid::Axis),
     FocusAdjacent(pane_grid::Direction),
@@ -39,6 +40,7 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     match event.key_code {
         KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
         KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
+        KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
         _ => direction.map(Message::FocusAdjacent),
     }

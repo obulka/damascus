@@ -21,6 +21,7 @@ use crate::action::{
 
 use crate::state::{
     Config,
+    style::Theme,
     widget::Panel,
 };
 
@@ -77,6 +78,12 @@ impl Application for Damascus {
                 }
             }
             Message::ThemeChanged(theme) => self.config.theme = theme,
+            Message::ToggleTheme => {
+                self.config.theme = match self.config.theme {
+                    Theme::Dark => Theme::Light,
+                    Theme::Light => Theme::Dark,
+                }
+            }
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(
                     axis,

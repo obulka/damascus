@@ -45,6 +45,12 @@ const INDIGO: Color = Color::from_rgb(
     0x7D as f32 / 255.0,
 );
 
+const ORANGE: Color = Color::from_rgb(
+    0xE3 as f32 / 255.0,
+    0x8E as f32 / 255.0,
+    0x21 as f32 / 255.0,
+);
+
 const CLOSE: Color = Color::from_rgb(
     0xE7 as f32 / 255.0,
     0x5B as f32 / 255.0,

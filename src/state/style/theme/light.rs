@@ -6,19 +6,27 @@ use iced::{
     Vector,
 };
 
-use crate::state::style::{CLOSE, tab};
+use crate::state::style::{
+    CLOSE,
+    ORANGE,
+    tab,
+};
 
+
+const HIGHLIGHT: Color = ORANGE;
+
+const PRIMARY: Color = Color::WHITE;
 
 const SECONDARY: Color = Color::from_rgb(
-    0x42 as f32 / 255.0,
-    0x43 as f32 / 255.0,
-    0x3E as f32 / 255.0,
+    0x99 as f32 / 255.0,
+    0x9A as f32 / 255.0,
+    0x9C as f32 / 255.0,
 );
 
 const TERTIARY: Color = Color::from_rgb(
-    0x6D as f32 / 255.0,
-    0x6E as f32 / 255.0,
-    0x6A as f32 / 255.0,
+    0x3C as f32 / 255.0,
+    0x3B as f32 / 255.0,
+    0x37 as f32 / 255.0,
 );
 
 const ACTIVE: Color = Color::from_rgb(
@@ -33,7 +41,7 @@ const HOVERED: Color = Color::from_rgb(
     0xC4 as f32 / 255.0,
 );
 
-pub const TEXT_COLOR: Color = Color::WHITE;
+pub const TEXT_COLOR: Color = Color::BLACK;
 
 
 pub struct TabBar;
@@ -56,7 +64,7 @@ pub struct Tab {
 impl tab::StyleSheet for Tab {
     fn style(&self) -> tab::Style {
         tab::Style {
-            background: Some(Background::Color(if self.is_focused {Color::WHITE} else {SECONDARY})),
+            background: Some(Background::Color(if self.is_focused {PRIMARY} else {SECONDARY})),
             border_width: 1,
             border_color: Color::TRANSPARENT,
             text_color: TEXT_COLOR,
@@ -72,16 +80,14 @@ pub struct Pane {
 impl container::StyleSheet for Pane {
     fn style(&self) -> container::Style {
         container::Style {
-            background: Some(Background::Color(Color::WHITE)),
+            background: Some(Background::Color(PRIMARY)),
             border_width: 1,
-            border_color: Color {
-                a: if self.is_focused { 1.0 } else { 0.3 },
-                ..Color::BLACK
-            },
+            border_color: if self.is_focused { HIGHLIGHT } else { Color::BLACK },
             ..Default::default()
         }
     }
 }
+
 
 pub enum Button {
     Primary,
@@ -93,8 +99,8 @@ impl button::StyleSheet for Button {
     fn active(&self) -> button::Style {
         let (background, text_color, border_radius) = match self {
             Button::Primary => (Some(SECONDARY), TEXT_COLOR, 5),
-            Button::Destructive => (Some(CLOSE), Color::BLACK, 5),
-            Button::CloseTab => (Some(Color::TRANSPARENT), Color::BLACK, 5),
+            Button::Destructive => (Some(SECONDARY), TEXT_COLOR, 5),
+            Button::CloseTab => (Some(Color::TRANSPARENT), TEXT_COLOR, 5),
         };
 
         button::Style {
@@ -114,10 +120,7 @@ impl button::StyleSheet for Button {
                 a: 0.6,
                 ..SECONDARY
             }),
-            Button::Destructive | Button::CloseTab => Some(Color {
-                a: 0.6,
-                ..CLOSE
-            }),
+            Button::Destructive | Button::CloseTab => Some(CLOSE),
         };
 
         button::Style {
@@ -129,7 +132,7 @@ impl button::StyleSheet for Button {
     fn pressed(&self) -> button::Style {
         button::Style {
             border_width: 1,
-            border_color: Color::WHITE,
+            border_color: Color::BLACK,
             ..self.hovered()
         }
     }

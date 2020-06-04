@@ -199,21 +199,17 @@ impl Panel {
             .padding(0)
             .style(config.theme.tab_bar_style());
 
-        let content = Column::new()
+        let mut content = Column::new()
             .spacing(5)
             .width(Length::Fill)
             .height(Length::Fill)
             .push(tab_bar);
 
-        let new_content;
         if let Some(tab_content) = tab_contents.get(*focused_tab) {
-            new_content = content.push(tab_content.view(config));
-        }
-        else {
-            new_content = content;
+            content = content.push(tab_content.view(config));
         }
 
-        Container::new(new_content)
+        Container::new(content)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(0)

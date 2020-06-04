@@ -12,7 +12,11 @@ use iced::{
     Vector,
 };
 
-use crate::state::style::{CLOSE, tab};
+use crate::state::style::{
+    CLOSE,
+    ORANGE,
+    tab,
+};
 
 
 const ACCENT: Color = Color::from_rgb(
@@ -21,11 +25,7 @@ const ACCENT: Color = Color::from_rgb(
     0xE9 as f32 / 255.0,
 );
 
-const HIGHLIGHT: Color = Color::from_rgb(
-    0xE3 as f32 / 255.0,
-    0x8E as f32 / 255.0,
-    0x21 as f32 / 255.0,
-);
+const HIGHLIGHT: Color = ORANGE;
 
 const PRIMARY: Color = Color::from_rgb(
     0x28 as f32 / 255.0,

@@ -54,10 +54,10 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::OpenTabFocused(label) => {
+            Message::OpenTabFocused(tab_type) => {
                 if let Some(pane) = self.panes.active() {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).open_tab(&label);
+                        (*panel).open_tab(tab_type);
                     }
                 }
             }
@@ -130,7 +130,6 @@ impl Application for Damascus {
     }
 
     fn view(&mut self) -> Element<Message> {
-        let total_panes = self.panes.len();
         let config = &self.config;
 
         let app_content = Column::new()
@@ -147,7 +146,7 @@ impl Application for Damascus {
             .push(
                 // Panes
                 PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                    content.view(pane, focus, total_panes, config)
+                    content.view(pane, focus, config)
                 })
                     .width(Length::Fill)
                     .height(Length::Fill)

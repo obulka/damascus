@@ -1,9 +1,3 @@
-//! Allow your users to perform actions by pressing a button.
-//!
-//! A [`Button`] has some local [`State`].
-//!
-//! [`Button`]: struct.Button.html
-//! [`State`]: struct.State.html
 use iced_native::{
     Clipboard,
     Element,
@@ -19,22 +13,7 @@ use iced_native::{
 };
 use std::hash::Hash;
 
-/// A generic widget that produces a message when pressed.
-///
-/// ```
-/// # use iced_native::{button, Text};
-/// #
-/// # type Button<'a, Message> =
-/// #     iced_native::Button<'a, Message, iced_native::renderer::Null>;
-/// #
-/// enum Message {
-///     ButtonPressed,
-/// }
-///
-/// let mut state = button::State::new();
-/// let button = Button::new(&mut state, Text::new("Press me!"))
-///     .on_press(Message::ButtonPressed);
-/// ```
+
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: self::Renderer> {
     content: Element<'a, Message, Renderer>,
@@ -51,11 +30,10 @@ impl<'a, Message, Renderer> Tab<'a, Message, Renderer>
 where
     Renderer: self::Renderer,
 {
-    /// Creates a new [`Button`] with some local [`State`] and the given
+    /// Creates a new [`Tab`] with the given
     /// content.
     ///
-    /// [`Button`]: struct.Button.html
-    /// [`State`]: struct.State.html
+    /// [`Tab`]: struct.Tab.html
     pub fn new<E>(content: E) -> Self
     where
         E: Into<Element<'a, Message, Renderer>>,
@@ -72,57 +50,57 @@ where
         }
     }
 
-    /// Sets the width of the [`Button`].
+    /// Sets the width of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn width(mut self, width: Length) -> Self {
         self.width = width;
         self
     }
 
-    /// Sets the height of the [`Button`].
+    /// Sets the height of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn height(mut self, height: Length) -> Self {
         self.height = height;
         self
     }
 
-    /// Sets the minimum width of the [`Button`].
+    /// Sets the minimum width of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn min_width(mut self, min_width: u32) -> Self {
         self.min_width = min_width;
         self
     }
 
-    /// Sets the minimum height of the [`Button`].
+    /// Sets the minimum height of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn min_height(mut self, min_height: u32) -> Self {
         self.min_height = min_height;
         self
     }
 
-    /// Sets the padding of the [`Button`].
+    /// Sets the padding of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn padding(mut self, padding: u16) -> Self {
         self.padding = padding;
         self
     }
 
-    /// Sets the message that will be produced when the [`Button`] is pressed.
+    /// Sets the message that will be produced when the [`Tab`] is pressed.
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn on_press(mut self, msg: Message) -> Self {
         self.on_press = Some(msg);
         self
     }
 
-    /// Sets the style of the [`Button`].
+    /// Sets the style of the [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     pub fn style(mut self, style: impl Into<Renderer::Style>) -> Self {
         self.style = style.into();
         self
@@ -174,7 +152,7 @@ where
         renderer: &Renderer,
         clipboard: Option<&dyn Clipboard>,
     ) {
-        // Allows the close tab button to be pressed
+        // Allows the close tab Tab to be pressed
         if let Some(child_layout) = layout.children().next() {
             self.content.on_event(
                 event.clone(),
@@ -184,7 +162,7 @@ where
                 renderer,
                 clipboard,
             );
-            // Do not focus if close button clicked
+            // Do not focus if close Tab clicked
             if let Some(close_layout) = child_layout.children().last() {
                 match event {
                     Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
@@ -227,25 +205,25 @@ where
     }
 }
 
-/// The renderer of a [`Button`].
+/// The renderer of a [`Tab`].
 ///
 /// Your [renderer] will need to implement this trait before being
-/// able to use a [`Button`] in your user interface.
+/// able to use a [`Tab`] in your user interface.
 ///
-/// [`Button`]: struct.Button.html
+/// [`Tab`]: struct.Tab.html
 /// [renderer]: ../../renderer/index.html
 pub trait Renderer: iced_native::Renderer + Sized {
-    /// The default padding of a [`Button`].
+    /// The default padding of a [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     const DEFAULT_PADDING: u16;
 
     /// The style supported by this renderer.
     type Style: Default;
 
-    /// Draws a [`Button`].
+    /// Draws a [`Tab`].
     ///
-    /// [`Button`]: struct.Button.html
+    /// [`Tab`]: struct.Tab.html
     fn draw<Message>(
         &mut self,
         defaults: &Self::Defaults,

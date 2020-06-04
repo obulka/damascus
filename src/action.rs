@@ -2,12 +2,15 @@
 use iced::{pane_grid, keyboard};
 
 // Local Imports
-use crate::state::style::Theme;
+use crate::state::{
+    widget::tabs::TabType,
+    style::Theme,
+};
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    OpenTabFocused(String),
+    OpenTabFocused(TabType),
     CloseTab(pane_grid::Pane, usize),
     FocusTab((pane_grid::Pane, usize)),
     ThemeChanged(Theme),
@@ -40,17 +43,3 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         _ => direction.map(Message::FocusAdjacent),
     }
 }
-
-
-// impl Action
-// {
-//     fn handle_event(event: Event, model: &mut Model)
-//     {
-//         let proposal = match event {
-//             Event::MouseClick {..} => Action::CreateWidget{widget: Widget{}},
-//             Event::NothingHappened(..) => Action::CloseWidget{widget: Widget{}},
-//         };
-//         model.submit(proposal);
-//     }
-// }
-

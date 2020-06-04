@@ -21,7 +21,12 @@ use iced::{
 use crate::action::Message;
 use crate::state::{
     Config,
-    widget::tab::{Tab},
+    widget::{
+        Tab,
+        TabContent,
+        TabType,
+        Viewer,
+    },
 };
 use crate::state::style;
 
@@ -32,6 +37,7 @@ pub struct Panel {
     float_pane: button::State, // Not Implemented
     close: button::State,
     tabs: Vec<(String, button::State)>,
+    tab_contents: Vec<Box<dyn TabContent>>,
     focused_tab: usize,
 }
 
@@ -46,6 +52,7 @@ impl Panel {
             float_pane: button::State::new(),
             close: button::State::new(),
             tabs: Vec::new(),
+            tab_contents: Vec::new(),
             focused_tab: 0,
         }
     }
@@ -54,7 +61,6 @@ impl Panel {
         &mut self,
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
-        total_panes: usize,
         config: &Config,
     ) -> Element<Message> {
         let Panel {
@@ -63,6 +69,7 @@ impl Panel {
             float_pane,
             close,
             tabs,
+            tab_contents,
             focused_tab,
         } = self;
 
@@ -120,7 +127,7 @@ impl Panel {
                     .push(button(
                         float_pane,
                         "+",
-                        Message::OpenTabFocused(format!("Fook{}", total_panes)),
+                        Message::OpenTabFocused(TabType::Viewer),
                         config.theme.button_style(
                             style::Button::Primary,
                         ),
@@ -152,6 +159,7 @@ impl Panel {
                     tabs.iter_mut().enumerate().fold(
                         Row::new().padding(0).spacing(0),
                         |row_of_tabs, (index, (tab_label, close_tab_state))| {
+                            let focused = *focused_tab == index;
                             row_of_tabs.push(
                                 Tab::new(
                                     Row::new().padding(7).spacing(5).max_width(150)
@@ -179,7 +187,7 @@ impl Panel {
                                 .width(Length::Shrink)
                                 .padding(1)
                                 .on_press(Message::FocusTab((pane, index)))
-                                .style(config.theme.tab_style(*focused_tab == index))
+                                .style(config.theme.tab_style(focused))
                             )
                         },
                     )
@@ -198,7 +206,15 @@ impl Panel {
             .height(Length::Fill)
             .push(tab_bar);
 
-        Container::new(content)
+        let new_content;
+        if let Some(tab_content) = tab_contents.get(*focused_tab) {
+            new_content = content.push(tab_content.view(config));
+        }
+        else {
+            new_content = content;
+        }
+
+        Container::new(new_content)
             .width(Length::Fill)
             .height(Length::Fill)
             .padding(0)
@@ -207,8 +223,17 @@ impl Panel {
             .into()
     }
 
-    pub fn open_tab(&mut self, label: &String) {
-        self.tabs.push((label.to_string(), button::State::new()));
+    pub fn open_tab(&mut self, tab_type: TabType) {
+        let tab = match tab_type {
+            TabType::Viewer => {
+                Viewer{}
+            }
+            TabType::NodeGraph => {
+                Viewer{}
+            }
+        };
+        self.tabs.push((tab_type.into(), button::State::new()));
+        self.tab_contents.push(Box::new(tab));
         self.focused_tab = self.tabs.len() - 1;
     }
 
@@ -219,6 +244,7 @@ impl Panel {
     pub fn close_tab(&mut self, index: usize) -> usize {
         let current_focus = self.focused_tab;
         self.tabs.remove(index);
+        self.tab_contents.remove(index);
 
         let mut new_focus = if current_focus > index {current_focus - 1} else {current_focus};
         while new_focus >= self.tabs.len() && new_focus >= 1 {
@@ -229,5 +255,6 @@ impl Panel {
 
     pub fn close_all_tabs(&mut self) {
         self.tabs.clear();
+        self.tab_contents.clear();
     }
 }

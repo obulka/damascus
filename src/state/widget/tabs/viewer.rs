@@ -16,7 +16,7 @@ pub struct Viewer {}
 
 impl TabContent for Viewer {
 
-    fn view(&self, config: &Config) -> Element<Message> {
+    fn view(&mut self, config: &Config) -> Element<Message> {
         let content = Text::new("Viewer")
             .width(Length::Shrink)
             .horizontal_alignment(HorizontalAlignment::Left)

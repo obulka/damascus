@@ -55,16 +55,52 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
+            Message::NodeGraph(_node_graph_message) => {
+
+            }
+            Message::MoveTab((pane, tab_index, target_pane)) => {
+                if let Some(panel) = self.panes.get_mut(&pane) {
+                    let (new_focus, tab, tab_content) = (*panel).close_tab(tab_index);
+                    if let Some(target_panel) = self.panes.get_mut(&target_pane) {
+                        (*target_panel).open_tab_with_content(tab, tab_content);
+                    }
+                    return Command::perform(async move {
+                            (pane, new_focus)
+                        },
+                        Message::FocusTab,
+                    );
+                }
+            }
             Message::OpenTabFocused(tab_type) => {
-                if let Some(pane) = self.panes.active() {
-                    if let Some(panel) = self.panes.get_mut(&pane) {
+                if let Some(active_pane) = self.panes.active() {
+                    for (pane, panel) in self.panes.iter_mut() {
+                        if let Some(index) = (*panel).index_of_tab_type(tab_type.clone()) {
+                            let pane = *pane;
+                            if pane == active_pane {
+                                return Command::perform(async move {
+                                        (pane, index)
+                                    },
+                                    Message::FocusTab,
+                                );
+                            }
+                            else {
+                                return Command::perform(async move {
+                                        (pane, index, active_pane)
+                                    },
+                                    Message::MoveTab,
+                                );
+                            }
+                        }
+                    }
+
+                    if let Some(panel) = self.panes.get_mut(&active_pane) {
                         (*panel).open_tab(tab_type);
                     }
                 }
             }
             Message::CloseTab(pane, index) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
-                    let new_focus = (*panel).close_tab(index);
+                    let (new_focus, _, _) = (*panel).close_tab(index);
                     return Command::perform(async move {
                             (pane, new_focus)
                         },

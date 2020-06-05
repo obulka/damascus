@@ -26,7 +26,7 @@ impl From<TabType> for String {
 }
 
 pub trait TabContent {
-    fn view(&self, config: &Config) -> Element<Message>;
+    fn view(&mut self, config: &Config) -> Element<Message>;
 }
 
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
@@ -35,7 +35,7 @@ pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
             Box::new(Viewer{})
         }
         TabType::NodeGraph => {
-            Box::new(NodeGraph{})
+            Box::new(NodeGraph::new())
         }
     }
 }

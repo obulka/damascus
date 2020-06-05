@@ -205,7 +205,7 @@ impl Panel {
             .height(Length::Fill)
             .push(tab_bar);
 
-        if let Some(tab_content) = tab_contents.get(*focused_tab) {
+        if let Some(tab_content) = tab_contents.get_mut(*focused_tab) {
             content = content.push(tab_content.view(config));
         }
 
@@ -226,24 +226,40 @@ impl Panel {
         self.focused_tab = self.tabs.len() - 1;
     }
 
+    pub fn open_tab_with_content(&mut self, tab: (String, button::State), tab_content: Box<dyn TabContent>) {
+        self.tabs.push(tab);
+        self.tab_contents.push(tab_content);
+        self.focused_tab = self.tabs.len() - 1;
+    }
+
     pub fn focus_tab(&mut self, index: usize) {
         self.focused_tab = index;
     }
 
-    pub fn close_tab(&mut self, index: usize) -> usize {
+    pub fn close_tab(&mut self, index: usize) -> (usize, (String, button::State), Box<dyn TabContent>) {
         let current_focus = self.focused_tab;
-        self.tabs.remove(index);
-        self.tab_contents.remove(index);
+        let tab = self.tabs.remove(index);
+        let tab_content = self.tab_contents.remove(index);
 
         let mut new_focus = if current_focus > index {current_focus - 1} else {current_focus};
         while new_focus >= self.tabs.len() && new_focus >= 1 {
             new_focus -= 1;
         }
-        new_focus
+        (new_focus, tab, tab_content)
     }
 
     pub fn close_all_tabs(&mut self) {
         self.tabs.clear();
         self.tab_contents.clear();
+    }
+
+    pub fn index_of_tab_type(&self, tab_type: TabType) -> Option<usize> {
+        let tab_string: String = tab_type.into();
+        for (index, (label, _)) in self.tabs.iter().enumerate() {
+            if *label == tab_string {
+                return Some(index);
+            }
+        }
+        None
     }
 }

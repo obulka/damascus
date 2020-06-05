@@ -3,13 +3,18 @@ use iced::{pane_grid, keyboard};
 
 // Local Imports
 use crate::state::{
-    widget::tabs::TabType,
+    widget::tabs::{
+        node_graph::Message as NodeGraphMessage,
+        TabType,
+    },
     style::Theme,
 };
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    NodeGraph(NodeGraphMessage),
+    MoveTab((pane_grid::Pane, usize, pane_grid::Pane)),
     OpenTabFocused(TabType),
     CloseTab(pane_grid::Pane, usize),
     FocusTab((pane_grid::Pane, usize)),

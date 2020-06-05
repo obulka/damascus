@@ -2,7 +2,10 @@ pub mod renderer;
 pub mod style;
 pub mod widget;
 
+pub use widget::tabs;
+
 use crate::state::style::Theme;
+
 
 #[derive(Clone, Copy)]
 pub struct Config {

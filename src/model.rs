@@ -15,16 +15,18 @@ use iced::{
 };
 
 // Local Imports
+mod panel;
+pub mod tabs;
+
 use crate::action::{
     handle_hotkey,
     Message,
 };
-
 use crate::state::{
     Config,
     style::Theme,
-    widget::Panel,
 };
+use panel::Panel;
 
 
 pub struct Damascus {

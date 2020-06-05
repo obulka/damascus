@@ -5,10 +5,8 @@ use iced::{pane_grid, keyboard};
 pub mod tabs;
 
 use crate::state::{
-    widget::tabs::{
-        TabType,
-    },
     style::Theme,
+    widget::TabType,
 };
 use tabs::Message as TabContentMessage;
 

@@ -26,16 +26,16 @@ use crate::action::{
 };
 use crate::state::{
     Config,
+    style,
     widget::{
         Tab,
-        TabContent,
         TabType,
-        tabs::{
-            tab_content_from_type,
-        },
     },
 };
-use crate::state::style;
+use super::tabs::{
+    TabContent,
+    tab_content_from_type,
+};
 
 
 pub struct Panel {
@@ -270,15 +270,7 @@ impl Panel {
 
     pub fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let Some((focused_label, _)) = self.tabs.get(self.focused_tab) {
-            let type_label: String = match message {
-                TabContentMessage::NodeGraph(..) => {
-                    TabType::NodeGraph.into()
-                }
-                TabContentMessage::Viewer(..) => {
-                    TabType::Viewer.into()
-                }
-            };
-            if *focused_label == type_label {
+            if message == *focused_label {
                 return self.tab_contents[self.focused_tab].update(message);
             }
         }

@@ -21,14 +21,16 @@ use iced::{
 };
 use std::time::Instant;
 
-use crate::action::Message as DamascusMessage;
+use crate::action::{
+    Message as DamascusMessage,
+    tabs::{
+        Message as TabContentMessage,
+        node_graph::Message,
+    },
+};
 use crate::state::Config;
 use super::TabContent;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Message {
-    Tick(Instant),
-}
 
 pub struct NodeGraph {
     state: State,
@@ -40,12 +42,19 @@ impl NodeGraph {
             state: State::new(),
         }
     }
+}
 
-    fn update(&mut self, message: Message) -> Command<DamascusMessage> {
+impl TabContent for NodeGraph {
+    fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
         match message {
-            Message::Tick(instant) => {
-                self.state.update(instant);
+            TabContentMessage::NodeGraph(node_graph_message) => {
+                match node_graph_message {
+                    Message::Tick(instant) => {
+                        self.state.update(instant);
+                    }
+                }
             }
+            _ => {}
         }
 
         Command::none()
@@ -53,11 +62,13 @@ impl NodeGraph {
 
     fn subscription(&self) -> Subscription<DamascusMessage> {
         time::every(std::time::Duration::from_millis(10))
-            .map(|instant| DamascusMessage::NodeGraph(Message::Tick(instant)))
+            .map(|instant| DamascusMessage::TabContent(
+                TabContentMessage::NodeGraph(
+                    Message::Tick(instant)
+                )
+            ))
     }
-}
 
-impl TabContent for NodeGraph {
     fn view(&mut self, _config: &Config) -> Element<DamascusMessage> {
         let content = Canvas::new(&mut self.state)
             .width(Length::Fill)

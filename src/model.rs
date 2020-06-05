@@ -11,6 +11,7 @@ use iced::{
     PaneGrid,
     pane_grid,
     Row,
+    Subscription,
 };
 
 // Local Imports
@@ -55,8 +56,12 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::NodeGraph(_node_graph_message) => {
-
+            Message::TabContent(tab_content_message) => {
+                return Command::batch(
+                    self.panes.iter_mut().map(|(_, panel)| {
+                        (*panel).update(tab_content_message.clone())
+                    })
+                );
             }
             Message::MoveTab((pane, tab_index, target_pane)) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
@@ -170,6 +175,14 @@ impl Application for Damascus {
             }
         }
         Command::none()
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        Subscription::batch(
+            self.panes.iter().map(|(_, panel)| {
+                (*panel).subscription()
+            })
+        )
     }
 
     fn view(&mut self) -> Element<Message> {

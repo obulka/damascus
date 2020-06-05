@@ -5,6 +5,7 @@ use iced::{
     Button,
     button,
     Column,
+    Command,
     Container,
     Element,
     HorizontalAlignment,
@@ -12,13 +13,17 @@ use iced::{
     pane_grid,
     Row,
     Space,
+    Subscription,
     Text,
     VerticalAlignment,
 };
 
 
 // Local Imports
-use crate::action::Message;
+use crate::action::{
+    Message,
+    tabs::Message as TabContentMessage,
+};
 use crate::state::{
     Config,
     widget::{
@@ -261,5 +266,29 @@ impl Panel {
             }
         }
         None
+    }
+
+    pub fn update(&mut self, message: TabContentMessage) -> Command<Message> {
+        if let Some((focused_label, _)) = self.tabs.get(self.focused_tab) {
+            let type_label: String = match message {
+                TabContentMessage::NodeGraph(..) => {
+                    TabType::NodeGraph.into()
+                }
+                TabContentMessage::Viewer(..) => {
+                    TabType::Viewer.into()
+                }
+            };
+            if *focused_label == type_label {
+                return self.tab_contents[self.focused_tab].update(message);
+            }
+        }
+        Command::none()
+    }
+
+    pub fn subscription(&self) -> Subscription<Message> {
+        if let Some(focused_content) = self.tab_contents.get(self.focused_tab) {
+            return focused_content.subscription();
+        }
+        Subscription::none()
     }
 }

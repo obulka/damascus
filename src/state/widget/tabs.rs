@@ -1,7 +1,14 @@
-use iced::Element;
+use iced::{
+    Command,
+    Element,
+    Subscription,
+};
 
 use crate::state::Config;
-use crate::action::Message;
+use crate::action::{
+    Message as DamascusMessage,
+    tabs::Message,
+};
 
 pub mod node_graph;
 pub mod viewer;
@@ -26,7 +33,15 @@ impl From<TabType> for String {
 }
 
 pub trait TabContent {
-    fn view(&mut self, config: &Config) -> Element<Message>;
+    fn update(&mut self, _message: Message) -> Command<DamascusMessage> {
+        Command::none()
+    }
+
+    fn subscription(&self) -> Subscription<DamascusMessage> {
+        Subscription::none()
+    }
+
+    fn view(&mut self, config: &Config) -> Element<DamascusMessage>;
 }
 
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {

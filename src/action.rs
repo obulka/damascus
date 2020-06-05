@@ -2,18 +2,20 @@
 use iced::{pane_grid, keyboard};
 
 // Local Imports
+pub mod tabs;
+
 use crate::state::{
     widget::tabs::{
-        node_graph::Message as NodeGraphMessage,
         TabType,
     },
     style::Theme,
 };
+use tabs::Message as TabContentMessage;
 
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    NodeGraph(NodeGraphMessage),
+    TabContent(TabContentMessage),
     MoveTab((pane_grid::Pane, usize, pane_grid::Pane)),
     OpenTabFocused(TabType),
     CloseTab(pane_grid::Pane, usize),

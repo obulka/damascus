@@ -172,7 +172,7 @@ impl Application for Damascus {
                 .height(Length::Fill)
                 .spacing(0) // Space between panes
                 .on_drag(Message::PaneDragged)
-                .on_resize(Message::Resized)
+                .on_resize(10, Message::Resized)
                 .on_key_press(handle_hotkey),
             );
 

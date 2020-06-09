@@ -44,6 +44,7 @@ impl Viewer {
         }
     }
 }
+
 impl TabContent for Viewer {
 
     fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {

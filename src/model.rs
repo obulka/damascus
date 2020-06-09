@@ -1,39 +1,21 @@
 // 3rd Party Imports
 use iced::{
-    Align,
-    Application,
-    Column,
-    Command,
-    Container,
-    Element,
-    executor,
-    Length,
-    PaneGrid,
-    pane_grid,
-    Row,
-    Subscription,
+    executor, pane_grid, Align, Application, Column, Command, Container, Element, Length, PaneGrid,
+    Row, Subscription,
 };
 
 // Local Imports
 mod panel;
 pub mod tabs;
 
-use crate::action::{
-    handle_hotkey,
-    Message,
-};
-use crate::state::{
-    Config,
-    style::Theme,
-};
+use crate::action::{handle_hotkey, Message};
+use crate::state::{style::Theme, Config};
 use panel::Panel;
-
 
 pub struct Damascus {
     config: Config,
     panes: pane_grid::State<Panel>,
 }
-
 
 impl Application for Damascus {
     type Message = Message;
@@ -60,9 +42,9 @@ impl Application for Damascus {
         match message {
             Message::TabContent(tab_content_message) => {
                 return Command::batch(
-                    self.panes.iter_mut().map(|(_, panel)| {
-                        (*panel).update(tab_content_message.clone())
-                    })
+                    self.panes
+                        .iter_mut()
+                        .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
                 );
             }
             Message::MoveTab((pane, tab_index, target_pane)) => {
@@ -71,11 +53,7 @@ impl Application for Damascus {
                     if let Some(target_panel) = self.panes.get_mut(&target_pane) {
                         (*target_panel).open_tab_with_content(tab, tab_content);
                     }
-                    return Command::perform(async move {
-                            (pane, new_focus)
-                        },
-                        Message::FocusTab,
-                    );
+                    return Command::perform(async move { (pane, new_focus) }, Message::FocusTab);
                 }
             }
             Message::OpenTabFocused(tab_type) => {
@@ -84,16 +62,13 @@ impl Application for Damascus {
                         if let Some(index) = (*panel).index_of_tab_type(tab_type.clone()) {
                             let pane = *pane;
                             if pane == active_pane {
-                                return Command::perform(async move {
-                                        (pane, index)
-                                    },
+                                return Command::perform(
+                                    async move { (pane, index) },
                                     Message::FocusTab,
                                 );
-                            }
-                            else {
-                                return Command::perform(async move {
-                                        (pane, index, active_pane)
-                                    },
+                            } else {
+                                return Command::perform(
+                                    async move { (pane, index, active_pane) },
                                     Message::MoveTab,
                                 );
                             }
@@ -108,11 +83,7 @@ impl Application for Damascus {
             Message::CloseTab(pane, index) => {
                 if let Some(panel) = self.panes.get_mut(&pane) {
                     let (new_focus, _, _) = (*panel).close_tab(index);
-                    return Command::perform(async move {
-                            (pane, new_focus)
-                        },
-                        Message::FocusTab,
-                    );
+                    return Command::perform(async move { (pane, new_focus) }, Message::FocusTab);
                 }
             }
             Message::FocusTab((pane, index)) => {
@@ -128,26 +99,16 @@ impl Application for Damascus {
                 }
             }
             Message::Split(axis, pane) => {
-                let _ = self.panes.split(
-                    axis,
-                    &pane,
-                    Panel::new(),
-                );
+                let _ = self.panes.split(axis, &pane, Panel::new());
             }
             Message::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {
-                    let _ = self.panes.split(
-                        axis,
-                        &pane,
-                        Panel::new(),
-                    );
+                    let _ = self.panes.split(axis, &pane, Panel::new());
                 }
             }
             Message::FocusAdjacent(direction) => {
                 if let Some(pane) = self.panes.active() {
-                    if let Some(adjacent) =
-                        self.panes.adjacent(&pane, direction)
-                    {
+                    if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
                         self.panes.focus(&adjacent);
                     }
                 }
@@ -155,10 +116,7 @@ impl Application for Damascus {
             Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(&split, ratio);
             }
-            Message::PaneDragged(pane_grid::DragEvent::Dropped {
-                pane,
-                target,
-            }) => {
+            Message::PaneDragged(pane_grid::DragEvent::Dropped { pane, target }) => {
                 self.panes.swap(&pane, &target);
             }
             Message::PaneDragged(_) => {}
@@ -188,11 +146,7 @@ impl Application for Damascus {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        Subscription::batch(
-            self.panes.iter().map(|(_, panel)| {
-                (*panel).subscription()
-            })
-        )
+        Subscription::batch(self.panes.iter().map(|(_, panel)| (*panel).subscription()))
     }
 
     fn view(&mut self) -> Element<Message> {
@@ -207,19 +161,19 @@ impl Application for Damascus {
                     .max_height(config.tab_bar_height)
                     .align_items(Align::End)
                     .spacing(1)
-                    .padding(0)
+                    .padding(0),
             )
             .push(
                 // Panes
                 PaneGrid::new(&mut self.panes, |pane, content, focus| {
                     content.view(pane, focus, config)
                 })
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-                    .spacing(0) // Space between panes
-                    .on_drag(Message::PaneDragged)
-                    .on_resize(Message::Resized)
-                    .on_key_press(handle_hotkey)
+                .width(Length::Fill)
+                .height(Length::Fill)
+                .spacing(0) // Space between panes
+                .on_drag(Message::PaneDragged)
+                .on_resize(Message::Resized)
+                .on_key_press(handle_hotkey),
             );
 
         Container::new(app_content)

@@ -1,14 +1,8 @@
+// TODO: Create a theme trait
+
 // 3rd Party Imports
 use iced::{
-    button,
-    checkbox,
-    Color,
-    container,
-    progress_bar,
-    radio,
-    scrollable,
-    slider,
-    text_input,
+    button, checkbox, container, progress_bar, radio, scrollable, slider, text_input, Color,
 };
 
 pub mod tab;
@@ -63,7 +57,6 @@ pub enum Button {
     CloseTab,
 }
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Theme {
     Dark,
@@ -81,38 +74,44 @@ impl Theme {
 
     pub fn button_style(&self, button: Button) -> Box<dyn button::StyleSheet> {
         match button {
-            Button::Primary => {
-                match self {
-                    Theme::Dark => dark::Button::Primary.into(),
-                    Theme::Light => light::Button::Primary.into(),
-                }
-            }
-            Button::Destructive => {
-                match self {
-                    Theme::Dark => dark::Button::Destructive.into(),
-                    Theme::Light => light::Button::Destructive.into(),
-                }
-            }
-            Button::CloseTab => {
-                match self {
-                    Theme::Dark => dark::Button::CloseTab.into(),
-                    Theme::Light => light::Button::CloseTab.into(),
-                }
-            }
+            Button::Primary => match self {
+                Theme::Dark => dark::Button::Primary.into(),
+                Theme::Light => light::Button::Primary.into(),
+            },
+            Button::Destructive => match self {
+                Theme::Dark => dark::Button::Destructive.into(),
+                Theme::Light => light::Button::Destructive.into(),
+            },
+            Button::CloseTab => match self {
+                Theme::Dark => dark::Button::CloseTab.into(),
+                Theme::Light => light::Button::CloseTab.into(),
+            },
         }
     }
 
     pub fn pane_style(&self, is_focused: bool) -> Box<dyn container::StyleSheet> {
         match self {
-            Theme::Dark => dark::Pane{is_focused: is_focused}.into(),
-            Theme::Light => light::Pane{is_focused: is_focused}.into(),
+            Theme::Dark => dark::Pane {
+                is_focused: is_focused,
+            }
+            .into(),
+            Theme::Light => light::Pane {
+                is_focused: is_focused,
+            }
+            .into(),
         }
     }
 
     pub fn tab_style(&self, is_focused: bool) -> Box<dyn tab::StyleSheet> {
         match self {
-            Theme::Dark => dark::Tab{is_focused: is_focused}.into(),
-            Theme::Light => light::Tab{is_focused: is_focused}.into(),
+            Theme::Dark => dark::Tab {
+                is_focused: is_focused,
+            }
+            .into(),
+            Theme::Light => light::Tab {
+                is_focused: is_focused,
+            }
+            .into(),
         }
     }
 
@@ -127,6 +126,27 @@ impl Theme {
         match self {
             Theme::Dark => dark::TEXT_COLOR,
             Theme::Light => light::TEXT_COLOR,
+        }
+    }
+
+    pub fn primary_color(&self) -> Color {
+        match self {
+            Theme::Dark => dark::PRIMARY,
+            Theme::Light => light::PRIMARY,
+        }
+    }
+
+    pub fn secondary_color(&self) -> Color {
+        match self {
+            Theme::Dark => dark::SECONDARY,
+            Theme::Light => light::SECONDARY,
+        }
+    }
+
+    pub fn tertiary_color(&self) -> Color {
+        match self {
+            Theme::Dark => dark::TERTIARY,
+            Theme::Light => light::TERTIARY,
         }
     }
 }

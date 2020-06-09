@@ -1,5 +1,5 @@
-use std::time::Instant;
 use crate::model::tabs::viewer::grid;
+use std::time::Instant;
 
 #[derive(Debug, Clone)]
 pub enum Message {

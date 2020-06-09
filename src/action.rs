@@ -1,15 +1,11 @@
 // 3rd Party Imports
-use iced::{pane_grid, keyboard};
+use iced::{keyboard, pane_grid};
 
 // Local Imports
 pub mod tabs;
 
-use crate::state::{
-    style::Theme,
-    widget::TabType,
-};
+use crate::state::{style::Theme, widget::TabType};
 use tabs::Message as TabContentMessage;
-
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -29,7 +25,6 @@ pub enum Message {
     Close(pane_grid::Pane),
     CloseFocused,
 }
-
 
 pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     use keyboard::KeyCode;

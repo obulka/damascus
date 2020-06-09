@@ -1,19 +1,8 @@
 use iced::{
-    canvas::{
-        self,
-        Cursor,
-        Path,
-        Stroke,
-    },
-    window,
-    Color,
-    Point,
-    Rectangle,
-    Size,
-    Vector,
+    canvas::{self, Cursor, Path, Stroke},
+    window, Color, Point, Rectangle, Size, Vector,
 };
 use std::time::Instant;
-
 
 #[derive(Debug)]
 pub struct State {
@@ -60,14 +49,8 @@ impl State {
             .map(|_| {
                 (
                     Point::new(
-                        rng.gen_range(
-                            -(width as f32) / 2.0,
-                            width as f32 / 2.0,
-                        ),
-                        rng.gen_range(
-                            -(height as f32) / 2.0,
-                            height as f32 / 2.0,
-                        ),
+                        rng.gen_range(-(width as f32) / 2.0, width as f32 / 2.0),
+                        rng.gen_range(-(height as f32) / 2.0, height as f32 / 2.0),
                     ),
                     rng.gen_range(0.5, 1.0),
                 )
@@ -77,11 +60,7 @@ impl State {
 }
 
 impl<Message> canvas::Program<Message> for State {
-    fn draw(
-        &self,
-        bounds: Rectangle,
-        _cursor: Cursor,
-    ) -> Vec<canvas::Geometry> {
+    fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<canvas::Geometry> {
         use std::f32::consts::PI;
 
         let background = self.space_cache.draw(bounds.size(), |frame| {
@@ -127,10 +106,7 @@ impl<Message> canvas::Program<Message> for State {
                 let earth = Path::circle(Point::ORIGIN, Self::EARTH_RADIUS);
                 let shadow = Path::rectangle(
                     Point::new(0.0, -Self::EARTH_RADIUS),
-                    Size::new(
-                        Self::EARTH_RADIUS * 4.0,
-                        Self::EARTH_RADIUS * 2.0,
-                    ),
+                    Size::new(Self::EARTH_RADIUS * 4.0, Self::EARTH_RADIUS * 2.0),
                 );
 
                 frame.fill(&earth, Color::from_rgb8(0x6B, 0x93, 0xD6));

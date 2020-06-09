@@ -6,7 +6,6 @@ pub use widget::tabs;
 
 use crate::state::style::Theme;
 
-
 #[derive(Clone, Copy)]
 pub struct Config {
     pub font_size: u16,

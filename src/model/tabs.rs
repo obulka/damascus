@@ -1,23 +1,12 @@
-use iced::{
-    Command,
-    Element,
-    Subscription,
-};
+use iced::{Command, Element, Subscription};
 
 pub mod node_graph;
 pub mod viewer;
 
-use crate::action::{
-    Message as DamascusMessage,
-    tabs::Message,
-};
+use crate::action::{tabs::Message, Message as DamascusMessage};
+use crate::state::{widget::TabType, Config};
 use node_graph::NodeGraph;
 use viewer::Viewer;
-use crate::state::{
-    Config,
-    widget::TabType,
-};
-
 
 impl From<TabType> for String {
     fn from(tab_type: TabType) -> Self {
@@ -27,7 +16,6 @@ impl From<TabType> for String {
         }
     }
 }
-
 
 impl std::cmp::PartialEq<String> for Message {
     fn eq(&self, other: &String) -> bool {
@@ -44,7 +32,6 @@ impl std::cmp::PartialEq<String> for Message {
     }
 }
 
-
 pub trait TabContent {
     fn update(&mut self, _message: Message) -> Command<DamascusMessage> {
         Command::none()
@@ -57,14 +44,9 @@ pub trait TabContent {
     fn view(&mut self, config: &Config) -> Element<DamascusMessage>;
 }
 
-
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
     match tab_type {
-        TabType::Viewer => {
-            Box::new(Viewer::new())
-        }
-        TabType::NodeGraph => {
-            Box::new(NodeGraph::new())
-        }
+        TabType::Viewer => Box::new(Viewer::new()),
+        TabType::NodeGraph => Box::new(NodeGraph::new()),
     }
 }

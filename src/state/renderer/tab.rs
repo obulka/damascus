@@ -6,17 +6,14 @@
 //! [`State`]: struct.State.html
 use iced_graphics::{Backend, Defaults, Primitive, Renderer};
 use iced_native::mouse;
-use iced_native::{
-    Background, Color, Element, Layout, Point, Rectangle,
-};
+use iced_native::{Background, Color, Element, Layout, Point, Rectangle};
 
-pub use crate::state::style::tab::{StyleSheet};
+pub use crate::state::style::tab::StyleSheet;
 
 /// A widget that produces a message when clicked.
 ///
 /// This is an alias of an `iced_native` button with an `iced_wgpu::Renderer`.
-pub type Tab<'a, Message, Backend> =
-    crate::state::widget::Tab<'a, Message, Renderer<Backend>>;
+pub type Tab<'a, Message, Backend> = crate::state::widget::Tab<'a, Message, Renderer<Backend>>;
 
 impl<B> crate::state::widget::tab::Renderer for Renderer<B>
 where
@@ -39,12 +36,7 @@ where
 
         let styling = style.style();
 
-        let (content, _) = content.draw(
-            self,
-            defaults,
-            content_layout,
-            cursor_position,
-        );
+        let (content, _) = content.draw(self, defaults, content_layout, cursor_position);
 
         (
             if styling.background.is_some() || styling.border_width > 0 {

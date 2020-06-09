@@ -1,48 +1,24 @@
-use iced::{
-    button,
-    Background,
-    container,
-    Color,
-    Vector,
-};
+use iced::{button, container, Background, Color, Vector};
 
-use crate::state::style::{
-    CLOSE,
-    ORANGE,
-    tab,
-};
-
+use crate::state::style::{tab, CLOSE, ORANGE};
 
 const HIGHLIGHT: Color = ORANGE;
 
-const PRIMARY: Color = Color::WHITE;
+pub const PRIMARY: Color = Color::WHITE;
 
-const SECONDARY: Color = Color::from_rgb(
+pub const SECONDARY: Color = Color::from_rgb(
     0x99 as f32 / 255.0,
     0x9A as f32 / 255.0,
     0x9C as f32 / 255.0,
 );
 
-const TERTIARY: Color = Color::from_rgb(
+pub const TERTIARY: Color = Color::from_rgb(
     0x3C as f32 / 255.0,
     0x3B as f32 / 255.0,
     0x37 as f32 / 255.0,
 );
 
-const ACTIVE: Color = Color::from_rgb(
-    0x72 as f32 / 255.0,
-    0x89 as f32 / 255.0,
-    0xDA as f32 / 255.0,
-);
-
-const HOVERED: Color = Color::from_rgb(
-    0x67 as f32 / 255.0,
-    0x7B as f32 / 255.0,
-    0xC4 as f32 / 255.0,
-);
-
 pub const TEXT_COLOR: Color = Color::BLACK;
-
 
 pub struct TabBar;
 
@@ -64,7 +40,11 @@ pub struct Tab {
 impl tab::StyleSheet for Tab {
     fn style(&self) -> tab::Style {
         tab::Style {
-            background: Some(Background::Color(if self.is_focused {PRIMARY} else {SECONDARY})),
+            background: Some(Background::Color(if self.is_focused {
+                PRIMARY
+            } else {
+                SECONDARY
+            })),
             border_width: 1,
             border_color: Color::TRANSPARENT,
             text_color: TEXT_COLOR,
@@ -82,12 +62,15 @@ impl container::StyleSheet for Pane {
         container::Style {
             background: Some(Background::Color(PRIMARY)),
             border_width: 1,
-            border_color: if self.is_focused { HIGHLIGHT } else { Color::BLACK },
+            border_color: if self.is_focused {
+                HIGHLIGHT
+            } else {
+                Color::BLACK
+            },
             ..Default::default()
         }
     }
 }
-
 
 pub enum Button {
     Primary,

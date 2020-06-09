@@ -1,42 +1,18 @@
 // 3rd Party Imports
 
 use iced::{
-    Align,
-    Button,
-    button,
-    Column,
-    Command,
-    Container,
-    Element,
-    HorizontalAlignment,
-    Length,
-    pane_grid,
-    Row,
-    Space,
-    Subscription,
-    Text,
-    VerticalAlignment,
+    button, pane_grid, Align, Button, Column, Command, Container, Element, HorizontalAlignment,
+    Length, Row, Space, Subscription, Text, VerticalAlignment,
 };
-
 
 // Local Imports
-use crate::action::{
-    Message,
-    tabs::Message as TabContentMessage,
-};
+use super::tabs::{tab_content_from_type, TabContent};
+use crate::action::{tabs::Message as TabContentMessage, Message};
 use crate::state::{
-    Config,
     style,
-    widget::{
-        Tab,
-        TabType,
-    },
+    widget::{Tab, TabType},
+    Config,
 };
-use super::tabs::{
-    TabContent,
-    tab_content_from_type,
-};
-
 
 pub struct Panel {
     split_horizontally: button::State,
@@ -98,28 +74,25 @@ impl Panel {
             .max_width(config.tab_bar_height)
             .max_height(config.tab_bar_height)
             .padding(3)
-            .push(Row::new()
-                .spacing(2)
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .max_width(config.tab_bar_height)
-                .max_height(config.tab_bar_height)
-                .push(button(
-                    split_vertically,
-                    "|",
-                    Message::Split(pane_grid::Axis::Vertical, pane),
-                    config.theme.button_style(
-                        style::Button::Primary,
-                    ),
-                ))
-                .push(button(
-                    close,
-                    "×",
-                    Message::Close(pane),
-                    config.theme.button_style(
-                        style::Button::Destructive,
-                    ),
-                ))
+            .push(
+                Row::new()
+                    .spacing(2)
+                    .width(Length::Fill)
+                    .height(Length::Fill)
+                    .max_width(config.tab_bar_height)
+                    .max_height(config.tab_bar_height)
+                    .push(button(
+                        split_vertically,
+                        "|",
+                        Message::Split(pane_grid::Axis::Vertical, pane),
+                        config.theme.button_style(style::Button::Primary),
+                    ))
+                    .push(button(
+                        close,
+                        "×",
+                        Message::Close(pane),
+                        config.theme.button_style(style::Button::Destructive),
+                    )),
             )
             .push(
                 Row::new()
@@ -132,18 +105,14 @@ impl Panel {
                         float_pane,
                         "+",
                         Message::FloatPane(pane),
-                        config.theme.button_style(
-                            style::Button::Primary,
-                        ),
+                        config.theme.button_style(style::Button::Primary),
                     ))
                     .push(button(
                         split_horizontally,
                         "─",
                         Message::Split(pane_grid::Axis::Horizontal, pane),
-                        config.theme.button_style(
-                            style::Button::Primary,
-                        ),
-                    ))
+                        config.theme.button_style(style::Button::Primary),
+                    )),
             );
 
         let tab_bar = Container::new(
@@ -157,52 +126,51 @@ impl Panel {
                     Row::new()
                         .width(Length::Shrink)
                         .max_width(1)
-                        .push(Space::with_width(Length::Fill)) // Hack to get space before tab
+                        .push(Space::with_width(Length::Fill)), // Hack to get space before tab
                 )
-                .push(
-                    tabs.iter_mut().enumerate().fold(
-                        Row::new().padding(0).spacing(0),
-                        |row_of_tabs, (index, (tab_label, close_tab_state))| {
-                            let focused = *focused_tab == index;
-                            row_of_tabs.push(
-                                Tab::new(
-                                    Row::new().padding(7).spacing(5).max_width(150)
-                                        .push(
-                                            Text::new(tab_label.to_string())
-                                                .width(Length::Shrink)
-                                                .horizontal_alignment(HorizontalAlignment::Left)
-                                                .vertical_alignment(VerticalAlignment::Center)
-                                                .size(config.font_size)
-                                                .color(config.theme.text_color())
+                .push(tabs.iter_mut().enumerate().fold(
+                    Row::new().padding(0).spacing(0),
+                    |row_of_tabs, (index, (tab_label, close_tab_state))| {
+                        let focused = *focused_tab == index;
+                        row_of_tabs.push(
+                            Tab::new(
+                                Row::new()
+                                    .padding(7)
+                                    .spacing(5)
+                                    .max_width(150)
+                                    .push(
+                                        Text::new(tab_label.to_string())
+                                            .width(Length::Shrink)
+                                            .horizontal_alignment(HorizontalAlignment::Left)
+                                            .vertical_alignment(VerticalAlignment::Center)
+                                            .size(config.font_size)
+                                            .color(config.theme.text_color()), // TODO: Move text into tab to get theme
+                                    )
+                                    .push(
+                                        button(
+                                            close_tab_state,
+                                            "×",
+                                            Message::CloseTab(pane, index),
+                                            config.theme.button_style(style::Button::CloseTab),
                                         )
-                                        .push(
-                                            button(
-                                                close_tab_state,
-                                                "×",
-                                                Message::CloseTab(pane, index),
-                                                config.theme.button_style(
-                                                    style::Button::CloseTab,
-                                                ),
-                                            )
-                                                .width(Length::Shrink)
-                                                .min_width(10)
-                                        ),
-                                )
-                                    .width(Length::Shrink)
-                                    .padding(1)
-                                    .on_press(Message::FocusTab((pane, index)))
-                                    .style(config.theme.tab_style(focused))
+                                        .width(Length::Shrink)
+                                        .min_width(10),
+                                    ),
                             )
-                        },
-                    )
-                )
-                    .push(Space::new(Length::Fill, Length::Fill))
-                    .push(options)
+                            .width(Length::Shrink)
+                            .padding(1)
+                            .on_press(Message::FocusTab((pane, index)))
+                            .style(config.theme.tab_style(focused)),
+                        )
+                    },
+                ))
+                .push(Space::new(Length::Fill, Length::Fill))
+                .push(options),
         )
-            .width(Length::Fill)
-            .max_height(config.tab_bar_height)
-            .padding(0)
-            .style(config.theme.tab_bar_style());
+        .width(Length::Fill)
+        .max_height(config.tab_bar_height)
+        .padding(0)
+        .style(config.theme.tab_bar_style());
 
         let mut content = Column::new()
             .spacing(5)
@@ -224,13 +192,18 @@ impl Panel {
     }
 
     pub fn open_tab(&mut self, tab_type: TabType) {
-        self.tabs.push((tab_type.clone().into(), button::State::new()));
+        self.tabs
+            .push((tab_type.clone().into(), button::State::new()));
         self.tab_contents.push(tab_content_from_type(tab_type));
 
         self.focused_tab = self.tabs.len() - 1;
     }
 
-    pub fn open_tab_with_content(&mut self, tab: (String, button::State), tab_content: Box<dyn TabContent>) {
+    pub fn open_tab_with_content(
+        &mut self,
+        tab: (String, button::State),
+        tab_content: Box<dyn TabContent>,
+    ) {
         self.tabs.push(tab);
         self.tab_contents.push(tab_content);
         self.focused_tab = self.tabs.len() - 1;
@@ -240,12 +213,19 @@ impl Panel {
         self.focused_tab = index;
     }
 
-    pub fn close_tab(&mut self, index: usize) -> (usize, (String, button::State), Box<dyn TabContent>) {
+    pub fn close_tab(
+        &mut self,
+        index: usize,
+    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
         let current_focus = self.focused_tab;
         let tab = self.tabs.remove(index);
         let tab_content = self.tab_contents.remove(index);
 
-        let mut new_focus = if current_focus > index {current_focus - 1} else {current_focus};
+        let mut new_focus = if current_focus > index {
+            current_focus - 1
+        } else {
+            current_focus
+        };
         while new_focus >= self.tabs.len() && new_focus >= 1 {
             new_focus -= 1;
         }

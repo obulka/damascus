@@ -1,23 +1,9 @@
 use iced::{
-    Background,
-    button,
-    checkbox,
-    Color,
-    container,
-    progress_bar,
-    radio,
-    scrollable,
-    slider,
-    text_input,
-    Vector,
+    button, checkbox, container, progress_bar, radio, scrollable, slider, text_input, Background,
+    Color, Vector,
 };
 
-use crate::state::style::{
-    CLOSE,
-    ORANGE,
-    tab,
-};
-
+use crate::state::style::{tab, CLOSE, ORANGE};
 
 const ACCENT: Color = Color::from_rgb(
     0x6F as f32 / 255.0,
@@ -27,19 +13,19 @@ const ACCENT: Color = Color::from_rgb(
 
 const HIGHLIGHT: Color = ORANGE;
 
-const PRIMARY: Color = Color::from_rgb(
+pub const PRIMARY: Color = Color::from_rgb(
     0x28 as f32 / 255.0,
     0x29 as f32 / 255.0,
     0x23 as f32 / 255.0,
 );
 
-const SECONDARY: Color = Color::from_rgb(
+pub const SECONDARY: Color = Color::from_rgb(
     0x42 as f32 / 255.0,
     0x43 as f32 / 255.0,
     0x3E as f32 / 255.0,
 );
 
-const TERTIARY: Color = Color::from_rgb(
+pub const TERTIARY: Color = Color::from_rgb(
     0x6D as f32 / 255.0,
     0x6E as f32 / 255.0,
     0x6A as f32 / 255.0,
@@ -58,7 +44,6 @@ const HOVERED: Color = Color::from_rgb(
 );
 
 pub const TEXT_COLOR: Color = Color::WHITE;
-
 
 pub struct Container;
 
@@ -91,7 +76,11 @@ pub struct Tab {
 impl tab::StyleSheet for Tab {
     fn style(&self) -> tab::Style {
         tab::Style {
-            background: Some(Background::Color(if self.is_focused {PRIMARY} else {SECONDARY})),
+            background: Some(Background::Color(if self.is_focused {
+                PRIMARY
+            } else {
+                SECONDARY
+            })),
             border_width: 1,
             border_color: Color::TRANSPARENT,
             text_color: TEXT_COLOR,
@@ -109,7 +98,11 @@ impl container::StyleSheet for Pane {
         container::Style {
             background: Some(Background::Color(PRIMARY)),
             border_width: 1,
-            border_color: if self.is_focused { HIGHLIGHT } else { Color::BLACK },
+            border_color: if self.is_focused {
+                HIGHLIGHT
+            } else {
+                Color::BLACK
+            },
             ..Default::default()
         }
     }
@@ -163,7 +156,6 @@ impl button::StyleSheet for Button {
         }
     }
 }
-
 
 pub struct Radio;
 
@@ -226,7 +218,6 @@ impl text_input::StyleSheet for TextInput {
     }
 }
 
-
 pub struct Scrollable;
 
 impl scrollable::StyleSheet for Scrollable {
@@ -249,10 +240,7 @@ impl scrollable::StyleSheet for Scrollable {
         let active = self.active();
 
         scrollable::Scrollbar {
-            background: Some(Background::Color(Color {
-                a: 0.9,
-                ..PRIMARY
-            })),
+            background: Some(Background::Color(Color { a: 0.9, ..PRIMARY })),
             scroller: scrollable::Scroller {
                 color: HOVERED,
                 ..active.scroller
@@ -331,11 +319,7 @@ pub struct Checkbox;
 impl checkbox::StyleSheet for Checkbox {
     fn active(&self, is_checked: bool) -> checkbox::Style {
         checkbox::Style {
-            background: Background::Color(if is_checked {
-                ACTIVE
-            } else {
-                PRIMARY
-            }),
+            background: Background::Color(if is_checked { ACTIVE } else { PRIMARY }),
             checkmark_color: Color::WHITE,
             border_radius: 2,
             border_width: 1,

@@ -1,6 +1,10 @@
-use std::time::Instant;
+pub mod grid;
+
+use grid::Message as GridMessage;
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Tick(Instant),
+    Grid(GridMessage),
+    Next,
+    Clear,
 }

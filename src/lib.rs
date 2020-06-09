@@ -1,6 +1,6 @@
 // Local Imports
 pub mod action;
-pub mod state;
 pub mod model;
+pub mod state;
 
-pub use model::{Damascus};
+pub use model::Damascus;

@@ -1,18 +1,7 @@
 use iced_native::{
-    Clipboard,
-    Element,
-    Event,
-    Hasher,
-    Layout,
-    layout,
-    Length,
-    mouse,
-    Point,
-    Rectangle,
-    Widget,
+    layout, mouse, Clipboard, Element, Event, Hasher, Layout, Length, Point, Rectangle, Widget,
 };
 use std::hash::Hash;
-
 
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: self::Renderer> {
@@ -107,9 +96,7 @@ where
     }
 }
 
-
-impl<'a, Message, Renderer> Widget<Message, Renderer>
-    for Tab<'a, Message, Renderer>
+impl<'a, Message, Renderer> Widget<Message, Renderer> for Tab<'a, Message, Renderer>
 where
     Renderer: self::Renderer,
     Message: Clone,
@@ -122,11 +109,7 @@ where
         self.height
     }
 
-    fn layout(
-        &self,
-        renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+    fn layout(&self, renderer: &Renderer, limits: &layout::Limits) -> layout::Node {
         let padding = f32::from(self.padding);
         let limits = limits
             .min_width(self.min_width)
@@ -168,7 +151,8 @@ where
                     Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
                         if let Some(on_press) = self.on_press.clone() {
                             if layout.bounds().contains(cursor_position)
-                            && !close_layout.bounds().contains(cursor_position) {
+                                && !close_layout.bounds().contains(cursor_position)
+                            {
                                 messages.push(on_press);
                             }
                         }
@@ -235,15 +219,12 @@ pub trait Renderer: iced_native::Renderer + Sized {
     ) -> Self::Output;
 }
 
-impl<'a, Message, Renderer> From<Tab<'a, Message, Renderer>>
-    for Element<'a, Message, Renderer>
+impl<'a, Message, Renderer> From<Tab<'a, Message, Renderer>> for Element<'a, Message, Renderer>
 where
     Renderer: 'a + self::Renderer,
     Message: 'a + Clone,
 {
-    fn from(
-        tab: Tab<'a, Message, Renderer>,
-    ) -> Element<'a, Message, Renderer> {
+    fn from(tab: Tab<'a, Message, Renderer>) -> Element<'a, Message, Renderer> {
         Element::new(tab)
     }
 }

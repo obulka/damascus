@@ -2,28 +2,21 @@ use grid::Grid;
 use iced::{
     button::{self, Button},
     slider::{self, Slider},
-    time, Align, Checkbox, Column, Command, Container, Element,
-    Length, Row, Subscription, Text,
+    time, Align, Checkbox, Column, Command, Container, Element, Length, Row, Subscription, Text,
 };
 
+use std::time::Duration;
 
-use std::time::{Duration};
-
+use super::TabContent;
 use crate::action::{
+    tabs::{viewer::Message, Message as TabContentMessage},
     Message as DamascusMessage,
-    tabs::{
-        Message as TabContentMessage,
-        viewer::Message,
-    },
 };
 use crate::state::{
-    Config,
     style,
     // tabs::viewer::State,
+    Config,
 };
-use super::TabContent;
-
-
 
 #[derive(Default)]
 pub struct Viewer {
@@ -35,7 +28,6 @@ pub struct Viewer {
     next_speed: Option<usize>,
 }
 
-
 impl Viewer {
     pub fn new() -> Self {
         Self {
@@ -46,7 +38,6 @@ impl Viewer {
 }
 
 impl TabContent for Viewer {
-
     fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
         if let TabContentMessage::Viewer(message) = message {
             match message {
@@ -63,10 +54,7 @@ impl TabContent for Viewer {
 
                         self.queued_ticks = 0;
 
-                        return Command::perform(
-                            task,
-                            DamascusMessage::TabContent,
-                        );
+                        return Command::perform(task, DamascusMessage::TabContent);
                     }
                 }
                 Message::TogglePlayback => {
@@ -93,12 +81,9 @@ impl TabContent for Viewer {
 
     fn subscription(&self) -> Subscription<DamascusMessage> {
         if self.is_playing {
-            time::every(Duration::from_millis(1000 / self.speed as u64))
-                .map(|instant| DamascusMessage::TabContent(
-                TabContentMessage::Viewer(
-                    Message::Tick(instant)
-                )
-            ))
+            time::every(Duration::from_millis(1000 / self.speed as u64)).map(|instant| {
+                DamascusMessage::TabContent(TabContentMessage::Viewer(Message::Tick(instant)))
+            })
         } else {
             Subscription::none()
         }
@@ -106,26 +91,19 @@ impl TabContent for Viewer {
 
     fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
         let selected_speed = self.next_speed.unwrap_or(self.speed);
-        let controls = self.controls.view(
-            self.is_playing,
-            self.grid.are_lines_visible(),
-            selected_speed,
-            config,
-        ).map(|message| {
-            DamascusMessage::TabContent(
-                TabContentMessage::Viewer(
-                    message
-                )
+        let controls = self
+            .controls
+            .view(
+                self.is_playing,
+                self.grid.are_lines_visible(),
+                selected_speed,
+                config,
             )
-        });
+            .map(|message| DamascusMessage::TabContent(TabContentMessage::Viewer(message)));
 
         let content = Column::new()
             .push(self.grid.view().map(|message| {
-                DamascusMessage::TabContent(
-                    TabContentMessage::Viewer(
-                        Message::Grid(message)
-                    )
-                )
+                DamascusMessage::TabContent(TabContentMessage::Viewer(Message::Grid(message)))
             }))
             .push(controls);
 
@@ -139,21 +117,16 @@ impl TabContent for Viewer {
 
 pub mod grid {
     use iced::{
-        canvas::{
-            self, Cache, Canvas, Cursor, Event, Frame, Geometry, Path, Text,
-        },
-        mouse, Color, Element, HorizontalAlignment, Length, Point, Rectangle,
-        Size, Vector, VerticalAlignment,
+        canvas::{self, Cache, Canvas, Cursor, Event, Frame, Geometry, Path, Text},
+        mouse, Color, Element, HorizontalAlignment, Length, Point, Rectangle, Size, Vector,
+        VerticalAlignment,
     };
     use rustc_hash::{FxHashMap, FxHashSet};
     use std::future::Future;
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::action::tabs::{
-        Message as TabContentMessage,
-        viewer::Message as ViewerMessage,
-    };
+    use crate::action::tabs::{viewer::Message as ViewerMessage, Message as TabContentMessage};
 
     pub struct Grid {
         state: State,
@@ -205,10 +178,7 @@ pub mod grid {
         const MIN_SCALING: f32 = 0.1;
         const MAX_SCALING: f32 = 2.0;
 
-        pub fn tick(
-            &mut self,
-            amount: usize,
-        ) -> Option<impl Future<Output = TabContentMessage>> {
+        pub fn tick(&mut self, amount: usize) -> Option<impl Future<Output = TabContentMessage>> {
             let version = self.version;
             let tick = self.state.tick(amount)?;
 
@@ -219,15 +189,11 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                TabContentMessage::Viewer(
-                    ViewerMessage::Grid(
-                        Message::Ticked {
-                            result,
-                            version,
-                            tick_duration,
-                        }
-                    )
-                )
+                TabContentMessage::Viewer(ViewerMessage::Grid(Message::Ticked {
+                    result,
+                    version,
+                    tick_duration,
+                }))
             })
         }
 
@@ -305,12 +271,7 @@ pub mod grid {
     }
 
     impl<'a> canvas::Program<Message> for Grid {
-        fn update(
-            &mut self,
-            event: Event,
-            bounds: Rectangle,
-            cursor: Cursor,
-        ) -> Option<Message> {
+        fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<Message> {
             if let Event::Mouse(mouse::Event::ButtonReleased(_)) = event {
                 self.interaction = Interaction::None;
             }
@@ -347,23 +308,20 @@ pub mod grid {
                         }
                         _ => None,
                     },
-                    mouse::Event::CursorMoved { .. } => {
-                        match self.interaction {
-                            Interaction::Drawing => populate,
-                            Interaction::Erasing => unpopulate,
-                            Interaction::Panning { translation, start } => {
-                                self.translation = translation
-                                    + (cursor_position - start)
-                                        * (1.0 / self.scaling);
+                    mouse::Event::CursorMoved { .. } => match self.interaction {
+                        Interaction::Drawing => populate,
+                        Interaction::Erasing => unpopulate,
+                        Interaction::Panning { translation, start } => {
+                            self.translation =
+                                translation + (cursor_position - start) * (1.0 / self.scaling);
 
-                                self.life_cache.clear();
-                                self.grid_cache.clear();
+                            self.life_cache.clear();
+                            self.grid_cache.clear();
 
-                                None
-                            }
-                            _ => None,
+                            None
                         }
-                    }
+                        _ => None,
+                    },
                     mouse::Event::WheelScrolled { delta } => match delta {
                         mouse::ScrollDelta::Lines { y, .. }
                         | mouse::ScrollDelta::Pixels { y, .. } => {
@@ -372,8 +330,7 @@ pub mod grid {
                             {
                                 let old_scaling = self.scaling;
 
-                                self.scaling = (self.scaling
-                                    * (1.0 + y / 30.0))
+                                self.scaling = (self.scaling * (1.0 + y / 30.0))
                                     .max(Self::MIN_SCALING)
                                     .min(Self::MAX_SCALING);
 
@@ -431,10 +388,9 @@ pub mod grid {
             let overlay = {
                 let mut frame = Frame::new(bounds.size());
 
-                let hovered_cell =
-                    cursor.position_in(&bounds).map(|position| {
-                        Cell::at(self.project(position, frame.size()))
-                    });
+                let hovered_cell = cursor
+                    .position_in(&bounds)
+                    .map(|position| Cell::at(self.project(position, frame.size())));
 
                 if let Some(cell) = hovered_cell {
                     frame.with_save(|frame| {
@@ -527,18 +483,12 @@ pub mod grid {
             }
         }
 
-        fn mouse_interaction(
-            &self,
-            bounds: Rectangle,
-            cursor: Cursor,
-        ) -> mouse::Interaction {
+        fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction {
             match self.interaction {
                 Interaction::Drawing => mouse::Interaction::Crosshair,
                 Interaction::Erasing => mouse::Interaction::Crosshair,
                 Interaction::Panning { .. } => mouse::Interaction::Grabbing,
-                Interaction::None if cursor.is_over(&bounds) => {
-                    mouse::Interaction::Crosshair
-                }
+                Interaction::None if cursor.is_over(&bounds) => mouse::Interaction::Crosshair,
                 _ => mouse::Interaction::default(),
             }
         }
@@ -587,10 +537,7 @@ pub mod grid {
             self.is_ticking = false;
         }
 
-        fn tick(
-            &mut self,
-            amount: usize,
-        ) -> Option<impl Future<Output = Result<Life, TickError>>> {
+        fn tick(&mut self, amount: usize) -> Option<impl Future<Output = Result<Life, TickError>>> {
             if self.is_ticking {
                 return None;
             }
@@ -718,8 +665,7 @@ pub mod grid {
         fn rows(&self) -> RangeInclusive<isize> {
             let first_row = (self.y / Cell::SIZE as f32).floor() as isize;
 
-            let visible_rows =
-                (self.height / Cell::SIZE as f32).ceil() as isize;
+            let visible_rows = (self.height / Cell::SIZE as f32).ceil() as isize;
 
             first_row..=first_row + visible_rows
         }
@@ -727,8 +673,7 @@ pub mod grid {
         fn columns(&self) -> RangeInclusive<isize> {
             let first_column = (self.x / Cell::SIZE as f32).floor() as isize;
 
-            let visible_columns =
-                (self.width / Cell::SIZE as f32).ceil() as isize;
+            let visible_columns = (self.width / Cell::SIZE as f32).ceil() as isize;
 
             first_column..=first_column + visible_columns
         }
@@ -740,9 +685,7 @@ pub mod grid {
             let rows = self.rows();
             let columns = self.columns();
 
-            cells.filter(move |cell| {
-                rows.contains(&cell.i) && columns.contains(&cell.j)
-            })
+            cells.filter(move |cell| rows.contains(&cell.i) && columns.contains(&cell.j))
         }
     }
 
@@ -778,16 +721,12 @@ impl Controls {
                     Text::new(if is_playing { "Pause" } else { "Play" }),
                 )
                 .on_press(Message::TogglePlayback)
-                .style(config.theme.button_style(
-                        style::Button::Primary,
-                    )),
+                .style(config.theme.button_style(style::Button::Primary)),
             )
             .push(
                 Button::new(&mut self.next_button, Text::new("Next"))
                     .on_press(Message::Next)
-                    .style(config.theme.button_style(
-                        style::Button::Primary,
-                    )),
+                    .style(config.theme.button_style(style::Button::Primary)),
             );
 
         let speed_controls = Row::new()
@@ -820,9 +759,7 @@ impl Controls {
             .push(
                 Button::new(&mut self.clear_button, Text::new("Clear"))
                     .on_press(Message::Clear)
-                    .style(config.theme.button_style(
-                        style::Button::Primary,
-                    )),
+                    .style(config.theme.button_style(style::Button::Primary)),
             )
             .into()
     }

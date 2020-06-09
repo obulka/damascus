@@ -10,16 +10,3 @@ pub enum Message {
     NodeGraph(NodeGraphMessage),
     Viewer(ViewerMessage),
 }
-
-impl std::cmp::PartialEq<String> for Message {
-    fn eq(&self, other: &String) -> bool {
-        match self {
-            Message::NodeGraph(..) => {
-                other == "NodeGraph"
-            }
-            Message::Viewer(..) => {
-                other == "Viewer"
-            }
-        }
-    }
-}

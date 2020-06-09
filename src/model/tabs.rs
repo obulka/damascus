@@ -28,6 +28,23 @@ impl From<TabType> for String {
     }
 }
 
+
+impl std::cmp::PartialEq<String> for Message {
+    fn eq(&self, other: &String) -> bool {
+        match self {
+            Message::NodeGraph(..) => {
+                let tab_type_string: String = TabType::NodeGraph.into();
+                *other == tab_type_string
+            }
+            Message::Viewer(..) => {
+                let tab_type_string: String = TabType::Viewer.into();
+                *other == tab_type_string
+            }
+        }
+    }
+}
+
+
 pub trait TabContent {
     fn update(&mut self, _message: Message) -> Command<DamascusMessage> {
         Command::none()
@@ -39,6 +56,7 @@ pub trait TabContent {
 
     fn view(&mut self, config: &Config) -> Element<DamascusMessage>;
 }
+
 
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
     match tab_type {

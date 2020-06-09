@@ -175,7 +175,12 @@ impl Application for Damascus {
             }
             Message::CloseFocused => {
                 if let Some(pane) = self.panes.active() {
-                    let _ = self.panes.close(&pane);
+                    let panel = self.panes.close(&pane);
+                    if panel.is_none() {
+                        if let Some(panel) = self.panes.get_mut(&pane) {
+                            (*panel).close_all_tabs();
+                        }
+                    }
                 }
             }
         }

@@ -4,8 +4,8 @@ use iced::{
     Subscription,
 };
 
-mod node_graph;
-mod viewer;
+pub mod node_graph;
+pub mod viewer;
 
 use crate::action::{
     Message as DamascusMessage,
@@ -61,7 +61,7 @@ pub trait TabContent {
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
     match tab_type {
         TabType::Viewer => {
-            Box::new(Viewer{})
+            Box::new(Viewer::new())
         }
         TabType::NodeGraph => {
             Box::new(NodeGraph::new())

@@ -29,7 +29,7 @@ pub struct NodeGraph {
 
 impl NodeGraph {
     pub fn new() -> Self {
-        NodeGraph {
+        Self {
             state: State::new(),
         }
     }

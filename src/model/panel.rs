@@ -225,9 +225,8 @@ impl Panel {
 
     pub fn open_tab(&mut self, tab_type: TabType) {
         self.tabs.push((tab_type.clone().into(), button::State::new()));
+        self.tab_contents.push(tab_content_from_type(tab_type));
 
-        let tab = tab_content_from_type(tab_type);
-        self.tab_contents.push(tab);
         self.focused_tab = self.tabs.len() - 1;
     }
 

@@ -1,134 +1,247 @@
 use iced::{
-    canvas::{self, Cursor, Path, Stroke},
-    window, Color, Point, Rectangle, Size, Vector,
+    canvas::{self, Cache, Canvas, Cursor, Event, Geometry, Path, Stroke},
+    mouse, Element, Length, Point, Rectangle, Size, Vector,
 };
-use std::time::Instant;
 
-#[derive(Debug)]
+use std::ops::RangeInclusive;
+
+use crate::action::tabs::node_graph::Message;
+use crate::state::Config;
+
+
 pub struct State {
-    space_cache: canvas::Cache,
-    system_cache: canvas::Cache,
-    cursor_position: Point,
-    start: Instant,
-    now: Instant,
-    stars: Vec<(Point, f32)>,
+    grid_size: f32,
+    interaction: Interaction,
+    life_cache: Cache,
+    grid_cache: Cache,
+    translation: Vector,
+    scaling: f32,
+    show_lines: bool,
+    config: Config,
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            grid_size: 20.0,
+            interaction: Interaction::None,
+            life_cache: Cache::default(),
+            grid_cache: Cache::default(),
+            translation: Vector::default(),
+            scaling: 1.0,
+            show_lines: true,
+            config: Config::default(),
+        }
+    }
 }
 
 impl State {
-    const SUN_RADIUS: f32 = 70.0;
-    const ORBIT_RADIUS: f32 = 150.0;
-    const EARTH_RADIUS: f32 = 12.0;
-    const MOON_RADIUS: f32 = 4.0;
-    const MOON_DISTANCE: f32 = 28.0;
+    const MIN_SCALING: f32 = 0.1;
+    const MAX_SCALING: f32 = 2.0;
 
-    pub fn new() -> State {
-        let now = Instant::now();
-        let (width, height) = window::Settings::default().size;
+    pub fn view<'a>(&'a mut self, config: &Config) -> Element<'a, Message> {
+        self.config = *config;
+        Canvas::new(self)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+    }
 
-        State {
-            space_cache: Default::default(),
-            system_cache: Default::default(),
-            cursor_position: Point::ORIGIN,
-            start: now,
-            now,
-            stars: Self::generate_stars(width, height),
+    pub fn clear(&mut self) {
+        self.life_cache.clear();
+    }
+
+    pub fn toggle_lines(&mut self) {
+        self.show_lines = !self.are_lines_visible();
+    }
+
+    pub fn are_lines_visible(&self) -> bool {
+        self.show_lines
+    }
+
+    fn visible_region(&self, size: Size) -> Region {
+        let width = size.width / self.scaling;
+        let height = size.height / self.scaling;
+
+        Region {
+            x: -self.translation.x - width / 2.0,
+            y: -self.translation.y - height / 2.0,
+            width,
+            height,
+            grid_size: self.grid_size,
         }
     }
 
-    pub fn update(&mut self, now: Instant) {
-        self.now = now;
-        self.system_cache.clear();
-    }
+    // fn project(&self, position: Point, size: Size) -> Point {
+    //     let region = self.visible_region(size);
 
-    fn generate_stars(width: u32, height: u32) -> Vec<(Point, f32)> {
-        use rand::Rng;
-
-        let mut rng = rand::thread_rng();
-
-        (0..100)
-            .map(|_| {
-                (
-                    Point::new(
-                        rng.gen_range(-(width as f32) / 2.0, width as f32 / 2.0),
-                        rng.gen_range(-(height as f32) / 2.0, height as f32 / 2.0),
-                    ),
-                    rng.gen_range(0.5, 1.0),
-                )
-            })
-            .collect()
-    }
+    //     Point::new(
+    //         position.x / self.scaling + region.x,
+    //         position.y / self.scaling + region.y,
+    //     )
+    // }
 }
 
-impl<Message> canvas::Program<Message> for State {
-    fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<canvas::Geometry> {
-        use std::f32::consts::PI;
+impl<'a> canvas::Program<Message> for State {
+    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<Message> {
+        if let Event::Mouse(mouse::Event::ButtonReleased(_)) = event {
+            self.interaction = Interaction::None;
+        }
 
-        let background = self.space_cache.draw(bounds.size(), |frame| {
-            let space = Path::rectangle(Point::new(0.0, 0.0), frame.size());
+        let cursor_position = cursor.position_in(&bounds)?;
 
-            let stars = Path::new(|path| {
-                for (p, size) in &self.stars {
-                    path.rectangle(*p, Size::new(*size, *size));
+        match event {
+            Event::Mouse(mouse_event) => match mouse_event {
+                mouse::Event::ButtonPressed(button) => match button {
+                    mouse::Button::Middle => {
+                        self.interaction = Interaction::Panning {
+                            translation: self.translation,
+                            start: cursor_position,
+                        };
+
+                        None
+                    }
+                    mouse::Button::Left => {
+                        return Some(Message::ToggleGrid);
+                    }
+                    _ => None,
+                },
+                mouse::Event::CursorMoved { .. } => match self.interaction {
+                    Interaction::Panning { translation, start } => {
+                        self.translation =
+                            translation + (cursor_position - start) * (1.0 / self.scaling);
+
+                        self.life_cache.clear();
+                        self.grid_cache.clear();
+
+                        None
+                    }
+                    _ => None,
+                },
+                mouse::Event::WheelScrolled { delta } => match delta {
+                    mouse::ScrollDelta::Lines { y, .. } | mouse::ScrollDelta::Pixels { y, .. } => {
+                        if y < 0.0 && self.scaling > Self::MIN_SCALING
+                            || y > 0.0 && self.scaling < Self::MAX_SCALING
+                        {
+                            let old_scaling = self.scaling;
+
+                            self.scaling = (self.scaling * (1.0 + y / 30.0))
+                                .max(Self::MIN_SCALING)
+                                .min(Self::MAX_SCALING);
+
+                            if let Some(cursor_to_center) = cursor.position_from(bounds.center()) {
+                                let factor = self.scaling - old_scaling;
+
+                                self.translation = self.translation
+                                    - Vector::new(
+                                        cursor_to_center.x * factor / (old_scaling * old_scaling),
+                                        cursor_to_center.y * factor / (old_scaling * old_scaling),
+                                    );
+                            }
+
+                            self.life_cache.clear();
+                            self.grid_cache.clear();
+                        }
+
+                        None
+                    }
+                },
+                _ => None,
+            },
+        }
+    }
+
+    fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry> {
+        let center = Vector::new(bounds.width / 2.0, bounds.height / 2.0);
+
+        if self.scaling < 0.2 || !self.show_lines {
+            vec![]
+        } else {
+            let grid = self.grid_cache.draw(bounds.size(), |frame| {
+                frame.translate(center);
+                frame.scale(self.scaling);
+                frame.translate(self.translation);
+                frame.scale(self.grid_size);
+
+                let region = self.visible_region(frame.size());
+                let rows = region.rows();
+                let columns = region.columns();
+                let width = 1.0 / self.grid_size;
+                let color = self.config.theme.secondary_color();
+
+                frame.translate(Vector::new(-width / 2.0, -width / 2.0));
+
+                for row in region.rows() {
+                    let line = Path::line(
+                        Point::new(*columns.start() as f32, row as f32),
+                        Point::new(*columns.end() as f32, row as f32),
+                    );
+                    frame.stroke(
+                        &line,
+                        Stroke {
+                            width: 1.0,
+                            color: color,
+                            ..Stroke::default()
+                        },
+                    );
+                }
+
+                for column in region.columns() {
+                    let line = Path::line(
+                        Point::new(column as f32, *rows.start() as f32),
+                        Point::new(column as f32, *rows.end() as f32),
+                    );
+                    frame.stroke(
+                        &line,
+                        Stroke {
+                            width: 1.0,
+                            color: color,
+                            ..Stroke::default()
+                        },
+                    );
                 }
             });
 
-            frame.fill(&space, Color::BLACK);
-
-            frame.translate(frame.center() - Point::ORIGIN);
-            frame.fill(&stars, Color::WHITE);
-        });
-
-        let system = self.system_cache.draw(bounds.size(), |frame| {
-            let center = frame.center();
-
-            let sun = Path::circle(center, Self::SUN_RADIUS);
-            let orbit = Path::circle(center, Self::ORBIT_RADIUS);
-
-            frame.fill(&sun, Color::from_rgb8(0xF9, 0xD7, 0x1C));
-            frame.stroke(
-                &orbit,
-                Stroke {
-                    width: 1.0,
-                    color: Color::from_rgba8(0, 153, 255, 0.1),
-                    ..Stroke::default()
-                },
-            );
-
-            let elapsed = self.now - self.start;
-            let rotation = (2.0 * PI / 60.0) * elapsed.as_secs() as f32
-                + (2.0 * PI / 60_000.0) * elapsed.subsec_millis() as f32;
-
-            frame.with_save(|frame| {
-                frame.translate(Vector::new(center.x, center.y));
-                frame.rotate(rotation);
-                frame.translate(Vector::new(Self::ORBIT_RADIUS, 0.0));
-
-                let earth = Path::circle(Point::ORIGIN, Self::EARTH_RADIUS);
-                let shadow = Path::rectangle(
-                    Point::new(0.0, -Self::EARTH_RADIUS),
-                    Size::new(Self::EARTH_RADIUS * 4.0, Self::EARTH_RADIUS * 2.0),
-                );
-
-                frame.fill(&earth, Color::from_rgb8(0x6B, 0x93, 0xD6));
-
-                frame.with_save(|frame| {
-                    frame.rotate(rotation * 10.0);
-                    frame.translate(Vector::new(0.0, Self::MOON_DISTANCE));
-
-                    let moon = Path::circle(Point::ORIGIN, Self::MOON_RADIUS);
-                    frame.fill(&moon, Color::WHITE);
-                });
-
-                frame.fill(
-                    &shadow,
-                    Color {
-                        a: 0.7,
-                        ..Color::BLACK
-                    },
-                );
-            });
-        });
-
-        vec![background, system]
+            vec![grid]
+        }
     }
+
+    fn mouse_interaction(&self, _bounds: Rectangle, _cursor: Cursor) -> mouse::Interaction {
+        match self.interaction {
+            Interaction::Panning { .. } => mouse::Interaction::Grabbing,
+            _ => mouse::Interaction::default(),
+        }
+    }
+}
+
+
+pub struct Region {
+    x: f32,
+    y: f32,
+    width: f32,
+    height: f32,
+    grid_size: f32,
+}
+
+impl Region {
+    fn rows(&self) -> RangeInclusive<isize> {
+        let first_row = (self.y / self.grid_size).floor() as isize;
+
+        let visible_rows = (self.height / self.grid_size).ceil() as isize;
+
+        first_row..=first_row + visible_rows
+    }
+
+    fn columns(&self) -> RangeInclusive<isize> {
+        let first_column = (self.x / self.grid_size).floor() as isize;
+
+        let visible_columns = (self.width / self.grid_size).ceil() as isize;
+
+        first_column..=first_column + visible_columns
+    }
+}
+
+enum Interaction {
+    None,
+    Panning { translation: Vector, start: Point },
 }

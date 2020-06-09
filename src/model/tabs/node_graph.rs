@@ -1,19 +1,18 @@
 use iced::{Command, Container, Element, Length};
 
-mod grid;
-
-use grid::Grid;
-
 use super::TabContent;
 use crate::action::{
     tabs::{node_graph::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
-use crate::state::Config;
+use crate::state::{
+    Config,
+    tabs::node_graph::State,
+};
 
 #[derive(Default)]
 pub struct NodeGraph {
-    grid: Grid,
+    state: State,
 }
 
 impl NodeGraph {
@@ -26,11 +25,9 @@ impl TabContent for NodeGraph {
     fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
         if let TabContentMessage::NodeGraph(message) = message {
             match message {
-                Message::Grid(message) => {
-                    self.grid.update(message);
-                }
+                Message::ToggleGrid => self.state.toggle_lines(),
                 Message::Clear => {
-                    self.grid.clear();
+                    self.state.clear();
                 }
                 Message::Next => {}
             }
@@ -39,8 +36,10 @@ impl TabContent for NodeGraph {
     }
 
     fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
-        let content = self.grid.view(config).map(|message| {
-            DamascusMessage::TabContent(TabContentMessage::NodeGraph(Message::Grid(message)))
+        let content = self.state.view(config).map(|message| {
+            DamascusMessage::TabContent(
+                TabContentMessage::NodeGraph(message)
+            )
         });
 
         Container::new(content)

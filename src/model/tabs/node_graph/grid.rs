@@ -1,5 +1,5 @@
 use iced::{
-    canvas::{self, Cache, Canvas, Cursor, Event, Geometry},
+    canvas::{self, Cache, Canvas, Cursor, Event, Geometry, Path, Stroke},
     mouse, Element, Length, Point, Rectangle, Size, Vector,
 };
 
@@ -85,14 +85,14 @@ impl Grid {
         }
     }
 
-    fn project(&self, position: Point, size: Size) -> Point {
-        let region = self.visible_region(size);
+    // fn project(&self, position: Point, size: Size) -> Point {
+    //     let region = self.visible_region(size);
 
-        Point::new(
-            position.x / self.scaling + region.x,
-            position.y / self.scaling + region.y,
-        )
-    }
+    //     Point::new(
+    //         position.x / self.scaling + region.x,
+    //         position.y / self.scaling + region.y,
+    //     )
+    // }
 }
 
 impl<'a> canvas::Program<Message> for Grid {
@@ -106,7 +106,7 @@ impl<'a> canvas::Program<Message> for Grid {
         match event {
             Event::Mouse(mouse_event) => match mouse_event {
                 mouse::Event::ButtonPressed(button) => match button {
-                    mouse::Button::Left => {
+                    mouse::Button::Middle => {
                         self.interaction = Interaction::Panning {
                             translation: self.translation,
                             start: cursor_position,
@@ -114,7 +114,7 @@ impl<'a> canvas::Program<Message> for Grid {
 
                         None
                     }
-                    mouse::Button::Middle => {
+                    mouse::Button::Left => {
                         return Some(Message::ToggleGrid);
                     }
                     _ => None,
@@ -179,25 +179,38 @@ impl<'a> canvas::Program<Message> for Grid {
                 let region = self.visible_region(frame.size());
                 let rows = region.rows();
                 let columns = region.columns();
-                let (total_rows, total_columns) = (rows.clone().count(), columns.clone().count());
                 let width = 1.0 / Cell::SIZE as f32;
                 let color = self.config.theme.secondary_color();
 
                 frame.translate(Vector::new(-width / 2.0, -width / 2.0));
 
                 for row in region.rows() {
-                    frame.fill_rectangle(
+                    let line = Path::line(
                         Point::new(*columns.start() as f32, row as f32),
-                        Size::new(total_columns as f32, width),
-                        color,
+                        Point::new(*columns.end() as f32, row as f32),
+                    );
+                    frame.stroke(
+                        &line,
+                        Stroke {
+                            width: 1.0,
+                            color: color,
+                            ..Stroke::default()
+                        },
                     );
                 }
 
                 for column in region.columns() {
-                    frame.fill_rectangle(
+                    let line = Path::line(
                         Point::new(column as f32, *rows.start() as f32),
-                        Size::new(width, total_rows as f32),
-                        color,
+                        Point::new(column as f32, *rows.end() as f32),
+                    );
+                    frame.stroke(
+                        &line,
+                        Stroke {
+                            width: 1.0,
+                            color: color,
+                            ..Stroke::default()
+                        },
                     );
                 }
             });
@@ -230,15 +243,15 @@ pub struct Cell {
 impl Cell {
     const SIZE: usize = 20;
 
-    fn at(position: Point) -> Cell {
-        let i = (position.y / Cell::SIZE as f32).ceil() as isize;
-        let j = (position.x / Cell::SIZE as f32).ceil() as isize;
+    // fn at(position: Point) -> Cell {
+    //     let i = (position.y / Cell::SIZE as f32).ceil() as isize;
+    //     let j = (position.x / Cell::SIZE as f32).ceil() as isize;
 
-        Cell {
-            i: i.saturating_sub(1),
-            j: j.saturating_sub(1),
-        }
-    }
+    //     Cell {
+    //         i: i.saturating_sub(1),
+    //         j: j.saturating_sub(1),
+    //     }
+    // }
 }
 
 pub struct Region {

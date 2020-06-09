@@ -9,35 +9,35 @@ pub mod tab;
 mod theme;
 use theme::{dark, light};
 
-const BLUE: Color = Color::from_rgb(
-    0x00 as f32 / 255.0,
-    0x76 as f32 / 255.0,
-    0xBF as f32 / 255.0,
-);
+// const BLUE: Color = Color::from_rgb(
+//     0x00 as f32 / 255.0,
+//     0x76 as f32 / 255.0,
+//     0xBF as f32 / 255.0,
+// );
 
-const PURPLE: Color = Color::from_rgb(
-    0x41 as f32 / 255.0,
-    0x1D as f32 / 255.0,
-    0x4E as f32 / 255.0,
-);
+// const PURPLE: Color = Color::from_rgb(
+//     0x41 as f32 / 255.0,
+//     0x1D as f32 / 255.0,
+//     0x4E as f32 / 255.0,
+// );
 
-const DARK_PURPLE: Color = Color::from_rgb(
-    0x14 as f32 / 255.0,
-    0x10 as f32 / 255.0,
-    0x27 as f32 / 255.0,
-);
+// const DARK_PURPLE: Color = Color::from_rgb(
+//     0x14 as f32 / 255.0,
+//     0x10 as f32 / 255.0,
+//     0x27 as f32 / 255.0,
+// );
 
-const TURQOISE: Color = Color::from_rgb(
-    0x00 as f32 / 255.0,
-    0x8D as f32 / 255.0,
-    0x92 as f32 / 255.0,
-);
+// const TURQOISE: Color = Color::from_rgb(
+//     0x00 as f32 / 255.0,
+//     0x8D as f32 / 255.0,
+//     0x92 as f32 / 255.0,
+// );
 
-const INDIGO: Color = Color::from_rgb(
-    0x36 as f32 / 255.0,
-    0x2F as f32 / 255.0,
-    0x7D as f32 / 255.0,
-);
+// const INDIGO: Color = Color::from_rgb(
+//     0x36 as f32 / 255.0,
+//     0x2F as f32 / 255.0,
+//     0x7D as f32 / 255.0,
+// );
 
 const ORANGE: Color = Color::from_rgb(
     0xE3 as f32 / 255.0,

@@ -24,6 +24,7 @@ pub enum Message {
     SplitFocused(pane_grid::Axis),
     FocusAdjacent(pane_grid::Direction),
     PaneDragged(pane_grid::DragEvent),
+    FloatPane(pane_grid::Pane),
     Resized(pane_grid::ResizeEvent),
     Close(pane_grid::Pane),
     CloseFocused,

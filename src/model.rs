@@ -162,6 +162,9 @@ impl Application for Damascus {
                 self.panes.swap(&pane, &target);
             }
             Message::PaneDragged(_) => {}
+            Message::FloatPane(_) => {
+                println!("Floating panes not imlemented.");
+            }
             Message::Close(pane) => {
                 let panel = self.panes.close(&pane);
                 if panel.is_none() {

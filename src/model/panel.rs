@@ -131,7 +131,7 @@ impl Panel {
                     .push(button(
                         float_pane,
                         "+",
-                        Message::OpenTabFocused(TabType::Viewer),
+                        Message::FloatPane(pane),
                         config.theme.button_style(
                             style::Button::Primary,
                         ),

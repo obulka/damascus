@@ -37,17 +37,13 @@ impl NodeGraph {
 
 impl TabContent for NodeGraph {
     fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
-        match message {
-            TabContentMessage::NodeGraph(node_graph_message) => {
-                match node_graph_message {
-                    Message::Tick(instant) => {
-                        self.state.update(instant);
-                    }
+        if let TabContentMessage::NodeGraph(message) = message {
+            match message {
+                Message::Tick(instant) => {
+                    self.state.update(instant);
                 }
             }
-            _ => {}
         }
-
         Command::none()
     }
 

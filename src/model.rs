@@ -8,11 +8,7 @@ use iced::{
 mod panel;
 pub mod tabs;
 
-use crate::action::{
-    handle_hotkey,
-    Message,
-    panel::Message as PanelMessage,
-};
+use crate::action::{handle_hotkey, panel::Message as PanelMessage, Message};
 use crate::state::{style::Theme, Config};
 use panel::Panel;
 
@@ -56,12 +52,12 @@ impl Application for Damascus {
                     if let Some(panel) = self.panes.get_mut(&pane) {
                         let (new_focus, tab, tab_content) = (*panel).state.close_tab(tab_index);
                         if let Some(target_panel) = self.panes.get_mut(&target_pane) {
-                            (*target_panel).state.open_tab_with_content(tab, tab_content);
+                            (*target_panel)
+                                .state
+                                .open_tab_with_content(tab, tab_content);
                         }
                         return Command::perform(
-                            async move {
-                                PanelMessage::FocusTab((pane, new_focus))
-                            },
+                            async move { PanelMessage::FocusTab((pane, new_focus)) },
                             Message::Panel,
                         );
                     }
@@ -69,7 +65,8 @@ impl Application for Damascus {
                 PanelMessage::OpenTabFocused(tab_type) => {
                     if let Some(active_pane) = self.panes.active() {
                         for (pane, panel) in self.panes.iter_mut() {
-                            if let Some(index) = (*panel).state.index_of_tab_type(tab_type.clone()) {
+                            if let Some(index) = (*panel).state.index_of_tab_type(tab_type.clone())
+                            {
                                 let pane = *pane;
                                 if pane == active_pane {
                                     return Command::perform(
@@ -78,9 +75,7 @@ impl Application for Damascus {
                                     );
                                 } else {
                                     return Command::perform(
-                                        async move {
-                                            PanelMessage::MoveTab((pane, index, active_pane))
-                                        },
+                                        async move { PanelMessage::MoveTab((pane, index, active_pane)) },
                                         Message::Panel,
                                     );
                                 }
@@ -106,7 +101,7 @@ impl Application for Damascus {
                         (*panel).state.focus_tab(index);
                     }
                 }
-            }
+            },
             Message::ThemeChanged(theme) => self.config.theme = theme,
             Message::ToggleTheme => {
                 self.config.theme = match self.config.theme {
@@ -137,7 +132,7 @@ impl Application for Damascus {
             }
             Message::PaneDragged(_) => {}
             Message::FloatPane(_) => {
-                println!("Floating panes not imlemented.");
+                println!("Floating panes not implemented.");
             }
             Message::Close(pane) => {
                 let panel = self.panes.close(&pane);

@@ -1,8 +1,7 @@
-use iced::{pane_grid};
+use iced::pane_grid;
 
-use crate::state::{widget::TabType};
 use super::tabs::Message as TabContentMessage;
-
+use crate::state::widget::TabType;
 
 #[derive(Debug, Clone)]
 pub enum Message {

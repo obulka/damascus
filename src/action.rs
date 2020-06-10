@@ -2,12 +2,11 @@
 use iced::{keyboard, pane_grid};
 
 // Local Imports
-pub mod tabs;
 pub mod panel;
+pub mod tabs;
 
 use crate::state::{style::Theme, widget::TabType};
 use panel::Message as PanelMessage;
-
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -37,8 +36,12 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     };
 
     match event.key_code {
-        KeyCode::V => Some(Message::Panel(PanelMessage::OpenTabFocused(TabType::Viewer))),
-        KeyCode::G => Some(Message::Panel(PanelMessage::OpenTabFocused(TabType::NodeGraph))),
+        KeyCode::V => Some(Message::Panel(PanelMessage::OpenTabFocused(
+            TabType::Viewer,
+        ))),
+        KeyCode::G => Some(Message::Panel(PanelMessage::OpenTabFocused(
+            TabType::NodeGraph,
+        ))),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
         _ => direction.map(Message::FocusAdjacent),

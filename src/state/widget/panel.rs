@@ -1,16 +1,13 @@
 // 3rd Party Imports
 
 use iced::{
-    button, pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment,
-    Length, Row, Space, Text, VerticalAlignment,
+    button, pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row,
+    Space, Text, VerticalAlignment,
 };
 
 // Local Imports
+use crate::action::{panel::Message, Message as DamascusMessage};
 use crate::model::tabs::{tab_content_from_type, TabContent};
-use crate::action::{
-    Message as DamascusMessage,
-    panel::Message,
-};
 use crate::state::{
     style,
     widget::{Tab, TabType},
@@ -153,9 +150,7 @@ impl State {
                                         button(
                                             close_tab_state,
                                             "×",
-                                            DamascusMessage::Panel(
-                                                Message::CloseTab(pane, index)
-                                            ),
+                                            DamascusMessage::Panel(Message::CloseTab(pane, index)),
                                             config.theme.button_style(style::Button::CloseTab),
                                         )
                                         .width(Length::Shrink)
@@ -164,9 +159,7 @@ impl State {
                             )
                             .width(Length::Shrink)
                             .padding(1)
-                            .on_press(DamascusMessage::Panel(
-                                Message::FocusTab((pane, index)))
-                            )
+                            .on_press(DamascusMessage::Panel(Message::FocusTab((pane, index))))
                             .style(config.theme.tab_style(focused)),
                         )
                     },

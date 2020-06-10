@@ -8,11 +8,11 @@ use std::ops::RangeInclusive;
 use crate::action::tabs::node_graph::Message;
 use crate::state::Config;
 
-
 pub struct State {
     grid_size: f32,
     interaction: Interaction,
-    life_cache: Cache,
+    connection_cache: Cache,
+    node_cache: Cache,
     grid_cache: Cache,
     translation: Vector,
     scaling: f32,
@@ -25,7 +25,8 @@ impl Default for State {
         Self {
             grid_size: 20.0,
             interaction: Interaction::None,
-            life_cache: Cache::default(),
+            connection_cache: Cache::default(),
+            node_cache: Cache::default(),
             grid_cache: Cache::default(),
             translation: Vector::default(),
             scaling: 1.0,
@@ -48,7 +49,8 @@ impl State {
     }
 
     pub fn clear(&mut self) {
-        self.life_cache.clear();
+        self.node_cache.clear();
+        self.connection_cache.clear();
     }
 
     pub fn toggle_lines(&mut self) {
@@ -111,8 +113,9 @@ impl<'a> canvas::Program<Message> for State {
                         self.translation =
                             translation + (cursor_position - start) * (1.0 / self.scaling);
 
-                        self.life_cache.clear();
+                        self.node_cache.clear();
                         self.grid_cache.clear();
+                        self.connection_cache.clear();
 
                         None
                     }
@@ -139,7 +142,8 @@ impl<'a> canvas::Program<Message> for State {
                                     );
                             }
 
-                            self.life_cache.clear();
+                            self.node_cache.clear();
+                            self.connection_cache.clear();
                             self.grid_cache.clear();
                         }
 
@@ -213,7 +217,6 @@ impl<'a> canvas::Program<Message> for State {
         }
     }
 }
-
 
 pub struct Region {
     x: f32,

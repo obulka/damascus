@@ -11,6 +11,7 @@ use super::TabContent;
 use crate::action::{
     tabs::{viewer::Message, Message as TabContentMessage},
     Message as DamascusMessage,
+    panel::Message as PanelMessage,
 };
 use crate::state::{
     style,
@@ -54,7 +55,7 @@ impl TabContent for Viewer {
 
                         self.queued_ticks = 0;
 
-                        return Command::perform(task, DamascusMessage::TabContent);
+                        return Command::perform(task, DamascusMessage::Panel);
                     }
                 }
                 Message::TogglePlayback => {
@@ -82,7 +83,11 @@ impl TabContent for Viewer {
     fn subscription(&self) -> Subscription<DamascusMessage> {
         if self.is_playing {
             time::every(Duration::from_millis(1000 / self.speed as u64)).map(|instant| {
-                DamascusMessage::TabContent(TabContentMessage::Viewer(Message::Tick(instant)))
+                DamascusMessage::Panel(
+                    PanelMessage::TabContent(
+                        TabContentMessage::Viewer(Message::Tick(instant))
+                    )
+                )
             })
         } else {
             Subscription::none()
@@ -99,11 +104,16 @@ impl TabContent for Viewer {
                 selected_speed,
                 config,
             )
-            .map(|message| DamascusMessage::TabContent(TabContentMessage::Viewer(message)));
+            .map(|message| DamascusMessage::Panel(
+                    PanelMessage::TabContent(TabContentMessage::Viewer(message))
+                )
+            );
 
         let content = Column::new()
             .push(self.grid.view().map(|message| {
-                DamascusMessage::TabContent(TabContentMessage::Viewer(Message::Grid(message)))
+                DamascusMessage::Panel(
+                    PanelMessage::TabContent(TabContentMessage::Viewer(Message::Grid(message)))
+                )
             }))
             .push(controls);
 
@@ -126,7 +136,10 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::action::tabs::{viewer::Message as ViewerMessage, Message as TabContentMessage};
+    use crate::action::{
+        panel::Message as PanelMessage,
+        tabs::{viewer::Message as ViewerMessage, Message as TabContentMessage},
+    };
 
     pub struct Grid {
         state: State,
@@ -178,7 +191,7 @@ pub mod grid {
         const MIN_SCALING: f32 = 0.1;
         const MAX_SCALING: f32 = 2.0;
 
-        pub fn tick(&mut self, amount: usize) -> Option<impl Future<Output = TabContentMessage>> {
+        pub fn tick(&mut self, amount: usize) -> Option<impl Future<Output = PanelMessage>> {
             let version = self.version;
             let tick = self.state.tick(amount)?;
 
@@ -189,11 +202,13 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                TabContentMessage::Viewer(ViewerMessage::Grid(Message::Ticked {
-                    result,
-                    version,
-                    tick_duration,
-                }))
+                PanelMessage::TabContent(
+                    TabContentMessage::Viewer(ViewerMessage::Grid(Message::Ticked {
+                        result,
+                        version,
+                        tick_duration,
+                    }))
+                )
             })
         }
 

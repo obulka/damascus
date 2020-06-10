@@ -2,7 +2,10 @@ pub mod renderer;
 pub mod style;
 pub mod widget;
 
-pub use widget::tabs;
+pub use widget::{
+    tabs,
+    panel,
+};
 
 use crate::state::style::Theme;
 

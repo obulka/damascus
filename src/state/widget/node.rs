@@ -1,0 +1,9 @@
+
+
+struct Node {
+    
+}
+
+trait Node {
+
+}

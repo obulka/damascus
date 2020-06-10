@@ -8,7 +8,11 @@ use iced::{
 mod panel;
 pub mod tabs;
 
-use crate::action::{handle_hotkey, Message};
+use crate::action::{
+    handle_hotkey,
+    Message,
+    panel::Message as PanelMessage,
+};
 use crate::state::{style::Theme, Config};
 use panel::Panel;
 
@@ -40,55 +44,67 @@ impl Application for Damascus {
 
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::TabContent(tab_content_message) => {
-                return Command::batch(
-                    self.panes
-                        .iter_mut()
-                        .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
-                );
-            }
-            Message::MoveTab((pane, tab_index, target_pane)) => {
-                if let Some(panel) = self.panes.get_mut(&pane) {
-                    let (new_focus, tab, tab_content) = (*panel).close_tab(tab_index);
-                    if let Some(target_panel) = self.panes.get_mut(&target_pane) {
-                        (*target_panel).open_tab_with_content(tab, tab_content);
-                    }
-                    return Command::perform(async move { (pane, new_focus) }, Message::FocusTab);
+            Message::Panel(message) => match message {
+                PanelMessage::TabContent(tab_content_message) => {
+                    return Command::batch(
+                        self.panes
+                            .iter_mut()
+                            .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
+                    );
                 }
-            }
-            Message::OpenTabFocused(tab_type) => {
-                if let Some(active_pane) = self.panes.active() {
-                    for (pane, panel) in self.panes.iter_mut() {
-                        if let Some(index) = (*panel).index_of_tab_type(tab_type.clone()) {
-                            let pane = *pane;
-                            if pane == active_pane {
-                                return Command::perform(
-                                    async move { (pane, index) },
-                                    Message::FocusTab,
-                                );
-                            } else {
-                                return Command::perform(
-                                    async move { (pane, index, active_pane) },
-                                    Message::MoveTab,
-                                );
+                PanelMessage::MoveTab((pane, tab_index, target_pane)) => {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        let (new_focus, tab, tab_content) = (*panel).state.close_tab(tab_index);
+                        if let Some(target_panel) = self.panes.get_mut(&target_pane) {
+                            (*target_panel).state.open_tab_with_content(tab, tab_content);
+                        }
+                        return Command::perform(
+                            async move {
+                                PanelMessage::FocusTab((pane, new_focus))
+                            },
+                            Message::Panel,
+                        );
+                    }
+                }
+                PanelMessage::OpenTabFocused(tab_type) => {
+                    if let Some(active_pane) = self.panes.active() {
+                        for (pane, panel) in self.panes.iter_mut() {
+                            if let Some(index) = (*panel).state.index_of_tab_type(tab_type.clone()) {
+                                let pane = *pane;
+                                if pane == active_pane {
+                                    return Command::perform(
+                                        async move { PanelMessage::FocusTab((pane, index)) },
+                                        Message::Panel,
+                                    );
+                                } else {
+                                    return Command::perform(
+                                        async move {
+                                            PanelMessage::MoveTab((pane, index, active_pane))
+                                        },
+                                        Message::Panel,
+                                    );
+                                }
                             }
                         }
-                    }
 
-                    if let Some(panel) = self.panes.get_mut(&active_pane) {
-                        (*panel).open_tab(tab_type);
+                        if let Some(panel) = self.panes.get_mut(&active_pane) {
+                            (*panel).state.open_tab(tab_type);
+                        }
                     }
                 }
-            }
-            Message::CloseTab(pane, index) => {
-                if let Some(panel) = self.panes.get_mut(&pane) {
-                    let (new_focus, _, _) = (*panel).close_tab(index);
-                    return Command::perform(async move { (pane, new_focus) }, Message::FocusTab);
+                PanelMessage::CloseTab(pane, index) => {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        let (new_focus, _, _) = (*panel).state.close_tab(index);
+                        return Command::perform(
+                            async move { PanelMessage::FocusTab((pane, new_focus)) },
+                            Message::Panel,
+                        );
+                    }
                 }
-            }
-            Message::FocusTab((pane, index)) => {
-                if let Some(panel) = self.panes.get_mut(&pane) {
-                    (*panel).focus_tab(index);
+                PanelMessage::FocusTab((pane, index)) => {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        (*panel).state.focus_tab(index);
+                    }
                 }
             }
             Message::ThemeChanged(theme) => self.config.theme = theme,
@@ -127,7 +143,7 @@ impl Application for Damascus {
                 let panel = self.panes.close(&pane);
                 if panel.is_none() {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).close_all_tabs();
+                        (*panel).state.close_all_tabs();
                     }
                 }
             }
@@ -136,7 +152,7 @@ impl Application for Damascus {
                     let panel = self.panes.close(&pane);
                     if panel.is_none() {
                         if let Some(panel) = self.panes.get_mut(&pane) {
-                            (*panel).close_all_tabs();
+                            (*panel).state.close_all_tabs();
                         }
                     }
                 }

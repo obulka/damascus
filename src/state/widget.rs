@@ -1,3 +1,4 @@
+pub mod panel;
 pub mod tab;
 pub mod tabs;
 

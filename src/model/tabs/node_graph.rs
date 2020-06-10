@@ -4,11 +4,9 @@ use super::TabContent;
 use crate::action::{
     tabs::{node_graph::Message, Message as TabContentMessage},
     Message as DamascusMessage,
+    panel::Message as PanelMessage,
 };
-use crate::state::{
-    Config,
-    tabs::node_graph::State,
-};
+use crate::state::{tabs::node_graph::State, Config};
 
 #[derive(Default)]
 pub struct NodeGraph {
@@ -36,11 +34,12 @@ impl TabContent for NodeGraph {
     }
 
     fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
-        let content = self.state.view(config).map(|message| {
-            DamascusMessage::TabContent(
-                TabContentMessage::NodeGraph(message)
-            )
-        });
+        let content = self
+            .state
+            .view(config)
+            .map(|message| DamascusMessage::Panel(
+                PanelMessage::TabContent(TabContentMessage::NodeGraph(message))
+            ));
 
         Container::new(content)
             .width(Length::Fill)

@@ -3,17 +3,15 @@ use iced::{keyboard, pane_grid};
 
 // Local Imports
 pub mod tabs;
+pub mod panel;
 
 use crate::state::{style::Theme, widget::TabType};
-use tabs::Message as TabContentMessage;
+use panel::Message as PanelMessage;
+
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    TabContent(TabContentMessage),
-    MoveTab((pane_grid::Pane, usize, pane_grid::Pane)),
-    OpenTabFocused(TabType),
-    CloseTab(pane_grid::Pane, usize),
-    FocusTab((pane_grid::Pane, usize)),
+    Panel(PanelMessage),
     ThemeChanged(Theme),
     ToggleTheme,
     Split(pane_grid::Axis, pane_grid::Pane),
@@ -39,8 +37,8 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     };
 
     match event.key_code {
-        KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
-        KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
+        KeyCode::V => Some(Message::Panel(PanelMessage::OpenTabFocused(TabType::Viewer))),
+        KeyCode::G => Some(Message::Panel(PanelMessage::OpenTabFocused(TabType::NodeGraph))),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
         _ => direction.map(Message::FocusAdjacent),

@@ -40,7 +40,6 @@ impl State {
     pub fn view(
         &mut self,
         pane: pane_grid::Pane,
-        focus: Option<pane_grid::Focus>,
         config: &Config,
     ) -> Element<DamascusMessage> {
         let State {
@@ -182,13 +181,7 @@ impl State {
             content = content.push(tab_content.view(config));
         }
 
-        Container::new(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .padding(0)
-            .center_y()
-            .style(config.theme.pane_style(focus.is_some()))
-            .into()
+        content.into()
     }
 
     pub fn open_tab(&mut self, tab_type: TabType) {

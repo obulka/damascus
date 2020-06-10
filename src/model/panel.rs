@@ -23,7 +23,7 @@ impl Panel {
         focus: Option<pane_grid::Focus>,
         config: &Config,
     ) -> Element<DamascusMessage> {
-        let content = self.state.view(pane, focus, config);
+        let content = self.state.view(pane, config);
 
         Container::new(content)
             .width(Length::Fill)

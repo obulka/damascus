@@ -8,8 +8,7 @@ use iced::{
 mod panel;
 pub mod tabs;
 
-use crate::action::{handle_hotkey, panel::Message as PanelMessage, Message};
-use crate::model::tabs::node_graph::NodeGraph;
+use crate::action::{handle_hotkey, panel::Message as PanelMessage, Message, tabs::node_graph::clear_cache_command};
 use crate::state::{style::Theme, Config};
 use panel::Panel;
 
@@ -105,14 +104,14 @@ impl Application for Damascus {
             },
             Message::ThemeChanged(theme) => {
                 self.config.theme = theme;
-                return NodeGraph::clear_cache_command();
+                return clear_cache_command();
             }
             Message::ToggleTheme => {
                 self.config.theme = match self.config.theme {
                     Theme::Dark => Theme::Light,
                     Theme::Light => Theme::Dark,
                 };
-                return NodeGraph::clear_cache_command();
+                return clear_cache_command();
             }
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(axis, &pane, Panel::new());

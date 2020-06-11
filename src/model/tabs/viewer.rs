@@ -9,7 +9,6 @@ use std::time::Duration;
 
 use super::TabContent;
 use crate::action::{
-    panel::Message as PanelMessage,
     tabs::{viewer::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
@@ -83,9 +82,7 @@ impl TabContent for Viewer {
     fn subscription(&self) -> Subscription<DamascusMessage> {
         if self.is_playing {
             time::every(Duration::from_millis(1000 / self.speed as u64)).map(|instant| {
-                DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
-                    Message::Tick(instant),
-                )))
+                    Message::Tick(instant).into()
             })
         } else {
             Subscription::none()
@@ -103,14 +100,12 @@ impl TabContent for Viewer {
                 config,
             )
             .map(|message| {
-                DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(message)))
+                message.into()
             });
 
         let content = Column::new()
             .push(self.grid.view().map(|message| {
-                DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
-                    Message::Grid(message),
-                )))
+                    Message::Grid(message).into()
             }))
             .push(controls);
 
@@ -135,7 +130,7 @@ pub mod grid {
 
     use crate::action::{
         panel::Message as PanelMessage,
-        tabs::{viewer::Message as ViewerMessage, Message as TabContentMessage},
+        tabs::{viewer::Message as ViewerMessage},
     };
 
     pub struct Grid {
@@ -199,13 +194,13 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                PanelMessage::TabContent(TabContentMessage::Viewer(ViewerMessage::Grid(
+                ViewerMessage::Grid(
                     Message::Ticked {
                         result,
                         version,
                         tick_duration,
                     },
-                )))
+                ).into()
             })
         }
 

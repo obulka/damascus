@@ -145,7 +145,7 @@ impl State {
                                         button(
                                             close_tab_state,
                                             "×",
-                                            DamascusMessage::Panel(Message::CloseTab(pane, index)),
+                                            Message::CloseTab(pane, index).into(),
                                             config.theme.button_style(style::Button::CloseTab),
                                         )
                                         .width(Length::Shrink)
@@ -154,7 +154,7 @@ impl State {
                             )
                             .width(Length::Shrink)
                             .padding(1)
-                            .on_press(DamascusMessage::Panel(Message::FocusTab((pane, index))))
+                            .on_press(Message::FocusTab((pane, index)).into())
                             .style(config.theme.tab_style(focused)),
                         )
                     },

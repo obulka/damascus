@@ -36,12 +36,12 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     };
 
     match event.key_code {
-        KeyCode::V => Some(Message::Panel(PanelMessage::OpenTabFocused(
+        KeyCode::V => Some(PanelMessage::OpenTabFocused(
             TabType::Viewer,
-        ))),
-        KeyCode::G => Some(Message::Panel(PanelMessage::OpenTabFocused(
+        ).into()),
+        KeyCode::G => Some(PanelMessage::OpenTabFocused(
             TabType::NodeGraph,
-        ))),
+        ).into()),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
         _ => direction.map(Message::FocusAdjacent),

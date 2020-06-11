@@ -37,11 +37,7 @@ impl State {
         }
     }
 
-    pub fn view(
-        &mut self,
-        pane: pane_grid::Pane,
-        config: &Config,
-    ) -> Element<DamascusMessage> {
+    pub fn view(&mut self, pane: pane_grid::Pane, config: &Config) -> Element<DamascusMessage> {
         let State {
             split_horizontally,
             split_vertically,

@@ -6,9 +6,10 @@ use iced::{
 use std::ops::RangeInclusive;
 
 use crate::action::tabs::node_graph::Message;
-use crate::state::Config;
+use crate::state::{node::Viewer, Config, Node};
 
 pub struct State {
+    nodes: Vec<Box<dyn Node>>,
     grid_size: f32,
     interaction: Interaction,
     connection_cache: Cache,
@@ -23,7 +24,8 @@ pub struct State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            grid_size: 20.0,
+            nodes: vec![Box::new(Viewer::default())],
+            grid_size: 15.0,
             interaction: Interaction::None,
             connection_cache: Cache::default(),
             node_cache: Cache::default(),
@@ -157,9 +159,38 @@ impl<'a> canvas::Program<Message> for State {
 
     fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry> {
         let center = Vector::new(bounds.width / 2.0, bounds.height / 2.0);
+        let lower_lod = self.scaling < 0.4;
 
-        if self.scaling < 0.2 || !self.show_lines {
-            vec![]
+        let nodes = self.node_cache.draw(bounds.size(), |frame| {
+            frame.with_save(|frame| {
+                frame.translate(center);
+                frame.scale(self.scaling);
+                frame.translate(self.translation);
+                frame.scale(self.grid_size);
+
+                let region = self.visible_region(frame.size());
+                let rows = region.rows();
+                let columns = region.columns();
+                let width = 1.0 / self.grid_size;
+
+                let visible_bounds = Rectangle::new(
+                    Point::new(*columns.start() as f32, *rows.start() as f32),
+                    Size::new(
+                        (*columns.end() - *columns.start()) as f32,
+                        (*rows.end() - *rows.start()) as f32,
+                    ),
+                );
+
+                frame.translate(Vector::new(-width / 2.0, -width / 2.0));
+
+                for node in self.nodes.iter() {
+                    node.draw(frame, &visible_bounds, !lower_lod);
+                }
+            })
+        });
+
+        if lower_lod || !self.show_lines {
+            vec![nodes]
         } else {
             let grid = self.grid_cache.draw(bounds.size(), |frame| {
                 frame.translate(center);
@@ -206,7 +237,7 @@ impl<'a> canvas::Program<Message> for State {
                 }
             });
 
-            vec![grid]
+            vec![grid, nodes]
         }
     }
 

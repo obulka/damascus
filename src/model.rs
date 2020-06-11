@@ -105,14 +105,14 @@ impl Application for Damascus {
             },
             Message::ThemeChanged(theme) => {
                 self.config.theme = theme;
-                return NodeGraph::clear_node_caches_command();
+                return NodeGraph::clear_cache_command();
             }
             Message::ToggleTheme => {
                 self.config.theme = match self.config.theme {
                     Theme::Dark => Theme::Light,
                     Theme::Light => Theme::Dark,
                 };
-                return NodeGraph::clear_node_caches_command();
+                return NodeGraph::clear_cache_command();
             }
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(axis, &pane, Panel::new());

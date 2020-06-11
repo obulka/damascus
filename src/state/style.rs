@@ -27,43 +27,49 @@ pub const LIGHT_GREY: Color = Color::from_rgb(
     0x6A as f32 / 255.0,
 );
 
-const BLUE: Color = Color::from_rgb(
+pub const OFF_WHITE: Color = Color::from_rgb(
+    0xDB as f32 / 255.0,
+    0xDB as f32 / 255.0,
+    0xDB as f32 / 255.0,
+);
+
+pub const BLUE: Color = Color::from_rgb(
     0x00 as f32 / 255.0,
     0x76 as f32 / 255.0,
     0xBF as f32 / 255.0,
 );
 
-const PURPLE: Color = Color::from_rgb(
+pub const PURPLE: Color = Color::from_rgb(
     0x41 as f32 / 255.0,
     0x1D as f32 / 255.0,
     0x4E as f32 / 255.0,
 );
 
-const DARK_PURPLE: Color = Color::from_rgb(
+pub const DARK_PURPLE: Color = Color::from_rgb(
     0x14 as f32 / 255.0,
     0x10 as f32 / 255.0,
     0x27 as f32 / 255.0,
 );
 
-const TURQOISE: Color = Color::from_rgb(
+pub const TURQOISE: Color = Color::from_rgb(
     0x00 as f32 / 255.0,
     0x8D as f32 / 255.0,
     0x92 as f32 / 255.0,
 );
 
-const INDIGO: Color = Color::from_rgb(
+pub const INDIGO: Color = Color::from_rgb(
     0x36 as f32 / 255.0,
     0x2F as f32 / 255.0,
     0x7D as f32 / 255.0,
 );
 
-const ORANGE: Color = Color::from_rgb(
+pub const ORANGE: Color = Color::from_rgb(
     0xE3 as f32 / 255.0,
     0x8E as f32 / 255.0,
     0x21 as f32 / 255.0,
 );
 
-const CLOSE: Color = Color::from_rgb(
+pub const CLOSE: Color = Color::from_rgb(
     0xE7 as f32 / 255.0,
     0x5B as f32 / 255.0,
     0x2B as f32 / 255.0,

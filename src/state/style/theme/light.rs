@@ -1,10 +1,12 @@
 use iced::{button, container, Background, Color, Vector};
 
-use crate::state::style::{tab, NodeGraphStyle, CLOSE, DARK_GREY, INDIGO, LIGHT_GREY, PURPLE};
+use crate::state::style::{
+    tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, OFF_WHITE, ORANGE, PURPLE,
+};
 
-const HIGHLIGHT: Color = INDIGO;
+const HIGHLIGHT: Color = ORANGE;
 
-pub const PRIMARY: Color = Color::WHITE;
+pub const PRIMARY: Color = OFF_WHITE;
 
 pub const SECONDARY: Color = LIGHT_GREY;
 

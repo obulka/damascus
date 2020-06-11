@@ -4,7 +4,7 @@ use iced::{
 };
 
 use crate::state::style::{
-    tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, PURPLE, TURQOISE,
+    tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, ORANGE, TURQOISE,
 };
 
 const ACCENT: Color = Color::from_rgb(
@@ -13,7 +13,7 @@ const ACCENT: Color = Color::from_rgb(
     0xE9 as f32 / 255.0,
 );
 
-const HIGHLIGHT: Color = TURQOISE;
+const HIGHLIGHT: Color = ORANGE;
 
 pub const PRIMARY: Color = DARK_GREY;
 
@@ -39,7 +39,7 @@ pub const NODE_GRAPH_STYLE: NodeGraphStyle = NodeGraphStyle {
     border_color: Color::BLACK,
     border_width: 2.0,
     selected_color: HIGHLIGHT,
-    working_color: PURPLE,
+    working_color: TURQOISE,
 };
 
 pub struct Container;

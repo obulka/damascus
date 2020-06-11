@@ -65,6 +65,10 @@ impl State {
             .into()
     }
 
+    pub fn deselect_node(&mut self, label: String) {
+        self.selected_nodes.remove(&label);
+    }
+
     pub fn select_node(&mut self, label: String) {
         self.selected_nodes.insert(label);
     }
@@ -118,7 +122,12 @@ impl State {
         )
     }
 
-    fn node_at(&self, position: Point) -> Option<String> {
+    fn node_at(&self, position: &Point) -> Option<String> {
+        for (label, node) in self.nodes.iter() {
+            if node.contains(*position) {
+                return Some(label.clone());
+            }
+        }
         None
     }
 
@@ -161,11 +170,12 @@ impl<'a> canvas::Program<Message> for State {
                         let grid_position =
                             self.node_graph_to_grid(self.project(cursor_position, bounds.size()));
 
-                        if let Some(label) = self.node_at(grid_position) {
-                            self.selected_nodes.insert(label.clone());
-                            println!("Clicked: {:?}", label);
+                        if let Some(label) = self.node_at(&grid_position) {
+                            if self.selected_nodes.contains(&label) {
+                                return Some(Message::DeselectNode(label));
+                            }
+                            return Some(Message::SelectNode(label));
                         }
-                        println!("Cursor: {:?}", self.project(cursor_position, bounds.size()));
                         return Some(Message::ToggleGrid);
                     }
                     _ => None,
@@ -258,6 +268,8 @@ impl<'a> canvas::Program<Message> for State {
                         frame,
                         &visible_bounds,
                         if lower_lod { None } else { Some(label) },
+                        self.selected_nodes.contains(label),
+                        false,
                         font_size,
                         node_graph_style,
                     );
@@ -341,7 +353,7 @@ impl Region {
 
         let visible_rows = (self.height / self.grid_size).ceil() as isize;
 
-        first_row..=first_row + visible_rows
+        first_row..=first_row + visible_rows + 1
     }
 
     fn columns(&self) -> RangeInclusive<isize> {
@@ -349,7 +361,7 @@ impl Region {
 
         let visible_columns = (self.width / self.grid_size).ceil() as isize;
 
-        first_column..=first_column + visible_columns
+        first_column..=first_column + visible_columns + 1
     }
 }
 

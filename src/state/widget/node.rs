@@ -41,6 +41,8 @@ pub trait Node {
         frame: &mut Frame,
         bounds: &Rectangle,
         label: Option<&String>,
+        selected: bool,
+        _working: bool,
         font_size: f32,
         node_graph_style: &NodeGraphStyle,
     ) {
@@ -54,7 +56,11 @@ pub trait Node {
                     &node,
                     Stroke {
                         width: node_graph_style.border_width,
-                        color: node_graph_style.border_color,
+                        color: if selected {
+                            node_graph_style.selected_color
+                        } else {
+                            node_graph_style.border_color
+                        },
                         ..Stroke::default()
                     },
                 );

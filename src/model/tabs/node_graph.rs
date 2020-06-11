@@ -28,6 +28,13 @@ impl NodeGraph {
             DamascusMessage::Panel,
         )
     }
+
+    pub fn clear_cache_command() -> Command<DamascusMessage> {
+        Command::perform(
+            async move { PanelMessage::TabContent(TabContentMessage::NodeGraph(Message::ClearCache)) },
+            DamascusMessage::Panel,
+        )
+    }
 }
 
 impl TabContent for NodeGraph {
@@ -36,7 +43,7 @@ impl TabContent for NodeGraph {
             match message {
                 Message::ToggleGrid => self.state.toggle_lines(),
                 Message::Next => {}
-                Message::AddNode { node_type: _ } => {}
+                Message::AddNode(..) => {}
                 Message::ClearCache => {
                     self.state.clear_cache();
                 }
@@ -47,7 +54,11 @@ impl TabContent for NodeGraph {
                     self.state.clear_selected();
                     return NodeGraph::clear_node_caches_command();
                 }
-                Message::SelectNode { label } => {
+                Message::DeselectNode(label) => {
+                    self.state.deselect_node(label);
+                    return NodeGraph::clear_node_caches_command();
+                }
+                Message::SelectNode(label) => {
                     self.state.select_node(label);
                     return NodeGraph::clear_node_caches_command();
                 }

@@ -3,7 +3,9 @@ use iced::{
     Color, Vector,
 };
 
-use crate::state::style::{tab, CLOSE, ORANGE};
+use crate::state::style::{
+    tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, PURPLE, TURQOISE,
+};
 
 const ACCENT: Color = Color::from_rgb(
     0x6F as f32 / 255.0,
@@ -11,25 +13,13 @@ const ACCENT: Color = Color::from_rgb(
     0xE9 as f32 / 255.0,
 );
 
-const HIGHLIGHT: Color = ORANGE;
+const HIGHLIGHT: Color = TURQOISE;
 
-pub const PRIMARY: Color = Color::from_rgb(
-    0x28 as f32 / 255.0,
-    0x29 as f32 / 255.0,
-    0x23 as f32 / 255.0,
-);
+pub const PRIMARY: Color = DARK_GREY;
 
-pub const SECONDARY: Color = Color::from_rgb(
-    0x42 as f32 / 255.0,
-    0x43 as f32 / 255.0,
-    0x3E as f32 / 255.0,
-);
+pub const SECONDARY: Color = MEDIUM_GREY;
 
-pub const TERTIARY: Color = Color::from_rgb(
-    0x6D as f32 / 255.0,
-    0x6E as f32 / 255.0,
-    0x6A as f32 / 255.0,
-);
+pub const TERTIARY: Color = LIGHT_GREY;
 
 const ACTIVE: Color = Color::from_rgb(
     0x72 as f32 / 255.0,
@@ -44,6 +34,13 @@ const HOVERED: Color = Color::from_rgb(
 );
 
 pub const TEXT_COLOR: Color = Color::WHITE;
+
+pub const NODE_GRAPH_STYLE: NodeGraphStyle = NodeGraphStyle {
+    border_color: Color::BLACK,
+    border_width: 2.0,
+    selected_color: HIGHLIGHT,
+    working_color: PURPLE,
+};
 
 pub struct Container;
 

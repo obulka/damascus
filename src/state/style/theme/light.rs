@@ -1,24 +1,23 @@
 use iced::{button, container, Background, Color, Vector};
 
-use crate::state::style::{tab, CLOSE, ORANGE};
+use crate::state::style::{tab, NodeGraphStyle, CLOSE, DARK_GREY, INDIGO, LIGHT_GREY, PURPLE};
 
-const HIGHLIGHT: Color = ORANGE;
+const HIGHLIGHT: Color = INDIGO;
 
 pub const PRIMARY: Color = Color::WHITE;
 
-pub const SECONDARY: Color = Color::from_rgb(
-    0x99 as f32 / 255.0,
-    0x9A as f32 / 255.0,
-    0x9C as f32 / 255.0,
-);
+pub const SECONDARY: Color = LIGHT_GREY;
 
-pub const TERTIARY: Color = Color::from_rgb(
-    0x3C as f32 / 255.0,
-    0x3B as f32 / 255.0,
-    0x37 as f32 / 255.0,
-);
+pub const TERTIARY: Color = DARK_GREY;
 
 pub const TEXT_COLOR: Color = Color::BLACK;
+
+pub const NODE_GRAPH_STYLE: NodeGraphStyle = NodeGraphStyle {
+    border_color: Color::BLACK,
+    border_width: 2.0,
+    selected_color: HIGHLIGHT,
+    working_color: PURPLE,
+};
 
 pub struct TabBar;
 

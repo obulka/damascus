@@ -1,4 +1,4 @@
-use iced::{Command, Container, Element, Length};
+use iced::{Command, Container, Element, Length, Point};
 
 use super::TabContent;
 use crate::action::{
@@ -6,7 +6,7 @@ use crate::action::{
     tabs::{node_graph::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
-use crate::state::{tabs::node_graph::State, Config};
+use crate::state::{node::NodeType, tabs::node_graph::State, Config};
 
 #[derive(Default)]
 pub struct NodeGraph {
@@ -15,7 +15,18 @@ pub struct NodeGraph {
 
 impl NodeGraph {
     pub fn new() -> Self {
-        Self { ..Self::default() }
+        let mut state = State::default();
+        state.add_node(NodeType::Viewer, Point::ORIGIN);
+        Self { state: state }
+    }
+
+    pub fn clear_node_caches_command() -> Command<DamascusMessage> {
+        Command::perform(
+            async move {
+                PanelMessage::TabContent(TabContentMessage::NodeGraph(Message::ClearNodeCaches))
+            },
+            DamascusMessage::Panel,
+        )
     }
 }
 
@@ -24,10 +35,22 @@ impl TabContent for NodeGraph {
         if let TabContentMessage::NodeGraph(message) = message {
             match message {
                 Message::ToggleGrid => self.state.toggle_lines(),
-                Message::Clear => {
-                    self.state.clear();
-                }
                 Message::Next => {}
+                Message::AddNode { node_type: _ } => {}
+                Message::ClearCache => {
+                    self.state.clear_cache();
+                }
+                Message::ClearNodeCaches => {
+                    self.state.clear_node_caches();
+                }
+                Message::ClearSelected => {
+                    self.state.clear_selected();
+                    return NodeGraph::clear_node_caches_command();
+                }
+                Message::SelectNode { label } => {
+                    self.state.select_node(label);
+                    return NodeGraph::clear_node_caches_command();
+                }
             }
         }
         Command::none()

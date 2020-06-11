@@ -9,35 +9,53 @@ pub mod tab;
 mod theme;
 use theme::{dark, light};
 
-// const BLUE: Color = Color::from_rgb(
-//     0x00 as f32 / 255.0,
-//     0x76 as f32 / 255.0,
-//     0xBF as f32 / 255.0,
-// );
+pub const DARK_GREY: Color = Color::from_rgb(
+    0x28 as f32 / 255.0,
+    0x29 as f32 / 255.0,
+    0x23 as f32 / 255.0,
+);
 
-// const PURPLE: Color = Color::from_rgb(
-//     0x41 as f32 / 255.0,
-//     0x1D as f32 / 255.0,
-//     0x4E as f32 / 255.0,
-// );
+pub const MEDIUM_GREY: Color = Color::from_rgb(
+    0x42 as f32 / 255.0,
+    0x43 as f32 / 255.0,
+    0x3E as f32 / 255.0,
+);
 
-// const DARK_PURPLE: Color = Color::from_rgb(
-//     0x14 as f32 / 255.0,
-//     0x10 as f32 / 255.0,
-//     0x27 as f32 / 255.0,
-// );
+pub const LIGHT_GREY: Color = Color::from_rgb(
+    0x6D as f32 / 255.0,
+    0x6E as f32 / 255.0,
+    0x6A as f32 / 255.0,
+);
 
-// const TURQOISE: Color = Color::from_rgb(
-//     0x00 as f32 / 255.0,
-//     0x8D as f32 / 255.0,
-//     0x92 as f32 / 255.0,
-// );
+const BLUE: Color = Color::from_rgb(
+    0x00 as f32 / 255.0,
+    0x76 as f32 / 255.0,
+    0xBF as f32 / 255.0,
+);
 
-// const INDIGO: Color = Color::from_rgb(
-//     0x36 as f32 / 255.0,
-//     0x2F as f32 / 255.0,
-//     0x7D as f32 / 255.0,
-// );
+const PURPLE: Color = Color::from_rgb(
+    0x41 as f32 / 255.0,
+    0x1D as f32 / 255.0,
+    0x4E as f32 / 255.0,
+);
+
+const DARK_PURPLE: Color = Color::from_rgb(
+    0x14 as f32 / 255.0,
+    0x10 as f32 / 255.0,
+    0x27 as f32 / 255.0,
+);
+
+const TURQOISE: Color = Color::from_rgb(
+    0x00 as f32 / 255.0,
+    0x8D as f32 / 255.0,
+    0x92 as f32 / 255.0,
+);
+
+const INDIGO: Color = Color::from_rgb(
+    0x36 as f32 / 255.0,
+    0x2F as f32 / 255.0,
+    0x7D as f32 / 255.0,
+);
 
 const ORANGE: Color = Color::from_rgb(
     0xE3 as f32 / 255.0,
@@ -147,6 +165,36 @@ impl Theme {
         match self {
             Theme::Dark => dark::TERTIARY,
             Theme::Light => light::TERTIARY,
+        }
+    }
+}
+
+pub struct NodeStyle {
+    pub background: Color,
+    pub text_color: Color,
+}
+
+impl Default for NodeStyle {
+    fn default() -> Self {
+        NodeStyle {
+            background: LIGHT_GREY,
+            text_color: Color::WHITE,
+        }
+    }
+}
+
+pub struct NodeGraphStyle {
+    pub border_color: Color,
+    pub border_width: f32,
+    pub selected_color: Color,
+    pub working_color: Color,
+}
+
+impl From<Theme> for NodeGraphStyle {
+    fn from(theme: Theme) -> Self {
+        match theme {
+            Theme::Dark => dark::NODE_GRAPH_STYLE,
+            Theme::Light => light::NODE_GRAPH_STYLE,
         }
     }
 }

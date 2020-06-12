@@ -18,7 +18,9 @@ pub struct NodeGraph {
 impl NodeGraph {
     pub fn new() -> Self {
         let mut state = State::default();
-        state.add_node(NodeType::Viewer, Point::new(1.0, 5.0));
+        for i in 0..5 {
+            state.add_node(NodeType::Viewer, Point::new(i as f32, i as f32));
+        }
         Self { state: state }
     }
 }

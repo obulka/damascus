@@ -156,11 +156,10 @@ impl<'a> canvas::Program<Message> for State {
                         _ => {}
                     }
                 }
-                _ => {
-                    self.interaction = Interaction::None;
-                    return None;
-                }
+                _ => {}
             }
+            self.interaction = Interaction::None;
+            return None;
         }
 
         let cursor_position = cursor.position_in(&bounds)?;

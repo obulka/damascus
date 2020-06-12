@@ -2,10 +2,7 @@ use iced::{Command, Container, Element, Length, Point};
 
 use super::TabContent;
 use crate::action::{
-    tabs::{
-        node_graph::{clear_node_caches_command, Message},
-        Message as TabContentMessage,
-    },
+    tabs::{node_graph::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
 use crate::state::{node::NodeType, tabs::node_graph::State, Config};
@@ -42,15 +39,27 @@ impl TabContent for NodeGraph {
                 }
                 Message::ClearSelected => {
                     self.state.clear_selected();
-                    return clear_node_caches_command();
+                    self.state.clear_node_caches();
                 }
                 Message::DeselectNode(label) => {
                     self.state.deselect_node(label);
-                    return clear_node_caches_command();
+                    self.state.clear_node_caches();
                 }
                 Message::SelectNode(label) => {
                     self.state.select_node(label);
-                    return clear_node_caches_command();
+                    self.state.clear_node_caches();
+                }
+                Message::BeginSelecting(start_position) => {
+                    self.state.clear_selected();
+                    self.state.initialize_selection_box(start_position);
+                    self.state.clear_node_caches();
+                }
+                Message::ExpandSelection(lower_right_position) => {
+                    self.state.expand_selection_box(lower_right_position);
+                    self.state.clear_node_caches();
+                }
+                Message::CompleteSelection => {
+                    self.state.close_selection_box();
                 }
             }
         }

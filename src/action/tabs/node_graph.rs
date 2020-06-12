@@ -15,6 +15,9 @@ pub enum Message {
     AddNode(NodeType, Point),
     DeselectNode(String),
     SelectNode(String),
+    BeginSelecting(Point),
+    ExpandSelection(Point),
+    CompleteSelection,
 }
 
 impl From<Message> for TabContentMessage {

@@ -200,6 +200,9 @@ pub struct NodeGraphStyle {
     pub border_width: f32,
     pub selected_color: Color,
     pub working_color: Color,
+    pub selection_box_color: Color,
+    pub selection_box_border_color: Color,
+    pub selection_box_border_width: f32,
 }
 
 impl From<Theme> for NodeGraphStyle {

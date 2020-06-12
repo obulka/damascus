@@ -19,6 +19,9 @@ pub const NODE_GRAPH_STYLE: NodeGraphStyle = NodeGraphStyle {
     border_width: 2.0,
     selected_color: HIGHLIGHT,
     working_color: PURPLE,
+    selection_box_color: Color { a: 0.5, ..TERTIARY },
+    selection_box_border_color: SECONDARY,
+    selection_box_border_width: 2.0,
 };
 
 pub struct TabBar;

@@ -180,7 +180,7 @@ impl<'a> canvas::Program<Message> for State {
 
                         if let Some(label) = self.node_at(&grid_position) {
                             self.interaction = Interaction::MovingSelected {
-                                position: grid_position,
+                                start: grid_position,
                             };
                             return Some(Message::SelectNode(label));
                         }
@@ -199,16 +199,19 @@ impl<'a> canvas::Program<Message> for State {
                         Some(Message::ClearCache)
                     }
                     Interaction::MovingSelected {
-                        position,
+                        start,
                     } => {
                         let grid_position = self.project(cursor_position, bounds.size());
-                        let translation = grid_position - *position;
+                        let translation = grid_position - *start;
                         for node_label in self.selected_nodes.iter() {
                             if let Some(node) = self.nodes.get_mut(node_label) {
                                 node.set_translation(translation);
                             }
                         }
                         Some(Message::ClearNodeCaches)
+                    }
+                    Interaction::SelectingNodes { start } => {
+                        None
                     }
                     _ => None,
                 },
@@ -381,7 +384,7 @@ enum Interaction {
         start: Point,
     },
     MovingSelected {
-        position: Point,
+        start: Point,
     },
     SelectingNodes {
         start: Point,

@@ -78,8 +78,22 @@ impl State {
             selection_box.width = to_position.x - corner.x;
             selection_box.height = to_position.y - corner.y;
 
+            let mut top_left = corner;
+            let mut top_left_size = selection_box.size();
+
+            if selection_box.width < 0.0 {
+                top_left.x += selection_box.width;
+                top_left_size.width *= -1.0;
+            }
+            if selection_box.height < 0.0 {
+                top_left.y += selection_box.height;
+                top_left_size.height *= -1.0;
+            }
+
+            let top_left_rect = Rectangle::new(top_left, top_left_size);
+
             for (node_label, node) in self.nodes.iter() {
-                if selection_box.contains(node.rect().center()) {
+                if top_left_rect.contains(node.rect().center()) {
                     self.selected_nodes.insert(node_label.to_string());
                 } else {
                     self.selected_nodes.remove(node_label);

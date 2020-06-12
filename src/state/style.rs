@@ -28,9 +28,15 @@ pub const LIGHT_GREY: Color = Color::from_rgb(
 );
 
 pub const OFF_WHITE: Color = Color::from_rgb(
-    0xDB as f32 / 255.0,
-    0xDB as f32 / 255.0,
-    0xDB as f32 / 255.0,
+    0xE4 as f32 / 255.0,
+    0xEC as f32 / 255.0,
+    0xE8 as f32 / 255.0,
+);
+
+pub const NODE_DEFAULT: Color = Color::from_rgb(
+    0xAB as f32 / 255.0,
+    0xAB as f32 / 255.0,
+    0xAB as f32 / 255.0,
 );
 
 pub const BLUE: Color = Color::from_rgb(
@@ -183,8 +189,8 @@ pub struct NodeStyle {
 impl Default for NodeStyle {
     fn default() -> Self {
         NodeStyle {
-            background: LIGHT_GREY,
-            text_color: Color::WHITE,
+            background: NODE_DEFAULT,
+            text_color: Color::BLACK,
         }
     }
 }

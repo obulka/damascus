@@ -1,9 +1,7 @@
 use std::time::Instant;
 
 use crate::action::{
-    panel::Message as PanelMessage,
-    tabs::Message as TabContentMessage,
-    Message as DamascusMessage,
+    panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
 };
 use crate::model::tabs::viewer::grid;
 
@@ -20,20 +18,20 @@ pub enum Message {
 
 impl From<Message> for TabContentMessage {
     fn from(message: Message) -> TabContentMessage {
-       TabContentMessage::Viewer(message)
+        TabContentMessage::Viewer(message)
     }
 }
 
 impl From<Message> for PanelMessage {
     fn from(message: Message) -> PanelMessage {
-       let message: TabContentMessage = message.into();
-       message.into()
+        let message: TabContentMessage = message.into();
+        message.into()
     }
 }
 
 impl From<Message> for DamascusMessage {
     fn from(message: Message) -> DamascusMessage {
-       let message: PanelMessage = message.into();
-       message.into()
+        let message: PanelMessage = message.into();
+        message.into()
     }
 }

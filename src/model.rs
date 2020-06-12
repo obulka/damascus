@@ -8,7 +8,9 @@ use iced::{
 mod panel;
 pub mod tabs;
 
-use crate::action::{handle_hotkey, panel::Message as PanelMessage, Message, tabs::node_graph::clear_cache_command};
+use crate::action::{
+    handle_hotkey, panel::Message as PanelMessage, tabs::node_graph::clear_cache_command, Message,
+};
 use crate::state::{style::Theme, Config};
 use panel::Panel;
 

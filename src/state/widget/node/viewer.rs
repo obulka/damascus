@@ -3,6 +3,7 @@ use iced::{Point, Rectangle, Size, Vector};
 
 pub struct Viewer {
     rectangle: Rectangle,
+    translation: Vector,
 }
 
 impl Viewer {
@@ -19,7 +20,8 @@ impl Viewer {
 impl Default for Viewer {
     fn default() -> Self {
         Self {
-            rectangle: Rectangle::with_size(Size::new(5.0, 3.0)),
+            rectangle: Rectangle::with_size(Size::new(4.0, 1.0)),
+            translation: Vector::default(),
         }
     }
 }
@@ -34,7 +36,16 @@ impl Node for Viewer {
         self.rectangle.y = position.y;
     }
 
-    fn translate(&mut self, translation: Vector) {
-        self.rectangle = self.rectangle + translation;
+    fn translate(&mut self) {
+        self.rectangle = self.rectangle + self.translation;
+        self.translation = Vector::default();
+    }
+
+    fn set_translation(&mut self, translation: Vector) {
+        self.translation = translation;
+    }
+
+    fn get_translation(&self) -> Vector {
+        self.translation
     }
 }

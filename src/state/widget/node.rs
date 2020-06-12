@@ -9,9 +9,13 @@ mod viewer;
 pub use viewer::Viewer;
 
 pub trait Node {
-    fn translate(&mut self, translation: Vector);
-
     fn set_position(&mut self, position: Point);
+
+    fn set_translation(&mut self, translation: Vector);
+
+    fn translate(&mut self);
+
+    fn get_translation(&self) -> Vector;
 
     fn rect(&self) -> Rectangle;
 
@@ -50,7 +54,7 @@ pub trait Node {
             let node_style = self.style();
             let node = Path::rectangle(rect.position(), rect.size());
             frame.with_save(|frame| {
-                frame.translate(self.position_vector());
+                frame.translate(self.get_translation());
                 frame.fill(&node, node_style.background);
                 frame.stroke(
                     &node,

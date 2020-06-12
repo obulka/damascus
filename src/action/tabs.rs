@@ -1,7 +1,7 @@
 pub mod node_graph;
 pub mod viewer;
 
-use super::{panel::Message as PanelMessage};
+use super::panel::Message as PanelMessage;
 use node_graph::Message as NodeGraphMessage;
 use viewer::Message as ViewerMessage;
 

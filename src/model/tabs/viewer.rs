@@ -81,9 +81,8 @@ impl TabContent for Viewer {
 
     fn subscription(&self) -> Subscription<DamascusMessage> {
         if self.is_playing {
-            time::every(Duration::from_millis(1000 / self.speed as u64)).map(|instant| {
-                    Message::Tick(instant).into()
-            })
+            time::every(Duration::from_millis(1000 / self.speed as u64))
+                .map(|instant| Message::Tick(instant).into())
         } else {
             Subscription::none()
         }
@@ -99,14 +98,14 @@ impl TabContent for Viewer {
                 selected_speed,
                 config,
             )
-            .map(|message| {
-                message.into()
-            });
+            .map(|message| message.into());
 
         let content = Column::new()
-            .push(self.grid.view().map(|message| {
-                    Message::Grid(message).into()
-            }))
+            .push(
+                self.grid
+                    .view()
+                    .map(|message| Message::Grid(message).into()),
+            )
             .push(controls);
 
         Container::new(content)
@@ -128,10 +127,7 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::action::{
-        panel::Message as PanelMessage,
-        tabs::{viewer::Message as ViewerMessage},
-    };
+    use crate::action::{panel::Message as PanelMessage, tabs::viewer::Message as ViewerMessage};
 
     pub struct Grid {
         state: State,
@@ -194,13 +190,12 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                ViewerMessage::Grid(
-                    Message::Ticked {
-                        result,
-                        version,
-                        tick_duration,
-                    },
-                ).into()
+                ViewerMessage::Grid(Message::Ticked {
+                    result,
+                    version,
+                    tick_duration,
+                })
+                .into()
             })
         }
 

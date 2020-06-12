@@ -1,6 +1,6 @@
 use iced::pane_grid;
 
-use super::{Message as DamascusMessage, tabs::Message as TabContentMessage};
+use super::{tabs::Message as TabContentMessage, Message as DamascusMessage};
 use crate::state::widget::TabType;
 
 #[derive(Debug, Clone)]

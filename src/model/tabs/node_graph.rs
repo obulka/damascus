@@ -2,7 +2,10 @@ use iced::{Command, Container, Element, Length, Point};
 
 use super::TabContent;
 use crate::action::{
-    tabs::{node_graph::{Message, clear_node_caches_command}, Message as TabContentMessage},
+    tabs::{
+        node_graph::{clear_node_caches_command, Message},
+        Message as TabContentMessage,
+    },
     Message as DamascusMessage,
 };
 use crate::state::{node::NodeType, tabs::node_graph::State, Config};
@@ -15,7 +18,7 @@ pub struct NodeGraph {
 impl NodeGraph {
     pub fn new() -> Self {
         let mut state = State::default();
-        state.add_node(NodeType::Viewer, Point::ORIGIN);
+        state.add_node(NodeType::Viewer, Point::new(1.0, 5.0));
         Self { state: state }
     }
 }
@@ -26,7 +29,9 @@ impl TabContent for NodeGraph {
             match message {
                 Message::ToggleGrid => self.state.toggle_lines(),
                 Message::Next => {}
-                Message::AddNode(..) => {}
+                Message::AddNode(node_type, position) => {
+                    self.state.add_node(node_type, position);
+                }
                 Message::ClearCache => {
                     self.state.clear_cache();
                 }
@@ -51,9 +56,7 @@ impl TabContent for NodeGraph {
     }
 
     fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
-        let content = self.state.view(config).map(|message| {
-                message.into()
-        });
+        let content = self.state.view(config).map(|message| message.into());
 
         Container::new(content)
             .width(Length::Fill)

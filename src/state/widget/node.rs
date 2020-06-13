@@ -50,27 +50,27 @@ pub trait Node {
         font_size: f32,
         node_graph_style: &NodeGraphStyle,
     ) {
-        if let Some(rect) = bounds.intersection(&self.rect()) {
+        let translated_rect = self.rect() + self.get_translation();
+        if let Some(rect) = bounds.intersection(&translated_rect) {
             let node_style = self.style();
             let node = Path::rectangle(rect.position(), rect.size());
-            frame.with_save(|frame| {
-                frame.translate(self.get_translation());
-                frame.fill(&node, node_style.background);
-                frame.stroke(
-                    &node,
-                    Stroke {
-                        width: node_graph_style.border_width,
-                        color: if selected {
-                            node_graph_style.selected_color
-                        } else {
-                            node_graph_style.border_color
-                        },
-                        ..Stroke::default()
+            frame.fill(&node, node_style.background);
+            frame.stroke(
+                &node,
+                Stroke {
+                    width: node_graph_style.border_width,
+                    color: if selected {
+                        node_graph_style.selected_color
+                    } else {
+                        node_graph_style.border_color
                     },
-                );
+                    ..Stroke::default()
+                },
+            );
 
-                if let Some(label) = label {
-                    if bounds.contains(self.rect().center()) {
+            if let Some(label) = label {
+                if bounds.contains(translated_rect.center()) {
+                    frame.with_save(|frame| {
                         frame.translate(Vector::new(rect.center_x(), rect.center_y()));
                         frame.fill_text(Text {
                             content: label.to_string(),
@@ -80,9 +80,9 @@ pub trait Node {
                             vertical_alignment: VerticalAlignment::Center,
                             ..Text::default()
                         })
-                    }
+                    });
                 }
-            });
+            }
         }
     }
 }

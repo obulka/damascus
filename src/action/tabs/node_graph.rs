@@ -1,4 +1,4 @@
-use iced::{Command, Point};
+use iced::{Command, Point, Vector};
 
 use crate::action::{
     panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
@@ -18,6 +18,10 @@ pub enum Message {
     BeginSelecting(Point),
     ExpandSelection(Point),
     CompleteSelection,
+    TranslateSelected(Vector),
+    NodesDropped,
+    Translate(Vector),
+    Zoom(f32, Option<Point>),
 }
 
 impl From<Message> for TabContentMessage {

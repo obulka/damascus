@@ -3,8 +3,8 @@ use iced::{
     mouse, Element, Length, Point, Rectangle, Size, Vector,
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet}; // Security not important
-use std::ops::RangeInclusive;
 
+use crate::model::tabs::node_graph::Region;
 use crate::action::tabs::node_graph::Message;
 use crate::state::{
     node::{create_node, NodeType},
@@ -132,12 +132,50 @@ impl State {
         self.grid_cache.clear();
     }
 
+    pub fn move_selected(&mut self) {
+        for node_label in self.selected_nodes.iter() {
+            if let Some(node) = self.nodes.get_mut(node_label) {
+                node.translate();
+            }
+        };
+    }
+
+    pub fn translate(&mut self, translation: Vector) {
+        self.translation = translation;
+    }
+
+    pub fn translate_selected(&mut self, translation: Vector) {
+        for node_label in self.selected_nodes.iter() {
+            if let Some(node) = self.nodes.get_mut(node_label) {
+                node.set_translation(translation);
+            }
+        }
+    }
+
     pub fn toggle_lines(&mut self) {
         self.show_lines = !self.are_lines_visible();
     }
 
     pub fn are_lines_visible(&self) -> bool {
         self.show_lines
+    }
+
+    pub fn zoom(&mut self, scroll_delta: f32, cursor_position: Option<Point>) {
+        let old_scaling = self.scaling;
+
+        self.scaling = (self.scaling * (1.0 + scroll_delta / 30.0))
+            .max(Self::MIN_SCALING)
+            .min(Self::MAX_SCALING);
+
+        if let Some(cursor_to_center) = cursor_position {
+            let factor = self.scaling - old_scaling;
+
+            self.translation = self.translation
+                - Vector::new(
+                    cursor_to_center.x * factor / (old_scaling * old_scaling),
+                    cursor_to_center.y * factor / (old_scaling * old_scaling),
+                );
+        }
     }
 
     fn visible_region(&self, size: Size) -> Region {
@@ -193,11 +231,8 @@ impl<'a> canvas::Program<Message> for State {
             match button {
                 mouse::Button::Left => match self.interaction {
                     Interaction::MovingSelected { .. } => {
-                        for node_label in self.selected_nodes.iter() {
-                            if let Some(node) = self.nodes.get_mut(node_label) {
-                                node.translate();
-                            }
-                        }
+                        self.interaction = Interaction::None;
+                        return Some(Message::NodesDropped);
                     }
                     Interaction::SelectingNodes => {
                         self.interaction = Interaction::None;
@@ -228,9 +263,7 @@ impl<'a> canvas::Program<Message> for State {
                         let grid_position = self.project(cursor_position, bounds.size());
 
                         if let Some(label) = self.node_at(&grid_position) {
-                            self.interaction = Interaction::MovingSelected {
-                                start: grid_position,
-                            };
+                            self.interaction = Interaction::MovingSelected{start: grid_position};
                             return Some(Message::SelectNode(label));
                         }
                         self.interaction = Interaction::SelectingNodes;
@@ -240,20 +273,14 @@ impl<'a> canvas::Program<Message> for State {
                 },
                 mouse::Event::CursorMoved { .. } => match &self.interaction {
                     Interaction::Panning { translation, start } => {
-                        self.translation =
-                            *translation + (cursor_position - *start) * (1.0 / self.scaling);
-
-                        Some(Message::ClearCache)
+                        Some(Message::Translate(
+                            *translation + (cursor_position - *start) * (1.0 / self.scaling)
+                        ))
                     }
                     Interaction::MovingSelected { start } => {
                         let grid_position = self.project(cursor_position, bounds.size());
                         let translation = grid_position - *start;
-                        for node_label in self.selected_nodes.iter() {
-                            if let Some(node) = self.nodes.get_mut(node_label) {
-                                node.set_translation(translation);
-                            }
-                        }
-                        Some(Message::ClearNodeCaches)
+                        Some(Message::TranslateSelected(translation))
                     }
                     Interaction::SelectingNodes => {
                         let grid_position = self.project(cursor_position, bounds.size());
@@ -266,23 +293,7 @@ impl<'a> canvas::Program<Message> for State {
                         if y < 0.0 && self.scaling > Self::MIN_SCALING
                             || y > 0.0 && self.scaling < Self::MAX_SCALING
                         {
-                            let old_scaling = self.scaling;
-
-                            self.scaling = (self.scaling * (1.0 + y / 30.0))
-                                .max(Self::MIN_SCALING)
-                                .min(Self::MAX_SCALING);
-
-                            if let Some(cursor_to_center) = cursor.position_from(bounds.center()) {
-                                let factor = self.scaling - old_scaling;
-
-                                self.translation = self.translation
-                                    - Vector::new(
-                                        cursor_to_center.x * factor / (old_scaling * old_scaling),
-                                        cursor_to_center.y * factor / (old_scaling * old_scaling),
-                                    );
-                            }
-
-                            return Some(Message::ClearCache);
+                            return Some(Message::Zoom(y, cursor.position_from(bounds.center())));
                         }
 
                         None
@@ -416,44 +427,7 @@ impl<'a> canvas::Program<Message> for State {
     }
 }
 
-pub struct Region {
-    x: f32,
-    y: f32,
-    width: f32,
-    height: f32,
-    grid_size: f32,
-}
-
-impl Region {
-    fn rows(&self) -> RangeInclusive<isize> {
-        let first_row = (self.y / self.grid_size).floor() as isize;
-
-        let visible_rows = (self.height / self.grid_size).ceil() as isize;
-
-        first_row..=first_row + visible_rows + 1
-    }
-
-    fn columns(&self) -> RangeInclusive<isize> {
-        let first_column = (self.x / self.grid_size).floor() as isize;
-
-        let visible_columns = (self.width / self.grid_size).ceil() as isize;
-
-        first_column..=first_column + visible_columns + 1
-    }
-}
-
-impl From<Region> for Rectangle {
-    fn from(region: Region) -> Rectangle {
-        Rectangle {
-            x: region.x / region.grid_size,
-            y: region.y / region.grid_size,
-            width: region.width / region.grid_size,
-            height: region.height / region.grid_size,
-        }
-    }
-}
-
-enum Interaction {
+pub enum Interaction {
     None,
     Panning { translation: Vector, start: Point },
     MovingSelected { start: Point },

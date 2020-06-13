@@ -1,4 +1,5 @@
-use iced::{Command, Container, Element, Length, Point};
+use iced::{Command, Container, Element, Length, Point, Rectangle};
+use std::ops::RangeInclusive;
 
 use super::TabContent;
 use crate::action::{
@@ -58,8 +59,23 @@ impl TabContent for NodeGraph {
                     self.state.expand_selection_box(lower_right_position);
                     self.state.clear_node_caches();
                 }
+                Message::NodesDropped => {
+                    self.state.move_selected();
+                }
                 Message::CompleteSelection => {
                     self.state.close_selection_box();
+                }
+                Message::Translate(translation) => {
+                    self.state.translate(translation);
+                    self.state.clear_cache();
+                }
+                Message::TranslateSelected(translation) => {
+                    self.state.translate_selected(translation);
+                    self.state.clear_node_caches();
+                }
+                Message::Zoom(scroll_delta, cursor_position) => {
+                    self.state.zoom(scroll_delta, cursor_position);
+                    self.state.clear_cache();
                 }
             }
         }
@@ -76,3 +92,41 @@ impl TabContent for NodeGraph {
             .into()
     }
 }
+
+pub struct Region {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+    pub grid_size: f32,
+}
+
+impl Region {
+    pub fn rows(&self) -> RangeInclusive<isize> {
+        let first_row = (self.y / self.grid_size).floor() as isize;
+
+        let visible_rows = (self.height / self.grid_size).ceil() as isize;
+
+        first_row..=first_row + visible_rows + 1
+    }
+
+    pub fn columns(&self) -> RangeInclusive<isize> {
+        let first_column = (self.x / self.grid_size).floor() as isize;
+
+        let visible_columns = (self.width / self.grid_size).ceil() as isize;
+
+        first_column..=first_column + visible_columns + 1
+    }
+}
+
+impl From<Region> for Rectangle {
+    fn from(region: Region) -> Rectangle {
+        Rectangle {
+            x: region.x / region.grid_size,
+            y: region.y / region.grid_size,
+            width: region.width / region.grid_size,
+            height: region.height / region.grid_size,
+        }
+    }
+}
+

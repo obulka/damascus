@@ -129,4 +129,3 @@ impl From<Region> for Rectangle {
         }
     }
 }
-

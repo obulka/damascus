@@ -4,8 +4,8 @@ use iced::{
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet}; // Security not important
 
-use crate::model::tabs::node_graph::Region;
 use crate::action::tabs::node_graph::Message;
+use crate::model::tabs::node_graph::Region;
 use crate::state::{
     node::{create_node, NodeType},
     style::NodeGraphStyle,
@@ -137,7 +137,7 @@ impl State {
             if let Some(node) = self.nodes.get_mut(node_label) {
                 node.translate();
             }
-        };
+        }
     }
 
     pub fn translate(&mut self, translation: Vector) {
@@ -263,7 +263,9 @@ impl<'a> canvas::Program<Message> for State {
                         let grid_position = self.project(cursor_position, bounds.size());
 
                         if let Some(label) = self.node_at(&grid_position) {
-                            self.interaction = Interaction::MovingSelected{start: grid_position};
+                            self.interaction = Interaction::MovingSelected {
+                                start: grid_position,
+                            };
                             return Some(Message::SelectNode(label));
                         }
                         self.interaction = Interaction::SelectingNodes;
@@ -272,11 +274,9 @@ impl<'a> canvas::Program<Message> for State {
                     _ => None,
                 },
                 mouse::Event::CursorMoved { .. } => match &self.interaction {
-                    Interaction::Panning { translation, start } => {
-                        Some(Message::Translate(
-                            *translation + (cursor_position - *start) * (1.0 / self.scaling)
-                        ))
-                    }
+                    Interaction::Panning { translation, start } => Some(Message::Translate(
+                        *translation + (cursor_position - *start) * (1.0 / self.scaling),
+                    )),
                     Interaction::MovingSelected { start } => {
                         let grid_position = self.project(cursor_position, bounds.size());
                         let translation = grid_position - *start;
@@ -295,7 +295,6 @@ impl<'a> canvas::Program<Message> for State {
                         {
                             return Some(Message::Zoom(y, cursor.position_from(bounds.center())));
                         }
-
                         None
                     }
                 },

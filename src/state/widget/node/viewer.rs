@@ -31,6 +31,11 @@ impl Node for Viewer {
         self.rectangle
     }
 
+    fn snap(&mut self) {
+        self.rectangle.x = self.rectangle.x.round();
+        self.rectangle.y = self.rectangle.y.round();
+    }
+
     fn set_position(&mut self, position: Point) {
         self.rectangle.x = position.x;
         self.rectangle.y = position.y;

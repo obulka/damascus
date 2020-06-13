@@ -61,6 +61,7 @@ impl TabContent for NodeGraph {
                 }
                 Message::NodesDropped => {
                     self.state.move_selected();
+                    self.state.clear_node_caches();
                 }
                 Message::CompleteSelection => {
                     self.state.close_selection_box();

@@ -7,6 +7,7 @@ pub mod tabs;
 
 use crate::state::{style::Theme, widget::TabType};
 use panel::Message as PanelMessage;
+use tabs::node_graph::Message as NodeGraphMessage;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -40,6 +41,7 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         KeyCode::G => Some(PanelMessage::OpenTabFocused(TabType::NodeGraph).into()),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
+        KeyCode::F => Some(NodeGraphMessage::ToggleGrid.into()),
         _ => direction.map(Message::FocusAdjacent),
     }
 }

@@ -144,7 +144,13 @@ impl State {
         self.translation = translation;
     }
 
-    pub fn translate_selected(&mut self, translation: Vector) {
+    pub fn translate_selected(&mut self, mut translation: Vector) {
+        if self.show_lines {
+            translation = Vector {
+                x: translation.x.round(),
+                y: translation.y.round(),
+            };
+        }
         for node_label in self.selected_nodes.iter() {
             if let Some(node) = self.nodes.get_mut(node_label) {
                 node.set_translation(translation);
@@ -152,8 +158,18 @@ impl State {
         }
     }
 
+    pub fn snap_nodes(&mut self) {
+        for (_, node) in self.nodes.iter_mut() {
+            node.snap();
+        }
+    }
+
     pub fn toggle_lines(&mut self) {
         self.show_lines = !self.are_lines_visible();
+        if self.show_lines {
+            self.snap_nodes();
+            self.clear_node_caches();
+        }
     }
 
     pub fn are_lines_visible(&self) -> bool {

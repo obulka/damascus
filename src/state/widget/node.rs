@@ -19,6 +19,8 @@ pub trait Node {
 
     fn rect(&self) -> Rectangle;
 
+    fn snap(&mut self);
+
     fn style(&self) -> NodeStyle {
         NodeStyle::default()
     }

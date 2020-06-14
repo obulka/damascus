@@ -8,7 +8,10 @@ use std::ops::RangeInclusive; // Security not important
 use super::TabContent;
 use crate::model::{CanvasModel, Config, Model};
 use crate::update::{
-    tabs::{node_graph::{Interaction, NodeGraphMessage}, TabContentMessage},
+    tabs::{
+        node_graph::{Interaction, NodeGraphMessage},
+        TabContentMessage,
+    },
     CanvasUpdate,
 };
 use crate::view::{

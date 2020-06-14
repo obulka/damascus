@@ -33,7 +33,6 @@ impl PanelUpdate for Panel {
 }
 
 impl Update<TabContentMessage> for Panel {
-
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let Some(focused_label) = self.get_focused_label() {
             if message == *focused_label {

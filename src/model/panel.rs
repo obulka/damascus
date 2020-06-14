@@ -66,11 +66,7 @@ impl Panel {
     pub fn close_tab(
         &mut self,
         index: usize,
-    ) -> (
-        usize,
-        (String, button::State),
-        Box<dyn TabContent>,
-    ) {
+    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
         let current_focus = self.focused_tab;
         let tab = self.tabs.remove(index);
         let tab_content = self.tab_contents.remove(index);
@@ -112,9 +108,7 @@ impl Panel {
         self.tab_contents.get(self.focused_tab)
     }
 
-    pub fn get_mut_focused_content(
-        &mut self,
-    ) -> Option<&mut Box<dyn TabContent>> {
+    pub fn get_mut_focused_content(&mut self) -> Option<&mut Box<dyn TabContent>> {
         self.tab_contents.get_mut(self.focused_tab)
     }
 }

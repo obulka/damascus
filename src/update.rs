@@ -68,7 +68,6 @@ pub trait CanvasUpdate<Message> {
 }
 
 impl Update<BaseMessage> for Damascus {
-
     fn update(&mut self, message: BaseMessage) -> Command<BaseMessage> {
         match message {
             BaseMessage::Panel(panel_message) => match panel_message {

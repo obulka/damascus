@@ -40,7 +40,6 @@ impl From<ViewerMessage> for BaseMessage {
 }
 
 impl Update<TabContentMessage> for Viewer {
-
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let TabContentMessage::Viewer(message) = message {
             match message {

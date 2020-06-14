@@ -133,7 +133,12 @@ impl Update<TabContentMessage> for NodeGraph {
 }
 
 impl CanvasUpdate<NodeGraphMessage> for NodeGraph {
-    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<NodeGraphMessage> {
+    fn update(
+        &mut self,
+        event: Event,
+        bounds: Rectangle,
+        cursor: Cursor,
+    ) -> Option<NodeGraphMessage> {
         if let Event::Mouse(mouse::Event::ButtonReleased(button)) = event {
             match button {
                 mouse::Button::Left => match self.interaction {

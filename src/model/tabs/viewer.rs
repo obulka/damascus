@@ -21,7 +21,6 @@ pub struct Viewer {
 
 impl Model<TabContentMessage> for Viewer {}
 impl TabContent for Viewer {}
-// impl CanvasModel for Viewer {}
 
 impl Viewer {
     pub fn new() -> Self {

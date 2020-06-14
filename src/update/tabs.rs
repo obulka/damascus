@@ -5,15 +5,16 @@ use std::convert::TryFrom;
 pub mod node_graph;
 pub mod viewer;
 
-use super::panel::PanelMessage;
 use crate::DamascusError;
 use node_graph::NodeGraphMessage;
-use viewer::ViewerMessage;
+// use viewer::ViewerMessage;
+use super::panel::PanelMessage;
+
 
 #[derive(Debug, Clone)]
 pub enum TabContentMessage {
     NodeGraph(NodeGraphMessage),
-    Viewer(ViewerMessage),
+    // Viewer(ViewerMessage),
 }
 
 impl From<TabContentMessage> for PanelMessage {

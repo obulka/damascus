@@ -5,11 +5,13 @@ use iced::pane_grid;
 pub mod panel;
 pub mod tabs;
 
-use crate::update::Update;
-use crate::view::{style::Theme, View};
+use crate::update::{CanvasUpdate, Update};
+use crate::view::{CanvasView, style::Theme, View};
 use panel::Panel;
 
 pub trait Model: Update + View {}
+pub trait State: Update {}
+pub trait CanvasModel: CanvasUpdate + CanvasView {}
 
 pub struct Damascus {
     pub config: Config,

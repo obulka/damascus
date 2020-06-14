@@ -1,29 +1,29 @@
-use iced::{Command, Element, Subscription};
-
+// Local Imports
 pub mod node_graph;
 pub mod viewer;
 
-use crate::model::Config;
-use crate::update::{tabs::TabContentMessage, BaseMessage};
+use crate::model::Model;
+use crate::update::{tabs::TabContentMessage};
 use crate::view::widget::TabType;
-use node_graph::NodeGraph;
-use viewer::Viewer;
 
-pub trait TabContent {
-    fn update(&mut self, _message: TabContentMessage) -> Command<BaseMessage> {
-        Command::none()
-    }
+pub use node_graph::NodeGraph;
+// pub use viewer::Viewer;
 
-    fn subscription(&self) -> Subscription<BaseMessage> {
-        Subscription::none()
-    }
+pub trait TabContent: Model {
+    // fn update(&mut self, _message: TabContentMessage) -> Command<BaseMessage> {
+    //     Command::none()
+    // }
 
-    fn view(&mut self, config: &Config) -> Element<BaseMessage>;
+    // fn subscription(&self) -> Subscription<BaseMessage> {
+    //     Subscription::none()
+    // }
+
+    // fn view(&mut self, config: &Config) -> Element<BaseMessage>;
 }
 
-pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
+pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent<Message = TabContentMessage>> {
     match tab_type {
-        TabType::Viewer => Box::new(Viewer::new()),
+        TabType::Viewer => Box::new(NodeGraph::new()),
         TabType::NodeGraph => Box::new(NodeGraph::new()),
     }
 }

@@ -6,8 +6,8 @@ use crate::model::{
     tabs::{tab_content_from_type, TabContent},
     Model,
 };
-
 use crate::view::TabType;
+use crate::update::tabs::TabContentMessage;
 
 pub struct Panel {
     pub pane: Option<pane_grid::Pane>,
@@ -17,7 +17,7 @@ pub struct Panel {
     pub float_pane: button::State, // Not Implemented
     pub close: button::State,
     pub tabs: Vec<(String, button::State)>,
-    pub tab_contents: Vec<Box<dyn TabContent>>,
+    pub tab_contents: Vec<Box<dyn TabContent<Message = TabContentMessage>>>,
     pub focused_tab: usize,
 }
 
@@ -49,7 +49,7 @@ impl Panel {
     pub fn open_tab_with_content(
         &mut self,
         tab: (String, button::State),
-        tab_content: Box<dyn TabContent>,
+        tab_content: Box<dyn TabContent<Message = TabContentMessage>>,
     ) {
         self.tabs.push(tab);
         self.tab_contents.push(tab_content);
@@ -63,7 +63,7 @@ impl Panel {
     pub fn close_tab(
         &mut self,
         index: usize,
-    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
+    ) -> (usize, (String, button::State), Box<dyn TabContent<Message = TabContentMessage>>) {
         let current_focus = self.focused_tab;
         let tab = self.tabs.remove(index);
         let tab_content = self.tab_contents.remove(index);
@@ -101,11 +101,11 @@ impl Panel {
         None
     }
 
-    pub fn get_focused_content(&self) -> Option<&Box<dyn TabContent>> {
+    pub fn get_focused_content(&self) -> Option<&Box<dyn TabContent<Message = TabContentMessage>>> {
         self.tab_contents.get(self.focused_tab)
     }
 
-    pub fn get_mut_focused_content(&mut self) -> Option<&mut Box<dyn TabContent>> {
+    pub fn get_mut_focused_content(&mut self) -> Option<&mut Box<dyn TabContent<Message = TabContentMessage>>> {
         self.tab_contents.get_mut(self.focused_tab)
     }
 }

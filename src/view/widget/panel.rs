@@ -1,8 +1,7 @@
 // 3rd Party Imports
 
 use iced::{
-    pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row, Space,
-    Text, VerticalAlignment,
+    pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row, Space, Text, VerticalAlignment,
 };
 
 // Local Imports

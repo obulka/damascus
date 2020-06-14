@@ -1,5 +1,5 @@
 // 3rd Party Imports
-use iced::{keyboard, pane_grid, Command, Subscription};
+use iced::{keyboard, mouse, pane_grid, Command, canvas::{Cursor, Event}, Rectangle, Subscription};
 
 // Local Imports
 pub mod panel;
@@ -26,8 +26,6 @@ pub enum BaseMessage {
     CloseFocused,
 }
 
-pub trait Message {}
-
 pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
     use keyboard::KeyCode;
     use pane_grid::Direction;
@@ -51,7 +49,9 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
 }
 
 pub trait Update {
+
     type Message;
+
     fn update(&mut self, _message: Self::Message) -> Command<BaseMessage> {
         Command::none()
     }
@@ -59,6 +59,18 @@ pub trait Update {
     fn subscription(&self) -> Subscription<BaseMessage> {
         Subscription::none()
     }
+}
+
+pub trait CanvasUpdate {
+    type Message;
+
+    fn update(&mut self,
+        event: Event,
+        bounds: Rectangle,
+        cursor: Cursor,
+    ) -> Option<Self::Message>;
+
+    fn mouse_interaction(&self, _bounds: Rectangle, _cursor: Cursor) -> mouse::Interaction;
 }
 
 impl Update for Damascus {

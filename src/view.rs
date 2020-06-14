@@ -1,4 +1,6 @@
-use iced::{Align, Column, Container, Element, Length, PaneGrid, Row};
+use iced::{Align, Column, Container, Element, Length, PaneGrid, Row, canvas::{Cursor, Geometry},
+    mouse, Rectangle,
+};
 
 pub mod renderer;
 pub mod style;
@@ -12,6 +14,14 @@ use crate::Damascus;
 
 pub trait View {
     fn view(&mut self, config: &Config) -> Element<BaseMessage>;
+}
+
+pub trait CanvasView: View {
+    type Message;
+
+    fn view<'a>(&'a mut self) -> Element<'a, Self::Message>;
+
+    fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry>;
 }
 
 impl View for Damascus {

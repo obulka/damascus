@@ -8,14 +8,14 @@ use iced_graphics::{Backend, Defaults, Primitive, Renderer};
 use iced_native::mouse;
 use iced_native::{Background, Color, Element, Layout, Point, Rectangle};
 
-pub use crate::state::style::tab::StyleSheet;
+pub use crate::view::style::tab::StyleSheet;
 
 /// A widget that produces a message when clicked.
 ///
 /// This is an alias of an `iced_native` button with an `iced_wgpu::Renderer`.
-pub type Tab<'a, Message, Backend> = crate::state::widget::Tab<'a, Message, Renderer<Backend>>;
+pub type Tab<'a, Message, Backend> = crate::view::widget::Tab<'a, Message, Renderer<Backend>>;
 
-impl<B> crate::state::widget::tab::Renderer for Renderer<B>
+impl<B> crate::view::widget::tab::Renderer for Renderer<B>
 where
     B: Backend,
 {

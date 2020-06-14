@@ -1,10 +1,10 @@
 // 3rd Party Imports
-
 use iced::{pane_grid, Command, Container, Element, Length, Subscription};
 
 // Local Imports
-use crate::action::{tabs::Message as TabContentMessage, Message as DamascusMessage};
-use crate::state::{panel::State, Config};
+use crate::model::Config;
+use crate::update::{tabs::Message as TabContentMessage, Message as DamascusMessage};
+use crate::view::panel::State;
 
 pub struct Panel {
     pub state: State,

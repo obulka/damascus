@@ -4,12 +4,12 @@ use iced::{
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet}; // Security not important
 
-use crate::action::tabs::node_graph::Message;
-use crate::model::tabs::node_graph::Region;
-use crate::state::{
+use crate::model::{tabs::node_graph::Region, Config};
+use crate::update::tabs::node_graph::Message;
+use crate::view::{
     node::{create_node, NodeType},
     style::NodeGraphStyle,
-    Config, Node,
+    Node,
 };
 
 pub struct State {
@@ -60,7 +60,7 @@ impl State {
     }
 
     pub fn view<'a>(&'a mut self, config: &Config) -> Element<'a, Message> {
-        self.config = *config;
+        self.config = (*config).clone();
         Canvas::new(self)
             .width(Length::Fill)
             .height(Length::Fill)

@@ -1,6 +1,6 @@
 use iced::{button, container, Background, Color, Vector};
 
-use crate::state::style::{
+use crate::view::style::{
     tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, OFF_WHITE, ORANGE, PURPLE,
 };
 

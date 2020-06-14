@@ -3,8 +3,9 @@ use iced::{Command, Element, Subscription};
 pub mod node_graph;
 pub mod viewer;
 
-use crate::action::{tabs::Message, Message as DamascusMessage};
-use crate::state::{widget::TabType, Config};
+use crate::model::Config;
+use crate::update::{tabs::Message, Message as DamascusMessage};
+use crate::view::widget::TabType;
 use node_graph::NodeGraph;
 use viewer::Viewer;
 

@@ -2,11 +2,12 @@ use iced::{Command, Container, Element, Length, Point, Rectangle};
 use std::ops::RangeInclusive;
 
 use super::TabContent;
-use crate::action::{
+use crate::model::Config;
+use crate::update::{
     tabs::{node_graph::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
-use crate::state::{node::NodeType, tabs::node_graph::State, Config};
+use crate::view::{node::NodeType, tabs::node_graph::State};
 
 #[derive(Default)]
 pub struct NodeGraph {

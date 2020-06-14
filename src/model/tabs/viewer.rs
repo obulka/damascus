@@ -8,15 +8,12 @@ use iced::{
 use std::time::Duration;
 
 use super::TabContent;
-use crate::action::{
+use crate::model::Config;
+use crate::update::{
     tabs::{viewer::Message, Message as TabContentMessage},
     Message as DamascusMessage,
 };
-use crate::state::{
-    style,
-    // tabs::viewer::State,
-    Config,
-};
+use crate::view::style;
 
 #[derive(Default)]
 pub struct Viewer {
@@ -127,7 +124,7 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::action::{panel::Message as PanelMessage, tabs::viewer::Message as ViewerMessage};
+    use crate::update::{panel::Message as PanelMessage, tabs::viewer::Message as ViewerMessage};
 
     pub struct Grid {
         state: State,

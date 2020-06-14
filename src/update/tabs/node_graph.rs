@@ -1,9 +1,15 @@
+// Standard Imports
+use std::convert::TryFrom;
+
+// 3rd Party Imports
 use iced::{Command, Point, Vector};
 
-use crate::action::{
+// Local Imports
+use crate::update::{
     panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
 };
-use crate::state::widget::NodeType;
+use crate::view::widget::NodeType;
+use crate::DamascusError;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -41,6 +47,21 @@ impl From<Message> for DamascusMessage {
     fn from(message: Message) -> DamascusMessage {
         let message: PanelMessage = message.into();
         message.into()
+    }
+}
+
+impl TryFrom<DamascusMessage> for Message {
+    type Error = &'static DamascusError;
+
+    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
+        if let DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(
+            message,
+        ))) = message
+        {
+            Ok(message)
+        } else {
+            Err(&DamascusError::UpdateError)
+        }
     }
 }
 

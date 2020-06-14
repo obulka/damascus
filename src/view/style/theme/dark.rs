@@ -3,7 +3,7 @@ use iced::{
     Color, Vector,
 };
 
-use crate::state::style::{
+use crate::view::style::{
     tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, ORANGE, TURQOISE,
 };
 

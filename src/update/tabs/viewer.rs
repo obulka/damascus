@@ -1,9 +1,13 @@
+// Standard Imports
+use std::convert::TryFrom;
 use std::time::Instant;
 
-use crate::action::{
+// Local Imports
+use crate::DamascusError;
+use crate::model::tabs::viewer::grid;
+use crate::update::{
     panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
 };
-use crate::model::tabs::viewer::grid;
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -33,5 +37,20 @@ impl From<Message> for DamascusMessage {
     fn from(message: Message) -> DamascusMessage {
         let message: PanelMessage = message.into();
         message.into()
+    }
+}
+
+impl TryFrom<DamascusMessage> for Message {
+    type Error = &'static DamascusError;
+
+    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
+        if let DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
+            message,
+        ))) = message
+        {
+            Ok(message)
+        } else {
+            Err(&DamascusError::UpdateError)
+        }
     }
 }

@@ -6,12 +6,14 @@ use iced::{
 };
 
 // Local Imports
-use crate::action::{panel::Message, Message as DamascusMessage};
-use crate::model::tabs::{tab_content_from_type, TabContent};
-use crate::state::{
+use crate::model::{
+    tabs::{tab_content_from_type, TabContent},
+    Config,
+};
+use crate::update::{panel::Message, Message as DamascusMessage};
+use crate::view::{
     style,
     widget::{Tab, TabType},
-    Config,
 };
 
 pub struct State {

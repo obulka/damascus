@@ -1,8 +1,8 @@
 pub mod node_graph;
 pub mod viewer;
 
-use crate::action::tabs::Message;
-use crate::state::TabType;
+use crate::update::tabs::Message;
+use crate::view::TabType;
 
 impl From<TabType> for String {
     fn from(tab_type: TabType) -> Self {

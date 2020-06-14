@@ -1,14 +1,15 @@
-// Standard Imports
-use std::convert::TryFrom;
-
 // 3rd Party Imports
-use iced::{canvas::{Cursor, Event}, Command, mouse, Point, Rectangle, Vector};
+use iced::{
+    canvas::{Cursor, Event},
+    mouse, Command, Point, Rectangle, Vector,
+};
 
 // Local Imports
 use crate::model::tabs::node_graph::NodeGraph;
+use crate::update::{
+    panel::PanelMessage, tabs::TabContentMessage, BaseMessage, CanvasUpdate, Update,
+};
 use crate::view::widget::NodeType;
-use crate::update::{panel::PanelMessage, tabs::TabContentMessage, BaseMessage, CanvasUpdate, Update};
-use crate::DamascusError;
 
 #[derive(Debug, Clone)]
 pub enum NodeGraphMessage {
@@ -49,20 +50,6 @@ impl From<NodeGraphMessage> for BaseMessage {
     }
 }
 
-impl TryFrom<BaseMessage> for NodeGraphMessage {
-    type Error = &'static DamascusError;
-
-    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
-        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(message))) =
-            message
-        {
-            Ok(message)
-        } else {
-            Err(&DamascusError::UpdateError)
-        }
-    }
-}
-
 pub fn clear_node_caches_command() -> Command<BaseMessage> {
     Command::perform(
         async move { NodeGraphMessage::ClearNodeCaches.into() },
@@ -84,9 +71,7 @@ pub enum Interaction {
     SelectingNodes,
 }
 
-impl Update for NodeGraph {
-    type Message = TabContentMessage;
-
+impl Update<TabContentMessage> for NodeGraph {
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let TabContentMessage::NodeGraph(message) = message {
             match message {
@@ -147,15 +132,8 @@ impl Update for NodeGraph {
     }
 }
 
-impl CanvasUpdate for NodeGraph {
-    type Message = NodeGraphMessage;
-
-    fn update(
-        &mut self,
-        event: Event,
-        bounds: Rectangle,
-        cursor: Cursor,
-    ) -> Option<Self::Message> {
+impl CanvasUpdate<NodeGraphMessage> for NodeGraph {
+    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<NodeGraphMessage> {
         if let Event::Mouse(mouse::Event::ButtonReleased(button)) = event {
             match button {
                 mouse::Button::Left => match self.interaction {
@@ -246,4 +224,3 @@ impl CanvasUpdate for NodeGraph {
         }
     }
 }
-

@@ -1,11 +1,10 @@
 // 3rd Party Imports
-use iced::{Element, Column, Container, Length};
+use iced::{Column, Container, Element, Length};
 
 // Local Imports
-use crate::model::{Config, tabs::Viewer};
+use crate::model::{tabs::Viewer, Config};
+use crate::update::{tabs::viewer::ViewerMessage, BaseMessage};
 use crate::view::View;
-use crate::update::{BaseMessage, tabs::viewer::ViewerMessage};
-
 
 impl View for Viewer {
     fn view(&mut self, config: &Config) -> Element<BaseMessage> {

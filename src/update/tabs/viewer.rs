@@ -1,5 +1,4 @@
 // Standard Imports
-use std::convert::TryFrom;
 use std::time::{Duration, Instant};
 
 // 3rd Party Imports
@@ -8,7 +7,6 @@ use iced::{time, Command, Subscription};
 // Local Imports
 use crate::model::tabs::viewer::{grid, Viewer};
 use crate::update::{panel::PanelMessage, tabs::TabContentMessage, BaseMessage, Update};
-use crate::DamascusError;
 
 #[derive(Debug, Clone)]
 pub enum ViewerMessage {
@@ -41,22 +39,7 @@ impl From<ViewerMessage> for BaseMessage {
     }
 }
 
-impl TryFrom<BaseMessage> for ViewerMessage {
-    type Error = &'static DamascusError;
-
-    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
-        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(message))) =
-            message
-        {
-            Ok(message)
-        } else {
-            Err(&DamascusError::UpdateError)
-        }
-    }
-}
-
-impl Update for Viewer {
-    type Message = TabContentMessage;
+impl Update<TabContentMessage> for Viewer {
 
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let TabContentMessage::Viewer(message) = message {

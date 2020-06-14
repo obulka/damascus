@@ -1,18 +1,20 @@
-use std::ops::RangeInclusive;
 use iced::{
-    mouse,
-    canvas::{self, Cache, Cursor, Event, Geometry}, Point, Rectangle, Size, Vector,
+    canvas::{self, Cache, Cursor, Event, Geometry},
+    mouse, Point, Rectangle, Size, Vector,
 };
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet}; // Security not important
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use std::ops::RangeInclusive; // Security not important
 
-use crate::model::{Config, Model, CanvasModel};
-use crate::view::{
-    CanvasView,
-    node::{create_node, NodeType},
-    Node,
-};
-use crate::update::{tabs::node_graph::{Interaction, NodeGraphMessage}, CanvasUpdate};
 use super::TabContent;
+use crate::model::{CanvasModel, Config, Model};
+use crate::update::{
+    tabs::{node_graph::{Interaction, NodeGraphMessage}, TabContentMessage},
+    CanvasUpdate,
+};
+use crate::view::{
+    node::{create_node, NodeType},
+    CanvasView, Node,
+};
 
 pub struct NodeGraph {
     pub nodes: HashMap<String, Box<dyn Node>>,
@@ -30,9 +32,9 @@ pub struct NodeGraph {
     pub config: Config,
 }
 
-impl Model for NodeGraph {}
+impl Model<TabContentMessage> for NodeGraph {}
+impl CanvasModel<NodeGraphMessage> for NodeGraph {}
 impl TabContent for NodeGraph {}
-impl CanvasModel for NodeGraph {}
 
 impl Default for NodeGraph {
     fn default() -> Self {

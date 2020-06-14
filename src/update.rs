@@ -1,5 +1,8 @@
 // 3rd Party Imports
-use iced::{keyboard, mouse, pane_grid, Command, canvas::{Cursor, Event}, Rectangle, Subscription};
+use iced::{
+    canvas::{Cursor, Event},
+    keyboard, mouse, pane_grid, Command, Rectangle, Subscription,
+};
 
 // Local Imports
 pub mod panel;
@@ -48,11 +51,8 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
     }
 }
 
-pub trait Update {
-
-    type Message;
-
-    fn update(&mut self, _message: Self::Message) -> Command<BaseMessage> {
+pub trait Update<Message> {
+    fn update(&mut self, _message: Message) -> Command<BaseMessage> {
         Command::none()
     }
 
@@ -61,20 +61,13 @@ pub trait Update {
     }
 }
 
-pub trait CanvasUpdate {
-    type Message;
-
-    fn update(&mut self,
-        event: Event,
-        bounds: Rectangle,
-        cursor: Cursor,
-    ) -> Option<Self::Message>;
+pub trait CanvasUpdate<Message> {
+    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<Message>;
 
     fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction;
 }
 
-impl Update for Damascus {
-    type Message = BaseMessage;
+impl Update<BaseMessage> for Damascus {
 
     fn update(&mut self, message: BaseMessage) -> Command<BaseMessage> {
         match message {

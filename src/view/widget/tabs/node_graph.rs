@@ -1,15 +1,12 @@
 use iced::{
-    canvas::{Canvas, Cursor, Geometry, Path, Stroke}, Container, Element, Length, Point, Rectangle, Vector,
+    canvas::{Canvas, Cursor, Geometry, Path, Stroke},
+    Container, Element, Length, Point, Rectangle, Vector,
 };
- // Security not important
+// Security not important
 
-use crate::model::{Config, tabs::NodeGraph};
-use crate::update::{BaseMessage, tabs::{node_graph::{NodeGraphMessage}}};
-use crate::view::{
-    style::NodeGraphStyle,
-    CanvasView,
-    View,
-};
+use crate::model::{tabs::NodeGraph, Config};
+use crate::update::{tabs::node_graph::NodeGraphMessage, BaseMessage};
+use crate::view::{style::NodeGraphStyle, CanvasView, View};
 
 impl View for NodeGraph {
     fn view(&mut self, _config: &Config) -> Element<BaseMessage> {

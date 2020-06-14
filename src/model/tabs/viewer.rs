@@ -1,13 +1,12 @@
 use grid::Grid;
 use iced::{
     button::{self, Button},
-    slider::{self, Slider}, Align, Checkbox, Element, Length, Row, Text,
+    slider::{self, Slider},
+    Align, Checkbox, Element, Length, Row, Text,
 };
 
-use crate::model::{Config, Model, tabs::TabContent};
-use crate::update::{
-    tabs::{viewer::ViewerMessage},
-};
+use crate::model::{tabs::TabContent, Config, Model};
+use crate::update::tabs::{viewer::ViewerMessage, TabContentMessage};
 use crate::view::style;
 
 #[derive(Default)]
@@ -20,7 +19,7 @@ pub struct Viewer {
     pub next_speed: Option<usize>,
 }
 
-impl Model for Viewer {}
+impl Model<TabContentMessage> for Viewer {}
 impl TabContent for Viewer {}
 // impl CanvasModel for Viewer {}
 

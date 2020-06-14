@@ -1,6 +1,3 @@
-// Standard Imports
-use std::convert::TryFrom;
-
 // 3rd Party Imports
 use iced::{pane_grid, Command, Subscription};
 
@@ -8,7 +5,10 @@ use iced::{pane_grid, Command, Subscription};
 use super::{tabs::TabContentMessage, BaseMessage, Update};
 use crate::model::panel::Panel;
 use crate::view::widget::TabType;
-use crate::DamascusError;
+
+pub trait PanelUpdate: Update<TabContentMessage> {
+    fn update_view_state(&mut self, pane: pane_grid::Pane, focus: Option<pane_grid::Focus>);
+}
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -25,20 +25,14 @@ impl From<PanelMessage> for BaseMessage {
     }
 }
 
-impl TryFrom<BaseMessage> for PanelMessage {
-    type Error = &'static DamascusError;
-
-    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
-        if let BaseMessage::Panel(message) = message {
-            Ok(message)
-        } else {
-            Err(&DamascusError::UpdateError)
-        }
+impl PanelUpdate for Panel {
+    fn update_view_state(&mut self, pane: pane_grid::Pane, focus: Option<pane_grid::Focus>) {
+        self.pane = Some(pane);
+        self.focus = focus.is_some();
     }
 }
 
-impl Update for Panel {
-    type Message = TabContentMessage;
+impl Update<TabContentMessage> for Panel {
 
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let Some(focused_label) = self.get_focused_label() {

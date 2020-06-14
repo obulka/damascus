@@ -1,15 +1,17 @@
-use iced::{Align, Column, Container, Element, Length, PaneGrid, Row, canvas::{Cursor, Geometry}, Rectangle,
+use iced::{
+    canvas::{Cursor, Geometry},
+    Align, Column, Container, Element, Length, PaneGrid, Rectangle, Row,
 };
 
 pub mod renderer;
 pub mod style;
 pub mod widget;
 
-pub use widget::*;
 use crate::model::Config;
-use crate::view::widget::panel::PanelView;
 use crate::update::{handle_hotkey, BaseMessage};
+use crate::view::widget::panel::PanelView;
 use crate::Damascus;
+pub use widget::*;
 
 pub trait View {
     fn view(&mut self, config: &Config) -> Element<BaseMessage>;

@@ -6,7 +6,7 @@ use iced::{time, Command, Subscription};
 
 // Local Imports
 use crate::model::tabs::viewer::{grid, Viewer};
-use crate::update::{panel::PanelMessage, tabs::TabContentMessage, BaseMessage, Update};
+use crate::update::{panel::PanelMessage, tabs::TabContentMessage, Message, Update};
 
 #[derive(Debug, Clone)]
 pub enum ViewerMessage {
@@ -32,15 +32,15 @@ impl From<ViewerMessage> for PanelMessage {
     }
 }
 
-impl From<ViewerMessage> for BaseMessage {
-    fn from(message: ViewerMessage) -> BaseMessage {
+impl From<ViewerMessage> for Message {
+    fn from(message: ViewerMessage) -> Message {
         let message: PanelMessage = message.into();
         message.into()
     }
 }
 
 impl Update<TabContentMessage> for Viewer {
-    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
+    fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let TabContentMessage::Viewer(message) = message {
             match message {
                 ViewerMessage::Grid(message) => {
@@ -56,7 +56,7 @@ impl Update<TabContentMessage> for Viewer {
 
                         self.queued_ticks = 0;
 
-                        return Command::perform(task, BaseMessage::Panel);
+                        return Command::perform(task, Message::Panel);
                     }
                 }
                 ViewerMessage::TogglePlayback => {
@@ -80,7 +80,7 @@ impl Update<TabContentMessage> for Viewer {
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<BaseMessage> {
+    fn subscription(&self) -> Subscription<Message> {
         if self.is_playing {
             time::every(Duration::from_millis(1000 / self.speed as u64))
                 .map(|instant| ViewerMessage::Tick(instant).into())

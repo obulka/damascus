@@ -8,7 +8,7 @@ use iced::{
 use crate::model::{panel::Panel, Config};
 use crate::update::{
     panel::{PanelMessage, PanelUpdate},
-    BaseMessage,
+    Message,
 };
 use crate::view::{style, widget::Tab, View};
 
@@ -18,7 +18,7 @@ pub trait PanelView: View {
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
         config: &Config,
-    ) -> Element<BaseMessage>;
+    ) -> Element<Message>;
 }
 
 impl PanelView for Panel {
@@ -27,14 +27,14 @@ impl PanelView for Panel {
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
         config: &Config,
-    ) -> Element<BaseMessage> {
+    ) -> Element<Message> {
         self.update_view_state(pane, focus);
         View::view(self, config)
     }
 }
 
 impl View for Panel {
-    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
+    fn view(&mut self, config: &Config) -> Element<Message> {
         let Panel {
             pane,
             focus,
@@ -80,13 +80,13 @@ impl View for Panel {
                     .push(button(
                         split_vertically,
                         "|",
-                        BaseMessage::Split(pane_grid::Axis::Vertical, pane),
+                        Message::Split(pane_grid::Axis::Vertical, pane),
                         config.theme.button_style(style::Button::Primary),
                     ))
                     .push(button(
                         close,
                         "×",
-                        BaseMessage::Close(pane),
+                        Message::Close(pane),
                         config.theme.button_style(style::Button::Destructive),
                     )),
             )
@@ -100,13 +100,13 @@ impl View for Panel {
                     .push(button(
                         float_pane,
                         "+",
-                        BaseMessage::FloatPane(pane),
+                        Message::FloatPane(pane),
                         config.theme.button_style(style::Button::Primary),
                     ))
                     .push(button(
                         split_horizontally,
                         "─",
-                        BaseMessage::Split(pane_grid::Axis::Horizontal, pane),
+                        Message::Split(pane_grid::Axis::Horizontal, pane),
                         config.theme.button_style(style::Button::Primary),
                     )),
             );

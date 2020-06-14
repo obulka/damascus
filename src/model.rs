@@ -5,7 +5,7 @@ use iced::pane_grid;
 pub mod panel;
 pub mod tabs;
 
-use crate::update::{BaseMessage, CanvasUpdate, Update};
+use crate::update::{CanvasUpdate, Message, Update};
 use crate::view::{style::Theme, CanvasView, View};
 use panel::Panel;
 
@@ -17,7 +17,7 @@ pub struct Damascus {
     pub panes: pane_grid::State<Panel>,
 }
 
-impl Model<BaseMessage> for Damascus {}
+impl Model<Message> for Damascus {}
 
 #[derive(Debug, Clone)]
 pub struct Config {

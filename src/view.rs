@@ -8,13 +8,13 @@ pub mod style;
 pub mod widget;
 
 use crate::model::Config;
-use crate::update::{handle_hotkey, BaseMessage};
+use crate::update::{handle_hotkey, Message};
 use crate::view::widget::panel::PanelView;
 use crate::Damascus;
 pub use widget::*;
 
 pub trait View {
-    fn view(&mut self, config: &Config) -> Element<BaseMessage>;
+    fn view(&mut self, config: &Config) -> Element<Message>;
 }
 
 pub trait CanvasView: View {
@@ -26,7 +26,7 @@ pub trait CanvasView: View {
 }
 
 impl View for Damascus {
-    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
+    fn view(&mut self, config: &Config) -> Element<Message> {
         let app_content = Column::new()
             .push(
                 // Toolbar
@@ -46,8 +46,8 @@ impl View for Damascus {
                 .width(Length::Fill)
                 .height(Length::Fill)
                 .spacing(0) // Space between panes
-                .on_drag(BaseMessage::PaneDragged)
-                .on_resize(10, BaseMessage::Resized)
+                .on_drag(Message::PaneDragged)
+                .on_resize(10, Message::Resized)
                 .on_key_press(handle_hotkey),
             );
 

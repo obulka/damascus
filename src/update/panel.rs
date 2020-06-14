@@ -2,7 +2,7 @@
 use iced::{pane_grid, Command, Subscription};
 
 // Local Imports
-use super::{tabs::TabContentMessage, BaseMessage, Update};
+use super::{tabs::TabContentMessage, Message, Update};
 use crate::model::panel::Panel;
 use crate::view::widget::TabType;
 
@@ -19,9 +19,9 @@ pub enum PanelMessage {
     FocusTab((pane_grid::Pane, usize)),
 }
 
-impl From<PanelMessage> for BaseMessage {
-    fn from(message: PanelMessage) -> BaseMessage {
-        BaseMessage::Panel(message)
+impl From<PanelMessage> for Message {
+    fn from(message: PanelMessage) -> Message {
+        Message::Panel(message)
     }
 }
 
@@ -33,7 +33,7 @@ impl PanelUpdate for Panel {
 }
 
 impl Update<TabContentMessage> for Panel {
-    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
+    fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let Some(focused_label) = self.get_focused_label() {
             if message == *focused_label {
                 if let Some(focused_content) = self.get_mut_focused_content() {
@@ -44,7 +44,7 @@ impl Update<TabContentMessage> for Panel {
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<BaseMessage> {
+    fn subscription(&self) -> Subscription<Message> {
         if let Some(focused_content) = self.get_focused_content() {
             return focused_content.subscription();
         }

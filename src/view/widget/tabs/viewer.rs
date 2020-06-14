@@ -3,11 +3,11 @@ use iced::{Column, Container, Element, Length};
 
 // Local Imports
 use crate::model::{tabs::Viewer, Config};
-use crate::update::{tabs::viewer::ViewerMessage, BaseMessage};
+use crate::update::{tabs::viewer::ViewerMessage, Message};
 use crate::view::View;
 
 impl View for Viewer {
-    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
+    fn view(&mut self, config: &Config) -> Element<Message> {
         let selected_speed = self.next_speed.unwrap_or(self.speed);
         let controls = self
             .controls

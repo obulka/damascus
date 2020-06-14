@@ -6,9 +6,7 @@ use iced::{
 
 // Local Imports
 use crate::model::tabs::node_graph::NodeGraph;
-use crate::update::{
-    panel::PanelMessage, tabs::TabContentMessage, BaseMessage, CanvasUpdate, Update,
-};
+use crate::update::{panel::PanelMessage, tabs::TabContentMessage, CanvasUpdate, Message, Update};
 use crate::view::widget::NodeType;
 
 #[derive(Debug, Clone)]
@@ -43,24 +41,24 @@ impl From<NodeGraphMessage> for PanelMessage {
     }
 }
 
-impl From<NodeGraphMessage> for BaseMessage {
-    fn from(message: NodeGraphMessage) -> BaseMessage {
+impl From<NodeGraphMessage> for Message {
+    fn from(message: NodeGraphMessage) -> Message {
         let message: PanelMessage = message.into();
         message.into()
     }
 }
 
-pub fn clear_node_caches_command() -> Command<BaseMessage> {
+pub fn clear_node_caches_command() -> Command<Message> {
     Command::perform(
         async move { NodeGraphMessage::ClearNodeCaches.into() },
-        BaseMessage::Panel,
+        Message::Panel,
     )
 }
 
-pub fn clear_cache_command() -> Command<BaseMessage> {
+pub fn clear_cache_command() -> Command<Message> {
     Command::perform(
         async move { NodeGraphMessage::ClearCache.into() },
-        BaseMessage::Panel,
+        Message::Panel,
     )
 }
 
@@ -72,7 +70,7 @@ pub enum Interaction {
 }
 
 impl Update<TabContentMessage> for NodeGraph {
-    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
+    fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let TabContentMessage::NodeGraph(message) = message {
             match message {
                 NodeGraphMessage::ToggleGrid => self.toggle_lines(),

@@ -5,11 +5,11 @@ use iced::{
 // Security not important
 
 use crate::model::{tabs::NodeGraph, Config};
-use crate::update::{tabs::node_graph::NodeGraphMessage, BaseMessage};
+use crate::update::{tabs::node_graph::NodeGraphMessage, Message};
 use crate::view::{style::NodeGraphStyle, CanvasView, View};
 
 impl View for NodeGraph {
-    fn view(&mut self, _config: &Config) -> Element<BaseMessage> {
+    fn view(&mut self, _config: &Config) -> Element<Message> {
         let content = CanvasView::view(self).map(|message| message.into());
 
         Container::new(content)

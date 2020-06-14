@@ -15,7 +15,7 @@ use panel::PanelMessage;
 use tabs::node_graph::{clear_cache_command, NodeGraphMessage};
 
 #[derive(Debug, Clone)]
-pub enum BaseMessage {
+pub enum Message {
     Panel(PanelMessage),
     ThemeChanged(Theme),
     ToggleTheme,
@@ -29,7 +29,7 @@ pub enum BaseMessage {
     CloseFocused,
 }
 
-pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
+pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     use keyboard::KeyCode;
     use pane_grid::Direction;
 
@@ -44,33 +44,34 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
     match event.key_code {
         KeyCode::V => Some(PanelMessage::OpenTabFocused(TabType::Viewer).into()),
         KeyCode::G => Some(PanelMessage::OpenTabFocused(TabType::NodeGraph).into()),
-        KeyCode::T => Some(BaseMessage::ToggleTheme),
-        KeyCode::W => Some(BaseMessage::CloseFocused),
+        KeyCode::T => Some(Message::ToggleTheme),
+        KeyCode::W => Some(Message::CloseFocused),
         KeyCode::F => Some(NodeGraphMessage::ToggleGrid.into()),
-        _ => direction.map(BaseMessage::FocusAdjacent),
+        _ => direction.map(Message::FocusAdjacent),
     }
 }
 
-pub trait Update<Message> {
-    fn update(&mut self, _message: Message) -> Command<BaseMessage> {
+pub trait Update<UpdateMessage> {
+    fn update(&mut self, _message: UpdateMessage) -> Command<Message> {
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<BaseMessage> {
+    fn subscription(&self) -> Subscription<Message> {
         Subscription::none()
     }
 }
 
-pub trait CanvasUpdate<Message> {
-    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<Message>;
+pub trait CanvasUpdate<EmittedMessage> {
+    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor)
+        -> Option<EmittedMessage>;
 
     fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction;
 }
 
-impl Update<BaseMessage> for Damascus {
-    fn update(&mut self, message: BaseMessage) -> Command<BaseMessage> {
+impl Update<Message> for Damascus {
+    fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            BaseMessage::Panel(panel_message) => match panel_message {
+            Message::Panel(panel_message) => match panel_message {
                 PanelMessage::TabContent(tab_content_message) => {
                     return Command::batch(
                         self.panes
@@ -86,7 +87,7 @@ impl Update<BaseMessage> for Damascus {
                         }
                         return Command::perform(
                             async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            BaseMessage::Panel,
+                            Message::Panel,
                         );
                     }
                 }
@@ -98,12 +99,12 @@ impl Update<BaseMessage> for Damascus {
                                 if pane == active_pane {
                                     return Command::perform(
                                         async move { PanelMessage::FocusTab((pane, index)) },
-                                        BaseMessage::Panel,
+                                        Message::Panel,
                                     );
                                 } else {
                                     return Command::perform(
                                         async move { PanelMessage::MoveTab((pane, index, active_pane)) },
-                                        BaseMessage::Panel,
+                                        Message::Panel,
                                     );
                                 }
                             }
@@ -119,7 +120,7 @@ impl Update<BaseMessage> for Damascus {
                         let (new_focus, _, _) = (*panel).close_tab(index);
                         return Command::perform(
                             async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            BaseMessage::Panel,
+                            Message::Panel,
                         );
                     }
                 }
@@ -129,43 +130,43 @@ impl Update<BaseMessage> for Damascus {
                     }
                 }
             },
-            BaseMessage::ThemeChanged(theme) => {
+            Message::ThemeChanged(theme) => {
                 self.config.theme = theme;
                 return clear_cache_command();
             }
-            BaseMessage::ToggleTheme => {
+            Message::ToggleTheme => {
                 self.config.theme = match self.config.theme {
                     Theme::Dark => Theme::Light,
                     Theme::Light => Theme::Dark,
                 };
                 return clear_cache_command();
             }
-            BaseMessage::Split(axis, pane) => {
+            Message::Split(axis, pane) => {
                 let _ = self.panes.split(axis, &pane, Panel::new());
             }
-            BaseMessage::SplitFocused(axis) => {
+            Message::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {
                     let _ = self.panes.split(axis, &pane, Panel::new());
                 }
             }
-            BaseMessage::FocusAdjacent(direction) => {
+            Message::FocusAdjacent(direction) => {
                 if let Some(pane) = self.panes.active() {
                     if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
                         self.panes.focus(&adjacent);
                     }
                 }
             }
-            BaseMessage::Resized(pane_grid::ResizeEvent { split, ratio }) => {
+            Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(&split, ratio);
             }
-            BaseMessage::PaneDragged(pane_grid::DragEvent::Dropped { pane, target }) => {
+            Message::PaneDragged(pane_grid::DragEvent::Dropped { pane, target }) => {
                 self.panes.swap(&pane, &target);
             }
-            BaseMessage::PaneDragged(_) => {}
-            BaseMessage::FloatPane(_) => {
+            Message::PaneDragged(_) => {}
+            Message::FloatPane(_) => {
                 println!("Floating panes not implemented.");
             }
-            BaseMessage::Close(pane) => {
+            Message::Close(pane) => {
                 let panel = self.panes.close(&pane);
                 if panel.is_none() {
                     if let Some(panel) = self.panes.get_mut(&pane) {
@@ -173,7 +174,7 @@ impl Update<BaseMessage> for Damascus {
                     }
                 }
             }
-            BaseMessage::CloseFocused => {
+            Message::CloseFocused => {
                 if let Some(pane) = self.panes.active() {
                     let panel = self.panes.close(&pane);
                     if panel.is_none() {
@@ -187,7 +188,7 @@ impl Update<BaseMessage> for Damascus {
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<BaseMessage> {
+    fn subscription(&self) -> Subscription<Message> {
         Subscription::batch(self.panes.iter().map(|(_, panel)| (*panel).subscription()))
     }
 }

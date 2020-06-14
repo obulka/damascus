@@ -11,7 +11,7 @@ pub mod view;
 
 pub use model::Damascus;
 use model::{panel::Panel, Config};
-use update::{BaseMessage, Update};
+use update::{Message, Update};
 use view::View;
 
 #[derive(Debug, Copy, Clone)]
@@ -34,7 +34,7 @@ impl fmt::Display for DamascusError {
 impl Error for DamascusError {}
 
 impl Application for Damascus {
-    type Message = BaseMessage;
+    type Message = Message;
     type Executor = executor::Default;
     type Flags = Config;
 

@@ -89,8 +89,7 @@ impl Update for Damascus {
                 PanelMessage::OpenTabFocused(tab_type) => {
                     if let Some(active_pane) = self.panes.active() {
                         for (pane, panel) in self.panes.iter_mut() {
-                            if let Some(index) = (*panel).index_of_tab_type(tab_type.clone())
-                            {
+                            if let Some(index) = (*panel).index_of_tab_type(tab_type.clone()) {
                                 let pane = *pane;
                                 if pane == active_pane {
                                     return Command::perform(

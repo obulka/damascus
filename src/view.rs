@@ -1,4 +1,4 @@
-use iced::{Align, Column, Container, Element, Length, PaneGrid, Row};
+use iced::{pane_grid, Align, Column, Container, Element, Length, PaneGrid, Row};
 
 pub mod renderer;
 pub mod style;
@@ -9,6 +9,15 @@ pub use widget::*;
 use crate::model::Config;
 use crate::update::{handle_hotkey, BaseMessage};
 use crate::Damascus;
+
+pub trait PaneGridView: View {
+    fn view(
+        &mut self,
+        pane: pane_grid::Pane,
+        focus: Option<pane_grid::Focus>,
+        config: &Config,
+    ) -> Element<BaseMessage>;
+}
 
 pub trait View {
     fn view(&mut self, config: &Config) -> Element<BaseMessage>;
@@ -30,7 +39,7 @@ impl View for Damascus {
             .push(
                 // Panes
                 PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                    content.pane_grid_view(pane, focus, config)
+                    PaneGridView::view(content, pane, focus, config)
                 })
                 .width(Length::Fill)
                 .height(Length::Fill)

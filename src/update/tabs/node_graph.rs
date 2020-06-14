@@ -5,9 +5,7 @@ use std::convert::TryFrom;
 use iced::{Command, Point, Vector};
 
 // Local Imports
-use crate::update::{
-    BaseMessage, panel::PanelMessage, tabs::TabContentMessage,
-};
+use crate::update::{panel::PanelMessage, tabs::TabContentMessage, BaseMessage};
 use crate::view::widget::NodeType;
 use crate::DamascusError;
 
@@ -54,9 +52,8 @@ impl TryFrom<BaseMessage> for NodeGraphMessage {
     type Error = &'static DamascusError;
 
     fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
-        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(
-            message,
-        ))) = message
+        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(message))) =
+            message
         {
             Ok(message)
         } else {

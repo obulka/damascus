@@ -1,10 +1,13 @@
 // 3rd Party Imports
-use iced::{button, pane_grid, Element};
+use iced::{button, pane_grid};
 
 // Local Imports
-use crate::model::{Config, Model, tabs::{tab_content_from_type, TabContent}};
-use crate::update::BaseMessage;
-use crate::view::{TabType, View};
+use crate::model::{
+    tabs::{tab_content_from_type, TabContent},
+    Model,
+};
+
+use crate::view::TabType;
 
 pub struct Panel {
     pub pane: Option<pane_grid::Pane>,
@@ -17,6 +20,8 @@ pub struct Panel {
     pub tab_contents: Vec<Box<dyn TabContent>>,
     pub focused_tab: usize,
 }
+
+impl Model for Panel {}
 
 impl Panel {
     pub fn new() -> Self {
@@ -31,17 +36,6 @@ impl Panel {
             tab_contents: Vec::new(),
             focused_tab: 0,
         }
-    }
-
-    pub fn pane_grid_view(
-        &mut self,
-        pane: pane_grid::Pane,
-        focus: Option<pane_grid::Focus>,
-        config: &Config,
-    ) -> Element<BaseMessage> {
-        self.pane = Some(pane);
-        self.focus = focus.is_some();
-        self.view(config)
     }
 
     pub fn open_tab(&mut self, tab_type: TabType) {
@@ -115,5 +109,3 @@ impl Panel {
         self.tab_contents.get_mut(self.focused_tab)
     }
 }
-
-impl Model for Panel {}

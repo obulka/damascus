@@ -2,13 +2,13 @@
 use std::convert::TryFrom;
 
 // 3rd Party Imports
-use iced::{Command, pane_grid, Subscription};
+use iced::{pane_grid, Command, Subscription};
 
 // Local Imports
-use crate::DamascusError;
+use super::{tabs::TabContentMessage, BaseMessage, Update};
 use crate::model::panel::Panel;
 use crate::view::widget::TabType;
-use super::{BaseMessage, tabs::TabContentMessage, Update};
+use crate::DamascusError;
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -42,8 +42,6 @@ impl Update for Panel {
 
     fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let Some(focused_label) = self.get_focused_label() {
-            // let message = TabContentMessage::try_from(message).ok()?;
-
             if message == *focused_label {
                 if let Some(focused_content) = self.get_mut_focused_content() {
                     return focused_content.update(message);

@@ -1,21 +1,27 @@
 // 3rd Party Imports
 
 use iced::{
-    pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row,
-    Space, Text, VerticalAlignment,
+    pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row, Space,
+    Text, VerticalAlignment,
 };
 
 // Local Imports
-use crate::model::{
-    Config,
-    panel::Panel,
-};
+use crate::model::{panel::Panel, Config};
 use crate::update::{panel::PanelMessage, BaseMessage};
-use crate::view::{
-    style,
-    widget::Tab,
-    View,
-};
+use crate::view::{style, widget::Tab, PaneGridView, View};
+
+impl PaneGridView for Panel {
+    fn view(
+        &mut self,
+        pane: pane_grid::Pane,
+        focus: Option<pane_grid::Focus>,
+        config: &Config,
+    ) -> Element<BaseMessage> {
+        self.pane = Some(pane);
+        self.focus = focus.is_some();
+        View::view(self, config)
+    }
+}
 
 impl View for Panel {
     fn view(&mut self, config: &Config) -> Element<BaseMessage> {

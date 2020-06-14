@@ -5,7 +5,7 @@ use std::convert::TryFrom;
 pub mod node_graph;
 pub mod viewer;
 
-use super::{panel::PanelMessage};
+use super::panel::PanelMessage;
 use crate::DamascusError;
 use node_graph::NodeGraphMessage;
 use viewer::ViewerMessage;

@@ -3,11 +3,9 @@ use std::convert::TryFrom;
 use std::time::Instant;
 
 // Local Imports
-use crate::DamascusError;
 use crate::model::tabs::viewer::grid;
-use crate::update::{
-    BaseMessage, panel::PanelMessage, tabs::TabContentMessage,
-};
+use crate::update::{panel::PanelMessage, tabs::TabContentMessage, BaseMessage};
+use crate::DamascusError;
 
 #[derive(Debug, Clone)]
 pub enum ViewerMessage {
@@ -44,9 +42,8 @@ impl TryFrom<BaseMessage> for ViewerMessage {
     type Error = &'static DamascusError;
 
     fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
-        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
-            message,
-        ))) = message
+        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(message))) =
+            message
         {
             Ok(message)
         } else {

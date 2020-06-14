@@ -242,7 +242,12 @@ impl State {
 }
 
 impl<'a> canvas::Program<NodeGraphMessage> for State {
-    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<NodeGraphMessage> {
+    fn update(
+        &mut self,
+        event: Event,
+        bounds: Rectangle,
+        cursor: Cursor,
+    ) -> Option<NodeGraphMessage> {
         if let Event::Mouse(mouse::Event::ButtonReleased(button)) = event {
             match button {
                 mouse::Button::Left => match self.interaction {
@@ -290,9 +295,11 @@ impl<'a> canvas::Program<NodeGraphMessage> for State {
                     _ => None,
                 },
                 mouse::Event::CursorMoved { .. } => match &self.interaction {
-                    Interaction::Panning { translation, start } => Some(NodeGraphMessage::Translate(
-                        *translation + (cursor_position - *start) * (1.0 / self.scaling),
-                    )),
+                    Interaction::Panning { translation, start } => {
+                        Some(NodeGraphMessage::Translate(
+                            *translation + (cursor_position - *start) * (1.0 / self.scaling),
+                        ))
+                    }
                     Interaction::MovingSelected { start } => {
                         let grid_position = self.project(cursor_position, bounds.size());
                         let translation = grid_position - *start;
@@ -309,7 +316,10 @@ impl<'a> canvas::Program<NodeGraphMessage> for State {
                         if y < 0.0 && self.scaling > Self::MIN_SCALING
                             || y > 0.0 && self.scaling < Self::MAX_SCALING
                         {
-                            return Some(NodeGraphMessage::Zoom(y, cursor.position_from(bounds.center())));
+                            return Some(NodeGraphMessage::Zoom(
+                                y,
+                                cursor.position_from(bounds.center()),
+                            ));
                         }
                         None
                     }

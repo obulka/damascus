@@ -1,54 +1,119 @@
 // 3rd Party Imports
-use iced::{pane_grid, Command, Container, Element, Length, Subscription};
+use iced::{button, pane_grid, Element};
 
 // Local Imports
-use crate::model::Config;
-use crate::update::{tabs::Message as TabContentMessage, Message as DamascusMessage};
-use crate::view::panel::State;
+use crate::model::{Config, Model, tabs::{tab_content_from_type, TabContent}};
+use crate::update::BaseMessage;
+use crate::view::{TabType, View};
 
 pub struct Panel {
-    pub state: State,
+    pub pane: Option<pane_grid::Pane>,
+    pub focus: bool,
+    pub split_horizontally: button::State,
+    pub split_vertically: button::State,
+    pub float_pane: button::State, // Not Implemented
+    pub close: button::State,
+    pub tabs: Vec<(String, button::State)>,
+    pub tab_contents: Vec<Box<dyn TabContent>>,
+    pub focused_tab: usize,
 }
 
 impl Panel {
     pub fn new() -> Self {
         Self {
-            state: State::new(),
+            pane: None,
+            focus: false,
+            split_horizontally: button::State::new(),
+            split_vertically: button::State::new(),
+            float_pane: button::State::new(),
+            close: button::State::new(),
+            tabs: Vec::new(),
+            tab_contents: Vec::new(),
+            focused_tab: 0,
         }
     }
 
-    pub fn view(
+    pub fn pane_grid_view(
         &mut self,
         pane: pane_grid::Pane,
         focus: Option<pane_grid::Focus>,
         config: &Config,
-    ) -> Element<DamascusMessage> {
-        let content = self.state.view(pane, config);
-
-        Container::new(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .padding(0)
-            .center_y()
-            .style(config.theme.pane_style(focus.is_some()))
-            .into()
+    ) -> Element<BaseMessage> {
+        self.pane = Some(pane);
+        self.focus = focus.is_some();
+        self.view(config)
     }
 
-    pub fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
-        if let Some(focused_label) = self.state.get_focused_label() {
-            if message == *focused_label {
-                if let Some(focused_content) = self.state.get_mut_focused_content() {
-                    return focused_content.update(message);
-                }
+    pub fn open_tab(&mut self, tab_type: TabType) {
+        self.tabs
+            .push((tab_type.clone().into(), button::State::new()));
+        self.tab_contents.push(tab_content_from_type(tab_type));
+
+        self.focused_tab = self.tabs.len() - 1;
+    }
+
+    pub fn open_tab_with_content(
+        &mut self,
+        tab: (String, button::State),
+        tab_content: Box<dyn TabContent>,
+    ) {
+        self.tabs.push(tab);
+        self.tab_contents.push(tab_content);
+        self.focused_tab = self.tabs.len() - 1;
+    }
+
+    pub fn focus_tab(&mut self, index: usize) {
+        self.focused_tab = index;
+    }
+
+    pub fn close_tab(
+        &mut self,
+        index: usize,
+    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
+        let current_focus = self.focused_tab;
+        let tab = self.tabs.remove(index);
+        let tab_content = self.tab_contents.remove(index);
+
+        let mut new_focus = if current_focus > index {
+            current_focus - 1
+        } else {
+            current_focus
+        };
+        while new_focus >= self.tabs.len() && new_focus >= 1 {
+            new_focus -= 1;
+        }
+        (new_focus, tab, tab_content)
+    }
+
+    pub fn close_all_tabs(&mut self) {
+        self.tabs.clear();
+        self.tab_contents.clear();
+    }
+
+    pub fn index_of_tab_type(&self, tab_type: TabType) -> Option<usize> {
+        let tab_string: String = tab_type.into();
+        for (index, (label, _)) in self.tabs.iter().enumerate() {
+            if *label == tab_string {
+                return Some(index);
             }
         }
-        Command::none()
+        None
     }
 
-    pub fn subscription(&self) -> Subscription<DamascusMessage> {
-        if let Some(focused_content) = self.state.get_focused_content() {
-            return focused_content.subscription();
+    pub fn get_focused_label(&self) -> Option<&String> {
+        if let Some((focused_label, _)) = self.tabs.get(self.focused_tab) {
+            return Some(focused_label);
         }
-        Subscription::none()
+        None
+    }
+
+    pub fn get_focused_content(&self) -> Option<&Box<dyn TabContent>> {
+        self.tab_contents.get(self.focused_tab)
+    }
+
+    pub fn get_mut_focused_content(&mut self) -> Option<&mut Box<dyn TabContent>> {
+        self.tab_contents.get_mut(self.focused_tab)
     }
 }
+
+impl Model for Panel {}

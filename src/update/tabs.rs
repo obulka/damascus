@@ -5,28 +5,28 @@ use std::convert::TryFrom;
 pub mod node_graph;
 pub mod viewer;
 
-use super::{panel::Message as PanelMessage, Message as DamascusMessage};
+use super::{panel::PanelMessage};
 use crate::DamascusError;
-use node_graph::Message as NodeGraphMessage;
-use viewer::Message as ViewerMessage;
+use node_graph::NodeGraphMessage;
+use viewer::ViewerMessage;
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum TabContentMessage {
     NodeGraph(NodeGraphMessage),
     Viewer(ViewerMessage),
 }
 
-impl From<Message> for PanelMessage {
-    fn from(message: Message) -> PanelMessage {
+impl From<TabContentMessage> for PanelMessage {
+    fn from(message: TabContentMessage) -> PanelMessage {
         PanelMessage::TabContent(message)
     }
 }
 
-impl TryFrom<DamascusMessage> for Message {
+impl TryFrom<PanelMessage> for TabContentMessage {
     type Error = &'static DamascusError;
 
-    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
-        if let DamascusMessage::Panel(PanelMessage::TabContent(message)) = message {
+    fn try_from(message: PanelMessage) -> Result<Self, Self::Error> {
+        if let PanelMessage::TabContent(message) = message {
             Ok(message)
         } else {
             Err(&DamascusError::UpdateError)

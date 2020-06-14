@@ -6,11 +6,11 @@ use std::time::Instant;
 use crate::DamascusError;
 use crate::model::tabs::viewer::grid;
 use crate::update::{
-    panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
+    BaseMessage, panel::PanelMessage, tabs::TabContentMessage,
 };
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum ViewerMessage {
     Grid(grid::Message),
     Tick(Instant),
     TogglePlayback,
@@ -20,31 +20,31 @@ pub enum Message {
     SpeedChanged(f32),
 }
 
-impl From<Message> for TabContentMessage {
-    fn from(message: Message) -> TabContentMessage {
+impl From<ViewerMessage> for TabContentMessage {
+    fn from(message: ViewerMessage) -> TabContentMessage {
         TabContentMessage::Viewer(message)
     }
 }
 
-impl From<Message> for PanelMessage {
-    fn from(message: Message) -> PanelMessage {
+impl From<ViewerMessage> for PanelMessage {
+    fn from(message: ViewerMessage) -> PanelMessage {
         let message: TabContentMessage = message.into();
         message.into()
     }
 }
 
-impl From<Message> for DamascusMessage {
-    fn from(message: Message) -> DamascusMessage {
+impl From<ViewerMessage> for BaseMessage {
+    fn from(message: ViewerMessage) -> BaseMessage {
         let message: PanelMessage = message.into();
         message.into()
     }
 }
 
-impl TryFrom<DamascusMessage> for Message {
+impl TryFrom<BaseMessage> for ViewerMessage {
     type Error = &'static DamascusError;
 
-    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
-        if let DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
+    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
+        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::Viewer(
             message,
         ))) = message
         {

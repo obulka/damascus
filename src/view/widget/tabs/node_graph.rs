@@ -5,7 +5,7 @@ use iced::{
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet}; // Security not important
 
 use crate::model::{tabs::node_graph::Region, Config};
-use crate::update::tabs::node_graph::Message;
+use crate::update::tabs::node_graph::NodeGraphMessage;
 use crate::view::{
     node::{create_node, NodeType},
     style::NodeGraphStyle,
@@ -59,7 +59,7 @@ impl State {
         }
     }
 
-    pub fn view<'a>(&'a mut self, config: &Config) -> Element<'a, Message> {
+    pub fn view<'a>(&'a mut self, config: &Config) -> Element<'a, NodeGraphMessage> {
         self.config = (*config).clone();
         Canvas::new(self)
             .width(Length::Fill)
@@ -241,18 +241,18 @@ impl State {
     }
 }
 
-impl<'a> canvas::Program<Message> for State {
-    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<Message> {
+impl<'a> canvas::Program<NodeGraphMessage> for State {
+    fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor) -> Option<NodeGraphMessage> {
         if let Event::Mouse(mouse::Event::ButtonReleased(button)) = event {
             match button {
                 mouse::Button::Left => match self.interaction {
                     Interaction::MovingSelected { .. } => {
                         self.interaction = Interaction::None;
-                        return Some(Message::NodesDropped);
+                        return Some(NodeGraphMessage::NodesDropped);
                     }
                     Interaction::SelectingNodes => {
                         self.interaction = Interaction::None;
-                        return Some(Message::CompleteSelection);
+                        return Some(NodeGraphMessage::CompleteSelection);
                     }
                     _ => {}
                 },
@@ -282,25 +282,25 @@ impl<'a> canvas::Program<Message> for State {
                             self.interaction = Interaction::MovingSelected {
                                 start: grid_position,
                             };
-                            return Some(Message::SelectNode(label));
+                            return Some(NodeGraphMessage::SelectNode(label));
                         }
                         self.interaction = Interaction::SelectingNodes;
-                        Some(Message::BeginSelecting(grid_position))
+                        Some(NodeGraphMessage::BeginSelecting(grid_position))
                     }
                     _ => None,
                 },
                 mouse::Event::CursorMoved { .. } => match &self.interaction {
-                    Interaction::Panning { translation, start } => Some(Message::Translate(
+                    Interaction::Panning { translation, start } => Some(NodeGraphMessage::Translate(
                         *translation + (cursor_position - *start) * (1.0 / self.scaling),
                     )),
                     Interaction::MovingSelected { start } => {
                         let grid_position = self.project(cursor_position, bounds.size());
                         let translation = grid_position - *start;
-                        Some(Message::TranslateSelected(translation))
+                        Some(NodeGraphMessage::TranslateSelected(translation))
                     }
                     Interaction::SelectingNodes => {
                         let grid_position = self.project(cursor_position, bounds.size());
-                        Some(Message::ExpandSelection(grid_position))
+                        Some(NodeGraphMessage::ExpandSelection(grid_position))
                     }
                     _ => None,
                 },
@@ -309,7 +309,7 @@ impl<'a> canvas::Program<Message> for State {
                         if y < 0.0 && self.scaling > Self::MIN_SCALING
                             || y > 0.0 && self.scaling < Self::MAX_SCALING
                         {
-                            return Some(Message::Zoom(y, cursor.position_from(bounds.center())));
+                            return Some(NodeGraphMessage::Zoom(y, cursor.position_from(bounds.center())));
                         }
                         None
                     }

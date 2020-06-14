@@ -8,11 +8,11 @@ pub mod tabs;
 use crate::model::panel::Panel;
 use crate::view::{style::Theme, widget::TabType};
 use crate::Damascus;
-use panel::Message as PanelMessage;
-use tabs::node_graph::{clear_cache_command, Message as NodeGraphMessage};
+use panel::PanelMessage;
+use tabs::node_graph::{clear_cache_command, NodeGraphMessage};
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum BaseMessage {
     Panel(PanelMessage),
     ThemeChanged(Theme),
     ToggleTheme,
@@ -26,7 +26,9 @@ pub enum Message {
     CloseFocused,
 }
 
-pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
+pub trait Message {}
+
+pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<BaseMessage> {
     use keyboard::KeyCode;
     use pane_grid::Direction;
 
@@ -41,147 +43,148 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     match event.key_code {
         KeyCode::V => Some(PanelMessage::OpenTabFocused(TabType::Viewer).into()),
         KeyCode::G => Some(PanelMessage::OpenTabFocused(TabType::NodeGraph).into()),
-        KeyCode::T => Some(Message::ToggleTheme),
-        KeyCode::W => Some(Message::CloseFocused),
+        KeyCode::T => Some(BaseMessage::ToggleTheme),
+        KeyCode::W => Some(BaseMessage::CloseFocused),
         KeyCode::F => Some(NodeGraphMessage::ToggleGrid.into()),
-        _ => direction.map(Message::FocusAdjacent),
+        _ => direction.map(BaseMessage::FocusAdjacent),
     }
 }
 
 pub trait Update {
-    fn update(&mut self, _message: Message) -> Option<Command<Message>> {
-        None
+    type Message;
+    fn update(&mut self, _message: Self::Message) -> Command<BaseMessage> {
+        Command::none()
     }
 
-    fn subscription(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<BaseMessage> {
         Subscription::none()
     }
 }
 
 impl Update for Damascus {
-    fn update(&mut self, message: Message) -> Option<Command<Message>> {
+    type Message = BaseMessage;
+
+    fn update(&mut self, message: BaseMessage) -> Command<BaseMessage> {
         match message {
-            Message::Panel(message) => match message {
+            BaseMessage::Panel(panel_message) => match panel_message {
                 PanelMessage::TabContent(tab_content_message) => {
-                    return Some(Command::batch(
+                    return Command::batch(
                         self.panes
                             .iter_mut()
                             .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
-                    ));
+                    );
                 }
                 PanelMessage::MoveTab((pane, tab_index, target_pane)) => {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        let (new_focus, tab, tab_content) = (*panel).state.close_tab(tab_index);
+                        let (new_focus, tab, tab_content) = (*panel).close_tab(tab_index);
                         if let Some(target_panel) = self.panes.get_mut(&target_pane) {
-                            (*target_panel)
-                                .state
-                                .open_tab_with_content(tab, tab_content);
+                            (*target_panel).open_tab_with_content(tab, tab_content);
                         }
-                        return Some(Command::perform(
+                        return Command::perform(
                             async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            Message::Panel,
-                        ));
+                            BaseMessage::Panel,
+                        );
                     }
                 }
                 PanelMessage::OpenTabFocused(tab_type) => {
                     if let Some(active_pane) = self.panes.active() {
                         for (pane, panel) in self.panes.iter_mut() {
-                            if let Some(index) = (*panel).state.index_of_tab_type(tab_type.clone())
+                            if let Some(index) = (*panel).index_of_tab_type(tab_type.clone())
                             {
                                 let pane = *pane;
                                 if pane == active_pane {
-                                    return Some(Command::perform(
+                                    return Command::perform(
                                         async move { PanelMessage::FocusTab((pane, index)) },
-                                        Message::Panel,
-                                    ));
+                                        BaseMessage::Panel,
+                                    );
                                 } else {
-                                    return Some(Command::perform(
+                                    return Command::perform(
                                         async move { PanelMessage::MoveTab((pane, index, active_pane)) },
-                                        Message::Panel,
-                                    ));
+                                        BaseMessage::Panel,
+                                    );
                                 }
                             }
                         }
 
                         if let Some(panel) = self.panes.get_mut(&active_pane) {
-                            (*panel).state.open_tab(tab_type);
+                            (*panel).open_tab(tab_type);
                         }
                     }
                 }
                 PanelMessage::CloseTab(pane, index) => {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        let (new_focus, _, _) = (*panel).state.close_tab(index);
-                        return Some(Command::perform(
+                        let (new_focus, _, _) = (*panel).close_tab(index);
+                        return Command::perform(
                             async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            Message::Panel,
-                        ));
+                            BaseMessage::Panel,
+                        );
                     }
                 }
                 PanelMessage::FocusTab((pane, index)) => {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).state.focus_tab(index);
+                        (*panel).focus_tab(index);
                     }
                 }
             },
-            Message::ThemeChanged(theme) => {
+            BaseMessage::ThemeChanged(theme) => {
                 self.config.theme = theme;
-                return Some(clear_cache_command());
+                return clear_cache_command();
             }
-            Message::ToggleTheme => {
+            BaseMessage::ToggleTheme => {
                 self.config.theme = match self.config.theme {
                     Theme::Dark => Theme::Light,
                     Theme::Light => Theme::Dark,
                 };
-                return Some(clear_cache_command());
+                return clear_cache_command();
             }
-            Message::Split(axis, pane) => {
+            BaseMessage::Split(axis, pane) => {
                 let _ = self.panes.split(axis, &pane, Panel::new());
             }
-            Message::SplitFocused(axis) => {
+            BaseMessage::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {
                     let _ = self.panes.split(axis, &pane, Panel::new());
                 }
             }
-            Message::FocusAdjacent(direction) => {
+            BaseMessage::FocusAdjacent(direction) => {
                 if let Some(pane) = self.panes.active() {
                     if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
                         self.panes.focus(&adjacent);
                     }
                 }
             }
-            Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {
+            BaseMessage::Resized(pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(&split, ratio);
             }
-            Message::PaneDragged(pane_grid::DragEvent::Dropped { pane, target }) => {
+            BaseMessage::PaneDragged(pane_grid::DragEvent::Dropped { pane, target }) => {
                 self.panes.swap(&pane, &target);
             }
-            Message::PaneDragged(_) => {}
-            Message::FloatPane(_) => {
+            BaseMessage::PaneDragged(_) => {}
+            BaseMessage::FloatPane(_) => {
                 println!("Floating panes not implemented.");
             }
-            Message::Close(pane) => {
+            BaseMessage::Close(pane) => {
                 let panel = self.panes.close(&pane);
                 if panel.is_none() {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).state.close_all_tabs();
+                        (*panel).close_all_tabs();
                     }
                 }
             }
-            Message::CloseFocused => {
+            BaseMessage::CloseFocused => {
                 if let Some(pane) = self.panes.active() {
                     let panel = self.panes.close(&pane);
                     if panel.is_none() {
                         if let Some(panel) = self.panes.get_mut(&pane) {
-                            (*panel).state.close_all_tabs();
+                            (*panel).close_all_tabs();
                         }
                     }
                 }
             }
         }
-        None
+        Command::none()
     }
 
-    fn subscription(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<BaseMessage> {
         Subscription::batch(self.panes.iter().map(|(_, panel)| (*panel).subscription()))
     }
 }

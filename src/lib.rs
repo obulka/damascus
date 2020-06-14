@@ -11,7 +11,7 @@ pub mod view;
 
 pub use model::Damascus;
 use model::{panel::Panel, Config};
-use update::{Message, Update};
+use update::{BaseMessage, Update};
 use view::View;
 
 #[derive(Debug, Copy, Clone)]
@@ -34,11 +34,11 @@ impl fmt::Display for DamascusError {
 impl Error for DamascusError {}
 
 impl Application for Damascus {
-    type Message = Message;
+    type Message = BaseMessage;
     type Executor = executor::Default;
     type Flags = Config;
 
-    fn new(flags: Self::Flags) -> (Self, Command<Message>) {
+    fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
         let (panes, _) = pane_grid::State::new(Panel::new());
         (
             Damascus {
@@ -53,18 +53,15 @@ impl Application for Damascus {
         self.config.title.clone()
     }
 
-    fn update(&mut self, message: Message) -> Command<Message> {
-        if let Some(command) = Update::update(self, message) {
-            return command;
-        }
-        Command::none()
+    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
+        Update::update(self, message)
     }
 
-    fn subscription(&self) -> Subscription<Message> {
+    fn subscription(&self) -> Subscription<Self::Message> {
         Update::subscription(self)
     }
 
-    fn view(&mut self) -> Element<Message> {
+    fn view(&mut self) -> Element<Self::Message> {
         View::view(self, &self.config.clone())
     }
 }

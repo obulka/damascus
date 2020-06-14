@@ -1,7 +1,7 @@
 pub mod node_graph;
 pub mod viewer;
 
-use crate::update::tabs::Message;
+use crate::update::tabs::TabContentMessage;
 use crate::view::TabType;
 
 impl From<TabType> for String {
@@ -13,14 +13,14 @@ impl From<TabType> for String {
     }
 }
 
-impl std::cmp::PartialEq<String> for Message {
+impl std::cmp::PartialEq<String> for TabContentMessage {
     fn eq(&self, other: &String) -> bool {
         match self {
-            Message::NodeGraph(..) => {
+            TabContentMessage::NodeGraph(..) => {
                 let tab_type_string: String = TabType::NodeGraph.into();
                 *other == tab_type_string
             }
-            Message::Viewer(..) => {
+            TabContentMessage::Viewer(..) => {
                 let tab_type_string: String = TabType::Viewer.into();
                 *other == tab_type_string
             }

@@ -2,15 +2,16 @@
 use std::convert::TryFrom;
 
 // 3rd Party Imports
-use iced::pane_grid;
+use iced::{Command, pane_grid, Subscription};
 
 // Local Imports
-use super::{tabs::Message as TabContentMessage, Message as DamascusMessage};
-use crate::view::widget::TabType;
 use crate::DamascusError;
+use crate::model::panel::Panel;
+use crate::view::widget::TabType;
+use super::{BaseMessage, tabs::TabContentMessage, Update};
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum PanelMessage {
     TabContent(TabContentMessage),
     MoveTab((pane_grid::Pane, usize, pane_grid::Pane)),
     OpenTabFocused(TabType),
@@ -18,20 +19,44 @@ pub enum Message {
     FocusTab((pane_grid::Pane, usize)),
 }
 
-impl From<Message> for DamascusMessage {
-    fn from(message: Message) -> DamascusMessage {
-        DamascusMessage::Panel(message)
+impl From<PanelMessage> for BaseMessage {
+    fn from(message: PanelMessage) -> BaseMessage {
+        BaseMessage::Panel(message)
     }
 }
 
-impl TryFrom<DamascusMessage> for Message {
+impl TryFrom<BaseMessage> for PanelMessage {
     type Error = &'static DamascusError;
 
-    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
-        if let DamascusMessage::Panel(message) = message {
+    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
+        if let BaseMessage::Panel(message) = message {
             Ok(message)
         } else {
             Err(&DamascusError::UpdateError)
         }
+    }
+}
+
+impl Update for Panel {
+    type Message = TabContentMessage;
+
+    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
+        if let Some(focused_label) = self.get_focused_label() {
+            // let message = TabContentMessage::try_from(message).ok()?;
+
+            if message == *focused_label {
+                if let Some(focused_content) = self.get_mut_focused_content() {
+                    return focused_content.update(message);
+                }
+            }
+        }
+        Command::none()
+    }
+
+    fn subscription(&self) -> Subscription<BaseMessage> {
+        if let Some(focused_content) = self.get_focused_content() {
+            return focused_content.subscription();
+        }
+        Subscription::none()
     }
 }

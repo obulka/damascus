@@ -10,8 +10,8 @@ use std::time::Duration;
 use super::TabContent;
 use crate::model::Config;
 use crate::update::{
-    tabs::{viewer::Message, Message as TabContentMessage},
-    Message as DamascusMessage,
+    tabs::{viewer::ViewerMessage, TabContentMessage},
+    BaseMessage,
 };
 use crate::view::style;
 
@@ -35,13 +35,13 @@ impl Viewer {
 }
 
 impl TabContent for Viewer {
-    fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
+    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let TabContentMessage::Viewer(message) = message {
             match message {
-                Message::Grid(message) => {
+                ViewerMessage::Grid(message) => {
                     self.grid.update(message);
                 }
-                Message::Tick(_) | Message::Next => {
+                ViewerMessage::Tick(_) | ViewerMessage::Next => {
                     self.queued_ticks = (self.queued_ticks + 1).min(self.speed);
 
                     if let Some(task) = self.grid.tick(self.queued_ticks) {
@@ -51,19 +51,19 @@ impl TabContent for Viewer {
 
                         self.queued_ticks = 0;
 
-                        return Command::perform(task, DamascusMessage::Panel);
+                        return Command::perform(task, BaseMessage::Panel);
                     }
                 }
-                Message::TogglePlayback => {
+                ViewerMessage::TogglePlayback => {
                     self.is_playing = !self.is_playing;
                 }
-                Message::ToggleGrid(show_grid_lines) => {
+                ViewerMessage::ToggleGrid(show_grid_lines) => {
                     self.grid.toggle_lines(show_grid_lines);
                 }
-                Message::Clear => {
+                ViewerMessage::Clear => {
                     self.grid.clear();
                 }
-                Message::SpeedChanged(speed) => {
+                ViewerMessage::SpeedChanged(speed) => {
                     if self.is_playing {
                         self.next_speed = Some(speed.round() as usize);
                     } else {
@@ -72,20 +72,19 @@ impl TabContent for Viewer {
                 }
             }
         }
-
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<DamascusMessage> {
+    fn subscription(&self) -> Subscription<BaseMessage> {
         if self.is_playing {
             time::every(Duration::from_millis(1000 / self.speed as u64))
-                .map(|instant| Message::Tick(instant).into())
+                .map(|instant| ViewerMessage::Tick(instant).into())
         } else {
             Subscription::none()
         }
     }
 
-    fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
+    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
         let selected_speed = self.next_speed.unwrap_or(self.speed);
         let controls = self
             .controls
@@ -101,7 +100,7 @@ impl TabContent for Viewer {
             .push(
                 self.grid
                     .view()
-                    .map(|message| Message::Grid(message).into()),
+                    .map(|message| ViewerMessage::Grid(message).into()),
             )
             .push(controls);
 
@@ -124,7 +123,7 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::update::{panel::Message as PanelMessage, tabs::viewer::Message as ViewerMessage};
+    use crate::update::{panel::PanelMessage, tabs::viewer::ViewerMessage};
 
     pub struct Grid {
         state: State,
@@ -711,7 +710,7 @@ impl Controls {
         is_grid_enabled: bool,
         speed: usize,
         config: &Config,
-    ) -> Element<'a, Message> {
+    ) -> Element<'a, ViewerMessage> {
         let playback_controls = Row::new()
             .spacing(10)
             .push(
@@ -719,12 +718,12 @@ impl Controls {
                     &mut self.toggle_button,
                     Text::new(if is_playing { "Pause" } else { "Play" }),
                 )
-                .on_press(Message::TogglePlayback)
+                .on_press(ViewerMessage::TogglePlayback)
                 .style(config.theme.button_style(style::Button::Primary)),
             )
             .push(
                 Button::new(&mut self.next_button, Text::new("Next"))
-                    .on_press(Message::Next)
+                    .on_press(ViewerMessage::Next)
                     .style(config.theme.button_style(style::Button::Primary)),
             );
 
@@ -737,7 +736,7 @@ impl Controls {
                     &mut self.speed_slider,
                     1.0..=1000.0,
                     speed as f32,
-                    Message::SpeedChanged,
+                    ViewerMessage::SpeedChanged,
                 )
                 .style(config.theme),
             )
@@ -750,14 +749,14 @@ impl Controls {
             .push(playback_controls)
             .push(speed_controls)
             .push(
-                Checkbox::new(is_grid_enabled, "Grid", Message::ToggleGrid)
+                Checkbox::new(is_grid_enabled, "Grid", ViewerMessage::ToggleGrid)
                     .size(16)
                     .spacing(5)
                     .text_size(16),
             )
             .push(
                 Button::new(&mut self.clear_button, Text::new("Clear"))
-                    .on_press(Message::Clear)
+                    .on_press(ViewerMessage::Clear)
                     .style(config.theme.button_style(style::Button::Primary)),
             )
             .into()

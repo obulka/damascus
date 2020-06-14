@@ -4,8 +4,8 @@ use std::ops::RangeInclusive;
 use super::TabContent;
 use crate::model::Config;
 use crate::update::{
-    tabs::{node_graph::Message, Message as TabContentMessage},
-    Message as DamascusMessage,
+    tabs::{node_graph::NodeGraphMessage, TabContentMessage},
+    BaseMessage,
 };
 use crate::view::{node::NodeType, tabs::node_graph::State};
 
@@ -25,57 +25,57 @@ impl NodeGraph {
 }
 
 impl TabContent for NodeGraph {
-    fn update(&mut self, message: TabContentMessage) -> Command<DamascusMessage> {
+    fn update(&mut self, message: TabContentMessage) -> Command<BaseMessage> {
         if let TabContentMessage::NodeGraph(message) = message {
             match message {
-                Message::ToggleGrid => self.state.toggle_lines(),
-                Message::Next => {}
-                Message::AddNode(node_type, position) => {
+                NodeGraphMessage::ToggleGrid => self.state.toggle_lines(),
+                NodeGraphMessage::Next => {}
+                NodeGraphMessage::AddNode(node_type, position) => {
                     self.state.add_node(node_type, position);
                 }
-                Message::ClearCache => {
+                NodeGraphMessage::ClearCache => {
                     self.state.clear_cache();
                 }
-                Message::ClearNodeCaches => {
+                NodeGraphMessage::ClearNodeCaches => {
                     self.state.clear_node_caches();
                 }
-                Message::ClearSelected => {
+                NodeGraphMessage::ClearSelected => {
                     self.state.clear_selected();
                     self.state.clear_node_caches();
                 }
-                Message::DeselectNode(label) => {
+                NodeGraphMessage::DeselectNode(label) => {
                     self.state.deselect_node(label);
                     self.state.clear_node_caches();
                 }
-                Message::SelectNode(label) => {
+                NodeGraphMessage::SelectNode(label) => {
                     self.state.select_node(label);
                     self.state.clear_node_caches();
                 }
-                Message::BeginSelecting(start_position) => {
+                NodeGraphMessage::BeginSelecting(start_position) => {
                     self.state.clear_selected();
                     self.state.initialize_selection_box(start_position);
                     self.state.clear_node_caches();
                 }
-                Message::ExpandSelection(lower_right_position) => {
+                NodeGraphMessage::ExpandSelection(lower_right_position) => {
                     self.state.expand_selection_box(lower_right_position);
                     self.state.clear_node_caches();
                 }
-                Message::NodesDropped => {
+                NodeGraphMessage::NodesDropped => {
                     self.state.move_selected();
                     self.state.clear_node_caches();
                 }
-                Message::CompleteSelection => {
+                NodeGraphMessage::CompleteSelection => {
                     self.state.close_selection_box();
                 }
-                Message::Translate(translation) => {
+                NodeGraphMessage::Translate(translation) => {
                     self.state.translate(translation);
                     self.state.clear_cache();
                 }
-                Message::TranslateSelected(translation) => {
+                NodeGraphMessage::TranslateSelected(translation) => {
                     self.state.translate_selected(translation);
                     self.state.clear_node_caches();
                 }
-                Message::Zoom(scroll_delta, cursor_position) => {
+                NodeGraphMessage::Zoom(scroll_delta, cursor_position) => {
                     self.state.zoom(scroll_delta, cursor_position);
                     self.state.clear_cache();
                 }
@@ -84,7 +84,7 @@ impl TabContent for NodeGraph {
         Command::none()
     }
 
-    fn view(&mut self, config: &Config) -> Element<DamascusMessage> {
+    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
         let content = self.state.view(config).map(|message| message.into());
 
         Container::new(content)

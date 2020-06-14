@@ -4,21 +4,21 @@ pub mod node_graph;
 pub mod viewer;
 
 use crate::model::Config;
-use crate::update::{tabs::Message, Message as DamascusMessage};
+use crate::update::{tabs::TabContentMessage, BaseMessage};
 use crate::view::widget::TabType;
 use node_graph::NodeGraph;
 use viewer::Viewer;
 
 pub trait TabContent {
-    fn update(&mut self, _message: Message) -> Command<DamascusMessage> {
+    fn update(&mut self, _message: TabContentMessage) -> Command<BaseMessage> {
         Command::none()
     }
 
-    fn subscription(&self) -> Subscription<DamascusMessage> {
+    fn subscription(&self) -> Subscription<BaseMessage> {
         Subscription::none()
     }
 
-    fn view(&mut self, config: &Config) -> Element<DamascusMessage>;
+    fn view(&mut self, config: &Config) -> Element<BaseMessage>;
 }
 
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {

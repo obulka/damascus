@@ -1,46 +1,27 @@
 // 3rd Party Imports
 
 use iced::{
-    button, pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row,
+    pane_grid, Align, Button, Column, Container, Element, HorizontalAlignment, Length, Row,
     Space, Text, VerticalAlignment,
 };
 
 // Local Imports
 use crate::model::{
-    tabs::{tab_content_from_type, TabContent},
     Config,
+    panel::Panel,
 };
-use crate::update::{panel::Message, Message as DamascusMessage};
+use crate::update::{panel::PanelMessage, BaseMessage};
 use crate::view::{
     style,
-    widget::{Tab, TabType},
+    widget::Tab,
+    View,
 };
 
-pub struct State {
-    split_horizontally: button::State,
-    split_vertically: button::State,
-    float_pane: button::State, // Not Implemented
-    close: button::State,
-    tabs: Vec<(String, button::State)>,
-    tab_contents: Vec<Box<dyn TabContent>>,
-    focused_tab: usize,
-}
-
-impl State {
-    pub fn new() -> Self {
-        Self {
-            split_horizontally: button::State::new(),
-            split_vertically: button::State::new(),
-            float_pane: button::State::new(),
-            close: button::State::new(),
-            tabs: Vec::new(),
-            tab_contents: Vec::new(),
-            focused_tab: 0,
-        }
-    }
-
-    pub fn view(&mut self, pane: pane_grid::Pane, config: &Config) -> Element<DamascusMessage> {
-        let State {
+impl View for Panel {
+    fn view(&mut self, config: &Config) -> Element<BaseMessage> {
+        let Panel {
+            pane,
+            focus,
             split_horizontally,
             split_vertically,
             float_pane,
@@ -49,6 +30,7 @@ impl State {
             tab_contents,
             focused_tab,
         } = self;
+        let pane = pane.unwrap();
 
         let button = |state, label, message, style| {
             Button::new(
@@ -64,6 +46,7 @@ impl State {
             .on_press(message)
             .style(style)
         };
+
         let options = Column::new()
             .spacing(2)
             .width(Length::Shrink)
@@ -81,13 +64,13 @@ impl State {
                     .push(button(
                         split_vertically,
                         "|",
-                        DamascusMessage::Split(pane_grid::Axis::Vertical, pane),
+                        BaseMessage::Split(pane_grid::Axis::Vertical, pane),
                         config.theme.button_style(style::Button::Primary),
                     ))
                     .push(button(
                         close,
                         "×",
-                        DamascusMessage::Close(pane),
+                        BaseMessage::Close(pane),
                         config.theme.button_style(style::Button::Destructive),
                     )),
             )
@@ -101,13 +84,13 @@ impl State {
                     .push(button(
                         float_pane,
                         "+",
-                        DamascusMessage::FloatPane(pane),
+                        BaseMessage::FloatPane(pane),
                         config.theme.button_style(style::Button::Primary),
                     ))
                     .push(button(
                         split_horizontally,
                         "─",
-                        DamascusMessage::Split(pane_grid::Axis::Horizontal, pane),
+                        BaseMessage::Split(pane_grid::Axis::Horizontal, pane),
                         config.theme.button_style(style::Button::Primary),
                     )),
             );
@@ -147,7 +130,7 @@ impl State {
                                         button(
                                             close_tab_state,
                                             "×",
-                                            Message::CloseTab(pane, index).into(),
+                                            PanelMessage::CloseTab(pane, index).into(),
                                             config.theme.button_style(style::Button::CloseTab),
                                         )
                                         .width(Length::Shrink)
@@ -156,7 +139,7 @@ impl State {
                             )
                             .width(Length::Shrink)
                             .padding(1)
-                            .on_press(Message::FocusTab((pane, index)).into())
+                            .on_press(PanelMessage::FocusTab((pane, index)).into())
                             .style(config.theme.tab_style(focused)),
                         )
                     },
@@ -178,78 +161,12 @@ impl State {
         if let Some(tab_content) = tab_contents.get_mut(*focused_tab) {
             content = content.push(tab_content.view(config));
         }
-
-        content.into()
-    }
-
-    pub fn open_tab(&mut self, tab_type: TabType) {
-        self.tabs
-            .push((tab_type.clone().into(), button::State::new()));
-        self.tab_contents.push(tab_content_from_type(tab_type));
-
-        self.focused_tab = self.tabs.len() - 1;
-    }
-
-    pub fn open_tab_with_content(
-        &mut self,
-        tab: (String, button::State),
-        tab_content: Box<dyn TabContent>,
-    ) {
-        self.tabs.push(tab);
-        self.tab_contents.push(tab_content);
-        self.focused_tab = self.tabs.len() - 1;
-    }
-
-    pub fn focus_tab(&mut self, index: usize) {
-        self.focused_tab = index;
-    }
-
-    pub fn close_tab(
-        &mut self,
-        index: usize,
-    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
-        let current_focus = self.focused_tab;
-        let tab = self.tabs.remove(index);
-        let tab_content = self.tab_contents.remove(index);
-
-        let mut new_focus = if current_focus > index {
-            current_focus - 1
-        } else {
-            current_focus
-        };
-        while new_focus >= self.tabs.len() && new_focus >= 1 {
-            new_focus -= 1;
-        }
-        (new_focus, tab, tab_content)
-    }
-
-    pub fn close_all_tabs(&mut self) {
-        self.tabs.clear();
-        self.tab_contents.clear();
-    }
-
-    pub fn index_of_tab_type(&self, tab_type: TabType) -> Option<usize> {
-        let tab_string: String = tab_type.into();
-        for (index, (label, _)) in self.tabs.iter().enumerate() {
-            if *label == tab_string {
-                return Some(index);
-            }
-        }
-        None
-    }
-
-    pub fn get_focused_label(&self) -> Option<&String> {
-        if let Some((focused_label, _)) = self.tabs.get(self.focused_tab) {
-            return Some(focused_label);
-        }
-        None
-    }
-
-    pub fn get_focused_content(&self) -> Option<&Box<dyn TabContent>> {
-        self.tab_contents.get(self.focused_tab)
-    }
-
-    pub fn get_mut_focused_content(&mut self) -> Option<&mut Box<dyn TabContent>> {
-        self.tab_contents.get_mut(self.focused_tab)
+        Container::new(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(0)
+            .center_y()
+            .style(config.theme.pane_style(*focus))
+            .into()
     }
 }

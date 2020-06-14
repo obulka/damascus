@@ -6,13 +6,13 @@ use iced::{Command, Point, Vector};
 
 // Local Imports
 use crate::update::{
-    panel::Message as PanelMessage, tabs::Message as TabContentMessage, Message as DamascusMessage,
+    BaseMessage, panel::PanelMessage, tabs::TabContentMessage,
 };
 use crate::view::widget::NodeType;
 use crate::DamascusError;
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum NodeGraphMessage {
     Next,
     ToggleGrid,
     ClearCache,
@@ -30,31 +30,31 @@ pub enum Message {
     Zoom(f32, Option<Point>),
 }
 
-impl From<Message> for TabContentMessage {
-    fn from(message: Message) -> TabContentMessage {
+impl From<NodeGraphMessage> for TabContentMessage {
+    fn from(message: NodeGraphMessage) -> TabContentMessage {
         TabContentMessage::NodeGraph(message)
     }
 }
 
-impl From<Message> for PanelMessage {
-    fn from(message: Message) -> PanelMessage {
+impl From<NodeGraphMessage> for PanelMessage {
+    fn from(message: NodeGraphMessage) -> PanelMessage {
         let message: TabContentMessage = message.into();
         message.into()
     }
 }
 
-impl From<Message> for DamascusMessage {
-    fn from(message: Message) -> DamascusMessage {
+impl From<NodeGraphMessage> for BaseMessage {
+    fn from(message: NodeGraphMessage) -> BaseMessage {
         let message: PanelMessage = message.into();
         message.into()
     }
 }
 
-impl TryFrom<DamascusMessage> for Message {
+impl TryFrom<BaseMessage> for NodeGraphMessage {
     type Error = &'static DamascusError;
 
-    fn try_from(message: DamascusMessage) -> Result<Self, Self::Error> {
-        if let DamascusMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(
+    fn try_from(message: BaseMessage) -> Result<Self, Self::Error> {
+        if let BaseMessage::Panel(PanelMessage::TabContent(TabContentMessage::NodeGraph(
             message,
         ))) = message
         {
@@ -65,16 +65,16 @@ impl TryFrom<DamascusMessage> for Message {
     }
 }
 
-pub fn clear_node_caches_command() -> Command<DamascusMessage> {
+pub fn clear_node_caches_command() -> Command<BaseMessage> {
     Command::perform(
-        async move { Message::ClearNodeCaches.into() },
-        DamascusMessage::Panel,
+        async move { NodeGraphMessage::ClearNodeCaches.into() },
+        BaseMessage::Panel,
     )
 }
 
-pub fn clear_cache_command() -> Command<DamascusMessage> {
+pub fn clear_cache_command() -> Command<BaseMessage> {
     Command::perform(
-        async move { Message::ClearCache.into() },
-        DamascusMessage::Panel,
+        async move { NodeGraphMessage::ClearCache.into() },
+        BaseMessage::Panel,
     )
 }

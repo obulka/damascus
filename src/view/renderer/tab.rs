@@ -1,21 +1,14 @@
-//! Allow your users to perform actions by pressing a button.
-//!
-//! A [`Button`] has some local [`State`].
-//!
-//! [`Button`]: type.Button.html
-//! [`State`]: struct.State.html
+// 3rd Party Imports
 use iced_graphics::{Backend, Defaults, Primitive, Renderer};
 use iced_native::mouse;
 use iced_native::{Background, Color, Element, Layout, Point, Rectangle};
 
+// Local Imports
 pub use crate::view::style::tab::StyleSheet;
 
-/// A widget that produces a message when clicked.
-///
-/// This is an alias of an `iced_native` button with an `iced_wgpu::Renderer`.
-pub type Tab<'a, Message, Backend> = crate::view::widget::Tab<'a, Message, Renderer<Backend>>;
+pub type Tab<'a, Message, Backend> = crate::model::tabs::Tab<'a, Message, Renderer<Backend>>;
 
-impl<B> crate::view::widget::tab::Renderer for Renderer<B>
+impl<B> crate::model::tabs::tab::Renderer for Renderer<B>
 where
     B: Backend,
 {

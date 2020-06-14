@@ -1,7 +1,7 @@
-//! Allow your users to perform actions by pressing a button.
+// 3rd Party Imports
 use iced_core::{Background, Color};
 
-/// The appearance of a button.
+/// The appearance of a tab.
 #[derive(Debug, Clone, Copy)]
 pub struct Style {
     pub background: Option<Background>,
@@ -23,7 +23,7 @@ impl std::default::Default for Style {
     }
 }
 
-/// A set of rules that dictate the style of a button.
+/// A set of rules that dictate the style of a tab.
 pub trait StyleSheet {
     fn style(&self) -> Style;
 }

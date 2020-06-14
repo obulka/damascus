@@ -5,9 +5,8 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::tabs::node_graph::NodeGraph;
+use crate::model::{node::NodeType, tabs::node_graph::NodeGraph};
 use crate::update::{panel::PanelMessage, tabs::TabContentMessage, CanvasUpdate, Message, Update};
-use crate::view::widget::NodeType;
 
 #[derive(Debug, Clone)]
 pub enum NodeGraphMessage {

@@ -1,7 +1,10 @@
+// Standard Imports
+use std::hash::Hash;
+
+// 3rd Party Imports
 use iced_native::{
     layout, mouse, Clipboard, Element, Event, Hasher, Layout, Length, Point, Rectangle, Widget,
 };
-use std::hash::Hash;
 
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: self::Renderer> {

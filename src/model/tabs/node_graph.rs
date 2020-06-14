@@ -6,7 +6,10 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::ops::RangeInclusive; // Security not important
 
 use super::TabContent;
-use crate::model::{CanvasModel, Config, Model};
+use crate::model::{
+    node::{create_node, Node, NodeType},
+    CanvasModel, Config, Model,
+};
 use crate::update::{
     tabs::{
         node_graph::{Interaction, NodeGraphMessage},
@@ -14,10 +17,7 @@ use crate::update::{
     },
     CanvasUpdate,
 };
-use crate::view::{
-    node::{create_node, NodeType},
-    CanvasView, Node,
-};
+use crate::view::CanvasView;
 
 pub struct NodeGraph {
     pub nodes: HashMap<String, Box<dyn Node>>,

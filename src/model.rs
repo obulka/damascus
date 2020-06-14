@@ -2,12 +2,13 @@
 use iced::pane_grid;
 
 // Local Imports
-pub mod panel;
-pub mod tabs;
-
 use crate::update::{CanvasUpdate, Message, Update};
 use crate::view::{style::Theme, CanvasView, View};
 use panel::Panel;
+
+pub mod node;
+pub mod panel;
+pub mod tabs;
 
 pub trait Model<UpdateMessage>: Update<UpdateMessage> + View {}
 pub trait CanvasModel<UpdateMessage>: CanvasUpdate<UpdateMessage> + CanvasView {}

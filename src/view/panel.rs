@@ -5,12 +5,12 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::{panel::Panel, Config};
+use crate::model::{panel::Panel, tabs::Tab, Config};
 use crate::update::{
     panel::{PanelMessage, PanelUpdate},
     Message,
 };
-use crate::view::{style, widget::Tab, View};
+use crate::view::{style, View};
 
 pub trait PanelView: View {
     fn view(

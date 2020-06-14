@@ -1,5 +1,3 @@
-// TODO: Create a theme trait
-
 // 3rd Party Imports
 use iced::{
     button, checkbox, container, progress_bar, radio, scrollable, slider, text_input, Color,

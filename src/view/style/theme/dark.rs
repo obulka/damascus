@@ -1,8 +1,10 @@
+// 3rd Party Imports
 use iced::{
     button, checkbox, container, progress_bar, radio, scrollable, slider, text_input, Background,
     Color, Vector,
 };
 
+// Local Imports
 use crate::view::style::{
     tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, ORANGE, TURQOISE,
 };

@@ -1,9 +1,10 @@
+// 3rd Party Imports
 use iced::{
     canvas::{Canvas, Cursor, Geometry, Path, Stroke},
     Container, Element, Length, Point, Rectangle, Vector,
 };
-// Security not important
 
+// Local Imports
 use crate::model::{tabs::NodeGraph, Config};
 use crate::update::{tabs::node_graph::NodeGraphMessage, Message};
 use crate::view::{style::NodeGraphStyle, CanvasView, View};

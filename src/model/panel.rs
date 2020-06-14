@@ -7,7 +7,7 @@ use crate::model::{
     Model,
 };
 use crate::update::{panel::PanelUpdate, tabs::TabContentMessage};
-use crate::view::widget::panel::PanelView;
+use crate::view::panel::PanelView;
 
 trait PanelModel: PanelUpdate + PanelView {}
 

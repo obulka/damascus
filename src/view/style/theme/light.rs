@@ -1,5 +1,7 @@
+// 3rd Party Imports
 use iced::{button, container, Background, Color, Vector};
 
+// Local Imports
 use crate::view::style::{
     tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, OFF_WHITE, ORANGE, PURPLE,
 };

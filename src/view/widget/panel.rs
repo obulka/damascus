@@ -8,9 +8,18 @@ use iced::{
 // Local Imports
 use crate::model::{panel::Panel, Config};
 use crate::update::{panel::PanelMessage, BaseMessage};
-use crate::view::{style, widget::Tab, PaneGridView, View};
+use crate::view::{style, widget::Tab, View};
 
-impl PaneGridView for Panel {
+pub trait PanelView: View {
+    fn view(
+        &mut self,
+        pane: pane_grid::Pane,
+        focus: Option<pane_grid::Focus>,
+        config: &Config,
+    ) -> Element<BaseMessage>;
+}
+
+impl PanelView for Panel {
     fn view(
         &mut self,
         pane: pane_grid::Pane,

@@ -2,19 +2,19 @@
 use std::convert::TryFrom;
 
 // Local Imports
+use crate::DamascusError;
+use super::panel::PanelMessage;
+
 pub mod node_graph;
 pub mod viewer;
 
-use crate::DamascusError;
-use node_graph::NodeGraphMessage;
-// use viewer::ViewerMessage;
-use super::panel::PanelMessage;
-
+pub use node_graph::NodeGraphMessage;
+pub use viewer::ViewerMessage;
 
 #[derive(Debug, Clone)]
 pub enum TabContentMessage {
     NodeGraph(NodeGraphMessage),
-    // Viewer(ViewerMessage),
+    Viewer(ViewerMessage),
 }
 
 impl From<TabContentMessage> for PanelMessage {

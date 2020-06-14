@@ -1,5 +1,4 @@
-use iced::{Align, Column, Container, Element, Length, PaneGrid, Row, canvas::{Cursor, Geometry},
-    mouse, Rectangle,
+use iced::{Align, Column, Container, Element, Length, PaneGrid, Row, canvas::{Cursor, Geometry}, Rectangle,
 };
 
 pub mod renderer;

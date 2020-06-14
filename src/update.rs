@@ -70,7 +70,7 @@ pub trait CanvasUpdate {
         cursor: Cursor,
     ) -> Option<Self::Message>;
 
-    fn mouse_interaction(&self, _bounds: Rectangle, _cursor: Cursor) -> mouse::Interaction;
+    fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction;
 }
 
 impl Update for Damascus {

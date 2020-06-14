@@ -20,10 +20,10 @@ impl std::cmp::PartialEq<String> for TabContentMessage {
                 let tab_type_string: String = TabType::NodeGraph.into();
                 *other == tab_type_string
             }
-            // TabContentMessage::Viewer(..) => {
-            //     let tab_type_string: String = TabType::Viewer.into();
-            //     *other == tab_type_string
-            // }
+            TabContentMessage::Viewer(..) => {
+                let tab_type_string: String = TabType::Viewer.into();
+                *other == tab_type_string
+            }
         }
     }
 }

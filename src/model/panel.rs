@@ -3,11 +3,11 @@ use iced::{button, pane_grid};
 
 // Local Imports
 use crate::model::{
-    tabs::{tab_content_from_type, TabContent},
+    tabs::{tab_content_from_type, TabContent, TabType},
     Model,
 };
 use crate::update::{panel::PanelUpdate, tabs::TabContentMessage};
-use crate::view::{widget::panel::PanelView, TabType};
+use crate::view::widget::panel::PanelView;
 
 trait PanelModel: PanelUpdate + PanelView {}
 

@@ -3,8 +3,7 @@ use iced::{pane_grid, Command, Subscription};
 
 // Local Imports
 use super::{tabs::TabContentMessage, Message, Update};
-use crate::model::panel::Panel;
-use crate::view::widget::TabType;
+use crate::model::{panel::Panel, tabs::TabType};
 
 pub trait PanelUpdate: Update<TabContentMessage> {
     fn update_view_state(&mut self, pane: pane_grid::Pane, focus: Option<pane_grid::Focus>);

@@ -223,15 +223,6 @@ impl From<Theme> for Box<dyn container::StyleSheet> {
     }
 }
 
-// impl From<Theme> for Box<dyn tab::StyleSheet> {
-//     fn from(theme: Theme) -> Self {
-//         match theme {
-//             Theme::Light => Default::default(),
-//             Theme::Dark => dark::DropDown.into(),
-//         }
-//     }
-// }
-
 impl From<Theme> for Box<dyn radio::StyleSheet> {
     fn from(theme: Theme) -> Self {
         match theme {

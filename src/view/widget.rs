@@ -5,9 +5,3 @@ pub mod tabs;
 
 pub use node::{Node, NodeType};
 pub use tab::Tab;
-
-#[derive(Debug, Clone)]
-pub enum TabType {
-    NodeGraph,
-    Viewer,
-}

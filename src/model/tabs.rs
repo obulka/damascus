@@ -4,7 +4,6 @@ pub mod viewer;
 
 use crate::model::Model;
 use crate::update::tabs::TabContentMessage;
-use crate::view::widget::TabType;
 
 pub use node_graph::NodeGraph;
 pub use viewer::Viewer;
@@ -16,4 +15,10 @@ pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
         TabType::Viewer => Box::new(Viewer::new()),
         TabType::NodeGraph => Box::new(NodeGraph::new()),
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum TabType {
+    NodeGraph,
+    Viewer,
 }

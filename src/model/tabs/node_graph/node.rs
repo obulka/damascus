@@ -15,15 +15,6 @@ pub enum NodeType {
     Viewer,
 }
 
-impl From<NodeType> for String {
-    fn from(node_type: NodeType) -> String {
-        match node_type {
-            NodeType::Read => "Read".to_string(),
-            NodeType::Viewer => "Viewer".to_string(),
-        }
-    }
-}
-
 pub fn create_node(node_type: NodeType) -> Box<dyn Node> {
     match node_type {
         NodeType::Viewer => Box::new(Viewer::default()),

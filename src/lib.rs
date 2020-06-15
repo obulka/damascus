@@ -9,8 +9,8 @@ pub mod model;
 pub mod update;
 pub mod view;
 
-pub use model::Damascus;
 use model::panel::Panel;
+pub use model::Damascus;
 use update::{Message, Update};
 use view::{Config, View};
 

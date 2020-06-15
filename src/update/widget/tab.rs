@@ -4,8 +4,8 @@ use iced_native::{Clipboard, Event, Layout, Point};
 
 // Local Imports
 use crate::model::Tab;
-use crate::view::renderer::tab::TabRenderer;
 use crate::update::WidgetUpdate;
+use crate::view::renderer::tab::TabRenderer;
 
 impl<'a, Message, Renderer> WidgetUpdate<Message, Renderer> for Tab<'a, Message, Renderer>
 where

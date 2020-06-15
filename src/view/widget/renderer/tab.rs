@@ -7,7 +7,8 @@ pub use crate::view::{style::tab::StyleSheet, WidgetView};
 
 pub type Tab<'a, Message, Backend> = crate::model::Tab<'a, Message, Renderer<Backend>>;
 
-impl<'a, Message, Renderer> WidgetView<Message, Renderer> for crate::model::Tab<'a, Message, Renderer>
+impl<'a, Message, Renderer> WidgetView<Message, Renderer>
+    for crate::model::Tab<'a, Message, Renderer>
 where
     Renderer: TabRenderer,
     Message: Clone,
@@ -76,7 +77,6 @@ pub trait TabRenderer: iced_native::Renderer + Sized {
         content_layout: Layout<'_>,
     ) -> Self::Output;
 }
-
 
 impl<B> TabRenderer for Renderer<B>
 where

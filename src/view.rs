@@ -12,8 +12,8 @@ pub use theme::Theme;
 pub use widget::*;
 
 use crate::update::{handle_hotkey, Message};
-use panel::PanelView;
 use crate::Damascus;
+use panel::PanelView;
 
 pub trait View {
     fn view(&mut self, config: &Config) -> Element<Message>;
@@ -45,7 +45,6 @@ impl Default for Config {
         }
     }
 }
-
 
 impl View for Damascus {
     fn view(&mut self, config: &Config) -> Element<Message> {

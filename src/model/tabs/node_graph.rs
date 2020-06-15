@@ -1,5 +1,5 @@
 use iced::{
-    canvas::{self, Cache, Cursor, Event, Geometry},
+    canvas::{Cache, Cursor, Event, Geometry, Program},
     mouse, Point, Rectangle, Size, Vector,
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
@@ -282,7 +282,7 @@ impl From<Region> for Rectangle {
     }
 }
 
-impl<'a> canvas::Program<NodeGraphMessage> for NodeGraph {
+impl<'a> Program<NodeGraphMessage> for NodeGraph {
     fn update(
         &mut self,
         event: Event,

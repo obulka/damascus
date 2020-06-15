@@ -2,13 +2,11 @@
 use std::hash::Hash;
 
 // 3rd Party Imports
-use iced_native::{
-    layout, Clipboard, Element, Event, Hasher, Layout, Length, Point, Widget,
-};
+use iced_native::{layout, Clipboard, Element, Event, Hasher, Layout, Length, Point, Widget};
 
 use crate::model::WidgetModel;
-use crate::view::{renderer::tab::TabRenderer, WidgetView};
 use crate::update::WidgetUpdate;
+use crate::view::{renderer::tab::TabRenderer, WidgetView};
 
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: TabRenderer> {
@@ -26,7 +24,18 @@ impl<'a, Message, Renderer> WidgetModel<Message, Renderer> for Tab<'a, Message, 
 where
     Renderer: TabRenderer,
     Message: Clone,
-{}
+{
+}
+
+impl<'a, Message, Renderer> From<Tab<'a, Message, Renderer>> for Element<'a, Message, Renderer>
+where
+    Renderer: 'a + TabRenderer,
+    Message: 'a + Clone,
+{
+    fn from(tab: Tab<'a, Message, Renderer>) -> Element<'a, Message, Renderer> {
+        Element::new(tab)
+    }
+}
 
 impl<'a, Message, Renderer> Tab<'a, Message, Renderer>
 where
@@ -153,13 +162,7 @@ where
         layout: Layout<'_>,
         cursor_position: Point,
     ) -> Renderer::Output {
-        WidgetView::draw(
-            self,
-            renderer,
-            defaults,
-            layout,
-            cursor_position,
-        )
+        WidgetView::draw(self, renderer, defaults, layout, cursor_position)
     }
 
     fn hash_layout(&self, state: &mut Hasher) {
@@ -168,15 +171,5 @@ where
 
         self.width.hash(state);
         self.content.hash_layout(state);
-    }
-}
-
-impl<'a, Message, Renderer> From<Tab<'a, Message, Renderer>> for Element<'a, Message, Renderer>
-where
-    Renderer: 'a + TabRenderer,
-    Message: 'a + Clone,
-{
-    fn from(tab: Tab<'a, Message, Renderer>) -> Element<'a, Message, Renderer> {
-        Element::new(tab)
     }
 }

@@ -2,6 +2,7 @@
 use iced::{Point, Rectangle, Vector};
 
 // Local Imports
+use crate::model::CanvasItemModel;
 use crate::update::node::NodeUpdate;
 use crate::view::node::NodeView;
 
@@ -31,7 +32,7 @@ pub fn create_node(node_type: NodeType) -> Box<dyn Node> {
 }
 
 pub trait NodeState {
-    fn get_label(&self) -> &str;
+    fn get_label(&self) -> &String;
 
     fn set_label(&mut self, label: String);
 
@@ -77,4 +78,4 @@ pub trait NodeState {
     }
 }
 
-pub trait Node: NodeUpdate + NodeView {}
+pub trait Node: CanvasItemModel + NodeUpdate + NodeView {}

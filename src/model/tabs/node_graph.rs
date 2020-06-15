@@ -255,7 +255,10 @@ impl NodeGraph {
     }
 
     pub fn add_node(&mut self, node_type: NodeType, position: Point) {
-        let default_label: String = node_type.clone().into();
+        let mut node = create_node(node_type);
+        node.set_position(position);
+
+        let default_label = node.get_label();
         let mut label = default_label.clone();
 
         let mut count = 0;
@@ -263,8 +266,6 @@ impl NodeGraph {
             label = format!("{}{}", default_label, count);
             count += 1;
         }
-        let mut node = create_node(node_type);
-        node.set_position(position);
         node.set_label(label.clone());
 
         self.nodes.insert(label, node);

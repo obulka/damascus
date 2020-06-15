@@ -1,3 +1,6 @@
+// Local Imports
 mod viewer;
 
-pub trait NodeUpdate {}
+use crate::update::CanvasItemUpdate;
+
+pub trait NodeUpdate: CanvasItemUpdate {}

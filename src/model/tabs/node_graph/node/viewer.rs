@@ -3,6 +3,7 @@ use iced::{Point, Rectangle, Size, Vector};
 
 // Local Imports
 use super::{Node, NodeState};
+use crate::model::CanvasItemModel;
 
 pub struct Viewer {
     pub rectangle: Rectangle,
@@ -35,8 +36,10 @@ impl Default for Viewer {
     }
 }
 
+impl CanvasItemModel for Viewer {}
+
 impl NodeState for Viewer {
-    fn get_label(&self) -> &str {
+    fn get_label(&self) -> &String {
         &self.label
     }
 

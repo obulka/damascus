@@ -11,8 +11,8 @@ pub mod tabs;
 
 mod widget;
 
-pub use widget::*;
 pub use tabs::node_graph::node;
+pub use widget::*;
 
 pub trait Model<UpdateMessage>: Update<UpdateMessage> + View {}
 pub trait CanvasModel<UpdateMessage>:

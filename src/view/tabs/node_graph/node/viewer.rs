@@ -1,20 +1,14 @@
 // 3rd Party Imports
-use iced::{Rectangle, Vector};
+use iced::{canvas::Frame, Rectangle};
 
 // Local Imports
-use crate::view::node::NodeView;
 use crate::model::node::Viewer;
+use crate::view::{node::NodeView, CanvasItemView, Config};
 
-impl NodeView for Viewer {
-    fn get_translation(&self) -> Vector {
-        self.translation
-    }
+impl NodeView for Viewer {}
 
-    fn set_translation(&mut self, translation: Vector) {
-        self.translation = translation;
-    }
-
-    fn rect(&self) -> Rectangle {
-        self.rectangle
+impl CanvasItemView for Viewer {
+    fn draw(&self, frame: &mut Frame, bounds: &Rectangle, render_text: bool, config: &Config) {
+        NodeView::rectangular_draw(self, frame, bounds, render_text, config);
     }
 }

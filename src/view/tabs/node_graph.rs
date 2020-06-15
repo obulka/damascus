@@ -36,10 +36,9 @@ impl CanvasView for NodeGraph {
         let mut geometry: Vec<Geometry> = Vec::new();
 
         let center = Vector::new(bounds.width / 2.0, bounds.height / 2.0);
-        let lower_lod = self.scaling < 0.6;
         let node_graph_style: &NodeGraphStyle = &self.config.theme.into();
 
-        if !lower_lod && self.show_lines {
+        if !self.lower_lod() && self.show_lines {
             let grid = self.grid_cache.draw(bounds.size(), |frame| {
                 frame.translate(center);
                 frame.scale(self.scaling);
@@ -100,18 +99,8 @@ impl CanvasView for NodeGraph {
 
                     let visible_bounds: Rectangle = self.visible_region(frame.size()).into();
 
-                    let font_size = self.config.font_size as f32;
-                    let node_graph_style = &self.config.theme.into();
-                    for (label, node) in self.nodes.iter() {
-                        node.draw(
-                            frame,
-                            &visible_bounds,
-                            if lower_lod { None } else { Some(label) },
-                            self.selected_nodes.contains(label),
-                            false,
-                            font_size,
-                            node_graph_style,
-                        );
+                    for (_, node) in self.nodes.iter() {
+                        node.draw(frame, &visible_bounds, !self.lower_lod(), &self.config);
                     }
                 })
             });

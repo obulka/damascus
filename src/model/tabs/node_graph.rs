@@ -12,9 +12,7 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 pub mod node;
 
 use super::TabContent;
-use crate::model::{
-    CanvasModel, Config, Model,
-};
+use crate::model::{CanvasModel, Config, Model};
 use crate::update::{
     tabs::{
         node_graph::{Interaction, NodeGraphMessage},
@@ -77,6 +75,10 @@ impl NodeGraph {
         node_graph
     }
 
+    pub fn lower_lod(&self) -> bool {
+        self.scaling < 0.6
+    }
+
     pub fn initialize_selection_box(&mut self, start_position: Point) {
         self.selection_box = Some(Rectangle::new(start_position, Size::new(0.0, 0.0)));
     }
@@ -101,14 +103,8 @@ impl NodeGraph {
             }
 
             let top_left_rect = Rectangle::new(top_left, top_left_size);
+            self.select_nodes_in_rect(top_left_rect);
 
-            for (node_label, node) in self.nodes.iter() {
-                if top_left_rect.contains(node.rect().center()) {
-                    self.selected_nodes.insert(node_label.to_string());
-                } else {
-                    self.selected_nodes.remove(node_label);
-                }
-            }
             self.selection_box = Some(selection_box);
         }
         self.selection_box_cache.clear();
@@ -120,14 +116,37 @@ impl NodeGraph {
     }
 
     pub fn deselect_node(&mut self, label: String) {
-        self.selected_nodes.remove(&label);
+        if let Some(node) = self.nodes.get_mut(&label) {
+            node.deselect();
+            self.selected_nodes.remove(&label);
+        }
     }
 
     pub fn select_node(&mut self, label: String) {
-        self.selected_nodes.insert(label);
+        if let Some(node) = self.nodes.get_mut(&label) {
+            node.select();
+            self.selected_nodes.insert(label);
+        }
+    }
+
+    pub fn select_nodes_in_rect(&mut self, rectangle: Rectangle) {
+        for (node_label, node) in self.nodes.iter_mut() {
+            if rectangle.contains(node.rect().center()) {
+                node.select();
+                self.selected_nodes.insert(node_label.to_string());
+            } else {
+                node.deselect();
+                self.selected_nodes.remove(node_label);
+            }
+        }
     }
 
     pub fn clear_selected(&mut self) {
+        for node_label in self.selected_nodes.iter() {
+            if let Some(node) = self.nodes.get_mut(node_label) {
+                node.deselect();
+            }
+        }
         self.selected_nodes.clear();
     }
 
@@ -246,6 +265,7 @@ impl NodeGraph {
         }
         let mut node = create_node(node_type);
         node.set_position(position);
+        node.set_label(label.clone());
 
         self.nodes.insert(label, node);
     }

@@ -8,9 +8,9 @@ pub mod tabs;
 pub mod theme;
 mod widget;
 
+pub use tabs::node_graph::node;
 pub use theme::Theme;
 pub use widget::*;
-pub use tabs::node_graph::node;
 
 use crate::update::{handle_hotkey, Message};
 use crate::Damascus;
@@ -29,11 +29,8 @@ pub trait CanvasView: View {
 }
 
 pub trait CanvasItemView {
-    fn draw(
-        &self,
-        frame: &mut Frame,
-        bounds: &Rectangle,
-    );
+    // TODO force this with NodeView
+    fn draw(&self, frame: &mut Frame, bounds: &Rectangle, render_text: bool, config: &Config);
 }
 
 #[derive(Debug, Clone)]

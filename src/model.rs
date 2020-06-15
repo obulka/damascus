@@ -10,6 +10,10 @@ pub mod node;
 pub mod panel;
 pub mod tabs;
 
+mod widget;
+
+pub use widget::*;
+
 pub trait Model<UpdateMessage>: Update<UpdateMessage> + View {}
 pub trait CanvasModel<UpdateMessage>: CanvasUpdate<UpdateMessage> + CanvasView {}
 

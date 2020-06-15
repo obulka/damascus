@@ -5,7 +5,7 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::{panel::Panel, tabs::Tab};
+use crate::model::{panel::Panel, Tab};
 use crate::update::{
     panel::{PanelMessage, PanelUpdate},
     Message,

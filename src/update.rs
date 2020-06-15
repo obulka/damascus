@@ -7,6 +7,9 @@ use iced::{
 // Local Imports
 pub mod panel;
 pub mod tabs;
+mod widget;
+
+pub use widget::*;
 
 use crate::model::{panel::Panel, tabs::TabType};
 use crate::view::Theme;

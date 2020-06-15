@@ -3,24 +3,34 @@ use std::hash::Hash;
 
 // 3rd Party Imports
 use iced_native::{
-    layout, mouse, Clipboard, Element, Event, Hasher, Layout, Length, Point, Rectangle, Widget,
+    layout, Clipboard, Element, Event, Hasher, Layout, Length, Point, Widget,
 };
 
+use crate::model::WidgetModel;
+use crate::view::{renderer::tab::TabRenderer, WidgetView};
+use crate::update::WidgetUpdate;
+
 #[allow(missing_debug_implementations)]
-pub struct Tab<'a, Message, Renderer: self::Renderer> {
-    content: Element<'a, Message, Renderer>,
-    on_press: Option<Message>,
-    width: Length,
-    height: Length,
-    min_width: u32,
-    min_height: u32,
-    padding: u16,
-    style: Renderer::Style,
+pub struct Tab<'a, Message, Renderer: TabRenderer> {
+    pub content: Element<'a, Message, Renderer>,
+    pub on_press: Option<Message>,
+    pub width: Length,
+    pub height: Length,
+    pub min_width: u32,
+    pub min_height: u32,
+    pub padding: u16,
+    pub style: Renderer::Style,
 }
+
+impl<'a, Message, Renderer> WidgetModel<Message, Renderer> for Tab<'a, Message, Renderer>
+where
+    Renderer: TabRenderer,
+    Message: Clone,
+{}
 
 impl<'a, Message, Renderer> Tab<'a, Message, Renderer>
 where
-    Renderer: self::Renderer,
+    Renderer: TabRenderer,
 {
     /// Creates a new [`Tab`] with the given
     /// content.
@@ -101,7 +111,7 @@ where
 
 impl<'a, Message, Renderer> Widget<Message, Renderer> for Tab<'a, Message, Renderer>
 where
-    Renderer: self::Renderer,
+    Renderer: TabRenderer,
     Message: Clone,
 {
     fn width(&self) -> Length {
@@ -113,20 +123,7 @@ where
     }
 
     fn layout(&self, renderer: &Renderer, limits: &layout::Limits) -> layout::Node {
-        let padding = f32::from(self.padding);
-        let limits = limits
-            .min_width(self.min_width)
-            .min_height(self.min_height)
-            .width(self.width)
-            .height(self.height)
-            .pad(padding);
-
-        let mut content = self.content.layout(renderer, &limits);
-        content.move_to(Point::new(padding, padding));
-
-        let size = limits.resolve(content.size()).pad(padding);
-
-        layout::Node::with_children(size, vec![content])
+        WidgetView::layout(self, renderer, limits)
     }
 
     fn on_event(
@@ -138,32 +135,15 @@ where
         renderer: &Renderer,
         clipboard: Option<&dyn Clipboard>,
     ) {
-        // Allows the close tab Tab to be pressed
-        if let Some(child_layout) = layout.children().next() {
-            self.content.on_event(
-                event.clone(),
-                child_layout,
-                cursor_position,
-                messages,
-                renderer,
-                clipboard,
-            );
-            // Do not focus if close Tab clicked
-            if let Some(close_layout) = child_layout.children().last() {
-                match event {
-                    Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left)) => {
-                        if let Some(on_press) = self.on_press.clone() {
-                            if layout.bounds().contains(cursor_position)
-                                && !close_layout.bounds().contains(cursor_position)
-                            {
-                                messages.push(on_press);
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-        }
+        WidgetUpdate::on_event(
+            self,
+            event,
+            layout,
+            cursor_position,
+            messages,
+            renderer,
+            clipboard,
+        )
     }
 
     fn draw(
@@ -173,13 +153,12 @@ where
         layout: Layout<'_>,
         cursor_position: Point,
     ) -> Renderer::Output {
-        renderer.draw(
+        WidgetView::draw(
+            self,
+            renderer,
             defaults,
-            layout.bounds(),
+            layout,
             cursor_position,
-            &self.style,
-            &self.content,
-            layout.children().next().unwrap(),
         )
     }
 
@@ -192,39 +171,9 @@ where
     }
 }
 
-/// The renderer of a [`Tab`].
-///
-/// Your [renderer] will need to implement this trait before being
-/// able to use a [`Tab`] in your user interface.
-///
-/// [`Tab`]: struct.Tab.html
-/// [renderer]: ../../renderer/index.html
-pub trait Renderer: iced_native::Renderer + Sized {
-    /// The default padding of a [`Tab`].
-    ///
-    /// [`Tab`]: struct.Tab.html
-    const DEFAULT_PADDING: u16;
-
-    /// The style supported by this renderer.
-    type Style: Default;
-
-    /// Draws a [`Tab`].
-    ///
-    /// [`Tab`]: struct.Tab.html
-    fn draw<Message>(
-        &mut self,
-        defaults: &Self::Defaults,
-        bounds: Rectangle,
-        cursor_position: Point,
-        style: &Self::Style,
-        content: &Element<'_, Message, Self>,
-        content_layout: Layout<'_>,
-    ) -> Self::Output;
-}
-
 impl<'a, Message, Renderer> From<Tab<'a, Message, Renderer>> for Element<'a, Message, Renderer>
 where
-    Renderer: 'a + self::Renderer,
+    Renderer: 'a + TabRenderer,
     Message: 'a + Clone,
 {
     fn from(tab: Tab<'a, Message, Renderer>) -> Element<'a, Message, Renderer> {

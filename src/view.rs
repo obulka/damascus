@@ -1,5 +1,5 @@
 use iced::{
-    canvas::{Cursor, Geometry},
+    canvas::{Cursor, Frame, Geometry},
     Align, Column, Container, Element, Length, PaneGrid, Rectangle, Row,
 };
 
@@ -10,6 +10,7 @@ mod widget;
 
 pub use theme::Theme;
 pub use widget::*;
+pub use tabs::node_graph::node;
 
 use crate::update::{handle_hotkey, Message};
 use crate::Damascus;
@@ -25,6 +26,14 @@ pub trait CanvasView: View {
     fn view<'a>(&'a mut self) -> Element<'a, Self::Message>;
 
     fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry>;
+}
+
+pub trait CanvasItemView {
+    fn draw(
+        &self,
+        frame: &mut Frame,
+        bounds: &Rectangle,
+    );
 }
 
 #[derive(Debug, Clone)]

@@ -1,13 +1,18 @@
+// Standard Imports
+use std::ops::RangeInclusive;
+
+// 3rd Party Imports
 use iced::{
     canvas::{Cache, Cursor, Event, Geometry, Program},
     mouse, Point, Rectangle, Size, Vector,
 };
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
-use std::ops::RangeInclusive; // Security not important
+
+// Local Imports
+pub mod node;
 
 use super::TabContent;
 use crate::model::{
-    node::{create_node, Node, NodeType},
     CanvasModel, Config, Model,
 };
 use crate::update::{
@@ -18,6 +23,7 @@ use crate::update::{
     CanvasUpdate,
 };
 use crate::view::CanvasView;
+use node::{create_node, Node, NodeType};
 
 pub struct NodeGraph {
     pub nodes: HashMap<String, Box<dyn Node>>,

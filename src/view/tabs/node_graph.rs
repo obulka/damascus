@@ -5,6 +5,8 @@ use iced::{
 };
 
 // Local Imports
+pub mod node;
+
 use crate::model::tabs::NodeGraph;
 use crate::update::{tabs::node_graph::NodeGraphMessage, Message};
 use crate::view::{theme::NodeGraphStyle, CanvasView, Config, View};

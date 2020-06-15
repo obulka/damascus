@@ -1,45 +1,27 @@
+// 3rd Party Imports
 use iced::{
     canvas::{Frame, Path, Stroke, Text},
-    HorizontalAlignment, Point, Rectangle, Vector, VerticalAlignment,
+    HorizontalAlignment, Rectangle, Vector, VerticalAlignment,
 };
 
-use crate::view::theme::{NodeGraphStyle, NodeStyle};
-
+// Local Imports
 mod viewer;
-pub use viewer::Viewer;
 
-pub trait Node {
-    fn set_position(&mut self, position: Point);
+use crate::view::{theme::{NodeGraphStyle, NodeStyle}};
+
+pub trait NodeView {
+    fn get_translation(&self) -> Vector {
+        Vector::default()
+    }
 
     fn set_translation(&mut self, translation: Vector);
 
-    fn translate(&mut self);
-
-    fn get_translation(&self) -> Vector;
-
-    fn rect(&self) -> Rectangle;
-
-    fn snap(&mut self);
+    fn rect(&self) -> Rectangle {
+        Rectangle::default()
+    }
 
     fn style(&self) -> NodeStyle {
         NodeStyle::default()
-    }
-
-    fn position_vector(&self) -> Vector {
-        let position = self.get_position();
-        Vector::new(position.x, position.y)
-    }
-
-    fn get_position(&self) -> Point {
-        self.rect().position()
-    }
-
-    fn contains(&self, point: Point) -> bool {
-        self.rect().contains(point)
-    }
-
-    fn intersection(&self, other_rectangle: &Rectangle) -> Option<Rectangle> {
-        self.rect().intersection(other_rectangle)
     }
 
     fn draw(
@@ -86,27 +68,5 @@ pub trait Node {
                 }
             }
         }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub enum NodeType {
-    Read,
-    Viewer,
-}
-
-impl From<NodeType> for String {
-    fn from(node_type: NodeType) -> String {
-        match node_type {
-            NodeType::Read => "Read".to_string(),
-            NodeType::Viewer => "Viewer".to_string(),
-        }
-    }
-}
-
-pub fn create_node(node_type: NodeType) -> Box<dyn Node> {
-    match node_type {
-        NodeType::Viewer => Box::new(Viewer::default()),
-        NodeType::Read => Box::new(Viewer::default()),
     }
 }

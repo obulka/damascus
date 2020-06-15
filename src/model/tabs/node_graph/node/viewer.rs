@@ -2,8 +2,8 @@ use super::Node;
 use iced::{Point, Rectangle, Size, Vector};
 
 pub struct Viewer {
-    rectangle: Rectangle,
-    translation: Vector,
+    pub rectangle: Rectangle,
+    pub translation: Vector,
 }
 
 impl Viewer {
@@ -27,10 +27,6 @@ impl Default for Viewer {
 }
 
 impl Node for Viewer {
-    fn rect(&self) -> Rectangle {
-        self.rectangle
-    }
-
     fn snap(&mut self) {
         self.rectangle.x = self.rectangle.x.round();
         self.rectangle.y = self.rectangle.y.round();
@@ -44,13 +40,5 @@ impl Node for Viewer {
     fn translate(&mut self) {
         self.rectangle = self.rectangle + self.translation;
         self.translation = Vector::default();
-    }
-
-    fn set_translation(&mut self, translation: Vector) {
-        self.translation = translation;
-    }
-
-    fn get_translation(&self) -> Vector {
-        self.translation
     }
 }

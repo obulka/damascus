@@ -10,6 +10,7 @@ pub mod tabs;
 mod widget;
 
 pub use widget::*;
+pub use tabs::node_graph::node;
 
 use crate::model::{panel::Panel, tabs::TabType};
 use crate::view::Theme;
@@ -69,6 +70,10 @@ pub trait CanvasUpdate<EmittedMessage> {
         -> Option<EmittedMessage>;
 
     fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction;
+}
+
+pub trait CanvasItemUpdate {
+    
 }
 
 impl Update<Message> for Damascus {

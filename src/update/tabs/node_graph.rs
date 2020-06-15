@@ -5,7 +5,9 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::{node::NodeType, tabs::node_graph::NodeGraph};
+pub mod node;
+
+use crate::model::tabs::node_graph::{node::NodeType, NodeGraph};
 use crate::update::{panel::PanelMessage, tabs::TabContentMessage, CanvasUpdate, Message, Update};
 
 #[derive(Debug, Clone)]

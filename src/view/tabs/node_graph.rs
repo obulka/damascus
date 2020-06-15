@@ -5,9 +5,9 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::{tabs::NodeGraph, Config};
+use crate::model::tabs::NodeGraph;
 use crate::update::{tabs::node_graph::NodeGraphMessage, Message};
-use crate::view::{style::NodeGraphStyle, CanvasView, View};
+use crate::view::{theme::NodeGraphStyle, Config, CanvasView, View};
 
 impl View for NodeGraph {
     fn view(&mut self, _config: &Config) -> Element<Message> {

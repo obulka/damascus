@@ -10,9 +10,9 @@ pub mod update;
 pub mod view;
 
 pub use model::Damascus;
-use model::{panel::Panel, Config};
+use model::panel::Panel;
 use update::{Message, Update};
-use view::View;
+use view::{Config, View};
 
 #[derive(Debug, Copy, Clone)]
 pub enum DamascusError {

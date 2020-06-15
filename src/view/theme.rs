@@ -3,9 +3,10 @@ use iced::{
     button, checkbox, container, progress_bar, radio, scrollable, slider, text_input, Color,
 };
 
-pub mod tab;
-mod theme;
-use theme::{dark, light};
+pub mod dark;
+pub mod light;
+
+use crate::view::style::tab;
 
 pub const DARK_GREY: Color = Color::from_rgb(
     0x28 as f32 / 255.0,

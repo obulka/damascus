@@ -5,7 +5,7 @@ use iced::{
 };
 
 // Local Imports
-use crate::view::style::{
+use crate::view::theme::{
     tab, NodeGraphStyle, CLOSE, DARK_GREY, LIGHT_GREY, MEDIUM_GREY, ORANGE, TURQOISE,
 };
 
@@ -339,38 +339,3 @@ impl checkbox::StyleSheet for Checkbox {
         }
     }
 }
-
-// pub struct DropDown;
-
-// impl crate::state::style::drop_down::StyleSheet for DropDown {
-//     fn active(&self) -> drop_down::Style {
-//         let (background, text_color) =  (Some(ACTIVE), TEXT_COLOR);
-
-//         drop_down::Style {
-//             text_color,
-//             background: background.map(Background::Color),
-//             border_radius: 5,
-//             shadow_offset: Vector::new(0.0, 0.0),
-//             ..drop_down::Style::default()
-//         }
-//     }
-
-//     fn hovered(&self) -> drop_down::Style {
-//         let active = self.active();
-
-//         let background = Some(HOVERED);
-
-//         drop_down::Style {
-//             background: background.map(Background::Color),
-//             ..active
-//         }
-//     }
-
-//     fn pressed(&self) -> drop_down::Style {
-//         drop_down::Style {
-//             border_width: 1,
-//             border_color: Color::WHITE,
-//             ..self.hovered()
-//         }
-//     }
-// }

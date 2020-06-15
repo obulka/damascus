@@ -3,7 +3,7 @@ use iced::{
     HorizontalAlignment, Point, Rectangle, Vector, VerticalAlignment,
 };
 
-use crate::view::style::{NodeGraphStyle, NodeStyle};
+use crate::view::theme::{NodeGraphStyle, NodeStyle};
 
 mod viewer;
 pub use viewer::Viewer;

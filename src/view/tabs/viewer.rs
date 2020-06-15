@@ -2,9 +2,9 @@
 use iced::{Column, Container, Element, Length};
 
 // Local Imports
-use crate::model::{tabs::Viewer, Config};
+use crate::model::tabs::Viewer;
 use crate::update::{tabs::viewer::ViewerMessage, Message};
-use crate::view::View;
+use crate::view::{Config, View};
 
 impl View for Viewer {
     fn view(&mut self, config: &Config) -> Element<Message> {

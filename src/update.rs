@@ -9,7 +9,7 @@ pub mod panel;
 pub mod tabs;
 
 use crate::model::{panel::Panel, tabs::TabType};
-use crate::view::style::Theme;
+use crate::view::Theme;
 use crate::Damascus;
 use panel::PanelMessage;
 use tabs::node_graph::{clear_cache_command, NodeGraphMessage};

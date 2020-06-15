@@ -4,13 +4,15 @@ use iced::{
 };
 
 pub mod panel;
-pub mod renderer;
-pub mod style;
 pub mod tabs;
+pub mod theme;
+mod widget;
 
-use crate::model::Config;
+pub use theme::Theme;
+pub use widget::*;
+
 use crate::update::{handle_hotkey, Message};
-use crate::view::panel::PanelView;
+use panel::PanelView;
 use crate::Damascus;
 
 pub trait View {
@@ -24,6 +26,26 @@ pub trait CanvasView: View {
 
     fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry>;
 }
+
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub font_size: u16,
+    pub tab_bar_height: u32,
+    pub theme: Theme,
+    pub title: String,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            font_size: 13,
+            tab_bar_height: 36,
+            theme: Theme::default(),
+            title: "Damascus".to_string(),
+        }
+    }
+}
+
 
 impl View for Damascus {
     fn view(&mut self, config: &Config) -> Element<Message> {

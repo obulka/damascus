@@ -7,7 +7,7 @@ use iced::{
 
 use crate::model::{tabs::TabContent, Config, Model};
 use crate::update::tabs::{viewer::ViewerMessage, TabContentMessage};
-use crate::view::style;
+use crate::view::theme;
 
 #[derive(Default)]
 pub struct Viewer {
@@ -638,12 +638,12 @@ impl Controls {
                     Text::new(if is_playing { "Pause" } else { "Play" }),
                 )
                 .on_press(ViewerMessage::TogglePlayback)
-                .style(config.theme.button_style(style::Button::Primary)),
+                .style(config.theme.button_style(theme::Button::Primary)),
             )
             .push(
                 Button::new(&mut self.next_button, Text::new("Next"))
                     .on_press(ViewerMessage::Next)
-                    .style(config.theme.button_style(style::Button::Primary)),
+                    .style(config.theme.button_style(theme::Button::Primary)),
             );
 
         let speed_controls = Row::new()
@@ -676,7 +676,7 @@ impl Controls {
             .push(
                 Button::new(&mut self.clear_button, Text::new("Clear"))
                     .on_press(ViewerMessage::Clear)
-                    .style(config.theme.button_style(style::Button::Primary)),
+                    .style(config.theme.button_style(theme::Button::Primary)),
             )
             .into()
     }

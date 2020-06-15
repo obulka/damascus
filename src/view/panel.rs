@@ -5,12 +5,12 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::{panel::Panel, tabs::Tab, Config};
+use crate::model::{panel::Panel, tabs::Tab};
 use crate::update::{
     panel::{PanelMessage, PanelUpdate},
     Message,
 };
-use crate::view::{style, View};
+use crate::view::{theme, Config, View};
 
 pub trait PanelView: View {
     fn view(
@@ -81,13 +81,13 @@ impl View for Panel {
                         split_vertically,
                         "|",
                         Message::Split(pane_grid::Axis::Vertical, pane),
-                        config.theme.button_style(style::Button::Primary),
+                        config.theme.button_style(theme::Button::Primary),
                     ))
                     .push(button(
                         close,
                         "×",
                         Message::Close(pane),
-                        config.theme.button_style(style::Button::Destructive),
+                        config.theme.button_style(theme::Button::Destructive),
                     )),
             )
             .push(
@@ -101,13 +101,13 @@ impl View for Panel {
                         float_pane,
                         "+",
                         Message::FloatPane(pane),
-                        config.theme.button_style(style::Button::Primary),
+                        config.theme.button_style(theme::Button::Primary),
                     ))
                     .push(button(
                         split_horizontally,
                         "─",
                         Message::Split(pane_grid::Axis::Horizontal, pane),
-                        config.theme.button_style(style::Button::Primary),
+                        config.theme.button_style(theme::Button::Primary),
                     )),
             );
 
@@ -147,7 +147,7 @@ impl View for Panel {
                                             close_tab_state,
                                             "×",
                                             PanelMessage::CloseTab(pane, index).into(),
-                                            config.theme.button_style(style::Button::CloseTab),
+                                            config.theme.button_style(theme::Button::CloseTab),
                                         )
                                         .width(Length::Shrink)
                                         .min_width(10),

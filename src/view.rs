@@ -29,7 +29,6 @@ pub trait CanvasView: View {
 }
 
 pub trait CanvasItemView {
-    // TODO force this with NodeView
     fn draw(&self, frame: &mut Frame, bounds: &Rectangle, render_text: bool, config: &Config);
 }
 

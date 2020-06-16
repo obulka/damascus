@@ -30,6 +30,7 @@ pub enum Message {
     ToggleTheme,
     Split(pane_grid::Axis, pane_grid::Pane),
     SplitFocused(pane_grid::Axis),
+    FocusAdjacent(pane_grid::Direction),
     PaneDragged(pane_grid::DragEvent),
     FloatPane(pane_grid::Pane),
     Resized(pane_grid::ResizeEvent),
@@ -49,16 +50,38 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         _ => None,
     };
 
-    match event.key_code {
-        KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
-        KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
-        KeyCode::T => Some(Message::ToggleTheme),
-        KeyCode::W => Some(Message::CloseFocused),
-        KeyCode::F => {
-            Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
+    let message;
+    if event.modifiers.shift {
+        if event.modifiers.alt {
+            // Ctrl + Alt + Shift
+            message = match event.key_code {
+                _ => None,
+            }
+        } else {
+            // Ctrl + Shift
+            message = match event.key_code {
+                _ => direction.map(Message::FocusAdjacent),
+            }
         }
-        _ => direction.map(Message::MoveTabAdjacent),
+    } else if event.modifiers.alt {
+        // Ctrl + Alt
+        message = match event.key_code {
+            _ => None,
+        }
+    } else {
+        // Ctrl
+        message = match event.key_code {
+            KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
+            KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
+            KeyCode::T => Some(Message::ToggleTheme),
+            KeyCode::W => Some(Message::CloseFocused),
+            KeyCode::F => {
+                Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
+            }
+            _ => direction.map(Message::MoveTabAdjacent),
+        }
     }
+    message
 }
 
 pub trait Update<UpdateMessage> {
@@ -138,6 +161,13 @@ impl Update<Message> for Damascus {
             }
             Message::Split(axis, pane) => {
                 let _ = self.panes.split(axis, &pane, Panel::new());
+            }
+            Message::FocusAdjacent(direction) => {
+                if let Some(pane) = self.panes.active() {
+                    if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
+                        self.panes.focus(&adjacent);
+                    }
+                }
             }
             Message::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {

@@ -48,6 +48,7 @@ pub trait NodeView: CanvasItemView + NodeState {
                 if bounds.contains(translated_rect.center()) {
                     frame.with_save(|frame| {
                         frame.translate(Vector::new(rect.center_x(), rect.center_y()));
+                        // Note that text will be overlayed until iced supports vectorial text
                         frame.fill_text(Text {
                             content: self.get_label().to_string(),
                             color: node_style.text_color,

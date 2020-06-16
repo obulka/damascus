@@ -141,7 +141,16 @@ impl NodeGraph {
 
     pub fn select_nodes_in_rect(&mut self, rectangle: Rectangle) {
         for (node_label, node) in self.nodes.iter_mut() {
-            if rectangle.contains(node.rect().center()) {
+            let top_left = node.rect().position();
+            let top_right = top_left + Vector::new(node.rect().width, 0.0);
+            let lower_right = top_right + Vector::new(0.0, node.rect().height);
+            let lower_left = top_left + Vector::new(0.0, node.rect().height);
+
+            if rectangle.contains(top_left)
+                && rectangle.contains(top_right)
+                && rectangle.contains(lower_right)
+                && rectangle.contains(lower_left)
+            {
                 node.select();
                 self.selected_nodes.insert(node_label.to_string());
             } else {

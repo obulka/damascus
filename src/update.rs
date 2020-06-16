@@ -1,7 +1,10 @@
 // 3rd Party Imports
 use iced::{
     canvas::{Cursor, Event},
-    keyboard, mouse, pane_grid, Command, Rectangle, Subscription,
+    keyboard::KeyCode,
+    mouse,
+    pane_grid::{self, Direction},
+    Command, Rectangle, Subscription,
 };
 
 // Local Imports
@@ -38,50 +41,58 @@ pub enum Message {
     CloseFocused,
 }
 
-pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
-    use keyboard::KeyCode;
-    use pane_grid::Direction;
-
-    let direction = match event.key_code {
+fn get_direction(event: pane_grid::KeyPressEvent) -> Option<Direction> {
+    match event.key_code {
         KeyCode::Up => Some(Direction::Up),
         KeyCode::Down => Some(Direction::Down),
         KeyCode::Left => Some(Direction::Left),
         KeyCode::Right => Some(Direction::Right),
         _ => None,
-    };
+    }
+}
 
-    let message;
+fn handle_ctrl(event: pane_grid::KeyPressEvent) -> Option<Message> {
+    match event.key_code {
+        KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
+        KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
+        KeyCode::T => Some(Message::ToggleTheme),
+        KeyCode::W => Some(Message::CloseFocused),
+        KeyCode::F => {
+            Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
+        }
+        _ => get_direction(event).map(Message::MoveTabAdjacent),
+    }
+}
+
+fn handle_ctrl_shift(event: pane_grid::KeyPressEvent) -> Option<Message> {
+    match event.key_code {
+        _ => get_direction(event).map(Message::FocusAdjacent),
+    }
+}
+
+fn handle_ctrl_alt(_event: pane_grid::KeyPressEvent) -> Option<Message> {
+    None
+}
+
+fn handle_ctrl_alt_shift(_event: pane_grid::KeyPressEvent) -> Option<Message> {
+    None
+}
+
+pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     if event.modifiers.shift {
         if event.modifiers.alt {
             // Ctrl + Alt + Shift
-            message = match event.key_code {
-                _ => None,
-            }
-        } else {
-            // Ctrl + Shift
-            message = match event.key_code {
-                _ => direction.map(Message::FocusAdjacent),
-            }
+            return handle_ctrl_alt_shift(event);
         }
-    } else if event.modifiers.alt {
-        // Ctrl + Alt
-        message = match event.key_code {
-            _ => None,
-        }
-    } else {
-        // Ctrl
-        message = match event.key_code {
-            KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
-            KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
-            KeyCode::T => Some(Message::ToggleTheme),
-            KeyCode::W => Some(Message::CloseFocused),
-            KeyCode::F => {
-                Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
-            }
-            _ => direction.map(Message::MoveTabAdjacent),
-        }
+        // Ctrl + Shift
+        return handle_ctrl_shift(event);
     }
-    message
+    if event.modifiers.alt {
+        // Ctrl + Alt
+        return handle_ctrl_alt(event);
+    }
+    // Ctrl
+    handle_ctrl(event)
 }
 
 pub trait Update<UpdateMessage> {

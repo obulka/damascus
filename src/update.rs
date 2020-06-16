@@ -116,7 +116,10 @@ impl Update<Message> for Damascus {
                         if let Some(focused_tab) = panel.get_focused_label() {
                             if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
                                 self.panes.focus(&adjacent);
-                                return Command::perform(async move {(focused_tab, adjacent)}, Message::MoveTab);
+                                return Command::perform(
+                                    async move { (focused_tab, adjacent) },
+                                    Message::MoveTab,
+                                );
                             }
                         }
                     }

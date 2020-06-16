@@ -6,10 +6,7 @@ use iced::{
 
 // Local Imports
 use crate::model::{panel::Panel, Tab};
-use crate::update::{
-    panel::PanelUpdate,
-    Message,
-};
+use crate::update::{panel::PanelUpdate, Message};
 use crate::view::{theme, Config, View};
 
 pub trait PanelView: View {

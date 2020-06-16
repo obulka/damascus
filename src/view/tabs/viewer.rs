@@ -3,7 +3,10 @@ use iced::{Column, Container, Element, Length};
 
 // Local Imports
 use crate::model::tabs::Viewer;
-use crate::update::{tabs::{viewer::ViewerMessage, TabContentMessage}, Message};
+use crate::update::{
+    tabs::{viewer::ViewerMessage, TabContentMessage},
+    Message,
+};
 use crate::view::{Config, View};
 
 impl View for Viewer {
@@ -18,15 +21,13 @@ impl View for Viewer {
                 selected_speed,
                 config,
             )
-            .map(move |message| TabContentMessage::Viewer((id.clone(), message)).into());
+            .map(move |message| TabContentMessage::Viewer((Some(id.clone()), message)).into());
 
         let id = self.id.clone();
         let content = Column::new()
-            .push(
-                self.grid
-                    .view()
-                    .map(move |message| TabContentMessage::Viewer((id.clone(), ViewerMessage::Grid(message))).into()),
-            )
+            .push(self.grid.view().map(move |message| {
+                TabContentMessage::Viewer((Some(id.clone()), ViewerMessage::Grid(message))).into()
+            }))
             .push(controls);
 
         Container::new(content)

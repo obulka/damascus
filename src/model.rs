@@ -4,8 +4,8 @@ use rustc_hash::FxHashMap as HashMap;
 
 // Local Imports
 use crate::model::tabs::{TabContent, TabType};
-use crate::view::{CanvasItemView, CanvasView, Config, View};
 use crate::update::{CanvasItemUpdate, CanvasUpdate, Message, Update};
+use crate::view::{CanvasItemView, CanvasView, Config, View};
 use panel::Panel;
 
 pub mod panel;

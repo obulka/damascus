@@ -73,7 +73,7 @@ impl Panel {
         tab_label: &String,
     ) -> (Option<String>, (String, button::State), Box<dyn TabContent>) {
         let current_focus = self.focused_tab;
-        
+
         let mut close_index = 0;
         for (index, (label, _)) in self.tabs.iter().enumerate() {
             if tab_label == label {

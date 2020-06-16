@@ -20,7 +20,6 @@ impl Update<TabContentMessage> for Panel {
     fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let Some(focused_label) = self.get_focused_label() {
             if let Some(focused_content) = self.get_mut_focused_content() {
-                println!("{:?}: {:?}\n", focused_content.get_id(), focused_label);
                 if *focused_content.get_id() == focused_label {
                     return focused_content.update(message);
                 }

@@ -2,14 +2,14 @@
 pub mod node_graph;
 pub mod viewer;
 
+use crate::update::Message;
 pub use node_graph::NodeGraphMessage;
 pub use viewer::ViewerMessage;
-use crate::update::Message;
 
 #[derive(Debug, Clone)]
 pub enum TabContentMessage {
-    NodeGraph((String, NodeGraphMessage)),
-    Viewer((String, ViewerMessage)),
+    NodeGraph((Option<String>, NodeGraphMessage)),
+    Viewer((Option<String>, ViewerMessage)),
 }
 
 impl From<TabContentMessage> for Message {

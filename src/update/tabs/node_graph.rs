@@ -31,14 +31,14 @@ pub enum NodeGraphMessage {
 
 pub fn clear_node_caches_command() -> Command<Message> {
     Command::perform(
-        async move { TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ClearNodeCaches)) },
+        async move { TabContentMessage::NodeGraph((None, NodeGraphMessage::ClearNodeCaches)) },
         Message::TabContent,
     )
 }
 
 pub fn clear_cache_command() -> Command<Message> {
     Command::perform(
-        async move { TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ClearCache)) },
+        async move { TabContentMessage::NodeGraph((None, NodeGraphMessage::ClearCache)) },
         Message::TabContent,
     )
 }
@@ -53,60 +53,59 @@ pub enum Interaction {
 impl Update<TabContentMessage> for NodeGraph {
     fn update(&mut self, message: TabContentMessage) -> Command<Message> {
         if let TabContentMessage::NodeGraph((id, message)) = message {
-            if id != self.id && id != "" {
-                return Command::none();
-            }
-            match message {
-                NodeGraphMessage::ToggleGrid => self.toggle_lines(),
-                NodeGraphMessage::Next => {}
-                NodeGraphMessage::AddNode(node_type, position) => {
-                    self.add_node(node_type, position);
-                }
-                NodeGraphMessage::ClearCache => {
-                    self.clear_cache();
-                }
-                NodeGraphMessage::ClearNodeCaches => {
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::ClearSelected => {
-                    self.clear_selected();
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::DeselectNode(label) => {
-                    self.deselect_node(label);
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::SelectNode(label) => {
-                    self.select_node(label);
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::BeginSelecting(start_position) => {
-                    self.clear_selected();
-                    self.initialize_selection_box(start_position);
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::ExpandSelection(lower_right_position) => {
-                    self.expand_selection_box(lower_right_position);
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::NodesDropped => {
-                    self.move_selected();
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::CompleteSelection => {
-                    self.close_selection_box();
-                }
-                NodeGraphMessage::Translate(translation) => {
-                    self.translate(translation);
-                    self.clear_cache();
-                }
-                NodeGraphMessage::TranslateSelected(translation) => {
-                    self.translate_selected(translation);
-                    self.clear_node_caches();
-                }
-                NodeGraphMessage::Zoom(scroll_delta, cursor_position) => {
-                    self.zoom(scroll_delta, cursor_position);
-                    self.clear_cache();
+            if id.is_none() || id.unwrap() == self.id {
+                match message {
+                    NodeGraphMessage::ToggleGrid => self.toggle_lines(),
+                    NodeGraphMessage::Next => {}
+                    NodeGraphMessage::AddNode(node_type, position) => {
+                        self.add_node(node_type, position);
+                    }
+                    NodeGraphMessage::ClearCache => {
+                        self.clear_cache();
+                    }
+                    NodeGraphMessage::ClearNodeCaches => {
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::ClearSelected => {
+                        self.clear_selected();
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::DeselectNode(label) => {
+                        self.deselect_node(label);
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::SelectNode(label) => {
+                        self.select_node(label);
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::BeginSelecting(start_position) => {
+                        self.clear_selected();
+                        self.initialize_selection_box(start_position);
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::ExpandSelection(lower_right_position) => {
+                        self.expand_selection_box(lower_right_position);
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::NodesDropped => {
+                        self.move_selected();
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::CompleteSelection => {
+                        self.close_selection_box();
+                    }
+                    NodeGraphMessage::Translate(translation) => {
+                        self.translate(translation);
+                        self.clear_cache();
+                    }
+                    NodeGraphMessage::TranslateSelected(translation) => {
+                        self.translate_selected(translation);
+                        self.clear_node_caches();
+                    }
+                    NodeGraphMessage::Zoom(scroll_delta, cursor_position) => {
+                        self.zoom(scroll_delta, cursor_position);
+                        self.clear_cache();
+                    }
                 }
             }
         }

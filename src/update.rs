@@ -13,10 +13,10 @@ pub use tabs::node_graph::node;
 pub use widget::*;
 
 use crate::model::{panel::Panel, tabs::TabType};
-use crate::view::Theme;
 use crate::update::tabs::TabContentMessage;
+use crate::view::Theme;
 use crate::Damascus;
-use tabs::{node_graph::{clear_cache_command, NodeGraphMessage}};
+use tabs::node_graph::{clear_cache_command, NodeGraphMessage};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -54,7 +54,9 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
-        KeyCode::F => Some(TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ToggleGrid)).into()),
+        KeyCode::F => {
+            Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
+        }
         _ => direction.map(Message::FocusAdjacent),
     }
 }
@@ -90,10 +92,7 @@ impl Update<Message> for Damascus {
             }
             Message::MoveTab((tab_label, target_pane)) => {
                 if let Some(new_focus) = self.move_tab(&tab_label, target_pane) {
-                    return Command::perform(
-                        async move { new_focus },
-                        Message::FocusTab,
-                    );
+                    return Command::perform(async move { new_focus }, Message::FocusTab);
                 }
             }
             Message::OpenTabFocused(tab_type) => {
@@ -101,10 +100,7 @@ impl Update<Message> for Damascus {
             }
             Message::CloseTab(tab_label) => {
                 if let Some(new_focus) = self.close_tab(&tab_label) {
-                    return Command::perform(
-                        async move { new_focus },
-                        Message::FocusTab,
-                    );
+                    return Command::perform(async move { new_focus }, Message::FocusTab);
                 }
             }
             Message::FocusTab(tab_label) => {

@@ -51,7 +51,7 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::update::{tabs::{TabContentMessage, viewer::ViewerMessage}};
+    use crate::update::tabs::{viewer::ViewerMessage, TabContentMessage};
 
     pub struct Grid {
         state: State,
@@ -120,12 +120,14 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                TabContentMessage::Viewer(
-                    ("".to_string(), ViewerMessage::Grid(Message::Ticked {
+                TabContentMessage::Viewer((
+                    None,
+                    ViewerMessage::Grid(Message::Ticked {
                         result,
                         version,
                         tick_duration,
-                    })))
+                    }),
+                ))
             })
         }
 

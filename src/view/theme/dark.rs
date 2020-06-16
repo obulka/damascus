@@ -85,7 +85,14 @@ impl tab::StyleSheet for Tab {
             })),
             border_width: 1,
             border_color: Color::TRANSPARENT,
-            text_color: TEXT_COLOR,
+            text_color: if self.is_focused {
+                TEXT_COLOR
+            } else {
+                Color {
+                    a: 0.5,
+                    ..TEXT_COLOR
+                }
+            },
             ..tab::Style::default()
         }
     }

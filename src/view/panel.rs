@@ -140,7 +140,9 @@ impl View for Panel {
                                             .horizontal_alignment(HorizontalAlignment::Left)
                                             .vertical_alignment(VerticalAlignment::Center)
                                             .size(config.font_size)
-                                            .color(config.theme.text_color()), // TODO: Move text into tab to get theme
+                                            .color(
+                                                config.theme.tab_style(focused).style().text_color,
+                                            ),
                                     )
                                     .push(
                                         button(

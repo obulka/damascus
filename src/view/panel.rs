@@ -122,7 +122,7 @@ impl View for Panel {
                     Row::new()
                         .width(Length::Shrink)
                         .max_width(1)
-                        .push(Space::with_width(Length::Fill)), // Hack to get space before tab
+                        .push(Space::with_width(Length::Fill)), // Add space before tab
                 )
                 .push(tabs.iter_mut().enumerate().fold(
                     Row::new().padding(0).spacing(0),

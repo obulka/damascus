@@ -50,6 +50,7 @@ impl Damascus {
                 let (new_focus, tab, tab_content) = (*panel).close_tab(tab_label);
                 if let Some(target_panel) = self.panes.get_mut(&target_pane) {
                     (*target_panel).open_tab_with_content(tab, tab_content);
+                    self.tabs.insert(tab_label.clone(), target_pane);
                 }
                 return new_focus;
             }

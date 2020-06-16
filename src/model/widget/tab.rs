@@ -12,13 +12,13 @@ use crate::view::{renderer::tab::TabRenderer, WidgetView};
 #[allow(missing_debug_implementations)]
 pub struct Tab<'a, Message, Renderer: TabRenderer> {
     pub content: Element<'a, Message, Renderer>,
-    pub on_press: Option<Message>,
     pub width: Length,
     pub height: Length,
     pub min_width: u32,
     pub min_height: u32,
     pub padding: u16,
     pub style: Renderer::Style,
+    pub on_press: Option<Message>,
 }
 
 impl<'a, Message, Renderer> WidgetModel<Message, Renderer> for Tab<'a, Message, Renderer>
@@ -52,13 +52,13 @@ where
     {
         Tab {
             content: content.into(),
-            on_press: None,
             width: Length::Shrink,
             height: Length::Shrink,
             min_width: 0,
             min_height: 0,
             padding: Renderer::DEFAULT_PADDING,
             style: Renderer::Style::default(),
+            on_press: None,
         }
     }
 

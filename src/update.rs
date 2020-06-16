@@ -25,11 +25,11 @@ pub enum Message {
     OpenTabFocused(TabType),
     CloseTab(String),
     FocusTab(String),
+    MoveTabAdjacent(pane_grid::Direction),
     ThemeChanged(Theme),
     ToggleTheme,
     Split(pane_grid::Axis, pane_grid::Pane),
     SplitFocused(pane_grid::Axis),
-    FocusAdjacent(pane_grid::Direction),
     PaneDragged(pane_grid::DragEvent),
     FloatPane(pane_grid::Pane),
     Resized(pane_grid::ResizeEvent),
@@ -57,7 +57,7 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
         KeyCode::F => {
             Some(TabContentMessage::NodeGraph((None, NodeGraphMessage::ToggleGrid)).into())
         }
-        _ => direction.map(Message::FocusAdjacent),
+        _ => direction.map(Message::MoveTabAdjacent),
     }
 }
 
@@ -110,6 +110,18 @@ impl Update<Message> for Damascus {
                     }
                 }
             }
+            Message::MoveTabAdjacent(direction) => {
+                if let Some(pane) = self.panes.active() {
+                    if let Some(panel) = self.panes.get_mut(&pane) {
+                        if let Some(focused_tab) = panel.get_focused_label() {
+                            if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
+                                self.panes.focus(&adjacent);
+                                return Command::perform(async move {(focused_tab, adjacent)}, Message::MoveTab);
+                            }
+                        }
+                    }
+                }
+            }
             Message::ThemeChanged(theme) => {
                 self.config.theme = theme;
                 return clear_cache_command();
@@ -127,13 +139,6 @@ impl Update<Message> for Damascus {
             Message::SplitFocused(axis) => {
                 if let Some(pane) = self.panes.active() {
                     let _ = self.panes.split(axis, &pane, Panel::new());
-                }
-            }
-            Message::FocusAdjacent(direction) => {
-                if let Some(pane) = self.panes.active() {
-                    if let Some(adjacent) = self.panes.adjacent(&pane, direction) {
-                        self.panes.focus(&adjacent);
-                    }
                 }
             }
             Message::Resized(pane_grid::ResizeEvent { split, ratio }) => {

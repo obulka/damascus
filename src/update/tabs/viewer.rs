@@ -6,7 +6,7 @@ use iced::{time, Command, Subscription};
 
 // Local Imports
 use crate::model::tabs::viewer::{grid, Viewer};
-use crate::update::{panel::PanelMessage, tabs::TabContentMessage, Message, Update};
+use crate::update::{tabs::TabContentMessage, Message, Update};
 
 #[derive(Debug, Clone)]
 pub enum ViewerMessage {
@@ -19,29 +19,12 @@ pub enum ViewerMessage {
     SpeedChanged(f32),
 }
 
-impl From<ViewerMessage> for TabContentMessage {
-    fn from(message: ViewerMessage) -> TabContentMessage {
-        TabContentMessage::Viewer(message)
-    }
-}
-
-impl From<ViewerMessage> for PanelMessage {
-    fn from(message: ViewerMessage) -> PanelMessage {
-        let message: TabContentMessage = message.into();
-        message.into()
-    }
-}
-
-impl From<ViewerMessage> for Message {
-    fn from(message: ViewerMessage) -> Message {
-        let message: PanelMessage = message.into();
-        message.into()
-    }
-}
-
 impl Update<TabContentMessage> for Viewer {
     fn update(&mut self, message: TabContentMessage) -> Command<Message> {
-        if let TabContentMessage::Viewer(message) = message {
+        if let TabContentMessage::Viewer((id, message)) = message {
+            if id != self.id && id != "" {
+                return Command::none();
+            }
             match message {
                 ViewerMessage::Grid(message) => {
                     self.grid.update(message);
@@ -56,7 +39,7 @@ impl Update<TabContentMessage> for Viewer {
 
                         self.queued_ticks = 0;
 
-                        return Command::perform(task, Message::Panel);
+                        return Command::perform(task, Message::TabContent);
                     }
                 }
                 ViewerMessage::TogglePlayback => {
@@ -82,8 +65,9 @@ impl Update<TabContentMessage> for Viewer {
 
     fn subscription(&self) -> Subscription<Message> {
         if self.is_playing {
+            let id = self.id.clone();
             time::every(Duration::from_millis(1000 / self.speed as u64))
-                .map(|instant| ViewerMessage::Tick(instant).into())
+                .map(move |instant| TabContentMessage::Viewer((id.clone(), ViewerMessage::Tick(instant))).into())
         } else {
             Subscription::none()
         }

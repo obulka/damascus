@@ -11,7 +11,7 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 // Local Imports
 pub mod node;
 
-use super::TabContent;
+use super::{TabContent, TabType};
 use crate::model::{CanvasModel, Config, Model};
 use crate::update::{
     tabs::{
@@ -24,6 +24,7 @@ use crate::view::CanvasView;
 use node::{create_node, Node, NodeType};
 
 pub struct NodeGraph {
+    pub id: String,
     pub nodes: HashMap<String, Box<dyn Node>>,
     pub selected_nodes: HashSet<String>,
     pub selection_box: Option<Rectangle>,
@@ -41,11 +42,20 @@ pub struct NodeGraph {
 
 impl Model<TabContentMessage> for NodeGraph {}
 impl CanvasModel<NodeGraphMessage> for NodeGraph {}
-impl TabContent for NodeGraph {}
+impl TabContent for NodeGraph {
+    fn get_id(&self) -> &String {
+        &self.id
+    }
+
+    fn set_id(&mut self, id: String) {
+        self.id = id;
+    }
+}
 
 impl Default for NodeGraph {
     fn default() -> Self {
         Self {
+            id: TabType::NodeGraph.into(),
             nodes: HashMap::default(),
             selected_nodes: HashSet::default(),
             selection_box: None,

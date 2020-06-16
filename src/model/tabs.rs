@@ -8,7 +8,11 @@ use crate::update::tabs::TabContentMessage;
 pub use node_graph::NodeGraph;
 pub use viewer::Viewer;
 
-pub trait TabContent: Model<TabContentMessage> {}
+pub trait TabContent: Model<TabContentMessage> {
+    fn get_id(&self) -> &String;
+
+    fn set_id(&mut self, id: String);
+}
 
 pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
     match tab_type {
@@ -21,6 +25,15 @@ pub fn tab_content_from_type(tab_type: TabType) -> Box<dyn TabContent> {
 pub enum TabType {
     NodeGraph,
     Viewer,
+}
+
+impl From<TabType> for Box<dyn TabContent> {
+    fn from(tab_type: TabType) -> Self {
+        match tab_type {
+            TabType::NodeGraph => Box::new(NodeGraph::new()),
+            TabType::Viewer => Box::new(Viewer::new()),
+        }
+    }
 }
 
 impl From<TabType> for String {

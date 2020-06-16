@@ -59,19 +59,37 @@ impl Panel {
         self.focused_tab = self.tabs.len() - 1;
     }
 
-    pub fn focus_tab(&mut self, index: usize) {
-        self.focused_tab = index;
+    pub fn focus_tab(&mut self, tab_label: String) {
+        for (index, (label, _)) in self.tabs.iter().enumerate() {
+            if tab_label == *label {
+                self.focused_tab = index;
+                break;
+            }
+        }
     }
 
     pub fn close_tab(
         &mut self,
-        index: usize,
-    ) -> (usize, (String, button::State), Box<dyn TabContent>) {
+        tab_label: &String,
+    ) -> (Option<String>, (String, button::State), Box<dyn TabContent>) {
         let current_focus = self.focused_tab;
-        let tab = self.tabs.remove(index);
-        let tab_content = self.tab_contents.remove(index);
+        
+        let mut close_index = 0;
+        for (index, (label, _)) in self.tabs.iter().enumerate() {
+            if tab_label == label {
+                close_index = index;
+                break;
+            }
+        }
 
-        let mut new_focus = if current_focus > index {
+        let tab = self.tabs.remove(close_index);
+        let tab_content = self.tab_contents.remove(close_index);
+
+        if self.tabs.is_empty() {
+            return (None, tab, tab_content);
+        }
+
+        let mut new_focus = if current_focus > close_index {
             current_focus - 1
         } else {
             current_focus
@@ -79,7 +97,8 @@ impl Panel {
         while new_focus >= self.tabs.len() && new_focus >= 1 {
             new_focus -= 1;
         }
-        (new_focus, tab, tab_content)
+        let (new_focus_label, _) = &self.tabs[new_focus];
+        (Some(new_focus_label.to_string()), tab, tab_content)
     }
 
     pub fn close_all_tabs(&mut self) {
@@ -97,9 +116,9 @@ impl Panel {
         None
     }
 
-    pub fn get_focused_label(&self) -> Option<&String> {
+    pub fn get_focused_label(&self) -> Option<String> {
         if let Some((focused_label, _)) = self.tabs.get(self.focused_tab) {
-            return Some(focused_label);
+            return Some(focused_label.to_string());
         }
         None
     }

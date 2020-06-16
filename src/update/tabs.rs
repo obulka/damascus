@@ -1,20 +1,19 @@
 // Local Imports
-use super::panel::PanelMessage;
-
 pub mod node_graph;
 pub mod viewer;
 
 pub use node_graph::NodeGraphMessage;
 pub use viewer::ViewerMessage;
+use crate::update::Message;
 
 #[derive(Debug, Clone)]
 pub enum TabContentMessage {
-    NodeGraph(NodeGraphMessage),
-    Viewer(ViewerMessage),
+    NodeGraph((String, NodeGraphMessage)),
+    Viewer((String, ViewerMessage)),
 }
 
-impl From<TabContentMessage> for PanelMessage {
-    fn from(message: TabContentMessage) -> PanelMessage {
-        PanelMessage::TabContent(message)
+impl From<TabContentMessage> for Message {
+    fn from(message: TabContentMessage) -> Message {
+        Message::TabContent(message)
     }
 }

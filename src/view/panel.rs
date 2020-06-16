@@ -7,7 +7,7 @@ use iced::{
 // Local Imports
 use crate::model::{panel::Panel, Tab};
 use crate::update::{
-    panel::{PanelMessage, PanelUpdate},
+    panel::PanelUpdate,
     Message,
 };
 use crate::view::{theme, Config, View};
@@ -148,7 +148,7 @@ impl View for Panel {
                                         button(
                                             close_tab_state,
                                             "×",
-                                            PanelMessage::CloseTab(pane, index).into(),
+                                            Message::CloseTab(tab_label.to_string()),
                                             config.theme.button_style(theme::Button::CloseTab),
                                         )
                                         .width(Length::Shrink)
@@ -157,7 +157,7 @@ impl View for Panel {
                             )
                             .width(Length::Shrink)
                             .padding(1)
-                            .on_press(PanelMessage::FocusTab((pane, index)).into())
+                            .on_press(Message::FocusTab(tab_label.to_string()))
                             .style(config.theme.tab_style(focused)),
                         )
                     },

@@ -8,7 +8,7 @@ use iced::{
 pub mod node;
 
 use crate::model::tabs::node_graph::{node::NodeType, NodeGraph};
-use crate::update::{panel::PanelMessage, tabs::TabContentMessage, CanvasUpdate, Message, Update};
+use crate::update::{tabs::TabContentMessage, CanvasUpdate, Message, Update};
 
 #[derive(Debug, Clone)]
 pub enum NodeGraphMessage {
@@ -29,37 +29,17 @@ pub enum NodeGraphMessage {
     Zoom(f32, Option<Point>),
 }
 
-impl From<NodeGraphMessage> for TabContentMessage {
-    fn from(message: NodeGraphMessage) -> TabContentMessage {
-        TabContentMessage::NodeGraph(message)
-    }
-}
-
-impl From<NodeGraphMessage> for PanelMessage {
-    fn from(message: NodeGraphMessage) -> PanelMessage {
-        let message: TabContentMessage = message.into();
-        message.into()
-    }
-}
-
-impl From<NodeGraphMessage> for Message {
-    fn from(message: NodeGraphMessage) -> Message {
-        let message: PanelMessage = message.into();
-        message.into()
-    }
-}
-
 pub fn clear_node_caches_command() -> Command<Message> {
     Command::perform(
-        async move { NodeGraphMessage::ClearNodeCaches.into() },
-        Message::Panel,
+        async move { TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ClearNodeCaches)) },
+        Message::TabContent,
     )
 }
 
 pub fn clear_cache_command() -> Command<Message> {
     Command::perform(
-        async move { NodeGraphMessage::ClearCache.into() },
-        Message::Panel,
+        async move { TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ClearCache)) },
+        Message::TabContent,
     )
 }
 
@@ -72,7 +52,10 @@ pub enum Interaction {
 
 impl Update<TabContentMessage> for NodeGraph {
     fn update(&mut self, message: TabContentMessage) -> Command<Message> {
-        if let TabContentMessage::NodeGraph(message) = message {
+        if let TabContentMessage::NodeGraph((id, message)) = message {
+            if id != self.id && id != "" {
+                return Command::none();
+            }
             match message {
                 NodeGraphMessage::ToggleGrid => self.toggle_lines(),
                 NodeGraphMessage::Next => {}

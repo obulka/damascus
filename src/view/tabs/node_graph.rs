@@ -8,12 +8,13 @@ use iced::{
 pub mod node;
 
 use crate::model::tabs::NodeGraph;
-use crate::update::{tabs::node_graph::NodeGraphMessage, Message};
+use crate::update::{tabs::{node_graph::NodeGraphMessage, TabContentMessage}, Message};
 use crate::view::{theme::NodeGraphStyle, CanvasView, Config, View};
 
 impl View for NodeGraph {
     fn view(&mut self, _config: &Config) -> Element<Message> {
-        let content = CanvasView::view(self).map(|message| message.into());
+        let id = self.id.clone();
+        let content = CanvasView::view(self).map(move |message| TabContentMessage::NodeGraph((id.clone(), message)).into());
 
         Container::new(content)
             .width(Length::Fill)
@@ -23,9 +24,8 @@ impl View for NodeGraph {
     }
 }
 
-impl CanvasView for NodeGraph {
-    type Message = NodeGraphMessage;
-    fn view<'a>(&'a mut self) -> Element<'a, Self::Message> {
+impl CanvasView<NodeGraphMessage> for NodeGraph {
+    fn view<'a>(&'a mut self) -> Element<'a, NodeGraphMessage> {
         Canvas::new(self)
             .width(Length::Fill)
             .height(Length::Fill)

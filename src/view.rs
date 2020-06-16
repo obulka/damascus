@@ -20,10 +20,8 @@ pub trait View {
     fn view(&mut self, config: &Config) -> Element<Message>;
 }
 
-pub trait CanvasView: View {
-    type Message;
-
-    fn view<'a>(&'a mut self) -> Element<'a, Self::Message>;
+pub trait CanvasView<EmittedMessage>: View {
+    fn view<'a>(&'a mut self) -> Element<'a, EmittedMessage>;
 
     fn draw(&self, bounds: Rectangle, _cursor: Cursor) -> Vec<Geometry>;
 }

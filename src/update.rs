@@ -14,13 +14,17 @@ pub use widget::*;
 
 use crate::model::{panel::Panel, tabs::TabType};
 use crate::view::Theme;
+use crate::update::tabs::TabContentMessage;
 use crate::Damascus;
-use panel::PanelMessage;
-use tabs::node_graph::{clear_cache_command, NodeGraphMessage};
+use tabs::{node_graph::{clear_cache_command, NodeGraphMessage}};
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Panel(PanelMessage),
+    TabContent(TabContentMessage),
+    MoveTab((String, pane_grid::Pane)),
+    OpenTabFocused(TabType),
+    CloseTab(String),
+    FocusTab(String),
     ThemeChanged(Theme),
     ToggleTheme,
     Split(pane_grid::Axis, pane_grid::Pane),
@@ -46,11 +50,11 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     };
 
     match event.key_code {
-        KeyCode::V => Some(PanelMessage::OpenTabFocused(TabType::Viewer).into()),
-        KeyCode::G => Some(PanelMessage::OpenTabFocused(TabType::NodeGraph).into()),
+        KeyCode::V => Some(Message::OpenTabFocused(TabType::Viewer)),
+        KeyCode::G => Some(Message::OpenTabFocused(TabType::NodeGraph)),
         KeyCode::T => Some(Message::ToggleTheme),
         KeyCode::W => Some(Message::CloseFocused),
-        KeyCode::F => Some(NodeGraphMessage::ToggleGrid.into()),
+        KeyCode::F => Some(TabContentMessage::NodeGraph(("".to_string(), NodeGraphMessage::ToggleGrid)).into()),
         _ => direction.map(Message::FocusAdjacent),
     }
 }
@@ -77,65 +81,39 @@ pub trait CanvasItemUpdate {}
 impl Update<Message> for Damascus {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
-            Message::Panel(panel_message) => match panel_message {
-                PanelMessage::TabContent(tab_content_message) => {
-                    return Command::batch(
-                        self.panes
-                            .iter_mut()
-                            .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
+            Message::TabContent(tab_content_message) => {
+                return Command::batch(
+                    self.panes
+                        .iter_mut()
+                        .map(|(_, panel)| (*panel).update(tab_content_message.clone())),
+                );
+            }
+            Message::MoveTab((tab_label, target_pane)) => {
+                if let Some(new_focus) = self.move_tab(&tab_label, target_pane) {
+                    return Command::perform(
+                        async move { new_focus },
+                        Message::FocusTab,
                     );
                 }
-                PanelMessage::MoveTab((pane, tab_index, target_pane)) => {
+            }
+            Message::OpenTabFocused(tab_type) => {
+                self.open_tab_focused(tab_type);
+            }
+            Message::CloseTab(tab_label) => {
+                if let Some(new_focus) = self.close_tab(&tab_label) {
+                    return Command::perform(
+                        async move { new_focus },
+                        Message::FocusTab,
+                    );
+                }
+            }
+            Message::FocusTab(tab_label) => {
+                if let Some(pane) = self.tabs.get(&tab_label) {
                     if let Some(panel) = self.panes.get_mut(&pane) {
-                        let (new_focus, tab, tab_content) = (*panel).close_tab(tab_index);
-                        if let Some(target_panel) = self.panes.get_mut(&target_pane) {
-                            (*target_panel).open_tab_with_content(tab, tab_content);
-                        }
-                        return Command::perform(
-                            async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            Message::Panel,
-                        );
+                        (*panel).focus_tab(tab_label);
                     }
                 }
-                PanelMessage::OpenTabFocused(tab_type) => {
-                    if let Some(active_pane) = self.panes.active() {
-                        for (pane, panel) in self.panes.iter_mut() {
-                            if let Some(index) = (*panel).index_of_tab_type(tab_type.clone()) {
-                                let pane = *pane;
-                                if pane == active_pane {
-                                    return Command::perform(
-                                        async move { PanelMessage::FocusTab((pane, index)) },
-                                        Message::Panel,
-                                    );
-                                } else {
-                                    return Command::perform(
-                                        async move { PanelMessage::MoveTab((pane, index, active_pane)) },
-                                        Message::Panel,
-                                    );
-                                }
-                            }
-                        }
-
-                        if let Some(panel) = self.panes.get_mut(&active_pane) {
-                            (*panel).open_tab(tab_type);
-                        }
-                    }
-                }
-                PanelMessage::CloseTab(pane, index) => {
-                    if let Some(panel) = self.panes.get_mut(&pane) {
-                        let (new_focus, _, _) = (*panel).close_tab(index);
-                        return Command::perform(
-                            async move { PanelMessage::FocusTab((pane, new_focus)) },
-                            Message::Panel,
-                        );
-                    }
-                }
-                PanelMessage::FocusTab((pane, index)) => {
-                    if let Some(panel) = self.panes.get_mut(&pane) {
-                        (*panel).focus_tab(index);
-                    }
-                }
-            },
+            }
             Message::ThemeChanged(theme) => {
                 self.config.theme = theme;
                 return clear_cache_command();

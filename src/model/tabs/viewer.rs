@@ -11,6 +11,7 @@ use crate::view::theme;
 
 #[derive(Default)]
 pub struct Viewer {
+    pub id: String,
     pub grid: Grid,
     pub controls: Controls,
     pub is_playing: bool,
@@ -20,7 +21,15 @@ pub struct Viewer {
 }
 
 impl Model<TabContentMessage> for Viewer {}
-impl TabContent for Viewer {}
+impl TabContent for Viewer {
+    fn get_id(&self) -> &String {
+        &self.id
+    }
+
+    fn set_id(&mut self, id: String) {
+        self.id = id;
+    }
+}
 
 impl Viewer {
     pub fn new() -> Self {
@@ -42,7 +51,7 @@ pub mod grid {
     use std::ops::RangeInclusive;
     use std::time::{Duration, Instant};
 
-    use crate::update::{panel::PanelMessage, tabs::viewer::ViewerMessage};
+    use crate::update::{tabs::{TabContentMessage, viewer::ViewerMessage}};
 
     pub struct Grid {
         state: State,
@@ -66,6 +75,12 @@ pub mod grid {
             tick_duration: Duration,
             version: usize,
         },
+    }
+
+    impl From<Message> for ViewerMessage {
+        fn from(message: Message) -> ViewerMessage {
+            ViewerMessage::Grid(message)
+        }
     }
 
     #[derive(Debug, Clone)]
@@ -94,7 +109,7 @@ pub mod grid {
         const MIN_SCALING: f32 = 0.1;
         const MAX_SCALING: f32 = 2.0;
 
-        pub fn tick(&mut self, amount: usize) -> Option<impl Future<Output = PanelMessage>> {
+        pub fn tick(&mut self, amount: usize) -> Option<impl Future<Output = TabContentMessage>> {
             let version = self.version;
             let tick = self.state.tick(amount)?;
 
@@ -105,12 +120,12 @@ pub mod grid {
                 let result = tick.await;
                 let tick_duration = start.elapsed() / amount as u32;
 
-                ViewerMessage::Grid(Message::Ticked {
-                    result,
-                    version,
-                    tick_duration,
-                })
-                .into()
+                TabContentMessage::Viewer(
+                    ("".to_string(), ViewerMessage::Grid(Message::Ticked {
+                        result,
+                        version,
+                        tick_duration,
+                    })))
             })
         }
 

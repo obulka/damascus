@@ -3,6 +3,7 @@ use std::{error::Error, fmt};
 
 // 3rd Party Imports
 use iced::{executor, pane_grid, Application, Command, Element, Subscription};
+use rustc_hash::FxHashMap as HashMap;
 
 // Local Imports
 pub mod model;
@@ -44,6 +45,7 @@ impl Application for Damascus {
             Damascus {
                 config: flags,
                 panes: panes,
+                tabs: HashMap::default(),
             },
             Command::none(),
         )

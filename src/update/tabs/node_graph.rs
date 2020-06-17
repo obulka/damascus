@@ -75,6 +75,9 @@ impl Update<TabContentMessage> for NodeGraph {
                         self.clear_node_caches();
                     }
                     NodeGraphMessage::SelectNode(label) => {
+                        if !self.selected_nodes.contains(&label) {
+                            self.clear_selected();
+                        }
                         self.select_node(label);
                         self.clear_node_caches();
                     }

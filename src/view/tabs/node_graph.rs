@@ -55,10 +55,7 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                 let region = self.visible_region(frame.size());
                 let rows = region.rows();
                 let columns = region.columns();
-                let width = 1.0 / self.grid_size;
                 let color = self.config.theme.secondary_color();
-
-                frame.translate(Vector::new(-width / 2.0, -width / 2.0));
 
                 for row in region.rows() {
                     let line = Path::line(
@@ -68,7 +65,7 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                     frame.stroke(
                         &line,
                         Stroke {
-                            width: 1.0,
+                            width: 1.25,
                             color: color,
                             ..Stroke::default()
                         },
@@ -83,7 +80,7 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                     frame.stroke(
                         &line,
                         Stroke {
-                            width: 1.0,
+                            width: 1.5,
                             color: color,
                             ..Stroke::default()
                         },
@@ -97,10 +94,9 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
         if !self.nodes.is_empty() {
             let disconnected = Path::line(Point::ORIGIN, Point::new(2.0, 0.0));
 
-            let style: NodeGraphStyle = self.config.theme.into();
             let connection_stroke = Stroke {
-                width: style.connection_width,
-                color: style.connection_color,
+                width: node_graph_style.connection_width,
+                color: node_graph_style.connection_color,
                 line_cap: LineCap::Butt,
                 ..Stroke::default()
             };
@@ -111,8 +107,6 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                     frame.scale(self.scaling);
                     frame.translate(self.translation);
                     frame.scale(self.grid_size);
-                    let width = 1.0 / self.grid_size;
-                    frame.translate(Vector::new(-width / 2.0, -width / 2.0));
 
                     let _visible_bounds: Rectangle = self.visible_region(frame.size()).into();
 
@@ -147,8 +141,6 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                     frame.scale(self.scaling);
                     frame.translate(self.translation);
                     frame.scale(self.grid_size);
-                    let width = 1.0 / self.grid_size;
-                    frame.translate(Vector::new(-width / 2.0, -width / 2.0));
 
                     let visible_bounds: Rectangle = self.visible_region(frame.size()).into();
 
@@ -167,8 +159,6 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                     frame.scale(self.scaling);
                     frame.translate(self.translation);
                     frame.scale(self.grid_size);
-                    let width = 1.0 / self.grid_size;
-                    frame.translate(Vector::new(-width / 2.0, -width / 2.0));
                     let selection_box_path =
                         Path::rectangle(selection_box.position(), selection_box.size());
                     frame.fill(&selection_box_path, (*node_graph_style).selection_box_color);

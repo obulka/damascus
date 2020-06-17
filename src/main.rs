@@ -5,5 +5,8 @@ use iced::{Application, Settings};
 use damascus::Damascus;
 
 pub fn main() {
-    Damascus::run(Settings::default())
+    Damascus::run(Settings {
+        antialiasing: true,
+        ..Settings::default()
+    })
 }

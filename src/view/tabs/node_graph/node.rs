@@ -1,4 +1,5 @@
 // Local Imports
+mod circle;
 mod rect;
 
 use crate::model::node::NodeState;

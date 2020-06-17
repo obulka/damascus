@@ -101,14 +101,14 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                 ..Stroke::default()
             };
 
-            let connections = self.connection_cache.draw(bounds.size(), |frame| {
+            let nodes = self.node_cache.draw(bounds.size(), |frame| {
                 frame.with_save(|frame| {
                     frame.translate(center);
                     frame.scale(self.scaling);
                     frame.translate(self.translation);
                     frame.scale(self.grid_size);
 
-                    let _visible_bounds: Rectangle = self.visible_region(frame.size()).into();
+                    let visible_bounds: Rectangle = self.visible_region(frame.size()).into();
 
                     for (_, node) in self.nodes.iter() {
                         let num_disconnected = node.num_disconnected();
@@ -130,21 +130,6 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
                                 }
                             })
                         }
-                    }
-                })
-            });
-            geometry.push(connections);
-
-            let nodes = self.node_cache.draw(bounds.size(), |frame| {
-                frame.with_save(|frame| {
-                    frame.translate(center);
-                    frame.scale(self.scaling);
-                    frame.translate(self.translation);
-                    frame.scale(self.grid_size);
-
-                    let visible_bounds: Rectangle = self.visible_region(frame.size()).into();
-
-                    for (_, node) in self.nodes.iter() {
                         node.draw(frame, &visible_bounds, !self.lower_lod(), &self.config);
                     }
                 })

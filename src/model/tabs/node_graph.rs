@@ -30,7 +30,6 @@ pub struct NodeGraph {
     pub selection_box: Option<Rectangle>,
     pub grid_size: f32,
     pub interaction: Interaction,
-    pub connection_cache: Cache,
     pub node_cache: Cache,
     pub grid_cache: Cache,
     pub selection_box_cache: Cache,
@@ -61,7 +60,6 @@ impl Default for NodeGraph {
             selection_box: None,
             grid_size: 20.0,
             interaction: Interaction::None,
-            connection_cache: Cache::default(),
             node_cache: Cache::default(),
             grid_cache: Cache::default(),
             selection_box_cache: Cache::default(),
@@ -177,12 +175,10 @@ impl NodeGraph {
 
     pub fn clear_node_caches(&mut self) {
         self.node_cache.clear();
-        self.connection_cache.clear();
     }
 
     pub fn clear_cache(&mut self) {
         self.node_cache.clear();
-        self.connection_cache.clear();
         self.grid_cache.clear();
     }
 

@@ -1,7 +1,6 @@
 // Local Imports
 mod circle;
+mod dot;
 mod rect;
 
-use crate::update::CanvasItemUpdate;
-
-pub trait NodeUpdate: CanvasItemUpdate {}
+pub trait NodeUpdate {}

@@ -112,8 +112,6 @@ pub trait CanvasUpdate<EmittedMessage> {
     fn mouse_interaction(&self, bounds: Rectangle, cursor: Cursor) -> mouse::Interaction;
 }
 
-pub trait CanvasItemUpdate {}
-
 impl Update<Message> for Damascus {
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {

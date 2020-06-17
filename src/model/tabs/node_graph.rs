@@ -82,6 +82,12 @@ impl NodeGraph {
         for i in 0..5 {
             node_graph.add_node(NodeType::Viewer, Point::new(i as f32, i as f32));
         }
+        for i in 5..10 {
+            node_graph.add_node(NodeType::Read, Point::new(-i as f32 * 2.0, -i as f32 * 2.0));
+        }
+        for i in 0..5 {
+            node_graph.add_node(NodeType::Dot, Point::new(i as f32, -i as f32));
+        }
         node_graph
     }
 

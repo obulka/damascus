@@ -4,7 +4,6 @@ use iced::{Point, Rectangle, Size, Vector};
 // Local Imports
 use crate::model::{
     node::{Node, NodeState},
-    CanvasItemModel,
 };
 
 pub struct CircleNode {
@@ -29,7 +28,7 @@ impl CircleNode {
 impl Default for CircleNode {
     fn default() -> Self {
         Self {
-            rectangle: Rectangle::with_size(Size::new(4.0, 1.0)),
+            rectangle: Rectangle::with_size(Size::new(3.0, 3.0)),
             translation: Vector::default(),
             label: "".to_string(),
             selected: false,
@@ -37,8 +36,6 @@ impl Default for CircleNode {
         }
     }
 }
-
-impl CanvasItemModel for CircleNode {}
 
 impl NodeState for CircleNode {
     fn get_label(&self) -> &String {

@@ -80,6 +80,12 @@ pub const CLOSE: Color = Color::from_rgb(
     0x2B as f32 / 255.0,
 );
 
+pub const RED: Color = Color::from_rgb(
+    0x65 as f32 / 255.0,
+    0x00 as f32 / 255.0,
+    0x00 as f32 / 255.0,
+);
+
 pub enum Button {
     Primary,
     Destructive,
@@ -193,6 +199,11 @@ impl Default for NodeStyle {
         }
     }
 }
+
+pub const CIRCLE_NODE_STYLE: NodeStyle = NodeStyle {
+    background: RED,
+    text_color: Color::WHITE,
+};
 
 pub struct NodeGraphStyle {
     pub border_color: Color,

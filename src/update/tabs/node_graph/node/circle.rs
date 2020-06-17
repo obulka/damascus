@@ -1,6 +1,5 @@
 // Local Imports
 use crate::model::node::CircleNode;
-use crate::update::{node::NodeUpdate, CanvasItemUpdate};
+use crate::update::node::NodeUpdate;
 
-impl CanvasItemUpdate for CircleNode {}
 impl NodeUpdate for CircleNode {}

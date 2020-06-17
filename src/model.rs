@@ -4,8 +4,8 @@ use rustc_hash::FxHashMap as HashMap;
 
 // Local Imports
 use crate::model::tabs::{TabContent, TabType};
-use crate::update::{CanvasItemUpdate, CanvasUpdate, Message, Update};
-use crate::view::{CanvasItemView, CanvasView, Config, View};
+use crate::update::{CanvasUpdate, Message, Update};
+use crate::view::{CanvasView, Config, View};
 use panel::Panel;
 
 pub mod core;
@@ -22,8 +22,6 @@ pub trait CanvasModel<UpdateMessage>:
     CanvasUpdate<UpdateMessage> + CanvasView<UpdateMessage> + Program<UpdateMessage>
 {
 }
-
-pub trait CanvasItemModel: CanvasItemView + CanvasItemUpdate {}
 
 pub struct Damascus {
     pub config: Config,

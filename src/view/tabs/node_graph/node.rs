@@ -10,7 +10,10 @@ mod dot;
 mod rect;
 
 use crate::model::node::NodeState;
-use crate::view::{theme::{NodeGraphStyle, NodeStyle}, Config};
+use crate::view::{
+    theme::{NodeGraphStyle, NodeStyle},
+    Config,
+};
 
 pub trait NodeView: NodeState {
     fn style(&self) -> NodeStyle {

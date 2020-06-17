@@ -87,11 +87,14 @@ pub trait Node: NodeUpdate + NodeView {
         None
     }
 
-    fn num_outputs(&self) -> usize {
+    fn min_inputs(&self) -> usize {
         0
     }
 
-    fn num_inputs(&self) -> usize {
-        0
+    fn num_disconnected(&self) -> usize {
+        if let Some(parents) = self.parents() {
+            return parents.len() - self.min_inputs();
+        }
+        self.min_inputs()
     }
 }

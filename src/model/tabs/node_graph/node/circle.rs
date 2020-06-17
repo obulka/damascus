@@ -2,9 +2,7 @@
 use iced::{Point, Rectangle, Size, Vector};
 
 // Local Imports
-use crate::model::{
-    node::{Node, NodeState},
-};
+use crate::model::node::{Node, NodeState};
 
 pub struct CircleNode {
     pub rectangle: Rectangle,

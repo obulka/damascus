@@ -45,6 +45,8 @@ pub const NODE_GRAPH_STYLE: NodeGraphStyle = NodeGraphStyle {
     selection_box_color: Color { a: 0.5, ..TERTIARY },
     selection_box_border_color: SECONDARY,
     selection_box_border_width: 2.0,
+    connection_color: Color::BLACK,
+    connection_width: 3.0,
 };
 
 pub struct Container;

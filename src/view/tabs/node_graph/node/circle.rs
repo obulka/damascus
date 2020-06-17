@@ -3,7 +3,10 @@ use iced::canvas::Path;
 
 // Local Imports
 use crate::model::node::{CircleNode, NodeState};
-use crate::view::{node::NodeView, theme::{CIRCLE_NODE_STYLE, NodeStyle}};
+use crate::view::{
+    node::NodeView,
+    theme::{NodeStyle, CIRCLE_NODE_STYLE},
+};
 
 impl NodeView for CircleNode {
     fn style(&self) -> NodeStyle {

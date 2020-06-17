@@ -1,6 +1,9 @@
+// Standard Imports
+use std::f32::consts::PI;
+
 // 3rd Party Imports
 use iced::{
-    canvas::{Canvas, Cursor, Geometry, Path, Stroke},
+    canvas::{Canvas, Cursor, Geometry, LineCap, Path, Stroke},
     Container, Element, Length, Point, Rectangle, Vector,
 };
 
@@ -92,6 +95,52 @@ impl CanvasView<NodeGraphMessage> for NodeGraph {
         }
 
         if !self.nodes.is_empty() {
+            let disconnected = Path::line(Point::ORIGIN, Point::new(2.0, 0.0));
+
+            let style: NodeGraphStyle = self.config.theme.into();
+            let connection_stroke = Stroke {
+                width: style.connection_width,
+                color: style.connection_color,
+                line_cap: LineCap::Butt,
+                ..Stroke::default()
+            };
+
+            let connections = self.connection_cache.draw(bounds.size(), |frame| {
+                frame.with_save(|frame| {
+                    frame.translate(center);
+                    frame.scale(self.scaling);
+                    frame.translate(self.translation);
+                    frame.scale(self.grid_size);
+                    let width = 1.0 / self.grid_size;
+                    frame.translate(Vector::new(-width / 2.0, -width / 2.0));
+
+                    let _visible_bounds: Rectangle = self.visible_region(frame.size()).into();
+
+                    for (_, node) in self.nodes.iter() {
+                        let num_disconnected = node.num_disconnected();
+                        if num_disconnected > 0 {
+                            let rotation = -PI / 4.0;
+                            let rotation_step = if num_disconnected > 1 {
+                                -PI / (2.0 * (num_disconnected - 1) as f32)
+                            } else {
+                                0.0
+                            };
+                            let node_position = node.translated_rect().center();
+                            let input_location = Vector::new(node_position.x, node_position.y);
+                            frame.with_save(|frame| {
+                                frame.translate(input_location);
+                                frame.rotate(rotation);
+                                for _ in 0..num_disconnected {
+                                    frame.stroke(&disconnected, connection_stroke);
+                                    frame.rotate(rotation_step);
+                                }
+                            })
+                        }
+                    }
+                })
+            });
+            geometry.push(connections);
+
             let nodes = self.node_cache.draw(bounds.size(), |frame| {
                 frame.with_save(|frame| {
                     frame.translate(center);

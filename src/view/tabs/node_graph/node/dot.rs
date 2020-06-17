@@ -1,11 +1,12 @@
 // 3rd Party Imports
 use iced::{
-    canvas::{Frame, Path, Stroke}, Rectangle,
+    canvas::{Frame, Path, Stroke},
+    Rectangle,
 };
 
 // Local Imports
 use crate::model::node::{DotNode, NodeState};
-use crate::view::{theme::{NodeGraphStyle}, Config, node::NodeView};
+use crate::view::{node::NodeView, theme::NodeGraphStyle, Config};
 
 impl NodeView for DotNode {
     fn get_path(&self) -> Path {

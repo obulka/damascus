@@ -2,9 +2,7 @@
 use iced::{Point, Rectangle, Size, Vector};
 
 // Local Imports
-use crate::model::{
-    node::{Node, NodeState},
-};
+use crate::model::node::{Node, NodeState};
 
 pub struct DotNode {
     pub rectangle: Rectangle,
@@ -90,4 +88,16 @@ impl NodeState for DotNode {
     }
 }
 
-impl Node for DotNode {}
+impl Node for DotNode {
+    fn parents(&self) -> Option<Vec<String>> {
+        None
+    }
+
+    fn children(&self) -> Option<Vec<String>> {
+        None
+    }
+
+    fn min_inputs(&self) -> usize {
+        1
+    }
+}

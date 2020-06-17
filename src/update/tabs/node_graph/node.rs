@@ -1,5 +1,5 @@
 // Local Imports
-mod viewer;
+mod rect;
 
 use crate::update::CanvasItemUpdate;
 

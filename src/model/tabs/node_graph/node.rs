@@ -2,12 +2,12 @@
 use iced::{Point, Rectangle, Vector};
 
 // Local Imports
+mod rect;
+
 use crate::model::CanvasItemModel;
 use crate::update::node::NodeUpdate;
 use crate::view::node::NodeView;
-
-mod viewer;
-pub use viewer::Viewer;
+pub use rect::RectNode;
 
 #[derive(Debug, Clone)]
 pub enum NodeType {
@@ -17,8 +17,8 @@ pub enum NodeType {
 
 pub fn create_node(node_type: NodeType) -> Box<dyn Node> {
     match node_type {
-        NodeType::Viewer => Box::new(Viewer::default()),
-        NodeType::Read => Box::new(Viewer::default()),
+        NodeType::Viewer => Box::new(RectNode::default()),
+        NodeType::Read => Box::new(RectNode::default()),
     }
 }
 
@@ -69,4 +69,20 @@ pub trait NodeState {
     }
 }
 
-pub trait Node: CanvasItemModel + NodeUpdate + NodeView {}
+pub trait Node: CanvasItemModel + NodeUpdate + NodeView {
+    fn parents(&self) -> Option<Vec<String>> {
+        None
+    }
+
+    fn children(&self) -> Option<Vec<String>> {
+        None
+    }
+
+    fn num_outputs(&self) -> usize {
+        0
+    }
+
+    fn num_inputs(&self) -> usize {
+        0
+    }
+}

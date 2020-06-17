@@ -8,6 +8,7 @@ use crate::update::{CanvasItemUpdate, CanvasUpdate, Message, Update};
 use crate::view::{CanvasItemView, CanvasView, Config, View};
 use panel::Panel;
 
+pub mod core;
 pub mod panel;
 pub mod tabs;
 

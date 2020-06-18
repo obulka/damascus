@@ -76,9 +76,7 @@ pub trait NodeState {
     fn intersection(&self, other_rectangle: &Rectangle) -> Option<Rectangle> {
         self.rect().intersection(other_rectangle)
     }
-}
 
-pub trait Node: NodeUpdate + NodeView {
     fn parents(&self) -> Option<Vec<String>> {
         None
     }
@@ -97,4 +95,10 @@ pub trait Node: NodeUpdate + NodeView {
         }
         self.min_inputs()
     }
+
+    fn get_connection_at(&self, _position: Point) -> Option<String> {
+        None
+    }
 }
+
+pub trait Node: NodeUpdate + NodeView {}

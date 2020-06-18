@@ -15,7 +15,7 @@ mod widget;
 pub use tabs::node_graph::node;
 pub use widget::*;
 
-use crate::model::{panel::Panel, tabs::TabType};
+use crate::model::{panel::Panel, tabs::TabType, CanvasModel, Model};
 use crate::update::tabs::TabContentMessage;
 use crate::view::Theme;
 use crate::Damascus;
@@ -95,7 +95,7 @@ pub fn handle_hotkey(event: pane_grid::KeyPressEvent) -> Option<Message> {
     handle_ctrl(event)
 }
 
-pub trait Update<UpdateMessage> {
+pub trait Update<UpdateMessage>: Model {
     fn update(&mut self, _message: UpdateMessage) -> Command<Message> {
         Command::none()
     }
@@ -105,7 +105,7 @@ pub trait Update<UpdateMessage> {
     }
 }
 
-pub trait CanvasUpdate<EmittedMessage> {
+pub trait CanvasUpdate<EmittedMessage>: CanvasModel<EmittedMessage> {
     fn update(&mut self, event: Event, bounds: Rectangle, cursor: Cursor)
         -> Option<EmittedMessage>;
 

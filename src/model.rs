@@ -4,8 +4,7 @@ use rustc_hash::FxHashMap as HashMap;
 
 // Local Imports
 use crate::model::tabs::{TabContent, TabType};
-use crate::update::{CanvasUpdate, Message, Update};
-use crate::view::{CanvasView, Config, View};
+use crate::view::Config;
 use panel::Panel;
 
 pub mod core;
@@ -17,11 +16,8 @@ mod widget;
 pub use tabs::node_graph::node;
 pub use widget::*;
 
-pub trait Model<UpdateMessage>: Update<UpdateMessage> + View {}
-pub trait CanvasModel<UpdateMessage>:
-    CanvasUpdate<UpdateMessage> + CanvasView<UpdateMessage> + Program<UpdateMessage>
-{
-}
+pub trait Model {}
+pub trait CanvasModel<UpdateMessage>: Program<UpdateMessage> {}
 
 pub struct Damascus {
     pub config: Config,
@@ -29,7 +25,7 @@ pub struct Damascus {
     pub tabs: HashMap<String, pane_grid::Pane>,
 }
 
-impl Model<Message> for Damascus {}
+impl Model for Damascus {}
 
 impl Damascus {
     pub fn close_tab(&mut self, tab_label: &String) -> Option<String> {

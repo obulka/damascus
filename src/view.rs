@@ -12,11 +12,12 @@ pub use tabs::node_graph::node;
 pub use theme::Theme;
 pub use widget::*;
 
+use crate::model::Model;
 use crate::update::{handle_hotkey, Message};
 use crate::Damascus;
 use panel::PanelView;
 
-pub trait View {
+pub trait View: Model {
     fn view(&mut self, config: &Config) -> Element<Message>;
 }
 

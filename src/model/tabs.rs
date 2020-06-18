@@ -2,13 +2,13 @@
 pub mod node_graph;
 pub mod viewer;
 
-use crate::model::Model;
-use crate::update::tabs::TabContentMessage;
+use crate::update::{tabs::TabContentMessage, Update};
+use crate::view::View;
 
 pub use node_graph::NodeGraph;
 pub use viewer::Viewer;
 
-pub trait TabContent: Model<TabContentMessage> {
+pub trait TabContent: View + Update<TabContentMessage> {
     fn get_id(&self) -> &String;
 
     fn set_id(&mut self, id: String);

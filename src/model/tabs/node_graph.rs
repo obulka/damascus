@@ -14,10 +14,7 @@ pub mod node;
 use super::{TabContent, TabType};
 use crate::model::{CanvasModel, Config, Model};
 use crate::update::{
-    tabs::{
-        node_graph::{Interaction, NodeGraphMessage},
-        TabContentMessage,
-    },
+    tabs::node_graph::{Interaction, NodeGraphMessage},
     CanvasUpdate,
 };
 use crate::view::CanvasView;
@@ -39,7 +36,7 @@ pub struct NodeGraph {
     pub config: Config,
 }
 
-impl Model<TabContentMessage> for NodeGraph {}
+impl Model for NodeGraph {}
 impl CanvasModel<NodeGraphMessage> for NodeGraph {}
 impl TabContent for NodeGraph {
     fn get_id(&self) -> &String {

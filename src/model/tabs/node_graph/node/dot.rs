@@ -86,9 +86,7 @@ impl NodeState for DotNode {
     fn rect(&self) -> Rectangle {
         self.rectangle
     }
-}
 
-impl Node for DotNode {
     fn parents(&self) -> Option<Vec<String>> {
         None
     }
@@ -101,3 +99,5 @@ impl Node for DotNode {
         1
     }
 }
+
+impl Node for DotNode {}

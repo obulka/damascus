@@ -6,7 +6,7 @@ use crate::model::{
     tabs::{tab_content_from_type, TabContent, TabType},
     Model,
 };
-use crate::update::{panel::PanelUpdate, tabs::TabContentMessage};
+use crate::update::panel::PanelUpdate;
 use crate::view::panel::PanelView;
 
 trait PanelModel: PanelUpdate + PanelView {}
@@ -23,7 +23,7 @@ pub struct Panel {
     pub focused_tab: usize,
 }
 
-impl Model<TabContentMessage> for Panel {}
+impl Model for Panel {}
 impl PanelModel for Panel {}
 
 impl Panel {

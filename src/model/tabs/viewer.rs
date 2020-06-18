@@ -6,7 +6,7 @@ use iced::{
 };
 
 use crate::model::{tabs::TabContent, Config, Model};
-use crate::update::tabs::{viewer::ViewerMessage, TabContentMessage};
+use crate::update::tabs::viewer::ViewerMessage;
 use crate::view::theme;
 
 #[derive(Default)]
@@ -20,7 +20,7 @@ pub struct Viewer {
     pub next_speed: Option<usize>,
 }
 
-impl Model<TabContentMessage> for Viewer {}
+impl Model for Viewer {}
 impl TabContent for Viewer {
     fn get_id(&self) -> &String {
         &self.id

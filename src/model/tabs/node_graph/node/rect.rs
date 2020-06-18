@@ -2,7 +2,7 @@
 use iced::{Point, Rectangle, Size, Vector};
 
 // Local Imports
-use crate::model::node::{Node, NodeState};
+use crate::model::node::{Node, NodeModel};
 
 pub struct RectNode {
     pub rectangle: Rectangle,
@@ -35,7 +35,9 @@ impl Default for RectNode {
     }
 }
 
-impl NodeState for RectNode {
+impl Node for RectNode {}
+
+impl NodeModel for RectNode {
     fn get_label(&self) -> &String {
         &self.label
     }
@@ -87,5 +89,3 @@ impl NodeState for RectNode {
         self.rectangle
     }
 }
-
-impl Node for RectNode {}

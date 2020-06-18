@@ -2,7 +2,7 @@
 use iced::canvas::Path;
 
 // Local Imports
-use crate::model::node::{CircleNode, NodeState};
+use crate::model::node::{CircleNode, NodeModel};
 use crate::view::{
     node::NodeView,
     theme::{NodeStyle, CIRCLE_NODE_STYLE},

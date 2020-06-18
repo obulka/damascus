@@ -6,11 +6,12 @@ mod circle;
 mod dot;
 mod rect;
 
-use crate::update::node::NodeUpdate;
-use crate::view::node::NodeView;
 pub use circle::CircleNode;
 pub use dot::DotNode;
 pub use rect::RectNode;
+
+use crate::view::node::NodeView;
+use crate::update::node::NodeUpdate;
 
 #[derive(Debug, Clone)]
 pub enum NodeType {
@@ -27,7 +28,9 @@ pub fn create_node(node_type: NodeType) -> Box<dyn Node> {
     }
 }
 
-pub trait NodeState {
+pub trait Node: NodeView + NodeUpdate {}
+
+pub trait NodeModel {
     fn get_label(&self) -> &String;
 
     fn set_label(&mut self, label: String);
@@ -100,5 +103,3 @@ pub trait NodeState {
         None
     }
 }
-
-pub trait Node: NodeUpdate + NodeView {}

@@ -5,7 +5,7 @@ use iced::{
 };
 
 // Local Imports
-use crate::model::node::{DotNode, NodeState};
+use crate::model::node::{DotNode, NodeModel};
 use crate::view::{node::NodeView, theme::NodeGraphStyle, Config};
 
 impl NodeView for DotNode {

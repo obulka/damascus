@@ -12,13 +12,13 @@ mod circle;
 mod dot;
 mod rect;
 
-use crate::model::node::NodeState;
+use crate::model::node::NodeModel;
 use crate::view::{
     theme::{NodeGraphStyle, NodeStyle},
     Config,
 };
 
-pub trait NodeView: NodeState {
+pub trait NodeView: NodeModel {
     fn style(&self) -> NodeStyle {
         NodeStyle::default()
     }

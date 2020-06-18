@@ -3,4 +3,6 @@ mod circle;
 mod dot;
 mod rect;
 
-pub trait NodeUpdate {}
+use crate::model::node::NodeModel;
+
+pub trait NodeUpdate: NodeModel {}

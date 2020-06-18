@@ -2,7 +2,7 @@
 use iced::{Point, Rectangle, Size, Vector};
 
 // Local Imports
-use crate::model::node::{Node, NodeState};
+use crate::model::node::{Node, NodeModel};
 
 pub struct CircleNode {
     pub rectangle: Rectangle,
@@ -35,7 +35,9 @@ impl Default for CircleNode {
     }
 }
 
-impl NodeState for CircleNode {
+impl Node for CircleNode {}
+
+impl NodeModel for CircleNode {
     fn get_label(&self) -> &String {
         &self.label
     }
@@ -87,5 +89,3 @@ impl NodeState for CircleNode {
         self.rectangle
     }
 }
-
-impl Node for CircleNode {}

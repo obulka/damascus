@@ -100,4 +100,8 @@ impl NodeModel for DotNode {
     fn min_inputs(&self) -> usize {
         1
     }
+
+    fn max_inputs(&self) -> usize {
+        1
+    }
 }

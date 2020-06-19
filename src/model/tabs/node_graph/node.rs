@@ -92,6 +92,10 @@ pub trait NodeModel {
         0
     }
 
+    fn max_inputs(&self) -> usize {
+        0
+    }
+
     fn num_disconnected(&self) -> usize {
         if let Some(parents) = self.parents() {
             return parents.len() - self.min_inputs();

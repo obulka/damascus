@@ -1,5 +1,6 @@
 use iced::{
     canvas::{Cursor, Frame, Geometry},
+    pane_grid,
     Align, Column, Container, Element, Length, PaneGrid, Rectangle, Row,
 };
 
@@ -66,7 +67,7 @@ impl View for Damascus {
             .push(
                 // Panes
                 PaneGrid::new(&mut self.panes, |pane, content, focus| {
-                    PanelView::view(content, pane, focus, config)
+                    pane_grid::Content::new(PanelView::view(content, pane, focus, config))
                 })
                 .width(Length::Fill)
                 .height(Length::Fill)

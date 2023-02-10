@@ -1,69 +1,23 @@
-// Standard Imports
-use std::{error::Error, fmt};
+#![forbid(unsafe_code)]
+#![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
+#![warn(clippy::all, rust_2018_idioms)]
 
-// 3rd Party Imports
-use iced::{executor, pane_grid, Application, Command, Element, Subscription};
-use rustc_hash::FxHashMap as HashMap;
+mod app;
+pub use app::Damascus;
 
-// Local Imports
-pub mod model;
-pub mod update;
-pub mod view;
+// ----------------------------------------------------------------------------
+// When compiling for web:
 
-use model::panel::Panel;
-pub use model::Damascus;
-use update::{Message, Update};
-use view::{Config, View};
+#[cfg(target_arch = "wasm32")]
+use eframe::wasm_bindgen::{self, prelude::*};
 
-#[derive(Debug, Copy, Clone)]
-pub enum DamascusError {
-    ModelError,
-    ViewError,
-    UpdateError,
-}
-
-impl fmt::Display for DamascusError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            DamascusError::ModelError => write!(f, "Model Error"),
-            DamascusError::ViewError => write!(f, "Update Error"),
-            DamascusError::UpdateError => write!(f, "View Error"),
-        }
-    }
-}
-
-impl Error for DamascusError {}
-
-impl Application for Damascus {
-    type Message = Message;
-    type Executor = executor::Default;
-    type Flags = Config;
-
-    fn new(flags: Self::Flags) -> (Self, Command<Self::Message>) {
-        let (panes, _) = pane_grid::State::new(Panel::new());
-        (
-            Damascus {
-                config: flags,
-                panes: panes,
-                tabs: HashMap::default(),
-            },
-            Command::none(),
-        )
-    }
-
-    fn title(&self) -> String {
-        self.config.title.clone()
-    }
-
-    fn update(&mut self, message: Self::Message) -> Command<Self::Message> {
-        Update::update(self, message)
-    }
-
-    fn subscription(&self) -> Subscription<Self::Message> {
-        Update::subscription(self)
-    }
-
-    fn view(&mut self) -> Element<Self::Message> {
-        View::view(self, &self.config.clone())
-    }
+/// This is the entry-point for all the web-assembly.
+/// This is called once from the HTML.
+/// It loads the app, installs some callbacks, then returns.
+/// You can add more callbacks like this if you want to call in to your code.
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen]
+pub fn start(canvas_id: &str) -> Result<(), eframe::wasm_bindgen::JsValue> {
+    let app = Damascus::default();
+    eframe::start_web(canvas_id, Box::new(app))
 }

@@ -1,45 +1,22 @@
 [package]
 name = "damascus"
 version = "0.1.0"
-authors = ["Owen Bulka <obulka@hotmail.com>"]
-edition = "2018"
+authors = ["ob1"]
+edition = "2021"
+rust-version = "1.56"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-num_cpus = "1.0"
-futures = "0.3.4"
-rayon = "1.1"
+eframe = "0.19.0"
+egui_node_graph = "0.4.0"
+anyhow = "1.0"
+serde = { version = "1.0", optional = true }
 
-iced = { path = "../iced", features = ["canvas", "tokio", "debug"] }
-iced_core = { path = "../iced/core"}
-iced_native = { path = "../iced/native" }
-iced_wgpu = { path = "../iced/wgpu" }
-iced_graphics = { path = "../iced/graphics" }
+[features]
+default = []
+persistence = ["serde", "egui_node_graph/persistence", "eframe/persistence"]
 
-tokio = { version = "0.2", features = ["full"] }
-tokio-util = { version = "0.3.1", features = ["codec"] }
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio-serde = "0.6"
-tokio-serde-json = "0.2"
-
-bytes = "0.5.4"
-specs = "0.15.1"
-specs-hierarchy = "0.5.1"
-wgpu = "0.5.0"
-image = "0.23"
-winit = "0.22.2"
-glsl-to-spirv = "0.1"
-cgmath = "0.17"
-failure = "0.1"
-bytemuck = "1.2.0"
-
-simple_logger = "1"
-actix = "0.10.0-alpha.3"
-actix-rt = "1.1.1"
-
-ron = "*"
-rustc-hash = "1.1"
-itertools = "0.9"
-rand = "0.7"
+[profile.release]
+opt-level = 2 # fast and small wasm

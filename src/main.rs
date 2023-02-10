@@ -1,12 +1,23 @@
-// 3rd Party Imports
-use iced::{Application, Settings};
+#![forbid(unsafe_code)]
+#![cfg_attr(not(debug_assertions), deny(warnings))] // Forbid warnings in release builds
+#![warn(clippy::all, rust_2018_idioms)]
 
-// Local Imports
-use damascus::Damascus;
+// When compiling natively:
+#[cfg(not(target_arch = "wasm32"))]
+fn main() {
+    use eframe::egui::Visuals;
 
-pub fn main() {
-    Damascus::run(Settings {
-        antialiasing: true,
-        ..Settings::default()
-    })
+    eframe::run_native(
+        "damascus",
+        eframe::NativeOptions::default(),
+        Box::new(|cc| {
+            cc.egui_ctx.set_visuals(Visuals::dark());
+            #[cfg(feature = "persistence")]
+            {
+                Box::new(damascus::Damascus::new(cc))
+            }
+            #[cfg(not(feature = "persistence"))]
+            Box::new(damascus::Damascus::default())
+        }),
+    );
 }

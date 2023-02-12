@@ -2,6 +2,9 @@ use std::{borrow::Cow, collections::HashMap};
 
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
+// use truck_platform::*;
+
+use crate::viewport_3d::Viewport3d;
 
 // ========= First, define your user data types =============
 
@@ -358,17 +361,16 @@ type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType
 type DamascusEditorState =
     GraphEditorState<DamascusNodeData, DamascusDataType, DamascusValueType, DamascusNodeTemplate, DamascusGraphState>;
 
-#[derive(Default)]
 pub struct Damascus {
     // The `GraphEditorState` is the top-level object. You "register" all your
     // custom types by specifying it as its generic parameters.
     state: DamascusEditorState,
-
     user_state: DamascusGraphState,
+    viewport_3d: Option<Viewport3d>,
 }
 
 #[cfg(feature = "persistence")]
-const PERSISTENCE_KEY: &str = "egui_node_graph";
+const PERSISTENCE_KEY: &str = "damascus";
 
 #[cfg(feature = "persistence")]
 impl Damascus {
@@ -382,6 +384,20 @@ impl Damascus {
         Self {
             state,
             user_state: DamascusGraphState::default(),
+            viewport_3d: Viewport3d::new(cc),
+        }
+    }
+}
+
+#[cfg(not(feature = "persistence"))]
+impl Damascus {
+    /// If the persistence feature is enabled, Called once before the first frame.
+    /// Load previous app state (if any).
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        Self {
+            state: DamascusEditorState::default(),
+            user_state: DamascusGraphState::default(),
+            viewport_3d: Viewport3d::new(cc),
         }
     }
 }
@@ -396,12 +412,66 @@ impl eframe::App for Damascus {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        egui::TopBottomPanel::top("top").show(ctx, |ui| {
+        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
-                egui::widgets::global_dark_light_mode_switch(ui);
+                ui.menu_button("File", |ui| {
+                    if ui.button("Open...").clicked() {
+                        ui.close_menu();
+                    }
+                    ui.menu_button("SubMenu", |ui| {
+                        ui.menu_button("SubMenu", |ui| {
+                            if ui.button("Open...").clicked() {
+                                ui.close_menu();
+                            }
+                            let _ = ui.button("Item");
+                        });
+                        ui.menu_button("SubMenu", |ui| {
+                            if ui.button("Open...").clicked() {
+                                ui.close_menu();
+                            }
+                            let _ = ui.button("Item");
+                        });
+                        let _ = ui.button("Item");
+                        if ui.button("Open...").clicked() {
+                            ui.close_menu();
+                        }
+                    });
+                    ui.menu_button("SubMenu", |ui| {
+                        let _ = ui.button("Item1");
+                        let _ = ui.button("Item2");
+                        let _ = ui.button("Item3");
+                        let _ = ui.button("Item4");
+                        if ui.button("Open...").clicked() {
+                            ui.close_menu();
+                        }
+                    });
+                    let _ = ui.button("Very long text for this item");
+                });
             });
         });
-        let graph_response = egui::CentralPanel::default()
+        egui::SidePanel::right("properties")
+            .resizable(true)
+            .default_width(250.0)
+            .show(ctx, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.heading("Right Panel");
+                });
+                egui::ScrollArea::vertical().show(ui, |ui| {
+                    ui.label("test");
+                });
+            });
+        egui::CentralPanel::default().frame(egui::Frame::default()).show(ctx, |ui| {
+            egui::Frame::canvas(ui.style())
+                .show(ui, |ui| {
+                    if let Some(viewport_3d) = &mut self.viewport_3d {
+                        viewport_3d.custom_painting(ui);
+                    }
+                    ui.allocate_space(ui.available_size());
+                });
+        });
+        let graph_response = egui::TopBottomPanel::bottom("bottom")
+            .resizable(true)
+            .default_height(300.0)
             .show(ctx, |ui| {
                 self.state
                     .draw_graph_editor(ui, AllDamascusNodeTemplates, &mut self.user_state)

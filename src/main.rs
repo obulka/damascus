@@ -12,12 +12,7 @@ fn main() {
         eframe::NativeOptions::default(),
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            #[cfg(feature = "persistence")]
-            {
-                Box::new(damascus::Damascus::new(cc))
-            }
-            #[cfg(not(feature = "persistence"))]
-            Box::new(damascus::Damascus::default())
+            Box::new(damascus::Damascus::new(cc))
         }),
     );
 }

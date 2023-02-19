@@ -6,6 +6,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 
+#[derive(Debug)]
 pub struct Viewport3d {
     angle: f32,
 }

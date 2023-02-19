@@ -7,9 +7,14 @@
 fn main() {
     use eframe::egui::Visuals;
 
+    let options = eframe::NativeOptions {
+        renderer: eframe::Renderer::Wgpu,
+        ..Default::default()
+    };
+
     eframe::run_native(
         "damascus",
-        eframe::NativeOptions::default(),
+        options,
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
             Box::new(damascus::Damascus::new(cc))

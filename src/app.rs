@@ -358,8 +358,13 @@ impl NodeDataTrait for DamascusNodeData {
 }
 
 type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
-type DamascusEditorState =
-    GraphEditorState<DamascusNodeData, DamascusDataType, DamascusValueType, DamascusNodeTemplate, DamascusGraphState>;
+type DamascusEditorState = GraphEditorState<
+    DamascusNodeData,
+    DamascusDataType,
+    DamascusValueType,
+    DamascusNodeTemplate,
+    DamascusGraphState,
+>;
 
 pub struct Damascus {
     // The `GraphEditorState` is the top-level object. You "register" all your
@@ -475,7 +480,9 @@ impl eframe::App for Damascus {
             // connection is created
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
-                    DamascusResponse::SetActiveNode(node) => self.user_state.active_node = Some(node),
+                    DamascusResponse::SetActiveNode(node) => {
+                        self.user_state.active_node = Some(node)
+                    }
                     DamascusResponse::ClearActiveNode => self.user_state.active_node = None,
                 }
             }
@@ -499,14 +506,15 @@ impl eframe::App for Damascus {
             }
         }
 
-        egui::CentralPanel::default().frame(egui::Frame::default()).show(ctx, |ui| {
-            egui::Frame::canvas(ui.style())
-                .show(ui, |ui| {
+        egui::CentralPanel::default()
+            .frame(egui::Frame::default())
+            .show(ctx, |ui| {
+                egui::Frame::canvas(ui.style()).show(ui, |ui| {
                     if let Some(viewport_3d) = &mut self.viewport_3d {
                         viewport_3d.custom_painting(ui);
                     }
                 });
-        });
+            });
     }
 }
 
@@ -529,7 +537,11 @@ pub fn evaluate_node(
         node_id: NodeId,
     }
     impl<'a> Evaluator<'a> {
-        fn new(graph: &'a DamascusGraph, outputs_cache: &'a mut OutputsCache, node_id: NodeId) -> Self {
+        fn new(
+            graph: &'a DamascusGraph,
+            outputs_cache: &'a mut OutputsCache,
+            node_id: NodeId,
+        ) -> Self {
             Self {
                 graph,
                 outputs_cache,
@@ -567,7 +579,11 @@ pub fn evaluate_node(
         fn input_scalar(&mut self, name: &str) -> anyhow::Result<f32> {
             self.evaluate_input(name)?.try_to_scalar()
         }
-        fn output_vector(&mut self, name: &str, value: egui::Vec2) -> anyhow::Result<DamascusValueType> {
+        fn output_vector(
+            &mut self,
+            name: &str,
+            value: egui::Vec2,
+        ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Vec2 { value })
         }
         fn output_scalar(&mut self, name: &str, value: f32) -> anyhow::Result<DamascusValueType> {

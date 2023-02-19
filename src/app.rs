@@ -460,15 +460,7 @@ impl eframe::App for Damascus {
                     ui.label("test");
                 });
             });
-        egui::CentralPanel::default().frame(egui::Frame::default()).show(ctx, |ui| {
-            egui::Frame::canvas(ui.style())
-                .show(ui, |ui| {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        viewport_3d.custom_painting(ui);
-                    }
-                    ui.allocate_space(ui.available_size());
-                });
-        });
+
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)
             .default_height(300.0)
@@ -506,6 +498,15 @@ impl eframe::App for Damascus {
                 self.user_state.active_node = None;
             }
         }
+
+        egui::CentralPanel::default().frame(egui::Frame::default()).show(ctx, |ui| {
+            egui::Frame::canvas(ui.style())
+                .show(ui, |ui| {
+                    if let Some(viewport_3d) = &mut self.viewport_3d {
+                        viewport_3d.custom_painting(ui);
+                    }
+                });
+        });
     }
 }
 

@@ -100,7 +100,7 @@ impl Viewport3d {
 impl Viewport3d {
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) =
-            ui.allocate_exact_size(egui::Vec2::splat(600.0), egui::Sense::drag());
+            ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         self.angle += response.drag_delta().x * 0.01;
 

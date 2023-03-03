@@ -17,7 +17,7 @@ fn main() {
         options,
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
-            Box::new(damascus::Damascus::new(cc))
+            Box::new(damascus_ui::Damascus::new(cc))
         }),
     );
 }

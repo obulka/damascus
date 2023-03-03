@@ -21,7 +21,7 @@ impl Viewport3d {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("damascus"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("./test.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("./shaders/test.wgsl").into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {

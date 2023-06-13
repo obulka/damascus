@@ -8,7 +8,7 @@ use eframe::{
 
 #[derive(Debug)]
 pub struct Viewport3d {
-    angle: f32,
+    pub angle: f32,
 }
 
 impl Viewport3d {
@@ -57,7 +57,10 @@ impl Viewport3d {
                 entry_point: "fs_main",
                 targets: &[Some(wgpu_render_state.target_format.into())],
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleStrip,
+                ..wgpu::PrimitiveState::default()
+            },
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
@@ -149,6 +152,6 @@ impl TriangleRenderResources {
         // Draw our triangle!
         rpass.set_pipeline(&self.pipeline);
         rpass.set_bind_group(0, &self.bind_group, &[]);
-        rpass.draw(0..3, 0..1);
+        rpass.draw(0..4, 0..1);
     }
 }

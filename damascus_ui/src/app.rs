@@ -490,17 +490,30 @@ impl eframe::App for Damascus {
 
         if let Some(node) = self.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
-                let text = match evaluate_node(&self.state.graph, node, &mut HashMap::new()) {
-                    Ok(value) => format!("The result is: {:?}", value),
-                    Err(err) => format!("Execution error: {}", err),
+                let angle = match evaluate_node(&self.state.graph, node, &mut HashMap::new()) {
+                    Ok(value) => value,
+                    Err(error) => {
+                        ctx.debug_painter().text(
+                            egui::pos2(10.0, 35.0),
+                            egui::Align2::LEFT_TOP,
+                            format!("Error: {}", error),
+                            TextStyle::Button.resolve(&ctx.style()),
+                            egui::Color32::RED,
+                        );
+
+                        DamascusValueType::Scalar { value: 0.0 }
+                    }
                 };
-                ctx.debug_painter().text(
-                    egui::pos2(10.0, 35.0),
-                    egui::Align2::LEFT_TOP,
-                    text,
-                    TextStyle::Button.resolve(&ctx.style()),
-                    egui::Color32::WHITE,
-                );
+                if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
+                    match angle {
+                        DamascusValueType::Vec2 { value } => {
+                            viewport_3d.angle = value.x;
+                        }
+                        DamascusValueType::Scalar { value } => {
+                            viewport_3d.angle = value;
+                        }
+                    }
+                }
             } else {
                 self.user_state.active_node = None;
             }

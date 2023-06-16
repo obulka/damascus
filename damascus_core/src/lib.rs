@@ -1,3 +1,6 @@
+mod geometry;
+mod materials;
+
 pub fn add(left: usize, right: usize) -> usize {
     left + right
 }

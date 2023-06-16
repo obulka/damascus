@@ -21,7 +21,7 @@ impl Viewport3d {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("damascus"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("./shaders/test.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(include_str!("./shaders/ray_march.wgsl").into()),
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -69,7 +69,8 @@ impl Viewport3d {
         let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("damascus"),
             contents: bytemuck::cast_slice(&[0.0_f32; 4]), // 16 bytes aligned!
-            // Mapping at creation (as done by the create_buffer_init utility) doesn't require us to to add the MAP_WRITE usage
+            // Mapping at creation (as done by the create_buffer_init utility)
+            // doesn't require us to to add the MAP_WRITE usage
             // (this *happens* to workaround this bug )
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });

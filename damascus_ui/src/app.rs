@@ -2,7 +2,8 @@ use std::{borrow::Cow, collections::HashMap};
 
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
-// use truck_platform::*;
+
+use damascus_core::*;
 
 use crate::viewport_3d::Viewport3d;
 
@@ -114,10 +115,10 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     }
 
     fn name(&self) -> Cow<'_, str> {
-        match self {
-            DamascusDataType::Scalar => Cow::Borrowed("scalar"),
-            DamascusDataType::Vec2 => Cow::Borrowed("2d vector"),
-        }
+        Cow::Borrowed(match self {
+            DamascusDataType::Scalar => "scalar",
+            DamascusDataType::Vec2 => "2d vector",
+        })
     }
 }
 

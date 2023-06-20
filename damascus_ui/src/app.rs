@@ -2,8 +2,9 @@ use std::{borrow::Cow, collections::HashMap};
 
 use eframe::egui::{self, DragValue, TextStyle};
 use egui_node_graph::*;
+use glam;
 
-use damascus_core::*;
+use damascus_core::{geometry, materials};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -23,8 +24,9 @@ pub struct DamascusNodeData {
 #[derive(PartialEq, Eq)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusDataType {
-    Scalar,
+    Float,
     Vec2,
+    Vec3,
 }
 
 /// In the graph, input parameters can optionally have a constant value. This
@@ -33,25 +35,35 @@ pub enum DamascusDataType {
 /// There will usually be a correspondence between DataTypes and ValueTypes. But
 /// this library makes no attempt to check this consistency. For instance, it is
 /// up to the user code in this example to make sure no parameter is created
-/// with a DataType of Scalar and a ValueType of Vec2.
+/// with a DataType of Float and a ValueType of Vec2.
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
-    Vec2 { value: egui::Vec2 },
-    Scalar { value: f32 },
+    Float { value: f32 },
+    Vec2 { value: glam::Vec2 },
+    Vec3 { value: glam::Vec3 },
 }
 
 impl Default for DamascusValueType {
     fn default() -> Self {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
-        Self::Scalar { value: 0.0 }
+        Self::Float { value: 0.0 }
     }
 }
 
 impl DamascusValueType {
-    /// Tries to downcast this value type to a vector
-    pub fn try_to_vec2(self) -> anyhow::Result<egui::Vec2> {
+    /// Tries to downcast this value type to a float
+    pub fn try_to_float(self) -> anyhow::Result<f32> {
+        if let DamascusValueType::Float { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to float", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a vector2
+    pub fn try_to_vec2(self) -> anyhow::Result<glam::Vec2> {
         if let DamascusValueType::Vec2 { value } = self {
             Ok(value)
         } else {
@@ -59,12 +71,12 @@ impl DamascusValueType {
         }
     }
 
-    /// Tries to downcast this value type to a scalar
-    pub fn try_to_scalar(self) -> anyhow::Result<f32> {
-        if let DamascusValueType::Scalar { value } = self {
+    /// Tries to downcast this value type to a vector3
+    pub fn try_to_vec3(self) -> anyhow::Result<glam::Vec3> {
+        if let DamascusValueType::Vec3 { value } = self {
             Ok(value)
         } else {
-            anyhow::bail!("Invalid cast from {:?} to scalar", self)
+            anyhow::bail!("Invalid cast from {:?} to vec3", self)
         }
     }
 }
@@ -75,13 +87,12 @@ impl DamascusValueType {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusNodeTemplate {
-    MakeVector,
-    MakeScalar,
-    AddScalar,
-    SubtractScalar,
-    VectorTimesScalar,
-    AddVector,
-    SubtractVector,
+    MakeFloat,
+    MakeVector2,
+    MakeVector3,
+    AddFloat,
+    AddVector2,
+    AddVector3,
 }
 
 /// The response type is used to encode side-effects produced when drawing a
@@ -109,15 +120,17 @@ pub struct DamascusGraphState {
 impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {
         match self {
-            DamascusDataType::Scalar => egui::Color32::from_rgb(38, 109, 211),
+            DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
+            DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
         }
     }
 
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusDataType::Scalar => "scalar",
+            DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
+            DamascusDataType::Vec3 => "3d vector",
         })
     }
 }
@@ -132,13 +145,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusNodeTemplate::MakeVector => "New vector",
-            DamascusNodeTemplate::MakeScalar => "New scalar",
-            DamascusNodeTemplate::AddScalar => "Scalar add",
-            DamascusNodeTemplate::SubtractScalar => "Scalar subtract",
-            DamascusNodeTemplate::AddVector => "Vector add",
-            DamascusNodeTemplate::SubtractVector => "Vector subtract",
-            DamascusNodeTemplate::VectorTimesScalar => "Vector times scalar",
+            DamascusNodeTemplate::MakeFloat => "New float",
+            DamascusNodeTemplate::MakeVector2 => "New vector2",
+            DamascusNodeTemplate::MakeVector3 => "New vector3",
+            DamascusNodeTemplate::AddFloat => "Float add",
+            DamascusNodeTemplate::AddVector2 => "Vector2 add",
+            DamascusNodeTemplate::AddVector3 => "Vector3 add",
         })
     }
 
@@ -163,86 +175,97 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
-        let input_scalar = |graph: &mut DamascusGraph, name: &str| {
+        let input_float = |graph: &mut DamascusGraph, name: &str| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Scalar,
-                DamascusValueType::Scalar { value: 0.0 },
+                DamascusDataType::Float,
+                DamascusValueType::Float { value: 0.0 },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        let input_vector = |graph: &mut DamascusGraph, name: &str| {
+        let input_vector2 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec2,
                 DamascusValueType::Vec2 {
-                    value: egui::vec2(0.0, 0.0),
+                    value: glam::Vec2::ZERO,
+                },
+                InputParamKind::ConnectionOrConstant,
+                true,
+            );
+        };
+        let input_vector3 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Vec3,
+                DamascusValueType::Vec3 {
+                    value: glam::Vec3::ZERO,
                 },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
 
-        let output_scalar = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Scalar);
+        let output_float = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Float);
         };
-        let output_vector = |graph: &mut DamascusGraph, name: &str| {
+        let output_vector2 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec2);
+        };
+        let output_vector3 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec3);
         };
 
         match self {
-            DamascusNodeTemplate::AddScalar => {
-                // The first input param doesn't use the closure so we can comment
+            DamascusNodeTemplate::MakeFloat => {
+                input_float(graph, "value");
+                output_float(graph, "out");
+            }
+            DamascusNodeTemplate::MakeVector2 => {
+                input_float(graph, "x");
+                input_float(graph, "y");
+                output_vector2(graph, "out");
+            }
+            DamascusNodeTemplate::MakeVector3 => {
+                input_float(graph, "x");
+                input_float(graph, "y");
+                input_float(graph, "z");
+                output_vector3(graph, "out");
+            }
+            DamascusNodeTemplate::AddFloat => {
+                // This input param doesn't use the closure so we can comment
                 // it in more detail.
                 graph.add_input_param(
                     node_id,
                     // This is the name of the parameter. Can be later used to
                     // retrieve the value. Parameter names should be unique.
                     "A".into(),
-                    // The data type for this input. In this case, a scalar
-                    DamascusDataType::Scalar,
+                    // The data type for this input. In this case, a float
+                    DamascusDataType::Float,
                     // The value type for this input. We store zero as default
-                    DamascusValueType::Scalar { value: 0.0 },
+                    DamascusValueType::Float { value: 0.0 },
                     // The input parameter kind. This allows defining whether a
                     // parameter accepts input connections and/or an inline
                     // widget to set its value.
                     InputParamKind::ConnectionOrConstant,
                     true,
                 );
-                input_scalar(graph, "B");
-                output_scalar(graph, "out");
+                input_float(graph, "B");
+                output_float(graph, "out");
             }
-            DamascusNodeTemplate::SubtractScalar => {
-                input_scalar(graph, "A");
-                input_scalar(graph, "B");
-                output_scalar(graph, "out");
+            DamascusNodeTemplate::AddVector2 => {
+                input_vector2(graph, "v1");
+                input_vector2(graph, "v2");
+                output_vector2(graph, "out");
             }
-            DamascusNodeTemplate::VectorTimesScalar => {
-                input_scalar(graph, "scalar");
-                input_vector(graph, "vector");
-                output_vector(graph, "out");
-            }
-            DamascusNodeTemplate::AddVector => {
-                input_vector(graph, "v1");
-                input_vector(graph, "v2");
-                output_vector(graph, "out");
-            }
-            DamascusNodeTemplate::SubtractVector => {
-                input_vector(graph, "v1");
-                input_vector(graph, "v2");
-                output_vector(graph, "out");
-            }
-            DamascusNodeTemplate::MakeVector => {
-                input_scalar(graph, "x");
-                input_scalar(graph, "y");
-                output_vector(graph, "out");
-            }
-            DamascusNodeTemplate::MakeScalar => {
-                input_scalar(graph, "value");
-                output_scalar(graph, "out");
+            DamascusNodeTemplate::AddVector3 => {
+                input_vector3(graph, "v1");
+                input_vector3(graph, "v2");
+                output_vector3(graph, "out");
             }
         }
     }
@@ -257,13 +280,12 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
         vec![
-            DamascusNodeTemplate::MakeScalar,
-            DamascusNodeTemplate::MakeVector,
-            DamascusNodeTemplate::AddScalar,
-            DamascusNodeTemplate::SubtractScalar,
-            DamascusNodeTemplate::AddVector,
-            DamascusNodeTemplate::SubtractVector,
-            DamascusNodeTemplate::VectorTimesScalar,
+            DamascusNodeTemplate::MakeFloat,
+            DamascusNodeTemplate::MakeVector2,
+            DamascusNodeTemplate::MakeVector3,
+            DamascusNodeTemplate::AddFloat,
+            DamascusNodeTemplate::AddVector2,
+            DamascusNodeTemplate::AddVector3,
         ]
     }
 }
@@ -283,6 +305,12 @@ impl WidgetValueTrait for DamascusValueType {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         match self {
+            DamascusValueType::Float { value } => {
+                ui.horizontal(|ui| {
+                    ui.label(param_name);
+                    ui.add(DragValue::new(value));
+                });
+            }
             DamascusValueType::Vec2 { value } => {
                 ui.label(param_name);
                 ui.horizontal(|ui| {
@@ -292,10 +320,15 @@ impl WidgetValueTrait for DamascusValueType {
                     ui.add(DragValue::new(&mut value.y));
                 });
             }
-            DamascusValueType::Scalar { value } => {
+            DamascusValueType::Vec3 { value } => {
+                ui.label(param_name);
                 ui.horizontal(|ui| {
-                    ui.label(param_name);
-                    ui.add(DragValue::new(value));
+                    ui.label("x");
+                    ui.add(DragValue::new(&mut value.x));
+                    ui.label("y");
+                    ui.add(DragValue::new(&mut value.y));
+                    ui.label("z");
+                    ui.add(DragValue::new(&mut value.z));
                 });
             }
         }
@@ -502,16 +535,19 @@ impl eframe::App for Damascus {
                             egui::Color32::RED,
                         );
 
-                        DamascusValueType::Scalar { value: 0.0 }
+                        DamascusValueType::Float { value: 0.0 }
                     }
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match angle {
+                        DamascusValueType::Float { value } => {
+                            viewport_3d.angle = value;
+                        }
                         DamascusValueType::Vec2 { value } => {
                             viewport_3d.angle = value.x;
                         }
-                        DamascusValueType::Scalar { value } => {
-                            viewport_3d.angle = value;
+                        DamascusValueType::Vec3 { value } => {
+                            viewport_3d.angle = value.x;
                         }
                     }
                 }
@@ -562,11 +598,13 @@ pub fn evaluate_node(
                 node_id,
             }
         }
+
         fn evaluate_input(&mut self, name: &str) -> anyhow::Result<DamascusValueType> {
             // Calling `evaluate_input` recursively evaluates other nodes in the
             // graph until the input value for a paramater has been computed.
             evaluate_input(self.graph, self.node_id, name, self.outputs_cache)
         }
+
         fn populate_output(
             &mut self,
             name: &str,
@@ -587,60 +625,72 @@ pub fn evaluate_node(
             // the graphs, you can come up with your own evaluation semantics!
             populate_output(self.graph, self.outputs_cache, self.node_id, name, value)
         }
-        fn input_vector(&mut self, name: &str) -> anyhow::Result<egui::Vec2> {
+
+        fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {
+            self.evaluate_input(name)?.try_to_float()
+        }
+
+        fn output_float(&mut self, name: &str, value: f32) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Float { value })
+        }
+
+        fn input_vector2(&mut self, name: &str) -> anyhow::Result<glam::Vec2> {
             self.evaluate_input(name)?.try_to_vec2()
         }
-        fn input_scalar(&mut self, name: &str) -> anyhow::Result<f32> {
-            self.evaluate_input(name)?.try_to_scalar()
-        }
-        fn output_vector(
+
+        fn output_vector2(
             &mut self,
             name: &str,
-            value: egui::Vec2,
+            value: glam::Vec2,
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Vec2 { value })
         }
-        fn output_scalar(&mut self, name: &str, value: f32) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Scalar { value })
+
+        fn input_vector3(&mut self, name: &str) -> anyhow::Result<glam::Vec3> {
+            self.evaluate_input(name)?.try_to_vec3()
+        }
+
+        fn output_vector3(
+            &mut self,
+            name: &str,
+            value: glam::Vec3,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Vec3 { value })
         }
     }
 
     let node = &graph[node_id];
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
     match node.user_data.template {
-        DamascusNodeTemplate::AddScalar => {
-            let a = evaluator.input_scalar("A")?;
-            let b = evaluator.input_scalar("B")?;
-            evaluator.output_scalar("out", a + b)
+        DamascusNodeTemplate::MakeFloat => {
+            let value = evaluator.input_float("value")?;
+            evaluator.output_float("out", value)
         }
-        DamascusNodeTemplate::SubtractScalar => {
-            let a = evaluator.input_scalar("A")?;
-            let b = evaluator.input_scalar("B")?;
-            evaluator.output_scalar("out", a - b)
+        DamascusNodeTemplate::MakeVector2 => {
+            let x = evaluator.input_float("x")?;
+            let y = evaluator.input_float("y")?;
+            evaluator.output_vector2("out", glam::Vec2{ x, y })
         }
-        DamascusNodeTemplate::VectorTimesScalar => {
-            let scalar = evaluator.input_scalar("scalar")?;
-            let vector = evaluator.input_vector("vector")?;
-            evaluator.output_vector("out", vector * scalar)
+        DamascusNodeTemplate::MakeVector3 => {
+            let x = evaluator.input_float("x")?;
+            let y = evaluator.input_float("y")?;
+            let z = evaluator.input_float("z")?;
+            evaluator.output_vector3("out", glam::Vec3{ x, y, z })
         }
-        DamascusNodeTemplate::AddVector => {
-            let v1 = evaluator.input_vector("v1")?;
-            let v2 = evaluator.input_vector("v2")?;
-            evaluator.output_vector("out", v1 + v2)
+        DamascusNodeTemplate::AddFloat => {
+            let a = evaluator.input_float("A")?;
+            let b = evaluator.input_float("B")?;
+            evaluator.output_float("out", a + b)
         }
-        DamascusNodeTemplate::SubtractVector => {
-            let v1 = evaluator.input_vector("v1")?;
-            let v2 = evaluator.input_vector("v2")?;
-            evaluator.output_vector("out", v1 - v2)
+        DamascusNodeTemplate::AddVector2 => {
+            let v1 = evaluator.input_vector2("v1")?;
+            let v2 = evaluator.input_vector2("v2")?;
+            evaluator.output_vector2("out", v1 + v2)
         }
-        DamascusNodeTemplate::MakeVector => {
-            let x = evaluator.input_scalar("x")?;
-            let y = evaluator.input_scalar("y")?;
-            evaluator.output_vector("out", egui::vec2(x, y))
-        }
-        DamascusNodeTemplate::MakeScalar => {
-            let value = evaluator.input_scalar("value")?;
-            evaluator.output_scalar("out", value)
+        DamascusNodeTemplate::AddVector3 => {
+            let v1 = evaluator.input_vector3("v1")?;
+            let v2 = evaluator.input_vector3("v2")?;
+            evaluator.output_vector3("out", v1 + v2)
         }
     }
 }

@@ -39,14 +39,13 @@ struct Material {
 // geometry/camera.wgsl
 
 struct Camera {
-    focal_length: f32,
-    horizontal_aperture: f32,
-    near_plane: f32,
-    far_plane: f32,
-    focal_distance: f32,
-    f_stops: f32,
-    world_matrix: mat4x4<f32>,
+    enable_depth_of_field: bool,
+    aperture: f32,
+    inverse_projection_matrix: mat4x4<f32>,
 }
+
+@group(1) @binding(0)
+var<uniform> render_camera: Camera;
 
 
 // geometry/geometry.wgsl

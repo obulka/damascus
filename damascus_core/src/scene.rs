@@ -2,9 +2,8 @@ use daggy::Dag;
 use glam::Vec3;
 use std::collections::HashMap;
 
-use crate::materials::Material;
 use crate::geometry::{camera::Camera, Primitive};
-
+use crate::materials::Material;
 
 #[derive(Default)]
 pub struct Scene {

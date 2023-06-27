@@ -12,10 +12,10 @@ pub struct Viewport3d {
 }
 
 impl Viewport3d {
-    pub fn new<'a>(cc: &'a eframe::CreationContext<'a>) -> Option<Self> {
+    pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
         // from `eframe::Frame` when you don't have a `CreationContext` available.
-        let wgpu_render_state = cc.wgpu_render_state.as_ref()?;
+        let wgpu_render_state = creation_context.wgpu_render_state.as_ref()?;
 
         let device = &wgpu_render_state.device;
 
@@ -44,7 +44,7 @@ impl Viewport3d {
             push_constant_ranges: &[],
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("damascus"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
@@ -92,7 +92,7 @@ impl Viewport3d {
             .write()
             .paint_callback_resources
             .insert(TriangleRenderResources {
-                pipeline,
+                render_pipeline,
                 bind_group,
                 uniform_buffer,
             });
@@ -138,7 +138,7 @@ impl Viewport3d {
 }
 
 struct TriangleRenderResources {
-    pipeline: wgpu::RenderPipeline,
+    render_pipeline: wgpu::RenderPipeline,
     bind_group: wgpu::BindGroup,
     uniform_buffer: wgpu::Buffer,
 }
@@ -149,10 +149,10 @@ impl TriangleRenderResources {
         queue.write_buffer(&self.uniform_buffer, 0, bytemuck::cast_slice(&[angle]));
     }
 
-    fn paint<'rpass>(&'rpass self, rpass: &mut wgpu::RenderPass<'rpass>) {
+    fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
         // Draw our triangle!
-        rpass.set_pipeline(&self.pipeline);
-        rpass.set_bind_group(0, &self.bind_group, &[]);
-        rpass.draw(0..4, 0..1);
+        render_pass.set_pipeline(&self.render_pipeline);
+        render_pass.set_bind_group(0, &self.bind_group, &[]);
+        render_pass.draw(0..4, 0..1);
     }
 }

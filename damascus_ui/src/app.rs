@@ -669,13 +669,13 @@ pub fn evaluate_node(
         DamascusNodeTemplate::MakeVector2 => {
             let x = evaluator.input_float("x")?;
             let y = evaluator.input_float("y")?;
-            evaluator.output_vector2("out", glam::Vec2{ x, y })
+            evaluator.output_vector2("out", glam::Vec2 { x, y })
         }
         DamascusNodeTemplate::MakeVector3 => {
             let x = evaluator.input_float("x")?;
             let y = evaluator.input_float("y")?;
             let z = evaluator.input_float("z")?;
-            evaluator.output_vector3("out", glam::Vec3{ x, y, z })
+            evaluator.output_vector3("out", glam::Vec3 { x, y, z })
         }
         DamascusNodeTemplate::AddFloat => {
             let a = evaluator.input_float("A")?;

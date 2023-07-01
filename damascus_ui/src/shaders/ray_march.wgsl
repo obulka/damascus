@@ -44,8 +44,8 @@ struct Camera {
     inverse_projection_matrix: mat4x4<f32>,
 }
 
-@group(1) @binding(0)
-var<uniform> render_camera: Camera;
+// @group(1) @binding(0)
+// var<uniform> render_camera: Camera;
 
 
 // geometry/geometry.wgsl

@@ -1,10 +1,24 @@
 use glam::{Mat4, Vec4};
 
-#[derive(Default)]
+#[derive(Clone, Copy, Debug)]
 pub struct Camera {
+    pub aspect_ratio: f32,
+    pub focal_length: f32,
+    pub horizontal_aperture: f32,
+    pub near_plane: f32,
+    pub far_plane: f32,
+    pub focal_distance: f32,
+    pub f_stop: f32,
+    pub world_matrix: Mat4,
     pub enable_depth_of_field: bool,
-    pub aperture: f32,
-    pub inverse_projection_matrix: Mat4,
+    _aperture: f32,
+    _inverse_projection_matrix: Mat4,
+}
+
+impl Default for Camera {
+    fn default() -> Self {
+        Self::new(1., 50., 1., 0.001, 10000., 10., 8., Mat4::IDENTITY, false)
+    }
 }
 
 impl Camera {
@@ -20,9 +34,17 @@ impl Camera {
         enable_depth_of_field: bool,
     ) -> Self {
         Self {
+            aspect_ratio: aspect_ratio,
+            focal_length: focal_length,
+            horizontal_aperture: horizontal_aperture,
+            near_plane: near_plane,
+            far_plane: far_plane,
+            focal_distance: focal_distance,
+            f_stop: f_stop,
+            world_matrix: world_matrix,
             enable_depth_of_field: enable_depth_of_field,
-            aperture: Self::aperture_from_f_stop(f_stop, focal_length),
-            inverse_projection_matrix: Self::projection_matrix(
+            _aperture: Self::aperture_from_f_stop(f_stop, focal_length),
+            _inverse_projection_matrix: Self::projection_matrix(
                 focal_length,
                 horizontal_aperture,
                 aspect_ratio,

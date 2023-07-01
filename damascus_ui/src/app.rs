@@ -27,6 +27,7 @@ pub enum DamascusDataType {
     Float,
     Vec2,
     Vec3,
+    Camera,
 }
 
 /// In the graph, input parameters can optionally have a constant value. This
@@ -42,6 +43,7 @@ pub enum DamascusValueType {
     Float { value: f32 },
     Vec2 { value: glam::Vec2 },
     Vec3 { value: glam::Vec3 },
+    Camera { value: geometry::camera::Camera },
 }
 
 impl Default for DamascusValueType {
@@ -79,6 +81,15 @@ impl DamascusValueType {
             anyhow::bail!("Invalid cast from {:?} to vec3", self)
         }
     }
+
+    /// Tries to downcast this value type to a vector3
+    pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
+        if let DamascusValueType::Camera { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to vec3", self)
+        }
+    }
 }
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -87,9 +98,13 @@ impl DamascusValueType {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusNodeTemplate {
+    // Base datatype creation
     MakeFloat,
     MakeVector2,
     MakeVector3,
+    MakeCamera,
+
+    // Data processors
     AddFloat,
     AddVector2,
     AddVector3,
@@ -123,6 +138,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
             DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
+            DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
         }
     }
 
@@ -131,6 +147,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
             DamascusDataType::Vec3 => "3d vector",
+            DamascusDataType::Camera => "camera",
         })
     }
 }
@@ -148,6 +165,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::MakeFloat => "New float",
             DamascusNodeTemplate::MakeVector2 => "New vector2",
             DamascusNodeTemplate::MakeVector3 => "New vector3",
+            DamascusNodeTemplate::MakeCamera => "New camera",
+
             DamascusNodeTemplate::AddFloat => "Float add",
             DamascusNodeTemplate::AddVector2 => "Vector2 add",
             DamascusNodeTemplate::AddVector3 => "Vector3 add",
@@ -209,6 +228,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
+        let input_camera = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Camera,
+                DamascusValueType::Camera {
+                    value: geometry::camera::Camera::default(),
+                },
+                InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
 
         let output_float = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Float);
@@ -218,6 +249,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_vector3 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec3);
+        };
+        let output_camera = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
         };
 
         match self {
@@ -236,6 +270,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "z");
                 output_vector3(graph, "out");
             }
+            DamascusNodeTemplate::MakeCamera => {
+                input_float(graph, "focal_length");
+                input_float(graph, "focal_distance");
+                input_float(graph, "f_stop");
+                input_float(graph, "horizontal_aperture");
+                input_float(graph, "near_plane");
+                input_float(graph, "far_plane");
+                // input_vector3(graph, "world_matrix"); // TODO: make mat4 type
+                // input_float(graph, "enable_depth_of_field"); // TODO: make bool type
+                output_camera(graph, "out");
+            }
+
             DamascusNodeTemplate::AddFloat => {
                 // This input param doesn't use the closure so we can comment
                 // it in more detail.
@@ -283,6 +329,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
             DamascusNodeTemplate::MakeFloat,
             DamascusNodeTemplate::MakeVector2,
             DamascusNodeTemplate::MakeVector3,
+            DamascusNodeTemplate::MakeCamera,
             DamascusNodeTemplate::AddFloat,
             DamascusNodeTemplate::AddVector2,
             DamascusNodeTemplate::AddVector3,
@@ -329,6 +376,25 @@ impl WidgetValueTrait for DamascusValueType {
                     ui.add(DragValue::new(&mut value.y));
                     ui.label("z");
                     ui.add(DragValue::new(&mut value.z));
+                });
+            }
+            DamascusValueType::Camera { value } => {
+                ui.label(param_name);
+                ui.horizontal(|ui| {
+                    ui.label("focal_length");
+                    ui.add(DragValue::new(&mut value.focal_length));
+                    ui.label("focal_distance");
+                    ui.add(DragValue::new(&mut value.focal_distance));
+                    ui.label("f_stop");
+                    ui.add(DragValue::new(&mut value.f_stop));
+                    ui.label("horizontal_aperture");
+                    ui.add(DragValue::new(&mut value.horizontal_aperture));
+                    ui.label("near_plane");
+                    ui.add(DragValue::new(&mut value.near_plane));
+                    ui.label("far_plane");
+                    ui.add(DragValue::new(&mut value.far_plane));
+                    ui.label("world_matrix"); // TODO add these
+                    ui.label("enable_depth_of_field");
                 });
             }
         }
@@ -549,6 +615,9 @@ impl eframe::App for Damascus {
                         DamascusValueType::Vec3 { value } => {
                             viewport_3d.angle = value.x;
                         }
+                        DamascusValueType::Camera { value } => {
+                            viewport_3d.angle = value.focal_length;
+                        }
                     }
                 }
             } else {
@@ -657,6 +726,18 @@ pub fn evaluate_node(
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Vec3 { value })
         }
+
+        fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
+            self.evaluate_input(name)?.try_to_camera()
+        }
+
+        fn output_camera(
+            &mut self,
+            name: &str,
+            value: geometry::camera::Camera,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Camera { value })
+        }
     }
 
     let node = &graph[node_id];
@@ -677,6 +758,31 @@ pub fn evaluate_node(
             let z = evaluator.input_float("z")?;
             evaluator.output_vector3("out", glam::Vec3 { x, y, z })
         }
+        DamascusNodeTemplate::MakeCamera => {
+            let focal_length = evaluator.input_float("focal_length")?;
+            let horizontal_aperture = evaluator.input_float("horizontal_aperture")?;
+            let near_plane = evaluator.input_float("near_plane")?;
+            let far_plane = evaluator.input_float("far_plane")?;
+            let focal_distance = evaluator.input_float("focal_distance")?;
+            let f_stop = evaluator.input_float("f_stop")?;
+            // let world_matrix = evaluator.input_vector3("world_matrix")?;
+            // let enable_depth_of_field = evaluator.input_float("enable_depth_of_field")?;
+            evaluator.output_camera(
+                "out",
+                geometry::camera::Camera::new(
+                    1., // TODO get aspect ratio from viewer
+                    focal_length,
+                    horizontal_aperture,
+                    near_plane,
+                    far_plane,
+                    focal_distance,
+                    f_stop,
+                    glam::Mat4::IDENTITY,
+                    false,
+                ),
+            )
+        }
+
         DamascusNodeTemplate::AddFloat => {
             let a = evaluator.input_float("A")?;
             let b = evaluator.input_float("B")?;

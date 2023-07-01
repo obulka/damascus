@@ -1,4 +1,14 @@
+use bytemuck;
 use glam::{Mat4, Vec4};
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+pub struct CameraUniform {
+    // enable_depth_of_field: u32,
+    // aperture: f32,
+    world_matrix: [[f32; 4]; 4],
+    inverse_projection_matrix: [[f32; 4]; 4],
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct Camera {
@@ -88,5 +98,14 @@ impl Camera {
                 0.,
             ),
         )
+    }
+
+    pub fn as_uniform(self) -> CameraUniform {
+        CameraUniform {
+            // enable_depth_of_field: self.enable_depth_of_field.into(),
+            // aperture: self._aperture,
+            world_matrix: self.world_matrix.to_cols_array_2d(),
+            inverse_projection_matrix: self._inverse_projection_matrix.to_cols_array_2d(),
+        }
     }
 }

@@ -616,7 +616,7 @@ impl eframe::App for Damascus {
                             viewport_3d.angle = value.x;
                         }
                         DamascusValueType::Camera { value } => {
-                            viewport_3d.angle = value.focal_length;
+                            viewport_3d.render_camera = value.as_uniform();
                         }
                     }
                 }

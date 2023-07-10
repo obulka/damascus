@@ -388,7 +388,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "horizontal_aperture", default_camera.horizontal_aperture);
                 input_float(graph, "near_plane", default_camera.near_plane);
                 input_float(graph, "far_plane", default_camera.far_plane);
-                // input_vector3(graph, "world_matrix"); // TODO: make mat4 type
+                input_matrix4(graph, "world_matrix", default_camera.world_matrix);
                 // input_float(graph, "enable_depth_of_field"); // TODO: make bool type
                 output_camera(graph, "out");
             }
@@ -463,107 +463,129 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
+        let make_float = |ui: &mut egui::Ui, value: &mut f32| {
+            ui.horizontal(|ui| {
+                ui.add(DragValue::new(value));
+            });
+        };
+        let make_vec2 = |ui: &mut egui::Ui, value: &mut glam::Vec2| {
+            ui.horizontal(|ui| {
+                ui.add(DragValue::new(&mut value.x));
+                ui.add(DragValue::new(&mut value.y));
+            });
+        };
+        let make_vec3 = |ui: &mut egui::Ui, value: &mut glam::Vec3| {
+            ui.horizontal(|ui| {
+                ui.add(DragValue::new(&mut value.x));
+                ui.add(DragValue::new(&mut value.y));
+                ui.add(DragValue::new(&mut value.z));
+            });
+        };
+        let make_vec4 = |ui: &mut egui::Ui, value: &mut glam::Vec4| {
+            ui.horizontal(|ui| {
+                ui.add(DragValue::new(&mut value.x));
+                ui.add(DragValue::new(&mut value.y));
+                ui.add(DragValue::new(&mut value.z));
+                ui.add(DragValue::new(&mut value.w));
+            });
+        };
+        let make_mat3 = |ui: &mut egui::Ui, value: &mut glam::Mat3| {
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.x_axis.x));
+                    ui.add(DragValue::new(&mut value.x_axis.y));
+                    ui.add(DragValue::new(&mut value.x_axis.z));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.y_axis.x));
+                    ui.add(DragValue::new(&mut value.y_axis.y));
+                    ui.add(DragValue::new(&mut value.y_axis.z));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.z_axis.x));
+                    ui.add(DragValue::new(&mut value.z_axis.y));
+                    ui.add(DragValue::new(&mut value.z_axis.z));
+                });
+            });
+        };
+        let make_mat4 = |ui: &mut egui::Ui, value: &mut glam::Mat4| {
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.x_axis.x));
+                    ui.add(DragValue::new(&mut value.x_axis.y));
+                    ui.add(DragValue::new(&mut value.x_axis.z));
+                    ui.add(DragValue::new(&mut value.x_axis.w));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.y_axis.x));
+                    ui.add(DragValue::new(&mut value.y_axis.y));
+                    ui.add(DragValue::new(&mut value.y_axis.z));
+                    ui.add(DragValue::new(&mut value.y_axis.w));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.z_axis.x));
+                    ui.add(DragValue::new(&mut value.z_axis.y));
+                    ui.add(DragValue::new(&mut value.z_axis.z));
+                    ui.add(DragValue::new(&mut value.z_axis.w));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(DragValue::new(&mut value.w_axis.x));
+                    ui.add(DragValue::new(&mut value.w_axis.y));
+                    ui.add(DragValue::new(&mut value.w_axis.z));
+                    ui.add(DragValue::new(&mut value.w_axis.w));
+                });
+            });
+        };
+
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         match self {
             DamascusValueType::Float { value } => {
                 ui.horizontal(|ui| {
                     ui.label(param_name);
-                    ui.add(DragValue::new(value));
+                    make_float(ui, value);
                 });
             }
             DamascusValueType::Vec2 { value } => {
                 ui.label(param_name);
-                ui.horizontal(|ui| {
-                    ui.label("x");
-                    ui.add(DragValue::new(&mut value.x));
-                    ui.label("y");
-                    ui.add(DragValue::new(&mut value.y));
-                });
+                make_vec2(ui, value);
             }
             DamascusValueType::Vec3 { value } => {
                 ui.label(param_name);
-                ui.horizontal(|ui| {
-                    ui.label("x");
-                    ui.add(DragValue::new(&mut value.x));
-                    ui.label("y");
-                    ui.add(DragValue::new(&mut value.y));
-                    ui.label("z");
-                    ui.add(DragValue::new(&mut value.z));
-                });
+                make_vec3(ui, value);
             }
             DamascusValueType::Vec4 { value } => {
                 ui.label(param_name);
-                ui.horizontal(|ui| {
-                    ui.label("x");
-                    ui.add(DragValue::new(&mut value.x));
-                    ui.label("y");
-                    ui.add(DragValue::new(&mut value.y));
-                    ui.label("z");
-                    ui.add(DragValue::new(&mut value.z));
-                    ui.label("w");
-                    ui.add(DragValue::new(&mut value.w));
-                });
+                make_vec4(ui, value);
             }
             DamascusValueType::Mat3 { value } => {
                 ui.label(param_name);
-                ui.horizontal(|ui| {
-                    ui.label("x_axis");
-                    ui.add(DragValue::new(&mut value.x_axis.x));
-                    ui.add(DragValue::new(&mut value.x_axis.y));
-                    ui.add(DragValue::new(&mut value.x_axis.z));
-                    ui.label("y_axis");
-                    ui.add(DragValue::new(&mut value.y_axis.x));
-                    ui.add(DragValue::new(&mut value.y_axis.y));
-                    ui.add(DragValue::new(&mut value.y_axis.z));
-                    ui.label("z_axis");
-                    ui.add(DragValue::new(&mut value.z_axis.x));
-                    ui.add(DragValue::new(&mut value.z_axis.y));
-                    ui.add(DragValue::new(&mut value.z_axis.z));
-                });
+                make_mat3(ui, value);
             }
             DamascusValueType::Mat4 { value } => {
                 ui.label(param_name);
                 ui.horizontal(|ui| {
-                    ui.label("x_axis");
-                    ui.add(DragValue::new(&mut value.x_axis.x));
-                    ui.add(DragValue::new(&mut value.x_axis.y));
-                    ui.add(DragValue::new(&mut value.x_axis.z));
-                    ui.add(DragValue::new(&mut value.x_axis.w));
-                    ui.label("y_axis");
-                    ui.add(DragValue::new(&mut value.y_axis.x));
-                    ui.add(DragValue::new(&mut value.y_axis.y));
-                    ui.add(DragValue::new(&mut value.y_axis.z));
-                    ui.add(DragValue::new(&mut value.y_axis.w));
-                    ui.label("z_axis");
-                    ui.add(DragValue::new(&mut value.z_axis.x));
-                    ui.add(DragValue::new(&mut value.z_axis.y));
-                    ui.add(DragValue::new(&mut value.z_axis.z));
-                    ui.add(DragValue::new(&mut value.z_axis.w));
-                    ui.label("w_axis");
-                    ui.add(DragValue::new(&mut value.w_axis.x));
-                    ui.add(DragValue::new(&mut value.w_axis.y));
-                    ui.add(DragValue::new(&mut value.w_axis.z));
-                    ui.add(DragValue::new(&mut value.w_axis.w));
+                    make_mat4(ui, value);
                 });
             }
             DamascusValueType::Camera { value } => {
                 ui.label(param_name);
                 ui.horizontal(|ui| {
                     ui.label("focal_length");
-                    ui.add(DragValue::new(&mut value.focal_length));
+                    make_float(ui, &mut value.focal_length);
                     ui.label("focal_distance");
-                    ui.add(DragValue::new(&mut value.focal_distance));
+                    make_float(ui, &mut value.focal_distance);
                     ui.label("f_stop");
-                    ui.add(DragValue::new(&mut value.f_stop));
+                    make_float(ui, &mut value.f_stop);
                     ui.label("horizontal_aperture");
-                    ui.add(DragValue::new(&mut value.horizontal_aperture));
+                    make_float(ui, &mut value.horizontal_aperture);
                     ui.label("near_plane");
-                    ui.add(DragValue::new(&mut value.near_plane));
+                    make_float(ui, &mut value.near_plane);
                     ui.label("far_plane");
-                    ui.add(DragValue::new(&mut value.far_plane));
-                    ui.label("world_matrix"); // TODO add these
-                    ui.label("enable_depth_of_field");
+                    make_float(ui, &mut value.far_plane);
+                    ui.label("world_matrix");
+                    make_mat4(ui, &mut value.world_matrix);
+                    ui.label("enable_depth_of_field"); // TODO add this
                 });
             }
         }
@@ -999,7 +1021,7 @@ pub fn evaluate_node(
             let far_plane = evaluator.input_float("far_plane")?;
             let focal_distance = evaluator.input_float("focal_distance")?;
             let f_stop = evaluator.input_float("f_stop")?;
-            // let world_matrix = evaluator.input_vector3("world_matrix")?;
+            let world_matrix = evaluator.input_matrix4("world_matrix")?;
             // let enable_depth_of_field = evaluator.input_float("enable_depth_of_field")?;
             evaluator.output_camera(
                 "out",
@@ -1011,7 +1033,7 @@ pub fn evaluate_node(
                     far_plane,
                     focal_distance,
                     f_stop,
-                    glam::Mat4::IDENTITY,
+                    world_matrix,
                     false,
                 ),
             )

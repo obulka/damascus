@@ -194,47 +194,47 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
-        let input_float = |graph: &mut DamascusGraph, name: &str| {
+        let input_float = |graph: &mut DamascusGraph, name: &str, default: f32| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Float,
-                DamascusValueType::Float { value: 0.0 },
+                DamascusValueType::Float { value: default },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        let input_vector2 = |graph: &mut DamascusGraph, name: &str| {
+        let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec2| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec2,
                 DamascusValueType::Vec2 {
-                    value: glam::Vec2::ZERO,
+                    value: default,
                 },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        let input_vector3 = |graph: &mut DamascusGraph, name: &str| {
+        let input_vector3 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec3,
                 DamascusValueType::Vec3 {
-                    value: glam::Vec3::ZERO,
+                    value: default,
                 },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        let input_camera = |graph: &mut DamascusGraph, name: &str| {
+        let input_camera = |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Camera,
                 DamascusValueType::Camera {
-                    value: geometry::camera::Camera::default(),
+                    value: default,
                 },
                 InputParamKind::ConnectionOnly,
                 true,
@@ -256,27 +256,28 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         match self {
             DamascusNodeTemplate::MakeFloat => {
-                input_float(graph, "value");
+                input_float(graph, "value", 0.0);
                 output_float(graph, "out");
             }
             DamascusNodeTemplate::MakeVector2 => {
-                input_float(graph, "x");
-                input_float(graph, "y");
+                input_float(graph, "x", 0.0);
+                input_float(graph, "y", 0.0);
                 output_vector2(graph, "out");
             }
             DamascusNodeTemplate::MakeVector3 => {
-                input_float(graph, "x");
-                input_float(graph, "y");
-                input_float(graph, "z");
+                input_float(graph, "x", 0.0);
+                input_float(graph, "y", 0.0);
+                input_float(graph, "z", 0.0);
                 output_vector3(graph, "out");
             }
             DamascusNodeTemplate::MakeCamera => {
-                input_float(graph, "focal_length");
-                input_float(graph, "focal_distance");
-                input_float(graph, "f_stop");
-                input_float(graph, "horizontal_aperture");
-                input_float(graph, "near_plane");
-                input_float(graph, "far_plane");
+                let default_camera = geometry::camera::Camera::default();
+                input_float(graph, "focal_length", default_camera.focal_length);
+                input_float(graph, "focal_distance", default_camera.focal_distance);
+                input_float(graph, "f_stop", default_camera.f_stop);
+                input_float(graph, "horizontal_aperture", default_camera.horizontal_aperture);
+                input_float(graph, "near_plane", default_camera.near_plane);
+                input_float(graph, "far_plane", default_camera.far_plane);
                 // input_vector3(graph, "world_matrix"); // TODO: make mat4 type
                 // input_float(graph, "enable_depth_of_field"); // TODO: make bool type
                 output_camera(graph, "out");
@@ -300,17 +301,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     InputParamKind::ConnectionOrConstant,
                     true,
                 );
-                input_float(graph, "B");
+                input_float(graph, "B", 0.0);
                 output_float(graph, "out");
             }
             DamascusNodeTemplate::AddVector2 => {
-                input_vector2(graph, "v1");
-                input_vector2(graph, "v2");
+                input_vector2(graph, "v1", glam::Vec2::ZERO);
+                input_vector2(graph, "v2", glam::Vec2::ZERO);
                 output_vector2(graph, "out");
             }
             DamascusNodeTemplate::AddVector3 => {
-                input_vector3(graph, "v1");
-                input_vector3(graph, "v2");
+                input_vector3(graph, "v1", glam::Vec3::ZERO);
+                input_vector3(graph, "v2", glam::Vec3::ZERO);
                 output_vector3(graph, "out");
             }
         }

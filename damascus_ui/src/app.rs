@@ -27,6 +27,9 @@ pub enum DamascusDataType {
     Float,
     Vec2,
     Vec3,
+    Vec4,
+    Mat3,
+    Mat4,
     Camera,
 }
 
@@ -43,6 +46,9 @@ pub enum DamascusValueType {
     Float { value: f32 },
     Vec2 { value: glam::Vec2 },
     Vec3 { value: glam::Vec3 },
+    Vec4 { value: glam::Vec4 },
+    Mat3 { value: glam::Mat3 },
+    Mat4 { value: glam::Mat4 },
     Camera { value: geometry::camera::Camera },
 }
 
@@ -69,7 +75,7 @@ impl DamascusValueType {
         if let DamascusValueType::Vec2 { value } = self {
             Ok(value)
         } else {
-            anyhow::bail!("Invalid cast from {:?} to vec2", self)
+            anyhow::bail!("Invalid cast from {:?} to Vec2", self)
         }
     }
 
@@ -78,16 +84,43 @@ impl DamascusValueType {
         if let DamascusValueType::Vec3 { value } = self {
             Ok(value)
         } else {
-            anyhow::bail!("Invalid cast from {:?} to vec3", self)
+            anyhow::bail!("Invalid cast from {:?} to Vec3", self)
         }
     }
 
-    /// Tries to downcast this value type to a vector3
+    /// Tries to downcast this value type to a vector4
+    pub fn try_to_vec4(self) -> anyhow::Result<glam::Vec4> {
+        if let DamascusValueType::Vec4 { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Vec4", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a mat3
+    pub fn try_to_mat3(self) -> anyhow::Result<glam::Mat3> {
+        if let DamascusValueType::Mat3 { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Mat3", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a mat4
+    pub fn try_to_mat4(self) -> anyhow::Result<glam::Mat4> {
+        if let DamascusValueType::Mat4 { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Mat4", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a camera
     pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
         if let DamascusValueType::Camera { value } = self {
             Ok(value)
         } else {
-            anyhow::bail!("Invalid cast from {:?} to vec3", self)
+            anyhow::bail!("Invalid cast from {:?} to Camera", self)
         }
     }
 }
@@ -102,6 +135,9 @@ pub enum DamascusNodeTemplate {
     MakeFloat,
     MakeVector2,
     MakeVector3,
+    MakeVector4,
+    MakeMatrix3,
+    MakeMatrix4,
     MakeCamera,
 
     // Data processors
@@ -138,6 +174,9 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
             DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
+            DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
+            DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
+            DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
         }
     }
@@ -147,6 +186,9 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
             DamascusDataType::Vec3 => "3d vector",
+            DamascusDataType::Vec4 => "4d vector",
+            DamascusDataType::Mat3 => "3x3 matrix",
+            DamascusDataType::Mat4 => "4x4 matrix",
             DamascusDataType::Camera => "camera",
         })
     }
@@ -165,6 +207,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::MakeFloat => "New float",
             DamascusNodeTemplate::MakeVector2 => "New vector2",
             DamascusNodeTemplate::MakeVector3 => "New vector3",
+            DamascusNodeTemplate::MakeVector4 => "New vector4",
+            DamascusNodeTemplate::MakeMatrix3 => "New matrix3",
+            DamascusNodeTemplate::MakeMatrix4 => "New matrix4",
             DamascusNodeTemplate::MakeCamera => "New camera",
 
             DamascusNodeTemplate::AddFloat => "Float add",
@@ -228,6 +273,42 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
+        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec4| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Vec4,
+                DamascusValueType::Vec4 {
+                    value: default,
+                },
+                InputParamKind::ConnectionOrConstant,
+                true,
+            );
+        };
+        let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: glam::Mat3| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Mat3,
+                DamascusValueType::Mat3 {
+                    value: default,
+                },
+                InputParamKind::ConnectionOrConstant,
+                true,
+            );
+        };
+        let input_matrix4 = |graph: &mut DamascusGraph, name: &str, default: glam::Mat4| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Mat4,
+                DamascusValueType::Mat4 {
+                    value: default,
+                },
+                InputParamKind::ConnectionOrConstant,
+                true,
+            );
+        };
         let input_camera = |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
             graph.add_input_param(
                 node_id,
@@ -250,6 +331,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         let output_vector3 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec3);
         };
+        let output_vector4 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec4);
+        };
+        let output_matrix3 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat3);
+        };
+        let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
+        };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
         };
@@ -269,6 +359,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "y", 0.0);
                 input_float(graph, "z", 0.0);
                 output_vector3(graph, "out");
+            }
+            DamascusNodeTemplate::MakeVector4 => {
+                input_float(graph, "x", 0.0);
+                input_float(graph, "y", 0.0);
+                input_float(graph, "z", 0.0);
+                input_float(graph, "w", 0.0);
+                output_vector4(graph, "out");
+            }
+            DamascusNodeTemplate::MakeMatrix3 => {
+                input_vector3(graph, "x_axis", glam::Vec3::X);
+                input_vector3(graph, "y_axis", glam::Vec3::Y);
+                input_vector3(graph, "z_axis", glam::Vec3::Z);
+                output_matrix3(graph, "out");
+            }
+            DamascusNodeTemplate::MakeMatrix4 => {
+                input_vector4(graph, "x_axis", glam::Vec4::X);
+                input_vector4(graph, "y_axis", glam::Vec4::Y);
+                input_vector4(graph, "z_axis", glam::Vec4::Z);
+                input_vector4(graph, "w_axis", glam::Vec4::W);
+                output_matrix4(graph, "out");
             }
             DamascusNodeTemplate::MakeCamera => {
                 let default_camera = geometry::camera::Camera::default();
@@ -330,6 +440,9 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
             DamascusNodeTemplate::MakeFloat,
             DamascusNodeTemplate::MakeVector2,
             DamascusNodeTemplate::MakeVector3,
+            DamascusNodeTemplate::MakeVector4,
+            DamascusNodeTemplate::MakeMatrix3,
+            DamascusNodeTemplate::MakeMatrix4,
             DamascusNodeTemplate::MakeCamera,
             DamascusNodeTemplate::AddFloat,
             DamascusNodeTemplate::AddVector2,
@@ -377,6 +490,61 @@ impl WidgetValueTrait for DamascusValueType {
                     ui.add(DragValue::new(&mut value.y));
                     ui.label("z");
                     ui.add(DragValue::new(&mut value.z));
+                });
+            }
+            DamascusValueType::Vec4 { value } => {
+                ui.label(param_name);
+                ui.horizontal(|ui| {
+                    ui.label("x");
+                    ui.add(DragValue::new(&mut value.x));
+                    ui.label("y");
+                    ui.add(DragValue::new(&mut value.y));
+                    ui.label("z");
+                    ui.add(DragValue::new(&mut value.z));
+                    ui.label("w");
+                    ui.add(DragValue::new(&mut value.w));
+                });
+            }
+            DamascusValueType::Mat3 { value } => {
+                ui.label(param_name);
+                ui.horizontal(|ui| {
+                    ui.label("x_axis");
+                    ui.add(DragValue::new(&mut value.x_axis.x));
+                    ui.add(DragValue::new(&mut value.x_axis.y));
+                    ui.add(DragValue::new(&mut value.x_axis.z));
+                    ui.label("y_axis");
+                    ui.add(DragValue::new(&mut value.y_axis.x));
+                    ui.add(DragValue::new(&mut value.y_axis.y));
+                    ui.add(DragValue::new(&mut value.y_axis.z));
+                    ui.label("z_axis");
+                    ui.add(DragValue::new(&mut value.z_axis.x));
+                    ui.add(DragValue::new(&mut value.z_axis.y));
+                    ui.add(DragValue::new(&mut value.z_axis.z));
+                });
+            }
+            DamascusValueType::Mat4 { value } => {
+                ui.label(param_name);
+                ui.horizontal(|ui| {
+                    ui.label("x_axis");
+                    ui.add(DragValue::new(&mut value.x_axis.x));
+                    ui.add(DragValue::new(&mut value.x_axis.y));
+                    ui.add(DragValue::new(&mut value.x_axis.z));
+                    ui.add(DragValue::new(&mut value.x_axis.w));
+                    ui.label("y_axis");
+                    ui.add(DragValue::new(&mut value.y_axis.x));
+                    ui.add(DragValue::new(&mut value.y_axis.y));
+                    ui.add(DragValue::new(&mut value.y_axis.z));
+                    ui.add(DragValue::new(&mut value.y_axis.w));
+                    ui.label("z_axis");
+                    ui.add(DragValue::new(&mut value.z_axis.x));
+                    ui.add(DragValue::new(&mut value.z_axis.y));
+                    ui.add(DragValue::new(&mut value.z_axis.z));
+                    ui.add(DragValue::new(&mut value.z_axis.w));
+                    ui.label("w_axis");
+                    ui.add(DragValue::new(&mut value.w_axis.x));
+                    ui.add(DragValue::new(&mut value.w_axis.y));
+                    ui.add(DragValue::new(&mut value.w_axis.z));
+                    ui.add(DragValue::new(&mut value.w_axis.w));
                 });
             }
             DamascusValueType::Camera { value } => {
@@ -616,6 +784,15 @@ impl eframe::App for Damascus {
                         DamascusValueType::Vec3 { value } => {
                             viewport_3d.angle = value.x;
                         }
+                        DamascusValueType::Vec4 { value } => {
+                            viewport_3d.angle = value.x;
+                        }
+                        DamascusValueType::Mat3 { value } => {
+                            viewport_3d.angle = value.x_axis.x;
+                        }
+                        DamascusValueType::Mat4 { value } => {
+                            viewport_3d.angle = value.x_axis.x;
+                        }
                         DamascusValueType::Camera { value } => {
                             viewport_3d.render_camera = value.as_uniform();
                         }
@@ -728,6 +905,42 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Vec3 { value })
         }
 
+        fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
+            self.evaluate_input(name)?.try_to_vec4()
+        }
+
+        fn output_vector4(
+            &mut self,
+            name: &str,
+            value: glam::Vec4,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Vec4 { value })
+        }
+
+        fn input_matrix3(&mut self, name: &str) -> anyhow::Result<glam::Mat3> {
+            self.evaluate_input(name)?.try_to_mat3()
+        }
+
+        fn output_matrix3(
+            &mut self,
+            name: &str,
+            value: glam::Mat3,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Mat3 { value })
+        }
+
+        fn input_matrix4(&mut self, name: &str) -> anyhow::Result<glam::Mat4> {
+            self.evaluate_input(name)?.try_to_mat4()
+        }
+
+        fn output_matrix4(
+            &mut self,
+            name: &str,
+            value: glam::Mat4,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Mat4 { value })
+        }
+
         fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
             self.evaluate_input(name)?.try_to_camera()
         }
@@ -758,6 +971,26 @@ pub fn evaluate_node(
             let y = evaluator.input_float("y")?;
             let z = evaluator.input_float("z")?;
             evaluator.output_vector3("out", glam::Vec3 { x, y, z })
+        }
+        DamascusNodeTemplate::MakeVector4 => {
+            let x = evaluator.input_float("x")?;
+            let y = evaluator.input_float("y")?;
+            let z = evaluator.input_float("z")?;
+            let w = evaluator.input_float("w")?;
+            evaluator.output_vector4("out", glam::Vec4::new(x, y, z, w))
+        }
+        DamascusNodeTemplate::MakeMatrix3 => {
+            let x_axis = evaluator.input_vector3("x_axis")?;
+            let y_axis = evaluator.input_vector3("y_axis")?;
+            let z_axis = evaluator.input_vector3("z_axis")?;
+            evaluator.output_matrix3("out", glam::Mat3 { x_axis, y_axis, z_axis })
+        }
+        DamascusNodeTemplate::MakeMatrix4 => {
+            let x_axis = evaluator.input_vector4("x_axis")?;
+            let y_axis = evaluator.input_vector4("y_axis")?;
+            let z_axis = evaluator.input_vector4("z_axis")?;
+            let w_axis = evaluator.input_vector4("w_axis")?;
+            evaluator.output_matrix4("out", glam::Mat4 { x_axis, y_axis, z_axis, w_axis })
         }
         DamascusNodeTemplate::MakeCamera => {
             let focal_length = evaluator.input_float("focal_length")?;

@@ -25,6 +25,7 @@ pub struct DamascusNodeData {
 #[derive(PartialEq, Eq)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusDataType {
+    // Base types
     Bool,
     Integer,
     UnsignedInteger,
@@ -34,6 +35,8 @@ pub enum DamascusDataType {
     Vec4,
     Mat3,
     Mat4,
+
+    // Composite types
     Camera,
 }
 
@@ -47,6 +50,7 @@ pub enum DamascusDataType {
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
+    // Base types
     Bool { value: bool },
     Integer { value: i32 },
     UnsignedInteger { value: u32 },
@@ -56,6 +60,8 @@ pub enum DamascusValueType {
     Vec4 { value: glam::Vec4 },
     Mat3 { value: glam::Mat3 },
     Mat4 { value: glam::Mat4 },
+
+    // Composite types
     Camera { value: geometry::camera::Camera },
 }
 
@@ -165,10 +171,11 @@ impl DamascusValueType {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusNodeTemplate {
-    // Base datatype creation
-    MakeCamera,
+    // Data creation
+    Axis,
+    Camera,
 
-    // Data processors
+    // Data processing
 }
 
 /// The response type is used to encode side-effects produced when drawing a
@@ -204,7 +211,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             // DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
             // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
             // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
-            // DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
+            DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             _ => egui::Color32::WHITE,
         }
@@ -236,7 +243,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusNodeTemplate::MakeCamera => "camera",
+            DamascusNodeTemplate::Axis => "axis",
+            DamascusNodeTemplate::Camera => "camera",
         })
     }
 
@@ -357,7 +365,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Mat4 {
                     value: default,
                 },
-                InputParamKind::ConstantOnly,
+                InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
@@ -374,15 +382,22 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             );
         };
 
-        // let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
-        //     graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
-        // };
+        let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
+        };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
         };
 
         match self {
-            DamascusNodeTemplate::MakeCamera => {
+            DamascusNodeTemplate::Axis => {
+                input_vector3(graph, "translate", glam::Vec3::ZERO);
+                input_vector3(graph, "rotate", glam::Vec3::ZERO);
+                input_vector3(graph, "scale", glam::Vec3::ONE);
+                // input_vector3(graph, "skew", default_camera.f_stop);
+                output_matrix4(graph, "out");
+            }
+            DamascusNodeTemplate::Camera => {
                 let default_camera = geometry::camera::Camera::default();
                 input_float(graph, "focal_length", default_camera.focal_length);
                 input_float(graph, "focal_distance", default_camera.focal_distance);
@@ -407,7 +422,8 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
         vec![
-            DamascusNodeTemplate::MakeCamera,
+            DamascusNodeTemplate::Axis,
+            DamascusNodeTemplate::Camera,
         ]
     }
 }
@@ -968,14 +984,16 @@ pub fn evaluate_node(
     let node = &graph[node_id];
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
     match node.user_data.template {
-        // DamascusNodeTemplate::MakeMatrix4 => {
-        //     let x_axis = evaluator.input_vector4("x_axis")?;
-        //     let y_axis = evaluator.input_vector4("y_axis")?;
-        //     let z_axis = evaluator.input_vector4("z_axis")?;
-        //     let w_axis = evaluator.input_vector4("w_axis")?;
-        //     evaluator.output_matrix4("out", glam::Mat4 { x_axis, y_axis, z_axis, w_axis })
-        // }
-        DamascusNodeTemplate::MakeCamera => {
+        DamascusNodeTemplate::Axis => {
+            let translate = evaluator.input_vector3("translate")?;
+            let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.0;
+            let scale = evaluator.input_vector3("scale")?;
+
+            let quaternion = glam::Quat::from_euler(glam::EulerRot::ZXY, rotate.x, rotate.y, rotate.z);
+
+            evaluator.output_matrix4("out", glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate))
+        }
+        DamascusNodeTemplate::Camera => {
             let focal_length = evaluator.input_float("focal_length")?;
             let horizontal_aperture = evaluator.input_float("horizontal_aperture")?;
             let near_plane = evaluator.input_float("near_plane")?;

@@ -1,6 +1,7 @@
+use core::ops::RangeInclusive;
 use std::{borrow::Cow, collections::HashMap};
 
-use eframe::egui::{self, Checkbox, DragValue, TextStyle};
+use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 
@@ -388,10 +389,10 @@ impl WidgetValueTrait for DamascusValueType {
                 ui.add(Checkbox::new(value, ""));
             });
         };
-        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut f32| {
+        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(DragValue::new(value));
+                ui.add(Slider::new(value, range));
             });
         };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
@@ -475,7 +476,7 @@ impl WidgetValueTrait for DamascusValueType {
                 create_bool_ui(ui, param_name, value);
             }
             DamascusValueType::Float { value } => {
-                create_float_ui(ui, param_name, value);
+                create_float_ui(ui, param_name, value, 0.0..=100.0);
             }
             DamascusValueType::Vec2 { value } => {
                 create_vec2_ui(ui, param_name, value);
@@ -497,12 +498,12 @@ impl WidgetValueTrait for DamascusValueType {
             DamascusValueType::Camera { value } => {
                 ui.label(param_name);
                 ui.horizontal(|ui| {
-                    create_float_ui(ui, "focal_length", &mut value.focal_length);
-                    create_float_ui(ui, "focal_distance", &mut value.focal_distance);
-                    create_float_ui(ui, "f_stop", &mut value.f_stop);
-                    create_float_ui(ui, "horizontal_aperture", &mut value.horizontal_aperture);
-                    create_float_ui(ui, "near_plane", &mut value.near_plane);
-                    create_float_ui(ui, "far_plane", &mut value.far_plane);
+                    create_float_ui(ui, "focal_length", &mut value.focal_length, 5.0..=100.0);
+                    create_float_ui(ui, "focal_distance", &mut value.focal_distance, 0.1..=10.0);
+                    create_float_ui(ui, "f_stop", &mut value.f_stop, 0.1..=30.0);
+                    create_float_ui(ui, "horizontal_aperture", &mut value.horizontal_aperture, 0.1..=50.0);
+                    create_float_ui(ui, "near_plane", &mut value.near_plane, 0.1..=10.0);
+                    create_float_ui(ui, "far_plane", &mut value.far_plane, 11.0..=10000.0);
                     create_mat4_ui(ui, "world_matrix", &mut value.world_matrix);
                     create_bool_ui(ui, "enable_depth_of_field", &mut value.enable_depth_of_field )
                 });

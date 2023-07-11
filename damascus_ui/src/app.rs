@@ -26,12 +26,8 @@ pub struct DamascusNodeData {
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusDataType {
     Bool,
-    // Integer,
-    // IVec2,
-    // IVec3,
-    // IVec4,
-    // IMat3,
-    // IMat4,
+    Integer,
+    UnsignedInteger,
     Float,
     Vec2,
     Vec3,
@@ -52,6 +48,8 @@ pub enum DamascusDataType {
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
     Bool { value: bool },
+    Integer { value: i32 },
+    UnsignedInteger { value: u32 },
     Float { value: f32 },
     Vec2 { value: glam::Vec2 },
     Vec3 { value: glam::Vec3 },
@@ -70,7 +68,25 @@ impl Default for DamascusValueType {
 }
 
 impl DamascusValueType {
-    /// Tries to downcast this value type to a float
+    /// Tries to downcast this value type to an int
+    pub fn try_to_int(self) -> anyhow::Result<i32> {
+        if let DamascusValueType::Integer { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to int", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a uint
+    pub fn try_to_uint(self) -> anyhow::Result<u32> {
+        if let DamascusValueType::UnsignedInteger { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to uint", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a bool
     pub fn try_to_bool(self) -> anyhow::Result<bool> {
         if let DamascusValueType::Bool { value } = self {
             Ok(value)
@@ -180,20 +196,25 @@ pub struct DamascusGraphState {
 impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {
         match self {
-            DamascusDataType::Bool => egui::Color32::from_rgb(255, 102, 0),
-            DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
-            DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
-            DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
-            DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
-            DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
-            DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
+            // DamascusDataType::Bool => egui::Color32::from_rgb(255, 102, 0),
+            // DamascusDataType::Integer => egui::Color32::from_rgb(255, 102, 0),
+            // DamascusDataType::UnsignedInteger => egui::Color32::from_rgb(255, 102, 0),
+            // DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
+            // DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
+            // DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
+            // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
+            // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
+            // DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
+            _ => egui::Color32::WHITE,
         }
     }
 
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
             DamascusDataType::Bool => "boolean",
+            DamascusDataType::Integer => "integer",
+            DamascusDataType::UnsignedInteger => "unsigned integer",
             DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
             DamascusDataType::Vec3 => "3d vector",
@@ -246,6 +267,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 name.to_string(),
                 DamascusDataType::Bool,
                 DamascusValueType::Bool { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_int = |graph: &mut DamascusGraph, name: &str, default: i32| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Integer,
+                DamascusValueType::Integer { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_uint = |graph: &mut DamascusGraph, name: &str, default: u32| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::UnsignedInteger,
+                DamascusValueType::UnsignedInteger { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -333,9 +374,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             );
         };
 
-        let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
-        };
+        // let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
+        //     graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
+        // };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
         };
@@ -387,6 +428,18 @@ impl WidgetValueTrait for DamascusValueType {
             ui.horizontal(|ui| {
                 ui.label(label);
                 ui.add(Checkbox::new(value, ""));
+            });
+        };
+        let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(Slider::new(value, range));
+            });
+        };
+        let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut u32, range: RangeInclusive<u32>| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(Slider::new(value, range));
             });
         };
         let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
@@ -474,6 +527,12 @@ impl WidgetValueTrait for DamascusValueType {
         match self {
             DamascusValueType::Bool { value } => {
                 create_bool_ui(ui, param_name, value);
+            }
+            DamascusValueType::Integer { value } => {
+                create_int_ui(ui, param_name, value, -50..=50);
+            }
+            DamascusValueType::UnsignedInteger { value } => {
+                create_uint_ui(ui, param_name, value, 0..=100);
             }
             DamascusValueType::Float { value } => {
                 create_float_ui(ui, param_name, value, 0.0..=100.0);
@@ -807,6 +866,22 @@ pub fn evaluate_node(
 
         fn output_bool(&mut self, name: &str, value: bool) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Bool { value })
+        }
+
+        fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
+            self.evaluate_input(name)?.try_to_int()
+        }
+
+        fn output_int(&mut self, name: &str, value: i32) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Integer { value })
+        }
+
+        fn output_uint(&mut self, name: &str, value: u32) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::UnsignedInteger { value })
+        }
+
+        fn input_uint(&mut self, name: &str) -> anyhow::Result<u32> {
+            self.evaluate_input(name)?.try_to_uint()
         }
 
         fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {

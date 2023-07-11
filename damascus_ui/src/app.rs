@@ -1,6 +1,6 @@
 use std::{borrow::Cow, collections::HashMap};
 
-use eframe::egui::{self, DragValue, TextStyle};
+use eframe::egui::{self, Checkbox, DragValue, TextStyle};
 use egui_node_graph::*;
 use glam;
 
@@ -24,6 +24,13 @@ pub struct DamascusNodeData {
 #[derive(PartialEq, Eq)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusDataType {
+    Bool,
+    // Integer,
+    // IVec2,
+    // IVec3,
+    // IVec4,
+    // IMat3,
+    // IMat4,
     Float,
     Vec2,
     Vec3,
@@ -43,6 +50,7 @@ pub enum DamascusDataType {
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
+    Bool { value: bool },
     Float { value: f32 },
     Vec2 { value: glam::Vec2 },
     Vec3 { value: glam::Vec3 },
@@ -61,6 +69,15 @@ impl Default for DamascusValueType {
 }
 
 impl DamascusValueType {
+    /// Tries to downcast this value type to a float
+    pub fn try_to_bool(self) -> anyhow::Result<bool> {
+        if let DamascusValueType::Bool { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to bool", self)
+        }
+    }
+
     /// Tries to downcast this value type to a float
     pub fn try_to_float(self) -> anyhow::Result<f32> {
         if let DamascusValueType::Float { value } = self {
@@ -132,18 +149,9 @@ impl DamascusValueType {
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusNodeTemplate {
     // Base datatype creation
-    MakeFloat,
-    MakeVector2,
-    MakeVector3,
-    MakeVector4,
-    MakeMatrix3,
-    MakeMatrix4,
     MakeCamera,
 
     // Data processors
-    AddFloat,
-    AddVector2,
-    AddVector3,
 }
 
 /// The response type is used to encode side-effects produced when drawing a
@@ -171,6 +179,7 @@ pub struct DamascusGraphState {
 impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {
         match self {
+            DamascusDataType::Bool => egui::Color32::from_rgb(255, 102, 0),
             DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
             DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
@@ -183,6 +192,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
 
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
+            DamascusDataType::Bool => "boolean",
             DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
             DamascusDataType::Vec3 => "3d vector",
@@ -204,17 +214,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusNodeTemplate::MakeFloat => "New float",
-            DamascusNodeTemplate::MakeVector2 => "New vector2",
-            DamascusNodeTemplate::MakeVector3 => "New vector3",
-            DamascusNodeTemplate::MakeVector4 => "New vector4",
-            DamascusNodeTemplate::MakeMatrix3 => "New matrix3",
-            DamascusNodeTemplate::MakeMatrix4 => "New matrix4",
-            DamascusNodeTemplate::MakeCamera => "New camera",
-
-            DamascusNodeTemplate::AddFloat => "Float add",
-            DamascusNodeTemplate::AddVector2 => "Vector2 add",
-            DamascusNodeTemplate::AddVector3 => "Vector3 add",
+            DamascusNodeTemplate::MakeCamera => "camera",
         })
     }
 
@@ -239,13 +239,23 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
+        let input_bool = |graph: &mut DamascusGraph, name: &str, default: bool| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Bool,
+                DamascusValueType::Bool { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
         let input_float = |graph: &mut DamascusGraph, name: &str, default: f32| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Float,
                 DamascusValueType::Float { value: default },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -257,7 +267,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Vec2 {
                     value: default,
                 },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -269,7 +279,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Vec3 {
                     value: default,
                 },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -281,7 +291,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Vec4 {
                     value: default,
                 },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -293,7 +303,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Mat3 {
                     value: default,
                 },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -305,7 +315,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 DamascusValueType::Mat4 {
                     value: default,
                 },
-                InputParamKind::ConnectionOrConstant,
+                InputParamKind::ConstantOnly,
                 true,
             );
         };
@@ -322,21 +332,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             );
         };
 
-        let output_float = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Float);
-        };
-        let output_vector2 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec2);
-        };
-        let output_vector3 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec3);
-        };
-        let output_vector4 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Vec4);
-        };
-        let output_matrix3 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat3);
-        };
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
         };
@@ -345,41 +340,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
 
         match self {
-            DamascusNodeTemplate::MakeFloat => {
-                input_float(graph, "value", 0.0);
-                output_float(graph, "out");
-            }
-            DamascusNodeTemplate::MakeVector2 => {
-                input_float(graph, "x", 0.0);
-                input_float(graph, "y", 0.0);
-                output_vector2(graph, "out");
-            }
-            DamascusNodeTemplate::MakeVector3 => {
-                input_float(graph, "x", 0.0);
-                input_float(graph, "y", 0.0);
-                input_float(graph, "z", 0.0);
-                output_vector3(graph, "out");
-            }
-            DamascusNodeTemplate::MakeVector4 => {
-                input_float(graph, "x", 0.0);
-                input_float(graph, "y", 0.0);
-                input_float(graph, "z", 0.0);
-                input_float(graph, "w", 0.0);
-                output_vector4(graph, "out");
-            }
-            DamascusNodeTemplate::MakeMatrix3 => {
-                input_vector3(graph, "x_axis", glam::Vec3::X);
-                input_vector3(graph, "y_axis", glam::Vec3::Y);
-                input_vector3(graph, "z_axis", glam::Vec3::Z);
-                output_matrix3(graph, "out");
-            }
-            DamascusNodeTemplate::MakeMatrix4 => {
-                input_vector4(graph, "x_axis", glam::Vec4::X);
-                input_vector4(graph, "y_axis", glam::Vec4::Y);
-                input_vector4(graph, "z_axis", glam::Vec4::Z);
-                input_vector4(graph, "w_axis", glam::Vec4::W);
-                output_matrix4(graph, "out");
-            }
             DamascusNodeTemplate::MakeCamera => {
                 let default_camera = geometry::camera::Camera::default();
                 input_float(graph, "focal_length", default_camera.focal_length);
@@ -389,40 +349,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "near_plane", default_camera.near_plane);
                 input_float(graph, "far_plane", default_camera.far_plane);
                 input_matrix4(graph, "world_matrix", default_camera.world_matrix);
-                // input_float(graph, "enable_depth_of_field"); // TODO: make bool type
+                input_bool(graph, "enable_depth_of_field", default_camera.enable_depth_of_field);
                 output_camera(graph, "out");
-            }
-
-            DamascusNodeTemplate::AddFloat => {
-                // This input param doesn't use the closure so we can comment
-                // it in more detail.
-                graph.add_input_param(
-                    node_id,
-                    // This is the name of the parameter. Can be later used to
-                    // retrieve the value. Parameter names should be unique.
-                    "A".into(),
-                    // The data type for this input. In this case, a float
-                    DamascusDataType::Float,
-                    // The value type for this input. We store zero as default
-                    DamascusValueType::Float { value: 0.0 },
-                    // The input parameter kind. This allows defining whether a
-                    // parameter accepts input connections and/or an inline
-                    // widget to set its value.
-                    InputParamKind::ConnectionOrConstant,
-                    true,
-                );
-                input_float(graph, "B", 0.0);
-                output_float(graph, "out");
-            }
-            DamascusNodeTemplate::AddVector2 => {
-                input_vector2(graph, "v1", glam::Vec2::ZERO);
-                input_vector2(graph, "v2", glam::Vec2::ZERO);
-                output_vector2(graph, "out");
-            }
-            DamascusNodeTemplate::AddVector3 => {
-                input_vector3(graph, "v1", glam::Vec3::ZERO);
-                input_vector3(graph, "v2", glam::Vec3::ZERO);
-                output_vector3(graph, "out");
             }
         }
     }
@@ -437,16 +365,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
         vec![
-            DamascusNodeTemplate::MakeFloat,
-            DamascusNodeTemplate::MakeVector2,
-            DamascusNodeTemplate::MakeVector3,
-            DamascusNodeTemplate::MakeVector4,
-            DamascusNodeTemplate::MakeMatrix3,
-            DamascusNodeTemplate::MakeMatrix4,
             DamascusNodeTemplate::MakeCamera,
-            DamascusNodeTemplate::AddFloat,
-            DamascusNodeTemplate::AddVector2,
-            DamascusNodeTemplate::AddVector3,
         ]
     }
 }
@@ -463,34 +382,45 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        let make_float = |ui: &mut egui::Ui, value: &mut f32| {
+        let create_bool_ui = |ui: &mut egui::Ui, label: &str, value: &mut bool| {
             ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(Checkbox::new(value, ""));
+            });
+        };
+        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut f32| {
+            ui.horizontal(|ui| {
+                ui.label(label);
                 ui.add(DragValue::new(value));
             });
         };
-        let make_vec2 = |ui: &mut egui::Ui, value: &mut glam::Vec2| {
+        let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
             ui.horizontal(|ui| {
+                ui.label(label);
                 ui.add(DragValue::new(&mut value.x));
                 ui.add(DragValue::new(&mut value.y));
             });
         };
-        let make_vec3 = |ui: &mut egui::Ui, value: &mut glam::Vec3| {
+        let create_vec3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec3| {
             ui.horizontal(|ui| {
+                ui.label(label);
                 ui.add(DragValue::new(&mut value.x));
                 ui.add(DragValue::new(&mut value.y));
                 ui.add(DragValue::new(&mut value.z));
             });
         };
-        let make_vec4 = |ui: &mut egui::Ui, value: &mut glam::Vec4| {
+        let create_vec4_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec4| {
             ui.horizontal(|ui| {
+                ui.label(label);
                 ui.add(DragValue::new(&mut value.x));
                 ui.add(DragValue::new(&mut value.y));
                 ui.add(DragValue::new(&mut value.z));
                 ui.add(DragValue::new(&mut value.w));
             });
         };
-        let make_mat3 = |ui: &mut egui::Ui, value: &mut glam::Mat3| {
+        let create_mat3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat3| {
             ui.vertical(|ui| {
+                ui.label(label);
                 ui.horizontal(|ui| {
                     ui.add(DragValue::new(&mut value.x_axis.x));
                     ui.add(DragValue::new(&mut value.x_axis.y));
@@ -508,8 +438,9 @@ impl WidgetValueTrait for DamascusValueType {
                 });
             });
         };
-        let make_mat4 = |ui: &mut egui::Ui, value: &mut glam::Mat4| {
+        let create_mat4_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat4| {
             ui.vertical(|ui| {
+                ui.label(label);
                 ui.horizontal(|ui| {
                     ui.add(DragValue::new(&mut value.x_axis.x));
                     ui.add(DragValue::new(&mut value.x_axis.y));
@@ -540,52 +471,40 @@ impl WidgetValueTrait for DamascusValueType {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         match self {
+            DamascusValueType::Bool { value } => {
+                create_bool_ui(ui, param_name, value);
+            }
             DamascusValueType::Float { value } => {
-                ui.horizontal(|ui| {
-                    ui.label(param_name);
-                    make_float(ui, value);
-                });
+                create_float_ui(ui, param_name, value);
             }
             DamascusValueType::Vec2 { value } => {
-                ui.label(param_name);
-                make_vec2(ui, value);
+                create_vec2_ui(ui, param_name, value);
             }
             DamascusValueType::Vec3 { value } => {
-                ui.label(param_name);
-                make_vec3(ui, value);
+                create_vec3_ui(ui, param_name, value);
             }
             DamascusValueType::Vec4 { value } => {
-                ui.label(param_name);
-                make_vec4(ui, value);
+                create_vec4_ui(ui, param_name, value);
             }
             DamascusValueType::Mat3 { value } => {
-                ui.label(param_name);
-                make_mat3(ui, value);
+                create_mat3_ui(ui, param_name, value);
             }
             DamascusValueType::Mat4 { value } => {
-                ui.label(param_name);
                 ui.horizontal(|ui| {
-                    make_mat4(ui, value);
+                    create_mat4_ui(ui, param_name, value);
                 });
             }
             DamascusValueType::Camera { value } => {
                 ui.label(param_name);
                 ui.horizontal(|ui| {
-                    ui.label("focal_length");
-                    make_float(ui, &mut value.focal_length);
-                    ui.label("focal_distance");
-                    make_float(ui, &mut value.focal_distance);
-                    ui.label("f_stop");
-                    make_float(ui, &mut value.f_stop);
-                    ui.label("horizontal_aperture");
-                    make_float(ui, &mut value.horizontal_aperture);
-                    ui.label("near_plane");
-                    make_float(ui, &mut value.near_plane);
-                    ui.label("far_plane");
-                    make_float(ui, &mut value.far_plane);
-                    ui.label("world_matrix");
-                    make_mat4(ui, &mut value.world_matrix);
-                    ui.label("enable_depth_of_field"); // TODO add this
+                    create_float_ui(ui, "focal_length", &mut value.focal_length);
+                    create_float_ui(ui, "focal_distance", &mut value.focal_distance);
+                    create_float_ui(ui, "f_stop", &mut value.f_stop);
+                    create_float_ui(ui, "horizontal_aperture", &mut value.horizontal_aperture);
+                    create_float_ui(ui, "near_plane", &mut value.near_plane);
+                    create_float_ui(ui, "far_plane", &mut value.far_plane);
+                    create_mat4_ui(ui, "world_matrix", &mut value.world_matrix);
+                    create_bool_ui(ui, "enable_depth_of_field", &mut value.enable_depth_of_field )
                 });
             }
         }
@@ -797,27 +716,13 @@ impl eframe::App for Damascus {
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match angle {
-                        DamascusValueType::Float { value } => {
-                            viewport_3d.angle = value;
-                        }
-                        DamascusValueType::Vec2 { value } => {
-                            viewport_3d.angle = value.x;
-                        }
-                        DamascusValueType::Vec3 { value } => {
-                            viewport_3d.angle = value.x;
-                        }
-                        DamascusValueType::Vec4 { value } => {
-                            viewport_3d.angle = value.x;
-                        }
-                        DamascusValueType::Mat3 { value } => {
-                            viewport_3d.angle = value.x_axis.x;
-                        }
                         DamascusValueType::Mat4 { value } => {
                             viewport_3d.angle = value.x_axis.x;
                         }
                         DamascusValueType::Camera { value } => {
                             viewport_3d.render_camera = value.as_uniform();
                         }
+                        _ => {}
                     }
                 }
             } else {
@@ -893,6 +798,14 @@ pub fn evaluate_node(
             // Note that this is just one possible semantic interpretation of
             // the graphs, you can come up with your own evaluation semantics!
             populate_output(self.graph, self.outputs_cache, self.node_id, name, value)
+        }
+
+        fn input_bool(&mut self, name: &str) -> anyhow::Result<bool> {
+            self.evaluate_input(name)?.try_to_bool()
+        }
+
+        fn output_bool(&mut self, name: &str, value: bool) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Bool { value })
         }
 
         fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {
@@ -979,41 +892,13 @@ pub fn evaluate_node(
     let node = &graph[node_id];
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
     match node.user_data.template {
-        DamascusNodeTemplate::MakeFloat => {
-            let value = evaluator.input_float("value")?;
-            evaluator.output_float("out", value)
-        }
-        DamascusNodeTemplate::MakeVector2 => {
-            let x = evaluator.input_float("x")?;
-            let y = evaluator.input_float("y")?;
-            evaluator.output_vector2("out", glam::Vec2 { x, y })
-        }
-        DamascusNodeTemplate::MakeVector3 => {
-            let x = evaluator.input_float("x")?;
-            let y = evaluator.input_float("y")?;
-            let z = evaluator.input_float("z")?;
-            evaluator.output_vector3("out", glam::Vec3 { x, y, z })
-        }
-        DamascusNodeTemplate::MakeVector4 => {
-            let x = evaluator.input_float("x")?;
-            let y = evaluator.input_float("y")?;
-            let z = evaluator.input_float("z")?;
-            let w = evaluator.input_float("w")?;
-            evaluator.output_vector4("out", glam::Vec4::new(x, y, z, w))
-        }
-        DamascusNodeTemplate::MakeMatrix3 => {
-            let x_axis = evaluator.input_vector3("x_axis")?;
-            let y_axis = evaluator.input_vector3("y_axis")?;
-            let z_axis = evaluator.input_vector3("z_axis")?;
-            evaluator.output_matrix3("out", glam::Mat3 { x_axis, y_axis, z_axis })
-        }
-        DamascusNodeTemplate::MakeMatrix4 => {
-            let x_axis = evaluator.input_vector4("x_axis")?;
-            let y_axis = evaluator.input_vector4("y_axis")?;
-            let z_axis = evaluator.input_vector4("z_axis")?;
-            let w_axis = evaluator.input_vector4("w_axis")?;
-            evaluator.output_matrix4("out", glam::Mat4 { x_axis, y_axis, z_axis, w_axis })
-        }
+        // DamascusNodeTemplate::MakeMatrix4 => {
+        //     let x_axis = evaluator.input_vector4("x_axis")?;
+        //     let y_axis = evaluator.input_vector4("y_axis")?;
+        //     let z_axis = evaluator.input_vector4("z_axis")?;
+        //     let w_axis = evaluator.input_vector4("w_axis")?;
+        //     evaluator.output_matrix4("out", glam::Mat4 { x_axis, y_axis, z_axis, w_axis })
+        // }
         DamascusNodeTemplate::MakeCamera => {
             let focal_length = evaluator.input_float("focal_length")?;
             let horizontal_aperture = evaluator.input_float("horizontal_aperture")?;
@@ -1022,11 +907,11 @@ pub fn evaluate_node(
             let focal_distance = evaluator.input_float("focal_distance")?;
             let f_stop = evaluator.input_float("f_stop")?;
             let world_matrix = evaluator.input_matrix4("world_matrix")?;
-            // let enable_depth_of_field = evaluator.input_float("enable_depth_of_field")?;
+            let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
             evaluator.output_camera(
                 "out",
                 geometry::camera::Camera::new(
-                    1., // TODO get aspect ratio from viewer
+                    1., // TODO get aspect ratio from viewer or add format
                     focal_length,
                     horizontal_aperture,
                     near_plane,
@@ -1034,25 +919,9 @@ pub fn evaluate_node(
                     focal_distance,
                     f_stop,
                     world_matrix,
-                    false,
+                    enable_depth_of_field,
                 ),
             )
-        }
-
-        DamascusNodeTemplate::AddFloat => {
-            let a = evaluator.input_float("A")?;
-            let b = evaluator.input_float("B")?;
-            evaluator.output_float("out", a + b)
-        }
-        DamascusNodeTemplate::AddVector2 => {
-            let v1 = evaluator.input_vector2("v1")?;
-            let v2 = evaluator.input_vector2("v2")?;
-            evaluator.output_vector2("out", v1 + v2)
-        }
-        DamascusNodeTemplate::AddVector3 => {
-            let v1 = evaluator.input_vector3("v1")?;
-            let v2 = evaluator.input_vector3("v2")?;
-            evaluator.output_vector3("out", v1 + v2)
         }
     }
 }

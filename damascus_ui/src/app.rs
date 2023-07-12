@@ -379,6 +379,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         match self {
             DamascusNodeTemplate::Axis => {
+                input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
                 input_vector3(graph, "translate", glam::Vec3::ZERO);
                 input_vector3(graph, "rotate", glam::Vec3::ZERO);
                 input_vector3(graph, "scale", glam::Vec3::ONE);
@@ -989,6 +990,7 @@ pub fn evaluate_node(
     let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
     match node.user_data.template {
         DamascusNodeTemplate::Axis => {
+            let input_axis = evaluator.input_matrix4("axis")?;
             let translate = evaluator.input_vector3("translate")?;
             let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.0;
             let scale = evaluator.input_vector3("scale")?;
@@ -998,7 +1000,7 @@ pub fn evaluate_node(
 
             evaluator.output_matrix4(
                 "out",
-                glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
+                input_axis * glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
             )
         }
         DamascusNodeTemplate::Camera => {

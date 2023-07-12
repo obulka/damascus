@@ -70,7 +70,7 @@ struct Transform {
 
 
 struct Primitive {
-    transform: Transform,
+    transform: Transform, // Could we just make this a world matrix?
     material: Material,
     modifiers: u32,
     blend_strength: f32,

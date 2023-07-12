@@ -4,7 +4,7 @@ use glam::{Mat4, Vec4};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct GPUCamera {
-    // enable_depth_of_field: u32,
+    // enable_depth_of_field: bool,
     // aperture: f32,
     world_matrix: [[f32; 4]; 4],
     inverse_projection_matrix: [[f32; 4]; 4],
@@ -21,8 +21,6 @@ pub struct Camera {
     pub f_stop: f32,
     pub world_matrix: Mat4,
     pub enable_depth_of_field: bool,
-    _aperture: f32,
-    _inverse_projection_matrix: Mat4,
 }
 
 impl Default for Camera {
@@ -53,15 +51,6 @@ impl Camera {
             f_stop: f_stop,
             world_matrix: world_matrix,
             enable_depth_of_field: enable_depth_of_field,
-            _aperture: Self::aperture_from_f_stop(f_stop, focal_length),
-            _inverse_projection_matrix: Self::projection_matrix(
-                focal_length,
-                horizontal_aperture,
-                aspect_ratio,
-                near_plane,
-                far_plane,
-            )
-            .inverse(),
         }
     }
 
@@ -102,10 +91,18 @@ impl Camera {
 
     pub fn to_gpu_camera(&self) -> GPUCamera {
         GPUCamera {
-            // enable_depth_of_field: self.enable_depth_of_field.into(),
-            // aperture: self._aperture,
+            // enable_depth_of_field: self.enable_depth_of_field,
+            // aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             world_matrix: self.world_matrix.to_cols_array_2d(),
-            inverse_projection_matrix: self._inverse_projection_matrix.to_cols_array_2d(),
+            inverse_projection_matrix: Self::projection_matrix(
+                self.focal_length,
+                self.horizontal_aperture,
+                self.aspect_ratio,
+                self.near_plane,
+                self.far_plane,
+            )
+            .inverse()
+            .to_cols_array_2d(),
         }
     }
 }

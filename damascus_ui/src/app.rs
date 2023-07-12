@@ -1016,7 +1016,7 @@ pub fn evaluate_node(
             evaluator.output_camera(
                 "out",
                 geometry::camera::Camera::new(
-                    1., // TODO get aspect ratio from viewer or add format
+                    1., // TODO use the root resolution or add a resolution knob
                     focal_length,
                     horizontal_aperture,
                     near_plane,

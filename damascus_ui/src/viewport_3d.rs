@@ -175,13 +175,12 @@ impl Viewport3d {
 
         Some(viewport3d)
     }
-}
 
-impl Viewport3d {
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         self.angle += response.drag_delta().x * 0.01;
+        self.scene.render_camera.aspect_ratio = (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
         // Clone locals so we can move them into the paint callback:
         let angle = self.angle;

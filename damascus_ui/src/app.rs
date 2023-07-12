@@ -801,7 +801,7 @@ impl eframe::App for Damascus {
                             viewport_3d.angle = value.x_axis.x;
                         }
                         DamascusValueType::Camera { value } => {
-                            viewport_3d.render_camera = value.as_uniform();
+                            viewport_3d.scene.render_camera = value;
                         }
                         _ => {}
                     }
@@ -1000,7 +1000,8 @@ pub fn evaluate_node(
 
             evaluator.output_matrix4(
                 "out",
-                input_axis * glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
+                input_axis
+                    * glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
             )
         }
         DamascusNodeTemplate::Camera => {

@@ -1,2 +1,2 @@
 mod material;
-pub use material::Material;
+pub use material::{GPUMaterial, Material};

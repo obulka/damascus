@@ -3,7 +3,7 @@ use glam::{Mat4, Vec4};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct CameraUniform {
+pub struct GPUCamera {
     // enable_depth_of_field: u32,
     // aperture: f32,
     world_matrix: [[f32; 4]; 4],
@@ -100,8 +100,8 @@ impl Camera {
         )
     }
 
-    pub fn as_uniform(self) -> CameraUniform {
-        CameraUniform {
+    pub fn to_gpu_camera(&self) -> GPUCamera {
+        GPUCamera {
             // enable_depth_of_field: self.enable_depth_of_field.into(),
             // aperture: self._aperture,
             world_matrix: self.world_matrix.to_cols_array_2d(),

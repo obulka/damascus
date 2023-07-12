@@ -35,6 +35,12 @@ struct Material {
     scattering_colour: vec3<f32>,
 }
 
+struct Materials {
+    materials: array<Material>,
+}
+
+@group(2) @binding(0)
+var<storage, read> _materials: Materials;
 
 // geometry/camera.wgsl
 // #include "math.h"

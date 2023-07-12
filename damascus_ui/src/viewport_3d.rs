@@ -93,7 +93,9 @@ impl Viewport3d {
         let materials_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d materials buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_materials()]),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::MAP_READ
+                | wgpu::BufferUsages::STORAGE,
         });
         let materials_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -180,7 +182,8 @@ impl Viewport3d {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         self.angle += response.drag_delta().x * 0.01;
-        self.scene.render_camera.aspect_ratio = (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
+        self.scene.render_camera.aspect_ratio =
+            (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
         // Clone locals so we can move them into the paint callback:
         let angle = self.angle;

@@ -174,7 +174,6 @@ pub enum DamascusNodeTemplate {
     // Data creation
     Axis,
     Camera,
-
     // Data processing
 }
 
@@ -314,9 +313,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec2,
-                DamascusValueType::Vec2 {
-                    value: default,
-                },
+                DamascusValueType::Vec2 { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -326,9 +323,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec3,
-                DamascusValueType::Vec3 {
-                    value: default,
-                },
+                DamascusValueType::Vec3 { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -338,9 +333,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 node_id,
                 name.to_string(),
                 DamascusDataType::Vec4,
-                DamascusValueType::Vec4 {
-                    value: default,
-                },
+                DamascusValueType::Vec4 { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -350,9 +343,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 node_id,
                 name.to_string(),
                 DamascusDataType::Mat3,
-                DamascusValueType::Mat3 {
-                    value: default,
-                },
+                DamascusValueType::Mat3 { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -362,25 +353,22 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 node_id,
                 name.to_string(),
                 DamascusDataType::Mat4,
-                DamascusValueType::Mat4 {
-                    value: default,
-                },
+                DamascusValueType::Mat4 { value: default },
                 InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        let input_camera = |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Camera,
-                DamascusValueType::Camera {
-                    value: default,
-                },
-                InputParamKind::ConnectionOnly,
-                true,
-            );
-        };
+        let input_camera =
+            |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::Camera,
+                    DamascusValueType::Camera { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
 
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
@@ -394,7 +382,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(graph, "translate", glam::Vec3::ZERO);
                 input_vector3(graph, "rotate", glam::Vec3::ZERO);
                 input_vector3(graph, "scale", glam::Vec3::ONE);
-                // input_vector3(graph, "skew", default_camera.f_stop);
                 output_matrix4(graph, "out");
             }
             DamascusNodeTemplate::Camera => {
@@ -402,11 +389,19 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "focal_length", default_camera.focal_length);
                 input_float(graph, "focal_distance", default_camera.focal_distance);
                 input_float(graph, "f_stop", default_camera.f_stop);
-                input_float(graph, "horizontal_aperture", default_camera.horizontal_aperture);
+                input_float(
+                    graph,
+                    "horizontal_aperture",
+                    default_camera.horizontal_aperture,
+                );
                 input_float(graph, "near_plane", default_camera.near_plane);
                 input_float(graph, "far_plane", default_camera.far_plane);
                 input_matrix4(graph, "world_matrix", default_camera.world_matrix);
-                input_bool(graph, "enable_depth_of_field", default_camera.enable_depth_of_field);
+                input_bool(
+                    graph,
+                    "enable_depth_of_field",
+                    default_camera.enable_depth_of_field,
+                );
                 output_camera(graph, "out");
             }
         }
@@ -421,10 +416,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // This function must return a list of node kinds, which the node finder
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
-        vec![
-            DamascusNodeTemplate::Axis,
-            DamascusNodeTemplate::Camera,
-        ]
+        vec![DamascusNodeTemplate::Axis, DamascusNodeTemplate::Camera]
     }
 }
 
@@ -446,24 +438,27 @@ impl WidgetValueTrait for DamascusValueType {
                 ui.add(Checkbox::new(value, ""));
             });
         };
-        let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                ui.add(Slider::new(value, range));
-            });
-        };
-        let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut u32, range: RangeInclusive<u32>| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                ui.add(Slider::new(value, range));
-            });
-        };
-        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                ui.add(Slider::new(value, range));
-            });
-        };
+        let create_int_ui =
+            |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
+                ui.horizontal(|ui| {
+                    ui.label(label);
+                    ui.add(Slider::new(value, range));
+                });
+            };
+        let create_uint_ui =
+            |ui: &mut egui::Ui, label: &str, value: &mut u32, range: RangeInclusive<u32>| {
+                ui.horizontal(|ui| {
+                    ui.label(label);
+                    ui.add(Slider::new(value, range));
+                });
+            };
+        let create_float_ui =
+            |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
+                ui.horizontal(|ui| {
+                    ui.label(label);
+                    ui.add(Slider::new(value, range));
+                });
+            };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
             ui.horizontal(|ui| {
                 ui.label(label);
@@ -576,11 +571,20 @@ impl WidgetValueTrait for DamascusValueType {
                     create_float_ui(ui, "focal_length", &mut value.focal_length, 5.0..=100.0);
                     create_float_ui(ui, "focal_distance", &mut value.focal_distance, 0.1..=10.0);
                     create_float_ui(ui, "f_stop", &mut value.f_stop, 0.1..=30.0);
-                    create_float_ui(ui, "horizontal_aperture", &mut value.horizontal_aperture, 0.1..=50.0);
+                    create_float_ui(
+                        ui,
+                        "horizontal_aperture",
+                        &mut value.horizontal_aperture,
+                        0.1..=50.0,
+                    );
                     create_float_ui(ui, "near_plane", &mut value.near_plane, 0.1..=10.0);
                     create_float_ui(ui, "far_plane", &mut value.far_plane, 11.0..=10000.0);
                     create_mat4_ui(ui, "world_matrix", &mut value.world_matrix);
-                    create_bool_ui(ui, "enable_depth_of_field", &mut value.enable_depth_of_field )
+                    create_bool_ui(
+                        ui,
+                        "enable_depth_of_field",
+                        &mut value.enable_depth_of_field,
+                    )
                 });
             }
         }
@@ -989,9 +993,13 @@ pub fn evaluate_node(
             let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.0;
             let scale = evaluator.input_vector3("scale")?;
 
-            let quaternion = glam::Quat::from_euler(glam::EulerRot::ZXY, rotate.x, rotate.y, rotate.z);
+            let quaternion =
+                glam::Quat::from_euler(glam::EulerRot::ZXY, rotate.x, rotate.y, rotate.z);
 
-            evaluator.output_matrix4("out", glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate))
+            evaluator.output_matrix4(
+                "out",
+                glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
+            )
         }
         DamascusNodeTemplate::Camera => {
             let focal_length = evaluator.input_float("focal_length")?;

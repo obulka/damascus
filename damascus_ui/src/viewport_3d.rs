@@ -3,7 +3,7 @@ use std::sync::Arc;
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
-    wgpu::{util::DeviceExt, Limits},
+    wgpu::util::DeviceExt,
 };
 
 use damascus_core::{geometry::camera::GPUCamera, materials::GPUMaterial, scene::Scene};

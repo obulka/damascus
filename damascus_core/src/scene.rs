@@ -1,28 +1,25 @@
-use daggy::Dag;
 use glam::Vec3;
 use std::collections::HashMap;
 
 use crate::geometry::{
     camera::{Camera, GPUCamera},
-    Primitive,
+    {GPUPrimitive, Primitive},
 };
-use crate::materials::{GPUMaterial, Material};
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct Scene {
-    // pub primitives: Dag<Box<dyn Primitive>, >,
     pub render_camera: Camera,
-    pub materials: Vec<Material>,
+    pub primitives: Vec<Box<dyn Primitive>>,
 }
 
 impl Scene {
-    pub const MAX_MATERIALS: usize = 512;
+    pub const MAX_PRIMITIVES: usize = 1024;
 
-    pub fn create_gpu_materials(&self) -> [GPUMaterial; Self::MAX_MATERIALS] {
-        let mut material_array = [GPUMaterial::default(); Self::MAX_MATERIALS];
-        for (index, material) in self.materials.iter().enumerate() {
-            material_array[index] = material.to_gpu_material();
+    pub fn create_gpu_primitives(&self) -> [GPUPrimitive; Self::MAX_PRIMITIVES] {
+        let mut primitive_array = [GPUPrimitive::default(); Self::MAX_PRIMITIVES];
+        for (index, primitive) in self.primitives.iter().enumerate() {
+            primitive_array[index] = primitive.to_gpu();
         }
-        material_array
+        primitive_array
     }
 }

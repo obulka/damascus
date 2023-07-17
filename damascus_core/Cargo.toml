@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 bytemuck = "1.13"
-daggy = "0.8"
 glam = "0.24"

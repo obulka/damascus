@@ -5,7 +5,7 @@ use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 
-use damascus_core::{geometry, materials};
+use damascus_core::geometry;
 
 use crate::viewport_3d::Viewport3d;
 

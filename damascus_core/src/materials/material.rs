@@ -36,7 +36,7 @@ pub struct Material {
 }
 
 impl Material {
-    pub fn to_gpu_material(&self) -> GPUMaterial {
+    pub fn to_gpu(&self) -> GPUMaterial {
         GPUMaterial {
             diffuse: self.diffuse,
             diffuse_colour: self.diffuse_colour.to_array(),

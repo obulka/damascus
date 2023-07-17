@@ -6,9 +6,8 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 
-use damascus_core::{geometry::camera::GPUCamera, materials::GPUMaterial, scene::Scene};
+use damascus_core::{geometry::{camera::GPUCamera, GPUPrimitive}, scene::Scene};
 
-#[derive(Debug)]
 pub struct Viewport3d {
     pub angle: f32,
     pub scene: Scene,
@@ -62,7 +61,7 @@ impl Viewport3d {
         // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu_camera()]),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_bind_group_layout =
@@ -89,17 +88,17 @@ impl Viewport3d {
             }],
         });
 
-        // Material storage buffer
-        let materials_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d materials buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_materials()]),
+        // Primitive storage buffer
+        let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("viewport 3d primitives buffer"),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_primitives()]),
             usage: wgpu::BufferUsages::COPY_DST
                 | wgpu::BufferUsages::MAP_READ
                 | wgpu::BufferUsages::STORAGE,
         });
-        let materials_bind_group_layout =
+        let primitives_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d materials bind group layout"),
+                label: Some("viewport 3d primitives bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
@@ -112,12 +111,12 @@ impl Viewport3d {
                 }],
             });
 
-        let materials_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d materials bind group"),
-            layout: &materials_bind_group_layout,
+        let primitives_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("viewport 3d primitives bind group"),
+            layout: &primitives_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: materials_buffer.as_entire_binding(),
+                resource: primitives_buffer.as_entire_binding(),
             }],
         });
 
@@ -171,8 +170,8 @@ impl Viewport3d {
                 render_globals_buffer,
                 render_camera_bind_group,
                 render_camera_buffer,
-                materials_bind_group,
-                materials_buffer,
+                primitives_bind_group,
+                primitives_buffer,
             });
 
         Some(viewport3d)
@@ -187,8 +186,8 @@ impl Viewport3d {
 
         // Clone locals so we can move them into the paint callback:
         let angle = self.angle;
-        let render_camera = self.scene.render_camera.to_gpu_camera();
-        let materials = self.scene.create_gpu_materials();
+        let render_camera = self.scene.render_camera.to_gpu();
+        let primitives = self.scene.create_gpu_primitives();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -201,7 +200,7 @@ impl Viewport3d {
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue, angle, render_camera, materials);
+                resources.prepare(device, queue, angle, render_camera, primitives);
             })
             .paint(move |_info, rpass, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
@@ -223,8 +222,8 @@ struct RenderResources {
     render_globals_buffer: wgpu::Buffer,
     render_camera_bind_group: wgpu::BindGroup,
     render_camera_buffer: wgpu::Buffer,
-    materials_bind_group: wgpu::BindGroup,
-    materials_buffer: wgpu::Buffer,
+    primitives_bind_group: wgpu::BindGroup,
+    primitives_buffer: wgpu::Buffer,
 }
 
 impl RenderResources {
@@ -234,7 +233,7 @@ impl RenderResources {
         queue: &wgpu::Queue,
         angle: f32,
         render_camera: GPUCamera,
-        materials: [GPUMaterial; Scene::MAX_MATERIALS],
+        primitives: [GPUPrimitive; Scene::MAX_PRIMITIVES],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
@@ -248,9 +247,9 @@ impl RenderResources {
             bytemuck::cast_slice(&[render_camera]),
         );
         queue.write_buffer(
-            &self.materials_buffer,
+            &self.primitives_buffer,
             0,
-            bytemuck::cast_slice(&[materials]),
+            bytemuck::cast_slice(&[primitives]),
         );
     }
 
@@ -259,7 +258,7 @@ impl RenderResources {
 
         render_pass.set_bind_group(0, &self.render_globals_bind_group, &[]);
         render_pass.set_bind_group(1, &self.render_camera_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.materials_bind_group, &[]);
+        render_pass.set_bind_group(2, &self.primitives_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

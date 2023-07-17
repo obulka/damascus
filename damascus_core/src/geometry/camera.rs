@@ -89,7 +89,7 @@ impl Camera {
         )
     }
 
-    pub fn to_gpu_camera(&self) -> GPUCamera {
+    pub fn to_gpu(&self) -> GPUCamera {
         GPUCamera {
             // enable_depth_of_field: self.enable_depth_of_field,
             // aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),

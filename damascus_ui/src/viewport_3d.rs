@@ -6,7 +6,10 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 
-use damascus_core::{geometry::{camera::GPUCamera, GPUPrimitive}, scene::Scene};
+use damascus_core::{
+    geometry::{camera::GPUCamera, GPUPrimitive},
+    scene::Scene,
+};
 
 pub struct Viewport3d {
     pub angle: f32,

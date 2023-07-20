@@ -9,7 +9,7 @@ use crate::geometry::{
 #[derive(Default)]
 pub struct Scene {
     pub render_camera: Camera,
-    pub primitives: Vec<Box<dyn Primitive>>,
+    pub primitives: Vec<Primitive>,
 }
 
 impl Scene {

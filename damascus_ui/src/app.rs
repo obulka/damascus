@@ -5,7 +5,7 @@ use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 
-use damascus_core::geometry;
+use damascus_core::{geometry, material};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -38,6 +38,7 @@ pub enum DamascusDataType {
 
     // Composite types
     Camera,
+    Primitive,
 }
 
 /// In the graph, input parameters can optionally have a constant value. This
@@ -63,6 +64,7 @@ pub enum DamascusValueType {
 
     // Composite types
     Camera { value: geometry::camera::Camera },
+    Primitive { value: Vec<geometry::Primitive> },
 }
 
 impl Default for DamascusValueType {
@@ -163,6 +165,15 @@ impl DamascusValueType {
             anyhow::bail!("Invalid cast from {:?} to Camera", self)
         }
     }
+
+    /// Tries to downcast this value type to a primitive
+    pub fn try_to_primitive(self) -> anyhow::Result<Vec<geometry::Primitive>> {
+        if let DamascusValueType::Primitive { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Primitive", self)
+        }
+    }
 }
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -174,6 +185,7 @@ pub enum DamascusNodeTemplate {
     // Data creation
     Axis,
     Camera,
+    Primitive,
     // Data processing
 }
 
@@ -205,13 +217,13 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             // DamascusDataType::Bool => egui::Color32::from_rgb(255, 102, 0),
             // DamascusDataType::Integer => egui::Color32::from_rgb(255, 102, 0),
             // DamascusDataType::UnsignedInteger => egui::Color32::from_rgb(255, 102, 0),
-            // DamascusDataType::Float => egui::Color32::from_rgb(38, 109, 211),
             // DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
             // DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
             // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
             // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
+            DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
             _ => egui::Color32::WHITE,
         }
     }
@@ -228,6 +240,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Mat3 => "3x3 matrix",
             DamascusDataType::Mat4 => "4x4 matrix",
             DamascusDataType::Camera => "camera",
+            DamascusDataType::Primitive => "primitive",
         })
     }
 }
@@ -244,6 +257,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         Cow::Borrowed(match self {
             DamascusNodeTemplate::Axis => "axis",
             DamascusNodeTemplate::Camera => "camera",
+            DamascusNodeTemplate::Primitive => "primitive",
         })
     }
 
@@ -370,11 +384,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
+        let input_primitive =
+            |graph: &mut DamascusGraph, name: &str, default: Vec<geometry::Primitive>| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::Primitive,
+                    DamascusValueType::Primitive { default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
+
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
         };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
+        };
+        let output_primitive = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
         };
 
         match self {
@@ -405,6 +434,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_camera(graph, "out");
             }
+            DamascusNodeTemplate::Primitive => {
+                let default_primitive = geometry::Primitive::default();
+                input_primitive(graph, "siblings", vec![]);
+                input_primitive(graph, "children", vec![]);
+                input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
+                input_matrix4(graph, "transform", glam::Mat4::IDENTITY);
+                // input_material(graph, "material", default_primitive.material); // TODO
+                input_uint(graph, "modifiers", default_primitive.modifiers as u32); // TODO make this a series of bools
+                input_float(graph, "blend_strength", default_primitive.blend_strength);
+                input_vector4(graph, "dimensional_data", glam::Vec4::X); // TODO make this dynamic based on shape
+                output_primitive(graph, "out");
+            }
         }
     }
 }
@@ -417,7 +458,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // This function must return a list of node kinds, which the node finder
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
-        vec![DamascusNodeTemplate::Axis, DamascusNodeTemplate::Camera]
+        vec![DamascusNodeTemplate::Axis, DamascusNodeTemplate::Camera, DamascusNodeTemplate::Primitive]
     }
 }
 
@@ -588,7 +629,16 @@ impl WidgetValueTrait for DamascusValueType {
                     )
                 });
             }
+            DamascusValueType::Primitive { value } => {
+                ui.label(param_name);
+                if let Some(primitive) = value {
+                    ui.horizontal(|ui| {
+                        create_float_ui(ui, "blend_strength", &mut primitive.blend_strength, 0.0..=1.0);
+                    });
+                }
+            }
         }
+
         // This allows you to return your responses from the inline widgets.
         Vec::new()
     }
@@ -803,6 +853,9 @@ impl eframe::App for Damascus {
                         DamascusValueType::Camera { value } => {
                             viewport_3d.scene.render_camera = value;
                         }
+                        DamascusValueType::Primitive { value } => {
+                            viewport_3d.scene.primitives = value;
+                        }
                         _ => {}
                     }
                 }
@@ -984,6 +1037,18 @@ pub fn evaluate_node(
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Camera { value })
         }
+
+        fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<geometry::Primitive>> {
+            self.evaluate_input(name)?.try_to_primitive()
+        }
+
+        fn output_primitive(
+            &mut self,
+            name: &str,
+            value: Vec<geometry::Primitive>,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Primitive { value })
+        }
     }
 
     let node = &graph[node_id];
@@ -1026,6 +1091,29 @@ pub fn evaluate_node(
                     world_matrix,
                     enable_depth_of_field,
                 ),
+            )
+        }
+        DamascusNodeTemplate::Primitive => {
+            let scene_primitives = evaluator.input_primitive("siblings")?;
+            let children = evaluator.input_primitive("children")?;
+            let shape = evaluator.input_uint("shape")?;
+            let modifiers = evaluator.input_uint("modifiers")?;
+            let blend_strength = evaluator.input_float("blend_strength")?;
+            let dimensional_data = evaluator.input_vector4("dimensional_data")?;
+            let primitive = geometry::Primitive {
+                shape: shape as geometry::Shapes, // TODO
+                transform: geometry::Transform::default(), // TODO
+                material: material::Material::default(), // TODO
+                modifiers: modifiers,
+                blend_strength: blend_strength,
+                num_children: children.len(),
+                dimensional_data: dimensional_data,
+            };
+            scene_primitives.append(primitive);
+            scene_primitives.extend(children);
+            evaluator.output_primitive(
+                "out",
+                scene_primitives,
             )
         }
     }

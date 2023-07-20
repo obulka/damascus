@@ -46,9 +46,9 @@ struct Camera {
     inverse_projection_matrix: mat4x4<f32>,
 }
 
+
 @group(1) @binding(0)
 var<uniform> _render_camera: Camera;
-
 
 // geometry/geometry.wgsl
 // #include "material.wgsl"
@@ -63,7 +63,6 @@ struct Transform {
 
 
 struct Primitive {
-    id: u32,
     shape: u32,
     transform: Transform, // Could we just make this a world matrix?
     material: Material,
@@ -79,7 +78,6 @@ struct Primitives {
 
 @group(2) @binding(0)
 var<storage, read> _primitives: Primitives;
-
 
 // ray_march.wgsl
 

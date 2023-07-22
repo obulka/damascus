@@ -458,7 +458,11 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         // This function must return a list of node kinds, which the node finder
         // will use to display it to the user. Crates like strum can reduce the
         // boilerplate in enumerating all variants of an enum.
-        vec![DamascusNodeTemplate::Axis, DamascusNodeTemplate::Camera, DamascusNodeTemplate::Primitive]
+        vec![
+            DamascusNodeTemplate::Axis,
+            DamascusNodeTemplate::Camera,
+            DamascusNodeTemplate::Primitive,
+        ]
     }
 }
 
@@ -633,7 +637,12 @@ impl WidgetValueTrait for DamascusValueType {
                 ui.label(param_name);
                 if let Some(primitive) = value {
                     ui.horizontal(|ui| {
-                        create_float_ui(ui, "blend_strength", &mut primitive.blend_strength, 0.0..=1.0);
+                        create_float_ui(
+                            ui,
+                            "blend_strength",
+                            &mut primitive.blend_strength,
+                            0.0..=1.0,
+                        );
                     });
                 }
             }
@@ -1101,9 +1110,9 @@ pub fn evaluate_node(
             let blend_strength = evaluator.input_float("blend_strength")?;
             let dimensional_data = evaluator.input_vector4("dimensional_data")?;
             let primitive = geometry::Primitive {
-                shape: shape as geometry::Shapes, // TODO
+                shape: shape as geometry::Shapes,          // TODO
                 transform: geometry::Transform::default(), // TODO
-                material: material::Material::default(), // TODO
+                material: material::Material::default(),   // TODO
                 modifiers: modifiers,
                 blend_strength: blend_strength,
                 num_children: children.len(),
@@ -1111,10 +1120,7 @@ pub fn evaluate_node(
             };
             scene_primitives.append(primitive);
             scene_primitives.extend(children);
-            evaluator.output_primitive(
-                "out",
-                scene_primitives,
-            )
+            evaluator.output_primitive("out", scene_primitives)
         }
     }
 }

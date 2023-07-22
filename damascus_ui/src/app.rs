@@ -5,7 +5,7 @@ use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 
-use damascus_core::{geometry, material};
+use damascus_core::{geometry, materials};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -1112,7 +1112,7 @@ pub fn evaluate_node(
             let primitive = geometry::Primitive {
                 shape: shape as geometry::Shapes,          // TODO
                 transform: geometry::Transform::default(), // TODO
-                material: material::Material::default(),   // TODO
+                material: materials::Material::default(),   // TODO
                 modifiers: modifiers,
                 blend_strength: blend_strength,
                 num_children: children.len(),

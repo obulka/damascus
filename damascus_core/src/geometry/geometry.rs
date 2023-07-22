@@ -11,7 +11,7 @@ pub struct GPUTransform {
     //pub skew: [f32; 3],
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Transform {
     pub position: Vec3,
     pub rotation: Vec3,
@@ -30,8 +30,9 @@ impl Transform {
     }
 }
 
+#[derive(Debug, Default, Copy, Clone)]
 pub enum Shapes {
-    Sphere,
+    #[default] Sphere,
     Ellipsoid,
     CutSphere,
     HollowSphere,
@@ -70,7 +71,7 @@ pub struct GPUPrimitive {
     pub dimensional_data: [f32; 4],
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Primitive {
     pub shape: Shapes,
     pub transform: Transform,
@@ -82,7 +83,7 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    fn to_gpu(&self) -> GPUPrimitive {
+    pub fn to_gpu(&self) -> GPUPrimitive {
         GPUPrimitive {
             shape: self.shape as u32,
             transform: self.transform.to_gpu(),

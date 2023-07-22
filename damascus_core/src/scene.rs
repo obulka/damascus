@@ -1,8 +1,5 @@
-use glam::Vec3;
-use std::collections::HashMap;
-
 use crate::geometry::{
-    camera::{Camera, GPUCamera},
+    camera::Camera,
     {GPUPrimitive, Primitive},
 };
 

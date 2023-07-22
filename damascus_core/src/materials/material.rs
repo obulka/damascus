@@ -18,7 +18,7 @@ pub struct GPUMaterial {
     scattering_colour: [f32; 3],
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 pub struct Material {
     pub diffuse: f32,
     pub diffuse_colour: Vec3,

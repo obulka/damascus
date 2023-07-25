@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 bytemuck = "1.13"
 glam = "0.24"
+num = "0.4"
+num-derive = "0.4"
+num-traits = "0.2"

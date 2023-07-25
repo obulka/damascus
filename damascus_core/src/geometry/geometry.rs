@@ -30,7 +30,7 @@ impl Transform {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, FromPrimitive)]
 pub enum Shapes {
     #[default] Sphere,
     Ellipsoid,

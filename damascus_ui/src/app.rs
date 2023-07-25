@@ -48,7 +48,7 @@ pub enum DamascusDataType {
 /// this library makes no attempt to check this consistency. For instance, it is
 /// up to the user code in this example to make sure no parameter is created
 /// with a DataType of Float and a ValueType of Vec2.
-#[derive(Copy, Clone, Debug)]
+#[derive(Debug, Copy, Clone)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
     // Base types
@@ -390,7 +390,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     node_id,
                     name.to_string(),
                     DamascusDataType::Primitive,
-                    DamascusValueType::Primitive { default },
+                    DamascusValueType::Primitive { value: default },
                     InputParamKind::ConnectionOnly,
                     true,
                 );
@@ -635,16 +635,16 @@ impl WidgetValueTrait for DamascusValueType {
             }
             DamascusValueType::Primitive { value } => {
                 ui.label(param_name);
-                if let Some(primitive) = value {
-                    ui.horizontal(|ui| {
-                        create_float_ui(
-                            ui,
-                            "blend_strength",
-                            &mut primitive.blend_strength,
-                            0.0..=1.0,
-                        );
-                    });
-                }
+                // if let Some(primitive) = value {
+                //     ui.horizontal(|ui| {
+                //         create_float_ui(
+                //             ui,
+                //             "blend_strength",
+                //             &mut primitive.blend_strength,
+                //             0.0..=1.0,
+                //         );
+                //     });
+                // }
             }
         }
 
@@ -1103,23 +1103,25 @@ pub fn evaluate_node(
             )
         }
         DamascusNodeTemplate::Primitive => {
-            let scene_primitives = evaluator.input_primitive("siblings")?;
+            let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let children = evaluator.input_primitive("children")?;
-            let shape = evaluator.input_uint("shape")?;
+            let shapeNumber = evaluator.input_uint("shape")?;
             let modifiers = evaluator.input_uint("modifiers")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
             let dimensional_data = evaluator.input_vector4("dimensional_data")?;
-            let primitive = geometry::Primitive {
-                shape: shape as geometry::Shapes,          // TODO
-                transform: geometry::Transform::default(), // TODO
-                material: materials::Material::default(),   // TODO
-                modifiers: modifiers,
-                blend_strength: blend_strength,
-                num_children: children.len(),
-                dimensional_data: dimensional_data,
-            };
-            scene_primitives.append(primitive);
-            scene_primitives.extend(children);
+            if let Some(shape) = num::FromPrimitive::from_u32(shapeNumber) {
+                let primitive = geometry::Primitive {
+                    shape: shape, // TODO
+                    transform: geometry::Transform::default(), // TODO
+                    material: materials::Material::default(),   // TODO
+                    modifiers: modifiers,
+                    blend_strength: blend_strength,
+                    num_children: children.len() as u32,
+                    dimensional_data: dimensional_data,
+                };
+                scene_primitives.push(primitive);
+            }
+            scene_primitives.append(children);
             evaluator.output_primitive("out", scene_primitives)
         }
     }

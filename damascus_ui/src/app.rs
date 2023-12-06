@@ -1104,7 +1104,7 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
-            let children = evaluator.input_primitive("children")?;
+            let mut children = evaluator.input_primitive("children")?;
             let shapeNumber = evaluator.input_uint("shape")?;
             let modifiers = evaluator.input_uint("modifiers")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
@@ -1121,7 +1121,7 @@ pub fn evaluate_node(
                 };
                 scene_primitives.push(primitive);
             }
-            scene_primitives.append(children);
+            scene_primitives.append(&mut children);
             evaluator.output_primitive("out", scene_primitives)
         }
     }

@@ -3,6 +3,7 @@ use std::{borrow::Cow, collections::HashMap};
 
 use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
+use exr;
 use glam;
 
 use damascus_core::{geometry, materials};
@@ -35,6 +36,7 @@ pub enum DamascusDataType {
     Vec4,
     Mat3,
     Mat4,
+    Image,
 
     // Composite types
     Camera,
@@ -48,7 +50,7 @@ pub enum DamascusDataType {
 /// this library makes no attempt to check this consistency. For instance, it is
 /// up to the user code in this example to make sure no parameter is created
 /// with a DataType of Float and a ValueType of Vec2.
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusValueType {
     // Base types
@@ -61,6 +63,7 @@ pub enum DamascusValueType {
     Vec4 { value: glam::Vec4 },
     Mat3 { value: glam::Mat3 },
     Mat4 { value: glam::Mat4 },
+    Image { value: exr::prelude::AnyImage },
 
     // Composite types
     Camera { value: geometry::camera::Camera },
@@ -158,6 +161,15 @@ impl DamascusValueType {
     }
 
     /// Tries to downcast this value type to a camera
+    pub fn try_to_image(self) -> anyhow::Result<exr::prelude::AnyImage> {
+        if let DamascusValueType::Image { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Image", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a camera
     pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
         if let DamascusValueType::Camera { value } = self {
             Ok(value)
@@ -222,6 +234,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
             // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
+            DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
             _ => egui::Color32::WHITE,
@@ -239,6 +252,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Vec4 => "4d vector",
             DamascusDataType::Mat3 => "3x3 matrix",
             DamascusDataType::Mat4 => "4x4 matrix",
+            DamascusDataType::Image => "image",
             DamascusDataType::Camera => "camera",
             DamascusDataType::Primitive => "primitive",
         })
@@ -372,6 +386,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
+        let input_image =
+            |graph: &mut DamascusGraph, name: &str, default: exr::prelude::AnyImage| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::Image,
+                    DamascusValueType::Image { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
         let input_camera =
             |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
                 graph.add_input_param(
@@ -398,6 +423,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
+        };
+        let output_image = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Image);
         };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
@@ -611,41 +639,7 @@ impl WidgetValueTrait for DamascusValueType {
                     create_mat4_ui(ui, param_name, value);
                 });
             }
-            DamascusValueType::Camera { value } => {
-                ui.label(param_name);
-                ui.horizontal(|ui| {
-                    create_float_ui(ui, "focal_length", &mut value.focal_length, 5.0..=100.0);
-                    create_float_ui(ui, "focal_distance", &mut value.focal_distance, 0.1..=10.0);
-                    create_float_ui(ui, "f_stop", &mut value.f_stop, 0.1..=30.0);
-                    create_float_ui(
-                        ui,
-                        "horizontal_aperture",
-                        &mut value.horizontal_aperture,
-                        0.1..=50.0,
-                    );
-                    create_float_ui(ui, "near_plane", &mut value.near_plane, 0.1..=10.0);
-                    create_float_ui(ui, "far_plane", &mut value.far_plane, 11.0..=10000.0);
-                    create_mat4_ui(ui, "world_matrix", &mut value.world_matrix);
-                    create_bool_ui(
-                        ui,
-                        "enable_depth_of_field",
-                        &mut value.enable_depth_of_field,
-                    )
-                });
-            }
-            DamascusValueType::Primitive { value } => {
-                ui.label(param_name);
-                // if let Some(primitive) = value {
-                //     ui.horizontal(|ui| {
-                //         create_float_ui(
-                //             ui,
-                //             "blend_strength",
-                //             &mut primitive.blend_strength,
-                //             0.0..=1.0,
-                //         );
-                //     });
-                // }
-            }
+            _ => {}
         }
 
         // This allows you to return your responses from the inline widgets.
@@ -840,7 +834,7 @@ impl eframe::App for Damascus {
 
         if let Some(node) = self.user_state.active_node {
             if self.state.graph.nodes.contains_key(node) {
-                let angle = match evaluate_node(&self.state.graph, node, &mut HashMap::new()) {
+                let value_type = match evaluate_node(&self.state.graph, node, &mut HashMap::new()) {
                     Ok(value) => value,
                     Err(error) => {
                         ctx.debug_painter().text(
@@ -855,10 +849,11 @@ impl eframe::App for Damascus {
                     }
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
-                    match angle {
+                    match value_type {
                         DamascusValueType::Mat4 { value } => {
                             viewport_3d.angle = value.x_axis.x;
                         }
+                        DamascusValueType::Image { value } => {}
                         DamascusValueType::Camera { value } => {
                             viewport_3d.scene.render_camera = value;
                         }
@@ -1035,6 +1030,18 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Mat4 { value })
         }
 
+        fn input_image(&mut self, name: &str) -> anyhow::Result<exr::prelude::AnyImage> {
+            self.evaluate_input(name)?.try_to_image()
+        }
+
+        fn output_image(
+            &mut self,
+            name: &str,
+            value: exr::prelude::AnyImage,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Image { value })
+        }
+
         fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
             self.evaluate_input(name)?.try_to_camera()
         }
@@ -1105,15 +1112,15 @@ pub fn evaluate_node(
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
-            let shapeNumber = evaluator.input_uint("shape")?;
+            let shape_number = evaluator.input_uint("shape")?;
             let modifiers = evaluator.input_uint("modifiers")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
             let dimensional_data = evaluator.input_vector4("dimensional_data")?;
-            if let Some(shape) = num::FromPrimitive::from_u32(shapeNumber) {
+            if let Some(shape) = num::FromPrimitive::from_u32(shape_number) {
                 let primitive = geometry::Primitive {
-                    shape: shape, // TODO
+                    shape: shape,                              // TODO
                     transform: geometry::Transform::default(), // TODO
-                    material: materials::Material::default(),   // TODO
+                    material: materials::Material::default(),  // TODO
                     modifiers: modifiers,
                     blend_strength: blend_strength,
                     num_children: children.len() as u32,
@@ -1135,7 +1142,7 @@ fn populate_output(
     value: DamascusValueType,
 ) -> anyhow::Result<DamascusValueType> {
     let output_id = graph[node_id].get_output(param_name)?;
-    outputs_cache.insert(output_id, value);
+    outputs_cache.insert(output_id, value.clone());
     Ok(value)
 }
 
@@ -1153,7 +1160,7 @@ fn evaluate_input(
         // The value was already computed due to the evaluation of some other
         // node. We simply return value from the cache.
         if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            Ok(*other_value)
+            Ok((*other_value).clone())
         }
         // This is the first time encountering this node, so we need to
         // recursively evaluate it.
@@ -1162,13 +1169,14 @@ fn evaluate_input(
             evaluate_node(graph, graph[other_output_id].node, outputs_cache)?;
 
             // Now that we know the value is cached, return it
-            Ok(*outputs_cache
+            Ok((*outputs_cache
                 .get(&other_output_id)
                 .expect("Cache should be populated"))
+            .clone())
         }
     }
     // No existing connection, take the inline value instead.
     else {
-        Ok(graph[input_id].value)
+        Ok(graph[input_id].value.clone())
     }
 }

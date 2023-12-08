@@ -14,8 +14,8 @@ impl Scene {
 
     pub fn create_gpu_primitives(&self) -> [GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [GPUPrimitive::default(); Self::MAX_PRIMITIVES];
-        for (index, primitive) in self.primitives.iter().enumerate() {
-            primitive_array[index] = primitive.to_gpu();
+        for index in 0..self.primitives.len().min(Scene::MAX_PRIMITIVES) {
+            primitive_array[index] = self.primitives[index].to_gpu();
         }
         primitive_array
     }

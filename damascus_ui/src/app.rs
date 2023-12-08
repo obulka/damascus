@@ -6,7 +6,7 @@ use egui_node_graph::*;
 use exr;
 use glam;
 
-use damascus_core::{geometry, materials};
+use damascus_core::{geometry, materials, scene};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -41,6 +41,7 @@ pub enum DamascusDataType {
     // Composite types
     Camera,
     Primitive,
+    Scene,
 }
 
 /// In the graph, input parameters can optionally have a constant value. This
@@ -68,6 +69,7 @@ pub enum DamascusValueType {
     // Composite types
     Camera { value: geometry::camera::Camera },
     Primitive { value: Vec<geometry::Primitive> },
+    Scene { value: scene::Scene },
 }
 
 impl Default for DamascusValueType {
@@ -160,7 +162,7 @@ impl DamascusValueType {
         }
     }
 
-    /// Tries to downcast this value type to a camera
+    /// Tries to downcast this value type to an image
     pub fn try_to_image(self) -> anyhow::Result<exr::prelude::AnyImage> {
         if let DamascusValueType::Image { value } = self {
             Ok(value)
@@ -186,6 +188,15 @@ impl DamascusValueType {
             anyhow::bail!("Invalid cast from {:?} to Primitive", self)
         }
     }
+
+    /// Tries to downcast this value type to a scene
+    pub fn try_to_scene(self) -> anyhow::Result<scene::Scene> {
+        if let DamascusValueType::Scene { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Scene", self)
+        }
+    }
 }
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -198,6 +209,7 @@ pub enum DamascusNodeTemplate {
     Axis,
     Camera,
     Primitive,
+    Scene,
     // Data processing
 }
 
@@ -237,6 +249,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
+            DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
         }
     }
@@ -255,6 +268,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Image => "image",
             DamascusDataType::Camera => "camera",
             DamascusDataType::Primitive => "primitive",
+            DamascusDataType::Scene => "scene",
         })
     }
 }
@@ -272,6 +286,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Axis => "axis",
             DamascusNodeTemplate::Camera => "camera",
             DamascusNodeTemplate::Primitive => "primitive",
+            DamascusNodeTemplate::Scene => "scene",
         })
     }
 
@@ -421,6 +436,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
+        let input_scene =
+            |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::Scene,
+                    DamascusValueType::Scene { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
+
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
         };
@@ -432,6 +459,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_primitive = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
+        };
+        let output_scene = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Scene);
         };
 
         match self {
@@ -474,6 +504,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector4(graph, "dimensional_data", glam::Vec4::X); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
+            DamascusNodeTemplate::Scene => {
+                let default_scene = scene::Scene::default();
+                input_camera(graph, "render_camera", default_scene.render_camera);
+                input_primitive(graph, "primitives", default_scene.primitives);
+                output_scene(graph, "out");
+            }
         }
     }
 }
@@ -490,6 +526,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
             DamascusNodeTemplate::Axis,
             DamascusNodeTemplate::Camera,
             DamascusNodeTemplate::Primitive,
+            DamascusNodeTemplate::Scene,
         ]
     }
 }
@@ -639,7 +676,9 @@ impl WidgetValueTrait for DamascusValueType {
                     create_mat4_ui(ui, param_name, value);
                 });
             }
-            _ => {}
+            _ => {
+                ui.label(param_name);
+            }
         }
 
         // This allows you to return your responses from the inline widgets.
@@ -860,6 +899,9 @@ impl eframe::App for Damascus {
                         DamascusValueType::Primitive { value } => {
                             viewport_3d.scene.primitives = value;
                         }
+                        DamascusValueType::Scene { value } => {
+                            viewport_3d.scene = value;
+                        }
                         _ => {}
                     }
                 }
@@ -1065,6 +1107,18 @@ pub fn evaluate_node(
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Primitive { value })
         }
+
+        fn input_scene(&mut self, name: &str) -> anyhow::Result<scene::Scene> {
+            self.evaluate_input(name)?.try_to_scene()
+        }
+
+        fn output_scene(
+            &mut self,
+            name: &str,
+            value: scene::Scene,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Scene { value })
+        }
     }
 
     let node = &graph[node_id];
@@ -1130,6 +1184,17 @@ pub fn evaluate_node(
             }
             scene_primitives.append(&mut children);
             evaluator.output_primitive("out", scene_primitives)
+        }
+        DamascusNodeTemplate::Scene => {
+            let render_camera = evaluator.input_camera("render_camera")?;
+            let primitives = evaluator.input_primitive("primitives")?;
+            evaluator.output_scene(
+                "out",
+                scene::Scene {
+                    render_camera: render_camera,
+                    primitives: primitives,
+                },
+            )
         }
     }
 }

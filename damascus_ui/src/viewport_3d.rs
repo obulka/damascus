@@ -129,6 +129,7 @@ impl Viewport3d {
             bind_group_layouts: &[
                 &render_globals_bind_group_layout,
                 &render_camera_bind_group_layout,
+                &primitives_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });

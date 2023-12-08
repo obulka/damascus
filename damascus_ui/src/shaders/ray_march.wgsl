@@ -54,6 +54,9 @@ var<uniform> _render_camera: Camera;
 // #include "material.wgsl"
 
 
+let MAX_PRIMITIVES = 1024; // const not supported in the current version
+
+
 struct Transform {
     position: vec3<f32>,
     rotation: vec3<f32>,
@@ -72,14 +75,24 @@ struct Primitive {
     custom_data: vec4<f32>,
 }
 
+
 struct Primitives {
-    primitives: array<Primitive>,
+    primitives: array<Primitive, 1024>,
 }
+
 
 @group(2) @binding(0)
 var<storage, read> _primitives: Primitives;
 
+
 // ray_march.wgsl
+
+
+// TODO pass these as uniforms
+let MAX_RAY_DISTANCE: f32 = 1000.0;
+let HIT_TOLERANCE: f32 = 0.001;
+let MAX_RAY_STEPS: u32 = 10000u;
+let MAX_BRIGHTNESS: f32 = 100000.0;
 
 
 struct VertexOut {
@@ -134,7 +147,57 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
 }
 
 
+fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32 {
+    for (var primitive = 0; primitive < MAX_PRIMITIVES; primitive++) {
+        return _primitives.primitives[primitive].blend_strength;
+    }
+
+    return 1.0;
+}
+
+
+fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
+    var ray_colour = vec4<f32>(0.0);
+    var throughput = vec4<f32>(1.0);
+
+    var distance_travelled: f32 = 0.0;
+    var distance_since_last_bounce = 0.0;
+
+    var last_step_distance = 1.0;
+
+    var iterations: u32 = 0u;
+    var bounces: u32 = 0u;
+
+    var pixel_footprint = HIT_TOLERANCE;
+
+    var origin = ray_origin;
+    var position_on_ray = origin;
+    var direction = ray_direction;
+
+    // while (
+    //     distance_travelled < MAX_RAY_DISTANCE
+    //     && iterations < MAX_RAY_STEPS
+    //     && (throughput.x + throughput.y + throughput.z + throughput.w) > HIT_TOLERANCE
+    //     && length(ray_colour) < MAX_BRIGHTNESS
+    // ) {
+    //     position_on_ray = origin + distance_since_last_bounce * direction;
+
+
+
+    // }
+
+    return ray_colour;
+}
+
+
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    return vec4<f32>(in.ray_direction, 1.0);
+    var ray_colour = vec4<f32>(0.0);
+
+    // for (var path=1; path <= 1; path++) {
+    //     ray_colour += march_path(in.ray_origin, in.ray_direction);
+    // }
+    ray_colour.x = min_distance_to_primitive(in.ray_origin, 0.1);
+
+    return ray_colour;
 }

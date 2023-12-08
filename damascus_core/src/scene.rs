@@ -3,7 +3,7 @@ use crate::geometry::{
     {GPUPrimitive, Primitive},
 };
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct Scene {
     pub render_camera: Camera,
     pub primitives: Vec<Primitive>,

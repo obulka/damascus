@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use crevice::std140::{Std140, AsStd140};
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
@@ -64,7 +65,7 @@ impl Viewport3d {
         // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu()]),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu().as_std140()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_bind_group_layout =
@@ -248,7 +249,7 @@ impl RenderResources {
         queue.write_buffer(
             &self.render_camera_buffer,
             0,
-            bytemuck::cast_slice(&[render_camera]),
+            bytemuck::cast_slice(&[render_camera.as_std140()]),
         );
         queue.write_buffer(
             &self.primitives_buffer,

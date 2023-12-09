@@ -1,3 +1,4 @@
+use crevice::std140::AsStd140;
 use glam::Vec3;
 
 #[repr(C)]
@@ -18,7 +19,7 @@ pub struct GPUMaterial {
     scattering_colour: [f32; 3],
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct Material {
     pub diffuse: f32,
     pub diffuse_colour: Vec3,

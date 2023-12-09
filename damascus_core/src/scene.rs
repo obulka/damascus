@@ -1,3 +1,5 @@
+use crevice::std140::AsStd140;
+
 use crate::geometry::{
     camera::Camera,
     {GPUPrimitive, Primitive},
@@ -10,7 +12,7 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub const MAX_PRIMITIVES: usize = 1024;
+    pub const MAX_PRIMITIVES: usize = 512;
 
     pub fn create_gpu_primitives(&self) -> [GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [GPUPrimitive::default(); Self::MAX_PRIMITIVES];

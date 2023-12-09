@@ -1,33 +1,15 @@
+use crevice::std140::AsStd140;
 use glam::{Vec3, Vec4};
 
 use crate::materials::{GPUMaterial, Material};
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-pub struct GPUTransform {
-    pub position: [f32; 3],
-    pub rotation: [f32; 3],
-    pub scale: [f32; 3],
-    //pub skew: [f32; 3],
-}
-
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct Transform {
     pub position: Vec3,
     pub rotation: Vec3,
     pub scale: Vec3,
     //pub skew: Vec3,
-}
-
-impl Transform {
-    pub fn to_gpu(&self) -> GPUTransform {
-        GPUTransform {
-            position: self.position.to_array(),
-            rotation: self.rotation.to_array(),
-            scale: self.scale.to_array(),
-            //skew: self.skew.to_array(),
-        }
-    }
 }
 
 #[derive(Debug, Default, Copy, Clone, FromPrimitive)]
@@ -61,15 +43,15 @@ pub enum Shapes {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct GPUPrimitive {
     pub shape: u32,
-    pub transform: GPUTransform,
-    pub material: GPUMaterial,
+    // pub transform: Transform,
+    // pub material: GPUMaterial,
     pub modifiers: u32,
     pub blend_strength: f32,
     pub num_children: u32,
-    pub dimensional_data: [f32; 4],
+    pub dimensional_data: Vec4,
 }
 
 #[derive(Debug, Default, Copy, Clone)]
@@ -87,12 +69,12 @@ impl Primitive {
     pub fn to_gpu(&self) -> GPUPrimitive {
         GPUPrimitive {
             shape: self.shape as u32,
-            transform: self.transform.to_gpu(),
-            material: self.material.to_gpu(),
+            // transform: self.transform,
+            // material: self.material.to_gpu(),
             modifiers: self.modifiers,
             blend_strength: self.blend_strength,
             num_children: self.num_children,
-            dimensional_data: self.dimensional_data.to_array(),
+            dimensional_data: self.dimensional_data,
         }
     }
 }

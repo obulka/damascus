@@ -54,7 +54,7 @@ var<uniform> _render_camera: Camera;
 // #include "material.wgsl"
 
 
-let MAX_PRIMITIVES = 1024; // const not supported in the current version
+let MAX_PRIMITIVES = 512; // const not supported in the current version
 
 
 struct Transform {
@@ -67,8 +67,8 @@ struct Transform {
 
 struct Primitive {
     shape: u32,
-    transform: Transform, // Could we just make this a world matrix?
-    material: Material,
+    // transform: Transform, // Could we just make this a world matrix?
+    // material: Material,
     modifiers: u32,
     blend_strength: f32,
     num_children: u32,
@@ -77,7 +77,7 @@ struct Primitive {
 
 
 struct Primitives {
-    primitives: array<Primitive, 1024>,
+    primitives: array<Primitive, MAX_PRIMITIVES>,
 }
 
 
@@ -197,7 +197,9 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     // for (var path=1; path <= 1; path++) {
     //     ray_colour += march_path(in.ray_origin, in.ray_direction);
     // }
-    ray_colour.x = min_distance_to_primitive(in.ray_origin, 0.1);
+    // ray_colour.x = min_distance_to_primitive(in.ray_origin, 0.1);
+
+    ray_colour = in.ray_direction;
 
     return ray_colour;
 }

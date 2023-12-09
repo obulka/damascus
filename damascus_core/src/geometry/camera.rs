@@ -1,13 +1,13 @@
-use bytemuck;
+use crevice::std140::AsStd140;
 use glam::{Mat4, Vec4};
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+#[derive(Debug, Copy, Clone, AsStd140)]
 pub struct GPUCamera {
     // enable_depth_of_field: bool,
     // aperture: f32,
-    world_matrix: [[f32; 4]; 4],
-    inverse_projection_matrix: [[f32; 4]; 4],
+    world_matrix: Mat4,
+    inverse_projection_matrix: Mat4,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -93,7 +93,7 @@ impl Camera {
         GPUCamera {
             // enable_depth_of_field: self.enable_depth_of_field,
             // aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
-            world_matrix: self.world_matrix.to_cols_array_2d(),
+            world_matrix: self.world_matrix,
             inverse_projection_matrix: Self::projection_matrix(
                 self.focal_length,
                 self.horizontal_aperture,
@@ -101,8 +101,7 @@ impl Camera {
                 self.near_plane,
                 self.far_plane,
             )
-            .inverse()
-            .to_cols_array_2d(),
+            .inverse(),
         }
     }
 }

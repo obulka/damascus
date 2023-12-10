@@ -1164,13 +1164,23 @@ pub fn evaluate_node(
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
             let shape_number = evaluator.input_uint("shape")?;
-            let modifiers = evaluator.input_uint("modifiers")?;
-            let blend_strength = evaluator.input_float("blend_strength")?;
-            let dimensional_data = evaluator.input_vector4("dimensional_data")?;
+
             if let Some(shape) = num::FromPrimitive::from_u32(shape_number) {
+                let modifiers = evaluator.input_uint("modifiers")?;
+                let blend_strength = evaluator.input_float("blend_strength")?;
+                let dimensional_data = evaluator.input_vector4("dimensional_data")?;
+                
+                let world_matrix = evaluator.input_matrix4("transform")?;
+                let (scale, quaternion, translation) = world_matrix.to_scale_rotation_translation();
+                let inverse_rotation = glam::Mat3::from_quat(quaternion).inverse();
+
                 let primitive = geometry::Primitive {
                     shape: shape,                              // TODO
-                    transform: geometry::Transform::default(), // TODO
+                    transform: geometry::Transform {
+                        translation: translation,
+                        inverse_rotation: inverse_rotation,
+                        scale: scale,
+                    },
                     material: materials::Material::default(),  // TODO
                     modifiers: modifiers,
                     blend_strength: blend_strength,

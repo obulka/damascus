@@ -1,13 +1,13 @@
 use crevice::std140::AsStd140;
-use glam::{Vec3, Vec4};
+use glam::{Mat3, Vec3, Vec4};
 
 use crate::materials::Material;
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct Transform {
-    pub position: Vec3,
-    pub rotation: Vec3,
+    pub translation: Vec3,
+    pub inverse_rotation: Mat3,
     pub scale: Vec3,
     //pub skew: Vec3,
 }

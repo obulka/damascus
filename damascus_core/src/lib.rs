@@ -4,6 +4,7 @@ extern crate num_derive;
 
 pub mod geometry;
 pub mod materials;
+pub mod math;
 pub mod scene;
 
 // pub fn add(left: usize, right: usize) -> usize {

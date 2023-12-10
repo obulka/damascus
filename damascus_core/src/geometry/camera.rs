@@ -4,8 +4,8 @@ use glam::{Mat4, Vec4};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140)]
 pub struct GPUCamera {
-    // enable_depth_of_field: bool,
-    // aperture: f32,
+    enable_depth_of_field: u32,
+    aperture: f32,
     world_matrix: Mat4,
     inverse_projection_matrix: Mat4,
 }
@@ -89,10 +89,10 @@ impl Camera {
         )
     }
 
-    pub fn to_gpu(&self) -> GPUCamera {
+    pub fn to_gpu(&self) -> Std140GPUCamera {
         GPUCamera {
-            // enable_depth_of_field: self.enable_depth_of_field,
-            // aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
+            enable_depth_of_field: self.enable_depth_of_field as u32,
+            aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             world_matrix: self.world_matrix,
             inverse_projection_matrix: Self::projection_matrix(
                 self.focal_length,
@@ -103,5 +103,6 @@ impl Camera {
             )
             .inverse(),
         }
+        .as_std140()
     }
 }

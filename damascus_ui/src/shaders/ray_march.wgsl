@@ -40,8 +40,8 @@ struct Material {
 
 
 struct Camera {
-    // enable_depth_of_field: bool,
-    // aperture: f32,
+    enable_depth_of_field: u32, // bool isn't host-shareable?
+    aperture: f32,
     world_matrix: mat4x4<f32>,
     inverse_projection_matrix: mat4x4<f32>,
 }

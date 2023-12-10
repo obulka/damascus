@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use crevice::std140::AsStd140;
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
@@ -8,7 +7,7 @@ use eframe::{
 };
 
 use damascus_core::{
-    geometry::{camera::GPUCamera, Std140GPUPrimitive},
+    geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
     scene::Scene,
 };
 
@@ -65,7 +64,7 @@ impl Viewport3d {
         // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu().as_std140()]),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_bind_group_layout =
@@ -237,7 +236,7 @@ impl RenderResources {
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
         angle: f32,
-        render_camera: GPUCamera,
+        render_camera: Std140GPUCamera,
         primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
     ) {
         // Update our uniform buffer with the angle from the UI
@@ -249,7 +248,7 @@ impl RenderResources {
         queue.write_buffer(
             &self.render_camera_buffer,
             0,
-            bytemuck::cast_slice(&[render_camera.as_std140()]),
+            bytemuck::cast_slice(&[render_camera]),
         );
         queue.write_buffer(
             &self.primitives_buffer,

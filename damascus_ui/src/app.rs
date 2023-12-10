@@ -436,17 +436,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
-        let input_scene =
-            |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Scene,
-                    DamascusValueType::Scene { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
+        let input_scene = |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Scene,
+                DamascusValueType::Scene { value: default },
+                InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
 
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);

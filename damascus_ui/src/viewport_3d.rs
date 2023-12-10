@@ -12,14 +12,12 @@ use damascus_core::{
 };
 
 pub struct Viewport3d {
-    pub angle: f32,
     pub scene: Scene,
 }
 
 impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewport3d = Self {
-            angle: 0.0,
             scene: Scene::default(),
         };
 
@@ -32,7 +30,7 @@ impl Viewport3d {
         // Render globals buffer, TODO: actually use this for renderer's global params
         let render_globals_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[0.0_f32; 4]), // 16 bytes aligned!
+            contents: bytemuck::cast_slice(&[0]),
             // Mapping at creation (as done by the create_buffer_init utility)
             // doesn't require us to to add the MAP_WRITE usage
             // (this *happens* to workaround this bug )
@@ -43,7 +41,7 @@ impl Viewport3d {
                 label: Some("viewport 3d render globals bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -184,13 +182,13 @@ impl Viewport3d {
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
-        self.angle += response.drag_delta().x * 0.01;
+        // self.angle += response.drag_delta().x * 0.01;
         self.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
         // Clone locals so we can move them into the paint callback:
-        let angle = self.angle;
         let render_camera = self.scene.render_camera.to_gpu();
+        let num_primitives = self.scene.primitives.len() as u32;
         let primitives = self.scene.create_gpu_primitives();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
@@ -204,7 +202,7 @@ impl Viewport3d {
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue, angle, render_camera, primitives);
+                resources.prepare(device, queue, render_camera, num_primitives, primitives);
             })
             .paint(move |_info, rpass, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
@@ -235,15 +233,15 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
-        angle: f32,
         render_camera: Std140GPUCamera,
+        num_primitives: u32,
         primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
             &self.render_globals_buffer,
             0,
-            bytemuck::cast_slice(&[angle]),
+            bytemuck::cast_slice(&[num_primitives]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,

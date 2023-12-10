@@ -888,9 +888,7 @@ impl eframe::App for Damascus {
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match value_type {
-                        DamascusValueType::Mat4 { value } => {
-                            viewport_3d.angle = value.x_axis.x;
-                        }
+                        DamascusValueType::Mat4 { value } => {}
                         DamascusValueType::Image { value } => {}
                         DamascusValueType::Camera { value } => {
                             viewport_3d.scene.render_camera = value;

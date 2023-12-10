@@ -54,7 +54,7 @@ var<uniform> _render_camera: Camera;
 // #include "material.wgsl"
 
 
-let MAX_PRIMITIVES = 512; // const not supported in the current version
+let MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
 
 
 struct Transform {
@@ -102,13 +102,13 @@ struct VertexOut {
 }
 
 
-struct Uniforms {
-    @size(16) angle: f32, // pad to 16 bytes
+struct RenderGlobals {
+    num_primitives: u32,
 }
 
 
 @group(0) @binding(0)
-var<uniform> _uniforms: Uniforms;
+var<uniform> _render_globals: RenderGlobals;
 
 
 var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
@@ -124,7 +124,7 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     var out: VertexOut;
 
     out.uv_position = vec4<f32>(v_positions[vertex_index], 0.0, 1.0);
-    out.uv_position.x = out.uv_position.x * cos(_uniforms.angle);
+    // out.uv_position.x = out.uv_position.x * cos(x); // TODO something similar to maintain aspect of render cam
 
     out.ray_origin = vec3<f32>(
         _render_camera.world_matrix[0][3],
@@ -148,7 +148,11 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
 
 
 fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32 {
-    for (var primitive = 0; primitive < MAX_PRIMITIVES; primitive++) {
+    for (
+        var primitive = 0u;
+        primitive < min(_render_globals.num_primitives, MAX_PRIMITIVES);
+        primitive++
+    ) {
         return _primitives.primitives[primitive].blend_strength;
     }
 
@@ -197,7 +201,8 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     // for (var path=1; path <= 1; path++) {
     //     ray_colour += march_path(in.ray_origin, in.ray_direction);
     // }
-    ray_colour.x = min_distance_to_primitive(in.ray_origin, 0.1);
+    ray_colour.x = f32(_render_globals.num_primitives);
+    ray_colour.y = f32(_render_globals.num_primitives / 2u);
 
     return ray_colour;
 }

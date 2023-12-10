@@ -191,10 +191,7 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
         _render_camera.inverse_projection_matrix
         * vec4<f32>(v_positions[vertex_index], 0.0, 1.0)
     );
-    direction = (
-        _render_camera.world_matrix
-        * vec4<f32>(direction.xyz, 0.0)
-    );
+    direction = _render_camera.world_matrix * vec4<f32>(direction.xyz, 0.0);
 
     out.ray_direction = normalize(direction.xyz);
 

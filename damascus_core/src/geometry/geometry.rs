@@ -1,7 +1,7 @@
 use crevice::std140::AsStd140;
 use glam::{Vec3, Vec4};
 
-use crate::materials::{GPUMaterial, Material};
+use crate::materials::Material;
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd140)]
@@ -46,8 +46,8 @@ pub enum Shapes {
 #[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct GPUPrimitive {
     pub shape: u32,
-    // pub transform: Transform,
-    // pub material: GPUMaterial,
+    pub transform: Transform,
+    pub material: Material,
     pub modifiers: u32,
     pub blend_strength: f32,
     pub num_children: u32,
@@ -69,8 +69,8 @@ impl Primitive {
     pub fn to_gpu(&self) -> GPUPrimitive {
         GPUPrimitive {
             shape: self.shape as u32,
-            // transform: self.transform,
-            // material: self.material.to_gpu(),
+            transform: self.transform,
+            material: self.material,
             modifiers: self.modifiers,
             blend_strength: self.blend_strength,
             num_children: self.num_children,

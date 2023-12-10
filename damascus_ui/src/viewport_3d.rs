@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crevice::std140::{Std140, AsStd140};
+use crevice::std140::AsStd140;
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
@@ -8,7 +8,7 @@ use eframe::{
 };
 
 use damascus_core::{
-    geometry::{camera::GPUCamera, GPUPrimitive},
+    geometry::{camera::GPUCamera, Std140GPUPrimitive},
     scene::Scene,
 };
 
@@ -238,7 +238,7 @@ impl RenderResources {
         queue: &wgpu::Queue,
         angle: f32,
         render_camera: GPUCamera,
-        primitives: [GPUPrimitive; Scene::MAX_PRIMITIVES],
+        primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(

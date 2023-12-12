@@ -333,6 +333,10 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
                 pixel_footprint,
             );
 
+            if (_render_globals.num_lights > 0u) {
+                return vec4<f32>(_lights.lights[_render_globals.num_lights - 1u].colour, 1.0);
+            }
+
             return vec4<f32>(surface_normal, 1.0);
 
             // distance_since_last_bounce = 0.0;

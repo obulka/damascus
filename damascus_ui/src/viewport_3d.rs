@@ -8,6 +8,7 @@ use eframe::{
 
 use damascus_core::{
     geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
+    lights::Std140GPULight,
     scene::Scene,
 };
 
@@ -121,6 +122,38 @@ impl Viewport3d {
             }],
         });
 
+        // Light storage buffer
+        let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("viewport 3d lights buffer"),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_lights()]),
+            usage: wgpu::BufferUsages::COPY_DST
+                | wgpu::BufferUsages::MAP_READ
+                | wgpu::BufferUsages::STORAGE,
+        });
+        let lights_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("viewport 3d lights bind group layout"),
+                entries: &[wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
+        let lights_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("viewport 3d lights bind group"),
+            layout: &lights_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: lights_buffer.as_entire_binding(),
+            }],
+        });
+
         // Create the pipeline
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("viewport 3d pipeline layout"),
@@ -128,6 +161,7 @@ impl Viewport3d {
                 &render_globals_bind_group_layout,
                 &render_camera_bind_group_layout,
                 &primitives_bind_group_layout,
+                &lights_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });
@@ -174,6 +208,8 @@ impl Viewport3d {
                 render_camera_buffer,
                 primitives_bind_group,
                 primitives_buffer,
+                lights_bind_group,
+                lights_buffer,
             });
 
         Some(viewport3d)
@@ -190,6 +226,8 @@ impl Viewport3d {
         let render_camera = self.scene.render_camera.to_gpu();
         let num_primitives = self.scene.primitives.len() as u32;
         let primitives = self.scene.create_gpu_primitives();
+        let num_lights = self.scene.lights.len() as u32;
+        let lights = self.scene.create_gpu_lights();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -202,7 +240,7 @@ impl Viewport3d {
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue, render_camera, num_primitives, primitives);
+                resources.prepare(device, queue, render_camera, num_primitives, primitives, num_lights, lights);
             })
             .paint(move |_info, rpass, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
@@ -226,6 +264,8 @@ struct RenderResources {
     render_camera_buffer: wgpu::Buffer,
     primitives_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
+    lights_bind_group: wgpu::BindGroup,
+    lights_buffer: wgpu::Buffer,
 }
 
 impl RenderResources {
@@ -236,12 +276,14 @@ impl RenderResources {
         render_camera: Std140GPUCamera,
         num_primitives: u32,
         primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
+        num_lights: u32,
+        lights: [Std140GPULight; Scene::MAX_LIGHTS],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
             &self.render_globals_buffer,
             0,
-            bytemuck::cast_slice(&[num_primitives, 0]),
+            bytemuck::cast_slice(&[num_primitives, num_lights]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,
@@ -253,6 +295,11 @@ impl RenderResources {
             0,
             bytemuck::cast_slice(&[primitives]),
         );
+        queue.write_buffer(
+            &self.lights_buffer,
+            0,
+            bytemuck::cast_slice(&[lights]),
+        );
     }
 
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
@@ -261,6 +308,7 @@ impl RenderResources {
         render_pass.set_bind_group(0, &self.render_globals_bind_group, &[]);
         render_pass.set_bind_group(1, &self.render_camera_bind_group, &[]);
         render_pass.set_bind_group(2, &self.primitives_bind_group, &[]);
+        render_pass.set_bind_group(3, &self.lights_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

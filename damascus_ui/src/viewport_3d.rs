@@ -30,7 +30,7 @@ impl Viewport3d {
         // Render globals buffer, TODO: actually use this for renderer's global params
         let render_globals_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[0]),
+            contents: bytemuck::cast_slice(&[0, 0]),
             // Mapping at creation (as done by the create_buffer_init utility)
             // doesn't require us to to add the MAP_WRITE usage
             // (this *happens* to workaround this bug )
@@ -241,7 +241,7 @@ impl RenderResources {
         queue.write_buffer(
             &self.render_globals_buffer,
             0,
-            bytemuck::cast_slice(&[num_primitives]),
+            bytemuck::cast_slice(&[num_primitives, 0]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,

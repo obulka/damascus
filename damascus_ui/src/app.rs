@@ -6,7 +6,7 @@ use egui_node_graph::*;
 use exr;
 use glam;
 
-use damascus_core::{geometry, materials, scene};
+use damascus_core::{geometry, lights, materials, scene};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -40,6 +40,7 @@ pub enum DamascusDataType {
 
     // Composite types
     Camera,
+    Light,
     Primitive,
     Scene,
 }
@@ -68,6 +69,7 @@ pub enum DamascusValueType {
 
     // Composite types
     Camera { value: geometry::camera::Camera },
+    Light { value: Vec<lights::Light> },
     Primitive { value: Vec<geometry::Primitive> },
     Scene { value: scene::Scene },
 }
@@ -181,6 +183,15 @@ impl DamascusValueType {
     }
 
     /// Tries to downcast this value type to a primitive
+    pub fn try_to_light(self) -> anyhow::Result<Vec<lights::Light>> {
+        if let DamascusValueType::Light { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Light", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a primitive
     pub fn try_to_primitive(self) -> anyhow::Result<Vec<geometry::Primitive>> {
         if let DamascusValueType::Primitive { value } = self {
             Ok(value)
@@ -208,6 +219,7 @@ pub enum DamascusNodeTemplate {
     // Data creation
     Axis,
     Camera,
+    Light,
     Primitive,
     Scene,
     // Data processing
@@ -248,6 +260,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
+            DamascusDataType::Light => egui::Color32::from_rgb(255, 204, 128),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
@@ -267,6 +280,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Mat4 => "4x4 matrix",
             DamascusDataType::Image => "image",
             DamascusDataType::Camera => "camera",
+            DamascusDataType::Light => "light",
             DamascusDataType::Primitive => "primitive",
             DamascusDataType::Scene => "scene",
         })
@@ -285,6 +299,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         Cow::Borrowed(match self {
             DamascusNodeTemplate::Axis => "axis",
             DamascusNodeTemplate::Camera => "camera",
+            DamascusNodeTemplate::Light => "light",
             DamascusNodeTemplate::Primitive => "primitive",
             DamascusNodeTemplate::Scene => "scene",
         })
@@ -424,6 +439,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
+        let input_light = |graph: &mut DamascusGraph, name: &str, default: Vec<lights::Light>| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Light,
+                DamascusValueType::Light { value: default },
+                InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
+
         let input_primitive =
             |graph: &mut DamascusGraph, name: &str, default: Vec<geometry::Primitive>| {
                 graph.add_input_param(
@@ -455,6 +481,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
+        };
+        let output_light = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Light);
         };
         let output_primitive = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
@@ -491,6 +520,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_camera(graph, "out");
             }
+            DamascusNodeTemplate::Light => {
+                let default_light = lights::Light::default();
+                input_light(graph, "lights", vec![]);
+                input_uint(graph, "light_type", default_light.light_type as u32); // TODO make a dropdown for enums
+                input_vector3(graph, "dimensional_data", default_light.dimensional_data);
+                input_float(graph, "intensity", default_light.intensity);
+                input_float(graph, "falloff", default_light.falloff);
+                input_vector3(graph, "colour", default_light.colour);
+                input_float(graph, "shadow_hardness", default_light.shadow_hardness);
+                input_bool(graph, "soften_shadows", default_light.soften_shadows);
+                output_light(graph, "out");
+            }
             DamascusNodeTemplate::Primitive => {
                 let default_primitive = geometry::Primitive::default();
                 input_primitive(graph, "siblings", vec![]);
@@ -507,6 +548,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 let default_scene = scene::Scene::default();
                 input_camera(graph, "render_camera", default_scene.render_camera);
                 input_primitive(graph, "primitives", default_scene.primitives);
+                input_light(graph, "lights", default_scene.lights);
                 output_scene(graph, "out");
             }
         }
@@ -524,6 +566,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
         vec![
             DamascusNodeTemplate::Axis,
             DamascusNodeTemplate::Camera,
+            DamascusNodeTemplate::Light,
             DamascusNodeTemplate::Primitive,
             DamascusNodeTemplate::Scene,
         ]
@@ -893,6 +936,9 @@ impl eframe::App for Damascus {
                         DamascusValueType::Camera { value } => {
                             viewport_3d.scene.render_camera = value;
                         }
+                        DamascusValueType::Light { value } => {
+                            viewport_3d.scene.lights = value;
+                        }
                         DamascusValueType::Primitive { value } => {
                             viewport_3d.scene.primitives = value;
                         }
@@ -1093,6 +1139,18 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Camera { value })
         }
 
+        fn input_light(&mut self, name: &str) -> anyhow::Result<Vec<lights::Light>> {
+            self.evaluate_input(name)?.try_to_light()
+        }
+
+        fn output_light(
+            &mut self,
+            name: &str,
+            value: Vec<lights::Light>,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Light { value })
+        }
+
         fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<geometry::Primitive>> {
             self.evaluate_input(name)?.try_to_primitive()
         }
@@ -1160,6 +1218,32 @@ pub fn evaluate_node(
                 ),
             )
         }
+        DamascusNodeTemplate::Light => {
+            let mut scene_lights = evaluator.input_light("lights")?;
+            let light_type = evaluator.input_uint("light_type")?;
+
+            if let Some(light_type) = num::FromPrimitive::from_u32(light_type) {
+                let dimensional_data = evaluator.input_vector3("dimensional_data")?;
+                let intensity = evaluator.input_float("intensity")?;
+                let falloff = evaluator.input_float("falloff")?;
+                let colour = evaluator.input_vector3("colour")?;
+                let shadow_hardness = evaluator.input_float("shadow_hardness")?;
+                let soften_shadows = evaluator.input_bool("soften_shadows")?;
+
+                let light = lights::Light {
+                    light_type: light_type,
+                    dimensional_data: dimensional_data,
+                    intensity: intensity,
+                    falloff: falloff,
+                    colour: colour,
+                    shadow_hardness: shadow_hardness,
+                    soften_shadows: soften_shadows,
+                };
+
+                scene_lights.push(light);
+            }
+            evaluator.output_light("out", scene_lights)
+        }
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
@@ -1169,19 +1253,19 @@ pub fn evaluate_node(
                 let modifiers = evaluator.input_uint("modifiers")?;
                 let blend_strength = evaluator.input_float("blend_strength")?;
                 let dimensional_data = evaluator.input_vector4("dimensional_data")?;
-                
+
                 let world_matrix = evaluator.input_matrix4("world_matrix")?;
                 let (scale, quaternion, translation) = world_matrix.to_scale_rotation_translation();
                 let inverse_rotation = glam::Mat3::from_quat(quaternion).inverse();
 
                 let primitive = geometry::Primitive {
-                    shape: shape,                              // TODO
+                    shape: shape, // TODO
                     transform: geometry::Transform {
                         translation: translation,
                         inverse_rotation: inverse_rotation,
                         scale: scale,
                     },
-                    material: materials::Material::default(),  // TODO
+                    material: materials::Material::default(), // TODO
                     modifiers: modifiers,
                     blend_strength: blend_strength,
                     num_children: children.len() as u32,
@@ -1194,11 +1278,13 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Scene => {
             let render_camera = evaluator.input_camera("render_camera")?;
+            let lights = evaluator.input_light("lights")?;
             let primitives = evaluator.input_primitive("primitives")?;
             evaluator.output_scene(
                 "out",
                 scene::Scene {
                     render_camera: render_camera,
+                    lights: lights,
                     primitives: primitives,
                 },
             )

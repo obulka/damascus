@@ -85,6 +85,30 @@ struct Primitives {
 var<storage, read> _primitives: Primitives;
 
 
+// lights.wgsl
+
+
+let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+
+
+struct Light {
+    light_type: u32,
+    dimensional_data: vec3<f32>,
+    intensity: f32,
+    falloff: f32,
+    colour: vec3<f32>,
+    shadow_hardness: f32,
+    soften_shadows: u32,
+}
+
+struct Lights {
+    lights: array<Light, MAX_LIGHTS>,
+}
+
+@group(3) @binding(0)
+var<storage, read> _lights: Lights;
+
+
 // sdfs.wgsl
 
 
@@ -165,6 +189,7 @@ struct VertexOut {
 
 struct RenderGlobals {
     num_primitives: u32,
+    num_lights: u32,
 }
 
 

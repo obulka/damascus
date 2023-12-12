@@ -15,6 +15,31 @@
 
 // math.wgsl
 
+// wish we could overload functions
+fn max_component_2(vector_: vec2<f32>) -> f32 {
+    return max(vector_.x, vector_.y);
+}
+
+fn max_component_3(vector_: vec3<f32>) -> f32 {
+    return max(vector_.x, max(vector_.y, vector_.z));
+}
+
+fn max_component_4(vector_: vec4<f32>) -> f32 {
+    return max(vector_.x, max(vector_.y, max(vector_.z, vector_.w)));
+}
+
+fn min_component_2(vector_: vec2<f32>) -> f32 {
+    return min(vector_.x, vector_.y);
+}
+
+fn min_component_3(vector_: vec3<f32>) -> f32 {
+    return min(vector_.x, min(vector_.y, vector_.z));
+}
+
+fn min_component_4(vector_: vec4<f32>) -> f32 {
+    return min(vector_.x, min(vector_.y, min(vector_.z, vector_.w)));
+}
+
 
 // materials/material.wgsl
 
@@ -34,6 +59,39 @@ struct Material {
     scattering_coefficient: f32,
     scattering_colour: vec3<f32>,
 }
+
+
+/**
+ * Handle the interaction between a ray and the surface of a material.
+ *
+ * @arg step_distance: The last step size to be marched.
+ * @arg pixel_footprint: A value proportional to the amount of world
+ *     space that fills a pixel, like the distance from camera.
+ * @arg distance: The distance travelled since the last bounce.
+ * @arg intersection_position: The position at which the ray
+ *     intersects the geometry.
+ * @arg surface_normal: The surface normal at the intersection point.
+ * @arg direction: The incoming ray direction.
+ * @arg origin: The ray origin.
+ * @arg ray_colour: The colour of the ray.
+ * @arg throughput: The throughput of the ray.
+ * @arg material: The material to interact with.
+ */
+fn material_interaction(
+    step_distance: f32,
+    pixel_footprint: f32,
+    distance: f32,
+    intersection_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    direction: ptr<function, vec3<f32>>,
+    origin: ptr<function, vec3<f32>>,
+    ray_colour: ptr<function, vec4<f32>>,
+    throughput: ptr<function, vec4<f32>>,
+    material: ptr<function, Material>,
+) {
+    *ray_colour = vec4<f32>((*material).diffuse_colour, 1.0);
+}
+
 
 // geometry/camera.wgsl
 // #include "math.h"
@@ -172,6 +230,8 @@ let HIT_TOLERANCE: f32 = 0.001;
 let MAX_RAY_STEPS: u32 = 10000u;
 let MAX_BRIGHTNESS: f32 = 100000.0;
 let LEVEL_OF_DETAIL: bool = true;
+let BOUNCES_PER_RAY: u32 = 5u;
+let ROULETTE: bool = true;
 
 // Constants
 let NORMAL_OFFSET_0 = vec3<f32>(0.5773, -0.5773, -0.5773);
@@ -230,7 +290,11 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
 }
 
 
-fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32 {
+fn min_distance_to_primitive(
+    ray_origin: vec3<f32>,
+    pixel_footprint: f32,
+    material: ptr<function, Material>,
+) -> f32 {
     var min_distance: f32 = MAX_RAY_DISTANCE;
 
     for (
@@ -249,6 +313,7 @@ fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32
 
         if (abs(distance_to_current) < abs(min_distance)) {
             min_distance = distance_to_current;
+            *material = primitive.material;
         }
     }
 
@@ -267,27 +332,40 @@ fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32
  * @returns: The normalized surface normal.
  */
 fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
+    var material: Material;
     return normalize(
         NORMAL_OFFSET_0 * min_distance_to_primitive(
             position + NORMAL_OFFSET_0 * HIT_TOLERANCE,
             pixel_footprint,
+            &material,
         )
         + NORMAL_OFFSET_1 * min_distance_to_primitive(
             position + NORMAL_OFFSET_1 * HIT_TOLERANCE,
             pixel_footprint,
+            &material,
         )
         + NORMAL_OFFSET_2 * min_distance_to_primitive(
             position + NORMAL_OFFSET_2 * HIT_TOLERANCE,
             pixel_footprint,
+            &material,
         )
         + NORMAL_OFFSET_3 * min_distance_to_primitive(
             position + NORMAL_OFFSET_3 * HIT_TOLERANCE,
             pixel_footprint,
+            &material,
         )
     );
 }
 
 
+/**
+ * March a path through the scene.
+ *
+ * @arg ray_origin: The origin of the ray.
+ * @arg ray_direction: The direction of the ray.
+ *
+ * @returns: The ray colour.
+ */
 fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
     var ray_colour = vec4<f32>(0.0);
     var throughput = vec4<f32>(1.0);
@@ -302,10 +380,12 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
 
     var pixel_footprint: f32 = HIT_TOLERANCE;
 
+    // Data for the next ray
     var origin: vec3<f32> = ray_origin;
     var position_on_ray: vec3<f32> = origin;
     var direction: vec3<f32> = ray_direction;
 
+    // March the ray
     while (
         distance_travelled < MAX_RAY_DISTANCE
         && iterations < MAX_RAY_STEPS
@@ -314,17 +394,25 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
     ) {
         position_on_ray = origin + distance_since_last_bounce * direction;
 
+
+        var nearest_material: Material;
+        // Keep the signed distance so we know whether or not we are inside the object
         var signed_step_distance = min_distance_to_primitive(
             position_on_ray,
             pixel_footprint,
+            &nearest_material,
         );
 
+        // Take the absolute value, the true shortest distance to a surface
         var step_distance = abs(signed_step_distance);
 
+        // Keep track of the distance the ray has travelled
         distance_travelled += step_distance;
         distance_since_last_bounce += step_distance;
 
+        // Have we hit the nearest object?
         if (step_distance < pixel_footprint) {
+            bounces++;
             var intersection_position = position_on_ray + step_distance * direction;
 
             // The normal to the surface at that position
@@ -333,14 +421,38 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
                 pixel_footprint,
             );
 
-            if (_render_globals.num_lights > 0u) {
-                return vec4<f32>(_lights.lights[_render_globals.num_lights - 1u].colour, 1.0);
+            // Early exit for the various AOVs that are not 'beauty'
+            // if (_render_globals.output_aov > BEAUTY) {
+            //     return aov_data(_render_globals.output_aov)
+            // }
+
+            material_interaction(
+                step_distance,
+                pixel_footprint,
+                distance_since_last_bounce,
+                intersection_position,
+                surface_normal,
+                &direction,
+                &origin,
+                &ray_colour,
+                &throughput,
+                &nearest_material,
+            );
+
+            // Exit if we have reached the bounce limit or with a random chance
+            var rng: f32 = 0.0; // TODO add random functions
+            var exit_probability: f32 = max_component_3(throughput.xyz);
+            if (bounces > BOUNCES_PER_RAY || (ROULETTE && exit_probability <= rng)) {
+                return ray_colour; // TODO object id in alpha after you can sample
+            }
+            else if (ROULETTE) {
+                // Account for the lost intensity from the early exits
+                throughput /= vec4<f32>(exit_probability);
             }
 
-            return vec4<f32>(surface_normal, 1.0);
-
-            // distance_since_last_bounce = 0.0;
-            // pixel_footprint = HIT_TOLERANCE;
+            distance_since_last_bounce = 0.0;
+            // Reset the pixel footprint so multiple reflections don't reduce precision
+            pixel_footprint = HIT_TOLERANCE;
         }
         else if (LEVEL_OF_DETAIL) {
             pixel_footprint += HIT_TOLERANCE * step_distance;

@@ -496,7 +496,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
                 input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
-                input_matrix4(graph, "transform", glam::Mat4::IDENTITY);
+                input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
                 // input_material(graph, "material", default_primitive.material); // TODO
                 input_uint(graph, "modifiers", default_primitive.modifiers as u32); // TODO make this a series of bools
                 input_float(graph, "blend_strength", default_primitive.blend_strength);
@@ -614,27 +614,27 @@ impl WidgetValueTrait for DamascusValueType {
             });
         };
         let create_mat4_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat4| {
-            ui.vertical(|ui| {
+            ui.horizontal(|ui| {
                 ui.label(label);
-                ui.horizontal(|ui| {
+                ui.vertical(|ui| {
                     ui.add(DragValue::new(&mut value.x_axis.x));
                     ui.add(DragValue::new(&mut value.x_axis.y));
                     ui.add(DragValue::new(&mut value.x_axis.z));
                     ui.add(DragValue::new(&mut value.x_axis.w));
                 });
-                ui.horizontal(|ui| {
+                ui.vertical(|ui| {
                     ui.add(DragValue::new(&mut value.y_axis.x));
                     ui.add(DragValue::new(&mut value.y_axis.y));
                     ui.add(DragValue::new(&mut value.y_axis.z));
                     ui.add(DragValue::new(&mut value.y_axis.w));
                 });
-                ui.horizontal(|ui| {
+                ui.vertical(|ui| {
                     ui.add(DragValue::new(&mut value.z_axis.x));
                     ui.add(DragValue::new(&mut value.z_axis.y));
                     ui.add(DragValue::new(&mut value.z_axis.z));
                     ui.add(DragValue::new(&mut value.z_axis.w));
                 });
-                ui.horizontal(|ui| {
+                ui.vertical(|ui| {
                     ui.add(DragValue::new(&mut value.w_axis.x));
                     ui.add(DragValue::new(&mut value.w_axis.y));
                     ui.add(DragValue::new(&mut value.w_axis.z));
@@ -1128,7 +1128,7 @@ pub fn evaluate_node(
             let scale = evaluator.input_vector3("scale")?;
 
             let quaternion =
-                glam::Quat::from_euler(glam::EulerRot::ZXY, rotate.x, rotate.y, rotate.z);
+                glam::Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
 
             evaluator.output_matrix4(
                 "out",
@@ -1170,7 +1170,7 @@ pub fn evaluate_node(
                 let blend_strength = evaluator.input_float("blend_strength")?;
                 let dimensional_data = evaluator.input_vector4("dimensional_data")?;
                 
-                let world_matrix = evaluator.input_matrix4("transform")?;
+                let world_matrix = evaluator.input_matrix4("world_matrix")?;
                 let (scale, quaternion, translation) = world_matrix.to_scale_rotation_translation();
                 let inverse_rotation = glam::Mat3::from_quat(quaternion).inverse();
 

@@ -182,9 +182,9 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     // out.uv_position.x = out.uv_position.x * cos(x); // TODO something similar to maintain aspect of render cam
 
     out.ray_origin = vec3<f32>(
-        _render_camera.world_matrix[0][3],
-        _render_camera.world_matrix[1][3],
-        _render_camera.world_matrix[2][3]
+        _render_camera.world_matrix[3][0],
+        _render_camera.world_matrix[3][1],
+        _render_camera.world_matrix[3][2]
     );
 
     var direction: vec4<f32> = (

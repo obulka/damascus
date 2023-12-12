@@ -149,6 +149,12 @@ let MAX_RAY_STEPS: u32 = 10000u;
 let MAX_BRIGHTNESS: f32 = 100000.0;
 let LEVEL_OF_DETAIL: bool = true;
 
+// Constants
+let NORMAL_OFFSET_0 = vec3<f32>(0.5773, -0.5773, -0.5773);
+let NORMAL_OFFSET_1 = vec3<f32>(-0.5773, -0.5773, 0.5773);
+let NORMAL_OFFSET_2 = vec3<f32>(-0.5773, 0.5773, -0.5773);
+let NORMAL_OFFSET_3 = vec3<f32>(0.5773, 0.5773, 0.5773);
+
 
 struct VertexOut {
     @location(0) ray_direction: vec3<f32>,
@@ -225,6 +231,38 @@ fn min_distance_to_primitive(ray_origin: vec3<f32>, pixel_footprint: f32) -> f32
 }
 
 
+/**
+ * Estimate the surface normal at the closest point on the closest
+ * object to a point.
+ *
+ * @arg position: The point near which to get the surface normal
+ * @arg pixel_footprint: A value proportional to the amount of world
+ *     space that fills a pixel, like the distance from camera.
+ *
+ * @returns: The normalized surface normal.
+ */
+fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
+    return normalize(
+        NORMAL_OFFSET_0 * min_distance_to_primitive(
+            position + NORMAL_OFFSET_0 * HIT_TOLERANCE,
+            pixel_footprint,
+        )
+        + NORMAL_OFFSET_1 * min_distance_to_primitive(
+            position + NORMAL_OFFSET_1 * HIT_TOLERANCE,
+            pixel_footprint,
+        )
+        + NORMAL_OFFSET_2 * min_distance_to_primitive(
+            position + NORMAL_OFFSET_2 * HIT_TOLERANCE,
+            pixel_footprint,
+        )
+        + NORMAL_OFFSET_3 * min_distance_to_primitive(
+            position + NORMAL_OFFSET_3 * HIT_TOLERANCE,
+            pixel_footprint,
+        )
+    );
+}
+
+
 fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
     var ray_colour = vec4<f32>(0.0);
     var throughput = vec4<f32>(1.0);
@@ -262,9 +300,15 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
         distance_since_last_bounce += step_distance;
 
         if (step_distance < pixel_footprint) {
-            return throughput;
+            var intersection_position = position_on_ray + step_distance * direction;
 
-            // var intersection_position = position_on_ray + step_distance * direction;
+            // The normal to the surface at that position
+            var surface_normal: vec3<f32> = sign(last_step_distance) * estimate_surface_normal(
+                intersection_position,
+                pixel_footprint,
+            );
+
+            return vec4<f32>(surface_normal, 1.0);
 
             // distance_since_last_bounce = 0.0;
             // pixel_footprint = HIT_TOLERANCE;

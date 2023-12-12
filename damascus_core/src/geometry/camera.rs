@@ -70,7 +70,7 @@ impl Camera {
             Vec4::new(2. * focal_length / horizontal_aperture, 0., 0., 0.),
             Vec4::new(
                 0.,
-                2. * focal_length / horizontal_aperture / aspect_ratio,
+                2. * focal_length / horizontal_aperture * aspect_ratio,
                 0.,
                 0.,
             ),

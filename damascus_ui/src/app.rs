@@ -41,6 +41,7 @@ pub enum DamascusDataType {
     // Composite types
     Camera,
     Light,
+    Material,
     Primitive,
     Scene,
 }
@@ -70,6 +71,7 @@ pub enum DamascusValueType {
     // Composite types
     Camera { value: geometry::camera::Camera },
     Light { value: Vec<lights::Light> },
+    Material { value: materials::Material },
     Primitive { value: Vec<geometry::Primitive> },
     Scene { value: scene::Scene },
 }
@@ -191,6 +193,15 @@ impl DamascusValueType {
         }
     }
 
+    /// Tries to downcast this value type to a material
+    pub fn try_to_material(self) -> anyhow::Result<materials::Material> {
+        if let DamascusValueType::Material { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Material", self)
+        }
+    }
+
     /// Tries to downcast this value type to a primitive
     pub fn try_to_primitive(self) -> anyhow::Result<Vec<geometry::Primitive>> {
         if let DamascusValueType::Primitive { value } = self {
@@ -220,6 +231,7 @@ pub enum DamascusNodeTemplate {
     Axis,
     Camera,
     Light,
+    Material,
     Primitive,
     Scene,
     // Data processing
@@ -254,13 +266,13 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             // DamascusDataType::Integer => egui::Color32::from_rgb(255, 102, 0),
             // DamascusDataType::UnsignedInteger => egui::Color32::from_rgb(255, 102, 0),
             // DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
-            // DamascusDataType::Vec3 => egui::Color32::from_rgb(79, 0, 107),
             // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
             // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             DamascusDataType::Light => egui::Color32::from_rgb(255, 204, 128),
+            DamascusDataType::Material => egui::Color32::from_rgb(255, 102, 0),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
             DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
@@ -281,6 +293,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Image => "image",
             DamascusDataType::Camera => "camera",
             DamascusDataType::Light => "light",
+            DamascusDataType::Material => "material",
             DamascusDataType::Primitive => "primitive",
             DamascusDataType::Scene => "scene",
         })
@@ -300,6 +313,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Axis => "axis",
             DamascusNodeTemplate::Camera => "camera",
             DamascusNodeTemplate::Light => "light",
+            DamascusNodeTemplate::Material => "material",
             DamascusNodeTemplate::Primitive => "primitive",
             DamascusNodeTemplate::Scene => "scene",
         })
@@ -450,6 +464,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             );
         };
 
+        let input_material =
+            |graph: &mut DamascusGraph, name: &str, default: materials::Material| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::Material,
+                    DamascusValueType::Material { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
+
         let input_primitive =
             |graph: &mut DamascusGraph, name: &str, default: Vec<geometry::Primitive>| {
                 graph.add_input_param(
@@ -484,6 +510,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_light = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Light);
+        };
+        let output_material = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Material);
         };
         let output_primitive = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
@@ -532,13 +561,50 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_bool(graph, "soften_shadows", default_light.soften_shadows);
                 output_light(graph, "out");
             }
+            DamascusNodeTemplate::Material => {
+                let default_material = materials::Material::default();
+                input_float(graph, "diffuse", default_material.diffuse);
+                input_vector3(graph, "diffuse_colour", default_material.diffuse_colour);
+                input_float(graph, "specular", default_material.specular);
+                input_float(
+                    graph,
+                    "specular_roughness",
+                    default_material.specular_roughness,
+                );
+                input_vector3(graph, "specular_colour", default_material.specular_colour);
+                input_float(graph, "transmissive", default_material.transmissive);
+                input_float(
+                    graph,
+                    "transmissive_roughness",
+                    default_material.transmissive_roughness,
+                );
+                input_vector3(
+                    graph,
+                    "transmissive_colour",
+                    default_material.transmissive_colour,
+                );
+                input_float(graph, "emissive", default_material.emissive);
+                input_vector3(graph, "emissive_colour", default_material.emissive_colour);
+                input_float(graph, "refractive_index", default_material.refractive_index);
+                input_float(
+                    graph,
+                    "scattering_coefficient",
+                    default_material.scattering_coefficient,
+                );
+                input_vector3(
+                    graph,
+                    "scattering_colour",
+                    default_material.scattering_colour,
+                );
+                output_material(graph, "out");
+            }
             DamascusNodeTemplate::Primitive => {
                 let default_primitive = geometry::Primitive::default();
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
+                input_material(graph, "material", default_primitive.material);
                 input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
                 input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
-                // input_material(graph, "material", default_primitive.material); // TODO
                 input_uint(graph, "modifiers", default_primitive.modifiers as u32); // TODO make this a series of bools
                 input_float(graph, "blend_strength", default_primitive.blend_strength);
                 input_vector4(graph, "dimensional_data", glam::Vec4::X); // TODO make this dynamic based on shape
@@ -567,6 +633,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
             DamascusNodeTemplate::Axis,
             DamascusNodeTemplate::Camera,
             DamascusNodeTemplate::Light,
+            DamascusNodeTemplate::Material,
             DamascusNodeTemplate::Primitive,
             DamascusNodeTemplate::Scene,
         ]
@@ -931,8 +998,8 @@ impl eframe::App for Damascus {
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match value_type {
-                        DamascusValueType::Mat4 { value } => {}
-                        DamascusValueType::Image { value } => {}
+                        // DamascusValueType::Mat4 { value } => {}
+                        // DamascusValueType::Image { value } => {}
                         DamascusValueType::Camera { value } => {
                             viewport_3d.scene.render_camera = value;
                         }
@@ -1151,6 +1218,18 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Light { value })
         }
 
+        fn input_material(&mut self, name: &str) -> anyhow::Result<materials::Material> {
+            self.evaluate_input(name)?.try_to_material()
+        }
+
+        fn output_material(
+            &mut self,
+            name: &str,
+            value: materials::Material,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::Material { value })
+        }
+
         fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<geometry::Primitive>> {
             self.evaluate_input(name)?.try_to_primitive()
         }
@@ -1244,12 +1323,45 @@ pub fn evaluate_node(
             }
             evaluator.output_light("out", scene_lights)
         }
+        DamascusNodeTemplate::Material => {
+            let diffuse = evaluator.input_float("diffuse")?;
+            let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
+            let specular = evaluator.input_float("specular")?;
+            let specular_roughness = evaluator.input_float("specular_roughness")?;
+            let specular_colour = evaluator.input_vector3("specular_colour")?;
+            let transmissive = evaluator.input_float("transmissive")?;
+            let transmissive_roughness = evaluator.input_float("transmissive_roughness")?;
+            let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
+            let emissive = evaluator.input_float("emissive")?;
+            let emissive_colour = evaluator.input_vector3("emissive_colour")?;
+            let refractive_index = evaluator.input_float("refractive_index")?;
+            let scattering_coefficient = evaluator.input_float("scattering_coefficient")?;
+            let scattering_colour = evaluator.input_vector3("scattering_colour")?;
+
+            let material = materials::Material {
+                diffuse: diffuse,
+                diffuse_colour: diffuse_colour,
+                specular: specular,
+                specular_roughness: specular_roughness,
+                specular_colour: specular_colour,
+                transmissive: transmissive,
+                transmissive_roughness: transmissive_roughness,
+                transmissive_colour: transmissive_colour,
+                emissive: emissive,
+                emissive_colour: emissive_colour,
+                refractive_index: refractive_index,
+                scattering_coefficient: scattering_coefficient,
+                scattering_colour: scattering_colour,
+            };
+            evaluator.output_material("out", material)
+        }
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
             let shape_number = evaluator.input_uint("shape")?;
 
             if let Some(shape) = num::FromPrimitive::from_u32(shape_number) {
+                let material = evaluator.input_material("material")?;
                 let modifiers = evaluator.input_uint("modifiers")?;
                 let blend_strength = evaluator.input_float("blend_strength")?;
                 let dimensional_data = evaluator.input_vector4("dimensional_data")?;
@@ -1265,7 +1377,7 @@ pub fn evaluate_node(
                         inverse_rotation: inverse_rotation,
                         scale: scale,
                     },
-                    material: materials::Material::default(), // TODO
+                    material: material,
                     modifiers: modifiers,
                     blend_strength: blend_strength,
                     num_children: children.len() as u32,

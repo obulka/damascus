@@ -240,7 +240,15 @@ impl Viewport3d {
         let cb = egui_wgpu::CallbackFn::new()
             .prepare(move |device, queue, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(device, queue, render_camera, num_primitives, primitives, num_lights, lights);
+                resources.prepare(
+                    device,
+                    queue,
+                    render_camera,
+                    num_primitives,
+                    primitives,
+                    num_lights,
+                    lights,
+                );
             })
             .paint(move |_info, rpass, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
@@ -295,11 +303,7 @@ impl RenderResources {
             0,
             bytemuck::cast_slice(&[primitives]),
         );
-        queue.write_buffer(
-            &self.lights_buffer,
-            0,
-            bytemuck::cast_slice(&[lights]),
-        );
+        queue.write_buffer(&self.lights_buffer, 0, bytemuck::cast_slice(&[lights]));
     }
 
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {

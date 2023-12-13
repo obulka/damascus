@@ -9,7 +9,7 @@ use eframe::{
 use damascus_core::{
     geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
     lights::Std140GPULight,
-    scene::Scene,
+    scene::{Scene, Std140SceneGlobals},
 };
 
 pub struct Viewport3d {
@@ -31,7 +31,7 @@ impl Viewport3d {
         // Render globals buffer, TODO: actually use this for renderer's global params
         let render_globals_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[0, 0]),
+            contents: bytemuck::cast_slice(&[viewport3d.scene.create_scene_globals()]),
             // Mapping at creation (as done by the create_buffer_init utility)
             // doesn't require us to to add the MAP_WRITE usage
             // (this *happens* to workaround this bug )
@@ -223,10 +223,9 @@ impl Viewport3d {
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
         // Clone locals so we can move them into the paint callback:
+        let scene_globals = self.scene.create_scene_globals();
         let render_camera = self.scene.render_camera.to_gpu();
-        let num_primitives = self.scene.primitives.len() as u32;
         let primitives = self.scene.create_gpu_primitives();
-        let num_lights = self.scene.lights.len() as u32;
         let lights = self.scene.create_gpu_lights();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
@@ -243,10 +242,9 @@ impl Viewport3d {
                 resources.prepare(
                     device,
                     queue,
+                    scene_globals,
                     render_camera,
-                    num_primitives,
                     primitives,
-                    num_lights,
                     lights,
                 );
             })
@@ -281,17 +279,16 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
+        scene_globals: Std140SceneGlobals,
         render_camera: Std140GPUCamera,
-        num_primitives: u32,
         primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
-        num_lights: u32,
         lights: [Std140GPULight; Scene::MAX_LIGHTS],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
             &self.render_globals_buffer,
             0,
-            bytemuck::cast_slice(&[num_primitives, num_lights]),
+            bytemuck::cast_slice(&[scene_globals]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,

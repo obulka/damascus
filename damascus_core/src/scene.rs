@@ -8,6 +8,13 @@ use crate::{
     lights::{GPULight, Light, Std140GPULight},
 };
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Default, AsStd140)]
+pub struct SceneGlobals {
+    num_primitives: u32,
+    num_lights: u32,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Scene {
     pub render_camera: Camera,
@@ -33,5 +40,12 @@ impl Scene {
             light_array[index] = self.lights[index].to_gpu().as_std140();
         }
         light_array
+    }
+
+    pub fn create_scene_globals(&self) -> Std140SceneGlobals {
+        return SceneGlobals {
+            num_primitives: self.primitives.len() as u32,
+            num_lights: self.lights.len() as u32,
+        }.as_std140()
     }
 }

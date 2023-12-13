@@ -51,10 +51,13 @@ fn min_component_4(vector_: vec4<f32>) -> f32 {
  *
  * @returns: A random value on the interval [0, 1].
  */
-fn random(seed: f32) -> f32 {
+fn random_f32(seed: f32) -> f32 {
     return fract(sin(seed * 91.3458) * 47453.5453);
 }
 
+fn vec2f_to_random_f32(seed: vec2<f32>) -> f32 {
+    return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453123);
+}
 
 // materials/material.wgsl
 
@@ -248,12 +251,6 @@ let LEVEL_OF_DETAIL: bool = true;
 let BOUNCES_PER_RAY: u32 = 5u;
 let ROULETTE: bool = true;
 
-// Constants
-let NORMAL_OFFSET_0 = vec3<f32>(0.5773, -0.5773, -0.5773);
-let NORMAL_OFFSET_1 = vec3<f32>(-0.5773, -0.5773, 0.5773);
-let NORMAL_OFFSET_2 = vec3<f32>(-0.5773, 0.5773, -0.5773);
-let NORMAL_OFFSET_3 = vec3<f32>(0.5773, 0.5773, 0.5773);
-
 
 struct VertexOut {
     @location(0) ray_direction: vec3<f32>,
@@ -262,14 +259,14 @@ struct VertexOut {
 }
 
 
-struct RenderGlobals {
+struct SceneGlobals {
     num_primitives: u32,
     num_lights: u32,
 }
 
 
 @group(0) @binding(0)
-var<uniform> _render_globals: RenderGlobals;
+var<uniform> _scene_globals: SceneGlobals;
 
 
 var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
@@ -283,10 +280,7 @@ var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     var out: VertexOut;
-
     out.uv_position = vec4<f32>(v_positions[vertex_index], 0.0, 1.0);
-    // out.uv_position.x = out.uv_position.x * cos(x); // TODO something similar to maintain aspect of render cam
-
     out.ray_origin = vec3<f32>(
         _render_camera.world_matrix[3][0],
         _render_camera.world_matrix[3][1],
@@ -314,7 +308,7 @@ fn min_distance_to_primitive(
 
     for (
         var primitive_index = 0u;
-        primitive_index < min(_render_globals.num_primitives, MAX_PRIMITIVES);
+        primitive_index < min(_scene_globals.num_primitives, MAX_PRIMITIVES);
         primitive_index++
     ) {
         var primitive: Primitive = _primitives.primitives[primitive_index];
@@ -348,24 +342,25 @@ fn min_distance_to_primitive(
  */
 fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
     var material: Material;
+    var normal_offset = vec2<f32>(0.5773, -0.5773);
     return normalize(
-        NORMAL_OFFSET_0 * min_distance_to_primitive(
-            position + NORMAL_OFFSET_0 * HIT_TOLERANCE,
+        normal_offset.xyy * min_distance_to_primitive(
+            position + normal_offset.xyy * HIT_TOLERANCE,
             pixel_footprint,
             &material,
         )
-        + NORMAL_OFFSET_1 * min_distance_to_primitive(
-            position + NORMAL_OFFSET_1 * HIT_TOLERANCE,
+        + normal_offset.yyx * min_distance_to_primitive(
+            position + normal_offset.yyx * HIT_TOLERANCE,
             pixel_footprint,
             &material,
         )
-        + NORMAL_OFFSET_2 * min_distance_to_primitive(
-            position + NORMAL_OFFSET_2 * HIT_TOLERANCE,
+        + normal_offset.yxy * min_distance_to_primitive(
+            position + normal_offset.yxy * HIT_TOLERANCE,
             pixel_footprint,
             &material,
         )
-        + NORMAL_OFFSET_3 * min_distance_to_primitive(
-            position + NORMAL_OFFSET_3 * HIT_TOLERANCE,
+        + normal_offset.xxx * min_distance_to_primitive(
+            position + normal_offset.xxx * HIT_TOLERANCE,
             pixel_footprint,
             &material,
         )
@@ -381,7 +376,7 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
  *
  * @returns: The ray colour.
  */
-fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
+fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec4<f32> {
     var ray_colour = vec4<f32>(0.0);
     var throughput = vec4<f32>(1.0);
 
@@ -437,8 +432,8 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
             );
 
             // Early exit for the various AOVs that are not 'beauty'
-            // if (_render_globals.output_aov > BEAUTY) {
-            //     return aov_data(_render_globals.output_aov)
+            // if (_scene_globals.output_aov > BEAUTY) {
+            //     return aov_data(_scene_globals.output_aov)
             // }
 
             material_interaction(
@@ -483,10 +478,11 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>) -> vec4<f32> {
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
+    var seed: f32 = vec2f_to_random_f32(in.uv_position.xy);
     var ray_colour = vec4<f32>(0.0);
 
     for (var path=1; path <= 1; path++) {
-        ray_colour += march_path(in.ray_origin, in.ray_direction);
+        ray_colour += march_path(in.ray_origin, in.ray_direction, seed);
     }
 
     return ray_colour;

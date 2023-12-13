@@ -41,6 +41,21 @@ fn min_component_4(vector_: vec4<f32>) -> f32 {
 }
 
 
+// random.wgsl
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+fn random(seed: f32) -> f32 {
+    return fract(sin(seed * 91.3458) * 47453.5453);
+}
+
+
 // materials/material.wgsl
 
 

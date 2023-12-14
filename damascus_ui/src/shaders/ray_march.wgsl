@@ -409,6 +409,39 @@ fn distance_to_cut_sphere(
 
 
 /**
+ * Compute the min distance from a point to a hollow sphere.
+ * The hollowed opening points up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the sphere.
+ * @arg height: The height (y-axis) at which an opening is created.
+ * @arg thickness: The thickness of the walls of the hollow sphere.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_hollow_sphere(
+    position: vec3<f32>,
+    radius: f32,
+    height: f32,
+    thickness: f32,
+) -> f32 {
+    var half_thickness: f32 = thickness / 2.0f;
+
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    var cut_radius: f32 = sqrt(radius * radius - height * height);
+
+    if (height * cylindrical_position.x < cut_radius * cylindrical_position.y)
+    {
+        // Closest point is on the rim
+        return length(cylindrical_position - vec2<f32>(cut_radius, height)) - half_thickness;
+    }
+    // Closest point is on the spherical surface
+    return abs(length(cylindrical_position) - radius) - half_thickness;
+}
+
+
+/**
  * Compute the min distance from a point to a geometric object.
  *
  * @arg position: The point to get the distance to, from the primitive.
@@ -432,21 +465,20 @@ fn distance_to_primitive(
         distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
     }
     else if ((*primitive).shape == CUT_SPHERE) {
-        return distance_to_cut_sphere(
+        distance = distance_to_cut_sphere(
             position,
             (*primitive).custom_data.x,
             (*primitive).custom_data.y,
         );
     }
-    // if ((*primitive).shape == HOLLOW_SPHERE)
-    // {
-    //     return distanceToHollowSphere(
-    //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
-    //     );
-    // }
+    else if ((*primitive).shape == HOLLOW_SPHERE) {
+        distance = distance_to_hollow_sphere(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
     // if ((*primitive).shape == DEATH_STAR)
     // {
     //     return distanceToDeathStar(

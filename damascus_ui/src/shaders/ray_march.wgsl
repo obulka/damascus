@@ -51,6 +51,18 @@ fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
 
+/**
+ * Convert a cartesion vector to cylindrical, without worrying about
+ * the angle.
+ *
+ * @returns: Cylindrical coordinates ignoring the angle, (r, h)
+ */
+fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
+    return vec2<f32>(length(coordinates.xz), coordinates.y);
+}
+
+
+
 
 // random.wgsl
 
@@ -345,6 +357,58 @@ fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
 
 
 /**
+ * Compute the min distance from a point to a cut sphere.
+ * The cut surface faces up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the sphere.
+ * @arg height: The height (y-axis) below which the sphere is culled.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_cut_sphere(
+    position: vec3<f32>,
+    radius: f32,
+    height: f32,
+) -> f32 {
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // The radius of the circle made by slicing the sphere
+    var cut_radius_squared: f32 = radius * radius - height * height;
+    var cut_radius: f32 = sqrt(cut_radius_squared);
+
+    // When the height is positive, if we are outside an infinite
+    // cone with its tip at the origin, opening through the edge of
+    // the cut surface, then the nearest point will be on the
+    // spherical surface. If the height is negative, we must be
+    // below the portion of the cone that is below the y-axis, but we
+    // must also be below a curved boundary separating the regions where
+    // the flat and spherical surfaces are closest
+    var nearest_is_spherical: f32 = max(
+        cut_radius_squared * (radius - height + 2.0 * cylindrical_position.y)
+            - (radius + height) * cylindrical_position.x * cylindrical_position.x,
+        cut_radius * cylindrical_position.y - height * cylindrical_position.x
+    );
+
+    if (nearest_is_spherical < 0.0)
+    {
+        // Closest point is on the surface of the sphere
+        return length(cylindrical_position) - radius;
+    }
+    else if (cylindrical_position.x < cut_radius)
+    {
+        // Closest point is within the cut surface
+        return -height + cylindrical_position.y;
+    }
+    else
+    {
+        // Closest point is on the edge of the cut surface
+        return length(cylindrical_position - vec2<f32>(cut_radius, height));
+    }
+}
+
+
+/**
  * Compute the min distance from a point to a geometric object.
  *
  * @arg position: The point to get the distance to, from the primitive.
@@ -361,18 +425,19 @@ fn distance_to_primitive(
 
     var distance = 0.0;
 
-    if ((*primitive).shape == SPHERE)
-    {
+    if ((*primitive).shape == SPHERE) {
         distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
     }
-    else if ((*primitive).shape == ELLIPSOID)
-    {
+    else if ((*primitive).shape == ELLIPSOID) {
         distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
     }
-    // if ((*primitive).shape == CUT_SPHERE)
-    // {
-    //     return distanceToCutSphere(position, dimensions.x, dimensions.y);
-    // }
+    else if ((*primitive).shape == CUT_SPHERE) {
+        return distance_to_cut_sphere(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+        );
+    }
     // if ((*primitive).shape == HOLLOW_SPHERE)
     // {
     //     return distanceToHollowSphere(

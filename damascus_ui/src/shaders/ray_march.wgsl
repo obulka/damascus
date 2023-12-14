@@ -112,6 +112,18 @@ fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
 
 
 /**
+ * Dot product of a vector with itself.
+ *
+ * @arg vector: The vector to take the dot product of.
+ *
+ * @returns: The dot product.
+ */
+fn dot2_vec2f(vector_: vec2<f32>) -> f32 {
+    return dot(vector_, vector_);
+}
+
+
+/**
  * Compute the signed distance along a vector
  *
  * @arg vector_: A vector from a point to the nearest surface of an
@@ -690,6 +702,61 @@ fn distance_to_rectangular_prism_frame(
 
 
 /**
+ * Compute the min distance from a point to a rhombus.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg width:  The width (x) of the rhombus.
+ * @arg height:  The height (y) of the rhombus.
+ * @arg depth:  The depth (z) of the rhombus, this the extruded
+ *     dimension, or thickness.
+ * @arg corner_radius:  The radius of the corners of the rhombus'
+ *     xy-plane parallel face.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_rhombus(
+    position: vec3<f32>,
+    width: f32,
+    height: f32,
+    depth: f32,
+    corner_radius: f32,
+) -> f32 {
+    var abs_position: vec3<f32> = abs(position);
+
+    var half_width: f32 = width / 2.0;
+    var half_height: f32 = height / 2.0;
+    var half_width_height = vec2<f32>(half_width, half_height);
+
+    var s: vec2<f32> = half_width_height - 2.0 * abs_position.xy;
+    var f: f32 = clamp(
+        (
+            (half_width * s.x - half_height * s.y)
+            / dot2_vec2f(half_width_height)
+        ),
+        -1.0,
+        1.0
+    );
+
+    var inside: f32 = sign(
+        abs_position.x * half_height
+        + abs_position.y * half_width
+        - half_width * half_height
+    );
+
+    var rhombus_to_position = vec2<f32>(
+        inside * length(
+            abs_position.xy - 0.5 * half_width_height * vec2<f32>(1.0 - f, 1.0 + f)
+        ) - corner_radius,
+        // Closest point along z-axis only depends on the thickness of
+        // the extrusion
+        abs_position.z - depth / 2.0
+    );
+
+    return sdf_length_vec2f(rhombus_to_position);
+}
+
+
+/**
  * Compute the min distance from a point to a triangular prism.
  *
  * @arg position: The point to get the distance to, from the object.
@@ -864,16 +931,15 @@ fn distance_to_primitive(
             (*primitive).custom_data.w,
         );
     }
-    // if ((*primitive).shape == RHOMBUS)
-    // {
-    //     distance = distance_to_rhombus(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         (*primitive).custom_data.z,
-    //         (*primitive).custom_data.w
-    //     );
-    // }
+    else if ((*primitive).shape == RHOMBUS) {
+        distance = distance_to_rhombus(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+            (*primitive).custom_data.w,
+        );
+    }
     else if ((*primitive).shape == TRIANGULAR_PRISM) {
         distance = distance_to_triangular_prism(
             position,

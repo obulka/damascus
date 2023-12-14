@@ -17,9 +17,9 @@
 
 
 // wish we could overload functions
-fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
-    return max(vector_.x, vector_.y);
-}
+// fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
+//     return max(vector_.x, vector_.y);
+// }
 
 
 fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
@@ -27,23 +27,35 @@ fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
 }
 
 
-fn max_component_vec4f(vector_: vec4<f32>) -> f32 {
-    return max(vector_.x, max(vector_.y, max(vector_.z, vector_.w)));
-}
+// fn max_component_vec4f(vector_: vec4<f32>) -> f32 {
+//     return max(vector_.x, max(vector_.y, max(vector_.z, vector_.w)));
+// }
 
 
-fn min_component_vec2f(vector_: vec2<f32>) -> f32 {
-    return min(vector_.x, vector_.y);
-}
+// fn min_component_vec2f(vector_: vec2<f32>) -> f32 {
+//     return min(vector_.x, vector_.y);
+// }
 
 
-fn min_component_vec3f(vector_: vec3<f32>) -> f32 {
-    return min(vector_.x, min(vector_.y, vector_.z));
-}
+// fn min_component_vec3f(vector_: vec3<f32>) -> f32 {
+//     return min(vector_.x, min(vector_.y, vector_.z));
+// }
 
 
-fn min_component_vec4f(vector_: vec4<f32>) -> f32 {
-    return min(vector_.x, min(vector_.y, min(vector_.z, vector_.w)));
+// fn min_component_vec4f(vector_: vec4<f32>) -> f32 {
+//     return min(vector_.x, min(vector_.y, min(vector_.z, vector_.w)));
+// }
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+fn positive_part_f32(value: f32) -> f32 {
+    return max(value, 0.0);
 }
 
 
@@ -51,11 +63,12 @@ fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
 
+
 /**
  * Convert a cartesion vector to cylindrical, without worrying about
  * the angle.
  *
- * @returns: Cylindrical coordinates ignoring the angle, (r, h)
+ * @returns: Cylindrical coordinates symmetric about the y-axis.
  */
 fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
     return vec2<f32>(length(coordinates.xz), coordinates.y);
@@ -362,32 +375,33 @@ fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
  *
  * @arg position: The point to get the distance to, from the object.
  * @arg radius: The radius of the sphere.
- * @arg height: The height (y-axis) below which the sphere is culled.
+ * @arg cut_height: The cut_height (y-axis) below which the sphere is
+ *     culled.
  *
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_cut_sphere(
     position: vec3<f32>,
     radius: f32,
-    height: f32,
+    cut_height: f32,
 ) -> f32 {
     var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
 
     // The radius of the circle made by slicing the sphere
-    var cut_radius_squared: f32 = radius * radius - height * height;
+    var cut_radius_squared: f32 = radius * radius - cut_height * cut_height;
     var cut_radius: f32 = sqrt(cut_radius_squared);
 
-    // When the height is positive, if we are outside an infinite
+    // When the cut_height is positive, if we are outside an infinite
     // cone with its tip at the origin, opening through the edge of
     // the cut surface, then the nearest point will be on the
-    // spherical surface. If the height is negative, we must be
+    // spherical surface. If the cut_height is negative, we must be
     // below the portion of the cone that is below the y-axis, but we
     // must also be below a curved boundary separating the regions where
     // the flat and spherical surfaces are closest
     var nearest_is_spherical: f32 = max(
-        cut_radius_squared * (radius - height + 2.0 * cylindrical_position.y)
-            - (radius + height) * cylindrical_position.x * cylindrical_position.x,
-        cut_radius * cylindrical_position.y - height * cylindrical_position.x
+        cut_radius_squared * (radius - cut_height + 2.0 * cylindrical_position.y)
+            - (radius + cut_height) * cylindrical_position.x * cylindrical_position.x,
+        cut_radius * cylindrical_position.y - cut_height * cylindrical_position.x,
     );
 
     if (nearest_is_spherical < 0.0)
@@ -398,12 +412,12 @@ fn distance_to_cut_sphere(
     else if (cylindrical_position.x < cut_radius)
     {
         // Closest point is within the cut surface
-        return -height + cylindrical_position.y;
+        return -cut_height + cylindrical_position.y;
     }
     else
     {
         // Closest point is on the edge of the cut surface
-        return length(cylindrical_position - vec2<f32>(cut_radius, height));
+        return length(cylindrical_position - vec2<f32>(cut_radius, cut_height));
     }
 }
 
@@ -414,7 +428,8 @@ fn distance_to_cut_sphere(
  *
  * @arg position: The point to get the distance to, from the object.
  * @arg radius: The radius of the sphere.
- * @arg height: The height (y-axis) at which an opening is created.
+ * @arg cut_height: The cut_height (y-axis) at which an opening is
+ *     created.
  * @arg thickness: The thickness of the walls of the hollow sphere.
  *
  * @returns: The minimum distance from the point to the shape.
@@ -422,22 +437,120 @@ fn distance_to_cut_sphere(
 fn distance_to_hollow_sphere(
     position: vec3<f32>,
     radius: f32,
-    height: f32,
+    cut_height: f32,
     thickness: f32,
 ) -> f32 {
     var half_thickness: f32 = thickness / 2.0f;
 
     var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
 
-    var cut_radius: f32 = sqrt(radius * radius - height * height);
+    var cut_radius: f32 = sqrt(radius * radius - cut_height * cut_height);
 
-    if (height * cylindrical_position.x < cut_radius * cylindrical_position.y)
+    if (cut_height * cylindrical_position.x < cut_radius * cylindrical_position.y)
     {
         // Closest point is on the rim
-        return length(cylindrical_position - vec2<f32>(cut_radius, height)) - half_thickness;
+        return length(
+            cylindrical_position
+            - vec2<f32>(cut_radius, cut_height)
+        ) - half_thickness;
     }
     // Closest point is on the spherical surface
     return abs(length(cylindrical_position) - radius) - half_thickness;
+}
+
+
+/**
+ * Compute the min distance from a point to a death star.
+ * The hollowed opening points up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg additive_sphere_radius: The radius of the sphere that remains solid.
+ * @arg subtractive_sphere_radius: The radius of the sphere that is cut from
+ *     the solid.
+ *
+ * @arg subtractive_sphere_height: The height (y-axis) of the center of
+ *     the sphere that is cut from the solid, above additive_sphere_radius +
+ *     subtractive_sphere_radius, the result will be a standard sphere of
+ *     radius additive_sphere_radius.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_death_star(
+    position: vec3<f32>,
+    additive_sphere_radius: f32,
+    subtractive_sphere_radius: f32,
+    subtractive_sphere_height: f32,
+) -> f32 {
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    var additive_sphere_radius_squared: f32 = additive_sphere_radius * additive_sphere_radius;
+
+    var cut_height: f32 = (
+        additive_sphere_radius_squared
+        - (
+            subtractive_sphere_radius * subtractive_sphere_radius
+            - subtractive_sphere_height * subtractive_sphere_height
+        )
+    ) / (2.0f * subtractive_sphere_height);
+
+    var cut_radius: f32 = sqrt(additive_sphere_radius_squared - cut_height * cut_height);
+
+    if (
+        subtractive_sphere_height * positive_part_f32(cut_radius - cylindrical_position.x)
+        < cylindrical_position.y * cut_radius - cylindrical_position.x * cut_height
+    ) {
+        // Closest point is on the rim
+        return length(cylindrical_position - vec2<f32>(cut_radius, cut_height));
+    }
+    return max(
+        // Closest point to the solid sphere
+        length(cylindrical_position) - additive_sphere_radius,
+        // Closest point to the hollowed portion
+        subtractive_sphere_radius - length(
+            cylindrical_position - vec2<f32>(0.0, subtractive_sphere_height)
+        ),
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a solid angle.
+ * The conical shape has its tip at the origin and opens up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the sphere to cut the angle out of.
+ * @arg angle: The angle between the edge of the solid angle and the
+ *     y-axis on [0-PI] measured between the y-axis and wall of the
+ *     solid angle.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_solid_angle(
+    position: vec3<f32>,
+    radius: f32,
+    angle: f32,
+) -> f32 {
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // The direction from the tip of the conical portion to where it
+    // meets the sphere
+    var cone_edge_direction = vec2<f32>(sin(angle), cos(angle));
+
+    // Distance to the sphere we cut the cone out of
+    var distance_to_sphere: f32 = length(cylindrical_position) - radius;
+    var distance_to_cone: f32 = length(
+        cylindrical_position - cone_edge_direction * clamp(
+            dot(cylindrical_position, cone_edge_direction),
+            0.0,
+            radius,
+        )
+    );
+    var inside: f32 = sign(
+        cone_edge_direction.y * cylindrical_position.x
+        - cone_edge_direction.x * cylindrical_position.y
+    );
+
+    return max(distance_to_sphere, inside * distance_to_cone);
 }
 
 
@@ -479,23 +592,22 @@ fn distance_to_primitive(
             (*primitive).custom_data.z,
         );
     }
-    // if ((*primitive).shape == DEATH_STAR)
-    // {
-    //     return distanceToDeathStar(
-    //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
-    //     );
-    // }
-    // if ((*primitive).shape == SOLID_ANGLE)
-    // {
-    //     return distanceToSolidAngle(
-    //         position,
-    //         dimensions.x,
-    //         degreesToRadians(dimensions.y)
-    //     );
-    // }
+    else if ((*primitive).shape == DEATH_STAR) {
+        distance = distance_to_death_star(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
+    else if ((*primitive).shape == SOLID_ANGLE)
+    {
+        return distance_to_solid_angle(
+            position,
+            (*primitive).custom_data.x,
+            radians((*primitive).custom_data.y),
+        );
+    }
     // if ((*primitive).shape == RECTANGULAR_PRISM)
     // {
     //     return distanceToRectangularPrism(
@@ -555,7 +667,7 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == CONE)
     // {
-    //     return distanceToCone(
+    //     return distance_to_cone(
     //         position,
     //         degreesToRadians(dimensions.x),
     //         dimensions.y

@@ -59,6 +59,30 @@ fn positive_part_f32(value: f32) -> f32 {
 }
 
 
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+fn positive_part_vec3f(value: vec3<f32>) -> vec3<f32> {
+    return max(value, vec3<f32>(0.0));
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+fn negative_part_f32(value: f32) -> f32 {
+    return -min(value, 0.0);
+}
+
+
 fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
@@ -72,6 +96,22 @@ fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
  */
 fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
     return vec2<f32>(length(coordinates.xz), coordinates.y);
+}
+
+
+/**
+ * Compute the signed distance along a vector
+ *
+ * @arg vector_: A vector from a point to the nearest surface of an
+ *     object.
+ *
+ * @returns: The signed length of the vector.
+ */
+fn sdf_length(vector_: vec3<f32>) -> f32 {
+    return (
+        length(positive_part_vec3f(vector_))
+        - negative_part_f32(max_component_vec3f(vector_))
+    );
 }
 
 
@@ -555,6 +595,63 @@ fn distance_to_solid_angle(
 
 
 /**
+ * Compute the min distance from a point to a rectangular prism.
+ * Centered at the origin.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg width: The width (x) of the prism.
+ * @arg height: The height (y) of the prism.
+ * @arg depth: The depth (z) of the prism.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_rectangular_prism(
+    position: vec3<f32>,
+    width: f32,
+    height: f32,
+    depth: f32,
+) -> f32 {
+    // Only look at positive quadrant, using symmetry
+    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / vec3<f32>(2.0);
+    // Clamp the components that are inside the prism to the surface
+    // before getting the distance
+    return sdf_length(prism_to_position);
+}
+
+
+/**
+ * Compute the min distance from a point to the frame of a
+ * rectangular prism.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg width:  The width (x) of the frame.
+ * @arg height:  The height (y) of the frame.
+ * @arg depth:  The depth (z) of the frame.
+ * @arg thickness:  The thickness of the frame.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_rectangular_prism_frame(
+    position: vec3<f32>,
+    width: f32,
+    height: f32,
+    depth: f32,
+    thickness: f32,
+) -> f32 {
+    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / vec3<f32>(2.0);
+    var inner_reflected: vec3<f32> = abs(prism_to_position + thickness) - thickness;
+
+    return min(
+        sdf_length(vec3<f32>(prism_to_position.x, inner_reflected.yz)),
+        min(
+            sdf_length(vec3<f32>(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
+            sdf_length(vec3<f32>(inner_reflected.xy, prism_to_position.z)),
+        ),
+    );
+}
+
+
+/**
  * Compute the min distance from a point to a geometric object.
  *
  * @arg position: The point to get the distance to, from the primitive.
@@ -600,130 +697,127 @@ fn distance_to_primitive(
             (*primitive).custom_data.z,
         );
     }
-    else if ((*primitive).shape == SOLID_ANGLE)
-    {
-        return distance_to_solid_angle(
+    else if ((*primitive).shape == SOLID_ANGLE) {
+        distance = distance_to_solid_angle(
             position,
             (*primitive).custom_data.x,
             radians((*primitive).custom_data.y),
         );
     }
-    // if ((*primitive).shape == RECTANGULAR_PRISM)
-    // {
-    //     return distanceToRectangularPrism(
-    //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
-    //     );
-    // }
-    // if ((*primitive).shape == RECTANGULAR_PRISM_FRAME)
-    // {
-    //     return distanceToRectangularPrismFrame(
-    //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z,
-    //         dimensions.w
-    //     );
-    // }
+    else if ((*primitive).shape == RECTANGULAR_PRISM) {
+        distance = distance_to_rectangular_prism(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
+    else if ((*primitive).shape == RECTANGULAR_PRISM_FRAME) {
+        return distance_to_rectangular_prism_frame(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+            (*primitive).custom_data.w,
+        );
+    }
     // if ((*primitive).shape == RHOMBUS)
     // {
     //     return distanceToRhombus(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z,
-    //         dimensions.w
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         (*primitive).custom_data.z,
+    //         (*primitive).custom_data.w
     //     );
     // }
     // if ((*primitive).shape == TRIANGULAR_PRISM)
     // {
-    //     return distanceToTriangularPrism(position, dimensions.x, dimensions.y);
+    //     return distanceToTriangularPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == CYLINDER)
     // {
-    //     return distanceToCylinder(position, dimensions.x, dimensions.y);
+    //     return distanceToCylinder(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == INFINITE_CYLINDER)
     // {
-    //     return distanceToInfiniteCylinder(position, dimensions.x);
+    //     return distanceToInfiniteCylinder(position, (*primitive).custom_data.x);
     // }
     // if ((*primitive).shape == PLANE)
     // {
     //     return distanceToPlane(
     //         position,
-    //         normalize(float3(dimensions.x, dimensions.y, dimensions.z))
+    //         normalize(vec3<f32>((*primitive).custom_data.x, (*primitive).custom_data.y, (*primitive).custom_data.z))
     //     );
     // }
     // if ((*primitive).shape == CAPSULE)
     // {
     //     return distanceToCapsule(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         (*primitive).custom_data.z
     //     );
     // }
     // if ((*primitive).shape == CONE)
     // {
     //     return distance_to_cone(
     //         position,
-    //         degreesToRadians(dimensions.x),
-    //         dimensions.y
+    //         degreesToRadians((*primitive).custom_data.x),
+    //         (*primitive).custom_data.y
     //     );
     // }
     // if ((*primitive).shape == INFINITE_CONE)
     // {
-    //     return distanceToInfiniteCone(position, degreesToRadians(dimensions.x));
+    //     return distanceToInfiniteCone(position, degreesToRadians((*primitive).custom_data.x));
     // }
     // if ((*primitive).shape == CAPPED_CONE)
     // {
     //     return distanceToCappedCone(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         (*primitive).custom_data.z
     //     );
     // }
     // if ((*primitive).shape == ROUNDED_CONE)
     // {
     //     return distanceToRoundedCone(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         (*primitive).custom_data.z
     //     );
     // }
     // if ((*primitive).shape == TORUS)
     // {
-    //     return distanceToTorus(position, dimensions.x, dimensions.y);
+    //     return distanceToTorus(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == CAPPED_TORUS)
     // {
     //     return distanceToCappedTorus(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         degreesToRadians(dimensions.z)
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         degreesToRadians((*primitive).custom_data.z)
     //     );
     // }
     // if ((*primitive).shape == LINK)
     // {
     //     return distanceToLink(
     //         position,
-    //         dimensions.x,
-    //         dimensions.y,
-    //         dimensions.z
+    //         (*primitive).custom_data.x,
+    //         (*primitive).custom_data.y,
+    //         (*primitive).custom_data.z
     //     );
     // }
     // if ((*primitive).shape == HEXAGONAL_PRISM)
     // {
-    //     return distanceToHexagonalPrism(position, dimensions.x, dimensions.y);
+    //     return distanceToHexagonalPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == OCTAHEDRON)
     // {
-    //     return distanceToOctahedron(position, dimensions.x);
+    //     return distanceToOctahedron(position, (*primitive).custom_data.x);
     // }
 
     return distance * uniform_scale;

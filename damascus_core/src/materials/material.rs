@@ -2,7 +2,7 @@ use crevice::std140::AsStd140;
 use glam::Vec3;
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct Material {
     pub diffuse: f32,
     pub diffuse_colour: Vec3,

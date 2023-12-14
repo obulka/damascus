@@ -15,7 +15,7 @@ use crate::viewport_3d::Viewport3d;
 /// The NodeData holds a custom data struct inside each node. It's useful to
 /// store additional information that doesn't live in parameters. For this
 /// example, the node data stores the template (i.e. the "type") of the node.
-#[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct DamascusNodeData {
     template: DamascusNodeTemplate,
 }
@@ -23,8 +23,7 @@ pub struct DamascusNodeData {
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow
 /// attaching incompatible datatypes.
-#[derive(PartialEq, Eq)]
-#[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
+#[derive(PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum DamascusDataType {
     // Base types
     Bool,
@@ -54,8 +53,7 @@ pub enum DamascusDataType {
 /// this library makes no attempt to check this consistency. For instance, it is
 /// up to the user code in this example to make sure no parameter is created
 /// with a DataType of Float and a ValueType of Vec2.
-#[derive(Debug, Clone)]
-#[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum DamascusValueType {
     // Base types
     Bool { value: bool },
@@ -235,8 +233,7 @@ impl DamascusValueType {
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the
 /// library how to convert a NodeTemplate into a Node.
-#[derive(Clone, Copy)]
-#[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub enum DamascusNodeTemplate {
     Axis,
     Camera,
@@ -260,8 +257,7 @@ pub enum DamascusResponse {
 /// The graph 'global' state. This state struct is passed around to the node and
 /// parameter drawing callbacks. The contents of this struct are entirely up to
 /// the user. For this example, we use it to keep track of the 'active' node.
-#[derive(Default)]
-#[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
+#[derive(Default, serde::Serialize, serde::Deserialize)]
 pub struct DamascusGraphState {
     pub active_node: Option<NodeId>,
 }
@@ -944,12 +940,10 @@ pub struct Damascus {
     viewport_3d: Option<Viewport3d>,
 }
 
-#[cfg(feature = "persistence")]
 const PERSISTENCE_KEY: &str = "damascus";
 
-#[cfg(feature = "persistence")]
 impl Damascus {
-    /// If the persistence feature is enabled, Called once before the first frame.
+    /// Called once before the first frame.
     /// Load previous app state (if any).
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         let state = cc
@@ -964,22 +958,7 @@ impl Damascus {
     }
 }
 
-#[cfg(not(feature = "persistence"))]
-impl Damascus {
-    /// If the persistence feature is enabled, Called once before the first frame.
-    /// Load previous app state (if any).
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        Self {
-            state: DamascusEditorState::default(),
-            user_state: DamascusGraphState::default(),
-            viewport_3d: Viewport3d::new(cc),
-        }
-    }
-}
-
 impl eframe::App for Damascus {
-    #[cfg(feature = "persistence")]
-    /// If the persistence function is enabled,
     /// Called by the frame work to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, PERSISTENCE_KEY, &self.state);
@@ -991,6 +970,7 @@ impl eframe::App for Damascus {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("Open...").clicked() {
+                        println!("{:#?}", serde_yaml::to_string(&self.state.graph));
                         ui.close_menu();
                     }
                     ui.menu_button("SubMenu", |ui| {

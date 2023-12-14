@@ -15,7 +15,7 @@ pub struct SceneParameters {
     num_lights: u32,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Scene {
     pub render_camera: Camera,
     pub primitives: Vec<Primitive>,

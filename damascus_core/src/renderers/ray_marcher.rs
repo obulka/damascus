@@ -42,7 +42,7 @@ pub struct RenderParameters {
     pub scene: Std140SceneParameters,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RayMarcher {
     pub scene: Scene,
     pub paths_per_pixel: u32,

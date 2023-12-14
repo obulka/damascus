@@ -1,4 +1,4 @@
-#[derive(Debug, Default, Copy, Clone, FromPrimitive)]
+#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
 pub enum AOVs {
     #[default]
     Beauty,

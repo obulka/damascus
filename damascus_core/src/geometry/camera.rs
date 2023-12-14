@@ -12,7 +12,7 @@ pub struct GPUCamera {
     inverse_projection_matrix: Mat4,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Camera {
     pub aspect_ratio: f32,
     pub focal_length: f32,

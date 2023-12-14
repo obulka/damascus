@@ -1,7 +1,7 @@
 use crevice::std140::AsStd140;
 use glam::Vec3;
 
-#[derive(Debug, Default, Copy, Clone, FromPrimitive)]
+#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
 pub enum Lights {
     #[default]
     Directional,
@@ -36,7 +36,7 @@ impl Default for GPULight {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Light {
     pub light_type: Lights,
     pub dimensional_data: Vec3,

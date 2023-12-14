@@ -4,7 +4,7 @@ use glam::{Mat3, Vec3, Vec4};
 use crate::materials::Material;
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, AsStd140)]
+#[derive(Debug, Default, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct Transform {
     pub translation: Vec3,
     pub inverse_rotation: Mat3,
@@ -12,7 +12,7 @@ pub struct Transform {
     //pub skew: Vec3,
 }
 
-#[derive(Debug, Default, Copy, Clone, FromPrimitive)]
+#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
 pub enum Shapes {
     #[default]
     Sphere,
@@ -54,7 +54,7 @@ pub struct GPUPrimitive {
     pub dimensional_data: Vec4,
 }
 
-#[derive(Debug, Default, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Primitive {
     pub shape: Shapes,
     pub transform: Transform,

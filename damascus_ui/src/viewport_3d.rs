@@ -1,5 +1,6 @@
 use std::ops::BitOr;
 use std::sync::Arc;
+use std::time::{Duration, SystemTime};
 
 use eframe::{
     egui,
@@ -15,12 +16,16 @@ use damascus_core::{
 };
 
 pub struct Viewport3d {
+    pub enable_frame_rate_overlay: bool,
+    previous_frame_time: SystemTime,
     pub renderer: RayMarcher,
 }
 
 impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewport3d = Self {
+            enable_frame_rate_overlay: true,
+            previous_frame_time: SystemTime::now(),
             renderer: RayMarcher::default(),
         };
 
@@ -262,6 +267,16 @@ impl Viewport3d {
         };
 
         ui.painter().add(callback);
+
+        if self.enable_frame_rate_overlay {
+            match SystemTime::now().duration_since(self.previous_frame_time) {
+                Ok(frame_time) => {
+                    ui.label(format!("{:?} fps", 1.0 / frame_time.as_secs_f32()));
+                },
+                Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+            }
+            self.previous_frame_time = SystemTime::now();
+        }
     }
 }
 

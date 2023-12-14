@@ -418,31 +418,31 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
 // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 //
 
-let SPHERE: u32 = 0u;
-let ELLIPSOID: u32 = 1u;
-let CUT_SPHERE: u32 = 2u;
-let HOLLOW_SPHERE: u32 = 3u;
-let DEATH_STAR: u32 = 4u;
-let SOLID_ANGLE: u32 = 5u;
-let RECTANGULAR_PRISM: u32 = 6u;
-let RECTANGULAR_PRISM_FRAME: u32 = 7u;
-let RHOMBUS: u32 = 8u;
-let TRIANGULAR_PRISM: u32 = 9u;
-let CYLINDER: u32 = 10u;
-let INFINITE_CYLINDER: u32 = 11u;
-let PLANE: u32 = 12u;
-let CAPSULE: u32 = 13u;
-let CONE: u32 = 14u;
-let INFINITE_CONE: u32 = 15u;
-let CAPPED_CONE: u32 = 16u;
-let ROUNDED_CONE: u32 = 17u;
-let TORUS: u32 = 18u;
-let CAPPED_TORUS: u32 = 19u;
-let LINK: u32 = 20u;
-let HEXAGONAL_PRISM: u32 = 21u;
-let OCTAHEDRON: u32 = 22u;
-let MANDELBULB: u32 = 23u;
-let MANDELBOX: u32 = 24u;
+// let SPHERE: u32 = 0u;
+// let ELLIPSOID: u32 = 1u;
+// let CUT_SPHERE: u32 = 2u;
+// let HOLLOW_SPHERE: u32 = 3u;
+// let DEATH_STAR: u32 = 4u;
+// let SOLID_ANGLE: u32 = 5u;
+// let RECTANGULAR_PRISM: u32 = 6u;
+// let RECTANGULAR_PRISM_FRAME: u32 = 7u;
+// let RHOMBUS: u32 = 8u;
+// let TRIANGULAR_PRISM: u32 = 9u;
+// let CYLINDER: u32 = 10u;
+// let INFINITE_CYLINDER: u32 = 11u;
+// let PLANE: u32 = 12u;
+// let CAPSULE: u32 = 13u;
+// let CONE: u32 = 14u;
+// let INFINITE_CONE: u32 = 15u;
+// let CAPPED_CONE: u32 = 16u;
+// let ROUNDED_CONE: u32 = 17u;
+// let TORUS: u32 = 18u;
+// let CAPPED_TORUS: u32 = 19u;
+// let LINK: u32 = 20u;
+// let HEXAGONAL_PRISM: u32 = 21u;
+// let OCTAHEDRON: u32 = 22u;
+// let MANDELBULB: u32 = 23u;
+// let MANDELBOX: u32 = 24u;
 
 let DIFFUSE_TRAP: u32 = 8192u;
 let SPECULAR_TRAP: u32 = 16384u;
@@ -1081,132 +1081,133 @@ fn distance_to_primitive(
     var uniform_scale: f32 = (*primitive).transform.scale.x; // TODO test this as vec3 or make f32
     var scaled_position = position / uniform_scale;
 
-    var distance = 0.0;
-
-    if ((*primitive).shape == SPHERE) {
-        distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
-    }
-    else if ((*primitive).shape == ELLIPSOID) {
-        distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
-    }
-    else if ((*primitive).shape == CUT_SPHERE) {
-        distance = distance_to_cut_sphere(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-        );
-    }
-    else if ((*primitive).shape == HOLLOW_SPHERE) {
-        distance = distance_to_hollow_sphere(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
-    }
-    else if ((*primitive).shape == DEATH_STAR) {
-        distance = distance_to_death_star(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
-    }
-    else if ((*primitive).shape == SOLID_ANGLE) {
-        distance = distance_to_solid_angle(
-            position,
-            (*primitive).custom_data.x,
-            radians((*primitive).custom_data.y),
-        );
-    }
-    else if ((*primitive).shape == RECTANGULAR_PRISM) {
-        distance = distance_to_rectangular_prism(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
-    }
-    else if ((*primitive).shape == RECTANGULAR_PRISM_FRAME) {
-        distance = distance_to_rectangular_prism_frame(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-            (*primitive).custom_data.w,
-        );
-    }
-    else if ((*primitive).shape == RHOMBUS) {
-        distance = distance_to_rhombus(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-            (*primitive).custom_data.w,
-        );
-    }
-    else if ((*primitive).shape == TRIANGULAR_PRISM) {
-        distance = distance_to_triangular_prism(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-        );
-    }
-    else if ((*primitive).shape == CYLINDER) {
-        distance = distance_to_cylinder(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-        );
-    }
-    else if ((*primitive).shape == INFINITE_CYLINDER) {
-        distance = distance_to_infinite_cylinder(
-            position,
-            (*primitive).custom_data.x,
-        );
-    }
-    else if ((*primitive).shape == PLANE) {
-        distance = distance_to_plane(
-            position,
-            normalize((*primitive).custom_data.xyz),
-        );
-    }
-    else if ((*primitive).shape == CAPSULE) {
-        distance = distance_to_capsule(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
-    }
-    else if ((*primitive).shape == CONE) {
-        distance = distance_to_cone(
-            position,
-            radians((*primitive).custom_data.x),
-            (*primitive).custom_data.y,
-        );
-    }
-    else if ((*primitive).shape == INFINITE_CONE) {
-        distance = distance_to_infinite_cone(
-            position,
-            radians((*primitive).custom_data.x),
-        );
-    }
-    else if ((*primitive).shape == CAPPED_CONE) {
-        distance = distance_to_capped_cone(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
-    }
-    else if ((*primitive).shape == ROUNDED_CONE) {
-        distance = distance_to_rounded_cone(
-            position,
-            (*primitive).custom_data.x,
-            (*primitive).custom_data.y,
-            (*primitive).custom_data.z,
-        );
+    var distance: f32;
+    switch (*primitive).shape {
+        case 1u {
+            distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
+        }
+        case 2u {
+            distance = distance_to_cut_sphere(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+            );
+        }
+        case 3u {
+            distance = distance_to_hollow_sphere(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        case 4u {
+            distance = distance_to_death_star(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        case 5u {
+            distance = distance_to_solid_angle(
+                position,
+                (*primitive).custom_data.x,
+                radians((*primitive).custom_data.y),
+            );
+        }
+        case 6u {
+            distance = distance_to_rectangular_prism(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        case 7u {
+            distance = distance_to_rectangular_prism_frame(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+                (*primitive).custom_data.w,
+            );
+        }
+        case 8u {
+            distance = distance_to_rhombus(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+                (*primitive).custom_data.w,
+            );
+        }
+        case 9u {
+            distance = distance_to_triangular_prism(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+            );
+        }
+        case 10u {
+            distance = distance_to_cylinder(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+            );
+        }
+        case 11u {
+            distance = distance_to_infinite_cylinder(
+                position,
+                (*primitive).custom_data.x,
+            );
+        }
+        case 12u {
+            distance = distance_to_plane(
+                position,
+                normalize((*primitive).custom_data.xyz),
+            );
+        }
+        case 13u {
+            distance = distance_to_capsule(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        case 14u {
+            distance = distance_to_cone(
+                position,
+                radians((*primitive).custom_data.x),
+                (*primitive).custom_data.y,
+            );
+        }
+        case 15u {
+            distance = distance_to_infinite_cone(
+                position,
+                radians((*primitive).custom_data.x),
+            );
+        }
+        case 16u {
+            distance = distance_to_capped_cone(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        case 17u {
+            distance = distance_to_rounded_cone(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
+        default { // cannot use default w/ other clauses, maybe version too old
+            distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
+        }
     }
     // if ((*primitive).shape == TORUS)
     // {

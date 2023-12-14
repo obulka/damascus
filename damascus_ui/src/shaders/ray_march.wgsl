@@ -455,7 +455,7 @@ fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
     // If this length is < 1 we are inside the ellipsoid
     var scaled_length: f32 = length(scaled_position);
 
-    return scaled_length * (scaled_length - 1.0f) / length(scaled_position / radii);
+    return scaled_length * (scaled_length - 1.0) / length(scaled_position / radii);
 }
 
 
@@ -530,7 +530,7 @@ fn distance_to_hollow_sphere(
     cut_height: f32,
     thickness: f32,
 ) -> f32 {
-    var half_thickness: f32 = thickness / 2.0f;
+    var half_thickness: f32 = thickness / 2.0;
 
     var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
 
@@ -581,7 +581,7 @@ fn distance_to_death_star(
             subtractive_sphere_radius * subtractive_sphere_radius
             - subtractive_sphere_height * subtractive_sphere_height
         )
-    ) / (2.0f * subtractive_sphere_height);
+    ) / (2.0 * subtractive_sphere_height);
 
     var cut_radius: f32 = sqrt(additive_sphere_radius_squared - cut_height * cut_height);
 
@@ -662,7 +662,7 @@ fn distance_to_rectangular_prism(
     depth: f32,
 ) -> f32 {
     // Only look at positive quadrant, using symmetry
-    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / vec3<f32>(2.0);
+    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / 2.0;
     // Clamp the components that are inside the prism to the surface
     // before getting the distance
     return sdf_length_vec3f(prism_to_position);
@@ -688,7 +688,7 @@ fn distance_to_rectangular_prism_frame(
     depth: f32,
     thickness: f32,
 ) -> f32 {
-    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / vec3<f32>(2.0);
+    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / 2.0;
     var inner_reflected: vec3<f32> = abs(prism_to_position + thickness) - thickness;
 
     return min(
@@ -722,25 +722,13 @@ fn distance_to_rhombus(
     corner_radius: f32,
 ) -> f32 {
     var abs_position: vec3<f32> = abs(position);
+    var half_width_height = vec2<f32>(width, height) / 2.0;
 
-    var half_width: f32 = width / 2.0;
-    var half_height: f32 = height / 2.0;
-    var half_width_height = vec2<f32>(half_width, half_height);
-
-    var s: vec2<f32> = half_width_height - 2.0 * abs_position.xy;
-    var f: f32 = clamp(
-        (
-            (half_width * s.x - half_height * s.y)
-            / dot2_vec2f(half_width_height)
-        ),
-        -1.0,
-        1.0
-    );
+    var s: vec2<f32> = half_width_height * (half_width_height - 2.0 * abs_position.xy);
+    var f: f32 = clamp((s.x - s.y) / dot2_vec2f(half_width_height), -1.0, 1.0);
 
     var inside: f32 = sign(
-        abs_position.x * half_height
-        + abs_position.y * half_width
-        - half_width * half_height
+        dot(abs_position.xy, half_width_height.yx) - half_width_height.x * half_width_height.y,
     );
 
     var rhombus_to_position = vec2<f32>(

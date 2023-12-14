@@ -17,9 +17,9 @@
 
 
 // wish we could overload functions
-// fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
-//     return max(vector_.x, vector_.y);
-// }
+fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
+    return max(vector_.x, vector_.y);
+}
 
 
 fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
@@ -56,6 +56,18 @@ fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
  */
 fn positive_part_f32(value: f32) -> f32 {
     return max(value, 0.0);
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+fn positive_part_vec2f(value: vec2<f32>) -> vec2<f32> {
+    return max(value, vec2<f32>(0.0));
 }
 
 
@@ -107,15 +119,28 @@ fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
  *
  * @returns: The signed length of the vector.
  */
-fn sdf_length(vector_: vec3<f32>) -> f32 {
+fn sdf_length_vec2f(vector_: vec2<f32>) -> f32 {
+    return (
+        length(positive_part_vec2f(vector_))
+        - negative_part_f32(max_component_vec2f(vector_))
+    );
+}
+
+
+/**
+ * Compute the signed distance along a vector
+ *
+ * @arg vector_: A vector from a point to the nearest surface of an
+ *     object.
+ *
+ * @returns: The signed length of the vector.
+ */
+fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
     return (
         length(positive_part_vec3f(vector_))
         - negative_part_f32(max_component_vec3f(vector_))
     );
 }
-
-
-
 
 // random.wgsl
 
@@ -377,6 +402,19 @@ let SCATTERING_TRAP: u32 = 131072u;
 
 
 /**
+ * Compute the min distance from a point to a circle.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the circle.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_circle(position: vec2<f32>, radius: f32) -> f32 {
+    return length(position) - radius;
+}
+
+
+/**
  * Compute the min distance from a point to a sphere.
  *
  * @arg position: The point to get the distance to, from the object.
@@ -615,7 +653,7 @@ fn distance_to_rectangular_prism(
     var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / vec3<f32>(2.0);
     // Clamp the components that are inside the prism to the surface
     // before getting the distance
-    return sdf_length(prism_to_position);
+    return sdf_length_vec3f(prism_to_position);
 }
 
 
@@ -642,12 +680,117 @@ fn distance_to_rectangular_prism_frame(
     var inner_reflected: vec3<f32> = abs(prism_to_position + thickness) - thickness;
 
     return min(
-        sdf_length(vec3<f32>(prism_to_position.x, inner_reflected.yz)),
+        sdf_length_vec3f(vec3<f32>(prism_to_position.x, inner_reflected.yz)),
         min(
-            sdf_length(vec3<f32>(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
-            sdf_length(vec3<f32>(inner_reflected.xy, prism_to_position.z)),
+            sdf_length_vec3f(vec3<f32>(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
+            sdf_length_vec3f(vec3<f32>(inner_reflected.xy, prism_to_position.z)),
         ),
     );
+}
+
+
+/**
+ * Compute the min distance from a point to a triangular prism.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg base: The equalateral triangles edge length (xy-plane).
+ * @arg depth: The depth (z-axis) of the prism.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_triangular_prism(position: vec3<f32>, base: f32, depth: f32) -> f32 {
+    // 0.28867513459f = tan(PI / 6.0f) / 2.0f, converts base length
+    // to the min distance from centroid to edge of triangle
+
+    // 0.86602540378f = cos(PI / 6.0f) = base / height
+    // 0.5f = sin(PI / 6.0f) = base / (2 * base)
+
+    return max(
+        abs(position.z) - depth,
+        max(
+            abs(position.x) * 0.86602540378f + position.y * 0.5f,
+            -position.y,
+        ) - 0.28867513459f * base
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a cylinder
+ * Symmetric about the xz-plane.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius (xz-plane) of the cylinder.
+ * @arg height: The height (y-axis) of the cylinder.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_cylinder(
+    position: vec3<f32>,
+    radius: f32,
+    height: f32,
+) -> f32 {
+    // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
+    var cylindrical_position: vec2<f32> = abs(cartesian_to_cylindrical(position));
+    var cylinder_to_position = cylindrical_position - vec2<f32>(radius, height / 2.0);
+
+    return sdf_length_vec2f(cylinder_to_position);
+}
+
+
+/**
+ * Compute the min distance from a point to an infinite cylinder
+ * (y-axis aligned).
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius (xz-plane) of the cylinder.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_infinite_cylinder(position: vec3<f32>, radius: f32) -> f32 {
+    return distance_to_circle(position.xz, radius);
+}
+
+
+/**
+ * Compute the min distance from a point to a plane.
+ * Anything underneath the plane, as defined by the normal direction
+ * pointing above, will be considered inside.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg normal: The normal direction of the plane.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_plane(position: vec3<f32>, normal: vec3<f32>) -> f32 {
+    return dot(position, normal);
+}
+
+
+/**
+ * Compute the min distance from a point to a capsule.
+ * Oriented along the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the capsule.
+ * @arg negative_height: The distance along the negative y-axis before
+ *     entering the dome.
+ * @arg positive_height: The distance along the positive y-axis before
+ *     entering the dome.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_capsule(
+    position: vec3<f32>,
+    radius: f32,
+    negative_height: f32,
+    positive_height: f32,
+) -> f32 {
+    return length(vec3<f32>(
+        position.x,
+        position.y - clamp(position.y, -negative_height, positive_height),
+        position.z,
+    )) - radius;
 }
 
 
@@ -713,7 +856,7 @@ fn distance_to_primitive(
         );
     }
     else if ((*primitive).shape == RECTANGULAR_PRISM_FRAME) {
-        return distance_to_rectangular_prism_frame(
+        distance = distance_to_rectangular_prism_frame(
             position,
             (*primitive).custom_data.x,
             (*primitive).custom_data.y,
@@ -723,7 +866,7 @@ fn distance_to_primitive(
     }
     // if ((*primitive).shape == RHOMBUS)
     // {
-    //     return distanceToRhombus(
+    //     distance = distance_to_rhombus(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
@@ -731,37 +874,43 @@ fn distance_to_primitive(
     //         (*primitive).custom_data.w
     //     );
     // }
-    // if ((*primitive).shape == TRIANGULAR_PRISM)
-    // {
-    //     return distanceToTriangularPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
-    // }
-    // if ((*primitive).shape == CYLINDER)
-    // {
-    //     return distanceToCylinder(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
-    // }
-    // if ((*primitive).shape == INFINITE_CYLINDER)
-    // {
-    //     return distanceToInfiniteCylinder(position, (*primitive).custom_data.x);
-    // }
-    // if ((*primitive).shape == PLANE)
-    // {
-    //     return distanceToPlane(
-    //         position,
-    //         normalize(vec3<f32>((*primitive).custom_data.x, (*primitive).custom_data.y, (*primitive).custom_data.z))
-    //     );
-    // }
-    // if ((*primitive).shape == CAPSULE)
-    // {
-    //     return distanceToCapsule(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         (*primitive).custom_data.z
-    //     );
-    // }
+    else if ((*primitive).shape == TRIANGULAR_PRISM) {
+        distance = distance_to_triangular_prism(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+        );
+    }
+    else if ((*primitive).shape == CYLINDER) {
+        distance = distance_to_cylinder(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+        );
+    }
+    else if ((*primitive).shape == INFINITE_CYLINDER) {
+        distance = distance_to_infinite_cylinder(
+            position,
+            (*primitive).custom_data.x,
+        );
+    }
+    else if ((*primitive).shape == PLANE) {
+        distance = distance_to_plane(
+            position,
+            normalize((*primitive).custom_data.xyz),
+        );
+    }
+    else if ((*primitive).shape == CAPSULE) {
+        distance = distance_to_capsule(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
     // if ((*primitive).shape == CONE)
     // {
-    //     return distance_to_cone(
+    //     distance = distance_to_cone(
     //         position,
     //         degreesToRadians((*primitive).custom_data.x),
     //         (*primitive).custom_data.y
@@ -769,11 +918,11 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == INFINITE_CONE)
     // {
-    //     return distanceToInfiniteCone(position, degreesToRadians((*primitive).custom_data.x));
+    //     distance = distance_to_infiniteCone(position, degreesToRadians((*primitive).custom_data.x));
     // }
     // if ((*primitive).shape == CAPPED_CONE)
     // {
-    //     return distanceToCappedCone(
+    //     distance = distance_to_cappedCone(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
@@ -782,7 +931,7 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == ROUNDED_CONE)
     // {
-    //     return distanceToRoundedCone(
+    //     distance = distance_to_roundedCone(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
@@ -791,11 +940,11 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == TORUS)
     // {
-    //     return distanceToTorus(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
+    //     distance = distance_to_torus(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == CAPPED_TORUS)
     // {
-    //     return distanceToCappedTorus(
+    //     distance = distance_to_cappedTorus(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
@@ -804,7 +953,7 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == LINK)
     // {
-    //     return distanceToLink(
+    //     distance = distance_to_link(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
@@ -813,11 +962,11 @@ fn distance_to_primitive(
     // }
     // if ((*primitive).shape == HEXAGONAL_PRISM)
     // {
-    //     return distanceToHexagonalPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
+    //     distance = distance_to_hexagonalPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
     // if ((*primitive).shape == OCTAHEDRON)
     // {
-    //     return distanceToOctahedron(position, (*primitive).custom_data.x);
+    //     distance = distance_to_octahedron(position, (*primitive).custom_data.x);
     // }
 
     return distance * uniform_scale;

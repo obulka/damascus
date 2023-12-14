@@ -10,7 +10,7 @@ use crate::{
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, Default, AsStd140)]
-pub struct SceneGlobals {
+pub struct SceneParameters {
     num_primitives: u32,
     num_lights: u32,
 }
@@ -29,7 +29,7 @@ impl Scene {
     pub fn create_gpu_primitives(&self) -> [Std140GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [GPUPrimitive::default().as_std140(); Self::MAX_PRIMITIVES];
         for index in 0..self.primitives.len().min(Scene::MAX_PRIMITIVES) {
-            primitive_array[index] = self.primitives[index].to_gpu().as_std140();
+            primitive_array[index] = self.primitives[index].to_gpu();
         }
         primitive_array
     }
@@ -37,15 +37,16 @@ impl Scene {
     pub fn create_gpu_lights(&self) -> [Std140GPULight; Self::MAX_LIGHTS] {
         let mut light_array = [GPULight::default().as_std140(); Self::MAX_LIGHTS];
         for index in 0..self.lights.len().min(Scene::MAX_LIGHTS) {
-            light_array[index] = self.lights[index].to_gpu().as_std140();
+            light_array[index] = self.lights[index].to_gpu();
         }
         light_array
     }
 
-    pub fn create_scene_globals(&self) -> Std140SceneGlobals {
-        return SceneGlobals {
+    pub fn create_scene_parameters(&self) -> Std140SceneParameters {
+        return SceneParameters {
             num_primitives: self.primitives.len() as u32,
             num_lights: self.lights.len() as u32,
-        }.as_std140()
+        }
+        .as_std140();
     }
 }

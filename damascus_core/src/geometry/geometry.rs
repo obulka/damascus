@@ -66,7 +66,7 @@ pub struct Primitive {
 }
 
 impl Primitive {
-    pub fn to_gpu(&self) -> GPUPrimitive {
+    pub fn to_gpu(&self) -> Std140GPUPrimitive {
         GPUPrimitive {
             shape: self.shape as u32,
             transform: self.transform,
@@ -76,5 +76,6 @@ impl Primitive {
             num_children: self.num_children,
             dimensional_data: self.dimensional_data,
         }
+        .as_std140()
     }
 }

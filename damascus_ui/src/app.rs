@@ -3,10 +3,10 @@ use std::{borrow::Cow, collections::HashMap};
 
 use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
-use exr;
 use glam;
+use ndarray;
 
-use damascus_core::{geometry, lights, materials, scene};
+use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use crate::viewport_3d::Viewport3d;
 
@@ -43,6 +43,7 @@ pub enum DamascusDataType {
     Light,
     Material,
     Primitive,
+    RayMarcher,
     Scene,
 }
 
@@ -66,13 +67,14 @@ pub enum DamascusValueType {
     Vec4 { value: glam::Vec4 },
     Mat3 { value: glam::Mat3 },
     Mat4 { value: glam::Mat4 },
-    Image { value: exr::prelude::AnyImage },
+    Image { value: ndarray::Array4<f32> },
 
     // Composite types
     Camera { value: geometry::camera::Camera },
     Light { value: Vec<lights::Light> },
     Material { value: materials::Material },
     Primitive { value: Vec<geometry::Primitive> },
+    RayMarcher { value: renderers::RayMarcher },
     Scene { value: scene::Scene },
 }
 
@@ -167,7 +169,7 @@ impl DamascusValueType {
     }
 
     /// Tries to downcast this value type to an image
-    pub fn try_to_image(self) -> anyhow::Result<exr::prelude::AnyImage> {
+    pub fn try_to_image(self) -> anyhow::Result<ndarray::Array4<f32>> {
         if let DamascusValueType::Image { value } = self {
             Ok(value)
         } else {
@@ -211,6 +213,15 @@ impl DamascusValueType {
         }
     }
 
+    /// Tries to downcast this value type to a ray_marcher
+    pub fn try_to_ray_marcher(self) -> anyhow::Result<renderers::RayMarcher> {
+        if let DamascusValueType::RayMarcher { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to RayMarcher", self)
+        }
+    }
+
     /// Tries to downcast this value type to a scene
     pub fn try_to_scene(self) -> anyhow::Result<scene::Scene> {
         if let DamascusValueType::Scene { value } = self {
@@ -227,14 +238,13 @@ impl DamascusValueType {
 #[derive(Clone, Copy)]
 #[cfg_attr(feature = "persistence", derive(serde::Serialize, serde::Deserialize))]
 pub enum DamascusNodeTemplate {
-    // Data creation
     Axis,
     Camera,
     Light,
     Material,
     Primitive,
+    RayMarcher,
     Scene,
-    // Data processing
 }
 
 /// The response type is used to encode side-effects produced when drawing a
@@ -262,18 +272,13 @@ pub struct DamascusGraphState {
 impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {
         match self {
-            // DamascusDataType::Bool => egui::Color32::from_rgb(255, 102, 0),
-            // DamascusDataType::Integer => egui::Color32::from_rgb(255, 102, 0),
-            // DamascusDataType::UnsignedInteger => egui::Color32::from_rgb(255, 102, 0),
-            // DamascusDataType::Vec2 => egui::Color32::from_rgb(238, 207, 109),
-            // DamascusDataType::Vec4 => egui::Color32::from_rgb(136, 55, 86),
-            // DamascusDataType::Mat3 => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
             DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             DamascusDataType::Light => egui::Color32::from_rgb(255, 204, 128),
             DamascusDataType::Material => egui::Color32::from_rgb(255, 102, 0),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
+            DamascusDataType::RayMarcher => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
         }
@@ -295,6 +300,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Light => "light",
             DamascusDataType::Material => "material",
             DamascusDataType::Primitive => "primitive",
+            DamascusDataType::RayMarcher => "ray marcher",
             DamascusDataType::Scene => "scene",
         })
     }
@@ -315,6 +321,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Light => "light",
             DamascusNodeTemplate::Material => "material",
             DamascusNodeTemplate::Primitive => "primitive",
+            DamascusNodeTemplate::RayMarcher => "ray marcher",
             DamascusNodeTemplate::Scene => "scene",
         })
     }
@@ -430,17 +437,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_image =
-            |graph: &mut DamascusGraph, name: &str, default: exr::prelude::AnyImage| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Image,
-                    DamascusValueType::Image { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
+        let input_image = |graph: &mut DamascusGraph, name: &str, default: ndarray::Array4<f32>| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Image,
+                DamascusValueType::Image { value: default },
+                InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
         let input_camera =
             |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
                 graph.add_input_param(
@@ -488,6 +494,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
+        let input_ray_marcher =
+            |graph: &mut DamascusGraph, name: &str, default: renderers::RayMarcher| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::RayMarcher,
+                    DamascusValueType::RayMarcher { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
+
         let input_scene = |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
             graph.add_input_param(
                 node_id,
@@ -516,6 +534,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_primitive = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
+        };
+        let output_ray_marcher = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), DamascusDataType::RayMarcher);
         };
         let output_scene = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Scene);
@@ -610,6 +631,62 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector4(graph, "dimensional_data", glam::Vec4::X); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
+            DamascusNodeTemplate::RayMarcher => {
+                let default_ray_marcher = renderers::RayMarcher::default();
+                input_scene(graph, "scene", default_ray_marcher.scene);
+                input_uint(
+                    graph,
+                    "paths_per_pixel",
+                    default_ray_marcher.paths_per_pixel,
+                );
+                input_bool(graph, "roulette", default_ray_marcher.roulette);
+                input_float(graph, "max_distance", default_ray_marcher.max_distance);
+                input_uint(graph, "max_ray_steps", default_ray_marcher.max_ray_steps);
+                input_uint(graph, "max_bounces", default_ray_marcher.max_bounces);
+                input_float(graph, "hit_tolerance", default_ray_marcher.hit_tolerance);
+                input_float(graph, "shadow_bias", default_ray_marcher.shadow_bias);
+                input_float(graph, "max_brightness", default_ray_marcher.max_brightness);
+                input_vector3(graph, "seeds", default_ray_marcher.seeds);
+                input_bool(
+                    graph,
+                    "enable_depth_of_field",
+                    default_ray_marcher.enable_depth_of_field,
+                );
+                input_bool(
+                    graph,
+                    "dynamic_level_of_detail",
+                    default_ray_marcher.dynamic_level_of_detail,
+                );
+                input_uint(
+                    graph,
+                    "max_light_sampling_bounces",
+                    default_ray_marcher.max_light_sampling_bounces,
+                );
+                input_bool(graph, "sample_hdri", default_ray_marcher.sample_hdri);
+                input_bool(
+                    graph,
+                    "sample_all_lights",
+                    default_ray_marcher.sample_all_lights,
+                );
+                input_float(
+                    graph,
+                    "light_sampling_bias",
+                    default_ray_marcher.light_sampling_bias,
+                );
+                input_bool(
+                    graph,
+                    "secondary_sampling",
+                    default_ray_marcher.secondary_sampling,
+                );
+                input_float(
+                    graph,
+                    "hdri_offset_angle",
+                    default_ray_marcher.hdri_offset_angle,
+                );
+                input_uint(graph, "output_aov", default_ray_marcher.output_aov as u32);
+                input_bool(graph, "latlong", default_ray_marcher.latlong);
+                output_ray_marcher(graph, "out");
+            }
             DamascusNodeTemplate::Scene => {
                 let default_scene = scene::Scene::default();
                 input_camera(graph, "render_camera", default_scene.render_camera);
@@ -635,6 +712,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
             DamascusNodeTemplate::Light,
             DamascusNodeTemplate::Material,
             DamascusNodeTemplate::Primitive,
+            DamascusNodeTemplate::RayMarcher,
             DamascusNodeTemplate::Scene,
         ]
     }
@@ -1001,16 +1079,19 @@ impl eframe::App for Damascus {
                         // DamascusValueType::Mat4 { value } => {}
                         // DamascusValueType::Image { value } => {}
                         DamascusValueType::Camera { value } => {
-                            viewport_3d.scene.render_camera = value;
+                            viewport_3d.renderer.scene.render_camera = value;
                         }
                         DamascusValueType::Light { value } => {
-                            viewport_3d.scene.lights = value;
+                            viewport_3d.renderer.scene.lights = value;
                         }
                         DamascusValueType::Primitive { value } => {
-                            viewport_3d.scene.primitives = value;
+                            viewport_3d.renderer.scene.primitives = value;
+                        }
+                        DamascusValueType::RayMarcher { value } => {
+                            viewport_3d.renderer = value;
                         }
                         DamascusValueType::Scene { value } => {
-                            viewport_3d.scene = value;
+                            viewport_3d.renderer.scene = value;
                         }
                         _ => {}
                     }
@@ -1182,14 +1263,14 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Mat4 { value })
         }
 
-        fn input_image(&mut self, name: &str) -> anyhow::Result<exr::prelude::AnyImage> {
+        fn input_image(&mut self, name: &str) -> anyhow::Result<ndarray::Array4<f32>> {
             self.evaluate_input(name)?.try_to_image()
         }
 
         fn output_image(
             &mut self,
             name: &str,
-            value: exr::prelude::AnyImage,
+            value: ndarray::Array4<f32>,
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Image { value })
         }
@@ -1240,6 +1321,18 @@ pub fn evaluate_node(
             value: Vec<geometry::Primitive>,
         ) -> anyhow::Result<DamascusValueType> {
             self.populate_output(name, DamascusValueType::Primitive { value })
+        }
+
+        fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
+            self.evaluate_input(name)?.try_to_ray_marcher()
+        }
+
+        fn output_ray_marcher(
+            &mut self,
+            name: &str,
+            value: renderers::RayMarcher,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::RayMarcher { value })
         }
 
         fn input_scene(&mut self, name: &str) -> anyhow::Result<scene::Scene> {
@@ -1387,6 +1480,58 @@ pub fn evaluate_node(
             }
             scene_primitives.append(&mut children);
             evaluator.output_primitive("out", scene_primitives)
+        }
+        DamascusNodeTemplate::RayMarcher => {
+            let scene = evaluator.input_scene("scene")?;
+            let paths_per_pixel = evaluator.input_uint("paths_per_pixel")?;
+            let roulette = evaluator.input_bool("roulette")?;
+            let max_distance = evaluator.input_float("max_distance")?;
+            let max_ray_steps = evaluator.input_uint("max_ray_steps")?;
+            let max_bounces = evaluator.input_uint("max_bounces")?;
+            let hit_tolerance = evaluator.input_float("hit_tolerance")?;
+            let shadow_bias = evaluator.input_float("shadow_bias")?;
+            let max_brightness = evaluator.input_float("max_brightness")?;
+            let seeds = evaluator.input_vector3("seeds")?;
+            let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
+            let dynamic_level_of_detail = evaluator.input_bool("dynamic_level_of_detail")?;
+            let max_light_sampling_bounces = evaluator.input_uint("max_light_sampling_bounces")?;
+            let sample_hdri = evaluator.input_bool("sample_hdri")?;
+            let sample_all_lights = evaluator.input_bool("sample_all_lights")?;
+            let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
+            let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
+            let hdri_offset_angle = evaluator.input_float("hdri_offset_angle")?;
+            let latlong = evaluator.input_bool("latlong")?;
+
+            let output_aov_num = evaluator.input_uint("output_aov")?;
+            let mut output_aov = renderers::AOVs::default();
+            if let Some(aov) = num::FromPrimitive::from_u32(output_aov_num) {
+                output_aov = aov;
+            }
+            evaluator.output_ray_marcher(
+                "out",
+                renderers::RayMarcher {
+                    scene: scene,
+                    paths_per_pixel: paths_per_pixel,
+                    roulette: roulette,
+                    max_distance: max_distance,
+                    max_ray_steps: max_ray_steps,
+                    max_bounces: max_bounces,
+                    hit_tolerance: hit_tolerance,
+                    shadow_bias: shadow_bias,
+                    max_brightness: max_brightness,
+                    seeds: seeds,
+                    enable_depth_of_field: enable_depth_of_field,
+                    dynamic_level_of_detail: dynamic_level_of_detail,
+                    max_light_sampling_bounces: max_light_sampling_bounces,
+                    sample_hdri: sample_hdri,
+                    sample_all_lights: sample_all_lights,
+                    light_sampling_bias: light_sampling_bias,
+                    secondary_sampling: secondary_sampling,
+                    hdri_offset_angle: hdri_offset_angle,
+                    output_aov: output_aov,
+                    latlong: latlong,
+                },
+            )
         }
         DamascusNodeTemplate::Scene => {
             let render_camera = evaluator.input_camera("render_camera")?;

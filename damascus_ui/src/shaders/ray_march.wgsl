@@ -15,29 +15,40 @@
 
 // math.wgsl
 
+
 // wish we could overload functions
-fn max_component_2(vector_: vec2<f32>) -> f32 {
+fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
     return max(vector_.x, vector_.y);
 }
 
-fn max_component_3(vector_: vec3<f32>) -> f32 {
+
+fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
     return max(vector_.x, max(vector_.y, vector_.z));
 }
 
-fn max_component_4(vector_: vec4<f32>) -> f32 {
+
+fn max_component_vec4f(vector_: vec4<f32>) -> f32 {
     return max(vector_.x, max(vector_.y, max(vector_.z, vector_.w)));
 }
 
-fn min_component_2(vector_: vec2<f32>) -> f32 {
+
+fn min_component_vec2f(vector_: vec2<f32>) -> f32 {
     return min(vector_.x, vector_.y);
 }
 
-fn min_component_3(vector_: vec3<f32>) -> f32 {
+
+fn min_component_vec3f(vector_: vec3<f32>) -> f32 {
     return min(vector_.x, min(vector_.y, vector_.z));
 }
 
-fn min_component_4(vector_: vec4<f32>) -> f32 {
+
+fn min_component_vec4f(vector_: vec4<f32>) -> f32 {
     return min(vector_.x, min(vector_.y, min(vector_.z, vector_.w)));
+}
+
+
+fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
+    return vector_.x + vector_.y + vector_.z + vector_.w;
 }
 
 
@@ -54,6 +65,23 @@ fn min_component_4(vector_: vec4<f32>) -> f32 {
 fn random_f32(seed: f32) -> f32 {
     return fract(sin(seed * 91.3458) * 47453.5453);
 }
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
+    return vec3<f32>(
+        random_f32(seed.x),
+        random_f32(seed.y),
+        random_f32(seed.z),
+    );
+}
+
 
 fn vec2f_to_random_f32(seed: vec2<f32>) -> f32 {
     return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453123);
@@ -107,7 +135,7 @@ fn material_interaction(
     throughput: ptr<function, vec4<f32>>,
     material: ptr<function, Material>,
 ) {
-    *ray_colour = vec4<f32>((*material).diffuse_colour, 1.0);
+    *ray_colour = vec4<f32>((*material).diffuse_colour, 1.0); // TODO
 }
 
 
@@ -118,13 +146,52 @@ fn material_interaction(
 struct Camera {
     enable_depth_of_field: u32, // bool isn't host-shareable?
     aperture: f32,
+    focal_distance: f32,
     world_matrix: mat4x4<f32>,
+    inverse_world_matrix: mat4x4<f32>,
     inverse_projection_matrix: mat4x4<f32>,
 }
 
 
 @group(1) @binding(0)
 var<uniform> _render_camera: Camera;
+
+
+fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
+    return (
+        _render_camera.inverse_world_matrix
+        * vec4<f32>(world_position, 1.0)
+    ).xyz;
+}
+
+
+/**
+ * Generate a ray out of a camera.
+ *
+ * @arg uv_coordinate: The UV position in the resulting image.
+ * @arg ray_origin: Will store the origin of the ray.
+ * @arg ray_direction: Will store the direction of the ray.
+ */
+fn create_ray(
+    uv_coordinate: vec4<f32>,
+    ray_origin: ptr<function, vec3<f32>>,
+    ray_direction: ptr<function, vec3<f32>>,
+) {
+    *ray_origin = vec3<f32>(
+        _render_camera.world_matrix[3][0],
+        _render_camera.world_matrix[3][1],
+        _render_camera.world_matrix[3][2],
+    );
+
+    var direction: vec4<f32> = (
+        _render_camera.inverse_projection_matrix
+        * uv_coordinate
+    );
+    direction = _render_camera.world_matrix * vec4<f32>(direction.xyz, 0.0);
+
+    *ray_direction = normalize(direction.xyz);
+}
+
 
 // geometry/geometry.wgsl
 // #include "material.wgsl"
@@ -238,35 +305,83 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
     return transformed_ray;
 }
 
+// aovs.wgsl
+
+
+let BEAUTY_AOV: u32 = 0u;
+let WORLD_POSITION_AOV: u32 = 1u;
+let LOCAL_POSITION_AOV: u32 = 2u;
+let NORMALS_AOV: u32 = 3u;
+let DEPTH_AOV: u32 = 4u;
+
+
+fn early_exit_aovs(
+    aov_type: u32,
+    world_position: vec3<f32>,
+    local_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+) -> vec4<f32> {
+    if (aov_type == WORLD_POSITION_AOV) {
+        return vec4<f32>(world_position, 1.0);
+    }
+    else if (aov_type == LOCAL_POSITION_AOV) {
+        return vec4<f32>(local_position, 1.0);
+    }
+    else if (aov_type == NORMALS_AOV) {
+        return vec4<f32>(surface_normal, 1.0);
+    }
+    else if (aov_type == DEPTH_AOV) {
+        return vec4<f32>(abs(world_to_camera_space(world_position).z));
+    }
+    return vec4<f32>(-1.0); // Invalid!!
+}
 
 // ray_march.wgsl
 
 
-// TODO pass these as uniforms
-let MAX_RAY_DISTANCE: f32 = 1000.0;
-let HIT_TOLERANCE: f32 = 0.001;
-let MAX_RAY_STEPS: u32 = 10000u;
-let MAX_BRIGHTNESS: f32 = 100000.0;
-let LEVEL_OF_DETAIL: bool = true;
-let BOUNCES_PER_RAY: u32 = 5u;
-let ROULETTE: bool = true;
-
-
 struct VertexOut {
-    @location(0) ray_direction: vec3<f32>,
-    @location(1) ray_origin: vec3<f32>,
-    @builtin(position) uv_position: vec4<f32>,
+    @location(0) uv_coordinate: vec4<f32>,
+    @builtin(position) frag_coordinate: vec4<f32>,
 }
 
 
-struct SceneGlobals {
+struct SceneParameters {
     num_primitives: u32,
     num_lights: u32,
 }
 
 
+struct RayMarcherParameters {
+    paths_per_pixel: u32,
+    roulette: u32,
+    max_distance: f32,
+    max_ray_steps: u32,
+    max_bounces: u32,
+    hit_tolerance: f32,
+    shadow_bias: f32,
+    max_brightness: f32,
+    seeds: vec3<f32>,
+    enable_depth_of_field: u32,
+    dynamic_level_of_detail: u32,
+    max_light_sampling_bounces: u32,
+    sample_hdri: u32,
+    sample_all_lights: u32,
+    light_sampling_bias: f32,
+    secondary_sampling: u32,
+    hdri_offset_angle: f32,
+    output_aov: u32,
+    latlong: u32,
+}
+
+
+struct RenderParameters {
+    ray_marcher: RayMarcherParameters,
+    scene: SceneParameters,
+}
+
+
 @group(0) @binding(0)
-var<uniform> _scene_globals: SceneGlobals;
+var<uniform> _render_params: RenderParameters;
 
 
 var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
@@ -280,20 +395,8 @@ var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     var out: VertexOut;
-    out.uv_position = vec4<f32>(v_positions[vertex_index], 0.0, 1.0);
-    out.ray_origin = vec3<f32>(
-        _render_camera.world_matrix[3][0],
-        _render_camera.world_matrix[3][1],
-        _render_camera.world_matrix[3][2]
-    );
-
-    var direction: vec4<f32> = (
-        _render_camera.inverse_projection_matrix
-        * vec4<f32>(v_positions[vertex_index], 0.0, 1.0)
-    );
-    direction = _render_camera.world_matrix * vec4<f32>(direction.xyz, 0.0);
-
-    out.ray_direction = normalize(direction.xyz);
+    out.frag_coordinate = vec4<f32>(v_positions[vertex_index], 0.0, 1.0);
+    out.uv_coordinate = vec4<f32>(v_positions[vertex_index], 0.0, 1.0);
 
     return out;
 }
@@ -304,11 +407,11 @@ fn min_distance_to_primitive(
     pixel_footprint: f32,
     material: ptr<function, Material>,
 ) -> f32 {
-    var min_distance: f32 = MAX_RAY_DISTANCE;
+    var min_distance: f32 = _render_params.ray_marcher.max_distance;
 
     for (
         var primitive_index = 0u;
-        primitive_index < min(_scene_globals.num_primitives, MAX_PRIMITIVES);
+        primitive_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
         primitive_index++
     ) {
         var primitive: Primitive = _primitives.primitives[primitive_index];
@@ -345,22 +448,22 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
     var normal_offset = vec2<f32>(0.5773, -0.5773);
     return normalize(
         normal_offset.xyy * min_distance_to_primitive(
-            position + normal_offset.xyy * HIT_TOLERANCE,
+            position + normal_offset.xyy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &material,
         )
         + normal_offset.yyx * min_distance_to_primitive(
-            position + normal_offset.yyx * HIT_TOLERANCE,
+            position + normal_offset.yyx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &material,
         )
         + normal_offset.yxy * min_distance_to_primitive(
-            position + normal_offset.yxy * HIT_TOLERANCE,
+            position + normal_offset.yxy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &material,
         )
         + normal_offset.xxx * min_distance_to_primitive(
-            position + normal_offset.xxx * HIT_TOLERANCE,
+            position + normal_offset.xxx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &material,
         )
@@ -376,7 +479,14 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
  *
  * @returns: The ray colour.
  */
-fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec4<f32> {
+fn march_path(
+    ray_origin: vec3<f32>,
+    ray_direction: vec3<f32>,
+    seed: vec3<f32>,
+) -> vec4<f32> {
+    var roulette = bool(_render_params.ray_marcher.roulette);
+    var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
+
     var ray_colour = vec4<f32>(0.0);
     var throughput = vec4<f32>(1.0);
 
@@ -388,7 +498,7 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec
     var iterations: u32 = 0u;
     var bounces: u32 = 0u;
 
-    var pixel_footprint: f32 = HIT_TOLERANCE;
+    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
 
     // Data for the next ray
     var origin: vec3<f32> = ray_origin;
@@ -397,10 +507,10 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec
 
     // March the ray
     while (
-        distance_travelled < MAX_RAY_DISTANCE
-        && iterations < MAX_RAY_STEPS
-        && (throughput.x + throughput.y + throughput.z + throughput.w) > HIT_TOLERANCE
-        && length(ray_colour) < MAX_BRIGHTNESS
+        distance_travelled < _render_params.ray_marcher.max_distance
+        && iterations < _render_params.ray_marcher.max_ray_steps
+        && sum_component_vec4f(throughput) > _render_params.ray_marcher.hit_tolerance
+        && length(ray_colour) < _render_params.ray_marcher.max_brightness
     ) {
         position_on_ray = origin + distance_since_last_bounce * direction;
 
@@ -432,9 +542,15 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec
             );
 
             // Early exit for the various AOVs that are not 'beauty'
-            // if (_scene_globals.output_aov > BEAUTY) {
-            //     return aov_data(_scene_globals.output_aov)
-            // }
+            if (_render_params.ray_marcher.output_aov > BEAUTY_AOV) {
+                return early_exit_aovs(
+                    _render_params.ray_marcher.output_aov,
+                    intersection_position,
+                    intersection_position, // TODO world to local
+                    surface_normal,
+                    // TODO object id
+                );
+            }
 
             material_interaction(
                 step_distance,
@@ -450,22 +566,25 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec
             );
 
             // Exit if we have reached the bounce limit or with a random chance
-            var rng: f32 = 0.0; // TODO add random functions
-            var exit_probability: f32 = max_component_3(throughput.xyz);
-            if (bounces > BOUNCES_PER_RAY || (ROULETTE && exit_probability <= rng)) {
+            var rng: f32 = random_f32(seed.x); // TODO add random functions
+            var exit_probability: f32 = max_component_vec3f(throughput.xyz);
+            if (
+                bounces > _render_params.ray_marcher.max_bounces
+                || (roulette && exit_probability <= rng)
+            ) {
                 return ray_colour; // TODO object id in alpha after you can sample
             }
-            else if (ROULETTE) {
+            else if (roulette) {
                 // Account for the lost intensity from the early exits
                 throughput /= vec4<f32>(exit_probability);
             }
 
             distance_since_last_bounce = 0.0;
             // Reset the pixel footprint so multiple reflections don't reduce precision
-            pixel_footprint = HIT_TOLERANCE;
+            pixel_footprint = _render_params.ray_marcher.hit_tolerance;
         }
-        else if (LEVEL_OF_DETAIL) {
-            pixel_footprint += HIT_TOLERANCE * step_distance;
+        else if (dynamic_level_of_detail) {
+            pixel_footprint += _render_params.ray_marcher.hit_tolerance * step_distance;
         }
 
         last_step_distance = signed_step_distance;
@@ -476,13 +595,73 @@ fn march_path(ray_origin: vec3<f32>, ray_direction: vec3<f32>, seed: f32) -> vec
 }
 
 
+/**
+ * Create a ray out of the camera. It will be either a standard ray,
+ * a latlong ray, or a ray that will result in depth of field.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg uv_coordinate: The u, and v locations of the pixel.
+ * @arg ray_origin: The location to store the origin of the new ray.
+ * @arg ray_direction: The location to store the direction of the new
+ *     ray.
+ */
+fn create_render_camera_ray(
+    seed: vec3<f32>,
+    uv_coordinate: vec4<f32>,
+    ray_origin: ptr<function, vec3<f32>>,
+    ray_direction: ptr<function, vec3<f32>>,
+) {
+    if (bool(_render_params.ray_marcher.latlong))
+    {
+        // create_latlong_ray(
+        //     uv_coordinate,
+        //     ray_origin,
+        //     ray_direction,
+        // );
+    }
+    else if (bool(_render_params.ray_marcher.enable_depth_of_field))
+    {
+        // create_ray_with_dof(
+        //     uv_coordinate,
+        //     seed,
+        //     ray_origin,
+        //     ray_direction,
+        // );
+    }
+    else
+    {
+        create_ray(
+            uv_coordinate,
+            ray_origin,
+            ray_direction,
+        );
+    }
+}
+
+
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    var seed: f32 = vec2f_to_random_f32(in.uv_position.xy);
+    var seed = random_vec3f(
+        _render_params.ray_marcher.seeds
+        + vec3<f32>(vec2f_to_random_f32(in.frag_coordinate.xy))
+    );
     var ray_colour = vec4<f32>(0.0);
 
-    for (var path=1; path <= 1; path++) {
-        ray_colour += march_path(in.ray_origin, in.ray_direction, seed);
+    var ray_origin: vec3<f32>;
+    var ray_direction: vec3<f32>;
+    for (var path=1u; path <= _render_params.ray_marcher.paths_per_pixel; path++) {
+        create_render_camera_ray(
+            seed,
+            in.uv_coordinate,
+            &ray_origin,
+            &ray_direction,
+        );
+
+        ray_colour += march_path(
+            ray_origin,
+            ray_direction,
+            seed,
+        );
     }
 
     return ray_colour;

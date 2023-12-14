@@ -6,6 +6,7 @@ pub mod geometry;
 pub mod lights;
 pub mod materials;
 pub mod math;
+pub mod renderers;
 pub mod scene;
 
 // pub fn add(left: usize, right: usize) -> usize {

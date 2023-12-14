@@ -1,3 +1,4 @@
+use std::ops::BitOr;
 use std::sync::Arc;
 
 use eframe::{
@@ -9,17 +10,18 @@ use eframe::{
 use damascus_core::{
     geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
     lights::Std140GPULight,
-    scene::{Scene, Std140SceneGlobals},
+    renderers::{RayMarcher, Std140RenderParameters},
+    scene::Scene,
 };
 
 pub struct Viewport3d {
-    pub scene: Scene,
+    pub renderer: RayMarcher,
 }
 
 impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewport3d = Self {
-            scene: Scene::default(),
+            renderer: RayMarcher::default(),
         };
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -29,15 +31,16 @@ impl Viewport3d {
         let device = &wgpu_render_state.device;
 
         // Render globals buffer, TODO: actually use this for renderer's global params
-        let render_globals_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.create_scene_globals()]),
-            // Mapping at creation (as done by the create_buffer_init utility)
-            // doesn't require us to to add the MAP_WRITE usage
-            // (this *happens* to workaround this bug )
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-        });
-        let render_globals_bind_group_layout =
+        let render_parameters_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("viewport 3d render globals buffer"),
+                contents: bytemuck::cast_slice(&[viewport3d.renderer.as_render_parameters()]),
+                // Mapping at creation (as done by the create_buffer_init utility)
+                // doesn't require us to to add the MAP_WRITE usage
+                // (this *happens* to workaround this bug )
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            });
+        let render_parameters_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d render globals bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -51,19 +54,19 @@ impl Viewport3d {
                     count: None,
                 }],
             });
-        let render_globals_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let render_parameters_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("viewport 3d render globals bind group"),
-            layout: &render_globals_bind_group_layout,
+            layout: &render_parameters_bind_group_layout,
             entries: &[wgpu::BindGroupEntry {
                 binding: 0,
-                resource: render_globals_buffer.as_entire_binding(),
+                resource: render_parameters_buffer.as_entire_binding(),
             }],
         });
 
         // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.render_camera.to_gpu()]),
+            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.to_gpu()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_bind_group_layout =
@@ -71,7 +74,7 @@ impl Viewport3d {
                 label: Some("viewport 3d camera bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
+                    visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
                     ty: wgpu::BindingType::Buffer {
                         ty: wgpu::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
@@ -93,7 +96,7 @@ impl Viewport3d {
         // Primitive storage buffer
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_primitives()]),
+            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
             usage: wgpu::BufferUsages::COPY_DST
                 | wgpu::BufferUsages::MAP_READ
                 | wgpu::BufferUsages::STORAGE,
@@ -125,7 +128,7 @@ impl Viewport3d {
         // Light storage buffer
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d lights buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.scene.create_gpu_lights()]),
+            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_lights()]),
             usage: wgpu::BufferUsages::COPY_DST
                 | wgpu::BufferUsages::MAP_READ
                 | wgpu::BufferUsages::STORAGE,
@@ -158,7 +161,7 @@ impl Viewport3d {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("viewport 3d pipeline layout"),
             bind_group_layouts: &[
-                &render_globals_bind_group_layout,
+                &render_parameters_bind_group_layout,
                 &render_camera_bind_group_layout,
                 &primitives_bind_group_layout,
                 &lights_bind_group_layout,
@@ -202,8 +205,8 @@ impl Viewport3d {
             .paint_callback_resources
             .insert(RenderResources {
                 render_pipeline,
-                render_globals_bind_group,
-                render_globals_buffer,
+                render_parameters_bind_group,
+                render_parameters_buffer,
                 render_camera_bind_group,
                 render_camera_buffer,
                 primitives_bind_group,
@@ -219,14 +222,14 @@ impl Viewport3d {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
         // self.angle += response.drag_delta().x * 0.01;
-        self.scene.render_camera.aspect_ratio =
+        self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
         // Clone locals so we can move them into the paint callback:
-        let scene_globals = self.scene.create_scene_globals();
-        let render_camera = self.scene.render_camera.to_gpu();
-        let primitives = self.scene.create_gpu_primitives();
-        let lights = self.scene.create_gpu_lights();
+        let render_parameters = self.renderer.as_render_parameters();
+        let render_camera = self.renderer.scene.render_camera.to_gpu();
+        let primitives = self.renderer.scene.create_gpu_primitives();
+        let lights = self.renderer.scene.create_gpu_lights();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -242,7 +245,7 @@ impl Viewport3d {
                 resources.prepare(
                     device,
                     queue,
-                    scene_globals,
+                    render_parameters,
                     render_camera,
                     primitives,
                     lights,
@@ -264,8 +267,8 @@ impl Viewport3d {
 
 struct RenderResources {
     render_pipeline: wgpu::RenderPipeline,
-    render_globals_bind_group: wgpu::BindGroup,
-    render_globals_buffer: wgpu::Buffer,
+    render_parameters_bind_group: wgpu::BindGroup,
+    render_parameters_buffer: wgpu::Buffer,
     render_camera_bind_group: wgpu::BindGroup,
     render_camera_buffer: wgpu::Buffer,
     primitives_bind_group: wgpu::BindGroup,
@@ -279,16 +282,16 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
-        scene_globals: Std140SceneGlobals,
+        render_parameters: Std140RenderParameters,
         render_camera: Std140GPUCamera,
         primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std140GPULight; Scene::MAX_LIGHTS],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
-            &self.render_globals_buffer,
+            &self.render_parameters_buffer,
             0,
-            bytemuck::cast_slice(&[scene_globals]),
+            bytemuck::cast_slice(&[render_parameters]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,
@@ -306,7 +309,7 @@ impl RenderResources {
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
         render_pass.set_pipeline(&self.render_pipeline);
 
-        render_pass.set_bind_group(0, &self.render_globals_bind_group, &[]);
+        render_pass.set_bind_group(0, &self.render_parameters_bind_group, &[]);
         render_pass.set_bind_group(1, &self.render_camera_bind_group, &[]);
         render_pass.set_bind_group(2, &self.primitives_bind_group, &[]);
         render_pass.set_bind_group(3, &self.lights_bind_group, &[]);

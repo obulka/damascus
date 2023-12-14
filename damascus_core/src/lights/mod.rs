@@ -24,7 +24,15 @@ pub struct GPULight {
 
 impl Default for GPULight {
     fn default() -> Self {
-        Light::default().to_gpu()
+        GPULight {
+            light_type: Lights::Directional as u32,
+            dimensional_data: Vec3::new(0., -1., 0.),
+            intensity: 1.,
+            falloff: 2.,
+            colour: Vec3::new(1., 0.8, 0.5),
+            shadow_hardness: 1.,
+            soften_shadows: 0,
+        }
     }
 }
 
@@ -54,7 +62,7 @@ impl Default for Light {
 }
 
 impl Light {
-    pub fn to_gpu(&self) -> GPULight {
+    pub fn to_gpu(&self) -> Std140GPULight {
         GPULight {
             light_type: self.light_type as u32,
             dimensional_data: self.dimensional_data,
@@ -64,5 +72,6 @@ impl Light {
             shadow_hardness: self.shadow_hardness,
             soften_shadows: self.soften_shadows as u32,
         }
+        .as_std140()
     }
 }

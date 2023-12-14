@@ -6,7 +6,9 @@ use glam::{Mat4, Vec4};
 pub struct GPUCamera {
     enable_depth_of_field: u32,
     aperture: f32,
+    focal_distance: f32,
     world_matrix: Mat4,
+    inverse_world_matrix: Mat4,
     inverse_projection_matrix: Mat4,
 }
 
@@ -93,7 +95,9 @@ impl Camera {
         GPUCamera {
             enable_depth_of_field: self.enable_depth_of_field as u32,
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
+            focal_distance: self.focal_distance,
             world_matrix: self.world_matrix,
+            inverse_world_matrix: self.world_matrix.inverse(),
             inverse_projection_matrix: Self::projection_matrix(
                 self.focal_length,
                 self.horizontal_aperture,

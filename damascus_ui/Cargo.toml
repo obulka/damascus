@@ -9,7 +9,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 damascus_core = { path = "../damascus_core" }
 anyhow = "1.0"
-eframe = { version = "0.19.0", features = ["persistence", "wgpu"]}
+eframe = { version = "0.19", features = ["persistence", "wgpu"]}
 egui_node_graph = { version = "0.4.0", features = ["persistence"]}
 glam = { version = "0.24", features = ["serde"] }
 serde = "1.0"

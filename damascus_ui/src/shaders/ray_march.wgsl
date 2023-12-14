@@ -50,9 +50,9 @@ fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
 /**
  * The positive part of the vector. Ie. any negative values will be 0.
  *
- * @arg vector: The vector.
+ * @arg value: The value.
  *
- * @returns: The positive part of the vector.
+ * @returns: The positive part of the value.
  */
 fn positive_part_f32(value: f32) -> f32 {
     return max(value, 0.0);
@@ -84,17 +84,25 @@ fn positive_part_vec3f(value: vec3<f32>) -> vec3<f32> {
 
 
 /**
- * The positive part of the vector. Ie. any negative values will be 0.
+ * The negative part of the vector. Ie. any positive values will be 0,
+ * and the negative values will be positive.
  *
- * @arg vector: The vector.
+ * @arg value: The value.
  *
- * @returns: The positive part of the vector.
+ * @returns: The negative part of the value.
  */
 fn negative_part_f32(value: f32) -> f32 {
     return -min(value, 0.0);
 }
 
 
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector_: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
 fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
@@ -120,6 +128,36 @@ fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
  */
 fn dot2_vec2f(vector_: vec2<f32>) -> f32 {
     return dot(vector_, vector_);
+}
+
+
+/**
+ * Get the length of the shorter of two vectors.
+ *
+ * @arg vector0: The first vector to get the length of if it is the
+ *     shortest option
+ * @arg vector1: The second vector to get the length of if it is the
+ *     shortest option
+ *
+ * @returns: The shorter of the two lengths
+ */
+fn min_length_vec2f(vector0: vec2<f32>, vector1: vec2<f32>) -> f32 {
+    return sqrt(min(dot2_vec2f(vector0), dot2_vec2f(vector1)));
+}
+
+
+/**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * Note: This should be a builtin function but I guess the wgsl version
+ *     is old.
+ *
+ * @arg value: The value to saturate.
+ *
+ * @returns: The clamped value
+ */
+fn saturate_f32(value: f32) -> f32 {
+    return clamp(value, 0.0, 1.0);
 }
 
 
@@ -754,18 +792,18 @@ fn distance_to_rhombus(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_triangular_prism(position: vec3<f32>, base: f32, depth: f32) -> f32 {
-    // 0.28867513459f = tan(PI / 6.0f) / 2.0f, converts base length
+    // 0.28867513459f = tan(PI / 6.0) / 2.0, converts base length
     // to the min distance from centroid to edge of triangle
 
-    // 0.86602540378f = cos(PI / 6.0f) = base / height
-    // 0.5f = sin(PI / 6.0f) = base / (2 * base)
+    // 0.86602540378f = cos(PI / 6.0) = base / height
+    // 0.5f = sin(PI / 6.0) = base / (2 * base)
 
     return max(
         abs(position.z) - depth,
         max(
-            abs(position.x) * 0.86602540378f + position.y * 0.5f,
+            abs(position.x) * 0.86602540378 + position.y * 0.5,
             -position.y,
-        ) - 0.28867513459f * base
+        ) - 0.28867513459 * base
     );
 }
 
@@ -846,6 +884,185 @@ fn distance_to_capsule(
         position.y - clamp(position.y, -negative_height, positive_height),
         position.z,
     )) - radius;
+}
+
+
+/**
+ * Compute the min distance from a point to a cone
+ * (y-axis aligned). The tip of the cone is at the origin, and it opens
+ * up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg angle: The angle between the tip and base of the cone [0-PI/2)
+ *     measured between the y-axis and wall of the cone.
+ * @arg height: The height (y-axis) of the cone. Cannot be 0.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_cone(position: vec3<f32>, angle: f32, height: f32) -> f32 {
+    // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // The cylindrical coordinates of the edge of the cone base
+    var cylindrical_bound = vec2<f32>(abs(height * tan(angle)), height);
+
+    // Vector from the top surface of the cone to the position given
+    var cone_top_to_position: vec2<f32> = cylindrical_position - cylindrical_bound * vec2<f32>(
+        saturate_f32(cylindrical_position.x / cylindrical_bound.x),
+        1.0,
+    );
+    // Vector from the edge of the cone to the position given
+    var cone_edge_to_position: vec2<f32> = (
+        cylindrical_position - cylindrical_bound * saturate_f32(
+            dot(cylindrical_position, cylindrical_bound)
+            / dot2_vec2f(cylindrical_bound),
+        )
+    );
+
+    var height_sign: f32 = sign(height);
+
+    // -1 if the position is inside the cone, +1 if it is outside
+    var inside: f32 = sign(max(
+        height_sign * (
+            cylindrical_position.x * height
+            - cylindrical_position.y * cylindrical_bound.x
+        ),
+        height_sign * (cylindrical_position.y - height),
+    ));
+    // The distance is the minimum between the distance to the edge and
+    // the distance to the base
+    return inside * min_length_vec2f(cone_edge_to_position, cone_top_to_position);
+}
+
+
+/**
+ * Compute the min distance from a point to an infinite cone
+ * (y-axis aligned). The tip of the cone is at the origin, and it opens
+ * up the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg angle: The angle between the tip and base of the cone [0-PI/2)
+ *     measured between the y-axis and wall of the cone.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_infinite_cone(position: vec3<f32>, angle: f32) -> f32 {
+    // The normalized cylindrical coordinates of the edge of the cone base
+    var cone_edge_direction: vec2<f32> = vec2<f32>(sin(angle), cos(angle));
+
+    // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // -1 if the position is inside the cone, +1 if it is outside
+    var inside: f32 = sign(
+        cylindrical_position.x * cone_edge_direction.y
+        - cylindrical_position.y * cone_edge_direction.x,
+    );
+
+    // The shortest path is always to the cones edge, or tip if we are
+    // below it. The dot product projects the position onto the cone
+    // edge, and taking the positive part clamps the cone above the
+    // xz-plane
+    return inside * length(
+        cylindrical_position - cone_edge_direction * positive_part_f32(
+            dot(cylindrical_position, cone_edge_direction),
+        ),
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a capped cone.
+ * Oriented along the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg height: The height (y-axis) of the cone, centered at the origin
+ *     Cannot be 0.
+ * @arg lower_radius: The radius of the cone at y = -height/2.
+ * @arg upper_radius: The radius of the cone at y = height/2.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_capped_cone(
+    position: vec3<f32>,
+    height: f32,
+    lower_radius: f32,
+    upper_radius: f32,
+) -> f32 {
+    var half_height: f32 = height / 2.0;
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // The 'corners' are the apparent corners when the shape is
+    // projected onto the xy-plane
+    var upper_corner = vec2<f32>(upper_radius, half_height);
+    var lower_to_upper_corner = vec2<f32>(upper_radius - lower_radius, height);
+
+    var cone_top_or_bottom_to_position = vec2<f32>(
+        cylindrical_position.x - min(
+            cylindrical_position.x,
+            select(upper_radius, lower_radius, cylindrical_position.y < 0.0),
+        ),
+        abs(cylindrical_position.y) - half_height,
+    );
+    var cone_edge_to_position: vec2<f32> = (
+        cylindrical_position
+        - upper_corner
+        + lower_to_upper_corner * saturate_f32(
+            dot(upper_corner - cylindrical_position, lower_to_upper_corner)
+            / dot2_vec2f(lower_to_upper_corner)
+        )
+    );
+
+    var inside: f32 = select(
+        1.0,
+        -1.0,
+        cone_edge_to_position.x < 0.0 && cone_top_or_bottom_to_position.y < 0.0,
+    );
+    return inside * min_length_vec2f(cone_top_or_bottom_to_position, cone_edge_to_position);
+}
+
+
+/**
+ * Compute the min distance from a point to a rounded cone.
+ * Oriented along the y-axis.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg height: The distance (y-axis) between the centers of the lower
+ *     and upper spheres which, when connected, form the rounded cone.
+ * @arg lower_radius: The radius of the sphere at y = 0.
+ * @arg upper_radius: The radius of the sphere at y = height.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_rounded_cone(
+    position: vec3<f32>,
+    height: f32,
+    lower_radius: f32,
+    upper_radius: f32,
+) -> f32 {
+    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+
+    // Get the unit vector that is normal to the conical surface in 2D
+    var parallel_x: f32 = (upper_radius - lower_radius) / height;
+    var parallel_y: f32 = sqrt(1.0 - parallel_x * parallel_x);
+    var parallel = vec2<f32>(parallel_x, parallel_y);
+
+    var position_projected_on_cone: f32 = dot(cylindrical_position, parallel);
+
+    if (position_projected_on_cone < 0.0)
+    {
+        // Closest point is on the lower sphere
+        return length(cylindrical_position) - lower_radius;
+    }
+    else if (position_projected_on_cone > parallel_y * height)
+    {
+        // Closest point is on the upper sphere
+        return length(cylindrical_position - vec2<f32>(0.0, height)) - upper_radius;
+    }
+
+    // Closest point is on the conical surface, so project the position
+    // onto the cone's normal direction, then offset it by the lower radius
+    return dot(cylindrical_position, vec2<f32>(parallel_y, -parallel_x)) - lower_radius;
 }
 
 
@@ -962,36 +1179,35 @@ fn distance_to_primitive(
             (*primitive).custom_data.z,
         );
     }
-    // if ((*primitive).shape == CONE)
-    // {
-    //     distance = distance_to_cone(
-    //         position,
-    //         degreesToRadians((*primitive).custom_data.x),
-    //         (*primitive).custom_data.y
-    //     );
-    // }
-    // if ((*primitive).shape == INFINITE_CONE)
-    // {
-    //     distance = distance_to_infiniteCone(position, degreesToRadians((*primitive).custom_data.x));
-    // }
-    // if ((*primitive).shape == CAPPED_CONE)
-    // {
-    //     distance = distance_to_cappedCone(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         (*primitive).custom_data.z
-    //     );
-    // }
-    // if ((*primitive).shape == ROUNDED_CONE)
-    // {
-    //     distance = distance_to_roundedCone(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         (*primitive).custom_data.z
-    //     );
-    // }
+    else if ((*primitive).shape == CONE) {
+        distance = distance_to_cone(
+            position,
+            radians((*primitive).custom_data.x),
+            (*primitive).custom_data.y,
+        );
+    }
+    else if ((*primitive).shape == INFINITE_CONE) {
+        distance = distance_to_infinite_cone(
+            position,
+            radians((*primitive).custom_data.x),
+        );
+    }
+    else if ((*primitive).shape == CAPPED_CONE) {
+        distance = distance_to_capped_cone(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
+    else if ((*primitive).shape == ROUNDED_CONE) {
+        distance = distance_to_rounded_cone(
+            position,
+            (*primitive).custom_data.x,
+            (*primitive).custom_data.y,
+            (*primitive).custom_data.z,
+        );
+    }
     // if ((*primitive).shape == TORUS)
     // {
     //     distance = distance_to_torus(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
@@ -1002,7 +1218,7 @@ fn distance_to_primitive(
     //         position,
     //         (*primitive).custom_data.x,
     //         (*primitive).custom_data.y,
-    //         degreesToRadians((*primitive).custom_data.z)
+    //         radians((*primitive).custom_data.z)
     //     );
     // }
     // if ((*primitive).shape == LINK)

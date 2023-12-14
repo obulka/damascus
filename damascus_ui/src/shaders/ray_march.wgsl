@@ -122,11 +122,23 @@ fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
 /**
  * Dot product of a vector with itself.
  *
- * @arg vector: The vector to take the dot product of.
+ * @arg vector_: The vector to take the dot product of.
  *
  * @returns: The dot product.
  */
 fn dot2_vec2f(vector_: vec2<f32>) -> f32 {
+    return dot(vector_, vector_);
+}
+
+
+/**
+ * Dot product of a vector with itself.
+ *
+ * @arg vector_: The vector to take the dot product of.
+ *
+ * @returns: The dot product.
+ */
+fn dot2_vec3f(vector_: vec3<f32>) -> f32 {
     return dot(vector_, vector_);
 }
 
@@ -418,31 +430,31 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
 // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 //
 
-// let SPHERE: u32 = 0u;
-// let ELLIPSOID: u32 = 1u;
-// let CUT_SPHERE: u32 = 2u;
-// let HOLLOW_SPHERE: u32 = 3u;
-// let DEATH_STAR: u32 = 4u;
-// let SOLID_ANGLE: u32 = 5u;
-// let RECTANGULAR_PRISM: u32 = 6u;
-// let RECTANGULAR_PRISM_FRAME: u32 = 7u;
-// let RHOMBUS: u32 = 8u;
-// let TRIANGULAR_PRISM: u32 = 9u;
-// let CYLINDER: u32 = 10u;
-// let INFINITE_CYLINDER: u32 = 11u;
-// let PLANE: u32 = 12u;
-// let CAPSULE: u32 = 13u;
-// let CONE: u32 = 14u;
-// let INFINITE_CONE: u32 = 15u;
-// let CAPPED_CONE: u32 = 16u;
-// let ROUNDED_CONE: u32 = 17u;
-// let TORUS: u32 = 18u;
-// let CAPPED_TORUS: u32 = 19u;
-// let LINK: u32 = 20u;
-// let HEXAGONAL_PRISM: u32 = 21u;
-// let OCTAHEDRON: u32 = 22u;
-// let MANDELBULB: u32 = 23u;
-// let MANDELBOX: u32 = 24u;
+// const SPHERE: u32 = 0u;
+// const ELLIPSOID: u32 = 1u;
+// const CUT_SPHERE: u32 = 2u;
+// const HOLLOW_SPHERE: u32 = 3u;
+// const DEATH_STAR: u32 = 4u;
+// const SOLID_ANGLE: u32 = 5u;
+// const RECTANGULAR_PRISM: u32 = 6u;
+// const RECTANGULAR_PRISM_FRAME: u32 = 7u;
+// const RHOMBUS: u32 = 8u;
+// const TRIANGULAR_PRISM: u32 = 9u;
+// const CYLINDER: u32 = 10u;
+// const INFINITE_CYLINDER: u32 = 11u;
+// const PLANE: u32 = 12u;
+// const CAPSULE: u32 = 13u;
+// const CONE: u32 = 14u;
+// const INFINITE_CONE: u32 = 15u;
+// const CAPPED_CONE: u32 = 16u;
+// const ROUNDED_CONE: u32 = 17u;
+// const TORUS: u32 = 18u;
+// const CAPPED_TORUS: u32 = 19u;
+// const LINK: u32 = 20u;
+// const HEXAGONAL_PRISM: u32 = 21u;
+// const OCTAHEDRON: u32 = 22u;
+// const MANDELBULB: u32 = 23u;
+// const MANDELBOX: u32 = 24u;
 
 let DIFFUSE_TRAP: u32 = 8192u;
 let SPECULAR_TRAP: u32 = 16384u;
@@ -1067,6 +1079,89 @@ fn distance_to_rounded_cone(
 
 
 /**
+ * Compute the min distance from a point to a torus.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg ring_radius: The radius (xy-plane) of the ring of the torus.
+ * @arg tube_radius: The radius of the tube of the torus.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_torus(position: vec3<f32>, ring_radius: f32, tube_radius: f32) -> f32 {
+    return distance_to_circle(
+        vec2<f32>(distance_to_circle(position.xy, ring_radius), position.z),
+        tube_radius,
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a capped torus.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg ring_radius: The radius (xy-plane) of the ring of the torus.
+ * @arg tube_radius: The radius of the tube of the torus.
+ * @arg cap_angle: The angle (xy-plane, symmetric about y-axis) to cap
+ *     at, in the range (0-PI).
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_capped_torus(
+    position: vec3<f32>,
+    ring_radius: f32,
+    tube_radius: f32,
+    cap_angle: f32,
+) -> f32 {
+    var cap_direction = vec2<f32>(sin(cap_angle), cos(cap_angle));
+    var abs_x_position = vec3<f32>(abs(position.x), position.yz);
+
+    var cap_factor: f32 = select(
+        // distance to z-axis from position
+        length(abs_x_position.xy),
+        // project position on xy-plane onto the direction we are capping at
+        dot(abs_x_position.xy, cap_direction.xy),
+        cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y,
+    );
+
+    return sqrt(
+        dot2_vec3f(abs_x_position)
+        + ring_radius * ring_radius
+        - 2.0f * ring_radius * cap_factor
+    ) - tube_radius;
+}
+
+
+/**
+ * Compute the min distance from a point to a chain link.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg ring_radius: The radius (xy-plane) of the ring of the torus that
+ *     will be stretched to create the link.
+ * @arg tube_radius: The radius of the tube that makes the link.
+ * @arg height: The height (y-axis) to elongate the torus.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_link(
+    position: vec3<f32>,
+    ring_radius: f32,
+    tube_radius: f32,
+    height: f32,
+) -> f32 {
+    var height_difference: f32 = abs(position.y) - height / 2.0f;
+
+    var distance_in_xy_plane: f32 = distance_to_circle(
+        vec2<f32>(position.x, positive_part_f32(height_difference)),
+        ring_radius,
+    );
+    return distance_to_circle(
+        vec2<f32>(distance_in_xy_plane, position.z),
+        tube_radius,
+    );
+}
+
+
+/**
  * Compute the min distance from a point to a geometric object.
  *
  * @arg position: The point to get the distance to, from the primitive.
@@ -1083,7 +1178,7 @@ fn distance_to_primitive(
 
     var distance: f32;
     switch (*primitive).shape {
-        case 1u {
+        case 1u { // would be nice if const existed in this version :(
             distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
         }
         case 2u {
@@ -1205,37 +1300,38 @@ fn distance_to_primitive(
                 (*primitive).custom_data.z,
             );
         }
+        case 18u {
+            distance = distance_to_torus(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+            );
+        }
+        case 19u {
+            distance = distance_to_capped_torus(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                radians((*primitive).custom_data.z),
+            );
+        }
+        case 20u {
+            distance = distance_to_link(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+                (*primitive).custom_data.z,
+            );
+        }
         default { // cannot use default w/ other clauses, maybe version too old
             distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
         }
     }
-    // if ((*primitive).shape == TORUS)
-    // {
-    //     distance = distance_to_torus(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
-    // }
-    // if ((*primitive).shape == CAPPED_TORUS)
-    // {
-    //     distance = distance_to_cappedTorus(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         radians((*primitive).custom_data.z)
-    //     );
-    // }
-    // if ((*primitive).shape == LINK)
-    // {
-    //     distance = distance_to_link(
-    //         position,
-    //         (*primitive).custom_data.x,
-    //         (*primitive).custom_data.y,
-    //         (*primitive).custom_data.z
-    //     );
-    // }
-    // if ((*primitive).shape == HEXAGONAL_PRISM)
+    // case HEXAGONAL_PRISM
     // {
     //     distance = distance_to_hexagonalPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
     // }
-    // if ((*primitive).shape == OCTAHEDRON)
+    // case OCTAHEDRON
     // {
     //     distance = distance_to_octahedron(position, (*primitive).custom_data.x);
     // }

@@ -1004,17 +1004,17 @@ impl eframe::App for Damascus {
                 });
             });
         });
-        egui::SidePanel::right("properties")
-            .resizable(true)
-            .default_width(250.0)
-            .show(ctx, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.heading("Right Panel");
-                });
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.label("test");
-                });
-            });
+        // egui::SidePanel::right("properties")
+        //     .resizable(true)
+        //     .default_width(250.0)
+        //     .show(ctx, |ui| {
+        //         ui.vertical_centered(|ui| {
+        //             ui.heading("Right Panel");
+        //         });
+        //         egui::ScrollArea::vertical().show(ui, |ui| {
+        //             ui.label("test");
+        //         });
+        //     });
 
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)

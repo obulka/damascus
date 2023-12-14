@@ -227,48 +227,7 @@ struct Primitives {
 @group(2) @binding(0)
 var<storage, read> _primitives: Primitives;
 
-
-// lights.wgsl
-
-
-let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
-
-
-struct Light {
-    light_type: u32,
-    dimensional_data: vec3<f32>,
-    intensity: f32,
-    falloff: f32,
-    colour: vec3<f32>,
-    shadow_hardness: f32,
-    soften_shadows: u32,
-}
-
-struct Lights {
-    lights: array<Light, MAX_LIGHTS>,
-}
-
-@group(3) @binding(0)
-var<storage, read> _lights: Lights;
-
-
-// sdfs.wgsl
-
-
-/**
- * Compute the min distance from a point to a sphere.
- *
- * @arg position: The point to get the distance to, from the object.
- * @arg radius: The radius of the sphere.
- *
- * @returns: The minimum distance from the point to the shape.
- */
-fn distance_to_sphere(position: vec3<f32>, radius: f32) -> f32 {
-    return length(position) - radius;
-}
-
-
-// modifications.wgsl
+// geometry/modifications.wgsl
 
 
 /**
@@ -295,7 +254,7 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
         transform.inverse_rotation
         * (ray_origin - transform.translation)
     );
-    // performShapeModification(
+    // perform_shape_modification(
     //     modifications,
     //     repetition,
     //     elongation,
@@ -304,6 +263,291 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
 
     return transformed_ray;
 }
+
+// geometry/sdfs.wgsl
+// Copyright 2022 by Owen Bulka.
+// All rights reserved.
+// This file is released under the "MIT License Agreement".
+// Please see the LICENSE.md file that should have been included as part
+// of this package.
+
+//
+// Signed Distance Functions
+//
+// Many of the below sdfs are based on the work of Inigo Quilez
+// https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+//
+
+let SPHERE: u32 = 0u;
+let ELLIPSOID: u32 = 1u;
+let CUT_SPHERE: u32 = 2u;
+let HOLLOW_SPHERE: u32 = 3u;
+let DEATH_STAR: u32 = 4u;
+let SOLID_ANGLE: u32 = 5u;
+let RECTANGULAR_PRISM: u32 = 6u;
+let RECTANGULAR_PRISM_FRAME: u32 = 7u;
+let RHOMBUS: u32 = 8u;
+let TRIANGULAR_PRISM: u32 = 9u;
+let CYLINDER: u32 = 10u;
+let INFINITE_CYLINDER: u32 = 11u;
+let PLANE: u32 = 12u;
+let CAPSULE: u32 = 13u;
+let CONE: u32 = 14u;
+let INFINITE_CONE: u32 = 15u;
+let CAPPED_CONE: u32 = 16u;
+let ROUNDED_CONE: u32 = 17u;
+let TORUS: u32 = 18u;
+let CAPPED_TORUS: u32 = 19u;
+let LINK: u32 = 20u;
+let HEXAGONAL_PRISM: u32 = 21u;
+let OCTAHEDRON: u32 = 22u;
+let MANDELBULB: u32 = 23u;
+let MANDELBOX: u32 = 24u;
+
+let DIFFUSE_TRAP: u32 = 8192u;
+let SPECULAR_TRAP: u32 = 16384u;
+let EXTINCTION_TRAP: u32 = 32768u;
+let EMISSION_TRAP: u32 = 65536u;
+let SCATTERING_TRAP: u32 = 131072u;
+
+
+/**
+ * Compute the min distance from a point to a sphere.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the sphere.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_sphere(position: vec3<f32>, radius: f32) -> f32 {
+    return length(position) - radius;
+}
+
+
+/**
+ * Compute the inexact min distance from a point to an ellipsoid.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radii: The radius along the x, y, and z axes of the ellipsoid.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
+    // Components of this vector that are < 1 are inside the ellipse
+    // when projected onto the plane the respective axis is normal to
+    var scaled_position: vec3<f32> = position / radii;
+
+    // If this length is < 1 we are inside the ellipsoid
+    var scaled_length: f32 = length(scaled_position);
+
+    return scaled_length * (scaled_length - 1.0f) / length(scaled_position / radii);
+}
+
+
+/**
+ * Compute the min distance from a point to a geometric object.
+ *
+ * @arg position: The point to get the distance to, from the primitive.
+ * @arg primitive: The primitive to get the distance to.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_primitive(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> f32 {
+    var uniform_scale: f32 = (*primitive).transform.scale.x; // TODO test this as vec3 or make f32
+    var scaled_position = position / uniform_scale;
+
+    var distance = 0.0;
+
+    if ((*primitive).shape == SPHERE)
+    {
+        distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
+    }
+    else if ((*primitive).shape == ELLIPSOID)
+    {
+        distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
+    }
+    // if ((*primitive).shape == CUT_SPHERE)
+    // {
+    //     return distanceToCutSphere(position, dimensions.x, dimensions.y);
+    // }
+    // if ((*primitive).shape == HOLLOW_SPHERE)
+    // {
+    //     return distanceToHollowSphere(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == DEATH_STAR)
+    // {
+    //     return distanceToDeathStar(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == SOLID_ANGLE)
+    // {
+    //     return distanceToSolidAngle(
+    //         position,
+    //         dimensions.x,
+    //         degreesToRadians(dimensions.y)
+    //     );
+    // }
+    // if ((*primitive).shape == RECTANGULAR_PRISM)
+    // {
+    //     return distanceToRectangularPrism(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == RECTANGULAR_PRISM_FRAME)
+    // {
+    //     return distanceToRectangularPrismFrame(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z,
+    //         dimensions.w
+    //     );
+    // }
+    // if ((*primitive).shape == RHOMBUS)
+    // {
+    //     return distanceToRhombus(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z,
+    //         dimensions.w
+    //     );
+    // }
+    // if ((*primitive).shape == TRIANGULAR_PRISM)
+    // {
+    //     return distanceToTriangularPrism(position, dimensions.x, dimensions.y);
+    // }
+    // if ((*primitive).shape == CYLINDER)
+    // {
+    //     return distanceToCylinder(position, dimensions.x, dimensions.y);
+    // }
+    // if ((*primitive).shape == INFINITE_CYLINDER)
+    // {
+    //     return distanceToInfiniteCylinder(position, dimensions.x);
+    // }
+    // if ((*primitive).shape == PLANE)
+    // {
+    //     return distanceToPlane(
+    //         position,
+    //         normalize(float3(dimensions.x, dimensions.y, dimensions.z))
+    //     );
+    // }
+    // if ((*primitive).shape == CAPSULE)
+    // {
+    //     return distanceToCapsule(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == CONE)
+    // {
+    //     return distanceToCone(
+    //         position,
+    //         degreesToRadians(dimensions.x),
+    //         dimensions.y
+    //     );
+    // }
+    // if ((*primitive).shape == INFINITE_CONE)
+    // {
+    //     return distanceToInfiniteCone(position, degreesToRadians(dimensions.x));
+    // }
+    // if ((*primitive).shape == CAPPED_CONE)
+    // {
+    //     return distanceToCappedCone(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == ROUNDED_CONE)
+    // {
+    //     return distanceToRoundedCone(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == TORUS)
+    // {
+    //     return distanceToTorus(position, dimensions.x, dimensions.y);
+    // }
+    // if ((*primitive).shape == CAPPED_TORUS)
+    // {
+    //     return distanceToCappedTorus(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         degreesToRadians(dimensions.z)
+    //     );
+    // }
+    // if ((*primitive).shape == LINK)
+    // {
+    //     return distanceToLink(
+    //         position,
+    //         dimensions.x,
+    //         dimensions.y,
+    //         dimensions.z
+    //     );
+    // }
+    // if ((*primitive).shape == HEXAGONAL_PRISM)
+    // {
+    //     return distanceToHexagonalPrism(position, dimensions.x, dimensions.y);
+    // }
+    // if ((*primitive).shape == OCTAHEDRON)
+    // {
+    //     return distanceToOctahedron(position, dimensions.x);
+    // }
+
+    return distance * uniform_scale;
+
+    // TODO
+    // return perform_distance_modification(
+    //     distance * uniform_scale,
+    //     primitive,
+    // );
+}
+
+// lights.wgsl
+
+
+let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+
+
+struct Light {
+    light_type: u32,
+    dimensional_data: vec3<f32>,
+    intensity: f32,
+    falloff: f32,
+    colour: vec3<f32>,
+    shadow_hardness: f32,
+    soften_shadows: u32,
+}
+
+struct Lights {
+    lights: array<Light, MAX_LIGHTS>,
+}
+
+@group(3) @binding(0)
+var<storage, read> _lights: Lights;
 
 // aovs.wgsl
 
@@ -417,11 +661,10 @@ fn min_distance_to_primitive(
         var primitive: Primitive = _primitives.primitives[primitive_index];
 
         var transformed_ray: vec3<f32> = transform_ray(ray_origin, primitive.transform);
-        var uniform_scale: f32 = length(primitive.transform.scale); // TODO do better
-        var distance_to_current: f32 = distance_to_sphere( // TODO add other shapes
-            transformed_ray / uniform_scale,
-            primitive.custom_data.x,
-        ) * uniform_scale;
+        var distance_to_current: f32 = distance_to_primitive(
+            transformed_ray,
+            &primitive,
+        );
 
         if (abs(distance_to_current) < abs(min_distance)) {
             min_distance = distance_to_current;

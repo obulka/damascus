@@ -8,8 +8,7 @@ use crate::materials::Material;
 pub struct Transform {
     pub translation: Vec3,
     pub inverse_rotation: Mat3,
-    pub scale: Vec3,
-    //pub skew: Vec3,
+    pub uniform_scale: f32,
 }
 
 #[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]

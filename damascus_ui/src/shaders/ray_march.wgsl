@@ -370,8 +370,7 @@ let MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
 struct Transform {
     translation: vec3<f32>,
     inverse_rotation: mat3x3<f32>,
-    scale: vec3<f32>,
-    //skew: vec3<f32>,
+    uniform_scale: f32,
 }
 
 
@@ -1395,8 +1394,7 @@ fn distance_to_primitive(
     position: vec3<f32>,
     primitive: ptr<function, Primitive>,
 ) -> f32 {
-    var uniform_scale: f32 = (*primitive).transform.scale.x; // TODO test this as vec3 or make f32
-    var scaled_position = position / uniform_scale;
+    var scaled_position = position / (*primitive).transform.uniform_scale;
 
     var distance: f32;
     switch (*primitive).shape {
@@ -1405,14 +1403,14 @@ fn distance_to_primitive(
         }
         case 2u {
             distance = distance_to_cut_sphere(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
             );
         }
         case 3u {
             distance = distance_to_hollow_sphere(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1420,7 +1418,7 @@ fn distance_to_primitive(
         }
         case 4u {
             distance = distance_to_death_star(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1428,14 +1426,14 @@ fn distance_to_primitive(
         }
         case 5u {
             distance = distance_to_solid_angle(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 radians((*primitive).custom_data.y),
             );
         }
         case 6u {
             distance = distance_to_rectangular_prism(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1443,7 +1441,7 @@ fn distance_to_primitive(
         }
         case 7u {
             distance = distance_to_rectangular_prism_frame(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1452,7 +1450,7 @@ fn distance_to_primitive(
         }
         case 8u {
             distance = distance_to_rhombus(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1461,33 +1459,33 @@ fn distance_to_primitive(
         }
         case 9u {
             distance = distance_to_triangular_prism(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
             );
         }
         case 10u {
             distance = distance_to_cylinder(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
             );
         }
         case 11u {
             distance = distance_to_infinite_cylinder(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
             );
         }
         case 12u {
             distance = distance_to_plane(
-                position,
+                scaled_position,
                 normalize((*primitive).custom_data.xyz),
             );
         }
         case 13u {
             distance = distance_to_capsule(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1495,20 +1493,20 @@ fn distance_to_primitive(
         }
         case 14u {
             distance = distance_to_cone(
-                position,
+                scaled_position,
                 radians((*primitive).custom_data.x),
                 (*primitive).custom_data.y,
             );
         }
         case 15u {
             distance = distance_to_infinite_cone(
-                position,
+                scaled_position,
                 radians((*primitive).custom_data.x),
             );
         }
         case 16u {
             distance = distance_to_capped_cone(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1516,7 +1514,7 @@ fn distance_to_primitive(
         }
         case 17u {
             distance = distance_to_rounded_cone(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1524,14 +1522,14 @@ fn distance_to_primitive(
         }
         case 18u {
             distance = distance_to_torus(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
             );
         }
         case 19u {
             distance = distance_to_capped_torus(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 radians((*primitive).custom_data.z),
@@ -1539,7 +1537,7 @@ fn distance_to_primitive(
         }
         case 20u {
             distance = distance_to_link(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
                 (*primitive).custom_data.z,
@@ -1547,18 +1545,21 @@ fn distance_to_primitive(
         }
         case 21u {
             distance = distance_to_hexagonal_prism(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 (*primitive).custom_data.y,
             );
         }
         case 22u {
-            distance = distance_to_octahedron(position, (*primitive).custom_data.x);
+            distance = distance_to_octahedron(
+                scaled_position,
+                (*primitive).custom_data.x,
+            );
         }
         case 23u {
             var colour = vec3<f32>(1.);
             distance = distance_to_mandelbulb(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 i32((*primitive).custom_data.y),
                 (*primitive).custom_data.z,
@@ -1569,7 +1570,7 @@ fn distance_to_primitive(
         case 24u {
             var colour = vec3<f32>(1.);
             distance = distance_to_mandelbox(
-                position,
+                scaled_position,
                 (*primitive).custom_data.x,
                 i32((*primitive).custom_data.y),
                 (*primitive).custom_data.z,
@@ -1583,7 +1584,7 @@ fn distance_to_primitive(
         }
     }
 
-    return distance * uniform_scale;
+    return distance * (*primitive).transform.uniform_scale;
 
     // TODO
     // return perform_distance_modification(

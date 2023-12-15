@@ -543,7 +543,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
                 input_vector3(graph, "translate", glam::Vec3::ZERO);
                 input_vector3(graph, "rotate", glam::Vec3::ZERO);
-                input_vector3(graph, "scale", glam::Vec3::ONE);
+                input_float(graph, "uniform_scale", 1.);
                 output_matrix4(graph, "out");
             }
             DamascusNodeTemplate::Camera => {
@@ -1355,7 +1355,7 @@ pub fn evaluate_node(
             let input_axis = evaluator.input_matrix4("axis")?;
             let translate = evaluator.input_vector3("translate")?;
             let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.0;
-            let scale = evaluator.input_vector3("scale")?;
+            let uniform_scale = evaluator.input_float("uniform_scale")?;
 
             let quaternion =
                 glam::Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
@@ -1363,7 +1363,11 @@ pub fn evaluate_node(
             evaluator.output_matrix4(
                 "out",
                 input_axis
-                    * glam::Mat4::from_scale_rotation_translation(scale, quaternion, translate),
+                    * glam::Mat4::from_scale_rotation_translation(
+                        glam::Vec3::splat(uniform_scale),
+                        quaternion,
+                        translate,
+                    ),
             )
         }
         DamascusNodeTemplate::Camera => {
@@ -1468,7 +1472,7 @@ pub fn evaluate_node(
                     transform: geometry::Transform {
                         translation: translation,
                         inverse_rotation: inverse_rotation,
-                        scale: scale,
+                        uniform_scale: scale.x,
                     },
                     material: material,
                     modifiers: modifiers,

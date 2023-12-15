@@ -1,6 +1,6 @@
 use std::ops::BitOr;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 use eframe::{
     egui,
@@ -272,7 +272,7 @@ impl Viewport3d {
             match SystemTime::now().duration_since(self.previous_frame_time) {
                 Ok(frame_time) => {
                     ui.label(format!("{:?} fps", 1.0 / frame_time.as_secs_f32()));
-                },
+                }
                 Err(_) => panic!("SystemTime before UNIX EPOCH!"),
             }
             self.previous_frame_time = SystemTime::now();

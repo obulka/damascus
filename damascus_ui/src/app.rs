@@ -5,6 +5,7 @@ use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 use ndarray;
+use tinyfiledialogs;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
@@ -969,8 +970,26 @@ impl eframe::App for Damascus {
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
-                    if ui.button("Open...").clicked() {
-                        println!("{:#?}", serde_yaml::to_string(&self.state.graph));
+                    if ui.button("load").clicked() {
+                        let load_file: String;
+                        match tinyfiledialogs::open_file_dialog("load", "", None) {
+                            Some(file) => load_file = file,
+                            None => load_file = "null".to_string(),
+                        }
+                        println!("Loading: {:?}", load_file);
+                        ui.close_menu();
+                    }
+                    if ui.button("save").clicked() {
+                        let save_file: String;
+                        match tinyfiledialogs::save_file_dialog("save", "") {
+                            Some(file) => save_file = file,
+                            None => save_file = "null".to_string(),
+                        }
+                        println!(
+                            "Saving: {:#?}\n\n to: {:?}",
+                            serde_yaml::to_string(&self.state.graph),
+                            save_file
+                        );
                         ui.close_menu();
                     }
                     ui.menu_button("SubMenu", |ui| {

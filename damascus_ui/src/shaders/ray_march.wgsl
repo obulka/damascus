@@ -174,6 +174,21 @@ fn saturate_f32(value: f32) -> f32 {
 
 
 /**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * Note: This should be a builtin function but I guess the wgsl version
+ *     is old.
+ *
+ * @arg value: The value to saturate.
+ *
+ * @returns: The clamped value
+ */
+fn saturate_vec3f(value: vec3<f32>) -> vec3<f32> {
+    return clamp(value, vec3<f32>(0.0), vec3<f32>(1.0));
+}
+
+
+/**
  * Compute the signed distance along a vector
  *
  * @arg vector_: A vector from a point to the nearest surface of an
@@ -1247,6 +1262,71 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
 }
 
 
+fn box_fold(position: vec3<f32>, folding_limit: vec3<f32>) -> vec3<f32> {
+    return clamp(position, -folding_limit, folding_limit) * 2.0 - position;
+}
+
+
+fn sphere_fold(
+    position: vec4<f32>,
+    radius_squared: f32,
+    min_square_radius: f32,
+) -> vec4<f32> {
+    return position * saturate_f32(
+        max(min_square_radius / radius_squared, min_square_radius),
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a mandelbox.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg scale:
+ * @arg iterations: The number of iterations to compute, the higher this
+ *     is the slower it will be to compute, but the deeper the fractal
+ *     will have detail.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_mandelbox(
+    position: vec3<f32>,
+    scale: f32,
+    iterations: i32,
+    min_square_radius: f32,
+    folding_limit: f32,
+    trap_colour: ptr<function, vec3<f32>>,
+) -> f32 {
+    var scale_vector = vec4<f32>(scale, scale, scale, abs(scale)) / min_square_radius;
+    var initial_position = vec4<f32>(position.xyz, 1.0);
+    var current_position: vec4<f32> = initial_position;
+
+    var folding_limit_vec3f = vec3<f32>(folding_limit);
+
+    for (var iteration=0; iteration < iterations; iteration++)
+    {
+        var folded_position = box_fold(current_position.xyz, folding_limit_vec3f);
+
+        var radius_squared: f32 = dot2_vec3f(folded_position);
+        current_position = sphere_fold(
+            vec4<f32>(folded_position, current_position.w),
+            radius_squared,
+            min_square_radius
+        );
+
+        current_position = scale_vector * current_position + initial_position;
+        *trap_colour = min(*trap_colour, abs(current_position.xyz));
+    }
+
+    *trap_colour = saturate_vec3f(*trap_colour);
+
+    return (
+        length(current_position.xyz - abs(scale - 1.0)) / current_position.w
+        - pow(abs(scale), f32(1 - iterations))
+    );
+}
+
+
 /**
  * Compute the min distance from a point to a geometric object.
  *
@@ -1418,6 +1498,18 @@ fn distance_to_primitive(
         }
         case 22u {
             distance = distance_to_octahedron(position, (*primitive).custom_data.x);
+        }
+        case 23u {
+            var colour = vec3<f32>(1.0);
+            distance = distance_to_mandelbox(
+                position,
+                (*primitive).custom_data.x,
+                i32((*primitive).custom_data.y),
+                (*primitive).custom_data.z,
+                (*primitive).custom_data.w,
+                &colour,
+            );
+            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
         }
         default { // cannot use default w/ other clauses, maybe version too old
             distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);

@@ -1262,6 +1262,62 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
 }
 
 
+/**
+ * Compute the min distance from a point to a mandelbulb.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg power: One greater than the axes of symmetry in the xy-plane.
+ * @arg iterations: The number of iterations to compute, the higher this
+ *     is the slower it will be to compute, but the deeper the fractal
+ *     will have detail.
+ * @arg max_square_radius: When the square radius has reached this length,
+ *     stop iterating.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_mandelbulb(
+    position: vec3<f32>,
+    power: f32,
+    iterations: i32,
+    max_square_radius: f32,
+    trap_colour: ptr<function, vec3<f32>>,
+) -> f32 {
+    var current_position: vec3<f32> = position;
+    var radius_squared: f32 = dot2_vec3f(current_position);
+
+    var abs_position: vec3<f32> = abs(current_position);
+    *trap_colour = abs_position;
+
+    var dradius: f32 = 1.0;
+    for (var iteration=0; iteration < iterations; iteration++)
+    {
+        dradius = power * pow(radius_squared, (power - 1.0) / 2.0) * dradius + 1.0;
+
+        var current_radius: f32 = length(current_position);
+        var theta: f32 = power * acos(current_position.z / current_radius);
+        var phi: f32 = power * atan2(current_position.y, current_position.x);
+
+        current_position = position + pow(current_radius, power) * vec3<f32>(
+            sin(theta) * cos(phi),
+            sin(theta) * sin(phi),
+            cos(theta)
+        );
+
+        abs_position = abs(current_position);
+        *trap_colour = min(*trap_colour, abs_position);
+
+        radius_squared = dot2_vec3f(current_position);
+        if(radius_squared > max_square_radius) {
+            break;
+        }
+    }
+
+    *trap_colour = saturate_vec3f(*trap_colour);
+
+    return 0.25 * log(radius_squared) * sqrt(radius_squared) / dradius;
+}
+
+
 fn box_fold(position: vec3<f32>, folding_limit: vec3<f32>) -> vec3<f32> {
     return clamp(position, -folding_limit, folding_limit) * 2.0 - position;
 }
@@ -1500,6 +1556,17 @@ fn distance_to_primitive(
             distance = distance_to_octahedron(position, (*primitive).custom_data.x);
         }
         case 23u {
+            var colour = vec3<f32>(1.0);
+            distance = distance_to_mandelbulb(
+                position,
+                (*primitive).custom_data.x,
+                i32((*primitive).custom_data.y),
+                (*primitive).custom_data.z,
+                &colour,
+            );
+            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
+        }
+        case 24u {
             var colour = vec3<f32>(1.0);
             distance = distance_to_mandelbox(
                 position,

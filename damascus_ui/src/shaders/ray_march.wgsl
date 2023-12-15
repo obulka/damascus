@@ -1811,7 +1811,7 @@ fn march_path(
             var rng: f32 = random_f32(seed.x); // TODO add random functions
             var exit_probability: f32 = max_component_vec3f(throughput.xyz);
             if (
-                bounces > _render_params.ray_marcher.max_bounces
+                bounces >= _render_params.ray_marcher.max_bounces
                 || (roulette && exit_probability <= rng)
             ) {
                 return ray_colour; // TODO object id in alpha after you can sample

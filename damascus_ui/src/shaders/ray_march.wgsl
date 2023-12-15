@@ -1300,7 +1300,7 @@ fn distance_to_mandelbulb(
         current_position = position + pow(current_radius, power) * vec3<f32>(
             sin(theta) * cos(phi),
             sin(theta) * sin(phi),
-            cos(theta)
+            cos(theta),
         );
 
         abs_position = abs(current_position);
@@ -1354,7 +1354,7 @@ fn distance_to_mandelbox(
     trap_colour: ptr<function, vec3<f32>>,
 ) -> f32 {
     var scale_vector = vec4<f32>(scale, scale, scale, abs(scale)) / min_square_radius;
-    var initial_position = vec4<f32>(position.xyz, 1.0);
+    var initial_position = vec4<f32>(position, 1.0);
     var current_position: vec4<f32> = initial_position;
 
     var folding_limit_vec3f = vec3<f32>(folding_limit);

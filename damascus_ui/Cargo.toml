@@ -19,7 +19,7 @@ ndarray = { version = "0.15.6", features = ["serde"] }
 num = "0.4"
 num-derive = "0.4"
 num-traits = "0.2"
-tinyfiledialogs = "3.9"
+rfd = "0.12"
 
 [profile.release]
 lto = true

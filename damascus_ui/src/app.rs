@@ -5,7 +5,6 @@ use eframe::egui::{self, Checkbox, DragValue, Slider, TextStyle};
 use egui_node_graph::*;
 use glam;
 use ndarray;
-use tinyfiledialogs;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
@@ -966,60 +965,62 @@ impl eframe::App for Damascus {
     }
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
                     if ui.button("load").clicked() {
-                        let load_file: String;
-                        match tinyfiledialogs::open_file_dialog("load", "", None) {
-                            Some(file) => load_file = file,
-                            None => load_file = "null".to_string(),
+                        let mut load_file: Option<String> = None;
+                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                            load_file = Some(path.display().to_string());
                         }
-                        println!("Loading: {:?}", load_file);
+                        if let Some(file_path) = load_file {
+                            println!("Loading: {:?}", file_path);
+                        }
                         ui.close_menu();
                     }
                     if ui.button("save").clicked() {
-                        let save_file: String;
-                        match tinyfiledialogs::save_file_dialog("save", "") {
-                            Some(file) => save_file = file,
-                            None => save_file = "null".to_string(),
+                        let mut save_file: Option<String> = None;
+                        if let Some(path) = rfd::FileDialog::new().pick_file() {
+                            save_file = Some(path.display().to_string());
                         }
-                        println!(
-                            "Saving: {:#?}\n\n to: {:?}",
-                            serde_yaml::to_string(&self.state.graph),
-                            save_file
-                        );
+                        if let Some(file_path) = save_file {
+                            println!(
+                                "Saving: {:#?}\n\n to: {:?}",
+                                serde_yaml::to_string(&self.state.graph),
+                                file_path,
+                            );
+                        }
                         ui.close_menu();
                     }
-                    ui.menu_button("SubMenu", |ui| {
-                        ui.menu_button("SubMenu", |ui| {
-                            if ui.button("Open...").clicked() {
-                                ui.close_menu();
-                            }
-                            let _ = ui.button("Item");
-                        });
-                        ui.menu_button("SubMenu", |ui| {
-                            if ui.button("Open...").clicked() {
-                                ui.close_menu();
-                            }
-                            let _ = ui.button("Item");
-                        });
-                        let _ = ui.button("Item");
-                        if ui.button("Open...").clicked() {
-                            ui.close_menu();
-                        }
-                    });
-                    ui.menu_button("SubMenu", |ui| {
-                        let _ = ui.button("Item1");
-                        let _ = ui.button("Item2");
-                        let _ = ui.button("Item3");
-                        let _ = ui.button("Item4");
-                        if ui.button("Open...").clicked() {
-                            ui.close_menu();
-                        }
-                    });
-                    let _ = ui.button("Very long text for this item");
+                    // ui.menu_button("SubMenu", |ui| {
+                    //     ui.menu_button("SubMenu", |ui| {
+                    //         if ui.button("Open...").clicked() {
+                    //             ui.close_menu();
+                    //         }
+                    //         let _ = ui.button("Item");
+                    //     });
+                    //     ui.menu_button("SubMenu", |ui| {
+                    //         if ui.button("Open...").clicked() {
+                    //             ui.close_menu();
+                    //         }
+                    //         let _ = ui.button("Item");
+                    //     });
+                    //     let _ = ui.button("Item");
+                    //     if ui.button("Open...").clicked() {
+                    //         ui.close_menu();
+                    //     }
+                    // });
+                    // ui.menu_button("SubMenu", |ui| {
+                    //     let _ = ui.button("Item1");
+                    //     let _ = ui.button("Item2");
+                    //     let _ = ui.button("Item3");
+                    //     let _ = ui.button("Item4");
+                    //     if ui.button("Open...").clicked() {
+                    //         ui.close_menu();
+                    //     }
+                    // });
+                    // let _ = ui.button("Very long text for this item");
                 });
             });
         });

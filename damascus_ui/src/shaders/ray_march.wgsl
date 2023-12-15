@@ -1148,7 +1148,7 @@ fn distance_to_link(
     tube_radius: f32,
     height: f32,
 ) -> f32 {
-    var height_difference: f32 = abs(position.y) - height / 2.0f;
+    var height_difference: f32 = abs(position.y) - height / 2.0;
 
     var distance_in_xy_plane: f32 = distance_to_circle(
         vec2<f32>(position.x, positive_part_f32(height_difference)),
@@ -1158,6 +1158,92 @@ fn distance_to_link(
         vec2<f32>(distance_in_xy_plane, position.z),
         tube_radius,
     );
+}
+
+
+/**
+ * Compute the min distance from a point to a hexagonal prism.
+ * The hexagonal face is parallel to the xy-plane, centered at the
+ * origin.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg height: The height (y) of the prism.
+ * @arg depth: The depth (z) of the prism.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> f32 {
+    // precomputed -cos(-PI / 6.0), -sin(-PI / 6.0), -tan(-PI / 6.0)
+    var cos_sin_tan = vec3<f32>(-0.86602540378, 0.5, 0.57735026919);
+    var half_height: f32 = height / 2.0;
+
+    var abs_position: vec3<f32> = abs(position);
+    abs_position += vec3<f32>(
+        2.0 * cos_sin_tan.xy * negative_part_f32(dot(cos_sin_tan.xy, abs_position.xy)),
+        0.0,
+    );
+
+    // Radial distance in xy-plane, and the distance along the z-axis
+    var radial_and_z_distance = vec2<f32>(
+        sign(abs_position.y - half_height) * length(
+            abs_position.xy
+            - vec2<f32>(
+                clamp(abs_position.x, -cos_sin_tan.z * half_height, cos_sin_tan.z * half_height),
+                half_height,
+            ),
+        ),
+        abs_position.z - depth / 2.0f,
+    );
+
+    // Return the positive distance if we are outside, negative if we are inside
+    return sdf_length_vec2f(radial_and_z_distance);
+}
+
+
+/**
+ * Compute the min distance from a point to a octahedron.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radial_extent: The maximum distance along the x, y, and z axes.
+ *     ie. The vertices are at +/-radial_extent on the x, y, and z axes.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
+    var abs_position: vec3<f32> = abs(position);
+
+    var position_sum_to_extent: f32 = dot(abs_position, vec3<f32>(1.0)) - radial_extent;
+
+    var three_position: vec3<f32> = 3.0f * abs_position;
+    var change_of_axes: vec3<f32>;
+    if (three_position.x < position_sum_to_extent)
+    {
+        change_of_axes = abs_position;
+    }
+    else if (three_position.y < position_sum_to_extent)
+    {
+        change_of_axes = abs_position.yzx;
+    }
+    else if (three_position.z < position_sum_to_extent)
+    {
+        change_of_axes = abs_position.zxy;
+    }
+    else
+    {
+        return position_sum_to_extent * 0.57735027;
+    }
+
+    var surface: f32 = clamp(
+        0.5 * (change_of_axes.z - change_of_axes.y + radial_extent),
+        0.0,
+        radial_extent,
+    );
+
+    return length(vec3<f32>(
+        change_of_axes.x,
+        change_of_axes.y - radial_extent + surface,
+        change_of_axes.z - surface,
+    ));
 }
 
 
@@ -1323,18 +1409,20 @@ fn distance_to_primitive(
                 (*primitive).custom_data.z,
             );
         }
+        case 21u {
+            distance = distance_to_hexagonal_prism(
+                position,
+                (*primitive).custom_data.x,
+                (*primitive).custom_data.y,
+            );
+        }
+        case 22u {
+            distance = distance_to_octahedron(position, (*primitive).custom_data.x);
+        }
         default { // cannot use default w/ other clauses, maybe version too old
             distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
         }
     }
-    // case HEXAGONAL_PRISM
-    // {
-    //     distance = distance_to_hexagonalPrism(position, (*primitive).custom_data.x, (*primitive).custom_data.y);
-    // }
-    // case OCTAHEDRON
-    // {
-    //     distance = distance_to_octahedron(position, (*primitive).custom_data.x);
-    // }
 
     return distance * uniform_scale;
 

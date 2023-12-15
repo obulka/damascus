@@ -67,7 +67,7 @@ fn positive_part_f32(value: f32) -> f32 {
  * @returns: The positive part of the vector.
  */
 fn positive_part_vec2f(value: vec2<f32>) -> vec2<f32> {
-    return max(value, vec2<f32>(0.));
+    return max(value, vec2(0.));
 }
 
 
@@ -79,7 +79,7 @@ fn positive_part_vec2f(value: vec2<f32>) -> vec2<f32> {
  * @returns: The positive part of the vector.
  */
 fn positive_part_vec3f(value: vec3<f32>) -> vec3<f32> {
-    return max(value, vec3<f32>(0.));
+    return max(value, vec3(0.));
 }
 
 
@@ -115,7 +115,7 @@ fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
  * @returns: Cylindrical coordinates symmetric about the y-axis.
  */
 fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
-    return vec2<f32>(length(coordinates.xz), coordinates.y);
+    return vec2(length(coordinates.xz), coordinates.y);
 }
 
 
@@ -184,7 +184,7 @@ fn saturate_f32(value: f32) -> f32 {
  * @returns: The clamped value
  */
 fn saturate_vec3f(value: vec3<f32>) -> vec3<f32> {
-    return clamp(value, vec3<f32>(0.), vec3<f32>(1.));
+    return clamp(value, vec3(0.), vec3(1.));
 }
 
 
@@ -230,7 +230,7 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
  * @returns: A random value on the interval [0, 1].
  */
 fn random_f32(seed: f32) -> f32 {
-    return fract(sin(seed * 91.3458) * 47453.5453);
+    return fract(sin(seed * 91.3458) * 47453.5453123);
 }
 
 
@@ -242,7 +242,7 @@ fn random_f32(seed: f32) -> f32 {
  * @returns: A random value on the interval [0, 1].
  */
 fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
-    return vec3<f32>(
+    return vec3(
         random_f32(seed.x),
         random_f32(seed.y),
         random_f32(seed.z),
@@ -253,6 +253,12 @@ fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
 fn vec2f_to_random_f32(seed: vec2<f32>) -> f32 {
     return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453123);
 }
+
+
+fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
+    return fract(sin(dot(seed, vec3(12.9898, 78.233, 34.532))) * 43758.5453123);
+}
+
 
 // materials/material.wgsl
 
@@ -291,6 +297,7 @@ struct Material {
  * @arg material: The material to interact with.
  */
 fn material_interaction(
+    seed: vec3<f32>,
     step_distance: f32,
     pixel_footprint: f32,
     distance: f32,
@@ -302,7 +309,7 @@ fn material_interaction(
     throughput: ptr<function, vec4<f32>>,
     material: ptr<function, Material>,
 ) {
-    *ray_colour = vec4<f32>((*material).diffuse_colour, 1.); // TODO
+    *ray_colour = vec4((*material).diffuse_colour, 1.); // TODO
 }
 
 
@@ -327,7 +334,7 @@ var<uniform> _render_camera: Camera;
 fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
     return (
         _render_camera.inverse_world_matrix
-        * vec4<f32>(world_position, 1.)
+        * vec4(world_position, 1.)
     ).xyz;
 }
 
@@ -344,7 +351,7 @@ fn create_ray(
     ray_origin: ptr<function, vec3<f32>>,
     ray_direction: ptr<function, vec3<f32>>,
 ) {
-    *ray_origin = vec3<f32>(
+    *ray_origin = vec3(
         _render_camera.world_matrix[3][0],
         _render_camera.world_matrix[3][1],
         _render_camera.world_matrix[3][2],
@@ -354,7 +361,7 @@ fn create_ray(
         _render_camera.inverse_projection_matrix
         * uv_coordinate
     );
-    direction = _render_camera.world_matrix * vec4<f32>(direction.xyz, 0.);
+    direction = _render_camera.world_matrix * vec4(direction.xyz, 0.);
 
     *ray_direction = normalize(direction.xyz);
 }
@@ -571,7 +578,7 @@ fn distance_to_cut_sphere(
     else
     {
         // Closest point is on the edge of the cut surface
-        return length(cylindrical_position - vec2<f32>(cut_radius, cut_height));
+        return length(cylindrical_position - vec2(cut_radius, cut_height));
     }
 }
 
@@ -605,7 +612,7 @@ fn distance_to_hollow_sphere(
         // Closest point is on the rim
         return length(
             cylindrical_position
-            - vec2<f32>(cut_radius, cut_height)
+            - vec2(cut_radius, cut_height)
         ) - half_thickness;
     }
     // Closest point is on the spherical surface
@@ -654,14 +661,14 @@ fn distance_to_death_star(
         < cylindrical_position.y * cut_radius - cylindrical_position.x * cut_height
     ) {
         // Closest point is on the rim
-        return length(cylindrical_position - vec2<f32>(cut_radius, cut_height));
+        return length(cylindrical_position - vec2(cut_radius, cut_height));
     }
     return max(
         // Closest point to the solid sphere
         length(cylindrical_position) - additive_sphere_radius,
         // Closest point to the hollowed portion
         subtractive_sphere_radius - length(
-            cylindrical_position - vec2<f32>(0., subtractive_sphere_height)
+            cylindrical_position - vec2(0., subtractive_sphere_height)
         ),
     );
 }
@@ -688,7 +695,7 @@ fn distance_to_solid_angle(
 
     // The direction from the tip of the conical portion to where it
     // meets the sphere
-    var cone_edge_direction = vec2<f32>(sin(angle), cos(angle));
+    var cone_edge_direction = vec2(sin(angle), cos(angle));
 
     // Distance to the sphere we cut the cone out of
     var distance_to_sphere: f32 = length(cylindrical_position) - radius;
@@ -726,7 +733,7 @@ fn distance_to_rectangular_prism(
     depth: f32,
 ) -> f32 {
     // Only look at positive quadrant, using symmetry
-    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / 2.;
+    var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
     // Clamp the components that are inside the prism to the surface
     // before getting the distance
     return sdf_length_vec3f(prism_to_position);
@@ -752,14 +759,14 @@ fn distance_to_rectangular_prism_frame(
     depth: f32,
     thickness: f32,
 ) -> f32 {
-    var prism_to_position = abs(position) - vec3<f32>(width, height, depth) / 2.;
+    var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
     var inner_reflected: vec3<f32> = abs(prism_to_position + thickness) - thickness;
 
     return min(
-        sdf_length_vec3f(vec3<f32>(prism_to_position.x, inner_reflected.yz)),
+        sdf_length_vec3f(vec3(prism_to_position.x, inner_reflected.yz)),
         min(
-            sdf_length_vec3f(vec3<f32>(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
-            sdf_length_vec3f(vec3<f32>(inner_reflected.xy, prism_to_position.z)),
+            sdf_length_vec3f(vec3(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
+            sdf_length_vec3f(vec3(inner_reflected.xy, prism_to_position.z)),
         ),
     );
 }
@@ -786,7 +793,7 @@ fn distance_to_rhombus(
     corner_radius: f32,
 ) -> f32 {
     var abs_position: vec3<f32> = abs(position);
-    var half_width_height = vec2<f32>(width, height) / 2.;
+    var half_width_height = vec2(width, height) / 2.;
 
     var s: vec2<f32> = half_width_height * (half_width_height - 2. * abs_position.xy);
     var f: f32 = clamp((s.x - s.y) / dot2_vec2f(half_width_height), -1., 1.);
@@ -795,9 +802,9 @@ fn distance_to_rhombus(
         dot(abs_position.xy, half_width_height.yx) - half_width_height.x * half_width_height.y,
     );
 
-    var rhombus_to_position = vec2<f32>(
+    var rhombus_to_position = vec2(
         inside * length(
-            abs_position.xy - 0.5 * half_width_height * vec2<f32>(1. - f, 1. + f)
+            abs_position.xy - 0.5 * half_width_height * vec2(1. - f, 1. + f)
         ) - corner_radius,
         // Closest point along z-axis only depends on the thickness of
         // the extrusion
@@ -851,7 +858,7 @@ fn distance_to_cylinder(
 ) -> f32 {
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
     var cylindrical_position: vec2<f32> = abs(cartesian_to_cylindrical(position));
-    var cylinder_to_position = cylindrical_position - vec2<f32>(radius, height / 2.);
+    var cylinder_to_position = cylindrical_position - vec2(radius, height / 2.);
 
     return sdf_length_vec2f(cylinder_to_position);
 }
@@ -905,7 +912,7 @@ fn distance_to_capsule(
     negative_height: f32,
     positive_height: f32,
 ) -> f32 {
-    return length(vec3<f32>(
+    return length(vec3(
         position.x,
         position.y - clamp(position.y, -negative_height, positive_height),
         position.z,
@@ -930,10 +937,10 @@ fn distance_to_cone(position: vec3<f32>, angle: f32, height: f32) -> f32 {
     var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
 
     // The cylindrical coordinates of the edge of the cone base
-    var cylindrical_bound = vec2<f32>(abs(height * tan(angle)), height);
+    var cylindrical_bound = vec2(abs(height * tan(angle)), height);
 
     // Vector from the top surface of the cone to the position given
-    var cone_top_to_position: vec2<f32> = cylindrical_position - cylindrical_bound * vec2<f32>(
+    var cone_top_to_position: vec2<f32> = cylindrical_position - cylindrical_bound * vec2(
         saturate_f32(cylindrical_position.x / cylindrical_bound.x),
         1.,
     );
@@ -974,7 +981,7 @@ fn distance_to_cone(position: vec3<f32>, angle: f32, height: f32) -> f32 {
  */
 fn distance_to_infinite_cone(position: vec3<f32>, angle: f32) -> f32 {
     // The normalized cylindrical coordinates of the edge of the cone base
-    var cone_edge_direction: vec2<f32> = vec2<f32>(sin(angle), cos(angle));
+    var cone_edge_direction: vec2<f32> = vec2(sin(angle), cos(angle));
 
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
     var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
@@ -1020,10 +1027,10 @@ fn distance_to_capped_cone(
 
     // The 'corners' are the apparent corners when the shape is
     // projected onto the xy-plane
-    var upper_corner = vec2<f32>(upper_radius, half_height);
-    var lower_to_upper_corner = vec2<f32>(upper_radius - lower_radius, height);
+    var upper_corner = vec2(upper_radius, half_height);
+    var lower_to_upper_corner = vec2(upper_radius - lower_radius, height);
 
-    var cone_top_or_bottom_to_position = vec2<f32>(
+    var cone_top_or_bottom_to_position = vec2(
         cylindrical_position.x - min(
             cylindrical_position.x,
             select(upper_radius, lower_radius, cylindrical_position.y < 0.),
@@ -1071,7 +1078,7 @@ fn distance_to_rounded_cone(
     // Get the unit vector that is normal to the conical surface in 2D
     var parallel_x: f32 = (upper_radius - lower_radius) / height;
     var parallel_y: f32 = sqrt(1. - parallel_x * parallel_x);
-    var parallel = vec2<f32>(parallel_x, parallel_y);
+    var parallel = vec2(parallel_x, parallel_y);
 
     var position_projected_on_cone: f32 = dot(cylindrical_position, parallel);
 
@@ -1083,12 +1090,12 @@ fn distance_to_rounded_cone(
     else if (position_projected_on_cone > parallel_y * height)
     {
         // Closest point is on the upper sphere
-        return length(cylindrical_position - vec2<f32>(0., height)) - upper_radius;
+        return length(cylindrical_position - vec2(0., height)) - upper_radius;
     }
 
     // Closest point is on the conical surface, so project the position
     // onto the cone's normal direction, then offset it by the lower radius
-    return dot(cylindrical_position, vec2<f32>(parallel_y, -parallel_x)) - lower_radius;
+    return dot(cylindrical_position, vec2(parallel_y, -parallel_x)) - lower_radius;
 }
 
 
@@ -1103,7 +1110,7 @@ fn distance_to_rounded_cone(
  */
 fn distance_to_torus(position: vec3<f32>, ring_radius: f32, tube_radius: f32) -> f32 {
     return distance_to_circle(
-        vec2<f32>(distance_to_circle(position.xy, ring_radius), position.z),
+        vec2(distance_to_circle(position.xy, ring_radius), position.z),
         tube_radius,
     );
 }
@@ -1126,8 +1133,8 @@ fn distance_to_capped_torus(
     tube_radius: f32,
     cap_angle: f32,
 ) -> f32 {
-    var cap_direction = vec2<f32>(sin(cap_angle), cos(cap_angle));
-    var abs_x_position = vec3<f32>(abs(position.x), position.yz);
+    var cap_direction = vec2(sin(cap_angle), cos(cap_angle));
+    var abs_x_position = vec3(abs(position.x), position.yz);
 
     var cap_factor: f32 = select(
         // distance to z-axis from position
@@ -1165,11 +1172,11 @@ fn distance_to_link(
     var height_difference: f32 = abs(position.y) - height / 2.;
 
     var distance_in_xy_plane: f32 = distance_to_circle(
-        vec2<f32>(position.x, positive_part_f32(height_difference)),
+        vec2(position.x, positive_part_f32(height_difference)),
         ring_radius,
     );
     return distance_to_circle(
-        vec2<f32>(distance_in_xy_plane, position.z),
+        vec2(distance_in_xy_plane, position.z),
         tube_radius,
     );
 }
@@ -1188,20 +1195,20 @@ fn distance_to_link(
  */
 fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> f32 {
     // precomputed -cos(-PI / 6.), -sin(-PI / 6.), -tan(-PI / 6.)
-    var cos_sin_tan = vec3<f32>(-0.86602540378, 0.5, 0.57735026919);
+    var cos_sin_tan = vec3(-0.86602540378, 0.5, 0.57735026919);
     var half_height: f32 = height / 2.;
 
     var abs_position: vec3<f32> = abs(position);
-    abs_position += vec3<f32>(
+    abs_position += vec3(
         2. * cos_sin_tan.xy * negative_part_f32(dot(cos_sin_tan.xy, abs_position.xy)),
         0.,
     );
 
     // Radial distance in xy-plane, and the distance along the z-axis
-    var radial_and_z_distance = vec2<f32>(
+    var radial_and_z_distance = vec2(
         sign(abs_position.y - half_height) * length(
             abs_position.xy
-            - vec2<f32>(
+            - vec2(
                 clamp(abs_position.x, -cos_sin_tan.z * half_height, cos_sin_tan.z * half_height),
                 half_height,
             ),
@@ -1226,7 +1233,7 @@ fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> 
 fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
     var abs_position: vec3<f32> = abs(position);
 
-    var position_sum_to_extent: f32 = dot(abs_position, vec3<f32>(1.)) - radial_extent;
+    var position_sum_to_extent: f32 = dot(abs_position, vec3(1.)) - radial_extent;
 
     var three_position: vec3<f32> = 3. * abs_position;
     var change_of_axes: vec3<f32>;
@@ -1253,7 +1260,7 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
         radial_extent,
     );
 
-    return length(vec3<f32>(
+    return length(vec3(
         change_of_axes.x,
         change_of_axes.y - radial_extent + surface,
         change_of_axes.z - surface,
@@ -1296,7 +1303,7 @@ fn distance_to_mandelbulb(
         var theta: f32 = power * acos(current_position.z / current_radius);
         var phi: f32 = power * atan2(current_position.y, current_position.x);
 
-        current_position = position + pow(current_radius, power) * vec3<f32>(
+        current_position = position + pow(current_radius, power) * vec3(
             sin(theta) * cos(phi),
             sin(theta) * sin(phi),
             cos(theta),
@@ -1352,11 +1359,11 @@ fn distance_to_mandelbox(
     folding_limit: f32,
     trap_colour: ptr<function, vec3<f32>>,
 ) -> f32 {
-    var scale_vector = vec4<f32>(scale, scale, scale, abs(scale)) / min_square_radius;
-    var initial_position = vec4<f32>(position, 1.);
+    var scale_vector = vec4(scale, scale, scale, abs(scale)) / min_square_radius;
+    var initial_position = vec4(position, 1.);
     var current_position: vec4<f32> = initial_position;
 
-    var folding_limit_vec3f = vec3<f32>(folding_limit);
+    var folding_limit_vec3f = vec3(folding_limit);
 
     for (var iteration=0; iteration < iterations; iteration++)
     {
@@ -1364,7 +1371,7 @@ fn distance_to_mandelbox(
 
         var radius_squared: f32 = dot2_vec3f(folded_position);
         current_position = sphere_fold(
-            vec4<f32>(folded_position, current_position.w),
+            vec4(folded_position, current_position.w),
             radius_squared,
             min_square_radius
         );
@@ -1557,7 +1564,7 @@ fn distance_to_primitive(
             );
         }
         case 23u {
-            var colour = vec3<f32>(1.);
+            var colour = vec3(1.);
             distance = distance_to_mandelbulb(
                 scaled_position,
                 (*primitive).custom_data.x,
@@ -1568,7 +1575,7 @@ fn distance_to_primitive(
             (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
         }
         case 24u {
-            var colour = vec3<f32>(1.);
+            var colour = vec3(1.);
             distance = distance_to_mandelbox(
                 scaled_position,
                 (*primitive).custom_data.x,
@@ -1633,18 +1640,18 @@ fn early_exit_aovs(
     surface_normal: vec3<f32>,
 ) -> vec4<f32> {
     if (aov_type == WORLD_POSITION_AOV) {
-        return vec4<f32>(world_position, 1.);
+        return vec4(world_position, 1.);
     }
     else if (aov_type == LOCAL_POSITION_AOV) {
-        return vec4<f32>(local_position, 1.);
+        return vec4(local_position, 1.);
     }
     else if (aov_type == NORMALS_AOV) {
-        return vec4<f32>(surface_normal, 1.);
+        return vec4(surface_normal, 1.);
     }
     else if (aov_type == DEPTH_AOV) {
-        return vec4<f32>(abs(world_to_camera_space(world_position).z));
+        return vec4(abs(world_to_camera_space(world_position).z));
     }
-    return vec4<f32>(-1.); // Invalid!!
+    return vec4(-1.); // Invalid!!
 }
 
 // ray_march.wgsl
@@ -1706,8 +1713,8 @@ var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
 @vertex
 fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
     var out: VertexOut;
-    out.frag_coordinate = vec4<f32>(v_positions[vertex_index], 0., 1.);
-    out.uv_coordinate = vec4<f32>(v_positions[vertex_index], 0., 1.);
+    out.frag_coordinate = vec4(v_positions[vertex_index], 0., 1.);
+    out.uv_coordinate = vec4(v_positions[vertex_index], 0., 1.);
 
     return out;
 }
@@ -1755,7 +1762,7 @@ fn min_distance_to_primitive(
  */
 fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
     var material: Material;
-    var normal_offset = vec2<f32>(0.5773, -0.5773);
+    var normal_offset = vec2(0.5773, -0.5773);
     return normalize(
         normal_offset.xyy * min_distance_to_primitive(
             position + normal_offset.xyy * _render_params.ray_marcher.hit_tolerance,
@@ -1794,11 +1801,12 @@ fn march_path(
     ray_direction: vec3<f32>,
     seed: vec3<f32>,
 ) -> vec4<f32> {
+    var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
 
-    var ray_colour = vec4<f32>(0.);
-    var throughput = vec4<f32>(1.);
+    var ray_colour = vec4(0.);
+    var throughput = vec4(1.);
 
     var distance_travelled: f32 = 0.;
     var distance_since_last_bounce = 0.;
@@ -1863,6 +1871,7 @@ fn march_path(
             }
 
             material_interaction(
+                path_seed,
                 step_distance,
                 pixel_footprint,
                 distance_since_last_bounce,
@@ -1876,7 +1885,7 @@ fn march_path(
             );
 
             // Exit if we have reached the bounce limit or with a random chance
-            var rng: f32 = random_f32(seed.x); // TODO add random functions
+            var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f(throughput.xyz);
             if (
                 bounces >= _render_params.ray_marcher.max_bounces
@@ -1886,12 +1895,15 @@ fn march_path(
             }
             else if (roulette) {
                 // Account for the lost intensity from the early exits
-                throughput /= vec4<f32>(exit_probability);
+                throughput /= vec4(exit_probability);
             }
 
             distance_since_last_bounce = 0.;
             // Reset the pixel footprint so multiple reflections don't reduce precision
             pixel_footprint = _render_params.ray_marcher.hit_tolerance;
+
+            // Update the random seed for the next iteration
+            path_seed = random_vec3f(path_seed.zxy + seed);
         }
         else if (dynamic_level_of_detail) {
             pixel_footprint += _render_params.ray_marcher.hit_tolerance * step_distance;
@@ -1951,11 +1963,9 @@ fn create_render_camera_ray(
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    var seed = random_vec3f(
-        _render_params.ray_marcher.seeds
-        + vec3<f32>(vec2f_to_random_f32(in.frag_coordinate.xy))
-    );
-    var ray_colour = vec4<f32>(0.);
+    var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
+    var seed = random_vec3f(_render_params.ray_marcher.seeds + frag_coord_seed);
+    var ray_colour = vec4(0.);
 
     var ray_origin: vec3<f32>;
     var ray_direction: vec3<f32>;
@@ -1972,7 +1982,9 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
             ray_direction,
             seed,
         );
+
+        seed = random_vec3f(seed.yzx + frag_coord_seed);
     }
 
-    return ray_colour;
+    return ray_colour / f32(_render_params.ray_marcher.paths_per_pixel);
 }

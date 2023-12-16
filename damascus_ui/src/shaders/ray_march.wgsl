@@ -220,110 +220,6 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
 }
 
 
-/**
- * Get a rotation matrix from an axis and an angle about that axis.
- *
- * @arg axis: The axis to rotate about.
- * @arg angle: The rotation angle in radians.
- * @arg out: The location to store the rotation matrix.
- */
-fn axis_angle_rotation_matrix(
-    axis: vec3<f32>,
-    angle: f32,
-    out: ptr<function, mat3x3<f32>>,
-) {
-    var cos_angle: f32 = cos(angle);
-    var one_minus_cos_angle: f32 = 1. - cos_angle;
-    var sin_angle: f32 = sin(angle);
-
-    var axis_squared: vec3<f32> = axis * axis;
-
-    var axis_xy: f32 = axis.x * axis.y * one_minus_cos_angle;
-    var axis_xz: f32 = axis.x * axis.z * one_minus_cos_angle;
-    var axis_yz: f32 = axis.y * axis.z * one_minus_cos_angle;
-
-    var axis_sin_angle: vec3<f32> = axis * sin_angle;
-
-    (*out)[0][0] = cos_angle + axis_squared.x * one_minus_cos_angle;
-    (*out)[1][0] = axis_xy - axis_sin_angle.z;
-    (*out)[2][0] = axis_xz + axis_sin_angle.y;
-    (*out)[0][1] = axis_xy + axis_sin_angle.z;
-    (*out)[1][1] = cos_angle + axis_squared.y * one_minus_cos_angle;
-    (*out)[2][1] = axis_yz - axis_sin_angle.x;
-    (*out)[0][2] = axis_xz - axis_sin_angle.y;
-    (*out)[1][2] = axis_yz + axis_sin_angle.x;
-    (*out)[2][2] = cos_angle + axis_squared.z * one_minus_cos_angle;
-}
-
-
-/**
- * Get the angle and axis to use to rotate a vector onto another.
- *
- * @arg axis: The rotation angles in radians.
- * @arg out: The location to store the axis.
- *
- * @returns: The angle.
- */
-fn angle_and_axis_between_vectors(
-    vector_0: vec3<f32>,
-    vector_1: vec3<f32>,
-    axis: ptr<function, vec3<f32>>,
-) -> f32 {
-    var perpendicular_vector: vec3<f32> = cross(vector_0, vector_1);
-    if (length(perpendicular_vector) > 0.) {
-        *axis = normalize(perpendicular_vector);
-    }
-    else if (vector_1.z != 0. || vector_1.y != 0.) {
-        *axis = normalize(cross(vec3(1., 0., 0.), vector_1));
-    }
-    else if (vector_1.x != 0. || vector_1.z != 0.) {
-        *axis = normalize(cross(vec3(0., 1., 0.), vector_1));
-    }
-    else if (vector_1.x != 0. || vector_1.y != 0.) {
-        *axis = normalize(cross(vec3(0., 0., 1.), vector_1));
-    }
-    else {
-        *axis = vector_0;
-    }
-    return acos(dot(vector_0, vector_1));
-}
-
-
-/**
- * Align a vector that has been defined relative to an axis with another
- * axis. For example if a vector has been chosen randomly in a
- * particular hemisphere, rotate that hemisphere to align with a new
- * axis.
- *
- * @arg unaligned_axis: The axis, about which, the vector was defined.
- * @arg align_direction: The axis to align with.
- * @arg vector_to_align: The vector that was defined relative to
- *     unaligned_axis.
- *
- * @returns: The aligned vector.
- */
-fn align_with_direction(
-    unaligned_axis: vec3<f32>,
-    align_direction: vec3<f32>,
-    vector_to_align: vec3<f32>,
-) -> vec3<f32> {
-    var rotation_axis: vec3<f32>;
-    var angle: f32 = angle_and_axis_between_vectors(
-        unaligned_axis,
-        align_direction,
-        &rotation_axis,
-    );
-
-    if (angle == 0.) {
-        return vector_to_align;
-    }
-
-    var rotationMatrix: mat3x3<f32>;
-    axis_angle_rotation_matrix(rotation_axis, angle, &rotationMatrix);
-
-    return rotationMatrix * vector_to_align;
-}
-
 // random.wgsl
 
 
@@ -381,27 +277,6 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
 
 /**
  * Create a random unit vector in the hemisphere aligned along the
- * z-axis, with a distribution that is cosine weighted.
- *
- * @arg seed: The random seed.
- *
- * @returns: A random unit vector.
- */
-fn cosineDirectionInZHemisphere(seed: vec2<f32>) -> vec3<f32>
-{
-    var uniform_: f32 = random_f32(seed.x);
-    var r: f32 = sqrt(uniform_);
-    var angle: f32 = 2. * 3.1415926535 * random_f32(seed.y);
- 
-    var x: f32 = r * cos(angle);
-    var y: f32 = r * sin(angle);
- 
-    return vec3(x, y, sqrt(positive_part_f32(1. - uniform_)));
-}
-
-
-/**
- * Create a random unit vector in the hemisphere aligned along the
  * given axis, with a distribution that is cosine weighted.
  *
  * @arg seed: The random seed.
@@ -415,28 +290,9 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
     var vv = vec3(tc.zy, -axis.y);
 
     var uv: vec2<f32> = random_vec2f(seed);
-    var a: f32 = 6.283185 * uv.y;
+    var angle: f32 = 6.283185 * uv.y;
 
-    return sqrt(uv.x) * (cos(a) * uu + sin(a) * vv) + sqrt(1. - uv.x) * axis;
-}
-
-
-/**
- * Create a random unit vector in the hemisphere aligned along the
- * given axis, with a distribution that is cosine weighted.
- *
- * @arg axis: The axis to align the hemisphere with.
- * @arg seed: The random seed.
- *
- * @returns: A random unit vector.
- */
-fn cosineDirectionInHemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
-{
-    return normalize(align_with_direction(
-        vec3(0., 0., 1.),
-        axis,
-        cosineDirectionInZHemisphere(seed)
-    ));
+    return sqrt(uv.x) * (cos(angle) * uu + sin(angle) * vv) + sqrt(1. - uv.x) * axis;
 }
 
 

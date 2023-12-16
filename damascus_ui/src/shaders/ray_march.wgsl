@@ -146,15 +146,15 @@ fn dot2_vec3f(vector_: vec3<f32>) -> f32 {
 /**
  * Get the length of the shorter of two vectors.
  *
- * @arg vector0: The first vector to get the length of if it is the
+ * @arg vector_0: The first vector to get the length of if it is the
  *     shortest option
- * @arg vector1: The second vector to get the length of if it is the
+ * @arg vector_1: The second vector to get the length of if it is the
  *     shortest option
  *
  * @returns: The shorter of the two lengths
  */
-fn min_length_vec2f(vector0: vec2<f32>, vector1: vec2<f32>) -> f32 {
-    return sqrt(min(dot2_vec2f(vector0), dot2_vec2f(vector1)));
+fn min_length_vec2f(vector_0: vec2<f32>, vector_1: vec2<f32>) -> f32 {
+    return sqrt(min(dot2_vec2f(vector_0), dot2_vec2f(vector_1)));
 }
 
 
@@ -219,6 +219,111 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
     );
 }
 
+
+/**
+ * Get a rotation matrix from an axis and an angle about that axis.
+ *
+ * @arg axis: The axis to rotate about.
+ * @arg angle: The rotation angle in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+fn axis_angle_rotation_matrix(
+    axis: vec3<f32>,
+    angle: f32,
+    out: ptr<function, mat3x3<f32>>,
+) {
+    var cos_angle: f32 = cos(angle);
+    var one_minus_cos_angle: f32 = 1. - cos_angle;
+    var sin_angle: f32 = sin(angle);
+
+    var axis_squared: vec3<f32> = axis * axis;
+
+    var axis_xy: f32 = axis.x * axis.y * one_minus_cos_angle;
+    var axis_xz: f32 = axis.x * axis.z * one_minus_cos_angle;
+    var axis_yz: f32 = axis.y * axis.z * one_minus_cos_angle;
+
+    var axis_sin_angle: vec3<f32> = axis * sin_angle;
+
+    (*out)[0][0] = cos_angle + axis_squared.x * one_minus_cos_angle;
+    (*out)[1][0] = axis_xy - axis_sin_angle.z;
+    (*out)[2][0] = axis_xz + axis_sin_angle.y;
+    (*out)[0][1] = axis_xy + axis_sin_angle.z;
+    (*out)[1][1] = cos_angle + axis_squared.y * one_minus_cos_angle;
+    (*out)[2][1] = axis_yz - axis_sin_angle.x;
+    (*out)[0][2] = axis_xz - axis_sin_angle.y;
+    (*out)[1][2] = axis_yz + axis_sin_angle.x;
+    (*out)[2][2] = cos_angle + axis_squared.z * one_minus_cos_angle;
+}
+
+
+/**
+ * Get the angle and axis to use to rotate a vector onto another.
+ *
+ * @arg axis: The rotation angles in radians.
+ * @arg out: The location to store the axis.
+ *
+ * @returns: The angle.
+ */
+fn angle_and_axis_between_vectors(
+    vector_0: vec3<f32>,
+    vector_1: vec3<f32>,
+    axis: ptr<function, vec3<f32>>,
+) -> f32 {
+    var perpendicular_vector: vec3<f32> = cross(vector_0, vector_1);
+    if (length(perpendicular_vector) > 0.) {
+        *axis = normalize(perpendicular_vector);
+    }
+    else if (vector_1.z != 0. || vector_1.y != 0.) {
+        *axis = normalize(cross(vec3(1., 0., 0.), vector_1));
+    }
+    else if (vector_1.x != 0. || vector_1.z != 0.) {
+        *axis = normalize(cross(vec3(0., 1., 0.), vector_1));
+    }
+    else if (vector_1.x != 0. || vector_1.y != 0.) {
+        *axis = normalize(cross(vec3(0., 0., 1.), vector_1));
+    }
+    else {
+        *axis = vector_0;
+    }
+    return acos(dot(vector_0, vector_1));
+}
+
+
+/**
+ * Align a vector that has been defined relative to an axis with another
+ * axis. For example if a vector has been chosen randomly in a
+ * particular hemisphere, rotate that hemisphere to align with a new
+ * axis.
+ *
+ * @arg unaligned_axis: The axis, about which, the vector was defined.
+ * @arg align_direction: The axis to align with.
+ * @arg vector_to_align: The vector that was defined relative to
+ *     unaligned_axis.
+ *
+ * @returns: The aligned vector.
+ */
+fn align_with_direction(
+    unaligned_axis: vec3<f32>,
+    align_direction: vec3<f32>,
+    vector_to_align: vec3<f32>,
+) -> vec3<f32> {
+    var rotation_axis: vec3<f32>;
+    var angle: f32 = angle_and_axis_between_vectors(
+        unaligned_axis,
+        align_direction,
+        &rotation_axis,
+    );
+
+    if (angle == 0.) {
+        return vector_to_align;
+    }
+
+    var rotationMatrix: mat3x3<f32>;
+    axis_angle_rotation_matrix(rotation_axis, angle, &rotationMatrix);
+
+    return rotationMatrix * vector_to_align;
+}
+
 // random.wgsl
 
 
@@ -231,6 +336,20 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
  */
 fn random_f32(seed: f32) -> f32 {
     return fract(sin(seed * 91.3458) * 47453.5453123);
+}
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+fn random_vec2f(seed: vec2<f32>) -> vec2<f32> {
+    return vec2(
+        random_f32(seed.x),
+        random_f32(seed.y),
+    );
 }
 
 
@@ -260,6 +379,67 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
 }
 
 
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * z-axis, with a distribution that is cosine weighted.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+fn cosineDirectionInZHemisphere(seed: vec2<f32>) -> vec3<f32>
+{
+    var uniform_: f32 = random_f32(seed.x);
+    var r: f32 = sqrt(uniform_);
+    var angle: f32 = 2. * 3.1415926535 * random_f32(seed.y);
+ 
+    var x: f32 = r * cos(angle);
+    var y: f32 = r * sin(angle);
+ 
+    return vec3(x, y, sqrt(positive_part_f32(1. - uniform_)));
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * given axis, with a distribution that is cosine weighted.
+ *
+ * @arg seed: The random seed.
+ * @arg axis: The axis to align the hemisphere with.
+ *
+ * @returns: A random unit vector.
+ */
+fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32> {
+    var tc = vec3(1. + axis.z - axis.xy * axis.xy, -axis.x * axis.y) / (1. + axis.z);
+    var uu = vec3(tc.xz, -axis.x);
+    var vv = vec3(tc.zy, -axis.y);
+
+    var uv: vec2<f32> = random_vec2f(seed);
+    var a: f32 = 6.283185 * uv.y;
+
+    return sqrt(uv.x) * (cos(a) * uu + sin(a) * vv) + sqrt(1. - uv.x) * axis;
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * given axis, with a distribution that is cosine weighted.
+ *
+ * @arg axis: The axis to align the hemisphere with.
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+fn cosineDirectionInHemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
+{
+    return normalize(align_with_direction(
+        vec3(0., 0., 1.),
+        axis,
+        cosineDirectionInZHemisphere(seed)
+    ));
+}
+
+
 // materials/material.wgsl
 
 
@@ -277,6 +457,42 @@ struct Material {
     refractive_index: f32,
     scattering_coefficient: f32,
     scattering_colour: vec3<f32>,
+}
+
+
+/**
+ * Perform material sampling.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg incident_direction: The incoming ray direction.
+ * @arg offset: The amount to offset the ray in order to escape the
+ *     surface.
+ * @arg material: The material properties of the surface.
+ * @arg position: The position on the surface to sample the
+ *     material of.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the material of.
+ * @arg outgoing_direction: The direction the ray will travel after
+ *     sampling the material.
+ * @arg light_pdf: The PDF of the material we are sampling from the
+ *     perspective of the light we will be sampling.
+ *
+ * @returns: The material PDF.
+ */
+fn sample_material(
+    seed: vec3<f32>,
+    surface_normal: vec3<f32>,
+    incident_direction: vec3<f32>,
+    offset: f32,
+    material: ptr<function, Material>,
+    position: ptr<function, vec3<f32>>,
+    material_brdf: vec4<f32>,
+    outgoing_direction: ptr<function, vec3<f32>>,
+    light_pdf: ptr<function, f32>,
+) -> f32 {
+    return 0.;
 }
 
 
@@ -300,6 +516,7 @@ fn material_interaction(
     seed: vec3<f32>,
     step_distance: f32,
     pixel_footprint: f32,
+    shadow_bias: f32,
     distance: f32,
     intersection_position: vec3<f32>,
     surface_normal: vec3<f32>,
@@ -309,7 +526,29 @@ fn material_interaction(
     throughput: ptr<function, vec4<f32>>,
     material: ptr<function, Material>,
 ) {
-    *ray_colour = vec4((*material).diffuse_colour, 1.); // TODO
+    // Compute the amount we would offset a point to escape the surface
+    var offset: f32 = 2. * pixel_footprint * shadow_bias;
+
+    *origin = intersection_position;
+
+    // var material_brdf: vec4<f32>;
+    // var outgoing_direction: vec3<f32>;
+    // var material_light_pdf: f32;
+    // var material_pdf: f32 = sample_material(
+    //     seed,
+    //     surface_normal,
+    //     direction,
+    //     offset,
+    //     material,
+    //     origin,
+    //     &material_brdf,
+    //     &outgoing_direction,
+    //     &material_light_pdf,
+    // );
+
+
+
+    *ray_colour = vec4(cosine_direction_in_hemisphere(seed.xy, surface_normal), 1.); // TODO
 }
 
 
@@ -1874,6 +2113,7 @@ fn march_path(
                 path_seed,
                 step_distance,
                 pixel_footprint,
+                _render_params.ray_marcher.shadow_bias,
                 distance_since_last_bounce,
                 intersection_position,
                 surface_normal,

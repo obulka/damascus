@@ -220,6 +220,109 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
 }
 
 
+/**
+ * Get a rotation matrix from an axis and an angle about that axis.
+ *
+ * @arg axis: The axis to rotate about.
+ * @arg angle: The rotation angle in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+fn axis_angle_rotation_matrix(axis: vec3<f32>, angle: f32) -> mat3x3<f32> {
+    var cos_angle: f32 = cos(angle);
+    var one_minus_cos_angle: f32 = 1. - cos_angle;
+    var sin_angle: f32 = sin(angle);
+
+    var axis_squared: vec3<f32> = axis * axis;
+
+    var axis_xy: f32 = axis.x * axis.y * one_minus_cos_angle;
+    var axis_xz: f32 = axis.x * axis.z * one_minus_cos_angle;
+    var axis_yz: f32 = axis.y * axis.z * one_minus_cos_angle;
+
+    var axis_sin_angle: vec3<f32> = axis * sin_angle;
+
+    var rotation_matrix: mat3x3<f32>;
+    rotation_matrix[0][0] = cos_angle + axis_squared.x * one_minus_cos_angle;
+    rotation_matrix[1][0] = axis_xy - axis_sin_angle.z;
+    rotation_matrix[2][0] = axis_xz + axis_sin_angle.y;
+    rotation_matrix[0][1] = axis_xy + axis_sin_angle.z;
+    rotation_matrix[1][1] = cos_angle + axis_squared.y * one_minus_cos_angle;
+    rotation_matrix[2][1] = axis_yz - axis_sin_angle.x;
+    rotation_matrix[0][2] = axis_xz - axis_sin_angle.y;
+    rotation_matrix[1][2] = axis_yz + axis_sin_angle.x;
+    rotation_matrix[2][2] = cos_angle + axis_squared.z * one_minus_cos_angle;
+
+    return rotation_matrix;
+}
+
+
+/**
+ * Get the angle between two vectors.
+ *
+ * @arg vector_0: The first vector.
+ * @arg vector_1: The second vector.
+ *
+ * @returns: The angle.
+ */
+fn angle_between_vec3f(vector_0: vec3<f32>, vector_1: vec3<f32>) -> f32 {
+    return acos(dot(vector_0, vector_1));
+}
+
+
+/**
+ * Find an axis normal to both input vectors.
+ *
+ * @arg vector_0: The first vector.
+ * @arg vector_1: The second vector.
+ *
+ * @returns: The angle.
+ */
+fn normal(vector_0: vec3<f32>, vector_1: vec3<f32>) -> vec3<f32> {
+    var perpendicular_vector: vec3<f32> = cross(vector_0, vector_1);
+    if (length(perpendicular_vector) > 0.) {
+        return normalize(perpendicular_vector);
+    }
+    else if (length(vector_1.yz) > 0.) {
+        return normalize(cross(vec3(1., 0., 0.), vector_1));
+    }
+    else if (length(vector_1.xz) > 0.) {
+        return normalize(cross(vec3(0., 1., 0.), vector_1));
+    }
+    else if (length(vector_1.xy) > 0.) {
+        return normalize(cross(vec3(0., 0., 1.), vector_1));
+    }
+    else {
+        return vector_0;
+    }
+}
+
+
+/**
+ * Align a vector that has been defined relative to an axis with another
+ * axis. For example if a vector has been chosen randomly in a
+ * particular hemisphere, rotate that hemisphere to align with a new
+ * axis.
+ *
+ * @arg unaligned_axis: The axis, about which, the vector was defined.
+ * @arg alignment_direction: The axis to align with.
+ * @arg vector_to_align: The vector that was defined relative to
+ *     unaligned_axis.
+ *
+ * @returns: The aligned vector.
+ */
+fn align_with_direction(
+    unaligned_axis: vec3<f32>,
+    alignment_direction: vec3<f32>,
+    vector_to_align: vec3<f32>,
+) -> vec3<f32> {
+    var angle: f32 = angle_between_vec3f(unaligned_axis, alignment_direction);
+    if (angle == 0.) {
+        return vector_to_align;
+    }
+    var rotation_axis: vec3<f32> = normal(unaligned_axis, alignment_direction);
+
+    return axis_angle_rotation_matrix(rotation_axis, angle) * vector_to_align;
+}
+
 // random.wgsl
 
 
@@ -277,6 +380,27 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
 
 /**
  * Create a random unit vector in the hemisphere aligned along the
+ * z-axis, with a distribution that is cosine weighted.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
+{
+    var uniform_random_numbers: vec2<f32> = random_vec2f(seed);
+    var r: f32 = sqrt(uniform_random_numbers.x);
+    var angle: f32 = 6.28318530718 * uniform_random_numbers.y;
+
+    var x: f32 = r * cos(angle);
+    var y: f32 = r * sin(angle);
+
+    return normalize(vec3(x, y, sqrt(positive_part_f32(1. - uniform_random_numbers.x))));
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
  * given axis, with a distribution that is cosine weighted.
  *
  * @arg seed: The random seed.
@@ -285,14 +409,11 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
  * @returns: A random unit vector.
  */
 fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32> {
-    var tc = vec3(1. + axis.z - axis.xy * axis.xy, -axis.x * axis.y) / (1. + axis.z);
-    var uu = vec3(tc.xz, -axis.x);
-    var vv = vec3(tc.zy, -axis.y);
-
-    var uv: vec2<f32> = random_vec2f(seed);
-    var angle: f32 = 6.283185 * uv.y;
-
-    return sqrt(uv.x) * (cos(angle) * uu + sin(angle) * vv) + sqrt(1. - uv.x) * axis;
+    return align_with_direction(
+        vec3(0., 0., 1.),
+        axis,
+        cosine_direction_in_z_hemisphere(seed),
+    );
 }
 
 
@@ -300,15 +421,15 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
 
 
 struct Material {
-    diffuse: f32,
+    diffuse_probability: f32,
     diffuse_colour: vec3<f32>,
-    specular: f32,
+    specular_probability: f32,
     specular_roughness: f32,
     specular_colour: vec3<f32>,
-    transmissive: f32,
+    transmissive_probability: f32,
     transmissive_roughness: f32,
     transmissive_colour: vec3<f32>,
-    emissive: f32,
+    emissive_probability: f32,
     emissive_colour: vec3<f32>,
     refractive_index: f32,
     scattering_coefficient: f32,
@@ -348,6 +469,25 @@ fn sample_material(
     outgoing_direction: ptr<function, vec3<f32>>,
     light_pdf: ptr<function, f32>,
 ) -> f32 {
+    var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
+        seed.xy,
+        surface_normal,
+    );
+    var rng: f32 = vec3f_to_random_f32(seed);
+
+    if (
+        (*material).specular_probability > 0.
+        && rng <= (*material).specular_probability
+    ) {
+
+    }
+    else if (
+        (*material).transmissive_probability > 0.
+        && rng <= (*material).transmissive_probability
+    ) {
+
+    }
+
     return 0.;
 }
 

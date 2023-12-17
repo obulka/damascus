@@ -580,16 +580,28 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             }
             DamascusNodeTemplate::Material => {
                 let default_material = materials::Material::default();
-                input_float(graph, "diffuse", default_material.diffuse);
+                input_float(
+                    graph,
+                    "diffuse_probability",
+                    default_material.diffuse_probability,
+                );
                 input_vector3(graph, "diffuse_colour", default_material.diffuse_colour);
-                input_float(graph, "specular", default_material.specular);
+                input_float(
+                    graph,
+                    "specular_probability",
+                    default_material.specular_probability,
+                );
                 input_float(
                     graph,
                     "specular_roughness",
                     default_material.specular_roughness,
                 );
                 input_vector3(graph, "specular_colour", default_material.specular_colour);
-                input_float(graph, "transmissive", default_material.transmissive);
+                input_float(
+                    graph,
+                    "transmissive_probability",
+                    default_material.transmissive_probability,
+                );
                 input_float(
                     graph,
                     "transmissive_roughness",
@@ -600,7 +612,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "transmissive_colour",
                     default_material.transmissive_colour,
                 );
-                input_float(graph, "emissive", default_material.emissive);
+                input_float(
+                    graph,
+                    "emissive_probability",
+                    default_material.emissive_probability,
+                );
                 input_vector3(graph, "emissive_colour", default_material.emissive_colour);
                 input_float(graph, "refractive_index", default_material.refractive_index);
                 input_float(
@@ -1421,30 +1437,30 @@ pub fn evaluate_node(
             evaluator.output_light("out", scene_lights)
         }
         DamascusNodeTemplate::Material => {
-            let diffuse = evaluator.input_float("diffuse")?;
+            let diffuse_probability = evaluator.input_float("diffuse_probability")?;
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
-            let specular = evaluator.input_float("specular")?;
+            let specular_probability = evaluator.input_float("specular_probability")?;
             let specular_roughness = evaluator.input_float("specular_roughness")?;
             let specular_colour = evaluator.input_vector3("specular_colour")?;
-            let transmissive = evaluator.input_float("transmissive")?;
+            let transmissive_probability = evaluator.input_float("transmissive_probability")?;
             let transmissive_roughness = evaluator.input_float("transmissive_roughness")?;
             let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
-            let emissive = evaluator.input_float("emissive")?;
+            let emissive_probability = evaluator.input_float("emissive_probability")?;
             let emissive_colour = evaluator.input_vector3("emissive_colour")?;
             let refractive_index = evaluator.input_float("refractive_index")?;
             let scattering_coefficient = evaluator.input_float("scattering_coefficient")?;
             let scattering_colour = evaluator.input_vector3("scattering_colour")?;
 
             let material = materials::Material {
-                diffuse: diffuse,
+                diffuse_probability: diffuse_probability,
                 diffuse_colour: diffuse_colour,
-                specular: specular,
+                specular_probability: specular_probability,
                 specular_roughness: specular_roughness,
                 specular_colour: specular_colour,
-                transmissive: transmissive,
+                transmissive_probability: transmissive_probability,
                 transmissive_roughness: transmissive_roughness,
                 transmissive_colour: transmissive_colour,
-                emissive: emissive,
+                emissive_probability: emissive_probability,
                 emissive_colour: emissive_colour,
                 refractive_index: refractive_index,
                 scattering_coefficient: scattering_coefficient,

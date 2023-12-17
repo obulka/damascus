@@ -15,6 +15,9 @@
 
 // math.wgsl
 
+let PI: f32 = 3.141592653589793;
+let TWO_PI: f32 = 6.28318530718;
+
 
 // wish we could overload functions
 fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
@@ -103,8 +106,8 @@ fn negative_part_f32(value: f32) -> f32 {
  *
  * @returns: The sum of the components.
  */
-fn sum_component_vec4f(vector_: vec4<f32>) -> f32 {
-    return vector_.x + vector_.y + vector_.z + vector_.w;
+fn sum_component_vec3f(vector_: vec3<f32>) -> f32 {
+    return vector_.x + vector_.y + vector_.z;
 }
 
 
@@ -217,6 +220,19 @@ fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
         length(positive_part_vec3f(vector_))
         - negative_part_f32(max_component_vec3f(vector_))
     );
+}
+
+
+/**
+ * Combine two PDFs in an optimal manner.
+ *
+ * @arg pdf_0: The first PDF.
+ * @arg pdf_1: The second PDF.
+ *
+ * @returns: The combined PDF.
+ */
+fn balance_heuristic(pdf_0: f32, pdf_1: f32) -> f32 {
+    return pdf_0 / (pdf_0 + pdf_1);
 }
 
 
@@ -390,7 +406,7 @@ fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
 {
     var uniform_random_numbers: vec2<f32> = random_vec2f(seed);
     var r: f32 = sqrt(uniform_random_numbers.x);
-    var angle: f32 = 6.28318530718 * uniform_random_numbers.y;
+    var angle: f32 = TWO_PI * uniform_random_numbers.y;
 
     var x: f32 = r * cos(angle);
     var y: f32 = r * sin(angle);
@@ -417,6 +433,160 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
 }
 
 
+// lights.wgsl
+
+
+/**
+ * Perform multiple importance sampling by combining probability
+ * distribution functions.
+ *
+ * @arg emittance: The emissive values of the surface.
+ * @arg throughput: The throughput of the ray.
+ * @arg pdf_0: The first PDF.
+ * @arg pdf_1: The second PDF.
+ *
+ * @returns: The multiple importance sampled colour.
+ */
+fn multiple_importance_sample(
+    emittance: vec3<f32>,
+    throughput: vec3<f32>,
+    pdf_0: f32,
+    pdf_1: f32,
+) -> vec3<f32> {
+    return emittance * throughput * balance_heuristic(pdf_0, pdf_1);
+}
+
+
+/**
+ * Get the probability distribution function for the lights in the
+ * scene.
+ *
+ * @arg num_lights: The number of lights in the scene.
+ * @arg visible_surface_area: The surface area that is visible to the
+ *     position we are sampling from.
+ *
+ * @returns: The probability distribution function.
+ */
+fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
+    if (visible_surface_area == 0.) {
+        return 1. / num_lights;
+    }
+    else {
+        return 1. / num_lights / visible_surface_area;
+    }
+}
+
+
+/**
+ * Perform direct illumination light sampling on every light in the
+ * scene.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg throughput: The throughput of the ray.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the illumination of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg position: The position on the surface to sample the
+ *     illumination of.
+ * @arg material_pdf: The PDF of the material we are sampling the
+ *     direct illumination of.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn sample_lights(
+    seed: vec3<f32>,
+    throughput: vec3<f32>,
+    material_brdf: vec3<f32>,
+    surface_normal: vec3<f32>,
+    position: vec3<f32>,
+    material_pdf: f32,
+    num_non_physical_lights: u32,
+) -> vec3<f32> {
+    var light_colour = vec3(0.);
+
+    for (var light=0u; light < num_non_physical_lights; light++) {
+        // float3 lightDirection = surface_normal;
+        // float distanceToLight = 0.0f;
+
+        // const float lightPDF = sampleLightData(
+        //     seed * RAND_CONST_3 / (path + 1),
+        //     position,
+        //     surface_normal,
+        //     emissiveIndices,
+        //     numEmissive,
+        //     numLights,
+        //     path,
+        //     lightDirection,
+        //     distanceToLight
+        // );
+
+        // light_colour += sampleLight(
+        //     seed * RAND_CONST_4 * (path + 1),
+        //     throughput,
+        //     material_brdf,
+        //     distanceToLight,
+        //     surface_normal,
+        //     position,
+        //     lightDirection,
+        //     lightPDF,
+        //     material_pdf,
+        //     path,
+        //     numEmissive,
+        //     sampleHDRI,
+        //     nestedDielectrics,
+        //     numNestedDielectrics
+        // );
+    }
+
+    return light_colour;
+}
+
+
+/**
+ * Perform direct illumination light sampling.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg throughput: The throughput of the ray.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the illumination of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg position: The position on the surface to sample the
+ *     illumination of.
+ * @arg material_pdf: The PDF of the material we are sampling the
+ *     direct illumination of.
+ * @arg sample_all_lights: Whether to sample all the lights or one
+ *     random one.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn light_sampling(
+    seed: vec3<f32>,
+    throughput: vec3<f32>,
+    material_brdf: vec3<f32>,
+    surface_normal: vec3<f32>,
+    position: vec3<f32>,
+    material_pdf: f32,
+    sample_all_lights: bool,
+    num_non_physical_lights: u32,
+) -> vec3<f32> {
+    if (sample_all_lights) {
+        return sample_lights(
+            seed,
+            throughput,
+            material_brdf,
+            surface_normal,
+            position,
+            material_pdf,
+            num_non_physical_lights,
+        );
+    }
+
+    return vec3(0.);
+}
+
+
 // materials/material.wgsl
 
 
@@ -434,6 +604,65 @@ struct Material {
     refractive_index: f32,
     scattering_coefficient: f32,
     scattering_colour: vec3<f32>,
+}
+
+
+
+
+/**
+ * Perform a diffuse bounce of the ray.
+ *
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg diffuseDirection: The direction the ray will travel after
+ *     sampling the material.
+ * @arg offset: The amount to offset the ray in order to escape the
+ *     surface.
+ * @arg direction: The location to store the new ray direction.
+ * @arg position: The location to store the new ray origin.
+ */
+fn diffuse_bounce(
+    surface_normal: vec3<f32>,
+    diffuse_direction: vec3<f32>,
+    offset: f32,
+    direction: ptr<function, vec3<f32>>,
+    position: ptr<function, vec3<f32>>,
+) {
+    *direction = diffuse_direction;
+
+    // Offset the point so that it doesn't get trapped on the surface.
+    *position += offset * surface_normal;
+}
+
+
+/**
+ * Perform diffuse material sampling.
+ *
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg diffusivity: The diffuse values of the surface.
+ * @arg diffuseDirection: The direction the ray will travel after
+ *     sampling the material.
+ * @arg diffuseProbability: The probability of doing a diffuse bounce
+ *     on this material.
+ * @arg materialBRDF: The BRDF of the surface at the position we
+ *     are sampling the material of.
+ * @arg lightPDF: The PDF of the material we are sampling from the
+ *     perspective of the light we will be sampling.
+ *
+ * @returns: The material PDF.
+ */
+fn sample_diffuse(
+    surface_normal: vec3<f32>,
+    diffuse_direction: vec3<f32>,
+    material: ptr<function, Material>,
+    material_brdf: ptr<function, vec3<f32>>,
+    light_pdf: ptr<function, f32>,
+) -> f32 {
+    *material_brdf = (*material).diffuse_colour;
+    var probability_over_pi = (*material).diffuse_probability / PI;
+    *light_pdf = probability_over_pi;
+    return probability_over_pi * dot(diffuse_direction, surface_normal);
 }
 
 
@@ -465,7 +694,7 @@ fn sample_material(
     offset: f32,
     material: ptr<function, Material>,
     position: ptr<function, vec3<f32>>,
-    material_brdf: vec4<f32>,
+    material_brdf: ptr<function, vec3<f32>>,
     outgoing_direction: ptr<function, vec3<f32>>,
     light_pdf: ptr<function, f32>,
 ) -> f32 {
@@ -474,21 +703,37 @@ fn sample_material(
         surface_normal,
     );
     var rng: f32 = vec3f_to_random_f32(seed);
-
+    var material_pdf: f32;
     if (
         (*material).specular_probability > 0.
         && rng <= (*material).specular_probability
     ) {
-
+        material_pdf = 1.;
     }
     else if (
         (*material).transmissive_probability > 0.
         && rng <= (*material).transmissive_probability
     ) {
-
+        material_pdf = 1.;
+    }
+    else {
+        diffuse_bounce(
+            surface_normal,
+            diffuse_direction,
+            offset,
+            outgoing_direction,
+            position,
+        );
+        material_pdf = sample_diffuse(
+            surface_normal,
+            diffuse_direction,
+            material,
+            material_brdf,
+            light_pdf,
+        );
     }
 
-    return 0.;
+    return material_pdf;
 }
 
 
@@ -496,55 +741,101 @@ fn sample_material(
  * Handle the interaction between a ray and the surface of a material.
  *
  * @arg step_distance: The last step size to be marched.
- * @arg pixel_footprint: A value proportional to the amount of world
- *     space that fills a pixel, like the distance from camera.
+ * @arg offset: The distance to offset the position in order to escape
+ *     the surface.
  * @arg distance: The distance travelled since the last bounce.
  * @arg intersection_position: The position at which the ray
  *     intersects the geometry.
  * @arg surface_normal: The surface normal at the intersection point.
+ * @arg num_lights: The number of lights in the scene.
+ * @arg previous_material_pdf: The PDF of the last material interacted
+ *     with.
  * @arg direction: The incoming ray direction.
  * @arg origin: The ray origin.
  * @arg ray_colour: The colour of the ray.
  * @arg throughput: The throughput of the ray.
  * @arg material: The material to interact with.
+ *
+ * @returns: The material pdf.
  */
 fn material_interaction(
     seed: vec3<f32>,
     step_distance: f32,
-    pixel_footprint: f32,
-    shadow_bias: f32,
+    offset: f32,
     distance: f32,
     intersection_position: vec3<f32>,
     surface_normal: vec3<f32>,
+    num_lights: f32,
+    previous_material_pdf: f32,
+    light_sampling_enabled: bool,
+    sample_all_lights: bool,
     direction: ptr<function, vec3<f32>>,
     origin: ptr<function, vec3<f32>>,
     ray_colour: ptr<function, vec4<f32>>,
-    throughput: ptr<function, vec4<f32>>,
+    throughput: ptr<function, vec3<f32>>,
     material: ptr<function, Material>,
-) {
-    // Compute the amount we would offset a point to escape the surface
-    var offset: f32 = 2. * pixel_footprint * shadow_bias;
-
+) -> f32 {
     *origin = intersection_position;
 
-    // var material_brdf: vec4<f32>;
-    // var outgoing_direction: vec3<f32>;
-    // var material_light_pdf: f32;
-    // var material_pdf: f32 = sample_material(
-    //     seed,
-    //     surface_normal,
-    //     direction,
-    //     offset,
-    //     material,
-    //     origin,
-    //     &material_brdf,
-    //     &outgoing_direction,
-    //     &material_light_pdf,
-    // );
+    var material_brdf: vec3<f32>;
+    var outgoing_direction: vec3<f32>;
+    var materials_light_pdf: f32;
+    var material_pdf: f32 = sample_material(
+        seed,
+        surface_normal,
+        *direction,
+        offset,
+        material,
+        origin,
+        &material_brdf,
+        direction,
+        &materials_light_pdf,
+    );
 
+    if (light_sampling_enabled && materials_light_pdf > 0.) {
+        var num_non_physical_lights = u32(num_lights);
+        // Perform MIS light sampling
+        *ray_colour += vec4(
+            light_sampling(
+                seed,
+                *throughput,
+                material_brdf,
+                surface_normal,
+                *origin + surface_normal * offset,
+                materials_light_pdf,
+                sample_all_lights,
+                num_non_physical_lights,
+            ),
+            0.,
+        );
+    }
 
+    var material_geometry_factor: f32;
+    if (materials_light_pdf > 0.) {
+        material_geometry_factor = saturate_f32(dot(outgoing_direction, surface_normal));
+    }
+    else {
+        material_geometry_factor = 1.;
+    }
 
-    *ray_colour = vec4(cosine_direction_in_hemisphere(seed.xy, surface_normal), 1.); // TODO
+    // TODO
+    var radius: f32 = 1.;
+    var visible_surface_area: f32 = TWO_PI * radius * radius;
+
+    // TODO seems like this should be affecting the output even without being emissive
+    *ray_colour += vec4(
+        multiple_importance_sample(
+            (*material).emissive_colour,
+            *throughput,
+            previous_material_pdf,
+            sample_lights_pdf(num_lights, visible_surface_area),
+        ),
+        1.,
+    );
+
+    *throughput *= material_brdf * material_geometry_factor / material_pdf;
+
+    return material_pdf;
 }
 
 
@@ -1371,13 +1662,15 @@ fn distance_to_capped_torus(
     var cap_direction = vec2(sin(cap_angle), cos(cap_angle));
     var abs_x_position = vec3(abs(position.x), position.yz);
 
-    var cap_factor: f32 = select(
-        // distance to z-axis from position
-        length(abs_x_position.xy),
+    var cap_factor: f32;
+    if (cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y) {
         // project position on xy-plane onto the direction we are capping at
-        dot(abs_x_position.xy, cap_direction.xy),
-        cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y,
-    );
+        cap_factor = dot(abs_x_position.xy, cap_direction.xy);
+    }
+    else {
+        // distance to z-axis from position
+        cap_factor = length(abs_x_position.xy);
+    }
 
     return sqrt(
         dot2_vec3f(abs_x_position)
@@ -2040,8 +2333,15 @@ fn march_path(
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
 
+    var num_lights = f32(_render_params.scene.num_lights); // TODO Add emissive prims
+    var light_sampling_enabled = (
+        num_lights > 0.
+        && _render_params.ray_marcher.max_light_sampling_bounces > 0u
+    );
+    var sample_all_lights = bool(_render_params.ray_marcher.sample_all_lights);
+
     var ray_colour = vec4(0.);
-    var throughput = vec4(1.);
+    var throughput = vec3(1.);
 
     var distance_travelled: f32 = 0.;
     var distance_since_last_bounce = 0.;
@@ -2053,6 +2353,8 @@ fn march_path(
 
     var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
 
+    var previous_material_pdf: f32 = 1.;
+
     // Data for the next ray
     var origin: vec3<f32> = ray_origin;
     var position_on_ray: vec3<f32> = origin;
@@ -2062,7 +2364,7 @@ fn march_path(
     while (
         distance_travelled < _render_params.ray_marcher.max_distance
         && iterations < _render_params.ray_marcher.max_ray_steps
-        && sum_component_vec4f(throughput) > _render_params.ray_marcher.hit_tolerance
+        && sum_component_vec3f(throughput) > _render_params.ray_marcher.hit_tolerance
         && length(ray_colour) < _render_params.ray_marcher.max_brightness
     ) {
         position_on_ray = origin + distance_since_last_bounce * direction;
@@ -2105,14 +2407,17 @@ fn march_path(
                 );
             }
 
-            material_interaction(
+            previous_material_pdf = material_interaction(
                 path_seed,
                 step_distance,
-                pixel_footprint,
-                _render_params.ray_marcher.shadow_bias,
+                2. * pixel_footprint * _render_params.ray_marcher.shadow_bias,
                 distance_since_last_bounce,
                 intersection_position,
                 surface_normal,
+                num_lights,
+                previous_material_pdf,
+                light_sampling_enabled,
+                sample_all_lights,
                 &direction,
                 &origin,
                 &ray_colour,
@@ -2122,7 +2427,7 @@ fn march_path(
 
             // Exit if we have reached the bounce limit or with a random chance
             var rng: f32 = vec3f_to_random_f32(path_seed);
-            var exit_probability: f32 = max_component_vec3f(throughput.xyz);
+            var exit_probability: f32 = max_component_vec3f(throughput);
             if (
                 bounces >= _render_params.ray_marcher.max_bounces
                 || (roulette && exit_probability <= rng)
@@ -2131,7 +2436,7 @@ fn march_path(
             }
             else if (roulette) {
                 // Account for the lost intensity from the early exits
-                throughput /= vec4(exit_probability);
+                throughput /= vec3(exit_probability);
             }
 
             distance_since_last_bounce = 0.;

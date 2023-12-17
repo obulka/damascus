@@ -13,6 +13,46 @@
 // TODO: separate into files and use import statements
 
 
+struct SceneParameters {
+    num_primitives: u32,
+    num_lights: u32,
+}
+
+
+struct RayMarcherParameters {
+    paths_per_pixel: u32,
+    roulette: u32,
+    max_distance: f32,
+    max_ray_steps: u32,
+    max_bounces: u32,
+    hit_tolerance: f32,
+    shadow_bias: f32,
+    max_brightness: f32,
+    seeds: vec3<f32>,
+    enable_depth_of_field: u32,
+    dynamic_level_of_detail: u32,
+    max_light_sampling_bounces: u32,
+    sample_hdri: u32,
+    sample_all_lights: u32,
+    light_sampling_bias: f32,
+    secondary_sampling: u32,
+    hdri_offset_angle: f32,
+    output_aov: u32,
+    latlong: u32,
+}
+
+
+struct RenderParameters {
+    ray_marcher: RayMarcherParameters,
+    scene: SceneParameters,
+}
+
+
+// Global render settings
+@group(0) @binding(0)
+var<uniform> _render_params: RenderParameters;
+
+
 // math.wgsl
 
 let PI: f32 = 3.141592653589793;
@@ -436,6 +476,26 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
 // lights.wgsl
 
 
+let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+
+
+struct Light {
+    light_type: u32,
+    dimensional_data: vec3<f32>,
+    intensity: f32,
+    falloff: f32,
+    colour: vec3<f32>,
+    shadow_hardness: f32,
+    soften_shadows: u32,
+}
+
+struct Lights {
+    lights: array<Light, MAX_LIGHTS>,
+}
+
+@group(3) @binding(0)
+var<storage, read> _lights: Lights;
+
 /**
  * Perform multiple importance sampling by combining probability
  * distribution functions.
@@ -478,6 +538,111 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
 
 
 /**
+ * Sample the data of a particular artificial light in the scene.
+ * Artificial lights are any that are passed into the 'lights'
+ * input.
+ *
+ * @arg position: The position on the surface to sample the data of.
+ * @arg light_index: The index of the chosen light in the lights
+ *     texture.
+ * @arg num_non_physical_lights: The number of lights in the scene.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg distance_to_light: The distance to the light's surface.
+ *
+ * @returns: The PDF of the light.
+ */
+fn sample_non_physical_light_data(
+    position: vec3<f32>,
+    light_index: u32,
+    num_non_physical_lights: u32,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+) -> f32 {
+    var visible_surface_area: f32 = 1.;
+    var light: ptr<function, Light> = &(_lights.lights[light_index]);
+
+    switch (*light).light_type {
+        case 0u {
+            directional_light_data(
+                light,
+                maxRayDistance,
+                light_direction,
+                distance_to_light,
+                &visible_surface_area,
+            );
+        }
+        case 1u {
+            point_light_data(
+                pointOnSurface,
+                light,
+                light_direction,
+                distance_to_light,
+                &visible_surface_area,
+            );
+        }
+        default {}
+    }
+
+    return sample_lights_pdf(f32(max(1u, num_non_physical_lights)), visible_surface_area);
+}
+
+
+/**
+ * Sample the data of a particular light in the scene.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg position: The position on the surface to sample the data of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the data of.
+ * @arg num_non_physical_lights: The number of lights in the scene.
+ * @arg light_id: The index of the chosen light to sample.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg distance_to_light: The distance to the light's surface.
+ *
+ * @returns: The PDF of the light.
+ */
+fn sample_light_data(
+    seed: vec3<f32>,
+    position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    num_non_physical_lights: u32,
+    light_id: u32,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+) -> f32 {
+    // if (light_id < _lightTextureWidth)
+    // {
+    return sample_non_physical_light_data(
+        position,
+        light_id,
+        num_non_physical_lights,
+        light_direction,
+        distance_to_light,
+    );
+    // }
+    // else if (light_id - _lightTextureWidth < numEmissive)
+    // {
+    //     return samplePhysicalLightData(
+    //         seed,
+    //         position,
+    //         emissiveIndices[light_id - _lightTextureWidth],
+    //         numLights,
+    //         light_direction,
+    //         distance_to_light
+    //     );
+    // }
+
+    // hdriLightData(
+    //     seed * RAND_CONST_1,
+    //     surface_normal,
+    //     light_direction,
+    //     distance_to_light
+    // );
+    // return sample_lights_pdf(max(1, numLights), 1.0f);
+}
+
+
+/**
  * Perform direct illumination light sampling on every light in the
  * scene.
  *
@@ -505,38 +670,32 @@ fn sample_lights(
 ) -> vec3<f32> {
     var light_colour = vec3(0.);
 
-    for (var light=0u; light < num_non_physical_lights; light++) {
-        // float3 lightDirection = surface_normal;
-        // float distanceToLight = 0.0f;
+    for (var light_id=0u; light_id < num_non_physical_lights; light_id++) {
+        var light_direction: vec3<f32> = surface_normal;
+        var distance_to_light: f32 = 0.;
 
-        // const float lightPDF = sampleLightData(
-        //     seed * RAND_CONST_3 / (path + 1),
-        //     position,
-        //     surface_normal,
-        //     emissiveIndices,
-        //     numEmissive,
-        //     numLights,
-        //     path,
-        //     lightDirection,
-        //     distanceToLight
-        // );
+        var light_pdf: f32 = sample_light_data(
+            seed * f32(light_id + 1u),
+            position,
+            surface_normal,
+            num_non_physical_lights,
+            light_id,
+            &light_direction,
+            &distance_to_light,
+        );
 
-        // light_colour += sampleLight(
-        //     seed * RAND_CONST_4 * (path + 1),
-        //     throughput,
-        //     material_brdf,
-        //     distanceToLight,
-        //     surface_normal,
-        //     position,
-        //     lightDirection,
-        //     lightPDF,
-        //     material_pdf,
-        //     path,
-        //     numEmissive,
-        //     sampleHDRI,
-        //     nestedDielectrics,
-        //     numNestedDielectrics
-        // );
+        light_colour += sample_light(
+            seed * f32(light_id + 2u),
+            throughput,
+            material_brdf,
+            distance_to_light,
+            surface_normal,
+            position,
+            light_direction,
+            light_pdf,
+            material_pdf,
+            light_id,
+        );
     }
 
     return light_colour;
@@ -647,7 +806,7 @@ fn diffuse_bounce(
  *     on this material.
  * @arg materialBRDF: The BRDF of the surface at the position we
  *     are sampling the material of.
- * @arg lightPDF: The PDF of the material we are sampling from the
+ * @arg light_pdf: The PDF of the material we are sampling from the
  *     perspective of the light we will be sampling.
  *
  * @returns: The material PDF.
@@ -2128,29 +2287,6 @@ fn distance_to_primitive(
     // );
 }
 
-// lights.wgsl
-
-
-let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
-
-
-struct Light {
-    light_type: u32,
-    dimensional_data: vec3<f32>,
-    intensity: f32,
-    falloff: f32,
-    colour: vec3<f32>,
-    shadow_hardness: f32,
-    soften_shadows: u32,
-}
-
-struct Lights {
-    lights: array<Light, MAX_LIGHTS>,
-}
-
-@group(3) @binding(0)
-var<storage, read> _lights: Lights;
-
 // aovs.wgsl
 
 
@@ -2189,45 +2325,6 @@ struct VertexOut {
     @location(0) uv_coordinate: vec4<f32>,
     @builtin(position) frag_coordinate: vec4<f32>,
 }
-
-
-struct SceneParameters {
-    num_primitives: u32,
-    num_lights: u32,
-}
-
-
-struct RayMarcherParameters {
-    paths_per_pixel: u32,
-    roulette: u32,
-    max_distance: f32,
-    max_ray_steps: u32,
-    max_bounces: u32,
-    hit_tolerance: f32,
-    shadow_bias: f32,
-    max_brightness: f32,
-    seeds: vec3<f32>,
-    enable_depth_of_field: u32,
-    dynamic_level_of_detail: u32,
-    max_light_sampling_bounces: u32,
-    sample_hdri: u32,
-    sample_all_lights: u32,
-    light_sampling_bias: f32,
-    secondary_sampling: u32,
-    hdri_offset_angle: f32,
-    output_aov: u32,
-    latlong: u32,
-}
-
-
-struct RenderParameters {
-    ray_marcher: RayMarcherParameters,
-    scene: SceneParameters,
-}
-
-
-@group(0) @binding(0)
-var<uniform> _render_params: RenderParameters;
 
 
 var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(

@@ -278,21 +278,21 @@ fn angle_between_vec3f(vector_0: vec3<f32>, vector_1: vec3<f32>) -> f32 {
  */
 fn normal(vector_0: vec3<f32>, vector_1: vec3<f32>) -> vec3<f32> {
     var perpendicular_vector: vec3<f32> = cross(vector_0, vector_1);
-    if (length(perpendicular_vector) > 0.) {
+    // If the two axes are too closely aligned it creates artifacts
+    // so check the magnitude of the cross product before normalizing
+    if (length(perpendicular_vector) > 0.001) {
         return normalize(perpendicular_vector);
     }
-    else if (length(vector_1.yz) > 0.) {
-        return normalize(cross(vec3(1., 0., 0.), vector_1));
+    // If the vectors are too closely aligned use any perpendicular axis
+    perpendicular_vector = cross(vec3(0., 1., 0.), vector_1);
+    if (length(perpendicular_vector) > 0.001) {
+        return normalize(perpendicular_vector);
     }
-    else if (length(vector_1.xz) > 0.) {
-        return normalize(cross(vec3(0., 1., 0.), vector_1));
+    perpendicular_vector = cross(vec3(1., 0., 0.), vector_1);
+    if (length(perpendicular_vector) > 0.001) {
+        return normalize(perpendicular_vector);
     }
-    else if (length(vector_1.xy) > 0.) {
-        return normalize(cross(vec3(0., 0., 1.), vector_1));
-    }
-    else {
-        return vector_0;
-    }
+    return normalize(cross(vec3(0., 0., 1.), vector_1));
 }
 
 
@@ -395,7 +395,7 @@ fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
     var x: f32 = r * cos(angle);
     var y: f32 = r * sin(angle);
 
-    return normalize(vec3(x, y, sqrt(positive_part_f32(1. - uniform_random_numbers.x))));
+    return vec3(x, y, sqrt(positive_part_f32(1. - uniform_random_numbers.x)));
 }
 
 
@@ -409,11 +409,11 @@ fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
  * @returns: A random unit vector.
  */
 fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32> {
-    return align_with_direction(
+    return normalize(align_with_direction(
         vec3(0., 0., 1.),
         axis,
         cosine_direction_in_z_hemisphere(seed),
-    );
+    ));
 }
 
 

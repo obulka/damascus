@@ -1445,65 +1445,6 @@ struct Material {
 }
 
 
-
-
-/**
- * Perform a diffuse bounce of the ray.
- *
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the material of.
- * @arg diffuseDirection: The direction the ray will travel after
- *     sampling the material.
- * @arg offset: The amount to offset the ray in order to escape the
- *     surface.
- * @arg direction: The location to store the new ray direction.
- * @arg position: The location to store the new ray origin.
- */
-fn diffuse_bounce(
-    surface_normal: vec3<f32>,
-    diffuse_direction: vec3<f32>,
-    offset: f32,
-    direction: ptr<function, vec3<f32>>,
-    position: ptr<function, vec3<f32>>,
-) {
-    *direction = diffuse_direction;
-
-    // Offset the point so that it doesn't get trapped on the surface.
-    *position += offset * surface_normal;
-}
-
-
-/**
- * Perform diffuse material sampling.
- *
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the material of.
- * @arg diffusivity: The diffuse values of the surface.
- * @arg diffuseDirection: The direction the ray will travel after
- *     sampling the material.
- * @arg diffuseProbability: The probability of doing a diffuse bounce
- *     on this material.
- * @arg material_brdf: The BRDF of the surface at the position we
- *     are sampling the material of.
- * @arg light_pdf: The PDF of the material we are sampling from the
- *     perspective of the light we will be sampling.
- *
- * @returns: The material PDF.
- */
-fn sample_diffuse(
-    surface_normal: vec3<f32>,
-    diffuse_direction: vec3<f32>,
-    material: ptr<function, Material>,
-    material_brdf: ptr<function, vec3<f32>>,
-    light_pdf: ptr<function, f32>,
-) -> f32 {
-    *material_brdf = (*material).diffuse_colour;
-    var probability_over_pi = (*material).diffuse_probability / PI;
-    *light_pdf = probability_over_pi;
-    return probability_over_pi * dot(diffuse_direction, surface_normal);
-}
-
-
 /**
  * Perform material sampling.
  *
@@ -1540,38 +1481,56 @@ fn sample_material(
         seed.xy,
         surface_normal,
     );
+
+    var specular_probability: f32 = (*material).specular_probability;
+    var transmissive_probability: f32 = (*material).transmissive_probability;
+
+    // TODO fresnel
+
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
-    if (
-        (*material).specular_probability > 0.
-        && rng <= (*material).specular_probability
-    ) {
-        material_pdf = 1.;
+    if ((*material).specular_probability > 0. && rng <= specular_probability) {
+        // Specular bounce
+        var ideal_specular_direction: vec3<f32> = reflect(
+            incident_direction,
+            surface_normal,
+        );
+
+        *outgoing_direction = normalize(mix(
+            ideal_specular_direction,
+            diffuse_direction,
+            (*material).specular_roughness * (*material).specular_roughness,
+        ));
+
+        // Offset the point so that it doesn't get trapped on the surface.
+        *position += offset * surface_normal;
+
+        *material_brdf = (*material).specular_colour;
+
+        var probability_over_pi = (*material).specular_probability / PI;
+        *light_pdf = 0.;
+        return probability_over_pi * dot(ideal_specular_direction, *outgoing_direction);
     }
     else if (
         (*material).transmissive_probability > 0.
-        && rng <= (*material).transmissive_probability
+        && rng <= transmissive_probability
     ) {
-        material_pdf = 1.;
+        // Transmissive bounce
+        return 1.;
     }
     else {
-        diffuse_bounce(
-            surface_normal,
-            diffuse_direction,
-            offset,
-            outgoing_direction,
-            position,
-        );
-        material_pdf = sample_diffuse(
-            surface_normal,
-            diffuse_direction,
-            material,
-            material_brdf,
-            light_pdf,
-        );
-    }
+        // Diffuse bounce
+        *outgoing_direction = diffuse_direction;
 
-    return material_pdf;
+        // Offset the point so that it doesn't get trapped on the surface.
+        *position += offset * surface_normal;
+
+        *material_brdf = (*material).diffuse_colour;
+
+        var probability_over_pi = (*material).diffuse_probability / PI;
+        *light_pdf = probability_over_pi;
+        return probability_over_pi * dot(diffuse_direction, surface_normal);
+    }
 }
 
 // geometry/modifications.wgsl

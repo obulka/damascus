@@ -472,656 +472,6 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
     ));
 }
 
-
-// lights.wgsl
-
-
-let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
-
-
-struct Light {
-    light_type: u32,
-    dimensional_data: vec3<f32>,
-    intensity: f32,
-    falloff: f32,
-    colour: vec3<f32>,
-    shadow_hardness: f32,
-    soften_shadows: u32,
-}
-
-struct Lights {
-    lights: array<Light, MAX_LIGHTS>,
-}
-
-@group(3) @binding(0)
-var<storage, read> _lights: Lights;
-
-/**
- * Perform multiple importance sampling by combining probability
- * distribution functions.
- *
- * @arg emittance: The emissive values of the surface.
- * @arg throughput: The throughput of the ray.
- * @arg pdf_0: The first PDF.
- * @arg pdf_1: The second PDF.
- *
- * @returns: The multiple importance sampled colour.
- */
-fn multiple_importance_sample(
-    emittance: vec3<f32>,
-    throughput: vec3<f32>,
-    pdf_0: f32,
-    pdf_1: f32,
-) -> vec3<f32> {
-    return emittance * throughput * balance_heuristic(pdf_0, pdf_1);
-}
-
-
-/**
- * Get the probability distribution function for the lights in the
- * scene.
- *
- * @arg num_lights: The number of lights in the scene.
- * @arg visible_surface_area: The surface area that is visible to the
- *     position we are sampling from.
- *
- * @returns: The probability distribution function.
- */
-fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
-    if (visible_surface_area == 0.) {
-        return 1. / num_lights;
-    }
-    else {
-        return 1. / num_lights / visible_surface_area;
-    }
-}
-
-
-/**
- * Sample the data of a particular artificial light in the scene.
- * Artificial lights are any that are passed into the 'lights'
- * input.
- *
- * @arg position: The position on the surface to sample the data of.
- * @arg light_index: The index of the chosen light in the lights
- *     texture.
- * @arg num_non_physical_lights: The number of lights in the scene.
- * @arg light_direction: The direction from the surface to the light.
- * @arg distance_to_light: The distance to the light's surface.
- *
- * @returns: The PDF of the light.
- */
-fn sample_non_physical_light_data(
-    position: vec3<f32>,
-    light_index: u32,
-    num_non_physical_lights: u32,
-    light_direction: ptr<function, vec3<f32>>,
-    distance_to_light: ptr<function, f32>,
-) -> f32 {
-    var visible_surface_area: f32 = 1.;
-    var light: ptr<function, Light> = &(_lights.lights[light_index]);
-
-    switch (*light).light_type {
-        case 0u {
-            directional_light_data(
-                light,
-                maxRayDistance,
-                light_direction,
-                distance_to_light,
-                &visible_surface_area,
-            );
-        }
-        case 1u {
-            point_light_data(
-                pointOnSurface,
-                light,
-                light_direction,
-                distance_to_light,
-                &visible_surface_area,
-            );
-        }
-        default {}
-    }
-
-    return sample_lights_pdf(f32(max(1u, num_non_physical_lights)), visible_surface_area);
-}
-
-
-/**
- * Sample the data of a particular light in the scene.
- *
- * @arg seed: The seed to use in randomization.
- * @arg position: The position on the surface to sample the data of.
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the data of.
- * @arg num_non_physical_lights: The number of lights in the scene.
- * @arg light_id: The index of the chosen light to sample.
- * @arg light_direction: The direction from the surface to the light.
- * @arg distance_to_light: The distance to the light's surface.
- *
- * @returns: The PDF of the light.
- */
-fn sample_light_data(
-    seed: vec3<f32>,
-    position: vec3<f32>,
-    surface_normal: vec3<f32>,
-    num_non_physical_lights: u32,
-    light_id: u32,
-    light_direction: ptr<function, vec3<f32>>,
-    distance_to_light: ptr<function, f32>,
-) -> f32 {
-    // if (light_id < _lightTextureWidth)
-    // {
-    return sample_non_physical_light_data(
-        position,
-        light_id,
-        num_non_physical_lights,
-        light_direction,
-        distance_to_light,
-    );
-    // }
-    // else if (light_id - _lightTextureWidth < numEmissive)
-    // {
-    //     return samplePhysicalLightData(
-    //         seed,
-    //         position,
-    //         emissiveIndices[light_id - _lightTextureWidth],
-    //         numLights,
-    //         light_direction,
-    //         distance_to_light
-    //     );
-    // }
-
-    // hdriLightData(
-    //     seed * RAND_CONST_1,
-    //     surface_normal,
-    //     light_direction,
-    //     distance_to_light
-    // );
-    // return sample_lights_pdf(max(1, numLights), 1.0f);
-}
-
-
-/**
- * Perform direct illumination light sampling on every light in the
- * scene.
- *
- * @arg seed: The seed to use in randomization.
- * @arg throughput: The throughput of the ray.
- * @arg material_brdf: The BRDF of the surface at the position we
- *     are sampling the illumination of.
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the illumination of.
- * @arg position: The position on the surface to sample the
- *     illumination of.
- * @arg material_pdf: The PDF of the material we are sampling the
- *     direct illumination of.
- *
- * @returns: The colour of the sampled light.
- */
-fn sample_lights(
-    seed: vec3<f32>,
-    throughput: vec3<f32>,
-    material_brdf: vec3<f32>,
-    surface_normal: vec3<f32>,
-    position: vec3<f32>,
-    material_pdf: f32,
-    num_non_physical_lights: u32,
-) -> vec3<f32> {
-    var light_colour = vec3(0.);
-
-    for (var light_id=0u; light_id < num_non_physical_lights; light_id++) {
-        var light_direction: vec3<f32> = surface_normal;
-        var distance_to_light: f32 = 0.;
-
-        var light_pdf: f32 = sample_light_data(
-            seed * f32(light_id + 1u),
-            position,
-            surface_normal,
-            num_non_physical_lights,
-            light_id,
-            &light_direction,
-            &distance_to_light,
-        );
-
-        light_colour += sample_light(
-            seed * f32(light_id + 2u),
-            throughput,
-            material_brdf,
-            distance_to_light,
-            surface_normal,
-            position,
-            light_direction,
-            light_pdf,
-            material_pdf,
-            light_id,
-        );
-    }
-
-    return light_colour;
-}
-
-
-/**
- * Perform direct illumination light sampling.
- *
- * @arg seed: The seed to use in randomization.
- * @arg throughput: The throughput of the ray.
- * @arg material_brdf: The BRDF of the surface at the position we
- *     are sampling the illumination of.
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the illumination of.
- * @arg position: The position on the surface to sample the
- *     illumination of.
- * @arg material_pdf: The PDF of the material we are sampling the
- *     direct illumination of.
- * @arg sample_all_lights: Whether to sample all the lights or one
- *     random one.
- *
- * @returns: The colour of the sampled light.
- */
-fn light_sampling(
-    seed: vec3<f32>,
-    throughput: vec3<f32>,
-    material_brdf: vec3<f32>,
-    surface_normal: vec3<f32>,
-    position: vec3<f32>,
-    material_pdf: f32,
-    sample_all_lights: bool,
-    num_non_physical_lights: u32,
-) -> vec3<f32> {
-    if (sample_all_lights) {
-        return sample_lights(
-            seed,
-            throughput,
-            material_brdf,
-            surface_normal,
-            position,
-            material_pdf,
-            num_non_physical_lights,
-        );
-    }
-
-    return vec3(0.);
-}
-
-
-// materials/material.wgsl
-
-
-struct Material {
-    diffuse_probability: f32,
-    diffuse_colour: vec3<f32>,
-    specular_probability: f32,
-    specular_roughness: f32,
-    specular_colour: vec3<f32>,
-    transmissive_probability: f32,
-    transmissive_roughness: f32,
-    transmissive_colour: vec3<f32>,
-    emissive_probability: f32,
-    emissive_colour: vec3<f32>,
-    refractive_index: f32,
-    scattering_coefficient: f32,
-    scattering_colour: vec3<f32>,
-}
-
-
-
-
-/**
- * Perform a diffuse bounce of the ray.
- *
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the material of.
- * @arg diffuseDirection: The direction the ray will travel after
- *     sampling the material.
- * @arg offset: The amount to offset the ray in order to escape the
- *     surface.
- * @arg direction: The location to store the new ray direction.
- * @arg position: The location to store the new ray origin.
- */
-fn diffuse_bounce(
-    surface_normal: vec3<f32>,
-    diffuse_direction: vec3<f32>,
-    offset: f32,
-    direction: ptr<function, vec3<f32>>,
-    position: ptr<function, vec3<f32>>,
-) {
-    *direction = diffuse_direction;
-
-    // Offset the point so that it doesn't get trapped on the surface.
-    *position += offset * surface_normal;
-}
-
-
-/**
- * Perform diffuse material sampling.
- *
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the material of.
- * @arg diffusivity: The diffuse values of the surface.
- * @arg diffuseDirection: The direction the ray will travel after
- *     sampling the material.
- * @arg diffuseProbability: The probability of doing a diffuse bounce
- *     on this material.
- * @arg materialBRDF: The BRDF of the surface at the position we
- *     are sampling the material of.
- * @arg light_pdf: The PDF of the material we are sampling from the
- *     perspective of the light we will be sampling.
- *
- * @returns: The material PDF.
- */
-fn sample_diffuse(
-    surface_normal: vec3<f32>,
-    diffuse_direction: vec3<f32>,
-    material: ptr<function, Material>,
-    material_brdf: ptr<function, vec3<f32>>,
-    light_pdf: ptr<function, f32>,
-) -> f32 {
-    *material_brdf = (*material).diffuse_colour;
-    var probability_over_pi = (*material).diffuse_probability / PI;
-    *light_pdf = probability_over_pi;
-    return probability_over_pi * dot(diffuse_direction, surface_normal);
-}
-
-
-/**
- * Perform material sampling.
- *
- * @arg seed: The seed to use in randomization.
- * @arg surface_normal: The normal to the surface at the position we
- *     are sampling the material of.
- * @arg incident_direction: The incoming ray direction.
- * @arg offset: The amount to offset the ray in order to escape the
- *     surface.
- * @arg material: The material properties of the surface.
- * @arg position: The position on the surface to sample the
- *     material of.
- * @arg material_brdf: The BRDF of the surface at the position we
- *     are sampling the material of.
- * @arg outgoing_direction: The direction the ray will travel after
- *     sampling the material.
- * @arg light_pdf: The PDF of the material we are sampling from the
- *     perspective of the light we will be sampling.
- *
- * @returns: The material PDF.
- */
-fn sample_material(
-    seed: vec3<f32>,
-    surface_normal: vec3<f32>,
-    incident_direction: vec3<f32>,
-    offset: f32,
-    material: ptr<function, Material>,
-    position: ptr<function, vec3<f32>>,
-    material_brdf: ptr<function, vec3<f32>>,
-    outgoing_direction: ptr<function, vec3<f32>>,
-    light_pdf: ptr<function, f32>,
-) -> f32 {
-    var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
-        seed.xy,
-        surface_normal,
-    );
-    var rng: f32 = vec3f_to_random_f32(seed);
-    var material_pdf: f32;
-    if (
-        (*material).specular_probability > 0.
-        && rng <= (*material).specular_probability
-    ) {
-        material_pdf = 1.;
-    }
-    else if (
-        (*material).transmissive_probability > 0.
-        && rng <= (*material).transmissive_probability
-    ) {
-        material_pdf = 1.;
-    }
-    else {
-        diffuse_bounce(
-            surface_normal,
-            diffuse_direction,
-            offset,
-            outgoing_direction,
-            position,
-        );
-        material_pdf = sample_diffuse(
-            surface_normal,
-            diffuse_direction,
-            material,
-            material_brdf,
-            light_pdf,
-        );
-    }
-
-    return material_pdf;
-}
-
-
-/**
- * Handle the interaction between a ray and the surface of a material.
- *
- * @arg step_distance: The last step size to be marched.
- * @arg offset: The distance to offset the position in order to escape
- *     the surface.
- * @arg distance: The distance travelled since the last bounce.
- * @arg intersection_position: The position at which the ray
- *     intersects the geometry.
- * @arg surface_normal: The surface normal at the intersection point.
- * @arg num_lights: The number of lights in the scene.
- * @arg previous_material_pdf: The PDF of the last material interacted
- *     with.
- * @arg direction: The incoming ray direction.
- * @arg origin: The ray origin.
- * @arg ray_colour: The colour of the ray.
- * @arg throughput: The throughput of the ray.
- * @arg material: The material to interact with.
- *
- * @returns: The material pdf.
- */
-fn material_interaction(
-    seed: vec3<f32>,
-    step_distance: f32,
-    offset: f32,
-    distance: f32,
-    intersection_position: vec3<f32>,
-    surface_normal: vec3<f32>,
-    num_lights: f32,
-    previous_material_pdf: f32,
-    light_sampling_enabled: bool,
-    sample_all_lights: bool,
-    direction: ptr<function, vec3<f32>>,
-    origin: ptr<function, vec3<f32>>,
-    ray_colour: ptr<function, vec4<f32>>,
-    throughput: ptr<function, vec3<f32>>,
-    material: ptr<function, Material>,
-) -> f32 {
-    *origin = intersection_position;
-
-    var material_brdf: vec3<f32>;
-    var outgoing_direction: vec3<f32>;
-    var materials_light_pdf: f32;
-    var material_pdf: f32 = sample_material(
-        seed,
-        surface_normal,
-        *direction,
-        offset,
-        material,
-        origin,
-        &material_brdf,
-        direction,
-        &materials_light_pdf,
-    );
-
-    if (light_sampling_enabled && materials_light_pdf > 0.) {
-        var num_non_physical_lights = u32(num_lights);
-        // Perform MIS light sampling
-        *ray_colour += vec4(
-            light_sampling(
-                seed,
-                *throughput,
-                material_brdf,
-                surface_normal,
-                *origin + surface_normal * offset,
-                materials_light_pdf,
-                sample_all_lights,
-                num_non_physical_lights,
-            ),
-            0.,
-        );
-    }
-
-    var material_geometry_factor: f32;
-    if (materials_light_pdf > 0.) {
-        material_geometry_factor = saturate_f32(dot(outgoing_direction, surface_normal));
-    }
-    else {
-        material_geometry_factor = 1.;
-    }
-
-    // TODO
-    var radius: f32 = 1.;
-    var visible_surface_area: f32 = TWO_PI * radius * radius;
-
-    // TODO seems like this should be affecting the output even without being emissive
-    *ray_colour += vec4(
-        multiple_importance_sample(
-            (*material).emissive_colour,
-            *throughput,
-            previous_material_pdf,
-            sample_lights_pdf(num_lights, visible_surface_area),
-        ),
-        1.,
-    );
-
-    *throughput *= material_brdf * material_geometry_factor / material_pdf;
-
-    return material_pdf;
-}
-
-
-// geometry/camera.wgsl
-// #include "math.h"
-
-
-struct Camera {
-    enable_depth_of_field: u32, // bool isn't host-shareable?
-    aperture: f32,
-    focal_distance: f32,
-    world_matrix: mat4x4<f32>,
-    inverse_world_matrix: mat4x4<f32>,
-    inverse_projection_matrix: mat4x4<f32>,
-}
-
-
-@group(1) @binding(0)
-var<uniform> _render_camera: Camera;
-
-
-fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
-    return (
-        _render_camera.inverse_world_matrix
-        * vec4(world_position, 1.)
-    ).xyz;
-}
-
-
-/**
- * Generate a ray out of a camera.
- *
- * @arg uv_coordinate: The UV position in the resulting image.
- * @arg ray_origin: Will store the origin of the ray.
- * @arg ray_direction: Will store the direction of the ray.
- */
-fn create_ray(
-    uv_coordinate: vec4<f32>,
-    ray_origin: ptr<function, vec3<f32>>,
-    ray_direction: ptr<function, vec3<f32>>,
-) {
-    *ray_origin = vec3(
-        _render_camera.world_matrix[3][0],
-        _render_camera.world_matrix[3][1],
-        _render_camera.world_matrix[3][2],
-    );
-
-    var direction: vec4<f32> = (
-        _render_camera.inverse_projection_matrix
-        * uv_coordinate
-    );
-    direction = _render_camera.world_matrix * vec4(direction.xyz, 0.);
-
-    *ray_direction = normalize(direction.xyz);
-}
-
-
-// geometry/geometry.wgsl
-// #include "material.wgsl"
-
-
-let MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
-
-
-struct Transform {
-    translation: vec3<f32>,
-    inverse_rotation: mat3x3<f32>,
-    uniform_scale: f32,
-}
-
-
-struct Primitive {
-    shape: u32,
-    transform: Transform, // Could we just make this a world matrix?
-    material: Material,
-    modifiers: u32,
-    blend_strength: f32,
-    num_children: u32,
-    custom_data: vec4<f32>,
-}
-
-
-struct Primitives {
-    primitives: array<Primitive, MAX_PRIMITIVES>,
-}
-
-
-@group(2) @binding(0)
-var<storage, read> _primitives: Primitives;
-
-// geometry/modifications.wgsl
-
-
-/**
- * Transform a ray's location.
- *
- * @arg rayOrigin: The location the ray originates from.
- * @arg position: The amount to translate the ray.
- * @arg rotation: The amount to rotate the ray (radians).
- * @arg modifications: The modifications to perform.
- *     Each bit will enable a modification:
- *         bit 0: finite repetition
- *         bit 1: infinite repetition
- *         bit 2: elongation
- *         bit 3: mirror x
- *         bit 4: mirror y
- *         bit 5: mirror z
- * @arg repetition: The values to use when repeating the ray.
- * @arg elongation: The values to use when elongating the ray.
- *
- * @returns: The transformed ray origin.
- */
-fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
-    var transformed_ray: vec3<f32> = (
-        transform.inverse_rotation
-        * (ray_origin - transform.translation)
-    );
-    // perform_shape_modification(
-    //     modifications,
-    //     repetition,
-    //     elongation,
-    //     transformed_ray
-    // );
-
-    return transformed_ray;
-}
-
 // geometry/sdfs.wgsl
 // Copyright 2022 by Owen Bulka.
 // All rights reserved.
@@ -2075,6 +1425,226 @@ fn distance_to_mandelbox(
     );
 }
 
+// materials/material.wgsl
+
+
+struct Material {
+    diffuse_probability: f32,
+    diffuse_colour: vec3<f32>,
+    specular_probability: f32,
+    specular_roughness: f32,
+    specular_colour: vec3<f32>,
+    transmissive_probability: f32,
+    transmissive_roughness: f32,
+    transmissive_colour: vec3<f32>,
+    emissive_probability: f32,
+    emissive_colour: vec3<f32>,
+    refractive_index: f32,
+    scattering_coefficient: f32,
+    scattering_colour: vec3<f32>,
+}
+
+
+
+
+/**
+ * Perform a diffuse bounce of the ray.
+ *
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg diffuseDirection: The direction the ray will travel after
+ *     sampling the material.
+ * @arg offset: The amount to offset the ray in order to escape the
+ *     surface.
+ * @arg direction: The location to store the new ray direction.
+ * @arg position: The location to store the new ray origin.
+ */
+fn diffuse_bounce(
+    surface_normal: vec3<f32>,
+    diffuse_direction: vec3<f32>,
+    offset: f32,
+    direction: ptr<function, vec3<f32>>,
+    position: ptr<function, vec3<f32>>,
+) {
+    *direction = diffuse_direction;
+
+    // Offset the point so that it doesn't get trapped on the surface.
+    *position += offset * surface_normal;
+}
+
+
+/**
+ * Perform diffuse material sampling.
+ *
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg diffusivity: The diffuse values of the surface.
+ * @arg diffuseDirection: The direction the ray will travel after
+ *     sampling the material.
+ * @arg diffuseProbability: The probability of doing a diffuse bounce
+ *     on this material.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the material of.
+ * @arg light_pdf: The PDF of the material we are sampling from the
+ *     perspective of the light we will be sampling.
+ *
+ * @returns: The material PDF.
+ */
+fn sample_diffuse(
+    surface_normal: vec3<f32>,
+    diffuse_direction: vec3<f32>,
+    material: ptr<function, Material>,
+    material_brdf: ptr<function, vec3<f32>>,
+    light_pdf: ptr<function, f32>,
+) -> f32 {
+    *material_brdf = (*material).diffuse_colour;
+    var probability_over_pi = (*material).diffuse_probability / PI;
+    *light_pdf = probability_over_pi;
+    return probability_over_pi * dot(diffuse_direction, surface_normal);
+}
+
+
+/**
+ * Perform material sampling.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the material of.
+ * @arg incident_direction: The incoming ray direction.
+ * @arg offset: The amount to offset the ray in order to escape the
+ *     surface.
+ * @arg material: The material properties of the surface.
+ * @arg position: The position on the surface to sample the
+ *     material of.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the material of.
+ * @arg outgoing_direction: The direction the ray will travel after
+ *     sampling the material.
+ * @arg light_pdf: The PDF of the material we are sampling from the
+ *     perspective of the light we will be sampling.
+ *
+ * @returns: The material PDF.
+ */
+fn sample_material(
+    seed: vec3<f32>,
+    surface_normal: vec3<f32>,
+    incident_direction: vec3<f32>,
+    offset: f32,
+    material: ptr<function, Material>,
+    position: ptr<function, vec3<f32>>,
+    material_brdf: ptr<function, vec3<f32>>,
+    outgoing_direction: ptr<function, vec3<f32>>,
+    light_pdf: ptr<function, f32>,
+) -> f32 {
+    var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
+        seed.xy,
+        surface_normal,
+    );
+    var rng: f32 = vec3f_to_random_f32(seed);
+    var material_pdf: f32;
+    if (
+        (*material).specular_probability > 0.
+        && rng <= (*material).specular_probability
+    ) {
+        material_pdf = 1.;
+    }
+    else if (
+        (*material).transmissive_probability > 0.
+        && rng <= (*material).transmissive_probability
+    ) {
+        material_pdf = 1.;
+    }
+    else {
+        diffuse_bounce(
+            surface_normal,
+            diffuse_direction,
+            offset,
+            outgoing_direction,
+            position,
+        );
+        material_pdf = sample_diffuse(
+            surface_normal,
+            diffuse_direction,
+            material,
+            material_brdf,
+            light_pdf,
+        );
+    }
+
+    return material_pdf;
+}
+
+// geometry/modifications.wgsl
+
+// geometry/geometry.wgsl
+// #include "material.wgsl"
+
+
+let MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
+
+
+struct Transform {
+    translation: vec3<f32>,
+    inverse_rotation: mat3x3<f32>,
+    uniform_scale: f32,
+}
+
+
+struct Primitive {
+    shape: u32,
+    transform: Transform, // Could we just make this a world matrix?
+    material: Material,
+    modifiers: u32,
+    blend_strength: f32,
+    num_children: u32,
+    custom_data: vec4<f32>,
+}
+
+
+struct Primitives {
+    primitives: array<Primitive, MAX_PRIMITIVES>,
+}
+
+
+@group(2) @binding(0)
+var<storage, read> _primitives: Primitives;
+
+
+
+/**
+ * Transform a ray's location.
+ *
+ * @arg ray_origin: The location the ray originates from.
+ * @arg position: The amount to translate the ray.
+ * @arg rotation: The amount to rotate the ray (radians).
+ * @arg modifications: The modifications to perform.
+ *     Each bit will enable a modification:
+ *         bit 0: finite repetition
+ *         bit 1: infinite repetition
+ *         bit 2: elongation
+ *         bit 3: mirror x
+ *         bit 4: mirror y
+ *         bit 5: mirror z
+ * @arg repetition: The values to use when repeating the ray.
+ * @arg elongation: The values to use when elongating the ray.
+ *
+ * @returns: The transformed ray origin.
+ */
+fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
+    var transformed_ray: vec3<f32> = (
+        transform.inverse_rotation
+        * (ray_origin - transform.translation)
+    );
+    // perform_shape_modification(
+    //     modifications,
+    //     repetition,
+    //     elongation,
+    //     transformed_ray
+    // );
+
+    return transformed_ray;
+}
+
 
 /**
  * Compute the min distance from a point to a geometric object.
@@ -2287,63 +1857,6 @@ fn distance_to_primitive(
     // );
 }
 
-// aovs.wgsl
-
-
-let BEAUTY_AOV: u32 = 0u;
-let WORLD_POSITION_AOV: u32 = 1u;
-let LOCAL_POSITION_AOV: u32 = 2u;
-let NORMALS_AOV: u32 = 3u;
-let DEPTH_AOV: u32 = 4u;
-
-
-fn early_exit_aovs(
-    aov_type: u32,
-    world_position: vec3<f32>,
-    local_position: vec3<f32>,
-    surface_normal: vec3<f32>,
-) -> vec4<f32> {
-    if (aov_type == WORLD_POSITION_AOV) {
-        return vec4(world_position, 1.);
-    }
-    else if (aov_type == LOCAL_POSITION_AOV) {
-        return vec4(local_position, 1.);
-    }
-    else if (aov_type == NORMALS_AOV) {
-        return vec4(surface_normal, 1.);
-    }
-    else if (aov_type == DEPTH_AOV) {
-        return vec4(abs(world_to_camera_space(world_position).z));
-    }
-    return vec4(-1.); // Invalid!!
-}
-
-// ray_march.wgsl
-
-
-struct VertexOut {
-    @location(0) uv_coordinate: vec4<f32>,
-    @builtin(position) frag_coordinate: vec4<f32>,
-}
-
-
-var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
-    vec2<f32>(1., 1.),
-    vec2<f32>(-1., 1.),
-    vec2<f32>(1., -1.),
-    vec2<f32>(-1., -1.),
-);
-
-
-@vertex
-fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
-    var out: VertexOut;
-    out.frag_coordinate = vec4(v_positions[vertex_index], 0., 1.);
-    out.uv_coordinate = vec4(v_positions[vertex_index], 0., 1.);
-
-    return out;
-}
-
 
 fn min_distance_to_primitive(
     ray_origin: vec3<f32>,
@@ -2410,6 +1923,920 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
             &material,
         )
     );
+}
+
+// lights.wgsl
+
+
+let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+
+
+struct Light {
+    light_type: u32,
+    dimensional_data: vec3<f32>,
+    intensity: f32,
+    falloff: f32,
+    colour: vec3<f32>,
+    shadow_hardness: f32,
+    soften_shadows: u32,
+}
+
+struct Lights {
+    lights: array<Light, MAX_LIGHTS>,
+}
+
+@group(3) @binding(0)
+var<storage, read> _lights: Lights;
+
+/**
+ * Perform multiple importance sampling by combining probability
+ * distribution functions.
+ *
+ * @arg emittance: The emissive values of the surface.
+ * @arg throughput: The throughput of the ray.
+ * @arg pdf_0: The first PDF.
+ * @arg pdf_1: The second PDF.
+ *
+ * @returns: The multiple importance sampled colour.
+ */
+fn multiple_importance_sample(
+    emittance: vec3<f32>,
+    throughput: vec3<f32>,
+    pdf_0: f32,
+    pdf_1: f32,
+) -> vec3<f32> {
+    return emittance * throughput * balance_heuristic(pdf_0, pdf_1);
+}
+
+
+/**
+ * Get the probability distribution function for the lights in the
+ * scene.
+ *
+ * @arg num_lights: The number of lights in the scene.
+ * @arg visible_surface_area: The surface area that is visible to the
+ *     position we are sampling from.
+ *
+ * @returns: The probability distribution function.
+ */
+fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
+    if (visible_surface_area == 0.) {
+        return 1. / num_lights;
+    }
+    else {
+        return 1. / num_lights / visible_surface_area;
+    }
+}
+
+
+/**
+ * Get the direction, and distance of a directional light.
+ *
+ * @arg direction: The direction the light is travelling.
+ * @arg light_direction: Will store the direction to the light.
+ * @arg distance_to_light: Will store the distance to the light.
+ * @arg visible_surface_area: The surface area that is visible to the
+ *     position we are sampling from.
+ */
+fn directional_light_data(
+    light: ptr<function, Light>,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+    visible_surface_area: ptr<function, f32>,
+) {
+    *visible_surface_area = TWO_PI;
+    *distance_to_light = _render_params.ray_marcher.max_distance;
+    *light_direction = normalize(-(*light).dimensional_data);
+}
+
+
+/**
+ * Get the direction, and distance of a point light.
+ *
+ * @arg point_on_surface: The point on the surface to compute the
+ *     light intensity at.
+ * @arg position: The position of the light.
+ * @arg surface_position: Will store the direction to the light.
+ * @arg distance_to_light: Will store the distance to the light.
+ * @arg visible_surface_area: The surface area that is visible to the
+ *     position we are sampling from.
+ */
+fn point_light_data(
+    light: ptr<function, Light>,
+    surface_position: vec3<f32>,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+    visible_surface_area: ptr<function, f32>,
+) {
+    *visible_surface_area = 0.;
+    *light_direction = (*light).dimensional_data - surface_position;
+    *distance_to_light = length(*light_direction);
+    *light_direction = normalize(*light_direction);
+}
+
+
+/**
+ * Sample the data of a particular artificial light in the scene.
+ * Artificial lights are any that are passed into the 'lights'
+ * input.
+ *
+ * @arg surface_position: The position on the surface to sample the
+ *     data of.
+ * @arg light_index: The index of the chosen light in the lights
+ *     texture.
+ * @arg num_non_physical_lights: The number of lights in the scene.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg distance_to_light: The distance to the light's surface.
+ *
+ * @returns: The PDF of the light.
+ */
+fn sample_non_physical_light_data(
+    surface_position: vec3<f32>,
+    light_index: u32,
+    num_non_physical_lights: u32,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+) -> f32 {
+    var visible_surface_area: f32 = 1.;
+    var light: Light = _lights.lights[light_index];
+
+    switch light.light_type {
+        case 0u {
+            directional_light_data(
+                &light,
+                light_direction,
+                distance_to_light,
+                &visible_surface_area,
+            );
+        }
+        case 1u {
+            point_light_data(
+                &light,
+                surface_position,
+                light_direction,
+                distance_to_light,
+                &visible_surface_area,
+            );
+        }
+        default {}
+    }
+
+    return sample_lights_pdf(f32(max(1u, num_non_physical_lights)), visible_surface_area);
+}
+
+
+/**
+ * Sample the data of a particular light in the scene.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg position: The position on the surface to sample the data of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the data of.
+ * @arg num_non_physical_lights: The number of lights in the scene.
+ * @arg light_id: The index of the chosen light to sample.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg distance_to_light: The distance to the light's surface.
+ *
+ * @returns: The PDF of the light.
+ */
+fn sample_light_data(
+    seed: vec3<f32>,
+    position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    num_non_physical_lights: u32,
+    light_id: u32,
+    light_direction: ptr<function, vec3<f32>>,
+    distance_to_light: ptr<function, f32>,
+) -> f32 {
+    // if (light_id < _lightTextureWidth)
+    // {
+    return sample_non_physical_light_data(
+        position,
+        light_id,
+        num_non_physical_lights,
+        light_direction,
+        distance_to_light,
+    );
+    // }
+    // else if (light_id - _lightTextureWidth < numEmissive)
+    // {
+    //     return samplePhysicalLightData(
+    //         seed,
+    //         position,
+    //         emissiveIndices[light_id - _lightTextureWidth],
+    //         numLights,
+    //         light_direction,
+    //         distance_to_light
+    //     );
+    // }
+
+    // hdriLightData(
+    //     seed * RAND_CONST_1,
+    //     surface_normal,
+    //     light_direction,
+    //     distance_to_light
+    // );
+    // return sample_lights_pdf(max(1, numLights), 1.0f);
+}
+
+
+/**
+ * Get the direction, distance, and intensity of a light.
+ *
+ * @arg intensity: The light intensity.
+ * @arg falloff: The power of the falloff of the light.
+ * @arg distance_to_light: The distance to the light.
+ *
+ * @returns: The light intensity.
+ */
+fn light_intensity(light: ptr<function, Light>, distance_to_light: f32) -> f32 {
+    return (*light).intensity / pow(distance_to_light, (*light).falloff);
+}
+
+
+/**
+ * Compute the ambient occlusion.
+ *
+ * @arg ray_origin: The origin of the ray.
+ * @arg surface_normal: The normal to the surface.
+ * @arg amount: The amount to scale the occlusion value by.
+ * @arg iterations: The number of iterations to refine the
+ *     occlusion.
+ *
+ * @returns: The occlusion value.
+ */
+fn sample_ambient_occlusion(
+    ray_origin: vec3<f32>,
+    surface_normal: vec3<f32>,
+    amount: f32,
+    iterations: u32,
+) -> f32 {
+    var material: Material;
+    var occlusion: f32 = 0.;
+    var occlusion_scale_factor: f32 = 1.;
+    for (var iteration=0u; iteration < iterations; iteration++)
+    {
+        var step_distance: f32 = 0.001 + 0.15 * f32(iteration) / 4.;
+        var distance_to_closest_object: f32 = abs(min_distance_to_primitive(
+            ray_origin + step_distance * surface_normal,
+            _render_params.ray_marcher.hit_tolerance,
+            &material,
+        ));
+        occlusion += (step_distance - distance_to_closest_object) * occlusion_scale_factor;
+        occlusion_scale_factor *= 0.95;
+    }
+
+    return (
+        amount
+        * saturate_f32(0.5 + 0.5 * surface_normal.y)  // ambient term
+        * saturate_f32(1. - 1.5 * occlusion)          // occlusion term
+    );
+}
+
+
+/**
+ * Compute a soft shadow value.
+ *
+ * @arg ray_origin: The origin of the ray.
+ * @arg ray_direction: The direction to cast the shadow ray.
+ * @arg distance_to_shade_point: The maximum distance to check for
+ *     a shadow casting object.
+ * @arg hardness: The hardness of the shadow.
+ *
+ * @returns: The shadow intenstity.
+ */
+fn sample_soft_shadow(
+    ray_origin: vec3<f32>,
+    ray_direction: vec3<f32>,
+    distance_to_shade_point: f32,
+    hardness: f32,
+) -> f32 {
+    var material: Material;
+
+    var distance_travelled: f32 = 0.;
+    var shadow_intensity: f32 = 1.;
+    var last_step_distance: f32 = 3.40282346638528859812e38; // FLT_MAX
+
+    var iterations: u32 = 0u;
+    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
+
+    var position: vec3<f32> = ray_origin;
+    while (
+        distance_travelled < distance_to_shade_point
+        && iterations < _render_params.ray_marcher.max_ray_steps / 2u
+    ) {
+        var step_distance: f32 = abs(min_distance_to_primitive(
+            position,
+            pixel_footprint,
+            &material,
+        ));
+        var step_distance_squared: f32 = step_distance * step_distance;
+        var soft_offset: f32 = step_distance_squared / (2. * last_step_distance);
+        shadow_intensity = min(
+            shadow_intensity,
+            hardness * sqrt(step_distance_squared - soft_offset * soft_offset)
+            / positive_part_f32(distance_travelled - soft_offset),
+        );
+
+        if (step_distance < pixel_footprint) {
+            shadow_intensity = saturate_f32(shadow_intensity);
+            return shadow_intensity * shadow_intensity * (3. - 2. * shadow_intensity);
+        }
+
+        last_step_distance = step_distance;
+        position += ray_direction * step_distance;
+        distance_travelled += step_distance;
+        pixel_footprint += step_distance * _render_params.ray_marcher.hit_tolerance;
+        iterations++;
+    }
+
+    shadow_intensity = saturate_f32(shadow_intensity);
+    return shadow_intensity * shadow_intensity * (3. - 2. * shadow_intensity);
+}
+
+
+/**
+ * Compute a shadow value.
+ *
+ * @arg ray_origin: The origin of the ray.
+ * @arg ray_direction: The direction to cast the shadow ray.
+ * @arg distance_to_shade_point: The maximum distance to check for
+ *     a shadow casting object.
+ *
+ * @returns: The shadow intenstity.
+ */
+fn sample_shadow(
+    ray_origin: vec3<f32>,
+    ray_direction: vec3<f32>,
+    distance_to_shade_point: f32,
+) -> f32 {
+    var material: Material;
+
+    var distance_travelled: f32 = 0.;
+    var iterations: u32 = 0u;
+    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
+    var position: vec3<f32> = ray_origin;
+    while (
+        distance_travelled < distance_to_shade_point
+        && iterations < _render_params.ray_marcher.max_ray_steps / 2u
+    ) {
+        var step_distance: f32 = abs(min_distance_to_primitive(
+            position,
+            pixel_footprint,
+            &material,
+        ));
+
+        if (step_distance < pixel_footprint) {
+            return 0.;
+        }
+
+        position += ray_direction * step_distance;
+        distance_travelled += step_distance;
+        pixel_footprint += step_distance * _render_params.ray_marcher.hit_tolerance;
+        iterations++;
+    }
+
+    return 1.;
+}
+
+
+/**
+ * Perform direct illumination light sampling on a chosen artificial
+ * light in the scene.
+ *
+ * @arg surface_position: The point on the surface to compute the
+ *     light intensity at.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg distance_to_light: The distance to the light's surface.
+ * @arg light_index: The index of the chosen light to sample.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn sample_non_physical_light(
+    surface_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    light_direction: vec3<f32>,
+    distance_to_light: f32,
+    light_index: u32,
+) -> vec3<f32> {
+    // Read the light properties
+    var light: Light = _lights.lights[light_index];
+
+    var intensity: vec2<f32>;
+    switch light.light_type {
+        case 1u {
+            var shadow_intensity_at_position: f32;
+            if (bool(light.soften_shadows)) {
+                shadow_intensity_at_position = sample_soft_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                    light.shadow_hardness,
+                );
+            }
+            else {
+                shadow_intensity_at_position = sample_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                );
+            }
+
+            intensity = vec2(
+                light_intensity(&light, distance_to_light),
+                shadow_intensity_at_position,
+            );
+        }
+        case 2u {
+            // Ambient light, simply return the intensity.
+            intensity = vec2(light.intensity, 1.);
+        }
+        case 3u {
+            intensity = vec2(
+                1.,
+                sample_ambient_occlusion(
+                    surface_position,
+                    surface_normal,
+                    light.intensity,
+                    u32(light.dimensional_data.x)
+                ),
+            );
+        }
+        default {
+            var shadow_intensity_at_position: f32;
+            if (bool(light.soften_shadows)) {
+                shadow_intensity_at_position = sample_soft_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                    light.shadow_hardness,
+                );
+            }
+            else {
+                shadow_intensity_at_position = sample_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                );
+            }
+
+            intensity = vec2(light.intensity, shadow_intensity_at_position);
+        }
+    }
+
+    return intensity.x * intensity.y * light.colour;
+}
+
+
+/**
+ * Perform direct illumination light sampling on a chosen light in
+ * the scene.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg throughput: The throughput of the ray.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the illumination of.
+ * @arg distance_to_light: The distance to the light's surface.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg position: The position on the surface to sample the
+ *     illumination of.
+ * @arg light_direction: The direction from the surface to the light.
+ * @arg light_pdf: The PDF of the light we are sampling the
+ *     direct illumination of.
+ * @arg material_pdf: The PDF of the material we are sampling the
+ *     direct illumination of.
+ * @arg light_id: The index of the chosen light to sample.
+ * @arg numEmissive: The number of emissive objects in the scene.
+ * @arg sampleHDRI: Whether or not to sample the HDRI. If there are
+ *     lights in the scene this will increase the noise, but will be
+ *     more accurate.
+ * @arg nestedDielectrics: The stack of dielectrics that we have
+ *     entered without exiting.
+ * @arg numNestedDielectrics: The number of dielectrics in the
+ *     stack.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn sample_light(
+    seed: vec3<f32>,
+    throughput: vec3<f32>,
+    material_brdf: vec3<f32>,
+    distance_to_light: f32,
+    surface_normal: vec3<f32>,
+    position: vec3<f32>,
+    light_direction: vec3<f32>,
+    light_pdf: f32,
+    material_pdf: f32,
+    light_id: u32,
+) -> vec3<f32> {
+    // float4 light_colour = float4(0);
+    // float light_geometry_factor;
+
+    // if (light_id < _lightTextureWidth)
+    // {
+    var light_colour = sample_non_physical_light(
+        position,
+        surface_normal,
+        light_direction,
+        distance_to_light,
+        light_id,
+    );
+    var light_geometry_factor: f32 = saturate_f32(dot(light_direction, surface_normal));
+    // }
+    // else if (light_id - _lightTextureWidth - sampleHDRI < numEmissive)
+    // {
+    //     float actualDistance;
+    //     float3 actualDirection = light_direction;
+    //     float3 lightNormal;
+    //     light_colour = marchPath(
+    //         position,
+    //         seed,
+    //         sampleHDRI,
+    //         distance_to_light * 2.0f,
+    //         nestedDielectrics,
+    //         numNestedDielectrics,
+    //         numEmissive,
+    //         position + distance_to_light * light_direction,
+    //         actualDistance,
+    //         actualDirection,
+    //         lightNormal
+    //     );
+    //     light_geometry_factor = geometryFactor(
+    //         actualDirection,
+    //         lightNormal,
+    //         actualDistance
+    //     );
+    // }
+
+    return multiple_importance_sample(
+        light_colour,
+        throughput * material_brdf * light_geometry_factor / light_pdf,
+        light_pdf,
+        material_pdf * light_geometry_factor
+    );
+}
+
+
+/**
+ * Perform direct illumination light sampling on every light in the
+ * scene.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg throughput: The throughput of the ray.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the illumination of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg position: The position on the surface to sample the
+ *     illumination of.
+ * @arg material_pdf: The PDF of the material we are sampling the
+ *     direct illumination of.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn sample_lights(
+    seed: vec3<f32>,
+    throughput: vec3<f32>,
+    material_brdf: vec3<f32>,
+    surface_normal: vec3<f32>,
+    position: vec3<f32>,
+    material_pdf: f32,
+    num_non_physical_lights: u32,
+) -> vec3<f32> {
+    var light_colour = vec3(0.);
+
+    for (var light_id=0u; light_id < num_non_physical_lights; light_id++) {
+        var light_direction: vec3<f32> = surface_normal;
+        var distance_to_light: f32 = 0.;
+
+        var light_pdf: f32 = sample_light_data(
+            seed * f32(light_id + 1u),
+            position,
+            surface_normal,
+            num_non_physical_lights,
+            light_id,
+            &light_direction,
+            &distance_to_light,
+        );
+
+        light_colour += sample_light(
+            seed * f32(light_id + 2u),
+            throughput,
+            material_brdf,
+            distance_to_light,
+            surface_normal,
+            position,
+            light_direction,
+            light_pdf,
+            material_pdf,
+            light_id,
+        );
+    }
+
+    return light_colour;
+}
+
+
+/**
+ * Perform direct illumination light sampling.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg throughput: The throughput of the ray.
+ * @arg material_brdf: The BRDF of the surface at the position we
+ *     are sampling the illumination of.
+ * @arg surface_normal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg position: The position on the surface to sample the
+ *     illumination of.
+ * @arg material_pdf: The PDF of the material we are sampling the
+ *     direct illumination of.
+ * @arg sample_all_lights: Whether to sample all the lights or one
+ *     random one.
+ *
+ * @returns: The colour of the sampled light.
+ */
+fn light_sampling(
+    seed: vec3<f32>,
+    throughput: vec3<f32>,
+    material_brdf: vec3<f32>,
+    surface_normal: vec3<f32>,
+    position: vec3<f32>,
+    material_pdf: f32,
+    sample_all_lights: bool,
+    num_non_physical_lights: u32,
+) -> vec3<f32> {
+    if (sample_all_lights) {
+        return sample_lights(
+            seed,
+            throughput,
+            material_brdf,
+            surface_normal,
+            position,
+            material_pdf,
+            num_non_physical_lights,
+        );
+    }
+
+    return vec3(0.);
+}
+
+
+// geometry/camera.wgsl
+// #include "math.h"
+
+
+struct Camera {
+    enable_depth_of_field: u32, // bool isn't host-shareable?
+    aperture: f32,
+    focal_distance: f32,
+    world_matrix: mat4x4<f32>,
+    inverse_world_matrix: mat4x4<f32>,
+    inverse_projection_matrix: mat4x4<f32>,
+}
+
+
+@group(1) @binding(0)
+var<uniform> _render_camera: Camera;
+
+
+fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
+    return (
+        _render_camera.inverse_world_matrix
+        * vec4(world_position, 1.)
+    ).xyz;
+}
+
+
+/**
+ * Generate a ray out of a camera.
+ *
+ * @arg uv_coordinate: The UV position in the resulting image.
+ * @arg ray_origin: Will store the origin of the ray.
+ * @arg ray_direction: Will store the direction of the ray.
+ */
+fn create_ray(
+    uv_coordinate: vec4<f32>,
+    ray_origin: ptr<function, vec3<f32>>,
+    ray_direction: ptr<function, vec3<f32>>,
+) {
+    *ray_origin = vec3(
+        _render_camera.world_matrix[3][0],
+        _render_camera.world_matrix[3][1],
+        _render_camera.world_matrix[3][2],
+    );
+
+    var direction: vec4<f32> = (
+        _render_camera.inverse_projection_matrix
+        * uv_coordinate
+    );
+    direction = _render_camera.world_matrix * vec4(direction.xyz, 0.);
+
+    *ray_direction = normalize(direction.xyz);
+}
+
+
+/**
+ * Create a ray out of the camera. It will be either a standard ray,
+ * a latlong ray, or a ray that will result in depth of field.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg uv_coordinate: The u, and v locations of the pixel.
+ * @arg ray_origin: The location to store the origin of the new ray.
+ * @arg ray_direction: The location to store the direction of the new
+ *     ray.
+ */
+fn create_render_camera_ray(
+    seed: vec3<f32>,
+    uv_coordinate: vec4<f32>,
+    ray_origin: ptr<function, vec3<f32>>,
+    ray_direction: ptr<function, vec3<f32>>,
+) {
+    if (bool(_render_params.ray_marcher.latlong))
+    {
+        // create_latlong_ray(
+        //     uv_coordinate,
+        //     ray_origin,
+        //     ray_direction,
+        // );
+    }
+    else if (bool(_render_params.ray_marcher.enable_depth_of_field))
+    {
+        // create_ray_with_dof(
+        //     uv_coordinate,
+        //     seed,
+        //     ray_origin,
+        //     ray_direction,
+        // );
+    }
+    else
+    {
+        create_ray(
+            uv_coordinate,
+            ray_origin,
+            ray_direction,
+        );
+    }
+}
+
+// aovs.wgsl
+
+
+let BEAUTY_AOV: u32 = 0u;
+let WORLD_POSITION_AOV: u32 = 1u;
+let LOCAL_POSITION_AOV: u32 = 2u;
+let NORMALS_AOV: u32 = 3u;
+let DEPTH_AOV: u32 = 4u;
+
+
+fn early_exit_aovs(
+    aov_type: u32,
+    world_position: vec3<f32>,
+    local_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+) -> vec4<f32> {
+    if (aov_type == WORLD_POSITION_AOV) {
+        return vec4(world_position, 1.);
+    }
+    else if (aov_type == LOCAL_POSITION_AOV) {
+        return vec4(local_position, 1.);
+    }
+    else if (aov_type == NORMALS_AOV) {
+        return vec4(surface_normal, 1.);
+    }
+    else if (aov_type == DEPTH_AOV) {
+        return vec4(abs(world_to_camera_space(world_position).z));
+    }
+    return vec4(-1.); // Invalid!!
+}
+
+// ray_march.wgsl
+
+
+struct VertexOut {
+    @location(0) uv_coordinate: vec4<f32>,
+    @builtin(position) frag_coordinate: vec4<f32>,
+}
+
+
+var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
+    vec2<f32>(1., 1.),
+    vec2<f32>(-1., 1.),
+    vec2<f32>(1., -1.),
+    vec2<f32>(-1., -1.),
+);
+
+
+@vertex
+fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
+    var out: VertexOut;
+    out.frag_coordinate = vec4(v_positions[vertex_index], 0., 1.);
+    out.uv_coordinate = vec4(v_positions[vertex_index], 0., 1.);
+
+    return out;
+}
+
+
+/**
+ * Handle the interaction between a ray and the surface of a material.
+ *
+ * @arg step_distance: The last step size to be marched.
+ * @arg offset: The distance to offset the position in order to escape
+ *     the surface.
+ * @arg distance: The distance travelled since the last bounce.
+ * @arg intersection_position: The position at which the ray
+ *     intersects the geometry.
+ * @arg surface_normal: The surface normal at the intersection point.
+ * @arg num_lights: The number of lights in the scene.
+ * @arg previous_material_pdf: The PDF of the last material interacted
+ *     with.
+ * @arg direction: The incoming ray direction.
+ * @arg origin: The ray origin.
+ * @arg ray_colour: The colour of the ray.
+ * @arg throughput: The throughput of the ray.
+ * @arg material: The material to interact with.
+ *
+ * @returns: The material pdf.
+ */
+fn material_interaction(
+    seed: vec3<f32>,
+    step_distance: f32,
+    offset: f32,
+    distance: f32,
+    intersection_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    num_lights: f32,
+    previous_material_pdf: f32,
+    light_sampling_enabled: bool,
+    sample_all_lights: bool,
+    direction: ptr<function, vec3<f32>>,
+    origin: ptr<function, vec3<f32>>,
+    ray_colour: ptr<function, vec4<f32>>,
+    throughput: ptr<function, vec3<f32>>,
+    material: ptr<function, Material>,
+) -> f32 {
+    *origin = intersection_position;
+
+    var material_brdf: vec3<f32>;
+    var outgoing_direction: vec3<f32>;
+    var materials_light_pdf: f32;
+    var material_pdf: f32 = sample_material(
+        seed,
+        surface_normal,
+        *direction,
+        offset,
+        material,
+        origin,
+        &material_brdf,
+        direction,
+        &materials_light_pdf,
+    );
+
+    if (light_sampling_enabled && materials_light_pdf > 0.) {
+        var num_non_physical_lights = u32(num_lights);
+        // Perform MIS light sampling
+        *ray_colour += vec4(
+            light_sampling(
+                seed,
+                *throughput,
+                material_brdf,
+                surface_normal,
+                *origin + surface_normal * offset,
+                materials_light_pdf,
+                sample_all_lights,
+                num_non_physical_lights,
+            ),
+            0.,
+        );
+    }
+
+    var material_geometry_factor: f32;
+    if (materials_light_pdf > 0.) {
+        material_geometry_factor = saturate_f32(dot(outgoing_direction, surface_normal));
+    }
+    else {
+        material_geometry_factor = 1.;
+    }
+
+    // TODO
+    var radius: f32 = 1.;
+    var visible_surface_area: f32 = TWO_PI * radius * radius;
+
+    *ray_colour += vec4(
+        multiple_importance_sample(
+            (*material).emissive_colour * (*material).emissive_probability,
+            *throughput,
+            previous_material_pdf,
+            sample_lights_pdf(num_lights, visible_surface_area),
+        ),
+        1.,
+    );
+
+    *throughput *= material_brdf * material_geometry_factor / material_pdf;
+
+    return material_pdf;
 }
 
 
@@ -2552,50 +2979,6 @@ fn march_path(
     }
 
     return ray_colour;
-}
-
-
-/**
- * Create a ray out of the camera. It will be either a standard ray,
- * a latlong ray, or a ray that will result in depth of field.
- *
- * @arg seed: The seed to use in randomization.
- * @arg uv_coordinate: The u, and v locations of the pixel.
- * @arg ray_origin: The location to store the origin of the new ray.
- * @arg ray_direction: The location to store the direction of the new
- *     ray.
- */
-fn create_render_camera_ray(
-    seed: vec3<f32>,
-    uv_coordinate: vec4<f32>,
-    ray_origin: ptr<function, vec3<f32>>,
-    ray_direction: ptr<function, vec3<f32>>,
-) {
-    if (bool(_render_params.ray_marcher.latlong))
-    {
-        // create_latlong_ray(
-        //     uv_coordinate,
-        //     ray_origin,
-        //     ray_direction,
-        // );
-    }
-    else if (bool(_render_params.ray_marcher.enable_depth_of_field))
-    {
-        // create_ray_with_dof(
-        //     uv_coordinate,
-        //     seed,
-        //     ray_origin,
-        //     ray_direction,
-        // );
-    }
-    else
-    {
-        create_ray(
-            uv_coordinate,
-            ray_origin,
-            ray_direction,
-        );
-    }
 }
 
 

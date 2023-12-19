@@ -2674,8 +2674,10 @@ fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
         ),
         normalize((
             _render_camera.world_matrix
-            * _render_camera.inverse_projection_matrix
-            * uv_coordinate
+            * vec4(
+                (_render_camera.inverse_projection_matrix * uv_coordinate).xyz,
+                0.,
+            )
         ).xyz),
     );
 }

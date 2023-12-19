@@ -1456,7 +1456,6 @@ fn distance_to_mandelbox(
 
 
 struct Material {
-    diffuse_probability: f32,
     diffuse_colour: vec3<f32>,
     specular_probability: f32,
     specular_roughness: f32,
@@ -1531,7 +1530,7 @@ fn schlick_reflection_coefficient(
  * @arg ray: The ray which has hit the surface with the above material.
  * @arg material_brdf: The BRDF of the surface at the position we
  *     are sampling the material of.
- * @arg light_pdf: The PDF of the material we are sampling from the
+ * @arg light_sampling_pdf: The PDF of the material we are sampling from the
  *     perspective of the light we will be sampling.
  *
  * @returns: The material PDF.
@@ -1543,7 +1542,7 @@ fn sample_material(
     material: ptr<function, Material>,
     ray: ptr<function, Ray>,
     material_brdf: ptr<function, vec3<f32>>,
-    light_pdf: ptr<function, f32>,
+    light_sampling_pdf: ptr<function, f32>,
 ) -> f32 {
     var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
         seed.xy,
@@ -1581,7 +1580,7 @@ fn sample_material(
     // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
-    if ((*material).specular_probability > 0. && rng <= specular_probability) {
+    if (specular_probability > 0. && rng <= specular_probability) {
         // Specular bounce
         var ideal_specular_direction: vec3<f32> = reflect(
             (*ray).direction,
@@ -1599,13 +1598,13 @@ fn sample_material(
 
         *material_brdf = (*material).specular_colour;
 
-        var probability_over_pi = (*material).specular_probability / PI;
-        *light_pdf = 0.;
+        var probability_over_pi = specular_probability / PI;
+        *light_sampling_pdf = 0.;
         return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
     }
     else if (
         (*material).transmissive_probability > 0.
-        && rng <= transmissive_probability
+        && rng <= transmissive_probability + specular_probability
     ) {
         // Transmissive bounce
         return 1.;
@@ -1619,8 +1618,8 @@ fn sample_material(
 
         *material_brdf = (*material).diffuse_colour;
 
-        var probability_over_pi = (*material).diffuse_probability / PI;
-        *light_pdf = probability_over_pi;
+        var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
+        *light_sampling_pdf = probability_over_pi;
         return probability_over_pi * dot(diffuse_direction, surface_normal);
     }
 }
@@ -2456,7 +2455,7 @@ fn sample_non_physical_light(
  * @arg position: The position on the surface to sample the
  *     illumination of.
  * @arg light_direction: The direction from the surface to the light.
- * @arg light_pdf: The PDF of the light we are sampling the
+ * @arg light_sampling_pdf: The PDF of the light we are sampling the
  *     direct illumination of.
  * @arg material_pdf: The PDF of the material we are sampling the
  *     direct illumination of.
@@ -2480,7 +2479,7 @@ fn sample_light(
     surface_normal: vec3<f32>,
     position: vec3<f32>,
     light_direction: vec3<f32>,
-    light_pdf: f32,
+    light_sampling_pdf: f32,
     material_pdf: f32,
     light_id: u32,
 ) -> vec3<f32> {
@@ -2525,8 +2524,8 @@ fn sample_light(
 
     return multiple_importance_sample(
         light_colour,
-        throughput * material_brdf * light_geometry_factor / light_pdf,
-        light_pdf,
+        throughput * material_brdf * light_geometry_factor / light_sampling_pdf,
+        light_sampling_pdf,
         material_pdf * light_geometry_factor
     );
 }
@@ -2564,7 +2563,7 @@ fn sample_lights(
         var light_direction: vec3<f32> = surface_normal;
         var distance_to_light: f32 = 0.;
 
-        var light_pdf: f32 = sample_light_data(
+        var light_sampling_pdf: f32 = sample_light_data(
             seed * f32(light_id + 1u),
             position,
             surface_normal,
@@ -2582,7 +2581,7 @@ fn sample_lights(
             surface_normal,
             position,
             light_direction,
-            light_pdf,
+            light_sampling_pdf,
             material_pdf,
             light_id,
         );
@@ -2812,7 +2811,7 @@ fn material_interaction(
 
     var material_brdf: vec3<f32>;
     var outgoing_direction: vec3<f32>;
-    var materials_light_pdf: f32;
+    var light_sampling_material_pdf: f32;
     var material_pdf: f32 = sample_material(
         seed,
         surface_normal,
@@ -2820,10 +2819,10 @@ fn material_interaction(
         material,
         ray,
         &material_brdf,
-        &materials_light_pdf,
+        &light_sampling_material_pdf,
     );
 
-    if (light_sampling_enabled && materials_light_pdf > 0.) {
+    if (light_sampling_enabled && light_sampling_material_pdf > 0.) {
         var num_non_physical_lights = u32(num_lights);
         // Perform MIS light sampling
         (*ray).colour += light_sampling(
@@ -2832,14 +2831,14 @@ fn material_interaction(
             material_brdf,
             surface_normal,
             (*ray).origin,
-            materials_light_pdf,
+            light_sampling_material_pdf,
             sample_all_lights,
             num_non_physical_lights,
         );
     }
 
     var material_geometry_factor: f32;
-    if (materials_light_pdf > 0.) {
+    if (light_sampling_material_pdf > 0.) {
         material_geometry_factor = saturate_f32(dot(outgoing_direction, surface_normal));
     }
     else {
@@ -2906,7 +2905,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
         && length((*ray).colour) < _render_params.ray_marcher.max_brightness
     ) {
         position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;
-
 
         var nearest_material: Material;
         // Keep the signed distance so we know whether or not we are inside the object

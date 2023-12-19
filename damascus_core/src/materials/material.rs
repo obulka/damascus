@@ -4,7 +4,6 @@ use glam::Vec3;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct Material {
-    pub diffuse_probability: f32,
     pub diffuse_colour: Vec3,
     pub specular_probability: f32,
     pub specular_roughness: f32,
@@ -22,7 +21,6 @@ pub struct Material {
 impl Default for Material {
     fn default() -> Self {
         Material {
-            diffuse_probability: 1.,
             diffuse_colour: Vec3::ONE,
             specular_probability: 0.,
             specular_roughness: 0.,

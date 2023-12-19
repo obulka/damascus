@@ -580,11 +580,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             }
             DamascusNodeTemplate::Material => {
                 let default_material = materials::Material::default();
-                input_float(
-                    graph,
-                    "diffuse_probability",
-                    default_material.diffuse_probability,
-                );
                 input_vector3(graph, "diffuse_colour", default_material.diffuse_colour);
                 input_float(
                     graph,
@@ -1437,7 +1432,6 @@ pub fn evaluate_node(
             evaluator.output_light("out", scene_lights)
         }
         DamascusNodeTemplate::Material => {
-            let diffuse_probability = evaluator.input_float("diffuse_probability")?;
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
             let specular_probability = evaluator.input_float("specular_probability")?;
             let specular_roughness = evaluator.input_float("specular_roughness")?;
@@ -1452,7 +1446,6 @@ pub fn evaluate_node(
             let scattering_colour = evaluator.input_vector3("scattering_colour")?;
 
             let material = materials::Material {
-                diffuse_probability: diffuse_probability,
                 diffuse_colour: diffuse_colour,
                 specular_probability: specular_probability,
                 specular_roughness: specular_roughness,

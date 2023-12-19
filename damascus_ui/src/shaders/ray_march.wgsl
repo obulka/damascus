@@ -2666,19 +2666,17 @@ fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
  * @arg uv_coordinate: The UV position in the resulting image.
  */
 fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
-    var direction: vec4<f32> = (
-        _render_camera.inverse_projection_matrix
-        * uv_coordinate
-    );
-    direction = _render_camera.world_matrix * vec4(direction.xyz, 0.);
-
     return Ray(
         vec3(
             _render_camera.world_matrix[3][0],
             _render_camera.world_matrix[3][1],
             _render_camera.world_matrix[3][2],
         ),
-        normalize(direction.xyz),
+        normalize((
+            _render_camera.world_matrix
+            * _render_camera.inverse_projection_matrix
+            * uv_coordinate
+        ).xyz),
     );
 }
 

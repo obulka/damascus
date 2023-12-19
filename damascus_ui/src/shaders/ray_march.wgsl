@@ -53,6 +53,12 @@ struct RenderParameters {
 var<uniform> _render_params: RenderParameters;
 
 
+struct Ray {
+    origin: vec3<f32>,
+    direction: vec3<f32>,
+}
+
+
 // math.wgsl
 
 let PI: f32 = 3.141592653589793;
@@ -1517,16 +1523,12 @@ fn schlick_reflection_coefficient(
  * @arg seed: The seed to use in randomization.
  * @arg surface_normal: The normal to the surface at the position we
  *     are sampling the material of.
- * @arg incident_direction: The incoming ray direction.
  * @arg offset: The amount to offset the ray in order to escape the
  *     surface.
  * @arg material: The material properties of the surface.
- * @arg position: The position on the surface to sample the
- *     material of.
+ * @arg ray: The ray which has hit the surface with the above material.
  * @arg material_brdf: The BRDF of the surface at the position we
  *     are sampling the material of.
- * @arg outgoing_direction: The direction the ray will travel after
- *     sampling the material.
  * @arg light_pdf: The PDF of the material we are sampling from the
  *     perspective of the light we will be sampling.
  *
@@ -1535,12 +1537,10 @@ fn schlick_reflection_coefficient(
 fn sample_material(
     seed: vec3<f32>,
     surface_normal: vec3<f32>,
-    incident_direction: vec3<f32>,
     offset: f32,
     material: ptr<function, Material>,
-    position: ptr<function, vec3<f32>>,
+    ray: ptr<function, Ray>,
     material_brdf: ptr<function, vec3<f32>>,
-    outgoing_direction: ptr<function, vec3<f32>>,
     light_pdf: ptr<function, f32>,
 ) -> f32 {
     var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
@@ -1559,7 +1559,7 @@ fn sample_material(
 
         // Compute the refraction values
         var reflectivity: f32 = schlick_reflection_coefficient(
-            incident_direction,
+            (*ray).direction,
             surface_normal,
             incident_refractive_index,
             refracted_refractive_index,
@@ -1582,24 +1582,24 @@ fn sample_material(
     if ((*material).specular_probability > 0. && rng <= specular_probability) {
         // Specular bounce
         var ideal_specular_direction: vec3<f32> = reflect(
-            incident_direction,
+            (*ray).direction,
             surface_normal,
         );
 
-        *outgoing_direction = normalize(mix(
+        (*ray).direction = normalize(mix(
             ideal_specular_direction,
             diffuse_direction,
             (*material).specular_roughness * (*material).specular_roughness,
         ));
 
         // Offset the point so that it doesn't get trapped on the surface.
-        *position += offset * surface_normal;
+        (*ray).origin += offset * surface_normal;
 
         *material_brdf = (*material).specular_colour;
 
         var probability_over_pi = (*material).specular_probability / PI;
         *light_pdf = 0.;
-        return probability_over_pi * dot(ideal_specular_direction, *outgoing_direction);
+        return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
     }
     else if (
         (*material).transmissive_probability > 0.
@@ -1610,10 +1610,10 @@ fn sample_material(
     }
     else {
         // Diffuse bounce
-        *outgoing_direction = diffuse_direction;
+        (*ray).direction = diffuse_direction;
 
         // Offset the point so that it doesn't get trapped on the surface.
-        *position += offset * surface_normal;
+        (*ray).origin += offset * surface_normal;
 
         *material_brdf = (*material).diffuse_colour;
 
@@ -2664,27 +2664,22 @@ fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
  * Generate a ray out of a camera.
  *
  * @arg uv_coordinate: The UV position in the resulting image.
- * @arg ray_origin: Will store the origin of the ray.
- * @arg ray_direction: Will store the direction of the ray.
  */
-fn create_ray(
-    uv_coordinate: vec4<f32>,
-    ray_origin: ptr<function, vec3<f32>>,
-    ray_direction: ptr<function, vec3<f32>>,
-) {
-    *ray_origin = vec3(
-        _render_camera.world_matrix[3][0],
-        _render_camera.world_matrix[3][1],
-        _render_camera.world_matrix[3][2],
-    );
-
+fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
     var direction: vec4<f32> = (
         _render_camera.inverse_projection_matrix
         * uv_coordinate
     );
     direction = _render_camera.world_matrix * vec4(direction.xyz, 0.);
 
-    *ray_direction = normalize(direction.xyz);
+    return Ray(
+        vec3(
+            _render_camera.world_matrix[3][0],
+            _render_camera.world_matrix[3][1],
+            _render_camera.world_matrix[3][2],
+        ),
+        normalize(direction.xyz),
+    );
 }
 
 
@@ -2694,41 +2689,29 @@ fn create_ray(
  *
  * @arg seed: The seed to use in randomization.
  * @arg uv_coordinate: The u, and v locations of the pixel.
- * @arg ray_origin: The location to store the origin of the new ray.
- * @arg ray_direction: The location to store the direction of the new
- *     ray.
  */
-fn create_render_camera_ray(
-    seed: vec3<f32>,
-    uv_coordinate: vec4<f32>,
-    ray_origin: ptr<function, vec3<f32>>,
-    ray_direction: ptr<function, vec3<f32>>,
-) {
-    if (bool(_render_params.ray_marcher.latlong))
-    {
-        // create_latlong_ray(
-        //     uv_coordinate,
-        //     ray_origin,
-        //     ray_direction,
-        // );
-    }
-    else if (bool(_render_params.ray_marcher.enable_depth_of_field))
-    {
-        // create_ray_with_dof(
-        //     uv_coordinate,
-        //     seed,
-        //     ray_origin,
-        //     ray_direction,
-        // );
-    }
-    else
-    {
-        create_ray(
-            uv_coordinate,
-            ray_origin,
-            ray_direction,
-        );
-    }
+fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
+    // if (bool(_render_params.ray_marcher.latlong))
+    // {
+    //     // create_latlong_ray(
+    //     //     uv_coordinate,
+    //     //     ray_origin,
+    //     //     ray_direction,
+    //     // );
+    // }
+    // else if (bool(_render_params.ray_marcher.enable_depth_of_field))
+    // {
+    //     // create_ray_with_dof(
+    //     //     uv_coordinate,
+    //     //     seed,
+    //     //     ray_origin,
+    //     //     ray_direction,
+    //     // );
+    // }
+    // else
+    // {
+    return create_ray(uv_coordinate);
+    // }
 }
 
 // aovs.wgsl
@@ -2821,13 +2804,12 @@ fn material_interaction(
     previous_material_pdf: f32,
     light_sampling_enabled: bool,
     sample_all_lights: bool,
-    direction: ptr<function, vec3<f32>>,
-    origin: ptr<function, vec3<f32>>,
+    ray: ptr<function, Ray>,
     ray_colour: ptr<function, vec4<f32>>,
     throughput: ptr<function, vec3<f32>>,
     material: ptr<function, Material>,
 ) -> f32 {
-    *origin = intersection_position;
+    (*ray).origin = intersection_position;
 
     var material_brdf: vec3<f32>;
     var outgoing_direction: vec3<f32>;
@@ -2835,12 +2817,10 @@ fn material_interaction(
     var material_pdf: f32 = sample_material(
         seed,
         surface_normal,
-        *direction,
         offset,
         material,
-        origin,
+        ray,
         &material_brdf,
-        direction,
         &materials_light_pdf,
     );
 
@@ -2853,7 +2833,7 @@ fn material_interaction(
                 *throughput,
                 material_brdf,
                 surface_normal,
-                *origin + surface_normal * offset,
+                (*ray).origin,
                 materials_light_pdf,
                 sample_all_lights,
                 num_non_physical_lights,
@@ -2893,16 +2873,12 @@ fn material_interaction(
 /**
  * March a path through the scene.
  *
- * @arg ray_origin: The origin of the ray.
- * @arg ray_direction: The direction of the ray.
+ * @arg seed: The seed to use in randomization.
+ * @arg ray: The ray to march.
  *
  * @returns: The ray colour.
  */
-fn march_path(
-    ray_origin: vec3<f32>,
-    ray_direction: vec3<f32>,
-    seed: vec3<f32>,
-) -> vec4<f32> {
+fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
     var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
@@ -2930,9 +2906,7 @@ fn march_path(
     var previous_material_pdf: f32 = 1.;
 
     // Data for the next ray
-    var origin: vec3<f32> = ray_origin;
-    var position_on_ray: vec3<f32> = origin;
-    var direction: vec3<f32> = ray_direction;
+    var position_on_ray: vec3<f32> = (*ray).origin;
 
     // March the ray
     while (
@@ -2941,7 +2915,7 @@ fn march_path(
         && sum_component_vec3f(throughput) > _render_params.ray_marcher.hit_tolerance
         && length(ray_colour) < _render_params.ray_marcher.max_brightness
     ) {
-        position_on_ray = origin + distance_since_last_bounce * direction;
+        position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;
 
 
         var nearest_material: Material;
@@ -2962,7 +2936,7 @@ fn march_path(
         // Have we hit the nearest object?
         if (step_distance < pixel_footprint) {
             bounces++;
-            var intersection_position = position_on_ray + step_distance * direction;
+            var intersection_position = position_on_ray + step_distance * (*ray).direction;
 
             // The normal to the surface at that position
             var surface_normal: vec3<f32> = sign(last_step_distance) * estimate_surface_normal(
@@ -2992,8 +2966,7 @@ fn march_path(
                 previous_material_pdf,
                 light_sampling_enabled,
                 sample_all_lights,
-                &direction,
-                &origin,
+                ray,
                 &ray_colour,
                 &throughput,
                 &nearest_material,
@@ -3038,21 +3011,10 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var seed = random_vec3f(_render_params.ray_marcher.seeds + frag_coord_seed);
     var ray_colour = vec4(0.);
 
-    var ray_origin: vec3<f32>;
-    var ray_direction: vec3<f32>;
     for (var path=1u; path <= _render_params.ray_marcher.paths_per_pixel; path++) {
-        create_render_camera_ray(
-            seed,
-            in.uv_coordinate,
-            &ray_origin,
-            &ray_direction,
-        );
+        var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
 
-        ray_colour += march_path(
-            ray_origin,
-            ray_direction,
-            seed,
-        );
+        ray_colour += march_path(seed, &ray);
 
         seed = random_vec3f(seed.yzx + frag_coord_seed);
     }

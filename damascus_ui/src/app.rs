@@ -572,7 +572,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(graph, "light_type", default_light.light_type as u32); // TODO make a dropdown for enums
                 input_vector3(graph, "dimensional_data", default_light.dimensional_data);
                 input_float(graph, "intensity", default_light.intensity);
-                input_float(graph, "falloff", default_light.falloff);
+                input_uint(graph, "falloff", default_light.falloff);
                 input_vector3(graph, "colour", default_light.colour);
                 input_float(graph, "shadow_hardness", default_light.shadow_hardness);
                 input_bool(graph, "soften_shadows", default_light.soften_shadows);
@@ -1417,7 +1417,7 @@ pub fn evaluate_node(
             if let Some(light_type) = num::FromPrimitive::from_u32(light_type) {
                 let dimensional_data = evaluator.input_vector3("dimensional_data")?;
                 let intensity = evaluator.input_float("intensity")?;
-                let falloff = evaluator.input_float("falloff")?;
+                let falloff = evaluator.input_uint("falloff")?;
                 let colour = evaluator.input_vector3("colour")?;
                 let shadow_hardness = evaluator.input_float("shadow_hardness")?;
                 let soften_shadows = evaluator.input_bool("soften_shadows")?;

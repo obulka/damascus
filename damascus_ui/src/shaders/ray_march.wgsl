@@ -379,6 +379,25 @@ fn align_with_direction(
     return axis_angle_rotation_matrix(rotation_axis, angle) * vector_to_align;
 }
 
+
+fn power_of_u32(base: f32, exponent: u32) -> f32 {
+    var base_: f32 = base;
+    var exponent_: u32 = exponent;
+    var result: f32 = 1.;
+    while (true) {
+        if (bool(exponent_ & 1u)) {
+            result *= base_;
+        }
+        exponent_ >>= 1u;
+        if (!bool(exponent_)) {
+            break;
+        }
+        base_ *= base_;
+    }
+
+    return result;
+}
+
 // random.wgsl
 
 
@@ -1446,6 +1465,53 @@ struct Material {
 
 
 /**
+ * Compute the schlick, simplified fresnel reflection coefficient.
+ *
+ * @arg incident_ray_direction: The incident direction.
+ * @arg surface_normal_direction: The normal to the surface.
+ * @arg incident_refractive_index: The refractive index the incident ray
+ *     is travelling through.
+ * @arg refracted_refractive_index: The refractive index the refracted ray
+ *     will be travelling through.
+ *
+ * @returns: The reflection coefficient.
+ */
+fn schlick_reflection_coefficient(
+    incident_ray_direction: vec3<f32>,
+    surface_normal_direction: vec3<f32>,
+    incident_refractive_index: f32,
+    refracted_refractive_index: f32,
+) -> f32 {
+    var parallel_coefficient: f32 = (
+        (incident_refractive_index - refracted_refractive_index)
+        / (incident_refractive_index + refracted_refractive_index)
+    );
+    parallel_coefficient *= parallel_coefficient;
+
+    var cos_x: f32 = -dot(surface_normal_direction, incident_ray_direction);
+    if (incident_refractive_index > refracted_refractive_index) {
+        var refractive_ratio: f32 = incident_refractive_index / refracted_refractive_index;
+        var sin_transmitted_squared: f32 = refractive_ratio * refractive_ratio * (
+            1. - cos_x * cos_x
+        );
+        if (sin_transmitted_squared > 1.) {
+            return 1.;
+        }
+        cos_x = sqrt(1. - sin_transmitted_squared);
+    }
+    var one_minus_cos_x: f32 = 1. - cos_x;
+    var one_minus_cos_x_squared: f32 = one_minus_cos_x * one_minus_cos_x;
+    return (
+        parallel_coefficient
+        + (1. - parallel_coefficient)
+        * one_minus_cos_x_squared
+        * one_minus_cos_x_squared
+        * one_minus_cos_x
+    );
+}
+
+
+/**
  * Perform material sampling.
  *
  * @arg seed: The seed to use in randomization.
@@ -1485,8 +1551,32 @@ fn sample_material(
     var specular_probability: f32 = (*material).specular_probability;
     var transmissive_probability: f32 = (*material).transmissive_probability;
 
-    // TODO fresnel
+    if (specular_probability > 0. || transmissive_probability > 0.) {
+        // Adjust probabilities according to fresnel
 
+        var incident_refractive_index: f32 = 1.; // TODO add nested dielectrics
+        var refracted_refractive_index: f32 = (*material).refractive_index; // TODO ^
+
+        // Compute the refraction values
+        var reflectivity: f32 = schlick_reflection_coefficient(
+            incident_direction,
+            surface_normal,
+            incident_refractive_index,
+            refracted_refractive_index,
+        );
+
+        specular_probability = (
+            (specular_probability + f32(transmissive_probability > 0.))
+            * mix(specular_probability, 1., reflectivity)
+        );
+
+        transmissive_probability = (
+            transmissive_probability * (1. - specular_probability)
+            / (1. - (*material).specular_probability)
+        );
+    }
+
+    // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
     if ((*material).specular_probability > 0. && rng <= specular_probability) {
@@ -1894,7 +1984,7 @@ struct Light {
     light_type: u32,
     dimensional_data: vec3<f32>,
     intensity: f32,
-    falloff: f32,
+    falloff: u32,
     colour: vec3<f32>,
     shadow_hardness: f32,
     soften_shadows: u32,
@@ -2095,7 +2185,7 @@ fn sample_light_data(
     //     light_direction,
     //     distance_to_light
     // );
-    // return sample_lights_pdf(max(1, numLights), 1.0f);
+    // return sample_lights_pdf(max(1, numLights), 1.);
 }
 
 
@@ -2109,7 +2199,8 @@ fn sample_light_data(
  * @returns: The light intensity.
  */
 fn light_intensity(light: ptr<function, Light>, distance_to_light: f32) -> f32 {
-    return (*light).intensity / pow(distance_to_light, (*light).falloff);
+
+    return (*light).intensity / power_of_u32(distance_to_light, (*light).falloff);
 }
 
 
@@ -2414,7 +2505,7 @@ fn sample_light(
     //         position,
     //         seed,
     //         sampleHDRI,
-    //         distance_to_light * 2.0f,
+    //         distance_to_light * 2.,
     //         nestedDielectrics,
     //         numNestedDielectrics,
     //         numEmissive,

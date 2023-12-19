@@ -56,6 +56,8 @@ var<uniform> _render_params: RenderParameters;
 struct Ray {
     origin: vec3<f32>,
     direction: vec3<f32>,
+    colour: vec3<f32>,
+    throughput: vec3<f32>,
 }
 
 
@@ -2679,6 +2681,8 @@ fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
                 0.,
             )
         ).xyz),
+        vec3(0.),
+        vec3(1.),
     );
 }
 
@@ -2716,12 +2720,7 @@ fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
 
 // aovs.wgsl
 
-
 let BEAUTY_AOV: u32 = 0u;
-let WORLD_POSITION_AOV: u32 = 1u;
-let LOCAL_POSITION_AOV: u32 = 2u;
-let NORMALS_AOV: u32 = 3u;
-let DEPTH_AOV: u32 = 4u;
 
 
 fn early_exit_aovs(
@@ -2729,20 +2728,25 @@ fn early_exit_aovs(
     world_position: vec3<f32>,
     local_position: vec3<f32>,
     surface_normal: vec3<f32>,
-) -> vec4<f32> {
-    if (aov_type == WORLD_POSITION_AOV) {
-        return vec4(world_position, 1.);
+) -> vec3<f32> {
+    switch aov_type {
+        case 1u {
+            return world_position;
+        }
+        case 2u {
+            return local_position;
+        }
+        case 3u {
+            return surface_normal;
+        }
+        case 4u {
+            // Depth
+            return vec3(abs(world_to_camera_space(world_position).z));
+        }
+        default {
+            return vec3(-1.); // Invalid!!
+        }
     }
-    else if (aov_type == LOCAL_POSITION_AOV) {
-        return vec4(local_position, 1.);
-    }
-    else if (aov_type == NORMALS_AOV) {
-        return vec4(surface_normal, 1.);
-    }
-    else if (aov_type == DEPTH_AOV) {
-        return vec4(abs(world_to_camera_space(world_position).z));
-    }
-    return vec4(-1.); // Invalid!!
 }
 
 // ray_march.wgsl
@@ -2785,10 +2789,7 @@ fn vs_main(@builtin(vertex_index) vertex_index: u32) -> VertexOut {
  * @arg num_lights: The number of lights in the scene.
  * @arg previous_material_pdf: The PDF of the last material interacted
  *     with.
- * @arg direction: The incoming ray direction.
- * @arg origin: The ray origin.
- * @arg ray_colour: The colour of the ray.
- * @arg throughput: The throughput of the ray.
+ * @arg ray: The ray which will interact with the material.
  * @arg material: The material to interact with.
  *
  * @returns: The material pdf.
@@ -2805,8 +2806,6 @@ fn material_interaction(
     light_sampling_enabled: bool,
     sample_all_lights: bool,
     ray: ptr<function, Ray>,
-    ray_colour: ptr<function, vec4<f32>>,
-    throughput: ptr<function, vec3<f32>>,
     material: ptr<function, Material>,
 ) -> f32 {
     (*ray).origin = intersection_position;
@@ -2827,18 +2826,15 @@ fn material_interaction(
     if (light_sampling_enabled && materials_light_pdf > 0.) {
         var num_non_physical_lights = u32(num_lights);
         // Perform MIS light sampling
-        *ray_colour += vec4(
-            light_sampling(
-                seed,
-                *throughput,
-                material_brdf,
-                surface_normal,
-                (*ray).origin,
-                materials_light_pdf,
-                sample_all_lights,
-                num_non_physical_lights,
-            ),
-            0.,
+        (*ray).colour += light_sampling(
+            seed,
+            (*ray).throughput,
+            material_brdf,
+            surface_normal,
+            (*ray).origin,
+            materials_light_pdf,
+            sample_all_lights,
+            num_non_physical_lights,
         );
     }
 
@@ -2854,17 +2850,14 @@ fn material_interaction(
     var radius: f32 = 1.;
     var visible_surface_area: f32 = TWO_PI * radius * radius;
 
-    *ray_colour += vec4(
-        multiple_importance_sample(
-            (*material).emissive_colour * (*material).emissive_probability,
-            *throughput,
-            previous_material_pdf,
-            sample_lights_pdf(num_lights, visible_surface_area),
-        ),
-        1.,
+    (*ray).colour += multiple_importance_sample(
+        (*material).emissive_colour * (*material).emissive_probability,
+        (*ray).throughput,
+        previous_material_pdf,
+        sample_lights_pdf(num_lights, visible_surface_area),
     );
 
-    *throughput *= material_brdf * material_geometry_factor / material_pdf;
+    (*ray).throughput *= material_brdf * material_geometry_factor / material_pdf;
 
     return material_pdf;
 }
@@ -2878,7 +2871,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
+fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
@@ -2889,9 +2882,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
         && _render_params.ray_marcher.max_light_sampling_bounces > 0u
     );
     var sample_all_lights = bool(_render_params.ray_marcher.sample_all_lights);
-
-    var ray_colour = vec4(0.);
-    var throughput = vec3(1.);
 
     var distance_travelled: f32 = 0.;
     var distance_since_last_bounce = 0.;
@@ -2912,8 +2902,8 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
     while (
         distance_travelled < _render_params.ray_marcher.max_distance
         && iterations < _render_params.ray_marcher.max_ray_steps
-        && sum_component_vec3f(throughput) > _render_params.ray_marcher.hit_tolerance
-        && length(ray_colour) < _render_params.ray_marcher.max_brightness
+        && sum_component_vec3f((*ray).throughput) > _render_params.ray_marcher.hit_tolerance
+        && length((*ray).colour) < _render_params.ray_marcher.max_brightness
     ) {
         position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;
 
@@ -2946,13 +2936,14 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
 
             // Early exit for the various AOVs that are not 'beauty'
             if (_render_params.ray_marcher.output_aov > BEAUTY_AOV) {
-                return early_exit_aovs(
+                (*ray).colour = early_exit_aovs(
                     _render_params.ray_marcher.output_aov,
                     intersection_position,
                     intersection_position, // TODO world to local
                     surface_normal,
                     // TODO object id
                 );
+                return;
             }
 
             previous_material_pdf = material_interaction(
@@ -2967,23 +2958,21 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
                 light_sampling_enabled,
                 sample_all_lights,
                 ray,
-                &ray_colour,
-                &throughput,
                 &nearest_material,
             );
 
             // Exit if we have reached the bounce limit or with a random chance
             var rng: f32 = vec3f_to_random_f32(path_seed);
-            var exit_probability: f32 = max_component_vec3f(throughput);
+            var exit_probability: f32 = max_component_vec3f((*ray).throughput);
             if (
                 bounces >= _render_params.ray_marcher.max_bounces
                 || (roulette && exit_probability <= rng)
             ) {
-                return ray_colour; // TODO object id in alpha after you can sample
+                return; // TODO object id in alpha after you can sample
             }
             else if (roulette) {
                 // Account for the lost intensity from the early exits
-                throughput /= vec3(exit_probability);
+                (*ray).throughput /= vec3(exit_probability);
             }
 
             distance_since_last_bounce = 0.;
@@ -3000,8 +2989,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
         last_step_distance = signed_step_distance;
         iterations++;
     }
-
-    return ray_colour;
 }
 
 
@@ -3009,15 +2996,17 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) -> vec4<f32> {
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
     var seed = random_vec3f(_render_params.ray_marcher.seeds + frag_coord_seed);
-    var ray_colour = vec4(0.);
+    var pixel_colour = vec3(0.);
 
     for (var path=1u; path <= _render_params.ray_marcher.paths_per_pixel; path++) {
         var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
 
-        ray_colour += march_path(seed, &ray);
+        march_path(seed, &ray);
+
+        pixel_colour += ray.colour;
 
         seed = random_vec3f(seed.yzx + frag_coord_seed);
     }
 
-    return ray_colour / f32(_render_params.ray_marcher.paths_per_pixel);
+    return vec4(pixel_colour, 1.) / f32(_render_params.ray_marcher.paths_per_pixel);
 }

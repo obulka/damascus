@@ -392,7 +392,7 @@ fn power_of_u32(base: f32, exponent: u32) -> f32 {
     var base_: f32 = base;
     var exponent_: u32 = exponent;
     var result: f32 = 1.;
-    while (true) {
+    for (;;) {
         if (bool(exponent_ & 1u)) {
             result *= base_;
         }
@@ -2720,6 +2720,7 @@ fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
 // aovs.wgsl
 
 let BEAUTY_AOV: u32 = 0u;
+let STATS_AOV: u32 = 5u;
 
 
 fn early_exit_aovs(
@@ -2741,6 +2742,22 @@ fn early_exit_aovs(
         case 4u {
             // Depth
             return vec3(abs(world_to_camera_space(world_position).z));
+        }
+        default {
+            return vec3(-1.); // Invalid!!
+        }
+    }
+}
+
+
+fn final_aovs(aov_type: u32, bounces: u32, iterations: u32) -> vec3<f32> {
+    switch aov_type {
+        case 5u {
+            return vec3(
+                f32(bounces) / f32(_render_params.ray_marcher.max_bounces),
+                f32(iterations) / f32(_render_params.ray_marcher.max_ray_steps),
+                0.,
+            );
         }
         default {
             return vec3(-1.); // Invalid!!
@@ -2810,7 +2827,6 @@ fn material_interaction(
     (*ray).origin = intersection_position;
 
     var material_brdf: vec3<f32>;
-    var outgoing_direction: vec3<f32>;
     var light_sampling_material_pdf: f32;
     var material_pdf: f32 = sample_material(
         seed,
@@ -2839,7 +2855,7 @@ fn material_interaction(
 
     var material_geometry_factor: f32;
     if (light_sampling_material_pdf > 0.) {
-        material_geometry_factor = saturate_f32(dot(outgoing_direction, surface_normal));
+        material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     }
     else {
         material_geometry_factor = 1.;
@@ -2933,13 +2949,16 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             );
 
             // Early exit for the various AOVs that are not 'beauty'
-            if (_render_params.ray_marcher.output_aov > BEAUTY_AOV) {
+            if (
+                _render_params.ray_marcher.output_aov > BEAUTY_AOV
+                && _render_params.ray_marcher.output_aov < STATS_AOV
+            ) {
+                // TODO object id
                 (*ray).colour = early_exit_aovs(
                     _render_params.ray_marcher.output_aov,
                     intersection_position,
                     intersection_position, // TODO world to local
                     surface_normal,
-                    // TODO object id
                 );
                 return;
             }
@@ -2966,7 +2985,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 bounces >= _render_params.ray_marcher.max_bounces
                 || (roulette && exit_probability <= rng)
             ) {
-                return; // TODO object id in alpha after you can sample
+                break;
             }
             else if (roulette) {
                 // Account for the lost intensity from the early exits
@@ -2986,6 +3005,14 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
 
         last_step_distance = signed_step_distance;
         iterations++;
+    }
+    if (_render_params.ray_marcher.output_aov > BEAUTY_AOV) {
+        (*ray).colour = final_aovs(
+            _render_params.ray_marcher.output_aov,
+            bounces,
+            iterations,
+        );
+        // TODO object id in alpha after you can sample
     }
 }
 

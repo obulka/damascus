@@ -6,7 +6,7 @@ pub enum AOVs {
     LocalPosition,
     Normals,
     Depth,
-    // TODO heatmap/stats
+    Stats,
 }
 
 mod ray_marcher;

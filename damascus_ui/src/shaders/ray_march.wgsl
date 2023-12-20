@@ -2953,7 +2953,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 _render_params.ray_marcher.output_aov > BEAUTY_AOV
                 && _render_params.ray_marcher.output_aov < STATS_AOV
             ) {
-                // TODO object id
                 (*ray).colour = early_exit_aovs(
                     _render_params.ray_marcher.output_aov,
                     intersection_position,

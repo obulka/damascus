@@ -5,8 +5,6 @@ use egui_node_graph::DataTypeTrait;
 
 use crate::app::node_graph_state::DamascusGraphState;
 
-// ========= First, define your user data types =============
-
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow
 /// attaching incompatible datatypes.

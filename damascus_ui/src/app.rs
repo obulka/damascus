@@ -3,24 +3,13 @@ use std::collections::HashMap;
 use eframe::egui;
 use egui_node_graph::{GraphEditorState, NodeResponse};
 
-use crate::viewport_3d::Viewport3d;
-
-// These four modules are all that needs to be updated to add nodes
-mod data_type;
-mod node_data;
-mod node_graph;
-mod node_template;
-
-mod node_graph_state;
-mod response;
-mod value_type;
-use data_type::DamascusDataType;
-use node_data::DamascusNodeData;
-use node_graph::evaluate_node;
-use node_graph_state::DamascusGraphState;
-use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
-use response::DamascusResponse;
-use value_type::DamascusValueType;
+use crate::panels::{
+    node_graph::{
+        evaluate_node, AllDamascusNodeTemplates, DamascusDataType, DamascusGraphState,
+        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType,
+    },
+    viewport_3d::Viewport3d,
+};
 
 type DamascusEditorState = GraphEditorState<
     DamascusNodeData,

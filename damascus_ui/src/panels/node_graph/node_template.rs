@@ -4,9 +4,9 @@ use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTempl
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use crate::app::{
-    data_type::DamascusDataType, node_data::DamascusNodeData, node_graph::DamascusGraph,
-    node_graph_state::DamascusGraphState, value_type::DamascusValueType,
+use crate::panels::node_graph::{
+    data_type::DamascusDataType, node_data::DamascusNodeData, node_graph_state::DamascusGraphState,
+    value_type::DamascusValueType, DamascusGraph,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph

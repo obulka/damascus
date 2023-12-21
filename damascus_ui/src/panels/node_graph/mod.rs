@@ -4,10 +4,21 @@ use egui_node_graph::{Graph, NodeId, OutputId};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use crate::app::{
-    data_type::DamascusDataType, node_data::DamascusNodeData, node_template::DamascusNodeTemplate,
-    value_type::DamascusValueType,
-};
+pub mod node_graph_state;
+pub mod response;
+pub mod value_type;
+
+// These three modules and this file are all that needs to be updated to add nodes
+pub mod data_type;
+pub mod node_data;
+pub mod node_template;
+
+pub use data_type::DamascusDataType;
+pub use node_data::DamascusNodeData;
+pub use node_graph_state::DamascusGraphState;
+pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
+pub use response::DamascusResponse;
+pub use value_type::DamascusValueType;
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;

@@ -7,7 +7,7 @@ use ndarray;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use crate::app::{
+use crate::panels::node_graph::{
     node_data::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
 };
 

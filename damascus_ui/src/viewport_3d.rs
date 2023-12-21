@@ -17,7 +17,10 @@ use damascus_core::{
 
 pub struct Viewport3d {
     pub enable_frame_rate_overlay: bool,
+    pub frames_to_update_fps: u32,
+    frame_counter: u32,
     previous_frame_time: SystemTime,
+    fps: f32,
     pub renderer: RayMarcher,
 }
 
@@ -25,7 +28,10 @@ impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewport3d = Self {
             enable_frame_rate_overlay: true,
+            frames_to_update_fps: 10,
+            frame_counter: 1,
             previous_frame_time: SystemTime::now(),
+            fps: 0.,
             renderer: RayMarcher::default(),
         };
 
@@ -269,13 +275,20 @@ impl Viewport3d {
         ui.painter().add(callback);
 
         if self.enable_frame_rate_overlay {
-            match SystemTime::now().duration_since(self.previous_frame_time) {
-                Ok(frame_time) => {
-                    ui.label(format!("{:?} fps", 1.0 / frame_time.as_secs_f32()));
+            if self.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.previous_frame_time) {
+                    Ok(frame_time) => {
+                        self.fps = self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                    }
+                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
                 }
-                Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+
+                self.previous_frame_time = SystemTime::now();
+                self.frame_counter = 1;
+            } else {
+                self.frame_counter += 1;
             }
-            self.previous_frame_time = SystemTime::now();
+            ui.label(format!("{:?} fps", self.fps));
         }
     }
 }

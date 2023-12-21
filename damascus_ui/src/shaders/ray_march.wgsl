@@ -2040,52 +2040,6 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
 
 
 /**
- * Get the direction, and distance of a directional light.
- *
- * @arg direction: The direction the light is travelling.
- * @arg light_direction: Will store the direction to the light.
- * @arg distance_to_light: Will store the distance to the light.
- * @arg visible_surface_area: The surface area that is visible to the
- *     position we are sampling from.
- */
-fn directional_light_data(
-    light: ptr<function, Light>,
-    light_direction: ptr<function, vec3<f32>>,
-    distance_to_light: ptr<function, f32>,
-    visible_surface_area: ptr<function, f32>,
-) {
-    *visible_surface_area = TWO_PI;
-    *distance_to_light = _render_params.ray_marcher.max_distance;
-    *light_direction = normalize(-(*light).dimensional_data);
-}
-
-
-/**
- * Get the direction, and distance of a point light.
- *
- * @arg point_on_surface: The point on the surface to compute the
- *     light intensity at.
- * @arg position: The position of the light.
- * @arg surface_position: Will store the direction to the light.
- * @arg distance_to_light: Will store the distance to the light.
- * @arg visible_surface_area: The surface area that is visible to the
- *     position we are sampling from.
- */
-fn point_light_data(
-    light: ptr<function, Light>,
-    surface_position: vec3<f32>,
-    light_direction: ptr<function, vec3<f32>>,
-    distance_to_light: ptr<function, f32>,
-    visible_surface_area: ptr<function, f32>,
-) {
-    *visible_surface_area = 0.;
-    *light_direction = (*light).dimensional_data - surface_position;
-    *distance_to_light = length(*light_direction);
-    *light_direction = normalize(*light_direction);
-}
-
-
-/**
  * Sample the data of a particular artificial light in the scene.
  * Artificial lights are any that are passed into the 'lights'
  * input.
@@ -2112,21 +2066,17 @@ fn sample_non_physical_light_data(
 
     switch light.light_type {
         case 0u {
-            directional_light_data(
-                &light,
-                light_direction,
-                distance_to_light,
-                &visible_surface_area,
-            );
+            // Directional light
+            visible_surface_area = TWO_PI;
+            *distance_to_light = _render_params.ray_marcher.max_distance;
+            *light_direction = normalize(-light.dimensional_data);
         }
         case 1u {
-            point_light_data(
-                &light,
-                surface_position,
-                light_direction,
-                distance_to_light,
-                &visible_surface_area,
-            );
+            // Point light
+            visible_surface_area = 0.;
+            *light_direction = light.dimensional_data - surface_position;
+            *distance_to_light = length(*light_direction);
+            *light_direction = normalize(*light_direction);
         }
         default {}
     }

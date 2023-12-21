@@ -43,7 +43,7 @@ impl Viewport3d {
 
         let device = &wgpu_render_state.device;
 
-        // Render globals buffer, TODO: actually use this for renderer's global params
+        // Render globals buffer
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render globals buffer"),

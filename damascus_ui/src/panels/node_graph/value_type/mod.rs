@@ -11,6 +11,9 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
 };
 
+mod vec;
+pub use vec::{Vec3, Vec4};
+
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
 ///
@@ -26,8 +29,8 @@ pub enum DamascusValueType {
     UnsignedInteger { value: u32 },
     Float { value: f32 },
     Vec2 { value: glam::Vec2 },
-    Vec3 { value: glam::Vec3 },
-    Vec4 { value: glam::Vec4 },
+    Vec3 { value: Vec3 },
+    Vec4 { value: Vec4 },
     Mat3 { value: glam::Mat3 },
     Mat4 { value: glam::Mat4 },
     Image { value: ndarray::Array4<f32> },
@@ -98,7 +101,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a vector3
     pub fn try_to_vec3(self) -> anyhow::Result<glam::Vec3> {
         if let DamascusValueType::Vec3 { value } = self {
-            Ok(value)
+            Ok(value.as_vec3())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec3", self)
         }
@@ -107,7 +110,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a vector4
     pub fn try_to_vec4(self) -> anyhow::Result<glam::Vec4> {
         if let DamascusValueType::Vec4 { value } = self {
-            Ok(value)
+            Ok(value.as_vec4())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec4", self)
         }
@@ -241,21 +244,27 @@ impl WidgetValueTrait for DamascusValueType {
                 ui.add(egui::DragValue::new(&mut value.y));
             });
         };
-        let create_vec3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec3| {
+        let create_vec3_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec3| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(egui::DragValue::new(&mut value.x));
-                ui.add(egui::DragValue::new(&mut value.y));
-                ui.add(egui::DragValue::new(&mut value.z));
+                ui.add(egui::DragValue::new(&mut value.value[0]));
+                ui.add(egui::DragValue::new(&mut value.value[1]));
+                ui.add(egui::DragValue::new(&mut value.value[2]));
+                if value.is_colour {
+                    ui.color_edit_button_rgb(&mut value.value);
+                }
             });
         };
-        let create_vec4_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec4| {
+        let create_vec4_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec4| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(egui::DragValue::new(&mut value.x));
-                ui.add(egui::DragValue::new(&mut value.y));
-                ui.add(egui::DragValue::new(&mut value.z));
-                ui.add(egui::DragValue::new(&mut value.w));
+                ui.add(egui::DragValue::new(&mut value.value[0]));
+                ui.add(egui::DragValue::new(&mut value.value[1]));
+                ui.add(egui::DragValue::new(&mut value.value[2]));
+                ui.add(egui::DragValue::new(&mut value.value[3]));
+                if value.is_colour {
+                    ui.color_edit_button_rgba_unmultiplied(&mut value.value);
+                }
             });
         };
         let create_mat3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat3| {

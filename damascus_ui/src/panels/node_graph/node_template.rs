@@ -5,8 +5,11 @@ use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTempl
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use crate::panels::node_graph::{
-    data_type::DamascusDataType, node_data::DamascusNodeData, node_graph_state::DamascusGraphState,
-    value_type::DamascusValueType, DamascusGraph,
+    data_type::DamascusDataType,
+    node_data::DamascusNodeData,
+    node_graph_state::DamascusGraphState,
+    value_type::{DamascusValueType, Vec3, Vec4},
+    DamascusGraph,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -115,7 +118,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_vector3 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec3| {
+        let input_vector3 = |graph: &mut DamascusGraph, name: &str, default: Vec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -125,7 +128,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec4| {
+        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -263,8 +266,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         match self {
             DamascusNodeTemplate::Axis => {
                 input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
-                input_vector3(graph, "translate", glam::Vec3::ZERO);
-                input_vector3(graph, "rotate", glam::Vec3::ZERO);
+                input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, false));
+                input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, false));
                 input_float(graph, "uniform_scale", 1.);
                 output_matrix4(graph, "out");
             }
@@ -292,17 +295,25 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 let default_light = lights::Light::default();
                 input_light(graph, "lights", vec![]);
                 input_uint(graph, "light_type", default_light.light_type as u32); // TODO make a dropdown for enums
-                input_vector3(graph, "dimensional_data", default_light.dimensional_data);
+                input_vector3(
+                    graph,
+                    "dimensional_data",
+                    Vec3::new(default_light.dimensional_data, false),
+                );
                 input_float(graph, "intensity", default_light.intensity);
                 input_uint(graph, "falloff", default_light.falloff);
-                input_vector3(graph, "colour", default_light.colour);
+                input_vector3(graph, "colour", Vec3::new(default_light.colour, true));
                 input_float(graph, "shadow_hardness", default_light.shadow_hardness);
                 input_bool(graph, "soften_shadows", default_light.soften_shadows);
                 output_light(graph, "out");
             }
             DamascusNodeTemplate::Material => {
                 let default_material = materials::Material::default();
-                input_vector3(graph, "diffuse_colour", default_material.diffuse_colour);
+                input_vector3(
+                    graph,
+                    "diffuse_colour",
+                    Vec3::new(default_material.diffuse_colour, true),
+                );
                 input_float(
                     graph,
                     "specular_probability",
@@ -313,7 +324,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "specular_roughness",
                     default_material.specular_roughness,
                 );
-                input_vector3(graph, "specular_colour", default_material.specular_colour);
+                input_vector3(
+                    graph,
+                    "specular_colour",
+                    Vec3::new(default_material.specular_colour, true),
+                );
                 input_float(
                     graph,
                     "transmissive_probability",
@@ -327,14 +342,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "transmissive_colour",
-                    default_material.transmissive_colour,
+                    Vec3::new(default_material.transmissive_colour, true),
                 );
                 input_float(
                     graph,
                     "emissive_probability",
                     default_material.emissive_probability,
                 );
-                input_vector3(graph, "emissive_colour", default_material.emissive_colour);
+                input_vector3(
+                    graph,
+                    "emissive_colour",
+                    Vec3::new(default_material.emissive_colour, true),
+                );
                 input_float(graph, "refractive_index", default_material.refractive_index);
                 input_float(
                     graph,
@@ -344,7 +363,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "scattering_colour",
-                    default_material.scattering_colour,
+                    Vec3::new(default_material.scattering_colour, true),
                 );
                 output_material(graph, "out");
             }
@@ -357,7 +376,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
                 input_uint(graph, "modifiers", default_primitive.modifiers as u32); // TODO make this a series of bools
                 input_float(graph, "blend_strength", default_primitive.blend_strength);
-                input_vector4(graph, "dimensional_data", glam::Vec4::X); // TODO make this dynamic based on shape
+                input_vector4(graph, "dimensional_data", Vec4::new(glam::Vec4::X, false)); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {
@@ -375,7 +394,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(graph, "hit_tolerance", default_ray_marcher.hit_tolerance);
                 input_float(graph, "shadow_bias", default_ray_marcher.shadow_bias);
                 input_float(graph, "max_brightness", default_ray_marcher.max_brightness);
-                input_vector3(graph, "seeds", default_ray_marcher.seeds);
+                input_vector3(graph, "seeds", Vec3::new(default_ray_marcher.seeds, false));
                 input_bool(
                     graph,
                     "enable_depth_of_field",

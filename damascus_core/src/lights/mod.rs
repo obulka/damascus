@@ -13,13 +13,13 @@ pub enum Lights {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140)]
 pub struct GPULight {
-    pub light_type: u32,
-    pub dimensional_data: Vec3,
-    pub intensity: f32,
-    pub falloff: u32,
-    pub colour: Vec3,
-    pub shadow_hardness: f32,
-    pub soften_shadows: u32,
+    light_type: u32,
+    dimensional_data: Vec3,
+    intensity: f32,
+    falloff: u32,
+    colour: Vec3,
+    shadow_hardness: f32,
+    soften_shadows: u32,
 }
 
 impl Default for GPULight {

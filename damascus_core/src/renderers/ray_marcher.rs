@@ -10,36 +10,36 @@ use crate::{
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140)]
 pub struct GPURayMarcher {
-    pub paths_per_pixel: u32,
-    pub roulette: u32,
-    pub max_distance: f32,
-    pub max_ray_steps: u32,
-    pub max_bounces: u32,
-    pub hit_tolerance: f32,
-    pub shadow_bias: f32,
-    pub max_brightness: f32,
-    pub seeds: Vec3,
-    pub enable_depth_of_field: u32,
-    pub dynamic_level_of_detail: u32,
-    pub max_light_sampling_bounces: u32,
-    pub sample_hdri: u32,
-    pub sample_all_lights: u32,
-    pub light_sampling_bias: f32,
-    pub secondary_sampling: u32,
+    paths_per_pixel: u32,
+    roulette: u32,
+    max_distance: f32,
+    max_ray_steps: u32,
+    max_bounces: u32,
+    hit_tolerance: f32,
+    shadow_bias: f32,
+    max_brightness: f32,
+    seeds: Vec3,
+    enable_depth_of_field: u32,
+    dynamic_level_of_detail: u32,
+    max_light_sampling_bounces: u32,
+    sample_hdri: u32,
+    sample_all_lights: u32,
+    light_sampling_bias: f32,
+    secondary_sampling: u32,
     // TODO add scattering material
-    pub hdri_offset_angle: f32,
+    hdri_offset_angle: f32,
     // TODO precomputed irradiance
     // TODO variance & adaptive sampling
-    pub output_aov: u32,
+    output_aov: u32,
     // TODO resolution
-    pub latlong: u32,
+    latlong: u32,
 }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140)]
 pub struct RenderParameters {
-    pub ray_marcher: Std140GPURayMarcher,
-    pub scene: Std140SceneParameters,
+    ray_marcher: Std140GPURayMarcher,
+    scene: Std140SceneParameters,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

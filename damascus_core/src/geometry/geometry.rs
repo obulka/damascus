@@ -6,9 +6,9 @@ use crate::materials::Material;
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct Transform {
-    pub translation: Vec3,
-    pub inverse_rotation: Mat3,
-    pub uniform_scale: f32,
+    translation: Vec3,
+    inverse_rotation: Mat3,
+    uniform_scale: f32,
 }
 
 #[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
@@ -44,13 +44,13 @@ pub enum Shapes {
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd140)]
 pub struct GPUPrimitive {
-    pub shape: u32,
-    pub transform: Transform,
-    pub material: Material,
-    pub modifiers: u32,
-    pub blend_strength: f32,
-    pub num_children: u32,
-    pub dimensional_data: Vec4,
+    shape: u32,
+    transform: Transform,
+    material: Material,
+    modifiers: u32,
+    blend_strength: f32,
+    num_children: u32,
+    dimensional_data: Vec4,
 }
 
 #[derive(Debug, Default, Copy, Clone, serde::Serialize, serde::Deserialize)]

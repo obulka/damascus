@@ -4,14 +4,14 @@ use egui_node_graph::{Graph, NodeId, OutputId};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
+mod node_data;
 mod node_graph_state;
 mod response;
-mod value_type;
 
 // These three modules and this file are all that needs to be updated to add nodes
 mod data_type;
-mod node_data;
 mod node_template;
+mod value_type;
 
 pub use data_type::DamascusDataType;
 pub use node_data::DamascusNodeData;

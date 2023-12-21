@@ -5,11 +5,13 @@ use egui_node_graph::{GraphEditorState, NodeResponse};
 
 use crate::viewport_3d::Viewport3d;
 
+// These four modules are all that needs to be updated to add nodes
 mod data_type;
 mod node_data;
 mod node_graph;
-mod node_graph_state;
 mod node_template;
+
+mod node_graph_state;
 mod response;
 mod value_type;
 use data_type::DamascusDataType;

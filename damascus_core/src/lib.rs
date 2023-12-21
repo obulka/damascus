@@ -5,7 +5,6 @@ extern crate num_derive;
 pub mod geometry;
 pub mod lights;
 pub mod materials;
-pub mod math;
 pub mod renderers;
 pub mod scene;
 pub mod shaders;

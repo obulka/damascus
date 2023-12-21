@@ -39,6 +39,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Material => "material",
             DamascusNodeTemplate::Primitive => "primitive",
             DamascusNodeTemplate::RayMarcher => "ray marcher",
+
             DamascusNodeTemplate::Scene => "scene",
         })
     }

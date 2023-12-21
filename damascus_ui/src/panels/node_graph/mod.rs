@@ -83,20 +83,8 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_bool()
         }
 
-        fn output_bool(&mut self, name: &str, value: bool) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Bool { value })
-        }
-
         fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
             self.evaluate_input(name)?.try_to_int()
-        }
-
-        fn output_int(&mut self, name: &str, value: i32) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Integer { value })
-        }
-
-        fn output_uint(&mut self, name: &str, value: u32) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::UnsignedInteger { value })
         }
 
         fn input_uint(&mut self, name: &str) -> anyhow::Result<u32> {
@@ -107,44 +95,16 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_float()
         }
 
-        fn output_float(&mut self, name: &str, value: f32) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Float { value })
-        }
-
         fn input_vector2(&mut self, name: &str) -> anyhow::Result<glam::Vec2> {
             self.evaluate_input(name)?.try_to_vec2()
-        }
-
-        fn output_vector2(
-            &mut self,
-            name: &str,
-            value: glam::Vec2,
-        ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Vec2 { value })
         }
 
         fn input_vector3(&mut self, name: &str) -> anyhow::Result<glam::Vec3> {
             self.evaluate_input(name)?.try_to_vec3()
         }
 
-        fn output_vector3(
-            &mut self,
-            name: &str,
-            value: glam::Vec3,
-        ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Vec3 { value })
-        }
-
         fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
             self.evaluate_input(name)?.try_to_vec4()
-        }
-
-        fn output_vector4(
-            &mut self,
-            name: &str,
-            value: glam::Vec4,
-        ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Vec4 { value })
         }
 
         fn input_matrix3(&mut self, name: &str) -> anyhow::Result<glam::Mat3> {

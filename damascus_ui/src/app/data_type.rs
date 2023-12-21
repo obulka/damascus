@@ -31,8 +31,6 @@ pub enum DamascusDataType {
     Scene,
 }
 
-// =========== Then, you need to implement some traits ============
-
 // A trait for the data types, to tell the library how to display them
 impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {

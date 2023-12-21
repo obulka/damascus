@@ -8,6 +8,7 @@ pub mod materials;
 pub mod math;
 pub mod renderers;
 pub mod scene;
+pub mod shaders;
 
 // pub fn add(left: usize, right: usize) -> usize {
 //     left + right

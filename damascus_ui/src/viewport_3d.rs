@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::ops::BitOr;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -13,6 +14,7 @@ use damascus_core::{
     lights::Std140GPULight,
     renderers::{RayMarcher, Std140RenderParameters},
     scene::Scene,
+    shaders,
 };
 
 pub struct Viewport3d {
@@ -182,7 +184,7 @@ impl Viewport3d {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("./shaders/ray_march.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(shaders::RAY_MARCH_SHADER)).into(),
         });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {

@@ -1473,16 +1473,13 @@ pub fn evaluate_node(
                 let dimensional_data = evaluator.input_vector4("dimensional_data")?;
 
                 let world_matrix = evaluator.input_matrix4("world_matrix")?;
-                let (scale, quaternion, translation) = world_matrix.to_scale_rotation_translation();
-                let inverse_rotation = glam::Mat3::from_quat(quaternion).inverse();
+                for child in children.iter_mut() {
+                    child.world_matrix = world_matrix * child.world_matrix;
+                }
 
                 let primitive = geometry::Primitive {
-                    shape: shape, // TODO
-                    transform: geometry::Transform {
-                        translation: translation,
-                        inverse_rotation: inverse_rotation,
-                        uniform_scale: scale.x,
-                    },
+                    shape: shape,
+                    world_matrix: world_matrix,
                     material: material,
                     modifiers: modifiers,
                     blend_strength: blend_strength,

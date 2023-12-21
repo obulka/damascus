@@ -1,5 +1,5 @@
 use crevice::std140::AsStd140;
-use glam::{Mat3, Vec3, Vec4};
+use glam::{Mat3, Mat4, Vec3, Vec4};
 
 use crate::materials::Material;
 
@@ -56,7 +56,7 @@ pub struct GPUPrimitive {
 #[derive(Debug, Default, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Primitive {
     pub shape: Shapes,
-    pub transform: Transform,
+    pub world_matrix: Mat4,
     pub material: Material,
     pub modifiers: u32,
     pub blend_strength: f32,
@@ -66,9 +66,14 @@ pub struct Primitive {
 
 impl Primitive {
     pub fn to_gpu(&self) -> Std140GPUPrimitive {
+        let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
         GPUPrimitive {
             shape: self.shape as u32,
-            transform: self.transform,
+            transform: Transform {
+                translation: translation,
+                inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),
+                uniform_scale: scale.x,
+            },
             material: self.material,
             modifiers: self.modifiers,
             blend_strength: self.blend_strength,

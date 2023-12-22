@@ -328,7 +328,6 @@ pub fn evaluate_node(
             let mut children = evaluator.input_primitive("children")?;
             let shape_selection = evaluator.input_combo_box("shape")?;
             let shape = geometry::Shapes::from_str(&shape_selection.selected)?;
-
             let material = evaluator.input_material("material")?;
             let modifiers = evaluator.input_uint("modifiers")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
@@ -373,12 +372,9 @@ pub fn evaluate_node(
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
             let hdri_offset_angle = evaluator.input_float("hdri_offset_angle")?;
             let latlong = evaluator.input_bool("latlong")?;
+            let output_aov_selection = evaluator.input_combo_box("output_aov")?;
+            let output_aov = renderers::AOVs::from_str(&output_aov_selection.selected)?;
 
-            let output_aov_num = evaluator.input_uint("output_aov")?;
-            let mut output_aov = renderers::AOVs::default();
-            if let Some(aov) = num::FromPrimitive::from_u32(output_aov_num) {
-                output_aov = aov;
-            }
             evaluator.output_ray_marcher(
                 "out",
                 renderers::RayMarcher {

@@ -1,4 +1,8 @@
-#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
+use strum::{Display, EnumIter, EnumString};
+
+#[derive(
+    Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+)]
 pub enum AOVs {
     #[default]
     Beauty,

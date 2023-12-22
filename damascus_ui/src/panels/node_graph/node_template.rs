@@ -449,7 +449,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "hdri_offset_angle",
                     default_ray_marcher.hdri_offset_angle,
                 );
-                input_uint(graph, "output_aov", default_ray_marcher.output_aov as u32);
+                input_combo_box(
+                    graph,
+                    "output_aov",
+                    ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov),
+                );
                 input_bool(graph, "latlong", default_ray_marcher.latlong);
                 output_ray_marcher(graph, "out");
             }

@@ -9,9 +9,6 @@ edition = "2021"
 bytemuck = "1.13"
 crevice = { version = "0.14.0", features = ["glam"] }
 glam = { version = "0.24", features = ["serde"] }
-num = "0.4"
-num-derive = "0.4"
-num-traits = "0.2"
 rand = "0.8.5"
 serde = "1.0"
 strum = { version = "0.25", features = ["derive"] }

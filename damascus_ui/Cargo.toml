@@ -16,9 +16,6 @@ serde = "1.0"
 serde_yaml = "0.9"
 bytemuck = "1.7.1"
 ndarray = { version = "0.15.6", features = ["serde"] }
-num = "0.4"
-num-derive = "0.4"
-num-traits = "0.2"
 rfd = "0.12"
 strum = { version = "0.25", features = ["derive"] }
 

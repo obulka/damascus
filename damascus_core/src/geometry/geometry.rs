@@ -13,16 +13,7 @@ pub struct Transform {
 }
 
 #[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumIter,
-    EnumString,
-    FromPrimitive,
-    serde::Serialize,
-    serde::Deserialize,
+    Debug, Display, Default, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
 )]
 pub enum Shapes {
     #[default]

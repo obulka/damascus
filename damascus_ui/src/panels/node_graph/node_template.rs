@@ -304,7 +304,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Light => {
                 let default_light = lights::Light::default();
                 input_light(graph, "lights", vec![]);
-                input_uint(graph, "light_type", default_light.light_type as u32); // TODO make a dropdown for enums
+                input_combo_box(
+                    graph,
+                    "light_type",
+                    ComboBox::new::<lights::Lights>(default_light.light_type),
+                );
                 input_vector3(
                     graph,
                     "dimensional_data",
@@ -382,7 +386,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
                 input_material(graph, "material", default_primitive.material);
-                // input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
                 input_combo_box(
                     graph,
                     "shape",

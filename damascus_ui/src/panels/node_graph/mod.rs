@@ -269,28 +269,26 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Light => {
             let mut scene_lights = evaluator.input_light("lights")?;
-            let light_type = evaluator.input_uint("light_type")?;
+            let light_type_selection = evaluator.input_combo_box("light_type")?;
+            let light_type = lights::Lights::from_str(&light_type_selection.selected)?;
+            let dimensional_data = evaluator.input_vector3("dimensional_data")?;
+            let intensity = evaluator.input_float("intensity")?;
+            let falloff = evaluator.input_uint("falloff")?;
+            let colour = evaluator.input_vector3("colour")?;
+            let shadow_hardness = evaluator.input_float("shadow_hardness")?;
+            let soften_shadows = evaluator.input_bool("soften_shadows")?;
 
-            if let Some(light_type) = num::FromPrimitive::from_u32(light_type) {
-                let dimensional_data = evaluator.input_vector3("dimensional_data")?;
-                let intensity = evaluator.input_float("intensity")?;
-                let falloff = evaluator.input_uint("falloff")?;
-                let colour = evaluator.input_vector3("colour")?;
-                let shadow_hardness = evaluator.input_float("shadow_hardness")?;
-                let soften_shadows = evaluator.input_bool("soften_shadows")?;
+            let light = lights::Light {
+                light_type: light_type,
+                dimensional_data: dimensional_data,
+                intensity: intensity,
+                falloff: falloff,
+                colour: colour,
+                shadow_hardness: shadow_hardness,
+                soften_shadows: soften_shadows,
+            };
 
-                let light = lights::Light {
-                    light_type: light_type,
-                    dimensional_data: dimensional_data,
-                    intensity: intensity,
-                    falloff: falloff,
-                    colour: colour,
-                    shadow_hardness: shadow_hardness,
-                    soften_shadows: soften_shadows,
-                };
-
-                scene_lights.push(light);
-            }
+            scene_lights.push(light);
             evaluator.output_light("out", scene_lights)
         }
         DamascusNodeTemplate::Material => {
@@ -307,21 +305,23 @@ pub fn evaluate_node(
             let scattering_coefficient = evaluator.input_float("scattering_coefficient")?;
             let scattering_colour = evaluator.input_vector3("scattering_colour")?;
 
-            let material = materials::Material {
-                diffuse_colour: diffuse_colour,
-                specular_probability: specular_probability,
-                specular_roughness: specular_roughness,
-                specular_colour: specular_colour,
-                transmissive_probability: transmissive_probability,
-                transmissive_roughness: transmissive_roughness,
-                transmissive_colour: transmissive_colour,
-                emissive_probability: emissive_probability,
-                emissive_colour: emissive_colour,
-                refractive_index: refractive_index,
-                scattering_coefficient: scattering_coefficient,
-                scattering_colour: scattering_colour,
-            };
-            evaluator.output_material("out", material)
+            evaluator.output_material(
+                "out",
+                materials::Material {
+                    diffuse_colour: diffuse_colour,
+                    specular_probability: specular_probability,
+                    specular_roughness: specular_roughness,
+                    specular_colour: specular_colour,
+                    transmissive_probability: transmissive_probability,
+                    transmissive_roughness: transmissive_roughness,
+                    transmissive_colour: transmissive_colour,
+                    emissive_probability: emissive_probability,
+                    emissive_colour: emissive_colour,
+                    refractive_index: refractive_index,
+                    scattering_coefficient: scattering_coefficient,
+                    scattering_colour: scattering_colour,
+                },
+            )
         }
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
@@ -348,6 +348,7 @@ pub fn evaluate_node(
                 num_children: children.len() as u32,
                 dimensional_data: dimensional_data,
             };
+
             scene_primitives.push(primitive);
             scene_primitives.append(&mut children);
             evaluator.output_primitive("out", scene_primitives)

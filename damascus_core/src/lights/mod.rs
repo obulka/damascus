@@ -1,7 +1,10 @@
 use crevice::std140::AsStd140;
 use glam::Vec3;
+use strum::{Display, EnumIter, EnumString};
 
-#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+)]
 pub enum Lights {
     #[default]
     Directional,

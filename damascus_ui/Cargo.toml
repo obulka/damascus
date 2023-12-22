@@ -20,6 +20,7 @@ num = "0.4"
 num-derive = "0.4"
 num-traits = "0.2"
 rfd = "0.12"
+strum = { version = "0.25", features = ["derive"] }
 
 [profile.release]
 lto = true

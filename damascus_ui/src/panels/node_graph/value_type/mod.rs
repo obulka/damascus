@@ -11,8 +11,8 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
 };
 
-mod vec;
-pub use vec::{Vec3, Vec4};
+mod wrappers;
+pub use wrappers::{ComboBox, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -25,6 +25,7 @@ pub use vec::{Vec3, Vec4};
 pub enum DamascusValueType {
     // Base types
     Bool { value: bool },
+    ComboBox { value: ComboBox },
     Integer { value: i32 },
     UnsignedInteger { value: u32 },
     Float { value: f32 },
@@ -77,6 +78,15 @@ impl DamascusValueType {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to bool", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a bool
+    pub fn try_to_combo_box(self) -> anyhow::Result<ComboBox> {
+        if let DamascusValueType::ComboBox { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to combo_box", self)
         }
     }
 
@@ -216,6 +226,23 @@ impl WidgetValueTrait for DamascusValueType {
                 ui.add(egui::Checkbox::new(value, ""));
             });
         };
+        let create_combo_box_ui = |ui: &mut egui::Ui, label: &str, value: &mut ComboBox| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                egui::ComboBox::from_label("")
+                    .selected_text(&value.selected)
+                    .width(ui.available_width())
+                    .show_ui(ui, |ui| {
+                        for enum_option in value.options.iter() {
+                            ui.selectable_value(
+                                &mut value.selected,
+                                enum_option.to_string(),
+                                enum_option,
+                            );
+                        }
+                    })
+            });
+        };
         let create_int_ui =
             |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
                 ui.horizontal(|ui| {
@@ -322,6 +349,9 @@ impl WidgetValueTrait for DamascusValueType {
         match self {
             DamascusValueType::Bool { value } => {
                 create_bool_ui(ui, param_name, value);
+            }
+            DamascusValueType::ComboBox { value } => {
+                create_combo_box_ui(ui, param_name, value);
             }
             DamascusValueType::Integer { value } => {
                 create_int_ui(ui, param_name, value, -50..=50);

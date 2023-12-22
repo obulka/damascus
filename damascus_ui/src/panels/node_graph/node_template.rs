@@ -8,7 +8,7 @@ use crate::panels::node_graph::{
     data_type::DamascusDataType,
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
-    value_type::{DamascusValueType, Vec3, Vec4},
+    value_type::{ComboBox, DamascusValueType, Vec3, Vec4},
     DamascusGraph,
 };
 
@@ -74,6 +74,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 name.to_string(),
                 DamascusDataType::Bool,
                 DamascusValueType::Bool { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_combo_box = |graph: &mut DamascusGraph, name: &str, default: ComboBox| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::ComboBox,
+                DamascusValueType::ComboBox { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -372,7 +382,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
                 input_material(graph, "material", default_primitive.material);
-                input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
+                // input_uint(graph, "shape", default_primitive.shape as u32); // TODO make a dropdown for enums
+                input_combo_box(
+                    graph,
+                    "shape",
+                    ComboBox::new::<geometry::Shapes>(default_primitive.shape),
+                );
                 input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
                 input_uint(graph, "modifiers", default_primitive.modifiers as u32); // TODO make this a series of bools
                 input_float(graph, "blend_strength", default_primitive.blend_strength);

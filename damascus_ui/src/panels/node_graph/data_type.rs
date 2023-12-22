@@ -12,6 +12,7 @@ use crate::panels::node_graph::node_graph_state::DamascusGraphState;
 pub enum DamascusDataType {
     // Base types
     Bool,
+    ComboBox,
     Integer,
     UnsignedInteger,
     Float,
@@ -50,6 +51,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
             DamascusDataType::Bool => "boolean",
+            DamascusDataType::ComboBox => "combo box",
             DamascusDataType::Integer => "integer",
             DamascusDataType::UnsignedInteger => "unsigned integer",
             DamascusDataType::Float => "scalar float",

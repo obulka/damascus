@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use egui_node_graph::{Graph, NodeId, OutputId};
 
@@ -18,7 +19,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::DamascusValueType;
+pub use value_type::{ComboBox, DamascusValueType};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
@@ -81,6 +82,10 @@ pub fn evaluate_node(
 
         fn input_bool(&mut self, name: &str) -> anyhow::Result<bool> {
             self.evaluate_input(name)?.try_to_bool()
+        }
+
+        fn input_combo_box(&mut self, name: &str) -> anyhow::Result<ComboBox> {
+            self.evaluate_input(name)?.try_to_combo_box()
         }
 
         fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
@@ -321,30 +326,29 @@ pub fn evaluate_node(
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
-            let shape_number = evaluator.input_uint("shape")?;
+            let shape_selection = evaluator.input_combo_box("shape")?;
+            let shape = geometry::Shapes::from_str(&shape_selection.selected)?;
 
-            if let Some(shape) = num::FromPrimitive::from_u32(shape_number) {
-                let material = evaluator.input_material("material")?;
-                let modifiers = evaluator.input_uint("modifiers")?;
-                let blend_strength = evaluator.input_float("blend_strength")?;
-                let dimensional_data = evaluator.input_vector4("dimensional_data")?;
+            let material = evaluator.input_material("material")?;
+            let modifiers = evaluator.input_uint("modifiers")?;
+            let blend_strength = evaluator.input_float("blend_strength")?;
+            let dimensional_data = evaluator.input_vector4("dimensional_data")?;
 
-                let world_matrix = evaluator.input_matrix4("world_matrix")?;
-                for child in children.iter_mut() {
-                    child.world_matrix = world_matrix * child.world_matrix;
-                }
-
-                let primitive = geometry::Primitive {
-                    shape: shape,
-                    world_matrix: world_matrix,
-                    material: material,
-                    modifiers: modifiers,
-                    blend_strength: blend_strength,
-                    num_children: children.len() as u32,
-                    dimensional_data: dimensional_data,
-                };
-                scene_primitives.push(primitive);
+            let world_matrix = evaluator.input_matrix4("world_matrix")?;
+            for child in children.iter_mut() {
+                child.world_matrix = world_matrix * child.world_matrix;
             }
+
+            let primitive = geometry::Primitive {
+                shape: shape,
+                world_matrix: world_matrix,
+                material: material,
+                modifiers: modifiers,
+                blend_strength: blend_strength,
+                num_children: children.len() as u32,
+                dimensional_data: dimensional_data,
+            };
+            scene_primitives.push(primitive);
             scene_primitives.append(&mut children);
             evaluator.output_primitive("out", scene_primitives)
         }

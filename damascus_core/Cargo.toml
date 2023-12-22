@@ -14,3 +14,4 @@ num-derive = "0.4"
 num-traits = "0.2"
 rand = "0.8.5"
 serde = "1.0"
+strum = { version = "0.25", features = ["derive"] }

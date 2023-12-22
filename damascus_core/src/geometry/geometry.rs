@@ -1,5 +1,6 @@
 use crevice::std140::AsStd140;
 use glam::{Mat3, Mat4, Vec3, Vec4};
+use strum::{Display, EnumIter, EnumString};
 
 use crate::materials::Material;
 
@@ -11,7 +12,18 @@ pub struct Transform {
     uniform_scale: f32,
 }
 
-#[derive(Debug, Default, Copy, Clone, FromPrimitive, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    FromPrimitive,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Shapes {
     #[default]
     Sphere,

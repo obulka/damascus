@@ -247,21 +247,21 @@ impl WidgetValueTrait for DamascusValueType {
             |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
                 ui.horizontal(|ui| {
                     ui.label(label);
-                    ui.add(egui::Slider::new(value, range));
+                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
                 });
             };
         let create_uint_ui =
             |ui: &mut egui::Ui, label: &str, value: &mut u32, range: RangeInclusive<u32>| {
                 ui.horizontal(|ui| {
                     ui.label(label);
-                    ui.add(egui::Slider::new(value, range));
+                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
                 });
             };
         let create_float_ui =
             |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
                 ui.horizontal(|ui| {
                     ui.label(label);
-                    ui.add(egui::Slider::new(value, range));
+                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
                 });
             };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {

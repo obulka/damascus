@@ -78,7 +78,7 @@ impl Default for RayMarcher {
             roulette: true,
             max_distance: 100.0,
             max_ray_steps: 1000,
-            max_bounces: 7,
+            max_bounces: 1,
             hit_tolerance: 0.0001,
             shadow_bias: 1.0,
             max_brightness: 999999999.9,

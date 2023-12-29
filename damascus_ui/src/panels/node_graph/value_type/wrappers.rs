@@ -1,7 +1,53 @@
+use core::ops::RangeInclusive;
 use std::fmt::Display;
 
 use glam;
 use strum::IntoEnumIterator;
+
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Integer {
+    pub value: i32,
+    pub range: RangeInclusive<i32>,
+}
+
+impl Integer {
+    pub fn new(value: i32, range: RangeInclusive<i32>) -> Self {
+        Self {
+            value: value,
+            range: range,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct UnsignedInteger {
+    pub value: u32,
+    pub range: RangeInclusive<u32>,
+}
+
+impl UnsignedInteger {
+    pub fn new(value: u32, range: RangeInclusive<u32>) -> Self {
+        Self {
+            value: value,
+            range: range,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Float {
+    pub value: f32,
+    pub range: RangeInclusive<f32>,
+}
+
+impl Float {
+    pub fn new(value: f32, range: RangeInclusive<f32>) -> Self {
+        Self {
+            value: value,
+            range: range,
+        }
+    }
+}
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Vec3 {

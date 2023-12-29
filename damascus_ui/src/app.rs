@@ -158,7 +158,7 @@ impl eframe::App for Damascus {
                             egui::Color32::RED,
                         );
 
-                        DamascusValueType::Float { value: 0.0 }
+                        DamascusValueType::Bool { value: false }
                     }
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {

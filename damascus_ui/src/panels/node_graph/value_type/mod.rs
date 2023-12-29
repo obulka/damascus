@@ -1,5 +1,3 @@
-use core::ops::RangeInclusive;
-
 use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
@@ -12,7 +10,7 @@ use crate::panels::node_graph::{
 };
 
 mod wrappers;
-pub use wrappers::{ComboBox, Vec3, Vec4};
+pub use wrappers::{ComboBox, Float, Integer, UnsignedInteger, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -26,9 +24,9 @@ pub enum DamascusValueType {
     // Base types
     Bool { value: bool },
     ComboBox { value: ComboBox },
-    Integer { value: i32 },
-    UnsignedInteger { value: u32 },
-    Float { value: f32 },
+    Integer { value: Integer },
+    UnsignedInteger { value: UnsignedInteger },
+    Float { value: Float },
     Vec2 { value: glam::Vec2 },
     Vec3 { value: Vec3 },
     Vec4 { value: Vec4 },
@@ -49,7 +47,7 @@ impl Default for DamascusValueType {
     fn default() -> Self {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
-        Self::Float { value: 0.0 }
+        Self::Bool { value: false }
     }
 }
 
@@ -57,7 +55,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to an int
     pub fn try_to_int(self) -> anyhow::Result<i32> {
         if let DamascusValueType::Integer { value } = self {
-            Ok(value)
+            Ok(value.value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to int", self)
         }
@@ -66,7 +64,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a uint
     pub fn try_to_uint(self) -> anyhow::Result<u32> {
         if let DamascusValueType::UnsignedInteger { value } = self {
-            Ok(value)
+            Ok(value.value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to uint", self)
         }
@@ -93,7 +91,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a float
     pub fn try_to_float(self) -> anyhow::Result<f32> {
         if let DamascusValueType::Float { value } = self {
-            Ok(value)
+            Ok(value.value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to float", self)
         }
@@ -243,27 +241,30 @@ impl WidgetValueTrait for DamascusValueType {
                     })
             });
         };
-        let create_int_ui =
-            |ui: &mut egui::Ui, label: &str, value: &mut i32, range: RangeInclusive<i32>| {
-                ui.horizontal(|ui| {
-                    ui.label(label);
-                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
-                });
-            };
-        let create_uint_ui =
-            |ui: &mut egui::Ui, label: &str, value: &mut u32, range: RangeInclusive<u32>| {
-                ui.horizontal(|ui| {
-                    ui.label(label);
-                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
-                });
-            };
-        let create_float_ui =
-            |ui: &mut egui::Ui, label: &str, value: &mut f32, range: RangeInclusive<f32>| {
-                ui.horizontal(|ui| {
-                    ui.label(label);
-                    ui.add(egui::Slider::new(value, range).clamp_to_range(false));
-                });
-            };
+        let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut Integer| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(
+                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
+                );
+            });
+        };
+        let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut UnsignedInteger| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(
+                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
+                );
+            });
+        };
+        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut Float| {
+            ui.horizontal(|ui| {
+                ui.label(label);
+                ui.add(
+                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
+                );
+            });
+        };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
             ui.horizontal(|ui| {
                 ui.label(label);
@@ -354,13 +355,13 @@ impl WidgetValueTrait for DamascusValueType {
                 create_combo_box_ui(ui, param_name, value);
             }
             DamascusValueType::Integer { value } => {
-                create_int_ui(ui, param_name, value, -50..=50);
+                create_int_ui(ui, param_name, value);
             }
             DamascusValueType::UnsignedInteger { value } => {
-                create_uint_ui(ui, param_name, value, 0..=100);
+                create_uint_ui(ui, param_name, value);
             }
             DamascusValueType::Float { value } => {
-                create_float_ui(ui, param_name, value, 0.0..=100.0);
+                create_float_ui(ui, param_name, value);
             }
             DamascusValueType::Vec2 { value } => {
                 create_vec2_ui(ui, param_name, value);

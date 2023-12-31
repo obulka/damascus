@@ -13,6 +13,7 @@ use crate::{
 pub struct SceneParameters {
     num_primitives: u32,
     num_lights: u32,
+    num_non_physical_lights: u32,
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -42,10 +43,21 @@ impl Scene {
         light_array
     }
 
+    fn num_emissive_prims(&self) -> u32 {
+        let mut count = 0;
+        for primitive in self.primitives.iter() {
+            if primitive.material.emissive_probability > 0. {
+                count += 1;
+            }
+        }
+        count
+    }
+
     pub fn create_scene_parameters(&self) -> Std140SceneParameters {
         return SceneParameters {
             num_primitives: self.primitives.len() as u32,
-            num_lights: self.lights.len() as u32,
+            num_lights: self.lights.len() as u32 + self.num_emissive_prims(),
+            num_non_physical_lights: self.lights.len() as u32,
         }
         .as_std140();
     }

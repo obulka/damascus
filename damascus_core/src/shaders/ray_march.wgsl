@@ -16,6 +16,7 @@
 struct SceneParameters {
     num_primitives: u32,
     num_lights: u32,
+    num_non_physical_lights: u32,
 }
 
 
@@ -2048,7 +2049,6 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
  *     data of.
  * @arg light_index: The index of the chosen light in the lights
  *     texture.
- * @arg num_non_physical_lights: The number of lights in the scene.
  * @arg light_direction: The direction from the surface to the light.
  * @arg distance_to_light: The distance to the light's surface.
  *
@@ -2057,7 +2057,6 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
 fn sample_non_physical_light_data(
     surface_position: vec3<f32>,
     light_index: u32,
-    num_non_physical_lights: u32,
     light_direction: ptr<function, vec3<f32>>,
     distance_to_light: ptr<function, f32>,
 ) -> f32 {
@@ -2081,7 +2080,7 @@ fn sample_non_physical_light_data(
         default {}
     }
 
-    return sample_lights_pdf(f32(max(1u, num_non_physical_lights)), visible_surface_area);
+    return sample_lights_pdf(f32(max(1u, _render_params.scene.num_non_physical_lights)), visible_surface_area);
 }
 
 
@@ -2092,7 +2091,6 @@ fn sample_non_physical_light_data(
  * @arg position: The position on the surface to sample the data of.
  * @arg surface_normal: The normal to the surface at the position we
  *     are sampling the data of.
- * @arg num_non_physical_lights: The number of lights in the scene.
  * @arg light_id: The index of the chosen light to sample.
  * @arg light_direction: The direction from the surface to the light.
  * @arg distance_to_light: The distance to the light's surface.
@@ -2103,7 +2101,6 @@ fn sample_light_data(
     seed: vec3<f32>,
     position: vec3<f32>,
     surface_normal: vec3<f32>,
-    num_non_physical_lights: u32,
     light_id: u32,
     light_direction: ptr<function, vec3<f32>>,
     distance_to_light: ptr<function, f32>,
@@ -2113,7 +2110,6 @@ fn sample_light_data(
     return sample_non_physical_light_data(
         position,
         light_id,
-        num_non_physical_lights,
         light_direction,
         distance_to_light,
     );
@@ -2433,20 +2429,20 @@ fn sample_light(
     material_pdf: f32,
     light_id: u32,
 ) -> vec3<f32> {
-    // float4 light_colour = float4(0);
-    // float light_geometry_factor;
+    var light_colour = vec3(0.);
+    var light_geometry_factor: f32 = 0.;
 
-    // if (light_id < _lightTextureWidth)
-    // {
-    var light_colour = sample_non_physical_light(
-        position,
-        surface_normal,
-        light_direction,
-        distance_to_light,
-        light_id,
-    );
-    var light_geometry_factor: f32 = saturate_f32(dot(light_direction, surface_normal));
-    // }
+    if (light_id < _render_params.scene.num_non_physical_lights)
+    {
+        light_colour = sample_non_physical_light(
+            position,
+            surface_normal,
+            light_direction,
+            distance_to_light,
+            light_id,
+        );
+        light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
+    }
     // else if (light_id - _lightTextureWidth - sampleHDRI < numEmissive)
     // {
     //     float actualDistance;
@@ -2505,11 +2501,10 @@ fn sample_lights(
     surface_normal: vec3<f32>,
     position: vec3<f32>,
     material_pdf: f32,
-    num_non_physical_lights: u32,
 ) -> vec3<f32> {
     var light_colour = vec3(0.);
 
-    for (var light_id=0u; light_id < num_non_physical_lights; light_id++) {
+    for (var light_id=0u; light_id < _render_params.scene.num_lights; light_id++) {
         var light_direction: vec3<f32> = surface_normal;
         var distance_to_light: f32 = 0.;
 
@@ -2517,7 +2512,6 @@ fn sample_lights(
             seed * f32(light_id + 1u),
             position,
             surface_normal,
-            num_non_physical_lights,
             light_id,
             &light_direction,
             &distance_to_light,
@@ -2567,7 +2561,6 @@ fn light_sampling(
     position: vec3<f32>,
     material_pdf: f32,
     sample_all_lights: bool,
-    num_non_physical_lights: u32,
 ) -> vec3<f32> {
     if (sample_all_lights) {
         return sample_lights(
@@ -2577,7 +2570,6 @@ fn light_sampling(
             surface_normal,
             position,
             material_pdf,
-            num_non_physical_lights,
         );
     }
 
@@ -2767,9 +2759,7 @@ fn material_interaction(
     distance: f32,
     intersection_position: vec3<f32>,
     surface_normal: vec3<f32>,
-    num_lights: f32,
     previous_material_pdf: f32,
-    light_sampling_enabled: bool,
     sample_all_lights: bool,
     ray: ptr<function, Ray>,
     material: ptr<function, Material>,
@@ -2788,8 +2778,11 @@ fn material_interaction(
         &light_sampling_material_pdf,
     );
 
-    if (light_sampling_enabled && light_sampling_material_pdf > 0.) {
-        var num_non_physical_lights = u32(num_lights);
+    if (
+        _render_params.scene.num_lights > 0u
+        && _render_params.ray_marcher.max_light_sampling_bounces > 0u
+        && light_sampling_material_pdf > 0.
+    ) {
         // Perform MIS light sampling
         (*ray).colour += light_sampling(
             seed,
@@ -2799,7 +2792,6 @@ fn material_interaction(
             (*ray).origin,
             light_sampling_material_pdf,
             sample_all_lights,
-            num_non_physical_lights,
         );
     }
 
@@ -2819,7 +2811,7 @@ fn material_interaction(
         (*material).emissive_colour * (*material).emissive_probability,
         (*ray).throughput,
         previous_material_pdf,
-        sample_lights_pdf(num_lights, visible_surface_area),
+        sample_lights_pdf(f32(_render_params.scene.num_lights), visible_surface_area),
     );
 
     (*ray).throughput *= material_brdf * material_geometry_factor / material_pdf;
@@ -2841,11 +2833,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
 
-    var num_lights = f32(_render_params.scene.num_lights); // TODO Add emissive prims
-    var light_sampling_enabled = (
-        num_lights > 0.
-        && _render_params.ray_marcher.max_light_sampling_bounces > 0u
-    );
     var sample_all_lights = bool(_render_params.ray_marcher.sample_all_lights);
 
     var distance_travelled: f32 = 0.;
@@ -2919,9 +2906,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 distance_since_last_bounce,
                 intersection_position,
                 surface_normal,
-                num_lights,
                 previous_material_pdf,
-                light_sampling_enabled,
                 sample_all_lights,
                 ray,
                 &nearest_material,

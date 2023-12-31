@@ -11,8 +11,10 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
 };
 
+mod ui_data;
+pub use ui_data::UIData;
 mod wrappers;
-pub use wrappers::{ComboBox, Float, Integer, Ranged, UnsignedInteger, Vec3, Vec4};
+pub use wrappers::{ComboBox, Float, Integer, Ranged, UIInput, UnsignedInteger, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -225,11 +227,20 @@ impl WidgetValueTrait for DamascusValueType {
         ) -> egui::Slider<'_> {
             let range: RangeInclusive<V> = value.get_range();
             egui::Slider::new(value.get_value_mut(), range).clamp_to_range(false)
-            // .custom_formatter(|n, _| format!("{:.05}", n))
+        }
+
+        fn create_parameter_label<V, T: UIInput<V>>(ui: &mut egui::Ui, label: &str, value: &T) {
+            if let Some(ui_data) = value.get_ui_data() {
+                if let Some(tooltip) = &ui_data.tooltip {
+                    ui.label(label).on_hover_text(tooltip);
+                    return;
+                }
+            }
+            ui.label(label);
         }
 
         let create_drag_value_ui = |ui: &mut egui::Ui, value: &mut f32| {
-            ui.add(egui::DragValue::new(value));
+            ui.add(egui::DragValue::new(value).max_decimals(100));
         };
         let create_bool_ui = |ui: &mut egui::Ui, label: &str, value: &mut bool| {
             ui.horizontal(|ui| {
@@ -256,19 +267,19 @@ impl WidgetValueTrait for DamascusValueType {
         };
         let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut Integer| {
             ui.horizontal(|ui| {
-                ui.label(label);
+                create_parameter_label(ui, label, value);
                 ui.add(create_slider(value));
             });
         };
         let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut UnsignedInteger| {
             ui.horizontal(|ui| {
-                ui.label(label);
+                create_parameter_label(ui, label, value);
                 ui.add(create_slider(value));
             });
         };
         let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut Float| {
             ui.horizontal(|ui| {
-                ui.label(label);
+                create_parameter_label(ui, label, value);
                 ui.add(create_slider(value));
             });
         };
@@ -383,9 +394,7 @@ impl WidgetValueTrait for DamascusValueType {
                 create_mat3_ui(ui, param_name, value);
             }
             DamascusValueType::Mat4 { value } => {
-                ui.horizontal(|ui| {
-                    create_mat4_ui(ui, param_name, value);
-                });
+                create_mat4_ui(ui, param_name, value);
             }
             _ => {
                 ui.label(param_name);

@@ -1,3 +1,5 @@
+use core::ops::RangeInclusive;
+
 use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
@@ -10,7 +12,7 @@ use crate::panels::node_graph::{
 };
 
 mod wrappers;
-pub use wrappers::{ComboBox, Float, Integer, UnsignedInteger, Vec3, Vec4};
+pub use wrappers::{ComboBox, Float, Integer, Ranged, UnsignedInteger, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -218,6 +220,17 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
+        fn create_slider<V: eframe::emath::Numeric, T: Ranged<V>>(
+            value: &mut T,
+        ) -> egui::Slider<'_> {
+            let range: RangeInclusive<V> = value.get_range();
+            egui::Slider::new(value.get_value_mut(), range).clamp_to_range(false)
+            // .custom_formatter(|n, _| format!("{:.05}", n))
+        }
+
+        let create_drag_value_ui = |ui: &mut egui::Ui, value: &mut f32| {
+            ui.add(egui::DragValue::new(value));
+        };
         let create_bool_ui = |ui: &mut egui::Ui, label: &str, value: &mut bool| {
             ui.horizontal(|ui| {
                 ui.label(label);
@@ -244,40 +257,34 @@ impl WidgetValueTrait for DamascusValueType {
         let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut Integer| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(
-                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
-                );
+                ui.add(create_slider(value));
             });
         };
         let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut UnsignedInteger| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(
-                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
-                );
+                ui.add(create_slider(value));
             });
         };
         let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut Float| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(
-                    egui::Slider::new(&mut value.value, value.range.clone()).clamp_to_range(false),
-                );
+                ui.add(create_slider(value));
             });
         };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(egui::DragValue::new(&mut value.x));
-                ui.add(egui::DragValue::new(&mut value.y));
+                create_drag_value_ui(ui, &mut value.x);
+                create_drag_value_ui(ui, &mut value.y);
             });
         };
         let create_vec3_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec3| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(egui::DragValue::new(&mut value.value[0]));
-                ui.add(egui::DragValue::new(&mut value.value[1]));
-                ui.add(egui::DragValue::new(&mut value.value[2]));
+                create_drag_value_ui(ui, &mut value.value[0]);
+                create_drag_value_ui(ui, &mut value.value[1]);
+                create_drag_value_ui(ui, &mut value.value[2]);
                 if value.is_colour {
                     ui.color_edit_button_rgb(&mut value.value);
                 }
@@ -286,10 +293,10 @@ impl WidgetValueTrait for DamascusValueType {
         let create_vec4_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec4| {
             ui.horizontal(|ui| {
                 ui.label(label);
-                ui.add(egui::DragValue::new(&mut value.value[0]));
-                ui.add(egui::DragValue::new(&mut value.value[1]));
-                ui.add(egui::DragValue::new(&mut value.value[2]));
-                ui.add(egui::DragValue::new(&mut value.value[3]));
+                create_drag_value_ui(ui, &mut value.value[0]);
+                create_drag_value_ui(ui, &mut value.value[1]);
+                create_drag_value_ui(ui, &mut value.value[2]);
+                create_drag_value_ui(ui, &mut value.value[3]);
                 if value.is_colour {
                     ui.color_edit_button_rgba_unmultiplied(&mut value.value);
                 }
@@ -299,19 +306,19 @@ impl WidgetValueTrait for DamascusValueType {
             ui.vertical(|ui| {
                 ui.label(label);
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.x_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.x_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.x_axis.z));
+                    create_drag_value_ui(ui, &mut value.x_axis.x);
+                    create_drag_value_ui(ui, &mut value.x_axis.y);
+                    create_drag_value_ui(ui, &mut value.x_axis.z);
                 });
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.y_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.y_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.y_axis.z));
+                    create_drag_value_ui(ui, &mut value.y_axis.x);
+                    create_drag_value_ui(ui, &mut value.y_axis.y);
+                    create_drag_value_ui(ui, &mut value.y_axis.z);
                 });
                 ui.horizontal(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.z_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.z_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.z_axis.z));
+                    create_drag_value_ui(ui, &mut value.z_axis.x);
+                    create_drag_value_ui(ui, &mut value.z_axis.y);
+                    create_drag_value_ui(ui, &mut value.z_axis.z);
                 });
             });
         };
@@ -319,28 +326,28 @@ impl WidgetValueTrait for DamascusValueType {
             ui.horizontal(|ui| {
                 ui.label(label);
                 ui.vertical(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.x_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.x_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.x_axis.z));
-                    ui.add(egui::DragValue::new(&mut value.x_axis.w));
+                    create_drag_value_ui(ui, &mut value.x_axis.x);
+                    create_drag_value_ui(ui, &mut value.x_axis.y);
+                    create_drag_value_ui(ui, &mut value.x_axis.z);
+                    create_drag_value_ui(ui, &mut value.x_axis.w);
                 });
                 ui.vertical(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.y_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.y_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.y_axis.z));
-                    ui.add(egui::DragValue::new(&mut value.y_axis.w));
+                    create_drag_value_ui(ui, &mut value.y_axis.x);
+                    create_drag_value_ui(ui, &mut value.y_axis.y);
+                    create_drag_value_ui(ui, &mut value.y_axis.z);
+                    create_drag_value_ui(ui, &mut value.y_axis.w);
                 });
                 ui.vertical(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.z_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.z_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.z_axis.z));
-                    ui.add(egui::DragValue::new(&mut value.z_axis.w));
+                    create_drag_value_ui(ui, &mut value.z_axis.x);
+                    create_drag_value_ui(ui, &mut value.z_axis.y);
+                    create_drag_value_ui(ui, &mut value.z_axis.z);
+                    create_drag_value_ui(ui, &mut value.z_axis.w);
                 });
                 ui.vertical(|ui| {
-                    ui.add(egui::DragValue::new(&mut value.w_axis.x));
-                    ui.add(egui::DragValue::new(&mut value.w_axis.y));
-                    ui.add(egui::DragValue::new(&mut value.w_axis.z));
-                    ui.add(egui::DragValue::new(&mut value.w_axis.w));
+                    create_drag_value_ui(ui, &mut value.w_axis.x);
+                    create_drag_value_ui(ui, &mut value.w_axis.y);
+                    create_drag_value_ui(ui, &mut value.w_axis.z);
+                    create_drag_value_ui(ui, &mut value.w_axis.w);
                 });
             });
         };

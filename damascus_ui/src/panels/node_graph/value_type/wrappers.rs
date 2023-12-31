@@ -4,18 +4,40 @@ use std::fmt::Display;
 use glam;
 use strum::IntoEnumIterator;
 
+pub trait Ranged<T> {
+    fn new(value: T, range: RangeInclusive<T>) -> Self;
+
+    fn get_value(&self) -> T;
+
+    fn get_value_mut(&mut self) -> &mut T;
+
+    fn get_range(&self) -> RangeInclusive<T>;
+}
+
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Integer {
     pub value: i32,
     pub range: RangeInclusive<i32>,
 }
 
-impl Integer {
-    pub fn new(value: i32, range: RangeInclusive<i32>) -> Self {
+impl Ranged<i32> for Integer {
+    fn new(value: i32, range: RangeInclusive<i32>) -> Self {
         Self {
             value: value,
             range: range,
         }
+    }
+
+    fn get_value(&self) -> i32 {
+        self.value
+    }
+
+    fn get_value_mut(&mut self) -> &mut i32 {
+        &mut self.value
+    }
+
+    fn get_range(&self) -> RangeInclusive<i32> {
+        self.range.clone()
     }
 }
 
@@ -23,6 +45,27 @@ impl Integer {
 pub struct UnsignedInteger {
     pub value: u32,
     pub range: RangeInclusive<u32>,
+}
+
+impl Ranged<u32> for UnsignedInteger {
+    fn new(value: u32, range: RangeInclusive<u32>) -> Self {
+        Self {
+            value: value,
+            range: range,
+        }
+    }
+
+    fn get_value(&self) -> u32 {
+        self.value
+    }
+
+    fn get_value_mut(&mut self) -> &mut u32 {
+        &mut self.value
+    }
+
+    fn get_range(&self) -> RangeInclusive<u32> {
+        self.range.clone()
+    }
 }
 
 impl UnsignedInteger {
@@ -40,12 +83,24 @@ pub struct Float {
     pub range: RangeInclusive<f32>,
 }
 
-impl Float {
-    pub fn new(value: f32, range: RangeInclusive<f32>) -> Self {
+impl Ranged<f32> for Float {
+    fn new(value: f32, range: RangeInclusive<f32>) -> Self {
         Self {
             value: value,
             range: range,
         }
+    }
+
+    fn get_value(&self) -> f32 {
+        self.value
+    }
+
+    fn get_value_mut(&mut self) -> &mut f32 {
+        &mut self.value
+    }
+
+    fn get_range(&self) -> RangeInclusive<f32> {
+        self.range.clone()
     }
 }
 

@@ -9,7 +9,9 @@ use crate::panels::node_graph::{
     data_type::DamascusDataType,
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
-    value_type::{ComboBox, DamascusValueType, Float, Integer, UnsignedInteger, Vec3, Vec4},
+    value_type::{
+        ComboBox, DamascusValueType, Float, Integer, Ranged, UnsignedInteger, Vec3, Vec4,
+    },
     DamascusGraph,
 };
 

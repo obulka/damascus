@@ -16,7 +16,7 @@ pub trait UIInput<T> {
     fn get_ui_data_mut(&mut self) -> &mut Option<UIData>;
 }
 
-pub trait Ranged<T>: UIInput<T> {
+pub trait RangedInput<T>: UIInput<T> {
     fn with_range(value: T, ui_data: Option<UIData>, range: RangeInclusive<T>) -> Self;
 
     fn get_range(&self) -> RangeInclusive<T>;
@@ -47,7 +47,7 @@ impl UIInput<i32> for Integer {
     }
 }
 
-impl Ranged<i32> for Integer {
+impl RangedInput<i32> for Integer {
     fn with_range(value: i32, ui_data: Option<UIData>, range: RangeInclusive<i32>) -> Self {
         Self {
             value: value,
@@ -86,7 +86,7 @@ impl UIInput<u32> for UnsignedInteger {
     }
 }
 
-impl Ranged<u32> for UnsignedInteger {
+impl RangedInput<u32> for UnsignedInteger {
     fn with_range(value: u32, ui_data: Option<UIData>, range: RangeInclusive<u32>) -> Self {
         Self {
             value: value,
@@ -125,7 +125,7 @@ impl UIInput<f32> for Float {
     }
 }
 
-impl Ranged<f32> for Float {
+impl RangedInput<f32> for Float {
     fn with_range(value: f32, ui_data: Option<UIData>, range: RangeInclusive<f32>) -> Self {
         Self {
             value: value,

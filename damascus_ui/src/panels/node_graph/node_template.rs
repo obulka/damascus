@@ -10,8 +10,8 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
-        ComboBox, DamascusValueType, Float, Integer, Ranged, UIData, UIInput, UnsignedInteger,
-        Vec3, Vec4,
+        ComboBox, DamascusValueType, Float, Integer, RangedInput, UIData, UnsignedInteger, Vec3,
+        Vec4,
     },
     DamascusGraph,
 };

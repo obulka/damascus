@@ -14,7 +14,7 @@ use crate::panels::node_graph::{
 mod ui_data;
 pub use ui_data::UIData;
 mod wrappers;
-pub use wrappers::{ComboBox, Float, Integer, Ranged, UIInput, UnsignedInteger, Vec3, Vec4};
+pub use wrappers::{ComboBox, Float, Integer, RangedInput, UIInput, UnsignedInteger, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -222,7 +222,7 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        fn create_slider<V: eframe::emath::Numeric, T: Ranged<V>>(
+        fn create_slider<V: eframe::emath::Numeric, T: RangedInput<V>>(
             value: &mut T,
         ) -> egui::Slider<'_> {
             let range: RangeInclusive<V> = value.get_range();

@@ -291,8 +291,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         match self {
             DamascusNodeTemplate::Axis => {
                 input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
-                input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, false));
-                input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, false));
+                input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, None, false));
+                input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, None, false));
                 input_float(graph, "uniform_scale", 1., None, 0.01..=10.0);
                 output_matrix4(graph, "out");
             }
@@ -353,11 +353,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "dimensional_data",
-                    Vec3::new(default_light.dimensional_data, false),
+                    Vec3::new(default_light.dimensional_data, None, false),
                 );
                 input_float(graph, "intensity", default_light.intensity, None, 0.0..=10.);
                 input_uint(graph, "falloff", default_light.falloff, 0..=4);
-                input_vector3(graph, "colour", Vec3::new(default_light.colour, true));
+                input_vector3(graph, "colour", Vec3::new(default_light.colour, None, true));
                 input_float(
                     graph,
                     "shadow_hardness",
@@ -373,7 +373,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "diffuse_colour",
-                    Vec3::new(default_material.diffuse_colour, true),
+                    Vec3::new(default_material.diffuse_colour, None, true),
                 );
                 input_float(
                     graph,
@@ -392,7 +392,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "specular_colour",
-                    Vec3::new(default_material.specular_colour, true),
+                    Vec3::new(default_material.specular_colour, None, true),
                 );
                 input_float(
                     graph,
@@ -411,7 +411,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "transmissive_colour",
-                    Vec3::new(default_material.transmissive_colour, true),
+                    Vec3::new(default_material.transmissive_colour, None, true),
                 );
                 input_float(
                     graph,
@@ -423,7 +423,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "emissive_colour",
-                    Vec3::new(default_material.emissive_colour, true),
+                    Vec3::new(default_material.emissive_colour, None, true),
                 );
                 input_float(
                     graph,
@@ -442,7 +442,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "scattering_colour",
-                    Vec3::new(default_material.scattering_colour, true),
+                    Vec3::new(default_material.scattering_colour, None, true),
                 );
                 output_material(graph, "out");
             }
@@ -470,7 +470,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     None,
                     0.0..=1.,
                 );
-                input_vector4(graph, "dimensional_data", Vec4::new(glam::Vec4::X, false)); // TODO make this dynamic based on shape
+                input_vector4(graph, "dimensional_data", Vec4::new(glam::Vec4::X, None, false)); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {
@@ -523,7 +523,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     None,
                     1.0..=1000000.,
                 );
-                input_vector3(graph, "seeds", Vec3::new(default_ray_marcher.seeds, false));
+                input_vector3(graph, "seeds", Vec3::new(default_ray_marcher.seeds, None, false));
                 input_bool(
                     graph,
                     "enable_depth_of_field",

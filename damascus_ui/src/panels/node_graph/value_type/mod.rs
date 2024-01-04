@@ -11,10 +11,18 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
 };
 
+mod inputs;
+pub use inputs::{
+    RangedInput, UIInput,
+    combo_box::ComboBox,
+    integer::Integer,
+    float::Float,
+    unsigned_integer::UnsignedInteger,
+    vec3::Vec3,
+    vec4::Vec4,
+};
 mod ui_data;
 pub use ui_data::UIData;
-mod wrappers;
-pub use wrappers::{ComboBox, Float, Integer, RangedInput, UIInput, UnsignedInteger, Vec3, Vec4};
 
 /// In the graph, input parameters can optionally have a constant value. This
 /// value can be directly edited in a widget inside the node itself.
@@ -222,23 +230,6 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        fn create_slider<V: eframe::emath::Numeric, T: RangedInput<V>>(
-            value: &mut T,
-        ) -> egui::Slider<'_> {
-            let range: RangeInclusive<V> = value.get_range();
-            egui::Slider::new(value.get_value_mut(), range).clamp_to_range(false)
-        }
-
-        fn create_parameter_label<V, T: UIInput<V>>(ui: &mut egui::Ui, label: &str, value: &T) {
-            if let Some(ui_data) = value.get_ui_data() {
-                if let Some(tooltip) = &ui_data.tooltip {
-                    ui.label(label).on_hover_text(tooltip);
-                    return;
-                }
-            }
-            ui.label(label);
-        }
-
         let create_drag_value_ui = |ui: &mut egui::Ui, value: &mut f32| {
             ui.add(egui::DragValue::new(value).max_decimals(100));
         };
@@ -265,52 +256,11 @@ impl WidgetValueTrait for DamascusValueType {
                     })
             });
         };
-        let create_int_ui = |ui: &mut egui::Ui, label: &str, value: &mut Integer| {
-            ui.horizontal(|ui| {
-                create_parameter_label(ui, label, value);
-                ui.add(create_slider(value));
-            });
-        };
-        let create_uint_ui = |ui: &mut egui::Ui, label: &str, value: &mut UnsignedInteger| {
-            ui.horizontal(|ui| {
-                create_parameter_label(ui, label, value);
-                ui.add(create_slider(value));
-            });
-        };
-        let create_float_ui = |ui: &mut egui::Ui, label: &str, value: &mut Float| {
-            ui.horizontal(|ui| {
-                create_parameter_label(ui, label, value);
-                ui.add(create_slider(value));
-            });
-        };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
             ui.horizontal(|ui| {
                 ui.label(label);
                 create_drag_value_ui(ui, &mut value.x);
                 create_drag_value_ui(ui, &mut value.y);
-            });
-        };
-        let create_vec3_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec3| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                create_drag_value_ui(ui, &mut value.value[0]);
-                create_drag_value_ui(ui, &mut value.value[1]);
-                create_drag_value_ui(ui, &mut value.value[2]);
-                if value.is_colour {
-                    ui.color_edit_button_rgb(&mut value.value);
-                }
-            });
-        };
-        let create_vec4_ui = |ui: &mut egui::Ui, label: &str, value: &mut Vec4| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                create_drag_value_ui(ui, &mut value.value[0]);
-                create_drag_value_ui(ui, &mut value.value[1]);
-                create_drag_value_ui(ui, &mut value.value[2]);
-                create_drag_value_ui(ui, &mut value.value[3]);
-                if value.is_colour {
-                    ui.color_edit_button_rgba_unmultiplied(&mut value.value);
-                }
             });
         };
         let create_mat3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat3| {
@@ -373,22 +323,22 @@ impl WidgetValueTrait for DamascusValueType {
                 create_combo_box_ui(ui, param_name, value);
             }
             DamascusValueType::Integer { value } => {
-                create_int_ui(ui, param_name, value);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::UnsignedInteger { value } => {
-                create_uint_ui(ui, param_name, value);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::Float { value } => {
-                create_float_ui(ui, param_name, value);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::Vec2 { value } => {
                 create_vec2_ui(ui, param_name, value);
             }
             DamascusValueType::Vec3 { value } => {
-                create_vec3_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Vec4 { value } => {
-                create_vec4_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Mat3 { value } => {
                 create_mat3_ui(ui, param_name, value);

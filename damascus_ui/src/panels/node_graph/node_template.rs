@@ -91,32 +91,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_int =
-            |graph: &mut DamascusGraph, name: &str, default: i32, range: RangeInclusive<i32>| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Integer,
-                    DamascusValueType::Integer {
-                        value: Integer::with_range(default, None, range),
-                    },
-                    InputParamKind::ConstantOnly,
-                    true,
-                );
-            };
-        let input_uint =
-            |graph: &mut DamascusGraph, name: &str, default: u32, range: RangeInclusive<u32>| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::UnsignedInteger,
-                    DamascusValueType::UnsignedInteger {
-                        value: UnsignedInteger::with_range(default, None, range),
-                    },
-                    InputParamKind::ConstantOnly,
-                    true,
-                );
-            };
+        let input_int = |graph: &mut DamascusGraph, name: &str, default: Integer| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Integer,
+                DamascusValueType::Integer { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_uint = |graph: &mut DamascusGraph, name: &str, default: UnsignedInteger| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::UnsignedInteger,
+                DamascusValueType::UnsignedInteger { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
         let input_float = |graph: &mut DamascusGraph,
                            name: &str,
                            default: f32,
@@ -356,7 +350,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Vec3::new(default_light.dimensional_data, None, false),
                 );
                 input_float(graph, "intensity", default_light.intensity, None, 0.0..=10.);
-                input_uint(graph, "falloff", default_light.falloff, 0..=4);
+                input_uint(
+                    graph,
+                    "falloff",
+                    UnsignedInteger::with_range(default_light.falloff, None, 0..=4),
+                );
                 input_vector3(graph, "colour", Vec3::new(default_light.colour, None, true));
                 input_float(
                     graph,
@@ -460,8 +458,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(
                     graph,
                     "modifiers",
-                    default_primitive.modifiers as u32,
-                    0..=100,
+                    UnsignedInteger::with_range(default_primitive.modifiers as u32, None, 0..=100),
                 ); // TODO make this a series of bools
                 input_float(
                     graph,
@@ -483,8 +480,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(
                     graph,
                     "paths_per_pixel",
-                    default_ray_marcher.paths_per_pixel,
-                    1..=100,
+                    UnsignedInteger::with_range(default_ray_marcher.paths_per_pixel, None, 1..=100),
                 );
                 input_bool(graph, "roulette", default_ray_marcher.roulette);
                 input_float(
@@ -497,14 +493,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(
                     graph,
                     "max_ray_steps",
-                    default_ray_marcher.max_ray_steps,
-                    100..=100000,
+                    UnsignedInteger::with_range(
+                        default_ray_marcher.max_ray_steps,
+                        None,
+                        100..=100000,
+                    ),
                 );
                 input_uint(
                     graph,
                     "max_bounces",
-                    default_ray_marcher.max_bounces,
-                    0..=100,
+                    UnsignedInteger::with_range(default_ray_marcher.max_bounces, None, 0..=100),
                 );
                 input_float(
                     graph,
@@ -545,8 +543,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(
                     graph,
                     "max_light_sampling_bounces",
-                    default_ray_marcher.max_light_sampling_bounces,
-                    0..=50,
+                    UnsignedInteger::with_range(
+                        default_ray_marcher.max_light_sampling_bounces,
+                        None,
+                        0..=50,
+                    ),
                 );
                 input_bool(graph, "sample_hdri", default_ray_marcher.sample_hdri);
                 input_bool(

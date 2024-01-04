@@ -2,6 +2,7 @@ use core::ops::RangeInclusive;
 use std::borrow::Cow;
 
 use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTemplateTrait};
+use indoc::indoc;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
@@ -278,13 +279,41 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         match self {
             DamascusNodeTemplate::Axis => {
-                input_matrix4(graph, "axis", Mat4::new(glam::Mat4::IDENTITY, None));
-                input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, None, false));
-                input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, None, false));
+                input_matrix4(
+                    graph,
+                    "axis",
+                    Mat4::new(glam::Mat4::IDENTITY, Some(UIData::new("The parent axis."))),
+                );
+                input_vector3(
+                    graph,
+                    "translate",
+                    Vec3::new(
+                        glam::Vec3::ZERO,
+                        Some(UIData::new("The translation of this axis.")),
+                        false,
+                    ),
+                );
+                input_vector3(
+                    graph,
+                    "rotate",
+                    Vec3::new(
+                        glam::Vec3::ZERO,
+                        Some(UIData::new("The rotation of this axis.")),
+                        false,
+                    ),
+                );
                 input_float(
                     graph,
                     "uniform_scale",
-                    Float::with_range(1., None, 0.01..=10.0),
+                    Float::with_range(
+                        1.,
+                        Some(UIData::new(indoc! {
+                            "The uniform scale of this axis.\n
+                            We use uniform scale because the signed distance 
+                            fields cannot have their individual axes scaled."
+                        })),
+                        0.01..=10.0,
+                    ),
                 );
                 output_matrix4(graph, "out");
             }
@@ -311,32 +340,56 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "f_stop",
-                    Float::with_range(default_camera.f_stop, None, 0.1..=30.),
+                    Float::with_range(
+                        default_camera.f_stop,
+                        Some(UIData::new("The f-stop of the camera.")),
+                        0.1..=30.,
+                    ),
                 );
                 input_float(
                     graph,
                     "horizontal_aperture",
-                    Float::with_range(default_camera.horizontal_aperture, None, 0.1..=50.),
+                    Float::with_range(
+                        default_camera.horizontal_aperture,
+                        Some(UIData::new("The horizontal aperture of the camera.")),
+                        0.1..=50.,
+                    ),
                 );
                 input_float(
                     graph,
                     "near_plane",
-                    Float::with_range(default_camera.near_plane, None, 0.1..=10.),
+                    Float::with_range(
+                        default_camera.near_plane,
+                        Some(UIData::new("The distance to the near plane of the camera.")),
+                        0.1..=10.,
+                    ),
                 );
                 input_float(
                     graph,
                     "far_plane",
-                    Float::with_range(default_camera.far_plane, None, 11.0..=10000.),
+                    Float::with_range(
+                        default_camera.far_plane,
+                        Some(UIData::new("The distance to the far plane of the camera.")),
+                        11.0..=10000.,
+                    ),
                 );
                 input_matrix4(
                     graph,
                     "world_matrix",
-                    Mat4::new(default_camera.world_matrix, None),
+                    Mat4::new(
+                        default_camera.world_matrix,
+                        Some(UIData::new("The world matrix/axis of the camera.")),
+                    ),
                 );
                 input_bool(
                     graph,
                     "enable_depth_of_field",
-                    Bool::new(default_camera.enable_depth_of_field, None),
+                    Bool::new(
+                        default_camera.enable_depth_of_field,
+                        Some(UIData::new(
+                            "If enabled, this camera will render with depth of field.",
+                        )),
+                    ),
                 );
                 output_camera(graph, "out");
             }
@@ -346,33 +399,81 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "light_type",
-                    ComboBox::new::<lights::Lights>(default_light.light_type, None),
+                    ComboBox::new::<lights::Lights>(
+                        default_light.light_type,
+                        Some(UIData::new(indoc! {
+                            "The type of non-physical light to create.\n
+                            \tPoint: A point light.\n
+                            \tDirectional: A directional light.\n
+                            \tAmbient: An ambient light (will be a uniform colour).\n
+                            \tAmbient Occlusion: Ambient occlusion."
+                        })),
+                    ),
                 );
                 input_vector3(
                     graph,
                     "dimensional_data",
-                    Vec3::new(default_light.dimensional_data, None, false),
+                    Vec3::new(
+                        default_light.dimensional_data,
+                        Some(UIData::new(indoc! {
+                            "The data needed by each individual light type.\n
+                            \tPoint: The position.\n
+                            \tDirectional: The direction vector.\n
+                            \tAmbient: Nothing - control brightness via intensity.\n
+                            \tAmbient Occlusion: Iterations is the x value.\n\n
+                            TODO: make dynamic knobs"
+                        })),
+                        false,
+                    ),
                 );
                 input_float(
                     graph,
                     "intensity",
-                    Float::with_range(default_light.intensity, None, 0.0..=10.),
+                    Float::with_range(
+                        default_light.intensity,
+                        Some(UIData::new("The intensity of the light.")),
+                        0.0..=10.,
+                    ),
                 );
                 input_uint(
                     graph,
                     "falloff",
-                    UnsignedInteger::with_range(default_light.falloff, None, 0..=4),
+                    UnsignedInteger::with_range(
+                        default_light.falloff,
+                        Some(UIData::new(
+                            "The exponent of the falloff (point lights only).",
+                        )),
+                        0..=4,
+                    ),
                 );
-                input_vector3(graph, "colour", Vec3::new(default_light.colour, None, true));
+                input_vector3(
+                    graph,
+                    "colour",
+                    Vec3::new(
+                        default_light.colour,
+                        Some(UIData::new("The light colour.")),
+                        true,
+                    ),
+                );
                 input_float(
                     graph,
                     "shadow_hardness",
-                    Float::with_range(default_light.shadow_hardness, None, 1.0..=100.),
+                    Float::with_range(
+                        default_light.shadow_hardness,
+                        Some(UIData::new("The hardness of softened shadows.")),
+                        1.0..=100.,
+                    ),
                 );
                 input_bool(
                     graph,
                     "soften_shadows",
-                    Bool::new(default_light.soften_shadows, None),
+                    Bool::new(
+                        default_light.soften_shadows,
+                        Some(UIData::new(indoc! {
+                            "If enabled, the shadows will be softened (directional
+                            and point lights only)."
+                        })),
+                    ),
                 );
                 output_light(graph, "out");
             }
@@ -381,12 +482,23 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "diffuse_colour",
-                    Vec3::new(default_material.diffuse_colour, None, true),
+                    Vec3::new(
+                        default_material.diffuse_colour,
+                        Some(UIData::new("The diffuse colour of the material.")),
+                        true,
+                    ),
                 );
                 input_float(
                     graph,
                     "specular_probability",
-                    Float::with_range(default_material.specular_probability, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.specular_probability,
+                        Some(UIData::new(indoc! {
+                            "The probability that light will be specularly reflected
+                            when it interacts with this material."
+                        })),
+                        0.0..=1.,
+                    ),
                 );
                 input_float(
                     graph,
@@ -401,7 +513,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "transmissive_probability",
-                    Float::with_range(default_material.transmissive_probability, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.transmissive_probability,
+                        Some(UIData::new(indoc! {
+                            "The probability that light will be transmitted through
+                            the material (before accounting for Fresnel) when it
+                            interacts with this material."
+                        })),
+                        0.0..=1.,
+                    ),
                 );
                 input_float(
                     graph,

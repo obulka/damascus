@@ -4,8 +4,8 @@ use crate::panels::node_graph::value_type::{RangedInput, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Integer {
-    pub value: i32,
-    pub ui_data: Option<UIData>,
+    value: i32,
+    ui_data: Option<UIData>,
     pub range: RangeInclusive<i32>,
 }
 

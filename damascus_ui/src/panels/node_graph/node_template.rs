@@ -10,8 +10,8 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
-        ComboBox, DamascusValueType, Float, Integer, RangedInput, UIData, UnsignedInteger, Vec3,
-        Vec4,
+        Bool, ComboBox, DamascusValueType, Float, Integer, RangedInput, UIData, UnsignedInteger,
+        Vec2, Vec3, Vec4,
     },
     DamascusGraph,
 };
@@ -71,7 +71,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
-        let input_bool = |graph: &mut DamascusGraph, name: &str, default: bool| {
+        let input_bool = |graph: &mut DamascusGraph, name: &str, default: Bool| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -121,7 +121,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: glam::Vec2| {
+        let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: Vec2| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -332,7 +332,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_bool(
                     graph,
                     "enable_depth_of_field",
-                    default_camera.enable_depth_of_field,
+                    Bool::new(default_camera.enable_depth_of_field, None),
                 );
                 output_camera(graph, "out");
             }
@@ -365,7 +365,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "shadow_hardness",
                     Float::with_range(default_light.shadow_hardness, None, 1.0..=100.),
                 );
-                input_bool(graph, "soften_shadows", default_light.soften_shadows);
+                input_bool(
+                    graph,
+                    "soften_shadows",
+                    Bool::new(default_light.soften_shadows, None),
+                );
                 output_light(graph, "out");
             }
             DamascusNodeTemplate::Material => {
@@ -468,7 +472,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "paths_per_pixel",
                     UnsignedInteger::with_range(default_ray_marcher.paths_per_pixel, None, 1..=100),
                 );
-                input_bool(graph, "roulette", default_ray_marcher.roulette);
+                input_bool(
+                    graph,
+                    "roulette",
+                    Bool::new(default_ray_marcher.roulette, None),
+                );
                 input_float(
                     graph,
                     "max_distance",
@@ -511,12 +519,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_bool(
                     graph,
                     "enable_depth_of_field",
-                    default_ray_marcher.enable_depth_of_field,
+                    Bool::new(default_ray_marcher.enable_depth_of_field, None),
                 );
                 input_bool(
                     graph,
                     "dynamic_level_of_detail",
-                    default_ray_marcher.dynamic_level_of_detail,
+                    Bool::new(default_ray_marcher.dynamic_level_of_detail, None),
                 );
                 input_uint(
                     graph,
@@ -527,11 +535,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         0..=50,
                     ),
                 );
-                input_bool(graph, "sample_hdri", default_ray_marcher.sample_hdri);
+                input_bool(
+                    graph,
+                    "sample_hdri",
+                    Bool::new(default_ray_marcher.sample_hdri, None),
+                );
                 input_bool(
                     graph,
                     "sample_all_lights",
-                    default_ray_marcher.sample_all_lights,
+                    Bool::new(default_ray_marcher.sample_all_lights, None),
                 );
                 input_float(
                     graph,
@@ -541,7 +553,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_bool(
                     graph,
                     "secondary_sampling",
-                    default_ray_marcher.secondary_sampling,
+                    Bool::new(default_ray_marcher.secondary_sampling, None),
                 );
                 input_float(
                     graph,
@@ -553,7 +565,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "output_aov",
                     ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov, None),
                 );
-                input_bool(graph, "latlong", default_ray_marcher.latlong);
+                input_bool(
+                    graph,
+                    "latlong",
+                    Bool::new(default_ray_marcher.latlong, None),
+                );
                 output_ray_marcher(graph, "out");
             }
             DamascusNodeTemplate::Scene => {

@@ -16,8 +16,8 @@ use crate::panels::node_graph::{
 
 mod inputs;
 pub use inputs::{
-    combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
-    unsigned_integer::UnsignedInteger, vec3::Vec3, vec4::Vec4, RangedInput, UIInput,
+    boolean::Bool, combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
+    unsigned_integer::UnsignedInteger, vec2::Vec2, vec3::Vec3, vec4::Vec4, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -32,12 +32,12 @@ pub use ui_data::UIData;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum DamascusValueType {
     // Base types
-    Bool { value: bool },
+    Bool { value: Bool },
     ComboBox { value: ComboBox },
     Integer { value: Integer },
     UnsignedInteger { value: UnsignedInteger },
     Float { value: Float },
-    Vec2 { value: glam::Vec2 },
+    Vec2 { value: Vec2 },
     Vec3 { value: Vec3 },
     Vec4 { value: Vec4 },
     Mat3 { value: glam::Mat3 },
@@ -57,7 +57,7 @@ impl Default for DamascusValueType {
     fn default() -> Self {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
-        Self::Bool { value: false }
+        Self::Bool { value: Bool::new(false, None) }
     }
 }
 
@@ -83,7 +83,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a bool
     pub fn try_to_bool(self) -> anyhow::Result<bool> {
         if let DamascusValueType::Bool { value } = self {
-            Ok(value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to bool", self)
         }
@@ -110,7 +110,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a vector2
     pub fn try_to_vec2(self) -> anyhow::Result<glam::Vec2> {
         if let DamascusValueType::Vec2 { value } = self {
-            Ok(value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec2", self)
         }
@@ -228,19 +228,6 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        let create_bool_ui = |ui: &mut egui::Ui, label: &str, value: &mut bool| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                ui.add(egui::Checkbox::new(value, ""));
-            });
-        };
-        let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                create_drag_value_ui(ui, &mut value.x);
-                create_drag_value_ui(ui, &mut value.y);
-            });
-        };
         let create_mat3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat3| {
             ui.vertical(|ui| {
                 ui.label(label);
@@ -295,7 +282,7 @@ impl WidgetValueTrait for DamascusValueType {
         // inline parameter widgets.
         match self {
             DamascusValueType::Bool { value } => {
-                create_bool_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::ComboBox { value } => {
                 value.create_ui(ui, param_name);
@@ -310,7 +297,7 @@ impl WidgetValueTrait for DamascusValueType {
                 RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::Vec2 { value } => {
-                create_vec2_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Vec3 { value } => {
                 value.create_ui(ui, param_name);

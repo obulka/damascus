@@ -7,6 +7,7 @@ use crate::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, DamascusDataType, DamascusGraphState,
         DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType,
+        Bool,
     },
     viewport_3d::Viewport3d,
 };
@@ -158,7 +159,7 @@ impl eframe::App for Damascus {
                             egui::Color32::RED,
                         );
 
-                        DamascusValueType::Bool { value: false }
+                        DamascusValueType::Bool { value: Bool::new(false, None) }
                     }
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {

@@ -4,10 +4,12 @@ use eframe::egui;
 
 use crate::panels::node_graph::value_type::UIData;
 
+pub mod boolean;
 pub mod combo_box;
 pub mod float;
 pub mod integer;
 pub mod unsigned_integer;
+pub mod vec2;
 pub mod vec3;
 pub mod vec4;
 

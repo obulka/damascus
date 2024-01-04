@@ -10,8 +10,8 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
-        Bool, ComboBox, DamascusValueType, Float, Integer, RangedInput, UIData, UnsignedInteger,
-        Vec2, Vec3, Vec4,
+        Bool, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
+        UnsignedInteger, Vec2, Vec3, Vec4,
     },
     DamascusGraph,
 };
@@ -151,7 +151,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: glam::Mat3| {
+        let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: Mat3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -161,7 +161,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_matrix4 = |graph: &mut DamascusGraph, name: &str, default: glam::Mat4| {
+        let input_matrix4 = |graph: &mut DamascusGraph, name: &str, default: Mat4| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -278,7 +278,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
         match self {
             DamascusNodeTemplate::Axis => {
-                input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
+                input_matrix4(graph, "axis", Mat4::new(glam::Mat4::IDENTITY, None));
                 input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, None, false));
                 input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, None, false));
                 input_float(
@@ -328,7 +328,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "far_plane",
                     Float::with_range(default_camera.far_plane, None, 11.0..=10000.),
                 );
-                input_matrix4(graph, "world_matrix", default_camera.world_matrix);
+                input_matrix4(
+                    graph,
+                    "world_matrix",
+                    Mat4::new(default_camera.world_matrix, None),
+                );
                 input_bool(
                     graph,
                     "enable_depth_of_field",
@@ -446,7 +450,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "shape",
                     ComboBox::new::<geometry::Shapes>(default_primitive.shape, None),
                 );
-                input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
+                input_matrix4(graph, "world_matrix", Mat4::new(glam::Mat4::IDENTITY, None));
                 input_uint(
                     graph,
                     "modifiers",

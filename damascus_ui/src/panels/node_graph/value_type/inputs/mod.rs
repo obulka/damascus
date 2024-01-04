@@ -8,6 +8,8 @@ pub mod boolean;
 pub mod combo_box;
 pub mod float;
 pub mod integer;
+pub mod mat3;
+pub mod mat4;
 pub mod unsigned_integer;
 pub mod vec2;
 pub mod vec3;

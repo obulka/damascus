@@ -17,7 +17,8 @@ use crate::panels::node_graph::{
 mod inputs;
 pub use inputs::{
     boolean::Bool, combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
-    unsigned_integer::UnsignedInteger, vec2::Vec2, vec3::Vec3, vec4::Vec4, RangedInput, UIInput,
+    mat3::Mat3, mat4::Mat4, unsigned_integer::UnsignedInteger, vec2::Vec2, vec3::Vec3, vec4::Vec4,
+    RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -40,8 +41,8 @@ pub enum DamascusValueType {
     Vec2 { value: Vec2 },
     Vec3 { value: Vec3 },
     Vec4 { value: Vec4 },
-    Mat3 { value: glam::Mat3 },
-    Mat4 { value: glam::Mat4 },
+    Mat3 { value: Mat3 },
+    Mat4 { value: Mat4 },
     Image { value: ndarray::Array4<f32> },
 
     // Composite types
@@ -57,7 +58,9 @@ impl Default for DamascusValueType {
     fn default() -> Self {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
-        Self::Bool { value: Bool::new(false, None) }
+        Self::Bool {
+            value: Bool::new(false, None),
+        }
     }
 }
 
@@ -137,7 +140,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a mat3
     pub fn try_to_mat3(self) -> anyhow::Result<glam::Mat3> {
         if let DamascusValueType::Mat3 { value } = self {
-            Ok(value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat3", self)
         }
@@ -146,7 +149,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a mat4
     pub fn try_to_mat4(self) -> anyhow::Result<glam::Mat4> {
         if let DamascusValueType::Mat4 { value } = self {
-            Ok(value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat4", self)
         }
@@ -228,56 +231,6 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        let create_mat3_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat3| {
-            ui.vertical(|ui| {
-                ui.label(label);
-                ui.horizontal(|ui| {
-                    create_drag_value_ui(ui, &mut value.x_axis.x);
-                    create_drag_value_ui(ui, &mut value.x_axis.y);
-                    create_drag_value_ui(ui, &mut value.x_axis.z);
-                });
-                ui.horizontal(|ui| {
-                    create_drag_value_ui(ui, &mut value.y_axis.x);
-                    create_drag_value_ui(ui, &mut value.y_axis.y);
-                    create_drag_value_ui(ui, &mut value.y_axis.z);
-                });
-                ui.horizontal(|ui| {
-                    create_drag_value_ui(ui, &mut value.z_axis.x);
-                    create_drag_value_ui(ui, &mut value.z_axis.y);
-                    create_drag_value_ui(ui, &mut value.z_axis.z);
-                });
-            });
-        };
-        let create_mat4_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Mat4| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                ui.vertical(|ui| {
-                    create_drag_value_ui(ui, &mut value.x_axis.x);
-                    create_drag_value_ui(ui, &mut value.x_axis.y);
-                    create_drag_value_ui(ui, &mut value.x_axis.z);
-                    create_drag_value_ui(ui, &mut value.x_axis.w);
-                });
-                ui.vertical(|ui| {
-                    create_drag_value_ui(ui, &mut value.y_axis.x);
-                    create_drag_value_ui(ui, &mut value.y_axis.y);
-                    create_drag_value_ui(ui, &mut value.y_axis.z);
-                    create_drag_value_ui(ui, &mut value.y_axis.w);
-                });
-                ui.vertical(|ui| {
-                    create_drag_value_ui(ui, &mut value.z_axis.x);
-                    create_drag_value_ui(ui, &mut value.z_axis.y);
-                    create_drag_value_ui(ui, &mut value.z_axis.z);
-                    create_drag_value_ui(ui, &mut value.z_axis.w);
-                });
-                ui.vertical(|ui| {
-                    create_drag_value_ui(ui, &mut value.w_axis.x);
-                    create_drag_value_ui(ui, &mut value.w_axis.y);
-                    create_drag_value_ui(ui, &mut value.w_axis.z);
-                    create_drag_value_ui(ui, &mut value.w_axis.w);
-                });
-            });
-        };
-
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         match self {
@@ -306,10 +259,10 @@ impl WidgetValueTrait for DamascusValueType {
                 value.create_ui(ui, param_name);
             }
             DamascusValueType::Mat3 { value } => {
-                create_mat3_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Mat4 { value } => {
-                create_mat4_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             _ => {
                 ui.label(param_name);

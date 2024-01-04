@@ -37,6 +37,7 @@ impl UIInput<[f32; 4]> for Vec4 {
             }
         });
     }
+
     fn get_value(&self) -> &[f32; 4] {
         &self.value
     }

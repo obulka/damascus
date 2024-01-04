@@ -21,7 +21,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::{Bool, ComboBox, DamascusValueType, UIInput};
+pub use value_type::{Bool, ComboBox, DamascusValueType, Mat4, UIInput};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
@@ -121,14 +121,6 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_mat3()
         }
 
-        fn output_matrix3(
-            &mut self,
-            name: &str,
-            value: glam::Mat3,
-        ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Mat3 { value })
-        }
-
         fn input_matrix4(&mut self, name: &str) -> anyhow::Result<glam::Mat4> {
             self.evaluate_input(name)?.try_to_mat4()
         }
@@ -138,7 +130,12 @@ pub fn evaluate_node(
             name: &str,
             value: glam::Mat4,
         ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Mat4 { value })
+            self.populate_output(
+                name,
+                DamascusValueType::Mat4 {
+                    value: Mat4::new(value, None),
+                },
+            )
         }
 
         fn input_image(&mut self, name: &str) -> anyhow::Result<ndarray::Array4<f32>> {

@@ -348,7 +348,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "light_type",
-                    ComboBox::new::<lights::Lights>(default_light.light_type),
+                    ComboBox::new::<lights::Lights>(default_light.light_type, None),
                 );
                 input_vector3(
                     graph,
@@ -454,7 +454,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::new::<geometry::Shapes>(default_primitive.shape),
+                    ComboBox::new::<geometry::Shapes>(default_primitive.shape, None),
                 );
                 input_matrix4(graph, "world_matrix", glam::Mat4::IDENTITY);
                 input_uint(
@@ -470,7 +470,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     None,
                     0.0..=1.,
                 );
-                input_vector4(graph, "dimensional_data", Vec4::new(glam::Vec4::X, None, false)); // TODO make this dynamic based on shape
+                input_vector4(
+                    graph,
+                    "dimensional_data",
+                    Vec4::new(glam::Vec4::X, None, false),
+                ); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {
@@ -523,7 +527,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     None,
                     1.0..=1000000.,
                 );
-                input_vector3(graph, "seeds", Vec3::new(default_ray_marcher.seeds, None, false));
+                input_vector3(
+                    graph,
+                    "seeds",
+                    Vec3::new(default_ray_marcher.seeds, None, false),
+                );
                 input_bool(
                     graph,
                     "enable_depth_of_field",
@@ -568,7 +576,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov),
+                    ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov, None),
                 );
                 input_bool(graph, "latlong", default_ray_marcher.latlong);
                 output_ray_marcher(graph, "out");

@@ -1,7 +1,9 @@
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::str::FromStr;
 
 use egui_node_graph::{Graph, NodeId, OutputId};
+use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
@@ -19,7 +21,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::{ComboBox, DamascusValueType};
+pub use value_type::{ComboBox, DamascusValueType, UIInput};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
@@ -84,8 +86,11 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_bool()
         }
 
-        fn input_combo_box(&mut self, name: &str) -> anyhow::Result<ComboBox> {
-            self.evaluate_input(name)?.try_to_combo_box()
+        fn input_combo_box<E: IntoEnumIterator + Display + FromStr>(
+            &mut self,
+            name: &str,
+        ) -> anyhow::Result<E> {
+            self.evaluate_input(name)?.try_to_combo_box::<E>()
         }
 
         fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
@@ -269,8 +274,7 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Light => {
             let mut scene_lights = evaluator.input_light("lights")?;
-            let light_type_selection = evaluator.input_combo_box("light_type")?;
-            let light_type = lights::Lights::from_str(&light_type_selection.selected)?;
+            let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
             let dimensional_data = evaluator.input_vector3("dimensional_data")?;
             let intensity = evaluator.input_float("intensity")?;
             let falloff = evaluator.input_uint("falloff")?;
@@ -326,8 +330,7 @@ pub fn evaluate_node(
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
-            let shape_selection = evaluator.input_combo_box("shape")?;
-            let shape = geometry::Shapes::from_str(&shape_selection.selected)?;
+            let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
             let material = evaluator.input_material("material")?;
             let modifiers = evaluator.input_uint("modifiers")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
@@ -372,8 +375,7 @@ pub fn evaluate_node(
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
             let hdri_offset_angle = evaluator.input_float("hdri_offset_angle")?;
             let latlong = evaluator.input_bool("latlong")?;
-            let output_aov_selection = evaluator.input_combo_box("output_aov")?;
-            let output_aov = renderers::AOVs::from_str(&output_aov_selection.selected)?;
+            let output_aov = evaluator.input_combo_box::<renderers::AOVs>("output_aov")?;
 
             evaluator.output_ray_marcher(
                 "out",

@@ -26,9 +26,7 @@ pub trait UIInput<T> {
         self.create_parameter_label(ui, label);
     }
 
-    fn get_value(&self) -> T;
-
-    fn get_value_mut(&mut self) -> &mut T;
+    fn get_value(&self) -> &T;
 
     fn get_ui_data(&self) -> &Option<UIData>;
 
@@ -48,7 +46,13 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
         egui::Slider::new(self.get_value_mut(), range).clamp_to_range(false)
     }
 
+    fn get_value_mut(&mut self) -> &mut T;
+
     fn with_range(value: T, ui_data: Option<UIData>, range: RangeInclusive<T>) -> Self;
 
     fn get_range(&self) -> RangeInclusive<T>;
+}
+
+pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) {
+    ui.add(egui::DragValue::new(value).max_decimals(100));
 }

@@ -10,12 +10,8 @@ pub struct Integer {
 }
 
 impl UIInput<i32> for Integer {
-    fn get_value(&self) -> i32 {
-        self.value
-    }
-
-    fn get_value_mut(&mut self) -> &mut i32 {
-        &mut self.value
+    fn get_value(&self) -> &i32 {
+        &self.value
     }
 
     fn get_ui_data(&self) -> &Option<UIData> {
@@ -28,6 +24,10 @@ impl UIInput<i32> for Integer {
 }
 
 impl RangedInput<i32> for Integer {
+    fn get_value_mut(&mut self) -> &mut i32 {
+        &mut self.value
+    }
+
     fn with_range(value: i32, ui_data: Option<UIData>, range: RangeInclusive<i32>) -> Self {
         Self {
             value: value,

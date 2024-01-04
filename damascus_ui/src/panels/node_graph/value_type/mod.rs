@@ -1,9 +1,12 @@
 use core::ops::RangeInclusive;
+use std::fmt::Display;
+use std::str::FromStr;
 
 use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
 use ndarray;
+use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
@@ -13,13 +16,8 @@ use crate::panels::node_graph::{
 
 mod inputs;
 pub use inputs::{
-    RangedInput, UIInput,
-    combo_box::ComboBox,
-    integer::Integer,
-    float::Float,
-    unsigned_integer::UnsignedInteger,
-    vec3::Vec3,
-    vec4::Vec4,
+    combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
+    unsigned_integer::UnsignedInteger, vec3::Vec3, vec4::Vec4, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -67,7 +65,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to an int
     pub fn try_to_int(self) -> anyhow::Result<i32> {
         if let DamascusValueType::Integer { value } = self {
-            Ok(value.value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to int", self)
         }
@@ -76,7 +74,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a uint
     pub fn try_to_uint(self) -> anyhow::Result<u32> {
         if let DamascusValueType::UnsignedInteger { value } = self {
-            Ok(value.value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to uint", self)
         }
@@ -92,9 +90,9 @@ impl DamascusValueType {
     }
 
     /// Tries to downcast this value type to a bool
-    pub fn try_to_combo_box(self) -> anyhow::Result<ComboBox> {
+    pub fn try_to_combo_box<E: IntoEnumIterator + Display + FromStr>(self) -> anyhow::Result<E> {
         if let DamascusValueType::ComboBox { value } = self {
-            Ok(value)
+            value.as_enum::<E>()
         } else {
             anyhow::bail!("Invalid cast from {:?} to combo_box", self)
         }
@@ -103,7 +101,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a float
     pub fn try_to_float(self) -> anyhow::Result<f32> {
         if let DamascusValueType::Float { value } = self {
-            Ok(value.value)
+            Ok(*value.get_value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to float", self)
         }
@@ -230,30 +228,10 @@ impl WidgetValueTrait for DamascusValueType {
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
-        let create_drag_value_ui = |ui: &mut egui::Ui, value: &mut f32| {
-            ui.add(egui::DragValue::new(value).max_decimals(100));
-        };
         let create_bool_ui = |ui: &mut egui::Ui, label: &str, value: &mut bool| {
             ui.horizontal(|ui| {
                 ui.label(label);
                 ui.add(egui::Checkbox::new(value, ""));
-            });
-        };
-        let create_combo_box_ui = |ui: &mut egui::Ui, label: &str, value: &mut ComboBox| {
-            ui.horizontal(|ui| {
-                ui.label(label);
-                egui::ComboBox::from_label("")
-                    .selected_text(&value.selected)
-                    .width(ui.available_width())
-                    .show_ui(ui, |ui| {
-                        for enum_option in value.options.iter() {
-                            ui.selectable_value(
-                                &mut value.selected,
-                                enum_option.to_string(),
-                                enum_option,
-                            );
-                        }
-                    })
             });
         };
         let create_vec2_ui = |ui: &mut egui::Ui, label: &str, value: &mut glam::Vec2| {
@@ -320,7 +298,7 @@ impl WidgetValueTrait for DamascusValueType {
                 create_bool_ui(ui, param_name, value);
             }
             DamascusValueType::ComboBox { value } => {
-                create_combo_box_ui(ui, param_name, value);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Integer { value } => {
                 RangedInput::create_ui(value, ui, param_name);

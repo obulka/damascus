@@ -111,18 +111,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_float = |graph: &mut DamascusGraph,
-                           name: &str,
-                           default: f32,
-                           ui_data: Option<UIData>,
-                           range: RangeInclusive<f32>| {
+        let input_float = |graph: &mut DamascusGraph, name: &str, default: Float| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
                 DamascusDataType::Float,
-                DamascusValueType::Float {
-                    value: Float::with_range(default, ui_data, range),
-                },
+                DamascusValueType::Float { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );
@@ -287,7 +281,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_matrix4(graph, "axis", glam::Mat4::IDENTITY);
                 input_vector3(graph, "translate", Vec3::new(glam::Vec3::ZERO, None, false));
                 input_vector3(graph, "rotate", Vec3::new(glam::Vec3::ZERO, None, false));
-                input_float(graph, "uniform_scale", 1., None, 0.01..=10.0);
+                input_float(
+                    graph,
+                    "uniform_scale",
+                    Float::with_range(1., None, 0.01..=10.0),
+                );
                 output_matrix4(graph, "out");
             }
             DamascusNodeTemplate::Camera => {
@@ -295,38 +293,40 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "focal_length",
-                    default_camera.focal_length,
-                    Some(UIData::new("The focal length of the camera.")),
-                    5.0..=100.,
+                    Float::with_range(
+                        default_camera.focal_length,
+                        Some(UIData::new("The focal length of the camera.")),
+                        5.0..=100.,
+                    ),
                 );
                 input_float(
                     graph,
                     "focal_distance",
-                    default_camera.focal_distance,
-                    Some(UIData::new("The focal distance of the camera.")),
-                    0.1..=10.,
+                    Float::with_range(
+                        default_camera.focal_distance,
+                        Some(UIData::new("The focal distance of the camera.")),
+                        0.1..=10.,
+                    ),
                 );
-                input_float(graph, "f_stop", default_camera.f_stop, None, 0.1..=30.);
+                input_float(
+                    graph,
+                    "f_stop",
+                    Float::with_range(default_camera.f_stop, None, 0.1..=30.),
+                );
                 input_float(
                     graph,
                     "horizontal_aperture",
-                    default_camera.horizontal_aperture,
-                    None,
-                    0.1..=50.,
+                    Float::with_range(default_camera.horizontal_aperture, None, 0.1..=50.),
                 );
                 input_float(
                     graph,
                     "near_plane",
-                    default_camera.near_plane,
-                    None,
-                    0.1..=10.,
+                    Float::with_range(default_camera.near_plane, None, 0.1..=10.),
                 );
                 input_float(
                     graph,
                     "far_plane",
-                    default_camera.far_plane,
-                    None,
-                    11.0..=10000.,
+                    Float::with_range(default_camera.far_plane, None, 11.0..=10000.),
                 );
                 input_matrix4(graph, "world_matrix", default_camera.world_matrix);
                 input_bool(
@@ -349,7 +349,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "dimensional_data",
                     Vec3::new(default_light.dimensional_data, None, false),
                 );
-                input_float(graph, "intensity", default_light.intensity, None, 0.0..=10.);
+                input_float(
+                    graph,
+                    "intensity",
+                    Float::with_range(default_light.intensity, None, 0.0..=10.),
+                );
                 input_uint(
                     graph,
                     "falloff",
@@ -359,9 +363,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "shadow_hardness",
-                    default_light.shadow_hardness,
-                    None,
-                    1.0..=100.,
+                    Float::with_range(default_light.shadow_hardness, None, 1.0..=100.),
                 );
                 input_bool(graph, "soften_shadows", default_light.soften_shadows);
                 output_light(graph, "out");
@@ -376,16 +378,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "specular_probability",
-                    default_material.specular_probability,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.specular_probability, None, 0.0..=1.),
                 );
                 input_float(
                     graph,
                     "specular_roughness",
-                    default_material.specular_roughness,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.specular_roughness, None, 0.0..=1.),
                 );
                 input_vector3(
                     graph,
@@ -395,16 +393,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "transmissive_probability",
-                    default_material.transmissive_probability,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.transmissive_probability, None, 0.0..=1.),
                 );
                 input_float(
                     graph,
                     "transmissive_roughness",
-                    default_material.transmissive_roughness,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.transmissive_roughness, None, 0.0..=1.),
                 );
                 input_vector3(
                     graph,
@@ -414,9 +408,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "emissive_probability",
-                    default_material.emissive_probability,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.emissive_probability, None, 0.0..=1.),
                 );
                 input_vector3(
                     graph,
@@ -426,16 +418,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "refractive_index",
-                    default_material.refractive_index,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.refractive_index, None, 0.0..=1.),
                 );
                 input_float(
                     graph,
                     "scattering_coefficient",
-                    default_material.scattering_coefficient,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_material.scattering_coefficient, None, 0.0..=1.),
                 );
                 input_vector3(
                     graph,
@@ -463,9 +451,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "blend_strength",
-                    default_primitive.blend_strength,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_primitive.blend_strength, None, 0.0..=1.),
                 );
                 input_vector4(
                     graph,
@@ -486,9 +472,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "max_distance",
-                    default_ray_marcher.max_distance,
-                    None,
-                    10.0..=10000.,
+                    Float::with_range(default_ray_marcher.max_distance, None, 10.0..=10000.),
                 );
                 input_uint(
                     graph,
@@ -507,23 +491,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "hit_tolerance",
-                    default_ray_marcher.hit_tolerance,
-                    None,
-                    0.00001..=0.1,
+                    Float::with_range(default_ray_marcher.hit_tolerance, None, 0.00001..=0.1),
                 );
                 input_float(
                     graph,
                     "shadow_bias",
-                    default_ray_marcher.shadow_bias,
-                    None,
-                    1.0..=5.0,
+                    Float::with_range(default_ray_marcher.shadow_bias, None, 1.0..=5.0),
                 );
                 input_float(
                     graph,
                     "max_brightness",
-                    default_ray_marcher.max_brightness,
-                    None,
-                    1.0..=1000000.,
+                    Float::with_range(default_ray_marcher.max_brightness, None, 1.0..=1000000.),
                 );
                 input_vector3(
                     graph,
@@ -558,9 +536,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "light_sampling_bias",
-                    default_ray_marcher.light_sampling_bias,
-                    None,
-                    0.0..=1.,
+                    Float::with_range(default_ray_marcher.light_sampling_bias, None, 0.0..=1.),
                 );
                 input_bool(
                     graph,
@@ -570,9 +546,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "hdri_offset_angle",
-                    default_ray_marcher.hdri_offset_angle,
-                    None,
-                    0.0..=360.,
+                    Float::with_range(default_ray_marcher.hdri_offset_angle, None, 0.0..=360.),
                 );
                 input_combo_box(
                     graph,

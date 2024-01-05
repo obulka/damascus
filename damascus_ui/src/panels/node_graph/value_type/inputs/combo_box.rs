@@ -26,6 +26,7 @@ impl ComboBox {
         }
     }
 
+    #[inline]
     pub fn with_options(mut self, options: Vec<String>) -> Self {
         self.options = options;
         self

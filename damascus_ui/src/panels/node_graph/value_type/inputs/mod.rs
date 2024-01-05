@@ -26,6 +26,7 @@ pub trait UIInput<T> {
         ui.label(label);
     }
 
+    #[inline]
     fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
         if !self.ui_data().hidden {
             self.show_ui(ui, label);
@@ -38,6 +39,7 @@ pub trait UIInput<T> {
 
     fn value(&self) -> &T;
 
+    #[inline]
     fn with_ui_data(mut self, ui_data: UIData) -> Self
     where
         Self: Sized,
@@ -52,6 +54,7 @@ pub trait UIInput<T> {
 }
 
 pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
+    #[inline]
     fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
         if !self.ui_data().hidden {
             RangedInput::show_ui(self, ui, label);
@@ -65,6 +68,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
         });
     }
 
+    #[inline]
     fn create_slider(&mut self) -> egui::Slider<'_> {
         let range: RangeInclusive<T> = self.range();
         egui::Slider::new(self.value_mut(), range).clamp_to_range(false)
@@ -72,6 +76,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 
     fn value_mut(&mut self) -> &mut T;
 
+    #[inline]
     fn with_range(mut self, range: RangeInclusive<T>) -> Self
     where
         Self: Sized,
@@ -86,6 +91,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 }
 
 pub trait Colour<T>: UIInput<T> {
+    #[inline]
     fn as_colour(mut self) -> Self
     where
         Self: Sized,

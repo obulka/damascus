@@ -387,7 +387,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "light_type",
-                    ComboBox::new::<lights::Lights>(default_light.light_type).with_ui_data(
+                    ComboBox::from_enum::<lights::Lights>(default_light.light_type).with_ui_data(
                         UIData::default().tooltip(indoc! {
                             "The type of non-physical light to create.\n
                             \tPoint: A point light.\n
@@ -583,7 +583,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::new::<geometry::Shapes>(default_primitive.shape)
+                    ComboBox::from_enum::<geometry::Shapes>(default_primitive.shape)
                         .with_ui_data(UIData::default().tooltip("The shape of the primitive.")),
                 );
                 input_matrix4(
@@ -799,15 +799,14 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                    ComboBox::from_enum::<renderers::AOVs>(default_ray_marcher.output_aov)
+                        .with_ui_data(UIData::default().tooltip(indoc! {
                             "The AOV type to output.\nThe stats AOV has the
                             average number of bounces in the red channel,
                             average number of steps in the green channel,
                             and the distance travelled in the blue channel.
                             Each is displayed as a fraction of the maximums."
-                        }),
-                    ),
+                        })),
                 );
                 input_bool(
                     graph,

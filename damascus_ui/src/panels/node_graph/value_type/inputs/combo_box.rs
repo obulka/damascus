@@ -14,7 +14,7 @@ pub struct ComboBox {
 }
 
 impl ComboBox {
-    pub fn new<E: IntoEnumIterator + Display + FromStr>(enumeration: E) -> Self {
+    pub fn from_enum<E: IntoEnumIterator + Display + FromStr>(enumeration: E) -> Self {
         let mut options = vec![];
         for enum_option in E::iter() {
             options.push(format!("{}", enum_option));
@@ -24,6 +24,11 @@ impl ComboBox {
             options: options,
             ..Default::default()
         }
+    }
+
+    pub fn with_options(mut self, options: Vec<String>) -> Self {
+        self.options = options;
+        self
     }
 
     pub fn as_enum<E: IntoEnumIterator + Display + FromStr>(&self) -> anyhow::Result<E> {

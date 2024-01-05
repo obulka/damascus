@@ -503,12 +503,22 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "specular_roughness",
-                    Float::with_range(default_material.specular_roughness, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.specular_roughness,
+                        Some(UIData::new(
+                            "The roughness of the material when specularly reflected.",
+                        )),
+                        0.0..=1.,
+                    ),
                 );
                 input_vector3(
                     graph,
                     "specular_colour",
-                    Vec3::new(default_material.specular_colour, None, true),
+                    Vec3::new(
+                        default_material.specular_colour,
+                        Some(UIData::new("The specular colour of the material.")),
+                        true,
+                    ),
                 );
                 input_float(
                     graph,
@@ -526,37 +536,69 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "transmissive_roughness",
-                    Float::with_range(default_material.transmissive_roughness, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.transmissive_roughness,
+                        Some(UIData::new(
+                            "The roughness when transmitted through the material.",
+                        )),
+                        0.0..=1.,
+                    ),
                 );
                 input_vector3(
                     graph,
                     "transmissive_colour",
-                    Vec3::new(default_material.transmissive_colour, None, true),
+                    Vec3::new(
+                        default_material.transmissive_colour,
+                        Some(UIData::new("The transmissive colour of the material.")),
+                        true,
+                    ),
                 );
                 input_float(
                     graph,
                     "emissive_probability",
-                    Float::with_range(default_material.emissive_probability, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.emissive_probability,
+                        Some(UIData::new(
+                            "The probability that light will be emitted from the material.",
+                        )),
+                        0.0..=1.,
+                    ),
                 );
                 input_vector3(
                     graph,
                     "emissive_colour",
-                    Vec3::new(default_material.emissive_colour, None, true),
+                    Vec3::new(
+                        default_material.emissive_colour,
+                        Some(UIData::new("The emissive colour of the material.")),
+                        true,
+                    ),
                 );
                 input_float(
                     graph,
                     "refractive_index",
-                    Float::with_range(default_material.refractive_index, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.refractive_index,
+                        Some(UIData::new("The index of refraction of the material.")),
+                        0.0..=1.,
+                    ),
                 );
                 input_float(
                     graph,
                     "scattering_coefficient",
-                    Float::with_range(default_material.scattering_coefficient, None, 0.0..=1.),
+                    Float::with_range(
+                        default_material.scattering_coefficient,
+                        Some(UIData::new("The scattering coefficient of the material.")),
+                        0.0..=1.,
+                    ),
                 );
                 input_vector3(
                     graph,
                     "scattering_colour",
-                    Vec3::new(default_material.scattering_colour, None, true),
+                    Vec3::new(
+                        default_material.scattering_colour,
+                        Some(UIData::new("The scattering colour of the material.")),
+                        true,
+                    ),
                 );
                 output_material(graph, "out");
             }
@@ -568,9 +610,19 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::new::<geometry::Shapes>(default_primitive.shape, None),
+                    ComboBox::new::<geometry::Shapes>(
+                        default_primitive.shape,
+                        Some(UIData::new("The shape of the primitive.")),
+                    ),
                 );
-                input_matrix4(graph, "world_matrix", Mat4::new(glam::Mat4::IDENTITY, None));
+                input_matrix4(
+                    graph,
+                    "world_matrix",
+                    Mat4::new(
+                        glam::Mat4::IDENTITY,
+                        Some(UIData::new("The world matrix/axis of the primitive.")),
+                    ),
+                );
                 input_uint(
                     graph,
                     "modifiers",
@@ -579,12 +631,25 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "blend_strength",
-                    Float::with_range(default_primitive.blend_strength, None, 0.0..=1.),
+                    Float::with_range(
+                        default_primitive.blend_strength,
+                        Some(UIData::new(
+                            "The amount to blend with this primitive's children.",
+                        )),
+                        0.0..=1.,
+                    ),
                 );
                 input_vector4(
                     graph,
                     "dimensional_data",
-                    Vec4::new(glam::Vec4::X, None, false),
+                    Vec4::new(
+                        glam::Vec4::X,
+                        Some(UIData::new(indoc! {
+                            "The data required to dimension each object\n
+                            TODO make the labels here dynamic."
+                        })),
+                        false,
+                    ),
                 ); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
@@ -594,105 +659,221 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_uint(
                     graph,
                     "paths_per_pixel",
-                    UnsignedInteger::with_range(default_ray_marcher.paths_per_pixel, None, 1..=100),
+                    UnsignedInteger::with_range(
+                        default_ray_marcher.paths_per_pixel,
+                        Some(UIData::new("The number of paths to march for each pixel.")),
+                        1..=100,
+                    ),
                 );
                 input_bool(
                     graph,
                     "roulette",
-                    Bool::new(default_ray_marcher.roulette, None),
+                    Bool::new(
+                        default_ray_marcher.roulette,
+                        Some(UIData::new(indoc! {
+                            "Randomly terminate rays with a probability proportional
+                            to the remaining strength, or throughput of a ray."
+                        })),
+                    ),
                 );
                 input_float(
                     graph,
                     "max_distance",
-                    Float::with_range(default_ray_marcher.max_distance, None, 10.0..=10000.),
+                    Float::with_range(
+                        default_ray_marcher.max_distance,
+                        Some(UIData::new(indoc! {
+                            "Each ray, once spawned is only allowed to travel
+                            this distance before it is culled."
+                        })),
+                        10.0..=10000.,
+                    ),
                 );
                 input_uint(
                     graph,
                     "max_ray_steps",
                     UnsignedInteger::with_range(
                         default_ray_marcher.max_ray_steps,
-                        None,
+                        Some(UIData::new(indoc! {
+                            "Limits the number of times the rays can intersect
+                            an object per subpixel."
+                        })),
                         100..=100000,
                     ),
                 );
                 input_uint(
                     graph,
                     "max_bounces",
-                    UnsignedInteger::with_range(default_ray_marcher.max_bounces, None, 0..=100),
+                    UnsignedInteger::with_range(
+                        default_ray_marcher.max_bounces,
+                        Some(UIData::new(indoc! {
+                            "Limits the number of times the rays can intersect
+                            an object per subpixel."
+                        })),
+                        0..=100,
+                    ),
                 );
                 input_float(
                     graph,
                     "hit_tolerance",
-                    Float::with_range(default_ray_marcher.hit_tolerance, None, 0.00001..=0.1),
+                    Float::with_range(
+                        default_ray_marcher.hit_tolerance,
+                        Some(UIData::new(indoc! {
+                            "The ray will be considered to have hit an object
+                            when it is within this distance of its surface."
+                        })),
+                        0.00001..=0.1,
+                    ),
                 );
                 input_float(
                     graph,
                     "shadow_bias",
-                    Float::with_range(default_ray_marcher.shadow_bias, None, 1.0..=5.0),
+                    Float::with_range(
+                        default_ray_marcher.shadow_bias,
+                        Some(UIData::new(indoc! {
+                            "After intersecting an object the ray is offset from
+                            the surface before continuing. Multiply that offset
+                            distance by this factor."
+                        })),
+                        1.0..=5.0,
+                    ),
                 );
                 input_float(
                     graph,
                     "max_brightness",
-                    Float::with_range(default_ray_marcher.max_brightness, None, 1.0..=1000000.),
+                    Float::with_range(
+                        default_ray_marcher.max_brightness,
+                        Some(UIData::new(indoc! {
+                            "The maximum brightness of a pixel. This protects
+                            against overflowing to infinity."
+                        })),
+                        1.0..=1000000.,
+                    ),
                 );
                 input_vector3(
                     graph,
                     "seeds",
-                    Vec3::new(default_ray_marcher.seeds, None, false),
-                );
-                input_bool(
-                    graph,
-                    "enable_depth_of_field",
-                    Bool::new(default_ray_marcher.enable_depth_of_field, None),
+                    Vec3::new(
+                        default_ray_marcher.seeds,
+                        Some(UIData::new(indoc! {
+                            "The seeds used to generate per-pixel, random seeds.
+                            Be sure these are different on each render used for
+                            adaptive sampling."
+                        })),
+                        false,
+                    ),
                 );
                 input_bool(
                     graph,
                     "dynamic_level_of_detail",
-                    Bool::new(default_ray_marcher.dynamic_level_of_detail, None),
+                    Bool::new(
+                        default_ray_marcher.dynamic_level_of_detail,
+                        Some(UIData::new(indoc! {
+                            "Increase the hit tolerance the farther the ray
+                            travels without hitting a surface. This has performance
+                            and antialiasing benefits."
+                        })),
+                    ),
                 );
                 input_uint(
                     graph,
                     "max_light_sampling_bounces",
                     UnsignedInteger::with_range(
                         default_ray_marcher.max_light_sampling_bounces,
-                        None,
+                        Some(UIData::new(indoc! {
+                            "The maximum number of bounces during light sampling.
+                            Light sampling will be disabled if this is 0. Light
+                            sampling means that each time a surface is hit, the
+                            direct illumination from lights in the scene will be
+                            computed, which helps to reduce noise very quickly.\nTODO"
+                        })),
                         0..=50,
                     ),
                 );
                 input_bool(
                     graph,
                     "sample_hdri",
-                    Bool::new(default_ray_marcher.sample_hdri, None),
+                    Bool::new(
+                        default_ray_marcher.sample_hdri,
+                        Some(UIData::new(indoc! {
+                            "Include the HDRI in the list of lights that can be
+                            sampled during light sampling.\nTODO"
+                        })),
+                    ),
                 );
                 input_bool(
                     graph,
                     "sample_all_lights",
-                    Bool::new(default_ray_marcher.sample_all_lights, None),
+                    Bool::new(
+                        default_ray_marcher.sample_all_lights,
+                        Some(UIData::new(indoc! {
+                            "Sample every light in the scene during light sampling,
+                            rather than just one random one. This will reduce noise
+                            quickly but slow things down.\nTODO"
+                        })),
+                    ),
                 );
                 input_float(
                     graph,
                     "light_sampling_bias",
-                    Float::with_range(default_ray_marcher.light_sampling_bias, None, 0.0..=1.),
+                    Float::with_range(
+                        default_ray_marcher.light_sampling_bias,
+                        Some(UIData::new(indoc! {
+                            "A fully biased (1) light sampling means that on each
+                            light sample the ray will be initialised pointing
+                            directly at the light. Reducing this bias means that
+                            some rays will be pointed away from the light. This,
+                            when combined with multiple 'max light sampling
+                            bounces' allows the renderer to find difficult paths,
+                            such as volumetric caustics.\nTODO"
+                        })),
+                        0.0..=1.,
+                    ),
                 );
                 input_bool(
                     graph,
                     "secondary_sampling",
-                    Bool::new(default_ray_marcher.secondary_sampling, None),
+                    Bool::new(
+                        default_ray_marcher.secondary_sampling,
+                        Some(UIData::new(indoc! {
+                            "Sample the artificial lights (those in the 'lights'
+                            input) while casting shadow rays for light sampling.\nTODO"
+                        })),
+                    ),
                 );
                 input_float(
                     graph,
                     "hdri_offset_angle",
-                    Float::with_range(default_ray_marcher.hdri_offset_angle, None, 0.0..=360.),
+                    Float::with_range(
+                        default_ray_marcher.hdri_offset_angle,
+                        Some(UIData::new(
+                            "Rotate the hdri image by this amount around the y-axis.\nTODO",
+                        )),
+                        0.0..=360.,
+                    ),
                 );
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::new::<renderers::AOVs>(default_ray_marcher.output_aov, None),
+                    ComboBox::new::<renderers::AOVs>(
+                        default_ray_marcher.output_aov,
+                        Some(UIData::new(indoc! {
+                            "The AOV type to output.\nThe stats AOV has the
+                            average number of bounces in the red channel,
+                            average number of steps in the green channel,
+                            and the distance travelled in the blue channel.
+                            Each is displayed as a fraction of the maximums."
+                        })),
+                    ),
                 );
                 input_bool(
                     graph,
                     "latlong",
-                    Bool::new(default_ray_marcher.latlong, None),
+                    Bool::new(
+                        default_ray_marcher.latlong,
+                        Some(UIData::new(
+                            "Output a LatLong, 360 degree field of view image.\nTODO",
+                        )),
+                    ),
                 );
                 output_ray_marcher(graph, "out");
             }

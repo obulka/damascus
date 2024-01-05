@@ -21,7 +21,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::{Bool, ComboBox, DamascusValueType, Mat4, UIInput};
+pub use value_type::{Bool, DamascusValueType, Mat4};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
@@ -363,7 +363,6 @@ pub fn evaluate_node(
             let shadow_bias = evaluator.input_float("shadow_bias")?;
             let max_brightness = evaluator.input_float("max_brightness")?;
             let seeds = evaluator.input_vector3("seeds")?;
-            let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
             let dynamic_level_of_detail = evaluator.input_bool("dynamic_level_of_detail")?;
             let max_light_sampling_bounces = evaluator.input_uint("max_light_sampling_bounces")?;
             let sample_hdri = evaluator.input_bool("sample_hdri")?;
@@ -387,7 +386,6 @@ pub fn evaluate_node(
                     shadow_bias: shadow_bias,
                     max_brightness: max_brightness,
                     seeds: seeds,
-                    enable_depth_of_field: enable_depth_of_field,
                     dynamic_level_of_detail: dynamic_level_of_detail,
                     max_light_sampling_bounces: max_light_sampling_bounces,
                     sample_hdri: sample_hdri,

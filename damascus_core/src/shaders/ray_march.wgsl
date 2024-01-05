@@ -30,7 +30,6 @@ struct RayMarcherParameters {
     shadow_bias: f32,
     max_brightness: f32,
     seeds: vec3<f32>,
-    enable_depth_of_field: u32,
     dynamic_level_of_detail: u32,
     max_light_sampling_bounces: u32,
     sample_hdri: u32,
@@ -2644,7 +2643,7 @@ fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
     //     //     ray_direction,
     //     // );
     // }
-    // else if (bool(_render_params.ray_marcher.enable_depth_of_field))
+    // else if (bool(_render_camera.enable_depth_of_field))
     // {
     //     // create_ray_with_dof(
     //     //     uv_coordinate,
@@ -2692,13 +2691,13 @@ fn early_exit_aovs(
 }
 
 
-fn final_aovs(aov_type: u32, bounces: u32, iterations: u32) -> vec3<f32> {
+fn final_aovs(aov_type: u32, bounces: u32, iterations: u32, distance_travelled: f32) -> vec3<f32> {
     switch aov_type {
         case 5u {
             return vec3(
                 f32(bounces) / f32(_render_params.ray_marcher.max_bounces),
                 f32(iterations) / f32(_render_params.ray_marcher.max_ray_steps),
-                0.,
+                distance_travelled / _render_params.ray_marcher.max_distance,
             );
         }
         default {
@@ -2945,6 +2944,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             _render_params.ray_marcher.output_aov,
             bounces,
             iterations,
+            distance_travelled,
         );
         // TODO object id in alpha after you can sample
     }

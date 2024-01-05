@@ -72,9 +72,17 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 
     fn value_mut(&mut self) -> &mut T;
 
-    fn with_range(value: T, ui_data: UIData, range: RangeInclusive<T>) -> Self;
+    fn with_range(mut self, range: RangeInclusive<T>) -> Self
+    where
+        Self: Sized,
+    {
+        *self.range_mut() = range;
+        self
+    }
 
     fn range(&self) -> RangeInclusive<T>;
+
+    fn range_mut(&mut self) -> &mut RangeInclusive<T>;
 }
 
 pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) {

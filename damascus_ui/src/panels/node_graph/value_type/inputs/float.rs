@@ -45,12 +45,8 @@ impl RangedInput<f32> for Float {
         &mut self.value
     }
 
-    fn with_range(value: f32, ui_data: UIData, range: RangeInclusive<f32>) -> Self {
-        Self {
-            value: value,
-            range: range,
-            ui_data: ui_data,
-        }
+    fn range_mut(&mut self) -> &mut RangeInclusive<f32> {
+        &mut self.range
     }
 
     fn range(&self) -> RangeInclusive<f32> {

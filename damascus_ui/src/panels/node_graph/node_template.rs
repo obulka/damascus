@@ -11,7 +11,7 @@ use crate::panels::node_graph::{
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
-        Bool, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
+        Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
         UIInput, UnsignedInteger, Vec2, Vec3, Vec4,
     },
     DamascusGraph,
@@ -288,20 +288,14 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "translate",
-                    Vec3::new(
-                        glam::Vec3::ZERO,
-                        UIData::default().tooltip("The translation of this axis."),
-                        false,
-                    ),
+                    Vec3::from_vec3(glam::Vec3::ZERO)
+                        .with_ui_data(UIData::default().tooltip("The translation of this axis.")),
                 );
                 input_vector3(
                     graph,
                     "rotate",
-                    Vec3::new(
-                        glam::Vec3::ZERO,
-                        UIData::default().tooltip("The rotation of this axis."),
-                        false,
-                    ),
+                    Vec3::from_vec3(glam::Vec3::ZERO)
+                        .with_ui_data(UIData::default().tooltip("The rotation of this axis.")),
                 );
                 input_float(
                     graph,
@@ -406,8 +400,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "dimensional_data",
-                    Vec3::new(
-                        default_light.dimensional_data,
+                    Vec3::from_vec3(default_light.dimensional_data).with_ui_data(
                         UIData::default().tooltip(indoc! {
                             "The data needed by each individual light type.\n
                             \tPoint: The position.\n
@@ -416,7 +409,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             \tAmbient Occlusion: Iterations is the x value.\n\n
                             TODO: make dynamic knobs"
                         }),
-                        false,
                     ),
                 );
                 input_float(
@@ -439,11 +431,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "colour",
-                    Vec3::new(
-                        default_light.colour,
-                        UIData::default().tooltip("The light colour."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_light.colour)
+                        .with_ui_data(UIData::default().tooltip("The light colour."))
+                        .as_colour(),
                 );
                 input_float(
                     graph,
@@ -471,11 +461,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "diffuse_colour",
-                    Vec3::new(
-                        default_material.diffuse_colour,
-                        UIData::default().tooltip("The diffuse colour of the material."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_material.diffuse_colour)
+                        .with_ui_data(
+                            UIData::default().tooltip("The diffuse colour of the material."),
+                        )
+                        .as_colour(),
                 );
                 input_float(
                     graph,
@@ -501,11 +491,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "specular_colour",
-                    Vec3::new(
-                        default_material.specular_colour,
-                        UIData::default().tooltip("The specular colour of the material."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_material.specular_colour)
+                        .with_ui_data(
+                            UIData::default().tooltip("The specular colour of the material."),
+                        )
+                        .as_colour(),
                 );
                 input_float(
                     graph,
@@ -531,11 +521,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "transmissive_colour",
-                    Vec3::new(
-                        default_material.transmissive_colour,
-                        UIData::default().tooltip("The transmissive colour of the material."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_material.transmissive_colour)
+                        .with_ui_data(
+                            UIData::default().tooltip("The transmissive colour of the material."),
+                        )
+                        .as_colour(),
                 );
                 input_float(
                     graph,
@@ -549,11 +539,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "emissive_colour",
-                    Vec3::new(
-                        default_material.emissive_colour,
-                        UIData::default().tooltip("The emissive colour of the material."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_material.emissive_colour)
+                        .with_ui_data(
+                            UIData::default().tooltip("The emissive colour of the material."),
+                        )
+                        .as_colour(),
                 );
                 input_float(
                     graph,
@@ -577,11 +567,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "scattering_colour",
-                    Vec3::new(
-                        default_material.scattering_colour,
-                        UIData::default().tooltip("The scattering colour of the material."),
-                        true,
-                    ),
+                    Vec3::from_vec3(default_material.scattering_colour)
+                        .with_ui_data(
+                            UIData::default().tooltip("The scattering colour of the material."),
+                        )
+                        .as_colour(),
                 );
                 output_material(graph, "out");
             }
@@ -623,14 +613,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector4(
                     graph,
                     "dimensional_data",
-                    Vec4::new(
-                        glam::Vec4::X,
-                        UIData::default().tooltip(indoc! {
+                    Vec4::from_vec4(glam::Vec4::X).with_ui_data(UIData::default().tooltip(
+                        indoc! {
                             "The data required to dimension each object\n
                             TODO make the labels here dynamic."
-                        }),
-                        false,
-                    ),
+                        },
+                    )),
                 ); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
@@ -721,14 +709,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "seeds",
-                    Vec3::new(
-                        default_ray_marcher.seeds,
+                    Vec3::from_vec3(default_ray_marcher.seeds).with_ui_data(
                         UIData::default().tooltip(indoc! {
                             "The seeds used to generate per-pixel, random seeds.
                             Be sure these are different on each render used for
                             adaptive sampling."
                         }),
-                        false,
                     ),
                 );
                 input_bool(

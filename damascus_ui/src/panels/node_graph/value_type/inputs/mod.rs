@@ -85,6 +85,20 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
     fn range_mut(&mut self) -> &mut RangeInclusive<T>;
 }
 
+pub trait Colour<T>: UIInput<T> {
+    fn as_colour(mut self) -> Self
+    where
+        Self: Sized,
+    {
+        *self.is_colour_mut() = true;
+        self
+    }
+
+    fn is_colour(&self) -> &bool;
+
+    fn is_colour_mut(&mut self) -> &mut bool;
+}
+
 pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) {
     ui.add(
         egui::DragValue::new(value).max_decimals(100),

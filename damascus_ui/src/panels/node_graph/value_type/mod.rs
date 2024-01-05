@@ -18,7 +18,7 @@ mod inputs;
 pub use inputs::{
     boolean::Bool, combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
     mat3::Mat3, mat4::Mat4, unsigned_integer::UnsignedInteger, vec2::Vec2, vec3::Vec3, vec4::Vec4,
-    RangedInput, UIInput,
+    Colour, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;

@@ -33,6 +33,7 @@ pub trait UIInput<T> {
         }
     }
 
+    #[inline]
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
         self.create_parameter_label(ui, label);
     }
@@ -70,7 +71,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 
     #[inline]
     fn create_slider(&mut self) -> egui::Slider<'_> {
-        let range: RangeInclusive<T> = self.range();
+        let range: RangeInclusive<T> = self.range().clone();
         egui::Slider::new(self.value_mut(), range).clamp_to_range(false)
     }
 
@@ -85,7 +86,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
         self
     }
 
-    fn range(&self) -> RangeInclusive<T>;
+    fn range(&self) -> &RangeInclusive<T>;
 
     fn range_mut(&mut self) -> &mut RangeInclusive<T>;
 }

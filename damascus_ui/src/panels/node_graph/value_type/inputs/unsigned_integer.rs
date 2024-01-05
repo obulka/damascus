@@ -49,7 +49,7 @@ impl RangedInput<u32> for UnsignedInteger {
         &mut self.range
     }
 
-    fn range(&self) -> RangeInclusive<u32> {
-        self.range.clone()
+    fn range(&self) -> &RangeInclusive<u32> {
+        &self.range
     }
 }

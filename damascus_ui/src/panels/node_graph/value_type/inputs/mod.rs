@@ -52,6 +52,12 @@ pub trait UIInput<T> {
 }
 
 pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
+    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+        if !self.ui_data().hidden {
+            RangedInput::show_ui(self, ui, label);
+        }
+    }
+
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);

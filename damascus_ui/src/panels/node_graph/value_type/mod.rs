@@ -241,13 +241,13 @@ impl WidgetValueTrait for DamascusValueType {
                 value.create_ui(ui, param_name);
             }
             DamascusValueType::Integer { value } => {
-                value.create_ui(ui, param_name);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::UnsignedInteger { value } => {
-                value.create_ui(ui, param_name);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::Float { value } => {
-                value.create_ui(ui, param_name);
+                RangedInput::create_ui(value, ui, param_name);
             }
             DamascusValueType::Vec2 { value } => {
                 value.create_ui(ui, param_name);

@@ -5,30 +5,47 @@ use crate::panels::node_graph::value_type::{RangedInput, UIData, UIInput};
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Integer {
     value: i32,
-    ui_data: Option<UIData>,
+    ui_data: UIData,
     pub range: RangeInclusive<i32>,
 }
 
+impl Default for Integer {
+    fn default() -> Self {
+        Self {
+            value: 0,
+            ui_data: UIData::default(),
+            range: -10..=10,
+        }
+    }
+}
+
 impl UIInput<i32> for Integer {
-    fn get_value(&self) -> &i32 {
+    fn new(value: i32) -> Self {
+        Self {
+            value: value,
+            ..Default::default()
+        }
+    }
+
+    fn value(&self) -> &i32 {
         &self.value
     }
 
-    fn get_ui_data(&self) -> &Option<UIData> {
+    fn ui_data(&self) -> &UIData {
         &self.ui_data
     }
 
-    fn get_ui_data_mut(&mut self) -> &mut Option<UIData> {
+    fn ui_data_mut(&mut self) -> &mut UIData {
         &mut self.ui_data
     }
 }
 
 impl RangedInput<i32> for Integer {
-    fn get_value_mut(&mut self) -> &mut i32 {
+    fn value_mut(&mut self) -> &mut i32 {
         &mut self.value
     }
 
-    fn with_range(value: i32, ui_data: Option<UIData>, range: RangeInclusive<i32>) -> Self {
+    fn with_range(value: i32, ui_data: UIData, range: RangeInclusive<i32>) -> Self {
         Self {
             value: value,
             ui_data: ui_data,
@@ -36,7 +53,7 @@ impl RangedInput<i32> for Integer {
         }
     }
 
-    fn get_range(&self) -> RangeInclusive<i32> {
+    fn range(&self) -> RangeInclusive<i32> {
         self.range.clone()
     }
 }

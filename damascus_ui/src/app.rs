@@ -6,7 +6,7 @@ use egui_node_graph::{GraphEditorState, NodeResponse};
 use crate::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
-        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType,
+        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType, UIInput,
     },
     viewport_3d::Viewport3d,
 };
@@ -159,7 +159,7 @@ impl eframe::App for Damascus {
                         );
 
                         DamascusValueType::Bool {
-                            value: Bool::new(false, None),
+                            value: Bool::new(false),
                         }
                     }
                 };

@@ -59,7 +59,7 @@ impl Default for DamascusValueType {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
         Self::Bool {
-            value: Bool::new(false, None),
+            value: Bool::new(false),
         }
     }
 }
@@ -68,7 +68,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to an int
     pub fn try_to_int(self) -> anyhow::Result<i32> {
         if let DamascusValueType::Integer { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to int", self)
         }
@@ -77,7 +77,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a uint
     pub fn try_to_uint(self) -> anyhow::Result<u32> {
         if let DamascusValueType::UnsignedInteger { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to uint", self)
         }
@@ -86,7 +86,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a bool
     pub fn try_to_bool(self) -> anyhow::Result<bool> {
         if let DamascusValueType::Bool { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to bool", self)
         }
@@ -104,7 +104,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a float
     pub fn try_to_float(self) -> anyhow::Result<f32> {
         if let DamascusValueType::Float { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to float", self)
         }
@@ -113,7 +113,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a vector2
     pub fn try_to_vec2(self) -> anyhow::Result<glam::Vec2> {
         if let DamascusValueType::Vec2 { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec2", self)
         }
@@ -140,7 +140,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a mat3
     pub fn try_to_mat3(self) -> anyhow::Result<glam::Mat3> {
         if let DamascusValueType::Mat3 { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat3", self)
         }
@@ -149,7 +149,7 @@ impl DamascusValueType {
     /// Tries to downcast this value type to a mat4
     pub fn try_to_mat4(self) -> anyhow::Result<glam::Mat4> {
         if let DamascusValueType::Mat4 { value } = self {
-            Ok(*value.get_value())
+            Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat4", self)
         }
@@ -241,13 +241,13 @@ impl WidgetValueTrait for DamascusValueType {
                 value.create_ui(ui, param_name);
             }
             DamascusValueType::Integer { value } => {
-                RangedInput::create_ui(value, ui, param_name);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::UnsignedInteger { value } => {
-                RangedInput::create_ui(value, ui, param_name);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Float { value } => {
-                RangedInput::create_ui(value, ui, param_name);
+                value.create_ui(ui, param_name);
             }
             DamascusValueType::Vec2 { value } => {
                 value.create_ui(ui, param_name);

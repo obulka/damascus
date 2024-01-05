@@ -10,14 +10,11 @@ use crate::panels::node_graph::value_type::{UIData, UIInput};
 pub struct ComboBox {
     selected: String,
     options: Vec<String>,
-    ui_data: Option<UIData>,
+    ui_data: UIData,
 }
 
 impl ComboBox {
-    pub fn new<E: IntoEnumIterator + Display + FromStr>(
-        enumeration: E,
-        ui_data: Option<UIData>,
-    ) -> Self {
+    pub fn new<E: IntoEnumIterator + Display + FromStr>(enumeration: E) -> Self {
         let mut options = vec![];
         for enum_option in E::iter() {
             options.push(format!("{}", enum_option));
@@ -25,21 +22,28 @@ impl ComboBox {
         Self {
             selected: format!("{}", enumeration),
             options: options,
-            ui_data: ui_data,
+            ..Default::default()
         }
     }
 
     pub fn as_enum<E: IntoEnumIterator + Display + FromStr>(&self) -> anyhow::Result<E> {
-        if let Ok(enum_value) = E::from_str(self.get_value()) {
+        if let Ok(enum_value) = E::from_str(self.value()) {
             Ok(enum_value)
         } else {
-            anyhow::bail!(format!("Could not cast {} to enum", self.get_value()))
+            anyhow::bail!(format!("Could not cast {} to enum", self.value()))
         }
     }
 }
 
 impl UIInput<String> for ComboBox {
-    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn new(selected: String) -> Self {
+        Self {
+            selected: selected,
+            ..Default::default()
+        }
+    }
+
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             egui::ComboBox::from_label("")
@@ -57,15 +61,15 @@ impl UIInput<String> for ComboBox {
         });
     }
 
-    fn get_value(&self) -> &String {
+    fn value(&self) -> &String {
         &self.selected
     }
 
-    fn get_ui_data(&self) -> &Option<UIData> {
+    fn ui_data(&self) -> &UIData {
         &self.ui_data
     }
 
-    fn get_ui_data_mut(&mut self) -> &mut Option<UIData> {
+    fn ui_data_mut(&mut self) -> &mut UIData {
         &mut self.ui_data
     }
 }

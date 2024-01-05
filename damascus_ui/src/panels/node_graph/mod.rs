@@ -21,7 +21,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::{Bool, DamascusValueType, Mat4};
+pub use value_type::{Bool, DamascusValueType, Mat4, UIData, UIInput};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
@@ -133,7 +133,7 @@ pub fn evaluate_node(
             self.populate_output(
                 name,
                 DamascusValueType::Mat4 {
-                    value: Mat4::new(value, None),
+                    value: Mat4::new(value),
                 },
             )
         }

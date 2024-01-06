@@ -17,7 +17,7 @@ impl UIInput<glam::Mat3> for Mat3 {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         ui.vertical(|ui| {
             self.create_parameter_label(ui, label);
             ui.horizontal(|ui| {
@@ -36,6 +36,7 @@ impl UIInput<glam::Mat3> for Mat3 {
                 create_drag_value_ui(ui, &mut self.value.z_axis.z);
             });
         });
+        false
     }
 
     fn value(&self) -> &glam::Mat3 {

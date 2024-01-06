@@ -36,7 +36,7 @@ impl ComboBox {
         if let Ok(enum_value) = E::from_str(self.value()) {
             Ok(enum_value)
         } else {
-            anyhow::bail!(format!("Could not cast {} to enum", self.value()))
+            anyhow::bail!(format!("Could not cast {} to enum.", self.value()))
         }
     }
 }
@@ -49,22 +49,25 @@ impl UIInput<String> for ComboBox {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            egui::ComboBox::from_label("")
+            let response = egui::ComboBox::from_label("")
                 .selected_text(&self.selected)
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {
                     for enum_option in self.options.iter() {
-                        ui.selectable_value(
+                        let response = ui.selectable_value(
                             &mut self.selected,
                             enum_option.to_string(),
                             enum_option,
                         );
+                        has_changed |= response.changed();
                     }
-                })
+                });
         });
+        has_changed
     }
 
     fn value(&self) -> &String {

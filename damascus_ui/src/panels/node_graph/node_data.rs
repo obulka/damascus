@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui_node_graph::{Graph, NodeDataTrait, NodeId, NodeResponse, UserResponseTrait};
+use egui_node_graph::{Graph, Node, NodeDataTrait, NodeId, NodeResponse, UserResponseTrait};
 
 use crate::panels::node_graph::{
     data_type::DamascusDataType, node_graph_state::DamascusGraphState,

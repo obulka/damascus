@@ -6,7 +6,8 @@ use egui_node_graph::{GraphEditorState, NodeResponse};
 use crate::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
-        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType, UIInput,
+        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType, NodeCallbacks,
+        run_input_value_changed_callbacks, UIInput,
     },
     viewport_3d::Viewport3d,
 };
@@ -141,6 +142,13 @@ impl eframe::App for Damascus {
                         self.user_state.active_node = Some(node)
                     }
                     DamascusResponse::ClearActiveNode => self.user_state.active_node = None,
+                    DamascusResponse::InputValueChanged(node_id, input_name) => {
+                        run_input_value_changed_callbacks(
+                            &mut self.state.graph,
+                            node_id,
+                            &input_name,
+                        );
+                    }
                 }
             }
         }

@@ -17,7 +17,7 @@ impl UIInput<glam::Mat4> for Mat4 {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             ui.vertical(|ui| {
@@ -45,6 +45,7 @@ impl UIInput<glam::Mat4> for Mat4 {
                 create_drag_value_ui(ui, &mut self.value.w_axis.w);
             });
         });
+        false
     }
 
     fn value(&self) -> &glam::Mat4 {

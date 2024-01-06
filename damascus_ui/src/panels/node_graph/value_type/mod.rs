@@ -92,8 +92,8 @@ impl DamascusValueType {
         }
     }
 
-    /// Tries to downcast this value type to a bool
-    pub fn try_to_combo_box<E: IntoEnumIterator + Display + FromStr>(self) -> anyhow::Result<E> {
+    /// Tries to downcast this value type to an enum
+    pub fn try_to_enum<E: IntoEnumIterator + Display + FromStr>(self) -> anyhow::Result<E> {
         if let DamascusValueType::ComboBox { value } = self {
             value.as_enum::<E>()
         } else {
@@ -226,50 +226,38 @@ impl WidgetValueTrait for DamascusValueType {
     fn value_widget(
         &mut self,
         param_name: &str,
-        _node_id: NodeId,
+        node_id: NodeId,
         ui: &mut egui::Ui,
         _user_state: &mut DamascusGraphState,
         _node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
-        match self {
-            DamascusValueType::Bool { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::ComboBox { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::Integer { value } => {
-                RangedInput::create_ui(value, ui, param_name);
-            }
+        let value_changed = match self {
+            DamascusValueType::Bool { value } => value.create_ui(ui, param_name),
+            DamascusValueType::ComboBox { value } => value.create_ui(ui, param_name),
+            DamascusValueType::Integer { value } => RangedInput::create_ui(value, ui, param_name),
             DamascusValueType::UnsignedInteger { value } => {
-                RangedInput::create_ui(value, ui, param_name);
+                RangedInput::create_ui(value, ui, param_name)
             }
-            DamascusValueType::Float { value } => {
-                RangedInput::create_ui(value, ui, param_name);
-            }
-            DamascusValueType::Vec2 { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::Vec3 { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::Vec4 { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::Mat3 { value } => {
-                value.create_ui(ui, param_name);
-            }
-            DamascusValueType::Mat4 { value } => {
-                value.create_ui(ui, param_name);
-            }
+            DamascusValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
+            DamascusValueType::Vec2 { value } => value.create_ui(ui, param_name),
+            DamascusValueType::Vec3 { value } => value.create_ui(ui, param_name),
+            DamascusValueType::Vec4 { value } => value.create_ui(ui, param_name),
+            DamascusValueType::Mat3 { value } => value.create_ui(ui, param_name),
+            DamascusValueType::Mat4 { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.label(param_name);
+                false
             }
-        }
+        };
 
-        // This allows you to return your responses from the inline widgets.
+        if value_changed {
+            return vec![DamascusResponse::InputValueChanged(
+                node_id,
+                param_name.to_string(),
+            )];
+        }
         Vec::new()
     }
 }

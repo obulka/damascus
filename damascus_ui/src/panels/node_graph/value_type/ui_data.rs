@@ -1,7 +1,7 @@
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct UIData {
-    pub tooltip: Option<String>,
-    pub hidden: bool,
+    tooltip: Option<String>,
+    hidden: bool,
 }
 
 impl Default for UIData {
@@ -14,7 +14,7 @@ impl Default for UIData {
 }
 
 impl UIData {
-    pub fn tooltip(mut self, tooltip: &str) -> Self {
+    pub fn with_tooltip(mut self, tooltip: &str) -> Self {
         self.tooltip = if tooltip.is_empty() {
             None
         } else {
@@ -23,8 +23,24 @@ impl UIData {
         self
     }
 
-    pub fn hidden(mut self, hidden: bool) -> Self {
-        self.hidden = hidden;
+    pub fn tooltip(&self) -> &Option<String> {
+        &self.tooltip
+    }
+
+    pub fn with_hidden(mut self) -> Self {
+        self.hidden = true;
         self
+    }
+
+    pub fn hide(&mut self) {
+        self.hidden = true;
+    }
+
+    pub fn show(&mut self) {
+        self.hidden = false;
+    }
+
+    pub fn hidden(&self) -> &bool {
+        &self.hidden
     }
 }

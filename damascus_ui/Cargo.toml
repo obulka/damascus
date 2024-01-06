@@ -19,6 +19,7 @@ bytemuck = "1.7.1"
 ndarray = { version = "0.15.6", features = ["serde"] }
 rfd = "0.12"
 strum = { version = "0.25", features = ["derive"] }
+typetag = "0.2"
 undo_2 = "0.1"
 
 [profile.release]

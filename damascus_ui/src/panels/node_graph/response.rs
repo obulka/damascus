@@ -4,10 +4,11 @@ use egui_node_graph::{NodeId, UserResponseTrait};
 /// node in the graph. Most side-effects (creating new nodes, deleting existing
 /// nodes, handling connections...) are already handled by the library, but this
 /// mechanism allows creating additional side effects from user code.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum DamascusResponse {
     SetActiveNode(NodeId),
     ClearActiveNode,
+    InputValueChanged(NodeId, String),
 }
 
 impl UserResponseTrait for DamascusResponse {}

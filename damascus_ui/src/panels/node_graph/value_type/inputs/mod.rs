@@ -19,7 +19,7 @@ pub trait UIInput<T> {
     fn new(value: T) -> Self;
 
     fn create_parameter_label(&self, ui: &mut egui::Ui, label: &str) {
-        if let Some(tooltip) = &self.ui_data().tooltip {
+        if let Some(tooltip) = &self.ui_data().tooltip() {
             ui.label(label).on_hover_text(tooltip);
             return;
         }
@@ -27,15 +27,17 @@ pub trait UIInput<T> {
     }
 
     #[inline]
-    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
-        if !self.ui_data().hidden {
-            self.show_ui(ui, label);
+    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        if *self.ui_data().hidden() {
+            return false;
         }
+        self.show_ui(ui, label)
     }
 
     #[inline]
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         self.create_parameter_label(ui, label);
+        false
     }
 
     fn value(&self) -> &T;
@@ -56,17 +58,19 @@ pub trait UIInput<T> {
 
 pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
     #[inline]
-    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) {
-        if !self.ui_data().hidden {
-            RangedInput::show_ui(self, ui, label);
+    fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        if *self.ui_data().hidden() {
+            return false;
         }
+        RangedInput::show_ui(self, ui, label)
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             ui.add(self.create_slider());
         });
+        false // TODO
     }
 
     #[inline]

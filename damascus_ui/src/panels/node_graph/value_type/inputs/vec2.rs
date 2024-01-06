@@ -17,12 +17,13 @@ impl UIInput<glam::Vec2> for Vec2 {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             create_drag_value_ui(ui, &mut self.value.x);
             create_drag_value_ui(ui, &mut self.value.y);
         });
+        false
     }
 
     fn value(&self) -> &glam::Vec2 {

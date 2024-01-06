@@ -7,6 +7,7 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
+mod node_callbacks;
 mod node_data;
 mod node_graph_state;
 mod response;
@@ -17,6 +18,7 @@ mod node_template;
 mod value_type;
 
 pub use data_type::DamascusDataType;
+pub use node_callbacks::{run_input_value_changed_callbacks, NodeCallbacks};
 pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
@@ -90,7 +92,7 @@ pub fn evaluate_node(
             &mut self,
             name: &str,
         ) -> anyhow::Result<E> {
-            self.evaluate_input(name)?.try_to_combo_box::<E>()
+            self.evaluate_input(name)?.try_to_enum::<E>()
         }
 
         fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {

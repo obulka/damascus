@@ -1,7 +1,7 @@
 use core::ops::RangeInclusive;
 use std::borrow::Cow;
 
-use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTemplateTrait};
+use egui_node_graph::{Graph, InputParamKind, Node, NodeId, NodeTemplateIter, NodeTemplateTrait};
 use indoc::indoc;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
@@ -14,7 +14,7 @@ use crate::panels::node_graph::{
         Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
         UIInput, UnsignedInteger, Vec2, Vec3, Vec4,
     },
-    DamascusGraph,
+    DamascusGraph, NodeCallbacks,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -283,25 +283,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "axis",
                     Mat4::new(glam::Mat4::IDENTITY)
-                        .with_ui_data(UIData::default().tooltip("The parent axis.")),
+                        .with_ui_data(UIData::default().with_tooltip("The parent axis.")),
                 );
                 input_vector3(
                     graph,
                     "translate",
-                    Vec3::from_vec3(glam::Vec3::ZERO)
-                        .with_ui_data(UIData::default().tooltip("The translation of this axis.")),
+                    Vec3::from_vec3(glam::Vec3::ZERO).with_ui_data(
+                        UIData::default().with_tooltip("The translation of this axis."),
+                    ),
                 );
                 input_vector3(
                     graph,
                     "rotate",
                     Vec3::from_vec3(glam::Vec3::ZERO)
-                        .with_ui_data(UIData::default().tooltip("The rotation of this axis.")),
+                        .with_ui_data(UIData::default().with_tooltip("The rotation of this axis.")),
                 );
                 input_float(
                     graph,
                     "uniform_scale",
                     Float::new(1.)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The uniform scale of this axis.\n
                             We use uniform scale because the signed distance 
                             fields cannot have their individual axes scaled."
@@ -316,7 +317,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "focal_length",
                     Float::new(default_camera.focal_length)
-                        .with_ui_data(UIData::default().tooltip("The focal length of the camera."))
+                        .with_ui_data(
+                            UIData::default().with_tooltip("The focal length of the camera."),
+                        )
                         .with_range(5.0..=100.),
                 );
                 input_float(
@@ -324,7 +327,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "focal_distance",
                     Float::new(default_camera.focal_distance)
                         .with_ui_data(
-                            UIData::default().tooltip("The focal distance of the camera."),
+                            UIData::default().with_tooltip("The focal distance of the camera."),
                         )
                         .with_range(0.1..=10.),
                 );
@@ -332,7 +335,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "f_stop",
                     Float::new(default_camera.f_stop)
-                        .with_ui_data(UIData::default().tooltip("The f-stop of the camera."))
+                        .with_ui_data(UIData::default().with_tooltip("The f-stop of the camera."))
                         .with_range(0.1..=30.),
                 );
                 input_float(
@@ -340,7 +343,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "horizontal_aperture",
                     Float::new(default_camera.horizontal_aperture)
                         .with_ui_data(
-                            UIData::default().tooltip("The horizontal aperture of the camera."),
+                            UIData::default()
+                                .with_tooltip("The horizontal aperture of the camera."),
                         )
                         .with_range(0.1..=50.),
                 );
@@ -350,7 +354,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Float::new(default_camera.near_plane)
                         .with_ui_data(
                             UIData::default()
-                                .tooltip("The distance to the near plane of the camera."),
+                                .with_tooltip("The distance to the near plane of the camera."),
                         )
                         .with_range(0.1..=10.),
                 );
@@ -360,7 +364,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Float::new(default_camera.far_plane)
                         .with_ui_data(
                             UIData::default()
-                                .tooltip("The distance to the far plane of the camera."),
+                                .with_tooltip("The distance to the far plane of the camera."),
                         )
                         .with_range(11.0..=10000.),
                 );
@@ -368,15 +372,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "world_matrix",
                     Mat4::new(default_camera.world_matrix).with_ui_data(
-                        UIData::default().tooltip("The world matrix/axis of the camera."),
+                        UIData::default().with_tooltip("The world matrix/axis of the camera."),
                     ),
                 );
                 input_bool(
                     graph,
                     "enable_depth_of_field",
                     Bool::new(default_camera.enable_depth_of_field).with_ui_data(
-                        UIData::default()
-                            .tooltip("If enabled, this camera will render with depth of field."),
+                        UIData::default().with_tooltip(
+                            "If enabled, this camera will render with depth of field.",
+                        ),
                     ),
                 );
                 output_camera(graph, "out");
@@ -388,7 +393,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "light_type",
                     ComboBox::from_enum::<lights::Lights>(default_light.light_type).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "The type of non-physical light to create.\n
                             \tPoint: A point light.\n
                             \tDirectional: A directional light.\n
@@ -401,7 +406,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "dimensional_data",
                     Vec3::from_vec3(default_light.dimensional_data).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "The data needed by each individual light type.\n
                             \tPoint: The position.\n
                             \tDirectional: The direction vector.\n
@@ -415,7 +420,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "intensity",
                     Float::new(default_light.intensity)
-                        .with_ui_data(UIData::default().tooltip("The intensity of the light."))
+                        .with_ui_data(UIData::default().with_tooltip("The intensity of the light."))
                         .with_range(0.0..=10.),
                 );
                 input_uint(
@@ -424,7 +429,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     UnsignedInteger::new(default_light.falloff)
                         .with_ui_data(
                             UIData::default()
-                                .tooltip("The exponent of the falloff (point lights only)."),
+                                .with_tooltip("The exponent of the falloff (point lights only)."),
                         )
                         .with_range(0..=4),
                 );
@@ -432,7 +437,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "colour",
                     Vec3::from_vec3(default_light.colour)
-                        .with_ui_data(UIData::default().tooltip("The light colour."))
+                        .with_ui_data(UIData::default().with_tooltip("The light colour."))
                         .as_colour(),
                 );
                 input_float(
@@ -440,7 +445,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "shadow_hardness",
                     Float::new(default_light.shadow_hardness)
                         .with_ui_data(
-                            UIData::default().tooltip("The hardness of softened shadows."),
+                            UIData::default().with_tooltip("The hardness of softened shadows."),
                         )
                         .with_range(1.0..=100.),
                 );
@@ -448,7 +453,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "soften_shadows",
                     Bool::new(default_light.soften_shadows).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "If enabled, the shadows will be softened (directional
                             and point lights only)."
                         }),
@@ -463,7 +468,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "diffuse_colour",
                     Vec3::from_vec3(default_material.diffuse_colour)
                         .with_ui_data(
-                            UIData::default().tooltip("The diffuse colour of the material."),
+                            UIData::default().with_tooltip("The diffuse colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -471,7 +476,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "specular_probability",
                     Float::new(default_material.specular_probability)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The probability that light will be specularly reflected
                             when it interacts with this material."
                         }))
@@ -481,11 +486,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "specular_roughness",
                     Float::new(default_material.specular_roughness)
-                        .with_ui_data(
-                            UIData::default().tooltip(
-                                "The roughness of the material when specularly reflected.",
-                            ),
-                        )
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The roughness of the material when specularly reflected.",
+                        ))
                         .with_range(0.0..=1.),
                 );
                 input_vector3(
@@ -493,7 +496,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "specular_colour",
                     Vec3::from_vec3(default_material.specular_colour)
                         .with_ui_data(
-                            UIData::default().tooltip("The specular colour of the material."),
+                            UIData::default().with_tooltip("The specular colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -501,7 +504,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "transmissive_probability",
                     Float::new(default_material.transmissive_probability)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The probability that light will be transmitted through
                             the material (before accounting for Fresnel) when it
                             interacts with this material."
@@ -513,8 +516,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "transmissive_roughness",
                     Float::new(default_material.transmissive_roughness)
                         .with_ui_data(
-                            UIData::default()
-                                .tooltip("The roughness when transmitted through the material."),
+                            UIData::default().with_tooltip(
+                                "The roughness when transmitted through the material.",
+                            ),
                         )
                         .with_range(0.0..=1.),
                 );
@@ -523,7 +527,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "transmissive_colour",
                     Vec3::from_vec3(default_material.transmissive_colour)
                         .with_ui_data(
-                            UIData::default().tooltip("The transmissive colour of the material."),
+                            UIData::default()
+                                .with_tooltip("The transmissive colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -531,7 +536,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "emissive_probability",
                     Float::new(default_material.emissive_probability)
-                        .with_ui_data(UIData::default().tooltip(
+                        .with_ui_data(UIData::default().with_tooltip(
                             "The probability that light will be emitted from the material.",
                         ))
                         .with_range(0.0..=1.),
@@ -541,7 +546,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "emissive_colour",
                     Vec3::from_vec3(default_material.emissive_colour)
                         .with_ui_data(
-                            UIData::default().tooltip("The emissive colour of the material."),
+                            UIData::default().with_tooltip("The emissive colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -550,7 +555,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "refractive_index",
                     Float::new(default_material.refractive_index)
                         .with_ui_data(
-                            UIData::default().tooltip("The index of refraction of the material."),
+                            UIData::default()
+                                .with_tooltip("The index of refraction of the material."),
                         )
                         .with_range(0.0..=1.),
                 );
@@ -560,7 +566,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Float::new(default_material.scattering_coefficient)
                         .with_ui_data(
                             UIData::default()
-                                .tooltip("The scattering coefficient of the material."),
+                                .with_tooltip("The scattering coefficient of the material."),
                         )
                         .with_range(0.0..=1.),
                 );
@@ -569,7 +575,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "scattering_colour",
                     Vec3::from_vec3(default_material.scattering_colour)
                         .with_ui_data(
-                            UIData::default().tooltip("The scattering colour of the material."),
+                            UIData::default()
+                                .with_tooltip("The scattering colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -583,14 +590,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::from_enum::<geometry::Shapes>(default_primitive.shape)
-                        .with_ui_data(UIData::default().tooltip("The shape of the primitive.")),
+                    ComboBox::from_enum::<geometry::Shapes>(default_primitive.shape).with_ui_data(
+                        UIData::default().with_tooltip("The shape of the primitive."),
+                    ),
                 );
                 input_matrix4(
                     graph,
                     "world_matrix",
                     Mat4::new(glam::Mat4::IDENTITY).with_ui_data(
-                        UIData::default().tooltip("The world matrix/axis of the primitive."),
+                        UIData::default().with_tooltip("The world matrix/axis of the primitive."),
                     ),
                 );
                 input_uint(
@@ -605,15 +613,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "blend_strength",
                     Float::new(default_primitive.blend_strength)
                         .with_ui_data(
-                            UIData::default()
-                                .tooltip("The amount to blend with this primitive's children."),
+                            UIData::default().with_tooltip(
+                                "The amount to blend with this primitive's children.",
+                            ),
                         )
                         .with_range(0.0..=1.),
                 );
                 input_vector4(
                     graph,
                     "dimensional_data",
-                    Vec4::from_vec4(glam::Vec4::X).with_ui_data(UIData::default().tooltip(
+                    Vec4::from_vec4(glam::Vec4::X).with_ui_data(UIData::default().with_tooltip(
                         indoc! {
                             "The data required to dimension each object\n
                             TODO make the labels here dynamic."
@@ -631,7 +640,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     UnsignedInteger::new(default_ray_marcher.paths_per_pixel)
                         .with_ui_data(
                             UIData::default()
-                                .tooltip("The number of paths to march for each pixel."),
+                                .with_tooltip("The number of paths to march for each pixel."),
                         )
                         .with_range(1..=100),
                 );
@@ -639,7 +648,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "roulette",
                     Bool::new(default_ray_marcher.roulette).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "Randomly terminate rays with a probability proportional
                             to the remaining strength, or throughput of a ray."
                         }),
@@ -649,7 +658,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "max_distance",
                     Float::new(default_ray_marcher.max_distance)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "Each ray, once spawned is only allowed to travel
                             this distance before it is culled."
                         }))
@@ -659,7 +668,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "max_ray_steps",
                     UnsignedInteger::new(default_ray_marcher.max_ray_steps)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "Limits the number of times the rays can intersect
                             an object per subpixel."
                         }))
@@ -669,7 +678,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "max_bounces",
                     UnsignedInteger::new(default_ray_marcher.max_bounces)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "Limits the number of times the rays can intersect
                             an object per subpixel."
                         }))
@@ -679,7 +688,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "hit_tolerance",
                     Float::new(default_ray_marcher.hit_tolerance)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The ray will be considered to have hit an object
                             when it is within this distance of its surface."
                         }))
@@ -689,7 +698,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "shadow_bias",
                     Float::new(default_ray_marcher.shadow_bias)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "After intersecting an object the ray is offset from
                             the surface before continuing. Multiply that offset
                             distance by this factor."
@@ -700,7 +709,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "max_brightness",
                     Float::new(default_ray_marcher.max_brightness)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The maximum brightness of a pixel. This protects
                             against overflowing to infinity."
                         }))
@@ -710,7 +719,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "seeds",
                     Vec3::from_vec3(default_ray_marcher.seeds).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "The seeds used to generate per-pixel, random seeds.
                             Be sure these are different on each render used for
                             adaptive sampling."
@@ -721,7 +730,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "dynamic_level_of_detail",
                     Bool::new(default_ray_marcher.dynamic_level_of_detail).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "Increase the hit tolerance the farther the ray
                             travels without hitting a surface. This has performance
                             and antialiasing benefits."
@@ -732,7 +741,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "max_light_sampling_bounces",
                     UnsignedInteger::new(default_ray_marcher.max_light_sampling_bounces)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The maximum number of bounces during light sampling.
                             Light sampling will be disabled if this is 0. Light
                             sampling means that each time a surface is hit, the
@@ -745,7 +754,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "sample_hdri",
                     Bool::new(default_ray_marcher.sample_hdri).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "Include the HDRI in the list of lights that can be
                             sampled during light sampling.\nTODO"
                         }),
@@ -755,7 +764,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "sample_all_lights",
                     Bool::new(default_ray_marcher.sample_all_lights).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "Sample every light in the scene during light sampling,
                             rather than just one random one. This will reduce noise
                             quickly but slow things down.\nTODO"
@@ -766,7 +775,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "light_sampling_bias",
                     Float::new(default_ray_marcher.light_sampling_bias)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "A fully biased (1) light sampling means that on each
                             light sample the ray will be initialised pointing
                             directly at the light. Reducing this bias means that
@@ -781,7 +790,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "secondary_sampling",
                     Bool::new(default_ray_marcher.secondary_sampling).with_ui_data(
-                        UIData::default().tooltip(indoc! {
+                        UIData::default().with_tooltip(indoc! {
                             "Sample the artificial lights (those in the 'lights'
                             input) while casting shadow rays for light sampling.\nTODO"
                         }),
@@ -791,7 +800,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "hdri_offset_angle",
                     Float::new(default_ray_marcher.hdri_offset_angle)
-                        .with_ui_data(UIData::default().tooltip(
+                        .with_ui_data(UIData::default().with_tooltip(
                             "Rotate the hdri image by this amount around the y-axis.\nTODO",
                         ))
                         .with_range(0.0..=360.),
@@ -800,7 +809,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "output_aov",
                     ComboBox::from_enum::<renderers::AOVs>(default_ray_marcher.output_aov)
-                        .with_ui_data(UIData::default().tooltip(indoc! {
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The AOV type to output.\nThe stats AOV has the
                             average number of bounces in the red channel,
                             average number of steps in the green channel,
@@ -812,8 +821,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "latlong",
                     Bool::new(default_ray_marcher.latlong).with_ui_data(
-                        UIData::default()
-                            .tooltip("Output a LatLong, 360 degree field of view image.\nTODO"),
+                        UIData::default().with_tooltip(
+                            "Output a LatLong, 360 degree field of view image.\nTODO",
+                        ),
                     ),
                 );
                 output_ray_marcher(graph, "out");

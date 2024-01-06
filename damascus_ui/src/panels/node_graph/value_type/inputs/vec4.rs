@@ -33,7 +33,7 @@ impl UIInput<[f32; 4]> for Vec4 {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) {
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             create_drag_value_ui(ui, &mut self.value[0]);
@@ -44,6 +44,7 @@ impl UIInput<[f32; 4]> for Vec4 {
                 ui.color_edit_button_rgba_unmultiplied(&mut self.value);
             }
         });
+        false
     }
 
     fn value(&self) -> &[f32; 4] {

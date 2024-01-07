@@ -63,8 +63,8 @@ pub enum DamascusNodeTemplate {
     Scene,
 }
 
-impl DamascusNodeTemplate {
-    pub fn input_value_changed(
+impl NodeCallbacks for DamascusNodeTemplate {
+    fn input_value_changed(
         &self,
         graph: &mut DamascusGraph,
         node_id: NodeId,

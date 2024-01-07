@@ -1,7 +1,6 @@
-use core::ops::RangeInclusive;
 use std::borrow::Cow;
 
-use egui_node_graph::{Graph, InputParamKind, Node, NodeId, NodeTemplateIter, NodeTemplateTrait};
+use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTemplateTrait};
 use indoc::indoc;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
@@ -14,7 +13,7 @@ use crate::panels::node_graph::{
         Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
         UIInput, UnsignedInteger, Vec2, Vec3, Vec4,
     },
-    DamascusGraph, NodeCallbacks,
+    DamascusGraph,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph

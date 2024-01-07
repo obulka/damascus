@@ -23,7 +23,7 @@ pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
-pub use value_type::{Bool, DamascusValueType, Mat4, UIData, UIInput};
+pub use value_type::{Bool, DamascusValueType, Mat4, UIInput};
 
 pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;

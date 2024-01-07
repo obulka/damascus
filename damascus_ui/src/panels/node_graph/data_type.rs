@@ -8,7 +8,7 @@ use crate::panels::node_graph::node_graph_state::DamascusGraphState;
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow
 /// attaching incompatible datatypes.
-#[derive(PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(PartialEq, Debug, Eq, serde::Serialize, serde::Deserialize)]
 pub enum DamascusDataType {
     // Base types
     Bool,

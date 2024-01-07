@@ -623,6 +623,160 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         UIData::default().with_tooltip("The shape of the primitive."),
                     ),
                 );
+                // Sphere dimensions
+                input_float(
+                    graph,
+                    "radius",
+                    Float::new(0.5)
+                        .with_ui_data(UIData::default().with_tooltip("The radius."))
+                        .with_range(0.0..=10.),
+                );
+
+                // Ellipsoid dimensions
+                input_vector3(
+                    graph,
+                    "radii",
+                    Vec3::from_vec3(glam::Vec3::splat(0.5)).with_ui_data(
+                        UIData::default().with_tooltip("The radii of the ellipsoid."),
+                    ),
+                );
+
+                // Cut Sphere dimensions
+                input_float(
+                    graph,
+                    "height",
+                    Float::new(0.25)
+                        .with_ui_data(UIData::default().with_tooltip("The height (y-axis)."))
+                        .with_range(0.0..=10.),
+                );
+
+                // Hollow Sphere dimensions
+                input_float(
+                    graph,
+                    "thickness",
+                    Float::new(0.05)
+                        .with_ui_data(UIData::default().with_tooltip("The thickness of the walls."))
+                        .with_range(0.0..=1.),
+                );
+
+                // Death Star dimensions
+                input_float(
+                    graph,
+                    "hollow_radius",
+                    Float::new(0.5)
+                        .with_ui_data(
+                            UIData::default().with_tooltip(
+                                "The radius of the sphere that is cut from the solid.",
+                            ),
+                        )
+                        .with_range(0.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "hollow_height",
+                    Float::new(0.75)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The height (y-axis) of the center of the sphere
+                            that is cut from the solid, above solidRadius +
+                            hollowRadius, the result will be a standard
+                            sphere of radius solidRadius."
+                        }))
+                        .with_range(0.0..=10.),
+                );
+
+                // Solid Angle Dimensions
+                input_float(
+                    graph,
+                    "solid_angle",
+                    Float::new(30.)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The angle between the edge of the solid angle and the
+                            y-axis on [0-180] measured between the y-axis and wall
+                            of the solid angle."
+                        }))
+                        .with_range(0.0..=180.),
+                );
+
+                // Rectangular Prism Dimensions
+                input_float(
+                    graph,
+                    "width",
+                    Float::new(0.5)
+                        .with_ui_data(UIData::default().with_tooltip("The width (x-axis)."))
+                        .with_range(0.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "depth",
+                    Float::new(0.75)
+                        .with_ui_data(UIData::default().with_tooltip("The depth (z-axis)."))
+                        .with_range(0.0..=10.),
+                );
+
+                // Rhombus Dimensions
+                input_float(
+                    graph,
+                    "corner_radius",
+                    Float::new(0.05)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The radius of the corners of the rhombus' xy-plane parallel face.",
+                        ))
+                        .with_range(0.0..=1.),
+                );
+
+                // Triangular Prism Dimensions
+                input_float(
+                    graph,
+                    "base",
+                    Float::new(0.5)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The equilateral triangles edge length (xy-plane)."),
+                        )
+                        .with_range(0.0..=10.),
+                );
+
+                // Plane Dimensions
+                input_vector3(
+                    graph,
+                    "normal",
+                    Vec3::from_vec3(glam::Vec3::Z).with_ui_data(
+                        UIData::default().with_tooltip("The normal direction of the plane."),
+                    ),
+                );
+
+                // Capsule Dimensions
+                input_float(
+                    graph,
+                    "negative height",
+                    Float::new(0.25)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The distance along the negative y-axis before entering the dome.",
+                        ))
+                        .with_range(0.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "positive height",
+                    Float::new(0.25)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The distance along the positive y-axis before entering the dome.",
+                        ))
+                        .with_range(0.0..=10.),
+                );
+
+                // Cone Dimensions
+                input_float(
+                    graph,
+                    "angle",
+                    Float::new(30.)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The angle between the tip and base of the cone [0-90]
+                            measured between the y-axis and wall of the cone."
+                        }))
+                        .with_range(0.0..=90.),
+                );
+
                 input_matrix4(
                     graph,
                     "world_matrix",
@@ -648,16 +802,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         )
                         .with_range(0.0..=1.),
                 );
-                input_vector4(
-                    graph,
-                    "dimensional_data",
-                    Vec4::from_vec4(glam::Vec4::X).with_ui_data(UIData::default().with_tooltip(
-                        indoc! {
-                            "The data required to dimension each object\n
-                            TODO make the labels here dynamic."
-                        },
-                    )),
-                ); // TODO make this dynamic based on shape
                 output_primitive(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {

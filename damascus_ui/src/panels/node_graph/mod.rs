@@ -268,7 +268,14 @@ pub fn evaluate_node(
         DamascusNodeTemplate::Light => {
             let mut scene_lights = evaluator.input_light("lights")?;
             let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
-            let dimensional_data = evaluator.input_vector3("dimensional_data")?;
+            let dimensional_data = match light_type {
+                lights::Lights::Directional => evaluator.input_vector3("direction")?,
+                lights::Lights::Point => evaluator.input_vector3("position")?,
+                lights::Lights::AmbientOcclusion => {
+                    glam::Vec3::new(evaluator.input_float("iterations")?, 0., 0.)
+                }
+                _ => glam::Vec3::ZERO,
+            };
             let intensity = evaluator.input_float("intensity")?;
             let falloff = evaluator.input_uint("falloff")?;
             let colour = evaluator.input_vector3("colour")?;

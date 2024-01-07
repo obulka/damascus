@@ -418,16 +418,27 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_vector3(
                     graph,
-                    "dimensional_data",
+                    "direction",
                     Vec3::from_vec3(default_light.dimensional_data).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "The data needed by each individual light type.\n
-                            \tPoint: The position.\n
-                            \tDirectional: The direction vector.\n
-                            \tAmbient: Nothing - control brightness via intensity.\n
-                            \tAmbient Occlusion: Iterations is the x value.\n\n
-                            TODO: make dynamic knobs"
-                        }),
+                        UIData::default().with_tooltip("The direction vector of the light."),
+                    ),
+                );
+                input_vector3(
+                    graph,
+                    "position",
+                    Vec3::from_vec3(glam::Vec3::ZERO).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The position of the point light.")
+                            .with_hidden(),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "iterations",
+                    Float::new(1.).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The number of iterations used to compute the occlusion.")
+                            .with_hidden(),
                     ),
                 );
                 input_float(

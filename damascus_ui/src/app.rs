@@ -5,9 +5,9 @@ use egui_node_graph::{GraphEditorState, NodeResponse};
 
 use crate::panels::{
     node_graph::{
-        evaluate_node, AllDamascusNodeTemplates, Bool,
-        DamascusDataType, DamascusGraphState, DamascusNodeData, DamascusNodeTemplate,
-        DamascusResponse, DamascusValueType, NodeCallbacks, UIInput,
+        evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
+        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType, NodeCallbacks,
+        UIInput,
     },
     viewport_3d::Viewport3d,
 };

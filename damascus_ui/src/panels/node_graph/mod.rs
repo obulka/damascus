@@ -7,21 +7,15 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-mod node_callbacks;
-mod node_data;
+mod data_type;
+mod node;
 mod node_graph_state;
 mod response;
-
-// These three modules and this file are all that needs to be updated to add nodes
-mod data_type;
-mod node_template;
 mod value_type;
 
 pub use data_type::DamascusDataType;
-pub use node_callbacks::NodeCallbacks;
-pub use node_data::DamascusNodeData;
+pub use node::{AllDamascusNodeTemplates, DamascusNodeData, DamascusNodeTemplate, NodeCallbacks};
 pub use node_graph_state::DamascusGraphState;
-pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};
 pub use response::DamascusResponse;
 pub use value_type::{Bool, DamascusValueType, Mat4, UIInput};
 

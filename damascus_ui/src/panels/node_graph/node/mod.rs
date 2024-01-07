@@ -6,10 +6,11 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
+mod callbacks;
+mod node_data;
+
 use super::{
     data_type::DamascusDataType,
-    NodeCallbacks,
-    node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
         Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
@@ -17,7 +18,8 @@ use super::{
     },
     DamascusGraph,
 };
-
+pub use callbacks::NodeCallbacks;
+pub use node_data::DamascusNodeData;
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 struct LightCallbacks;
@@ -64,12 +66,7 @@ pub enum DamascusNodeTemplate {
 }
 
 impl NodeCallbacks for DamascusNodeTemplate {
-    fn input_value_changed(
-        &self,
-        graph: &mut DamascusGraph,
-        node_id: NodeId,
-        input_name: &String,
-    ) {
+    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
         match self {
             DamascusNodeTemplate::Light => {
                 LightCallbacks.input_value_changed(graph, node_id, input_name)

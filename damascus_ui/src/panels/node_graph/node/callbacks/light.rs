@@ -2,7 +2,7 @@ use egui_node_graph::NodeId;
 
 use damascus_core::lights;
 
-use super::{DamascusGraph, DamascusValueType, NodeCallbacks, UIInput};
+use super::{DamascusGraph, DamascusValueType, NodeCallbacks};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct LightCallbacks;
@@ -45,35 +45,17 @@ impl NodeCallbacks for LightCallbacks {
             for input_name in to_show.iter() {
                 if let Ok(input_id) = node.get_input(input_name) {
                     if let Some(input_param) = graph.inputs.get_mut(input_id) {
-                        match &mut input_param.value {
-                            DamascusValueType::Vec3 { ref mut value } => {
-                                value.ui_data_mut().show();
-                            }
-                            DamascusValueType::UnsignedInteger { ref mut value } => {
-                                value.ui_data_mut().show();
-                            }
-                            _ => {}
-                        }
+                        self.show_input(&mut input_param.value)
                     }
                 }
             }
             for input_name in to_hide.iter() {
                 if let Ok(input_id) = node.get_input(input_name) {
                     if let Some(input_param) = graph.inputs.get_mut(input_id) {
-                        match &mut input_param.value {
-                            DamascusValueType::Vec3 { ref mut value } => {
-                                value.ui_data_mut().hide();
-                            }
-                            DamascusValueType::UnsignedInteger { ref mut value } => {
-                                value.ui_data_mut().hide();
-                            }
-                            _ => {}
-                        }
+                        self.hide_input(&mut input_param.value)
                     }
                 }
             }
-            // self.hide_inputs(graph, node, &to_hide);
-            // self.show_inputs(graph, node, to_show);
         }
     }
 }

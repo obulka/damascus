@@ -2059,27 +2059,23 @@ fn sample_non_physical_light_data(
     light_direction: ptr<function, vec3<f32>>,
     distance_to_light: ptr<function, f32>,
 ) -> f32 {
-    var visible_surface_area: f32 = 1.;
     var light: Light = _lights.lights[light_index];
 
     switch light.light_type {
         case 0u {
             // Directional light
-            visible_surface_area = TWO_PI;
             *distance_to_light = _render_params.ray_marcher.max_distance;
             *light_direction = normalize(-light.dimensional_data);
         }
         case 1u {
             // Point light
-            visible_surface_area = 0.;
             *light_direction = light.dimensional_data - surface_position;
             *distance_to_light = length(*light_direction);
             *light_direction = normalize(*light_direction);
         }
         default {}
     }
-
-    return sample_lights_pdf(f32(max(1u, _render_params.scene.num_non_physical_lights)), visible_surface_area);
+    return 1.;
 }
 
 

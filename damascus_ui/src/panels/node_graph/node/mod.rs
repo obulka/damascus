@@ -6,50 +6,19 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-mod callbacks;
-mod node_data;
-
 use super::{
-    data_type::DamascusDataType,
-    node_graph_state::DamascusGraphState,
     value_type::{
         Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
         UIInput, UnsignedInteger, Vec2, Vec3, Vec4,
     },
-    DamascusGraph,
+    DamascusDataType, DamascusGraph, DamascusGraphState, DamascusResponse,
 };
+
+mod callbacks;
+mod node_data;
+use callbacks::LightCallbacks;
 pub use callbacks::NodeCallbacks;
 pub use node_data::DamascusNodeData;
-
-#[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
-struct LightCallbacks;
-
-impl NodeCallbacks for LightCallbacks {
-    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
-        if input_name != "light_type" {
-            return;
-        }
-        if let Some(node) = graph.nodes.get(node_id) {
-            for (name, input_id) in &node.inputs {
-                if *name == "dimensional_data" {
-                    if let Some(input_param) = graph.inputs.get_mut(*input_id) {
-                        match &mut input_param.value {
-                            DamascusValueType::Vec3 { ref mut value } => {
-                                if *value.ui_data().hidden() {
-                                    value.ui_data_mut().show();
-                                } else {
-                                    value.ui_data_mut().hide();
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-    }
-}
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the

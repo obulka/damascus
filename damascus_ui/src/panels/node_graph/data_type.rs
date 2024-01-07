@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use eframe::egui;
 use egui_node_graph::DataTypeTrait;
 
-use crate::panels::node_graph::node_graph_state::DamascusGraphState;
+use super::DamascusGraphState;
 
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow

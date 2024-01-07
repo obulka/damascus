@@ -1,10 +1,8 @@
 use eframe::egui;
 use egui_node_graph::{Graph, NodeDataTrait, NodeId, NodeResponse, UserResponseTrait};
 
-use super::DamascusNodeTemplate;
-use crate::panels::node_graph::{
-    data_type::DamascusDataType, node_graph_state::DamascusGraphState, response::DamascusResponse,
-    value_type::DamascusValueType,
+use super::{
+    DamascusDataType, DamascusGraphState, DamascusNodeTemplate, DamascusResponse, DamascusValueType,
 };
 
 /// The NodeData holds a custom data struct inside each node. It's useful to

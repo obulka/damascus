@@ -1,6 +1,6 @@
 use eframe::egui;
 
-use crate::panels::node_graph::value_type::{UIData, UIInput};
+use super::{UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Bool {

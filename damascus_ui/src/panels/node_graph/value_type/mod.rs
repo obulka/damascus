@@ -229,7 +229,7 @@ impl WidgetValueTrait for DamascusValueType {
         node_id: NodeId,
         ui: &mut egui::Ui,
         _user_state: &mut DamascusGraphState,
-        _node_data: &DamascusNodeData,
+        node_data: &DamascusNodeData,
     ) -> Vec<DamascusResponse> {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
@@ -255,6 +255,7 @@ impl WidgetValueTrait for DamascusValueType {
         if value_changed {
             return vec![DamascusResponse::InputValueChanged(
                 node_id,
+                node_data.template,
                 param_name.to_string(),
             )];
         }

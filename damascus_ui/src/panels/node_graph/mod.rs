@@ -18,7 +18,7 @@ mod node_template;
 mod value_type;
 
 pub use data_type::DamascusDataType;
-pub use node_callbacks::{run_input_value_changed_callbacks, NodeCallbacks};
+pub use node_callbacks::NodeCallbacks;
 pub use node_data::DamascusNodeData;
 pub use node_graph_state::DamascusGraphState;
 pub use node_template::{AllDamascusNodeTemplates, DamascusNodeTemplate};

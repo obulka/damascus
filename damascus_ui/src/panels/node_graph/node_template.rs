@@ -2,11 +2,13 @@ use std::borrow::Cow;
 
 use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTemplateTrait};
 use indoc::indoc;
+use strum::{EnumIter, IntoEnumIterator};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use crate::panels::node_graph::{
+use super::{
     data_type::DamascusDataType,
+    NodeCallbacks,
     node_data::DamascusNodeData,
     node_graph_state::DamascusGraphState,
     value_type::{
@@ -16,10 +18,41 @@ use crate::panels::node_graph::{
     DamascusGraph,
 };
 
+
+#[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
+struct LightCallbacks;
+
+impl NodeCallbacks for LightCallbacks {
+    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
+        if input_name != "light_type" {
+            return;
+        }
+        if let Some(node) = graph.nodes.get(node_id) {
+            for (name, input_id) in &node.inputs {
+                if *name == "dimensional_data" {
+                    if let Some(input_param) = graph.inputs.get_mut(*input_id) {
+                        match &mut input_param.value {
+                            DamascusValueType::Vec3 { ref mut value } => {
+                                if *value.ui_data().hidden() {
+                                    value.ui_data_mut().show();
+                                } else {
+                                    value.ui_data_mut().hide();
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}
+
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the
 /// library how to convert a NodeTemplate into a Node.
-#[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, EnumIter, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum DamascusNodeTemplate {
     Axis,
     Camera,
@@ -28,6 +61,22 @@ pub enum DamascusNodeTemplate {
     Primitive,
     RayMarcher,
     Scene,
+}
+
+impl DamascusNodeTemplate {
+    pub fn input_value_changed(
+        &self,
+        graph: &mut DamascusGraph,
+        node_id: NodeId,
+        input_name: &String,
+    ) {
+        match self {
+            DamascusNodeTemplate::Light => {
+                LightCallbacks.input_value_changed(graph, node_id, input_name)
+            }
+            _ => {}
+        }
+    }
 }
 
 // A trait for the node kinds, which tells the library how to build new nodes
@@ -844,16 +893,7 @@ impl NodeTemplateIter for AllDamascusNodeTemplates {
 
     fn all_kinds(&self) -> Vec<Self::Item> {
         // This function must return a list of node kinds, which the node finder
-        // will use to display it to the user. Crates like strum can reduce the
-        // boilerplate in enumerating all variants of an enum.
-        vec![
-            DamascusNodeTemplate::Axis,
-            DamascusNodeTemplate::Camera,
-            DamascusNodeTemplate::Light,
-            DamascusNodeTemplate::Material,
-            DamascusNodeTemplate::Primitive,
-            DamascusNodeTemplate::RayMarcher,
-            DamascusNodeTemplate::Scene,
-        ]
+        // will use to display it to the user.
+        Self::Item::iter().collect()
     }
 }

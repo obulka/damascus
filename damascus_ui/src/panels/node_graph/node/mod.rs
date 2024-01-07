@@ -432,14 +432,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             .with_hidden(),
                     ),
                 );
-                input_float(
+                input_uint(
                     graph,
                     "iterations",
-                    Float::new(1.).with_ui_data(
-                        UIData::default()
-                            .with_tooltip("The number of iterations used to compute the occlusion.")
-                            .with_hidden(),
-                    ),
+                    UnsignedInteger::new(1)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(
+                                    "The number of iterations used to compute the occlusion.",
+                                )
+                                .with_hidden(),
+                        )
+                        .with_range(1..=10),
                 );
                 input_float(
                     graph,

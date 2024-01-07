@@ -272,7 +272,7 @@ pub fn evaluate_node(
                 lights::Lights::Directional => evaluator.input_vector3("direction")?,
                 lights::Lights::Point => evaluator.input_vector3("position")?,
                 lights::Lights::AmbientOcclusion => {
-                    glam::Vec3::new(evaluator.input_float("iterations")?, 0., 0.)
+                    glam::Vec3::new(evaluator.input_uint("iterations")? as f32, 0., 0.)
                 }
                 _ => glam::Vec3::ZERO,
             };

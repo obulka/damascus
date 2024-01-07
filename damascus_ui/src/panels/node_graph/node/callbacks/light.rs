@@ -49,7 +49,7 @@ impl NodeCallbacks for LightCallbacks {
                             DamascusValueType::Vec3 { ref mut value } => {
                                 value.ui_data_mut().show();
                             }
-                            DamascusValueType::Float { ref mut value } => {
+                            DamascusValueType::UnsignedInteger { ref mut value } => {
                                 value.ui_data_mut().show();
                             }
                             _ => {}
@@ -64,7 +64,7 @@ impl NodeCallbacks for LightCallbacks {
                             DamascusValueType::Vec3 { ref mut value } => {
                                 value.ui_data_mut().hide();
                             }
-                            DamascusValueType::Float { ref mut value } => {
+                            DamascusValueType::UnsignedInteger { ref mut value } => {
                                 value.ui_data_mut().hide();
                             }
                             _ => {}

@@ -16,8 +16,8 @@ use super::{
 
 mod callbacks;
 mod node_data;
-use callbacks::LightCallbacks;
 pub use callbacks::NodeCallbacks;
+use callbacks::{LightCallbacks, PrimitiveCallbacks};
 pub use node_data::DamascusNodeData;
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -39,6 +39,9 @@ impl NodeCallbacks for DamascusNodeTemplate {
         match self {
             DamascusNodeTemplate::Light => {
                 LightCallbacks.input_value_changed(graph, node_id, input_name)
+            }
+            DamascusNodeTemplate::Primitive => {
+                PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
             }
             _ => {}
         }
@@ -656,19 +659,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         .with_range(0.0..=10.),
                 );
 
-                // Hollow Sphere dimensions
-                input_float(
-                    graph,
-                    "thickness",
-                    Float::new(0.05)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The thickness of the walls.")
-                                .with_hidden(),
-                        )
-                        .with_range(0.0..=1.),
-                );
-
                 // Death Star dimensions
                 input_float(
                     graph,
@@ -739,6 +729,19 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                                 .with_hidden(),
                         )
                         .with_range(0.0..=10.),
+                );
+
+                // Hollow Sphere dimensions
+                input_float(
+                    graph,
+                    "thickness",
+                    Float::new(0.05)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The thickness of the walls.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=1.),
                 );
 
                 // Rhombus Dimensions

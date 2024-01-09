@@ -1,9 +1,11 @@
-use egui_node_graph::{Node, NodeId};
+use egui_node_graph::NodeId;
 
-use super::{DamascusGraph, DamascusNodeData, DamascusValueType, UIInput};
+use super::{DamascusGraph, DamascusValueType, UIInput};
 
 mod light;
+mod primitive;
 pub use light::LightCallbacks;
+pub use primitive::PrimitiveCallbacks;
 
 pub trait NodeCallbacks {
     fn show_input(&self, value_type: &mut DamascusValueType) {

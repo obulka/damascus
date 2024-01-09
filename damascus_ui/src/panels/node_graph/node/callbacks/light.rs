@@ -21,19 +21,24 @@ impl NodeCallbacks for LightCallbacks {
                         DamascusValueType::ComboBox { ref value } => {
                             match value.as_enum::<lights::Lights>() {
                                 Ok(lights::Lights::Directional) => {
-                                    to_hide.extend(vec!["position", "iterations"]);
-                                    to_show.extend(vec!["direction"]);
+                                    to_show.push("direction");
+                                    to_hide.push("iterations");
+                                    to_hide.push("position")
                                 }
                                 Ok(lights::Lights::Point) => {
-                                    to_hide.extend(vec!["direction", "iterations"]);
-                                    to_show.extend(vec!["position"]);
+                                    to_hide.push("direction");
+                                    to_hide.push("iterations");
+                                    to_show.push("position");
                                 }
                                 Ok(lights::Lights::AmbientOcclusion) => {
-                                    to_hide.extend(vec!["direction", "position"]);
-                                    to_show.extend(vec!["iterations"]);
+                                    to_hide.push("direction");
+                                    to_show.push("iterations");
+                                    to_hide.push("position")
                                 }
                                 _ => {
-                                    to_hide.extend(vec!["direction", "iterations", "position"]);
+                                    to_hide.push("direction");
+                                    to_hide.push("iterations");
+                                    to_hide.push("position");
                                 }
                             }
                         }
@@ -42,17 +47,17 @@ impl NodeCallbacks for LightCallbacks {
                 }
             }
 
-            for input_name in to_show.iter() {
-                if let Ok(input_id) = node.get_input(input_name) {
-                    if let Some(input_param) = graph.inputs.get_mut(input_id) {
-                        self.show_input(&mut input_param.value)
-                    }
-                }
-            }
             for input_name in to_hide.iter() {
                 if let Ok(input_id) = node.get_input(input_name) {
                     if let Some(input_param) = graph.inputs.get_mut(input_id) {
                         self.hide_input(&mut input_param.value)
+                    }
+                }
+            }
+            for input_name in to_show.iter() {
+                if let Ok(input_id) = node.get_input(input_name) {
+                    if let Some(input_param) = graph.inputs.get_mut(input_id) {
+                        self.show_input(&mut input_param.value)
                     }
                 }
             }

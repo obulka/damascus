@@ -1348,7 +1348,7 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
 fn distance_to_mandelbulb(
     position: vec3<f32>,
     power: f32,
-    iterations: i32,
+    iterations: u32,
     max_square_radius: f32,
     trap_colour: ptr<function, vec3<f32>>,
 ) -> f32 {
@@ -1359,7 +1359,7 @@ fn distance_to_mandelbulb(
     *trap_colour = abs_position;
 
     var dradius: f32 = 1.;
-    for (var iteration=0; iteration < iterations; iteration++)
+    for (var iteration=0u; iteration < iterations; iteration++)
     {
         dradius = power * pow(radius_squared, (power - 1.) / 2.) * dradius + 1.;
 
@@ -1875,7 +1875,7 @@ fn distance_to_primitive(
             distance = distance_to_mandelbulb(
                 scaled_position,
                 (*primitive).custom_data.x,
-                i32((*primitive).custom_data.y),
+                u32((*primitive).custom_data.y),
                 (*primitive).custom_data.z,
                 &colour,
             );

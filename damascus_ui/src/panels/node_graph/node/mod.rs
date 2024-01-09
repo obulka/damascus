@@ -637,7 +637,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "radii",
                     Vec3::from_vec3(glam::Vec3::splat(0.5)).with_ui_data(
-                        UIData::default().with_tooltip("The radii of the ellipsoid."),
+                        UIData::default()
+                            .with_tooltip("The radii of the ellipsoid.")
+                            .with_hidden(),
                     ),
                 );
 
@@ -646,7 +648,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "height",
                     Float::new(0.25)
-                        .with_ui_data(UIData::default().with_tooltip("The height (y-axis)."))
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The height (y-axis).")
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=10.),
                 );
 
@@ -655,7 +661,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "thickness",
                     Float::new(0.05)
-                        .with_ui_data(UIData::default().with_tooltip("The thickness of the walls."))
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The thickness of the walls.")
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=1.),
                 );
 
@@ -665,9 +675,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     "hollow_radius",
                     Float::new(0.5)
                         .with_ui_data(
-                            UIData::default().with_tooltip(
-                                "The radius of the sphere that is cut from the solid.",
-                            ),
+                            UIData::default()
+                                .with_tooltip(
+                                    "The radius of the sphere that is cut from the solid.",
+                                )
+                                .with_hidden(),
                         )
                         .with_range(0.0..=10.),
                 );
@@ -675,12 +687,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "hollow_height",
                     Float::new(0.75)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "The height (y-axis) of the center of the sphere
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The height (y-axis) of the center of the sphere
                             that is cut from the solid, above solidRadius +
                             hollowRadius, the result will be a standard
                             sphere of radius solidRadius."
-                        }))
+                                })
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=10.),
                 );
 
@@ -689,11 +705,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "solid_angle",
                     Float::new(30.)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "The angle between the edge of the solid angle and the
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The angle between the edge of the solid angle and the
                             y-axis on [0-180] measured between the y-axis and wall
                             of the solid angle."
-                        }))
+                                })
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=180.),
                 );
 
@@ -702,14 +722,22 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "width",
                     Float::new(0.5)
-                        .with_ui_data(UIData::default().with_tooltip("The width (x-axis)."))
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The width (x-axis).")
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=10.),
                 );
                 input_float(
                     graph,
                     "depth",
                     Float::new(0.75)
-                        .with_ui_data(UIData::default().with_tooltip("The depth (z-axis)."))
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The depth (z-axis).")
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=10.),
                 );
 
@@ -720,7 +748,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Float::new(0.05)
                         .with_ui_data(UIData::default().with_tooltip(
                             "The radius of the corners of the rhombus' xy-plane parallel face.",
-                        ))
+                        ).with_hidden())
                         .with_range(0.0..=1.),
                 );
 
@@ -731,7 +759,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     Float::new(0.5)
                         .with_ui_data(
                             UIData::default()
-                                .with_tooltip("The equilateral triangles edge length (xy-plane)."),
+                                .with_tooltip("The equilateral triangles edge length (xy-plane).")
+                                .with_hidden(),
                         )
                         .with_range(0.0..=10.),
                 );
@@ -741,27 +770,29 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "normal",
                     Vec3::from_vec3(glam::Vec3::Z).with_ui_data(
-                        UIData::default().with_tooltip("The normal direction of the plane."),
+                        UIData::default()
+                            .with_tooltip("The normal direction of the plane.")
+                            .with_hidden(),
                     ),
                 );
 
                 // Capsule Dimensions
                 input_float(
                     graph,
-                    "negative height",
+                    "negative_height",
                     Float::new(0.25)
                         .with_ui_data(UIData::default().with_tooltip(
                             "The distance along the negative y-axis before entering the dome.",
-                        ))
+                        ).with_hidden())
                         .with_range(0.0..=10.),
                 );
                 input_float(
                     graph,
-                    "positive height",
+                    "positive_height",
                     Float::new(0.25)
                         .with_ui_data(UIData::default().with_tooltip(
                             "The distance along the positive y-axis before entering the dome.",
-                        ))
+                        ).with_hidden())
                         .with_range(0.0..=10.),
                 );
 
@@ -770,11 +801,179 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "angle",
                     Float::new(30.)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "The angle between the tip and base of the cone [0-90]
-                            measured between the y-axis and wall of the cone."
-                        }))
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The angle between the tip and base of the cone [0-90]
+                                    measured between the y-axis and wall of the cone."
+                                })
+                                .with_hidden(),
+                        )
                         .with_range(0.0..=90.),
+                );
+
+                // Capped Cone Dimensions
+                input_float(
+                    graph,
+                    "lower_radius",
+                    Float::new(0.25)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The radius of the cone at y = -height/2.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "upper_radius",
+                    Float::new(0.125)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The radius of the cone at y = height/2.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=10.),
+                );
+
+                // Torus Dimensions
+                input_float(
+                    graph,
+                    "ring_radius",
+                    Float::new(0.3)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The radius (xy-plane) of the ring of the torus.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "tube_radius",
+                    Float::new(0.2)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The radius of the tube of the torus.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=5.),
+                );
+
+                // Capped Torus Dimensions
+                input_float(
+                    graph,
+                    "cap_angle",
+                    Float::new(30.)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The angle (xy-plane, symmetric about y-axis) to
+                                    cap at, in the range [0-180.]."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=180.),
+                );
+
+                // Octahedron Dimensions
+                input_float(
+                    graph,
+                    "radial_extent",
+                    Float::new(0.5)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The maximum distance along the x, y, and z axes.
+                            ie. The vertices are at +/-radial_extent on the x, y,
+                            and z axes."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=10.),
+                );
+
+                // Mandelbulb Dimensions
+                input_float(
+                    graph,
+                    "power",
+                    Float::new(8.)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(
+                                    "One greater than the axes of symmetry in the xy-plane.",
+                                )
+                                .with_hidden(),
+                        )
+                        .with_range(2.0..=30.),
+                );
+                input_uint(
+                    graph,
+                    "iterations",
+                    UnsignedInteger::new(10)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The number of iterations to compute, the higher this
+                            is, the slower it will be to compute, but the more
+                            detail the fractal will have."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(1..=30),
+                );
+                input_float(
+                    graph,
+                    "max_square_radius",
+                    Float::new(4.)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "When the square radius has reached this length, stop iterating.",
+                        ).with_hidden())
+                        .with_range(1.0..=9.),
+                );
+
+                // Mandelbox Dimensions
+                input_float(
+                    graph,
+                    "scale",
+                    Float::new(-1.75)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The amount to scale the position between folds.
+                                    Can be negative or positive.",
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(-5.0..=5.),
+                );
+                input_float(
+                    graph,
+                    "min_square_radius",
+                    Float::new(0.001)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(
+                                    "The minimum square radius to use when spherically folding.",
+                                )
+                                .with_hidden(),
+                        )
+                        .with_range(0.001..=1.),
+                );
+                input_float(
+                    graph,
+                    "folding_limit",
+                    Float::new(0.8)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "Clamp the position between +/- this value when
+                            performing the box fold. Higher values will result
+                            in a denser fractal.",
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.01..=2.),
                 );
 
                 input_matrix4(

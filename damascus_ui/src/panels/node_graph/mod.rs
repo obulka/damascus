@@ -3,6 +3,7 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use egui_node_graph::{Graph, NodeId, OutputId};
+use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
@@ -267,10 +268,16 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Light => {
             let mut scene_lights = evaluator.input_light("lights")?;
+            let world_matrix = evaluator.input_matrix4("world_matrix")?;
             let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
             let dimensional_data = match light_type {
-                lights::Lights::Directional => evaluator.input_vector3("direction")?,
-                lights::Lights::Point => evaluator.input_vector3("position")?,
+                lights::Lights::Directional => (world_matrix
+                    * glam::Vec4::from((evaluator.input_vector3("direction")?, 1.)))
+                .xyz()
+                .normalize(),
+                lights::Lights::Point => (world_matrix
+                    * glam::Vec4::from((evaluator.input_vector3("position")?, 1.)))
+                .xyz(),
                 lights::Lights::AmbientOcclusion => {
                     glam::Vec3::new(evaluator.input_uint("iterations")? as f32, 0., 0.)
                 }

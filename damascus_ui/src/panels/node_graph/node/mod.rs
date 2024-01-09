@@ -406,6 +406,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Light => {
                 let default_light = lights::Light::default();
                 input_light(graph, "lights", vec![]);
+                input_matrix4(
+                    graph,
+                    "world_matrix",
+                    Mat4::new(glam::Mat4::IDENTITY).with_ui_data(UIData::default().with_tooltip(
+                        indoc! {
+                            "The world matrix to apply to the light (point and
+                            directional only).\n
+                            \tPoint: Will affect the position of the light.\n
+                            \tDirectional: Will affect the direction vector of the light."
+                        },
+                    )),
+                );
                 input_combo_box(
                     graph,
                     "light_type",

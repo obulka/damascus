@@ -1644,7 +1644,11 @@ struct Primitive {
     transform: Transform, // Could we just make this a world matrix?
     material: Material,
     modifiers: u32,
-    blend_type: u32,
+    wall_thickness: f32,
+    edge_radius: f32,
+    elongation: vec3<f32>,
+    repetitions: vec3<u32>,
+    spacing: vec3<f32>,
     blend_strength: f32,
     num_children: u32,
     custom_data: vec4<f32>,

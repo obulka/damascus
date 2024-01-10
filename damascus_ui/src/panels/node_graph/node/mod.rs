@@ -520,21 +520,21 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "specular_probability",
-                    Float::new(default_material.specular_probability)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    Float::new(default_material.specular_probability).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "The probability that light will be specularly reflected
                             when it interacts with this material."
-                        }))
-                        .with_range(0.0..=1.),
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
                     "specular_roughness",
-                    Float::new(default_material.specular_roughness)
-                        .with_ui_data(UIData::default().with_tooltip(
+                    Float::new(default_material.specular_roughness).with_ui_data(
+                        UIData::default().with_tooltip(
                             "The roughness of the material when specularly reflected.",
-                        ))
-                        .with_range(0.0..=1.),
+                        ),
+                    ),
                 );
                 input_vector3(
                     graph,
@@ -548,24 +548,21 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "transmissive_probability",
-                    Float::new(default_material.transmissive_probability)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    Float::new(default_material.transmissive_probability).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "The probability that light will be transmitted through
                             the material (before accounting for Fresnel) when it
                             interacts with this material."
-                        }))
-                        .with_range(0.0..=1.),
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
                     "transmissive_roughness",
-                    Float::new(default_material.transmissive_roughness)
-                        .with_ui_data(
-                            UIData::default().with_tooltip(
-                                "The roughness when transmitted through the material.",
-                            ),
-                        )
-                        .with_range(0.0..=1.),
+                    Float::new(default_material.transmissive_roughness).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The roughness when transmitted through the material."),
+                    ),
                 );
                 input_vector3(
                     graph,
@@ -580,11 +577,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "emissive_probability",
-                    Float::new(default_material.emissive_probability)
-                        .with_ui_data(UIData::default().with_tooltip(
+                    Float::new(default_material.emissive_probability).with_ui_data(
+                        UIData::default().with_tooltip(
                             "The probability that light will be emitted from the material.",
-                        ))
-                        .with_range(0.0..=1.),
+                        ),
+                    ),
                 );
                 input_vector3(
                     graph,
@@ -598,22 +595,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "refractive_index",
-                    Float::new(default_material.refractive_index)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The index of refraction of the material."),
-                        )
-                        .with_range(0.0..=1.),
+                    Float::new(default_material.refractive_index).with_ui_data(
+                        UIData::default().with_tooltip("The index of refraction of the material."),
+                    ),
                 );
                 input_float(
                     graph,
                     "scattering_coefficient",
-                    Float::new(default_material.scattering_coefficient)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The scattering coefficient of the material."),
-                        )
-                        .with_range(0.0..=1.),
+                    Float::new(default_material.scattering_coefficient).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The scattering coefficient of the material."),
+                    ),
                 );
                 input_vector3(
                     graph,
@@ -748,24 +740,24 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "thickness",
-                    Float::new(0.05)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The thickness of the walls.")
-                                .with_hidden(),
-                        )
-                        .with_range(0.0..=1.),
+                    Float::new(0.05).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The thickness of the walls.")
+                            .with_hidden(),
+                    ),
                 );
 
                 // Rhombus Dimensions
                 input_float(
                     graph,
                     "corner_radius",
-                    Float::new(0.05)
-                        .with_ui_data(UIData::default().with_tooltip(
-                            "The radius of the corners of the rhombus' xy-plane parallel face.",
-                        ).with_hidden())
-                        .with_range(0.0..=1.),
+                    Float::new(0.05).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(
+                                "The radius of the corners of the rhombus' xy-plane parallel face.",
+                            )
+                            .with_hidden(),
+                    ),
                 );
 
                 // Triangular Prism Dimensions
@@ -984,8 +976,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             UIData::default()
                                 .with_tooltip(indoc! {
                                     "Clamp the position between +/- this value when
-                            performing the box fold. Higher values will result
-                            in a denser fractal.",
+                                    performing the box fold. Higher values will result
+                                    in a denser fractal.",
                                 })
                                 .with_hidden(),
                         )
@@ -995,17 +987,50 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_matrix4(
                     graph,
                     "world_matrix",
-                    Mat4::new(glam::Mat4::IDENTITY).with_ui_data(
+                    Mat4::new(default_primitive.world_matrix).with_ui_data(
                         UIData::default().with_tooltip("The world matrix/axis of the primitive."),
                     ),
                 );
-                input_uint(
+                input_float(
                     graph,
-                    "modifiers",
-                    UnsignedInteger::new(default_primitive.modifiers as u32)
-                        .with_ui_data(UIData::default())
-                        .with_range(0..=100),
-                ); // TODO make this a series of bools
+                    "edge_radius",
+                    Float::new(default_primitive.edge_radius).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "The thickness of the walls of the shape, if
+                            the shape is hollow.",
+                        }),
+                    ),
+                );
+                input_combo_box(
+                    graph,
+                    "repetition",
+                    ComboBox::from_enum::<geometry::Repetition>(default_primitive.repetition)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Repeat objects in the scene with no extra memory
+                            consumption. Note that if the repeated objects overlap
+                            some strange things can occur."
+                        })),
+                );
+                // input_vector3( // TODO uvec3
+                //     graph,
+                //     "repetitions",
+                //     Vec3::from_vec3(default_primitive.limits).with_ui_data(
+                //         UIData::default()
+                //             .with_tooltip("The number of repetitions along the x, y, and z axes.")
+                //             .with_hidden(),
+                //     ),
+                // );
+                input_vector3(
+                    graph,
+                    "spacing",
+                    Vec3::from_vec3(default_primitive.spacing).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(
+                                "The spacing along each positive axis to repeat the objects.",
+                            )
+                            .with_hidden(),
+                    ),
+                );
                 input_combo_box(
                     graph,
                     "blend_type",
@@ -1031,13 +1056,75 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "blend_strength",
-                    Float::new(default_primitive.blend_strength)
-                        .with_ui_data(
-                            UIData::default().with_tooltip(
-                                "The amount to blend with this primitive's children.",
-                            ),
-                        )
-                        .with_range(0.0..=1.),
+                    Float::new(default_primitive.blend_strength).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The amount to blend with this primitive's children.")
+                            .with_hidden(),
+                    ),
+                );
+                // input_vector3( // TODO bvec3
+                //     graph,
+                //     "mirror",
+                //     Vec3::from_vec3(default_primitive.limits).with_ui_data(
+                //         UIData::default()
+                //             .with_tooltip("Mirror along the x, y, and z axes."),
+                //     ),
+                // );
+                input_bool(
+                    graph,
+                    "hollow",
+                    Bool::new(default_primitive.hollow).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "If enabled, the object will be hollow, with a
+                            thickness of 'wall thickness'."
+                        }),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "wall_thickness",
+                    Float::new(default_primitive.wall_thickness).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "The thickness of the walls of the shape, if
+                                the shape is hollow.",
+                            })
+                            .with_hidden(),
+                    ),
+                );
+                input_bool(
+                    graph,
+                    "elongate",
+                    Bool::new(default_primitive.elongate).with_ui_data(
+                        UIData::default().with_tooltip("Enable the elongation of the object."),
+                    ),
+                );
+                input_vector3(
+                    graph,
+                    "elongation",
+                    Vec3::from_vec3(default_primitive.elongation).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The elongation of the object along the respective axes.")
+                            .with_hidden(),
+                    ),
+                );
+                input_bool(
+                    graph,
+                    "bounding_volume",
+                    Bool::new(default_primitive.bounding_volume).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "If enabled, this object will act as a bounding volume
+                            for all its children. This means that until a ray hits
+                            the bounding volume, none of the child object's signed
+                            distance fields will be computed. This can vastly
+                            improve performance, especially when many complex
+                            objects are far from the camera. This option does
+                            not always play well with lighting effects that depend
+                            on the number of iterations in the computation such
+                            as 'ambient occlusion' and 'softened shadows' due
+                            to the variation near the surface of the bounding object."
+                        }),
+                    ),
                 );
                 output_primitive(graph, "out");
             }
@@ -1184,8 +1271,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "light_sampling_bias",
-                    Float::new(default_ray_marcher.light_sampling_bias)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    Float::new(default_ray_marcher.light_sampling_bias).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "A fully biased (1) light sampling means that on each
                             light sample the ray will be initialised pointing
                             directly at the light. Reducing this bias means that
@@ -1193,8 +1280,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             when combined with multiple 'max light sampling
                             bounces' allows the renderer to find difficult paths,
                             such as volumetric caustics.\nTODO"
-                        }))
-                        .with_range(0.0..=1.),
+                        }),
+                    ),
                 );
                 input_bool(
                     graph,

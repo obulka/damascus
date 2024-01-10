@@ -337,11 +337,8 @@ pub fn evaluate_node(
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut children = evaluator.input_primitive("children")?;
-            let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
             let material = evaluator.input_material("material")?;
-            let modifiers = evaluator.input_uint("modifiers")?;
-            let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
-            let blend_strength = evaluator.input_float("blend_strength")?;
+            let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
 
             let dimensional_data = match shape {
                 geometry::Shapes::Sphere => {
@@ -471,7 +468,20 @@ pub fn evaluate_node(
                     evaluator.input_float("folding_limit")?,
                 ),
             };
-
+            let edge_radius = evaluator.input_float("edge_radius")?;
+            let repetition = evaluator.input_combo_box::<geometry::Repetition>("repetition")?;
+            // let repetitions = evaluator.input_unsigned_vector3("repetitions")?; // TODO
+            let repetitions = glam::UVec3::ONE;
+            let spacing = evaluator.input_vector3("spacing")?;
+            let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
+            let blend_strength = evaluator.input_float("blend_strength")?;
+            // let mirror = evaluator.input_bool_vector3("mirror")?; // TODO
+            let mirror = glam::BVec3::FALSE;
+            let hollow = evaluator.input_bool("hollow")?;
+            let wall_thickness = evaluator.input_float("wall_thickness")?;
+            let elongate = evaluator.input_bool("elongate")?;
+            let elongation = evaluator.input_vector3("elongation")?;
+            let bounding_volume = evaluator.input_bool("bounding_volume")?;
             let world_matrix = evaluator.input_matrix4("world_matrix")?;
             for child in children.iter_mut() {
                 child.world_matrix = world_matrix * child.world_matrix;
@@ -481,9 +491,18 @@ pub fn evaluate_node(
                 shape: shape,
                 world_matrix: world_matrix,
                 material: material,
-                modifiers: modifiers,
+                hollow: hollow,
+                wall_thickness: wall_thickness,
+                edge_radius: edge_radius,
+                mirror: mirror,
+                elongate: elongate,
+                elongation: elongation,
+                repetition: repetition,
+                repetitions: repetitions,
+                spacing: spacing,
                 blend_type: blend_type,
                 blend_strength: blend_strength,
+                bounding_volume: bounding_volume,
                 num_children: children.len() as u32,
                 dimensional_data: dimensional_data,
             };

@@ -340,6 +340,7 @@ pub fn evaluate_node(
             let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
             let material = evaluator.input_material("material")?;
             let modifiers = evaluator.input_uint("modifiers")?;
+            let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
 
             let dimensional_data = match shape {
@@ -481,6 +482,7 @@ pub fn evaluate_node(
                 world_matrix: world_matrix,
                 material: material,
                 modifiers: modifiers,
+                blend_type: blend_type,
                 blend_strength: blend_strength,
                 num_children: children.len() as u32,
                 dimensional_data: dimensional_data,

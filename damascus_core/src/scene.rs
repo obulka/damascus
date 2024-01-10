@@ -1,6 +1,6 @@
 use crevice::std140::AsStd140;
 
-use crate::{
+use super::{
     geometry::{
         camera::Camera,
         {GPUPrimitive, Primitive, Std140GPUPrimitive},

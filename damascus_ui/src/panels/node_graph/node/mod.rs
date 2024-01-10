@@ -1006,6 +1006,28 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         .with_ui_data(UIData::default())
                         .with_range(0..=100),
                 ); // TODO make this a series of bools
+                input_combo_box(
+                    graph,
+                    "blend_type",
+                    ComboBox::from_enum::<geometry::BlendType>(default_primitive.blend_type)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The type of interaction this object will have with its children.\n
+                            \tUnion: All objects will appear as normal.\n
+                            \tSubtraction: This object will be subtracted from all of its\n
+                            \t\tchildren, leaving holes.\n
+                            \tIntersection: Only the region where this object and its\n
+                            \t\tchildren overlap will remain.\n
+                            \tSmooth Union: All children will smoothly blend together\n
+                            \t\twith this object according to the 'blend strength'.\n
+                            \tSmooth Subtraction:This object will be subtracted from all\n
+                            \t\tof its children,  leaving holes that are smoothed\n
+                            \t\taccording to the 'blend strength'.\n
+                            \tSmooth Intersection: Only the region where this object\n
+                            \t\tand its children overlap will remain, and the remaining\n
+                            \t\tregions will be smoothed according to the 'blend\n
+                            \t\tstrength'.",
+                        })),
+                );
                 input_float(
                     graph,
                     "blend_strength",

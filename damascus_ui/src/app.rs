@@ -128,8 +128,12 @@ impl eframe::App for Damascus {
             .resizable(true)
             .default_height(300.0)
             .show(ctx, |ui| {
-                self.state
-                    .draw_graph_editor(ui, AllDamascusNodeTemplates, &mut self.user_state)
+                self.state.draw_graph_editor(
+                    ui,
+                    AllDamascusNodeTemplates,
+                    &mut self.user_state,
+                    Vec::default(),
+                )
             })
             .inner;
         for node_response in graph_response.node_responses {

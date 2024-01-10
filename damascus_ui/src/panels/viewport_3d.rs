@@ -110,9 +110,7 @@ impl Viewport3d {
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
-            usage: wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::MAP_READ
-                | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let primitives_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -142,9 +140,7 @@ impl Viewport3d {
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d lights buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_lights()]),
-            usage: wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::MAP_READ
-                | wgpu::BufferUsages::STORAGE,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let lights_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -213,7 +209,7 @@ impl Viewport3d {
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
         // `paint_callback_resources` type map, which is stored alongside the render pass.
         wgpu_render_state
-            .egui_rpass
+            .renderer
             .write()
             .paint_callback_resources
             .insert(RenderResources {
@@ -253,7 +249,7 @@ impl Viewport3d {
         // The paint callback is called after prepare and is given access to the render pass, which
         // can be used to issue draw commands.
         let cb = egui_wgpu::CallbackFn::new()
-            .prepare(move |device, queue, paint_callback_resources| {
+            .prepare(move |device, queue, _encoder, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();
                 resources.prepare(
                     device,
@@ -263,6 +259,7 @@ impl Viewport3d {
                     primitives,
                     lights,
                 );
+                Vec::new()
             })
             .paint(move |_info, rpass, paint_callback_resources| {
                 let resources: &RenderResources = paint_callback_resources.get().unwrap();

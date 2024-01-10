@@ -63,8 +63,8 @@ struct Ray {
 
 // math.wgsl
 
-let PI: f32 = 3.141592653589793;
-let TWO_PI: f32 = 6.28318530718;
+const PI: f32 = 3.141592653589793;
+const TWO_PI: f32 = 6.28318530718;
 
 
 // wish we could overload functions
@@ -539,12 +539,11 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
 // const MANDELBULB: u32 = 23u;
 // const MANDELBOX: u32 = 24u;
 
-let DIFFUSE_TRAP: u32 = 8192u;
-let SPECULAR_TRAP: u32 = 16384u;
-let EXTINCTION_TRAP: u32 = 32768u;
-let EMISSION_TRAP: u32 = 65536u;
-let SCATTERING_TRAP: u32 = 131072u;
-
+// const DIFFUSE_TRAP: u32 = 8192u;
+// const SPECULAR_TRAP: u32 = 16384u;
+// const EXTINCTION_TRAP: u32 = 32768u;
+// const EMISSION_TRAP: u32 = 65536u;
+// const SCATTERING_TRAP: u32 = 131072u;
 
 /**
  * Compute the min distance from a point to a circle.
@@ -1630,7 +1629,7 @@ fn sample_material(
 // #include "material.wgsl"
 
 
-let MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
+const MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
 
 
 struct Transform {
@@ -1695,7 +1694,6 @@ fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
     return transformed_ray;
 }
 
-
 /**
  * Compute the min distance from a point to a geometric object.
  *
@@ -1712,6 +1710,9 @@ fn distance_to_primitive(
 
     var distance: f32;
     switch (*primitive).shape {
+        case 0u, default { // cannot use const, maybe version too old
+            distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
+        }
         case 1u { // would be nice if const existed in this version :(
             distance = distance_to_ellipsoid(scaled_position,(*primitive).custom_data.xyz);
         }
@@ -1893,9 +1894,6 @@ fn distance_to_primitive(
             );
             (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
         }
-        default { // cannot use default w/ other clauses, maybe version too old
-            distance = distance_to_sphere(scaled_position, (*primitive).custom_data.x);
-        }
     }
 
     return distance * (*primitive).transform.uniform_scale;
@@ -1978,7 +1976,7 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
 // lights.wgsl
 
 
-let MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+const MAX_LIGHTS: u32 = 512u; // const not supported in the current version
 
 
 struct Light {
@@ -2318,6 +2316,26 @@ fn sample_non_physical_light(
 
     var intensity: vec2<f32>;
     switch light.light_type {
+        case 0u {
+            var shadow_intensity_at_position: f32;
+            if (bool(light.soften_shadows)) {
+                shadow_intensity_at_position = sample_soft_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                    light.shadow_hardness,
+                );
+            }
+            else {
+                shadow_intensity_at_position = sample_shadow(
+                    surface_position,
+                    light_direction,
+                    distance_to_light,
+                );
+            }
+
+            intensity = vec2(light.intensity, shadow_intensity_at_position);
+        }
         case 1u {
             var shadow_intensity_at_position: f32;
             if (bool(light.soften_shadows)) {
@@ -2341,7 +2359,7 @@ fn sample_non_physical_light(
                 shadow_intensity_at_position,
             );
         }
-        case 2u {
+        case 2u, default {
             // Ambient light, simply return the intensity.
             intensity = vec2(light.intensity, 1.);
         }
@@ -2355,26 +2373,6 @@ fn sample_non_physical_light(
                     u32(light.dimensional_data.x)
                 ),
             );
-        }
-        default {
-            var shadow_intensity_at_position: f32;
-            if (bool(light.soften_shadows)) {
-                shadow_intensity_at_position = sample_soft_shadow(
-                    surface_position,
-                    light_direction,
-                    distance_to_light,
-                    light.shadow_hardness,
-                );
-            }
-            else {
-                shadow_intensity_at_position = sample_shadow(
-                    surface_position,
-                    light_direction,
-                    distance_to_light,
-                );
-            }
-
-            intensity = vec2(light.intensity, shadow_intensity_at_position);
         }
     }
 
@@ -2656,8 +2654,8 @@ fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
 
 // aovs.wgsl
 
-let BEAUTY_AOV: u32 = 0u;
-let STATS_AOV: u32 = 5u;
+const BEAUTY_AOV: u32 = 0u;
+const STATS_AOV: u32 = 5u;
 
 
 fn early_exit_aovs(

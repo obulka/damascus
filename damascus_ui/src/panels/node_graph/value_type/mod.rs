@@ -222,14 +222,20 @@ impl WidgetValueTrait for DamascusValueType {
     type Response = DamascusResponse;
     type UserState = DamascusGraphState;
     type NodeData = DamascusNodeData;
+
+    /// This method will be called for each input parameter with a widget with an disconnected
+    /// input only. To display UI for connected inputs use [`WidgetValueTrait::value_widget_connected`].
+    /// The return value is a vector of custom response objects which can be used
+    /// to implement handling of side effects. If unsure, the response Vec can
+    /// be empty.
     fn value_widget(
         &mut self,
         param_name: &str,
         node_id: NodeId,
         ui: &mut egui::Ui,
-        _user_state: &mut DamascusGraphState,
-        node_data: &DamascusNodeData,
-    ) -> Vec<DamascusResponse> {
+        _user_state: &mut Self::UserState,
+        node_data: &Self::NodeData,
+    ) -> Vec<Self::Response> {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         let value_changed = match self {
@@ -259,5 +265,30 @@ impl WidgetValueTrait for DamascusValueType {
             )];
         }
         Vec::new()
+    }
+
+    /// This method will be called for each input parameter with a widget with a connected
+    /// input only. To display UI for diconnected inputs use [`WidgetValueTrait::value_widget`].
+    /// The return value is a vector of custom response objects which can be used
+    /// to implement handling of side effects. If unsure, the response Vec can
+    /// be empty.
+    ///
+    /// Shows the input name label by default.
+    fn value_widget_connected(
+        &mut self,
+        param_name: &str,
+        _node_id: NodeId,
+        ui: &mut egui::Ui,
+        _user_state: &mut Self::UserState,
+        _node_data: &Self::NodeData,
+    ) -> Vec<Self::Response> {
+        match self {
+            DamascusValueType::Mat4 { value } => value.create_parameter_label(ui, param_name),
+            _ => {
+                ui.label(param_name);
+            }
+        }
+
+        Default::default()
     }
 }

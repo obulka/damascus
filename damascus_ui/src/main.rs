@@ -12,7 +12,7 @@ fn main() {
         ..Default::default()
     };
 
-    eframe::run_native(
+    let _ = eframe::run_native(
         "damascus",
         options,
         Box::new(|cc| {

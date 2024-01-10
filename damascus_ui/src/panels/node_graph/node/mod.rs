@@ -55,6 +55,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
     type DataType = DamascusDataType;
     type ValueType = DamascusValueType;
     type UserState = DamascusGraphState;
+    type CategoryType = (); // TODO think about adding categories
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {

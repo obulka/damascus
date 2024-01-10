@@ -18,34 +18,35 @@ impl UIInput<glam::Mat4> for Mat4 {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             ui.vertical(|ui| {
-                create_drag_value_ui(ui, &mut self.value.x_axis.x);
-                create_drag_value_ui(ui, &mut self.value.x_axis.y);
-                create_drag_value_ui(ui, &mut self.value.x_axis.z);
-                create_drag_value_ui(ui, &mut self.value.x_axis.w);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.z).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.w).changed();
             });
             ui.vertical(|ui| {
-                create_drag_value_ui(ui, &mut self.value.y_axis.x);
-                create_drag_value_ui(ui, &mut self.value.y_axis.y);
-                create_drag_value_ui(ui, &mut self.value.y_axis.z);
-                create_drag_value_ui(ui, &mut self.value.y_axis.w);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.z).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.w).changed();
             });
             ui.vertical(|ui| {
-                create_drag_value_ui(ui, &mut self.value.z_axis.x);
-                create_drag_value_ui(ui, &mut self.value.z_axis.y);
-                create_drag_value_ui(ui, &mut self.value.z_axis.z);
-                create_drag_value_ui(ui, &mut self.value.z_axis.w);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.z).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.w).changed();
             });
             ui.vertical(|ui| {
-                create_drag_value_ui(ui, &mut self.value.w_axis.x);
-                create_drag_value_ui(ui, &mut self.value.w_axis.y);
-                create_drag_value_ui(ui, &mut self.value.w_axis.z);
-                create_drag_value_ui(ui, &mut self.value.w_axis.w);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.w_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.w_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.w_axis.z).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.w_axis.w).changed();
             });
         });
-        false
+        has_changed
     }
 
     fn value(&self) -> &glam::Mat4 {

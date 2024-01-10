@@ -18,12 +18,13 @@ impl UIInput<glam::Vec2> for Vec2 {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            create_drag_value_ui(ui, &mut self.value.x);
-            create_drag_value_ui(ui, &mut self.value.y);
+            has_changed |= create_drag_value_ui(ui, &mut self.value.x).changed();
+            has_changed |= create_drag_value_ui(ui, &mut self.value.y).changed();
         });
-        false
+        has_changed
     }
 
     fn value(&self) -> &glam::Vec2 {

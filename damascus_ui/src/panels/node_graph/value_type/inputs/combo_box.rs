@@ -53,17 +53,18 @@ impl UIInput<String> for ComboBox {
         let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            let response = egui::ComboBox::from_label("")
+            egui::ComboBox::from_label("")
                 .selected_text(&self.selected)
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {
                     for enum_option in self.options.iter() {
-                        let response = ui.selectable_value(
-                            &mut self.selected,
-                            enum_option.to_string(),
-                            enum_option,
-                        );
-                        has_changed |= response.changed();
+                        has_changed |= ui
+                            .selectable_value(
+                                &mut self.selected,
+                                enum_option.to_string(),
+                                enum_option,
+                            )
+                            .changed();
                     }
                 });
         });

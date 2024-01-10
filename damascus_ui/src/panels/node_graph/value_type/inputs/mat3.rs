@@ -1,7 +1,7 @@
 use eframe::egui;
 use glam;
 
-use crate::panels::node_graph::value_type::{create_drag_value_ui, UIData, UIInput};
+use super::{create_drag_value_ui, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Mat3 {
@@ -18,25 +18,26 @@ impl UIInput<glam::Mat3> for Mat3 {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.vertical(|ui| {
             self.create_parameter_label(ui, label);
             ui.horizontal(|ui| {
-                create_drag_value_ui(ui, &mut self.value.x_axis.x);
-                create_drag_value_ui(ui, &mut self.value.x_axis.y);
-                create_drag_value_ui(ui, &mut self.value.x_axis.z);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.z).changed();
             });
             ui.horizontal(|ui| {
-                create_drag_value_ui(ui, &mut self.value.y_axis.x);
-                create_drag_value_ui(ui, &mut self.value.y_axis.y);
-                create_drag_value_ui(ui, &mut self.value.y_axis.z);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y_axis.z).changed();
             });
             ui.horizontal(|ui| {
-                create_drag_value_ui(ui, &mut self.value.z_axis.x);
-                create_drag_value_ui(ui, &mut self.value.z_axis.y);
-                create_drag_value_ui(ui, &mut self.value.z_axis.z);
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z_axis.z).changed();
             });
         });
-        false
+        has_changed
     }
 
     fn value(&self) -> &glam::Mat3 {

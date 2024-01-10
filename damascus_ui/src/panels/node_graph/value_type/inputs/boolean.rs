@@ -17,11 +17,12 @@ impl UIInput<bool> for Bool {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            ui.add(egui::Checkbox::new(&mut self.value, ""));
+            has_changed |= ui.add(egui::Checkbox::new(&mut self.value, "")).changed();
         });
-        false
+        has_changed
     }
 
     fn value(&self) -> &bool {

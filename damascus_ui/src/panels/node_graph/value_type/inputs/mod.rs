@@ -66,11 +66,12 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            ui.add(self.create_slider());
+            has_changed |= ui.add(self.create_slider()).changed();
         });
-        false // TODO
+        has_changed
     }
 
     #[inline]
@@ -110,9 +111,9 @@ pub trait Colour<T>: UIInput<T> {
     fn is_colour_mut(&mut self) -> &mut bool;
 }
 
-pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) {
+pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) -> egui::Response {
     ui.add(
         egui::DragValue::new(value).max_decimals(100),
         // .update_while_editing(false), // TODO was this added in a later version?
-    );
+    )
 }

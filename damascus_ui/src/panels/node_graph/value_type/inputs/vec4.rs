@@ -34,17 +34,20 @@ impl UIInput<[f32; 4]> for Vec4 {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            create_drag_value_ui(ui, &mut self.value[0]);
-            create_drag_value_ui(ui, &mut self.value[1]);
-            create_drag_value_ui(ui, &mut self.value[2]);
-            create_drag_value_ui(ui, &mut self.value[3]);
+            has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
+            has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
+            has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
+            has_changed |= create_drag_value_ui(ui, &mut self.value[3]).changed();
             if self.is_colour {
-                ui.color_edit_button_rgba_unmultiplied(&mut self.value);
+                has_changed |= ui
+                    .color_edit_button_rgba_unmultiplied(&mut self.value)
+                    .changed();
             }
         });
-        false
+        has_changed
     }
 
     fn value(&self) -> &[f32; 4] {

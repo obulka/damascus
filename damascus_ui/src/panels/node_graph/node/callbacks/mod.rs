@@ -13,6 +13,9 @@ pub trait NodeCallbacks {
             DamascusValueType::Bool { ref mut value } => {
                 value.ui_data_mut().show();
             }
+            DamascusValueType::BVec3 { ref mut value } => {
+                value.ui_data_mut().show();
+            }
             DamascusValueType::ComboBox { ref mut value } => {
                 value.ui_data_mut().show();
             }
@@ -23,6 +26,9 @@ pub trait NodeCallbacks {
                 value.ui_data_mut().show();
             }
             DamascusValueType::UnsignedInteger { ref mut value } => {
+                value.ui_data_mut().show();
+            }
+            DamascusValueType::UVec3 { ref mut value } => {
                 value.ui_data_mut().show();
             }
             DamascusValueType::Mat3 { ref mut value } => {
@@ -46,6 +52,9 @@ pub trait NodeCallbacks {
             DamascusValueType::Bool { ref mut value } => {
                 value.ui_data_mut().hide();
             }
+            DamascusValueType::BVec3 { ref mut value } => {
+                value.ui_data_mut().hide();
+            }
             DamascusValueType::ComboBox { ref mut value } => {
                 value.ui_data_mut().hide();
             }
@@ -56,6 +65,9 @@ pub trait NodeCallbacks {
                 value.ui_data_mut().hide();
             }
             DamascusValueType::UnsignedInteger { ref mut value } => {
+                value.ui_data_mut().hide();
+            }
+            DamascusValueType::UVec3 { ref mut value } => {
                 value.ui_data_mut().hide();
             }
             DamascusValueType::Mat3 { ref mut value } => {

@@ -83,6 +83,10 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_bool()
         }
 
+        fn input_bool_vector3(&mut self, name: &str) -> anyhow::Result<glam::BVec3> {
+            self.evaluate_input(name)?.try_to_bvec3()
+        }
+
         fn input_combo_box<E: IntoEnumIterator + Display + FromStr>(
             &mut self,
             name: &str,
@@ -96,6 +100,10 @@ pub fn evaluate_node(
 
         fn input_uint(&mut self, name: &str) -> anyhow::Result<u32> {
             self.evaluate_input(name)?.try_to_uint()
+        }
+
+        fn input_uint_vector3(&mut self, name: &str) -> anyhow::Result<glam::UVec3> {
+            self.evaluate_input(name)?.try_to_uvec3()
         }
 
         fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {
@@ -470,13 +478,11 @@ pub fn evaluate_node(
             };
             let edge_radius = evaluator.input_float("edge_radius")?;
             let repetition = evaluator.input_combo_box::<geometry::Repetition>("repetition")?;
-            // let repetitions = evaluator.input_unsigned_vector3("repetitions")?; // TODO
-            let repetitions = glam::UVec3::ONE;
+            let repetitions = evaluator.input_uint_vector3("repetitions")?;
             let spacing = evaluator.input_vector3("spacing")?;
             let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
-            // let mirror = evaluator.input_bool_vector3("mirror")?; // TODO
-            let mirror = glam::BVec3::FALSE;
+            let mirror = evaluator.input_bool_vector3("mirror")?;
             let hollow = evaluator.input_bool("hollow")?;
             let wall_thickness = evaluator.input_float("wall_thickness")?;
             let elongate = evaluator.input_bool("elongate")?;

@@ -100,7 +100,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_bvec3 = |graph: &mut DamascusGraph, name: &str, default: BVec3| {
+        let input_bool_vector3 = |graph: &mut DamascusGraph, name: &str, default: BVec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -140,7 +140,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_uvec3 = |graph: &mut DamascusGraph, name: &str, default: UVec3| {
+        let input_uint_vector3 = |graph: &mut DamascusGraph, name: &str, default: UVec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -1031,15 +1031,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             some strange things can occur."
                         })),
                 );
-                // input_vector3( // TODO uvec3
-                //     graph,
-                //     "repetitions",
-                //     Vec3::from_vec3(default_primitive.limits).with_ui_data(
-                //         UIData::default()
-                //             .with_tooltip("The number of repetitions along the x, y, and z axes.")
-                //             .with_hidden(),
-                //     ),
-                // );
+                input_uint_vector3(
+                    graph,
+                    "repetitions",
+                    UVec3::new(default_primitive.repetitions).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The number of repetitions along the x, y, and z axes.")
+                            .with_hidden(),
+                    ),
+                );
                 input_vector3(
                     graph,
                     "spacing",
@@ -1082,14 +1082,13 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             .with_hidden(),
                     ),
                 );
-                // input_vector3( // TODO bvec3
-                //     graph,
-                //     "mirror",
-                //     Vec3::from_vec3(default_primitive.limits).with_ui_data(
-                //         UIData::default()
-                //             .with_tooltip("Mirror along the x, y, and z axes."),
-                //     ),
-                // );
+                input_bool_vector3(
+                    graph,
+                    "mirror",
+                    BVec3::new(default_primitive.mirror).with_ui_data(
+                        UIData::default().with_tooltip("Mirror along the x, y, and z axes."),
+                    ),
+                );
                 input_bool(
                     graph,
                     "hollow",

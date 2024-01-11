@@ -1,7 +1,7 @@
 use eframe::egui;
 use glam;
 
-use crate::panels::node_graph::value_type::{create_drag_value_ui, UIData, UIInput};
+use super::{create_drag_value_ui, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Mat4 {

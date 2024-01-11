@@ -1,16 +1,16 @@
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, UIData, UIInput};
+use super::{UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub struct Vec2 {
-    value: glam::Vec2,
+pub struct BVec3 {
+    value: glam::BVec3,
     ui_data: UIData,
 }
 
-impl UIInput<glam::Vec2> for Vec2 {
-    fn new(value: glam::Vec2) -> Self {
+impl UIInput<glam::BVec3> for BVec3 {
+    fn new(value: glam::BVec3) -> Self {
         Self {
             value: value,
             ..Default::default()
@@ -21,13 +21,14 @@ impl UIInput<glam::Vec2> for Vec2 {
         let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            has_changed |= create_drag_value_ui(ui, &mut self.value.x).changed();
-            has_changed |= create_drag_value_ui(ui, &mut self.value.y).changed();
+            has_changed |= ui.add(egui::Checkbox::new(&mut self.value.x, "")).changed();
+            has_changed |= ui.add(egui::Checkbox::new(&mut self.value.y, "")).changed();
+            has_changed |= ui.add(egui::Checkbox::new(&mut self.value.z, "")).changed();
         });
         has_changed
     }
 
-    fn value(&self) -> &glam::Vec2 {
+    fn value(&self) -> &glam::BVec3 {
         &self.value
     }
 

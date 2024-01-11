@@ -15,9 +15,9 @@ use super::{
 
 mod inputs;
 pub use inputs::{
-    boolean::Bool, combo_box::ComboBox, create_drag_value_ui, float::Float, integer::Integer,
-    mat3::Mat3, mat4::Mat4, unsigned_integer::UnsignedInteger, vec2::Vec2, vec3::Vec3, vec4::Vec4,
-    Colour, RangedInput, UIInput,
+    boolean::Bool, boolean_vec3::BVec3, combo_box::ComboBox, float::Float, integer::Integer,
+    mat3::Mat3, mat4::Mat4, unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3,
+    vec2::Vec2, vec3::Vec3, vec4::Vec4, Colour, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -33,9 +33,11 @@ pub use ui_data::UIData;
 pub enum DamascusValueType {
     // Base types
     Bool { value: Bool },
+    BVec3 { value: BVec3 },
     ComboBox { value: ComboBox },
     Integer { value: Integer },
     UnsignedInteger { value: UnsignedInteger },
+    UVec3 { value: UVec3 },
     Float { value: Float },
     Vec2 { value: Vec2 },
     Vec3 { value: Vec3 },
@@ -64,6 +66,24 @@ impl Default for DamascusValueType {
 }
 
 impl DamascusValueType {
+    /// Tries to downcast this value type to a bool
+    pub fn try_to_bool(self) -> anyhow::Result<bool> {
+        if let DamascusValueType::Bool { value } = self {
+            Ok(*value.value())
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to bool", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a BVec3
+    pub fn try_to_bvec3(self) -> anyhow::Result<glam::BVec3> {
+        if let DamascusValueType::BVec3 { value } = self {
+            Ok(*value.value())
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to BVec3", self)
+        }
+    }
+
     /// Tries to downcast this value type to an int
     pub fn try_to_int(self) -> anyhow::Result<i32> {
         if let DamascusValueType::Integer { value } = self {
@@ -82,12 +102,12 @@ impl DamascusValueType {
         }
     }
 
-    /// Tries to downcast this value type to a bool
-    pub fn try_to_bool(self) -> anyhow::Result<bool> {
-        if let DamascusValueType::Bool { value } = self {
+    /// Tries to downcast this value type to a UVec3
+    pub fn try_to_uvec3(self) -> anyhow::Result<glam::UVec3> {
+        if let DamascusValueType::UVec3 { value } = self {
             Ok(*value.value())
         } else {
-            anyhow::bail!("Invalid cast from {:?} to bool", self)
+            anyhow::bail!("Invalid cast from {:?} to UVec3", self)
         }
     }
 
@@ -240,11 +260,13 @@ impl WidgetValueTrait for DamascusValueType {
         // inline parameter widgets.
         let value_changed = match self {
             DamascusValueType::Bool { value } => value.create_ui(ui, param_name),
+            DamascusValueType::BVec3 { value } => value.create_ui(ui, param_name),
             DamascusValueType::ComboBox { value } => value.create_ui(ui, param_name),
             DamascusValueType::Integer { value } => RangedInput::create_ui(value, ui, param_name),
             DamascusValueType::UnsignedInteger { value } => {
                 RangedInput::create_ui(value, ui, param_name)
             }
+            DamascusValueType::UVec3 { value } => value.create_ui(ui, param_name),
             DamascusValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
             DamascusValueType::Vec2 { value } => value.create_ui(ui, param_name),
             DamascusValueType::Vec3 { value } => value.create_ui(ui, param_name),

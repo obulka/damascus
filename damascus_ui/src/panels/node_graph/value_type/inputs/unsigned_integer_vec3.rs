@@ -4,13 +4,13 @@ use glam;
 use super::{create_drag_value_ui, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub struct Vec2 {
-    value: glam::Vec2,
+pub struct UVec3 {
+    value: glam::UVec3,
     ui_data: UIData,
 }
 
-impl UIInput<glam::Vec2> for Vec2 {
-    fn new(value: glam::Vec2) -> Self {
+impl UIInput<glam::UVec3> for UVec3 {
+    fn new(value: glam::UVec3) -> Self {
         Self {
             value: value,
             ..Default::default()
@@ -23,11 +23,12 @@ impl UIInput<glam::Vec2> for Vec2 {
             self.create_parameter_label(ui, label);
             has_changed |= create_drag_value_ui(ui, &mut self.value.x).changed();
             has_changed |= create_drag_value_ui(ui, &mut self.value.y).changed();
+            has_changed |= create_drag_value_ui(ui, &mut self.value.z).changed();
         });
         has_changed
     }
 
-    fn value(&self) -> &glam::Vec2 {
+    fn value(&self) -> &glam::UVec3 {
         &self.value
     }
 

@@ -1,6 +1,6 @@
 use core::ops::RangeInclusive;
 
-use crate::panels::node_graph::value_type::{RangedInput, UIData, UIInput};
+use super::{RangedInput, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Integer {

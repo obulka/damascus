@@ -12,9 +12,11 @@ use super::DamascusGraphState;
 pub enum DamascusDataType {
     // Base types
     Bool,
+    BVec3,
     ComboBox,
     Integer,
     UnsignedInteger,
+    UVec3,
     Float,
     Vec2,
     Vec3,
@@ -51,9 +53,11 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
             DamascusDataType::Bool => "boolean",
+            DamascusDataType::BVec3 => "3d boolean vector",
             DamascusDataType::ComboBox => "combo box",
             DamascusDataType::Integer => "integer",
             DamascusDataType::UnsignedInteger => "unsigned integer",
+            DamascusDataType::UVec3 => "3d unsigned integer vector",
             DamascusDataType::Float => "scalar float",
             DamascusDataType::Vec2 => "2d vector",
             DamascusDataType::Vec3 => "3d vector",

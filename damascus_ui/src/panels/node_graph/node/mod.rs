@@ -8,8 +8,8 @@ use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use super::{
     value_type::{
-        Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput, UIData,
-        UIInput, UnsignedInteger, Vec2, Vec3, Vec4,
+        BVec3, Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput,
+        UIData, UIInput, UVec3, UnsignedInteger, Vec2, Vec3, Vec4,
     },
     DamascusDataType, DamascusGraph, DamascusGraphState, DamascusResponse,
 };
@@ -100,6 +100,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
+        let input_bvec3 = |graph: &mut DamascusGraph, name: &str, default: BVec3| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::BVec3,
+                DamascusValueType::BVec3 { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
         let input_combo_box = |graph: &mut DamascusGraph, name: &str, default: ComboBox| {
             graph.add_input_param(
                 node_id,
@@ -126,6 +136,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 name.to_string(),
                 DamascusDataType::UnsignedInteger,
                 DamascusValueType::UnsignedInteger { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_uvec3 = |graph: &mut DamascusGraph, name: &str, default: UVec3| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::UVec3,
+                DamascusValueType::UVec3 { value: default },
                 InputParamKind::ConstantOnly,
                 true,
             );

@@ -2,15 +2,17 @@ use core::ops::RangeInclusive;
 
 use eframe::egui;
 
-use crate::panels::node_graph::value_type::UIData;
+use super::UIData;
 
 pub mod boolean;
+pub mod boolean_vec3;
 pub mod combo_box;
 pub mod float;
 pub mod integer;
 pub mod mat3;
 pub mod mat4;
 pub mod unsigned_integer;
+pub mod unsigned_integer_vec3;
 pub mod vec2;
 pub mod vec3;
 pub mod vec4;
@@ -111,9 +113,9 @@ pub trait Colour<T>: UIInput<T> {
     fn is_colour_mut(&mut self) -> &mut bool;
 }
 
-pub fn create_drag_value_ui(ui: &mut egui::Ui, value: &mut f32) -> egui::Response {
-    ui.add(
-        egui::DragValue::new(value).max_decimals(100),
-        // .update_while_editing(false), // TODO was this added in a later version?
-    )
+pub fn create_drag_value_ui<T: eframe::emath::Numeric>(
+    ui: &mut egui::Ui,
+    value: &mut T,
+) -> egui::Response {
+    ui.add(egui::DragValue::new(value))
 }

@@ -1,9 +1,7 @@
 use eframe::egui;
 use glam;
 
-use crate::panels::node_graph::value_type::{
-    create_drag_value_ui, inputs::Colour, UIData, UIInput,
-};
+use super::{create_drag_value_ui, Colour, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Vec4 {

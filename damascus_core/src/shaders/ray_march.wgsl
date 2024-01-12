@@ -1962,12 +1962,13 @@ fn modify_shape(
     } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
         modified_position = mirrored_infinite_repetition(position, primitive);
     }
-    // if ((*primitive).modifiers & ELONGATE) {
-    //     modified_position = elongate(
-    //         position,
-    //         float3(elongation.x, elongation.y, elongation.z)
-    //     );
-    // }
+    if (bool((*primitive).modifiers & ELONGATE)) {
+        modified_position -= clamp(
+            modified_position,
+            -(*primitive).elongation,
+            (*primitive).elongation,
+        );
+    }
     // if ((*primitive).modifiers & MIRROR_X) {
     //     modified_position = mirrorX(position);
     // }

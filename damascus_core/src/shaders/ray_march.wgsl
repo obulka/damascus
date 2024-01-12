@@ -1524,7 +1524,7 @@ fn sample_material(
     seed: vec3<f32>,
     surface_normal: vec3<f32>,
     offset: f32,
-    material: ptr<function, Material>,
+    primitive: ptr<function, Primitive>,
     ray: ptr<function, Ray>,
     material_brdf: ptr<function, vec3<f32>>,
     light_sampling_pdf: ptr<function, f32>,
@@ -1534,14 +1534,14 @@ fn sample_material(
         surface_normal,
     );
 
-    var specular_probability: f32 = (*material).specular_probability;
-    var transmissive_probability: f32 = (*material).transmissive_probability;
+    var specular_probability: f32 = (*primitive).material.specular_probability;
+    var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
 
     if (specular_probability > 0. || transmissive_probability > 0.) {
         // Adjust probabilities according to fresnel
 
         var incident_refractive_index: f32 = 1.; // TODO add nested dielectrics
-        var refracted_refractive_index: f32 = (*material).refractive_index; // TODO ^
+        var refracted_refractive_index: f32 = (*primitive).material.refractive_index; // TODO ^
 
         // Compute the refraction values
         var reflectivity: f32 = schlick_reflection_coefficient(
@@ -1558,7 +1558,7 @@ fn sample_material(
 
         transmissive_probability = (
             transmissive_probability * (1. - specular_probability)
-            / (1. - (*material).specular_probability)
+            / (1. - (*primitive).material.specular_probability)
         );
     }
 
@@ -1575,19 +1575,19 @@ fn sample_material(
         (*ray).direction = normalize(mix(
             ideal_specular_direction,
             diffuse_direction,
-            (*material).specular_roughness * (*material).specular_roughness,
+            (*primitive).material.specular_roughness * (*primitive).material.specular_roughness,
         ));
 
         // Offset the point so that it doesn't get trapped on the surface.
         (*ray).origin += offset * surface_normal;
 
-        *material_brdf = (*material).specular_colour;
+        *material_brdf = (*primitive).material.specular_colour;
 
         var probability_over_pi = specular_probability / PI;
         *light_sampling_pdf = 0.;
         return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
     } else if (
-        (*material).transmissive_probability > 0.
+        (*primitive).material.transmissive_probability > 0.
         && rng <= transmissive_probability + specular_probability
     ) {
         // Transmissive bounce
@@ -1599,7 +1599,7 @@ fn sample_material(
         // Offset the point so that it doesn't get trapped on the surface.
         (*ray).origin += offset * surface_normal;
 
-        *material_brdf = (*material).diffuse_colour;
+        *material_brdf = (*primitive).material.diffuse_colour;
 
         var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
         *light_sampling_pdf = probability_over_pi;
@@ -1973,34 +1973,40 @@ fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
 /**
  * Transform a ray's location.
  *
- * @arg ray_origin: The location the ray originates from.
+ * @arg position: The location the ray originates from.
  * @arg primitive: The primitive which determines the transformation.
  *
  * @returns: The transformed ray origin.
  */
-fn transform_ray(
-    ray_origin: vec3<f32>,
+fn transform_position(
+    position: vec3<f32>,
     primitive: ptr<function, Primitive>,
 ) -> vec3<f32> {
-    var transformed_ray: vec3<f32> = (
+    var transformed_position: vec3<f32> = (
         (*primitive).transform.inverse_rotation
-        * (ray_origin - (*primitive).transform.translation)
+        * (position - (*primitive).transform.translation)
     );
     if (bool((*primitive).modifiers & FINITE_REPETITION)) {
-        transformed_ray = mirrored_finite_repetition(transformed_ray, primitive);
+        transformed_position = mirrored_finite_repetition(
+            transformed_position,
+            primitive,
+        );
     } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
-        transformed_ray = mirrored_infinite_repetition(transformed_ray, primitive);
+        transformed_position = mirrored_infinite_repetition(
+            transformed_position,
+            primitive,
+        );
     }
     if (bool((*primitive).modifiers & ELONGATE)) {
         transformed_ray -= clamp(
-            transformed_ray,
+            transformed_position,
             -(*primitive).elongation,
             (*primitive).elongation,
         );
     }
     return select(
-        transformed_ray,
-        abs(transformed_ray),
+        transformed_position,
+        abs(transformed_position),
         vec3<bool>(
             bool((*primitive).modifiers & MIRROR_X),
             bool((*primitive).modifiers & MIRROR_Y),
@@ -2011,10 +2017,12 @@ fn transform_ray(
 
 
 fn min_distance_to_primitive(
-    ray_origin: vec3<f32>,
+    position: vec3<f32>,
     pixel_footprint: f32,
-    material: ptr<function, Material>,
+    closest_primitive: ptr<function, Primitive>,
 ) -> f32 {
+    var num_primitives_on_stack: u32 = 0u;
+    var primitive_stack: array<Primitive, MAX_PRIMITIVES>;
     var min_distance: f32 = _render_params.ray_marcher.max_distance;
 
     for (
@@ -2024,16 +2032,25 @@ fn min_distance_to_primitive(
     ) {
         var primitive: Primitive = _primitives.primitives[primitive_index];
 
-        var transformed_ray: vec3<f32> = transform_ray(ray_origin, &primitive);
-        var distance_to_current: f32 = distance_to_primitive(
-            transformed_ray,
-            &primitive,
-        );
-        distance_to_current = modify_distance(distance_to_current, &primitive);
+        if (primitive.num_children == 0u) {
+            var transformed_position: vec3<f32> = transform_position(position, &primitive);
+            var distance_to_current: f32 = distance_to_primitive(
+                transformed_position,
+                &primitive,
+            );
+            distance_to_current = modify_distance(distance_to_current, &primitive);
 
-        if (abs(distance_to_current) < abs(min_distance)) {
-            min_distance = distance_to_current;
-            *material = primitive.material;
+            if (abs(distance_to_current) < abs(min_distance)) {
+                min_distance = distance_to_current;
+                *closest_primitive = primitive;
+            }
+
+            if (num_primitives_on_stack > 0u) {
+                var parent_primitive: Primitive = primitive_stack[num_primitives_on_stack - 1u];
+            }
+        } else {
+            primitive_stack[num_primitives_on_stack] = primitive;
+            num_primitives_on_stack++;
         }
     }
 
@@ -2052,28 +2069,28 @@ fn min_distance_to_primitive(
  * @returns: The normalized surface normal.
  */
 fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
-    var material: Material;
+    var primitive: Primitive;
     var normal_offset = vec2(0.5773, -0.5773);
     return normalize(
         normal_offset.xyy * min_distance_to_primitive(
             position + normal_offset.xyy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
-            &material,
+            &primitive,
         )
         + normal_offset.yyx * min_distance_to_primitive(
             position + normal_offset.yyx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
-            &material,
+            &primitive,
         )
         + normal_offset.yxy * min_distance_to_primitive(
             position + normal_offset.yxy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
-            &material,
+            &primitive,
         )
         + normal_offset.xxx * min_distance_to_primitive(
             position + normal_offset.xxx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
-            &material,
+            &primitive,
         )
     );
 }
@@ -2265,7 +2282,7 @@ fn sample_ambient_occlusion(
     amount: f32,
     iterations: u32,
 ) -> f32 {
-    var material: Material;
+    var primitive: Primitive;
     var occlusion: f32 = 0.;
     var occlusion_scale_factor: f32 = 1.;
     for (var iteration=0u; iteration < iterations; iteration++)
@@ -2274,7 +2291,7 @@ fn sample_ambient_occlusion(
         var distance_to_closest_object: f32 = abs(min_distance_to_primitive(
             ray_origin + step_distance * surface_normal,
             _render_params.ray_marcher.hit_tolerance,
-            &material,
+            &primitive,
         ));
         occlusion += (step_distance - distance_to_closest_object) * occlusion_scale_factor;
         occlusion_scale_factor *= 0.95;
@@ -2305,7 +2322,7 @@ fn sample_soft_shadow(
     distance_to_shade_point: f32,
     hardness: f32,
 ) -> f32 {
-    var material: Material;
+    var primitive: Primitive;
 
     var distance_travelled: f32 = 0.;
     var shadow_intensity: f32 = 1.;
@@ -2322,7 +2339,7 @@ fn sample_soft_shadow(
         var step_distance: f32 = abs(min_distance_to_primitive(
             position,
             pixel_footprint,
-            &material,
+            &primitive,
         ));
         var step_distance_squared: f32 = step_distance * step_distance;
         var soft_offset: f32 = step_distance_squared / (2. * last_step_distance);
@@ -2364,7 +2381,7 @@ fn sample_shadow(
     ray_direction: vec3<f32>,
     distance_to_shade_point: f32,
 ) -> f32 {
-    var material: Material;
+    var primitive: Primitive;
 
     var distance_travelled: f32 = 0.;
     var iterations: u32 = 0u;
@@ -2377,7 +2394,7 @@ fn sample_shadow(
         var step_distance: f32 = abs(min_distance_to_primitive(
             position,
             pixel_footprint,
-            &material,
+            &primitive,
         ));
 
         if (step_distance < pixel_footprint) {
@@ -2857,7 +2874,7 @@ fn material_interaction(
     previous_material_pdf: f32,
     sample_all_lights: bool,
     ray: ptr<function, Ray>,
-    material: ptr<function, Material>,
+    primitive: ptr<function, Primitive>,
 ) -> f32 {
     (*ray).origin = intersection_position;
 
@@ -2867,7 +2884,7 @@ fn material_interaction(
         seed,
         surface_normal,
         offset,
-        material,
+        primitive,
         ray,
         &material_brdf,
         &light_sampling_material_pdf,
@@ -2902,7 +2919,7 @@ fn material_interaction(
     var visible_surface_area: f32 = TWO_PI * radius * radius;
 
     (*ray).colour += multiple_importance_sample(
-        (*material).emissive_colour * (*material).emissive_probability,
+        (*primitive).material.emissive_colour * (*primitive).material.emissive_probability,
         (*ray).throughput,
         previous_material_pdf,
         sample_lights_pdf(f32(_render_params.scene.num_lights), visible_surface_area),
@@ -2953,12 +2970,12 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     ) {
         position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;
 
-        var nearest_material: Material;
+        var nearest_primitive: Primitive;
         // Keep the signed distance so we know whether or not we are inside the object
         var signed_step_distance = min_distance_to_primitive(
             position_on_ray,
             pixel_footprint,
-            &nearest_material,
+            &nearest_primitive,
         );
 
         // Take the absolute value, the true shortest distance to a surface
@@ -3003,7 +3020,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 previous_material_pdf,
                 sample_all_lights,
                 ray,
-                &nearest_material,
+                &nearest_primitive,
             );
 
             // Exit if we have reached the bounce limit or with a random chance

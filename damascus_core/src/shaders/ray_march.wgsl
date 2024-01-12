@@ -626,18 +626,13 @@ fn distance_to_cut_sphere(
         cut_radius * cylindrical_position.y - cut_height * cylindrical_position.x,
     );
 
-    if (nearest_is_spherical < 0.)
-    {
+    if (nearest_is_spherical < 0.) {
         // Closest point is on the surface of the sphere
         return length(cylindrical_position) - radius;
-    }
-    else if (cylindrical_position.x < cut_radius)
-    {
+    } else if (cylindrical_position.x < cut_radius) {
         // Closest point is within the cut surface
         return -cut_height + cylindrical_position.y;
-    }
-    else
-    {
+    } else {
         // Closest point is on the edge of the cut surface
         return length(cylindrical_position - vec2(cut_radius, cut_height));
     }
@@ -668,8 +663,10 @@ fn distance_to_hollow_sphere(
 
     var cut_radius: f32 = sqrt(radius * radius - cut_height * cut_height);
 
-    if (cut_height * cylindrical_position.x < cut_radius * cylindrical_position.y)
-    {
+    if (
+        cut_height * cylindrical_position.x
+        < cut_radius * cylindrical_position.y
+    ) {
         // Closest point is on the rim
         return length(
             cylindrical_position
@@ -1143,13 +1140,10 @@ fn distance_to_rounded_cone(
 
     var position_projected_on_cone: f32 = dot(cylindrical_position, parallel);
 
-    if (position_projected_on_cone < 0.)
-    {
+    if (position_projected_on_cone < 0.) {
         // Closest point is on the lower sphere
         return length(cylindrical_position) - lower_radius;
-    }
-    else if (position_projected_on_cone > parallel_y * height)
-    {
+    } else if (position_projected_on_cone > parallel_y * height) {
         // Closest point is on the upper sphere
         return length(cylindrical_position - vec2(0., height)) - upper_radius;
     }
@@ -1201,8 +1195,7 @@ fn distance_to_capped_torus(
     if (cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y) {
         // project position on xy-plane onto the direction we are capping at
         cap_factor = dot(abs_x_position.xy, cap_direction.xy);
-    }
-    else {
+    } else {
         // distance to z-axis from position
         cap_factor = length(abs_x_position.xy);
     }
@@ -1300,20 +1293,13 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
 
     var three_position: vec3<f32> = 3. * abs_position;
     var change_of_axes: vec3<f32>;
-    if (three_position.x < position_sum_to_extent)
-    {
+    if (three_position.x < position_sum_to_extent) {
         change_of_axes = abs_position;
-    }
-    else if (three_position.y < position_sum_to_extent)
-    {
+    } else if (three_position.y < position_sum_to_extent) {
         change_of_axes = abs_position.yzx;
-    }
-    else if (three_position.z < position_sum_to_extent)
-    {
+    } else if (three_position.z < position_sum_to_extent) {
         change_of_axes = abs_position.zxy;
-    }
-    else
-    {
+    } else {
         return position_sum_to_extent * 0.57735027;
     }
 
@@ -1600,15 +1586,13 @@ fn sample_material(
         var probability_over_pi = specular_probability / PI;
         *light_sampling_pdf = 0.;
         return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
-    }
-    else if (
+    } else if (
         (*material).transmissive_probability > 0.
         && rng <= transmissive_probability + specular_probability
     ) {
         // Transmissive bounce
         return 1.;
-    }
-    else {
+    } else {
         // Diffuse bounce
         (*ray).direction = diffuse_direction;
 
@@ -1651,7 +1635,8 @@ struct Primitive {
     transform: Transform, // Could we just make this a world matrix?
     material: Material,
     modifiers: u32,
-    repetitions: vec3<u32>,
+    negative_repetitions: vec3<f32>,
+    positive_repetitions: vec3<f32>,
     spacing: vec3<f32>,
     blend_strength: f32,
     wall_thickness: f32,
@@ -1672,62 +1657,6 @@ var<storage, read> _primitives: Primitives;
 
 
 /**
- * Transform a ray's location.
- *
- * @arg ray_origin: The location the ray originates from.
- * @arg position: The amount to translate the ray.
- * @arg rotation: The amount to rotate the ray (radians).
- * @arg modifications: The modifications to perform.
- *     Each bit will enable a modification:
- *         bit 0: finite repetition
- *         bit 1: infinite repetition
- *         bit 2: elongation
- *         bit 3: mirror x
- *         bit 4: mirror y
- *         bit 5: mirror z
- * @arg repetition: The values to use when repeating the ray.
- * @arg elongation: The values to use when elongating the ray.
- *
- * @returns: The transformed ray origin.
- */
-fn transform_ray(ray_origin: vec3<f32>, transform: Transform) -> vec3<f32> {
-    var transformed_ray: vec3<f32> = (
-        transform.inverse_rotation
-        * (ray_origin - transform.translation)
-    );
-    // perform_shape_modification(
-    //     modifications,
-    //     repetition,
-    //     elongation,
-    //     transformed_ray
-    // );
-
-    return transformed_ray;
-}
-
-
-/**
- * Modify the distance a ray has travelled, resulting in various
- * effects.
- *
- * @arg modifications: The modifications to perform.
- *     Each bit will enable a modification:
- *         bit 6: hollowing
- * @arg edgeRadius: The radius to round the edges by.
- * @arg wallThickness: The thickness of the walls if hollowing the
- *     object.
- * @arg position: The position of the ray.
- */
-fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
-    var modified_distance: f32 = distance;
-    if (bool((*primitive).modifiers & HOLLOW)) {
-        modified_distance = abs(modified_distance) - (*primitive).wall_thickness;
-    }
-    return modified_distance - (*primitive).edge_radius;
-}
-
-
-/**
  * Compute the min distance from a point to a geometric object.
  *
  * @arg position: The point to get the distance to, from the primitive.
@@ -1744,10 +1673,16 @@ fn distance_to_primitive(
     var distance: f32;
     switch (*primitive).shape {
         case 0u, default { // cannot use const, maybe version too old
-            distance = distance_to_sphere(scaled_position, (*primitive).dimensional_data.x);
+            distance = distance_to_sphere(
+                scaled_position,
+                (*primitive).dimensional_data.x,
+            );
         }
         case 1u {
-            distance = distance_to_ellipsoid(scaled_position,(*primitive).dimensional_data.xyz);
+            distance = distance_to_ellipsoid(
+                scaled_position,
+                (*primitive).dimensional_data.xyz,
+            );
         }
         case 2u {
             distance = distance_to_cut_sphere(
@@ -1929,10 +1864,159 @@ fn distance_to_primitive(
         }
     }
 
-    return modify_distance(
-        distance * (*primitive).transform.uniform_scale,
-        primitive,
+    return distance * (*primitive).transform.uniform_scale;
+}
+
+
+/**
+ * Finitely repeat an object in the positive quadrant.
+ *
+ * @arg position: The position of the ray.
+ * @arg primitive: The primitive to repeat.
+ *
+ * @returns: The modified ray position that results in repetion.
+ */
+fn symmetric_finite_repetition(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    return (
+        position
+        - (*primitive).spacing
+        * clamp(
+            round(position / (*primitive).spacing),
+            -(*primitive).negative_repetitions,
+            (*primitive).positive_repetitions,
+        )
     );
+}
+
+
+/**
+ * Finitely repeat an object in the positive quadrant.
+ *
+ * @arg position: The position of the ray.
+ * @arg primitive: The primitive to repeat.
+ *
+ * @returns: The modified ray position that results in repetion.
+ */
+fn mirrored_finite_repetition(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    var space_partition_id: vec3<f32> = clamp(
+        round(position / (*primitive).spacing),
+        -(*primitive).negative_repetitions,
+        (*primitive).positive_repetitions,
+    );
+    var repeated_position: vec3<f32> = position - (*primitive).spacing * space_partition_id;
+
+    return vec3(
+        select(-repeated_position.x, repeated_position.x, (i32(space_partition_id.x) & 1) == 0),
+        select(-repeated_position.y, repeated_position.y, (i32(space_partition_id.y) & 1) == 0),
+        select(-repeated_position.z, repeated_position.z, (i32(space_partition_id.z) & 1) == 0),
+    );
+}
+
+
+/**
+ * Infinitely repeat an object, mirroring with every repetition. By
+ * mirroring we remove the constraint that the object must be symmetric
+ * without repeating the distance check.
+ *
+ * @arg position: The position of the ray.
+ * @arg primitive: The primitive to repeat.
+ *
+ * @returns: The modified ray position that results in repetion.
+ */
+fn mirrored_infinite_repetition(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    var space_partition_id: vec3<f32> = round(position / (*primitive).spacing);
+    var repeated_position: vec3<f32> = position - (*primitive).spacing * space_partition_id;
+
+    return vec3(
+        select(-repeated_position.x, repeated_position.x, (i32(space_partition_id.x) & 1) == 0),
+        select(-repeated_position.y, repeated_position.y, (i32(space_partition_id.y) & 1) == 0),
+        select(-repeated_position.z, repeated_position.z, (i32(space_partition_id.z) & 1) == 0),
+    );
+}
+
+
+/**
+ * Modify the position of a ray, resulting in various effects.
+ *
+ * @arg position: The position of the ray.
+ * @arg primitive: The primitive which determines the modifiers.
+ *
+ * @returns: The modified position of the ray.
+ */
+fn modify_shape(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    var modified_position: vec3<f32> = position;
+    if (bool((*primitive).modifiers & FINITE_REPETITION)) {
+        modified_position = mirrored_finite_repetition(position, primitive);
+    } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
+        modified_position = mirrored_infinite_repetition(position, primitive);
+    }
+    // if ((*primitive).modifiers & ELONGATE) {
+    //     modified_position = elongate(
+    //         position,
+    //         float3(elongation.x, elongation.y, elongation.z)
+    //     );
+    // }
+    // if ((*primitive).modifiers & MIRROR_X) {
+    //     modified_position = mirrorX(position);
+    // }
+    // if ((*primitive).modifiers & MIRROR_Y) {
+    //     modified_position = mirrorY(position);
+    // }
+    // if ((*primitive).modifiers & MIRROR_Z) {
+    //     modified_position = mirrorZ(position);
+    // }
+
+    return modified_position;
+}
+
+
+/**
+ * Modify the distance a ray has travelled, resulting in various
+ * effects.
+ *
+ * @arg distance: The distance to the primitive without modification.
+ * @arg primitive: The primitive to get the distance to.
+ *
+ * @returns: The modified distance to the primitive.
+ */
+fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
+    var modified_distance: f32 = distance;
+    if (bool((*primitive).modifiers & HOLLOW)) {
+        modified_distance = abs(modified_distance) - (*primitive).wall_thickness;
+    }
+    return modified_distance - (*primitive).edge_radius;
+}
+
+
+/**
+ * Transform a ray's location.
+ *
+ * @arg ray_origin: The location the ray originates from.
+ * @arg primitive: The primitive which determines the transformation.
+ *
+ * @returns: The transformed ray origin.
+ */
+fn transform_ray(
+    ray_origin: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    var transformed_ray: vec3<f32> = (
+        (*primitive).transform.inverse_rotation
+        * (ray_origin - (*primitive).transform.translation)
+    );
+    return modify_shape(transformed_ray, primitive);
 }
 
 
@@ -1950,11 +2034,12 @@ fn min_distance_to_primitive(
     ) {
         var primitive: Primitive = _primitives.primitives[primitive_index];
 
-        var transformed_ray: vec3<f32> = transform_ray(ray_origin, primitive.transform);
+        var transformed_ray: vec3<f32> = transform_ray(ray_origin, &primitive);
         var distance_to_current: f32 = distance_to_primitive(
             transformed_ray,
             &primitive,
         );
+        distance_to_current = modify_distance(distance_to_current, &primitive);
 
         if (abs(distance_to_current) < abs(min_distance)) {
             min_distance = distance_to_current;
@@ -2060,8 +2145,7 @@ fn multiple_importance_sample(
 fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
     if (visible_surface_area == 0.) {
         return 1. / num_lights;
-    }
-    else {
+    } else {
         return 1. / num_lights / visible_surface_area;
     }
 }
@@ -2355,8 +2439,7 @@ fn sample_non_physical_light(
                     distance_to_light,
                     light.shadow_hardness,
                 );
-            }
-            else {
+            } else {
                 shadow_intensity_at_position = sample_shadow(
                     surface_position,
                     light_direction,
@@ -2375,8 +2458,7 @@ fn sample_non_physical_light(
                     distance_to_light,
                     light.shadow_hardness,
                 );
-            }
-            else {
+            } else {
                 shadow_intensity_at_position = sample_shadow(
                     surface_position,
                     light_direction,
@@ -2821,8 +2903,7 @@ fn material_interaction(
     var material_geometry_factor: f32;
     if (light_sampling_material_pdf > 0.) {
         material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
-    }
-    else {
+    } else {
         material_geometry_factor = 1.;
     }
 
@@ -2943,8 +3024,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 || (roulette && exit_probability <= rng)
             ) {
                 break;
-            }
-            else if (roulette) {
+            } else if (roulette) {
                 // Account for the lost intensity from the early exits
                 (*ray).throughput /= vec3(exit_probability);
             }
@@ -2955,8 +3035,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
 
             // Update the random seed for the next iteration
             path_seed = random_vec3f(path_seed.zxy + seed);
-        }
-        else if (dynamic_level_of_detail) {
+        } else if (dynamic_level_of_detail) {
             pixel_footprint += _render_params.ray_marcher.hit_tolerance * step_distance;
         }
 

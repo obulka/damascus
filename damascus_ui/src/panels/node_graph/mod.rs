@@ -478,7 +478,8 @@ pub fn evaluate_node(
             };
             let edge_radius = evaluator.input_float("edge_radius")?;
             let repetition = evaluator.input_combo_box::<geometry::Repetition>("repetition")?;
-            let repetitions = evaluator.input_uint_vector3("repetitions")?;
+            let negative_repetitions = evaluator.input_uint_vector3("negative_repetitions")?;
+            let positive_repetitions = evaluator.input_uint_vector3("positive_repetitions")?;
             let spacing = evaluator.input_vector3("spacing")?;
             let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
@@ -504,7 +505,8 @@ pub fn evaluate_node(
                 elongate: elongate,
                 elongation: elongation,
                 repetition: repetition,
-                repetitions: repetitions,
+                negative_repetitions: negative_repetitions,
+                positive_repetitions: positive_repetitions,
                 spacing: spacing,
                 blend_type: blend_type,
                 blend_strength: blend_strength,

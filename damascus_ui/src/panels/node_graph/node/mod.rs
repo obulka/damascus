@@ -1033,10 +1033,23 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_uint_vector3(
                     graph,
-                    "repetitions",
-                    UVec3::new(default_primitive.repetitions).with_ui_data(
+                    "negative_repetitions",
+                    UVec3::new(default_primitive.negative_repetitions).with_ui_data(
                         UIData::default()
-                            .with_tooltip("The number of repetitions along the x, y, and z axes.")
+                            .with_tooltip(
+                                "The number of repetitions along the negative x, y, and z axes.",
+                            )
+                            .with_hidden(),
+                    ),
+                );
+                input_uint_vector3(
+                    graph,
+                    "positive_repetitions",
+                    UVec3::new(default_primitive.positive_repetitions).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(
+                                "The number of repetitions along the positive x, y, and z axes.",
+                            )
                             .with_hidden(),
                     ),
                 );

@@ -169,15 +169,18 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             DamascusValueType::ComboBox { ref value } => {
                                 match value.as_enum::<geometry::Repetition>() {
                                     Ok(geometry::Repetition::Finite) => {
-                                        to_show.push("repetitions");
+                                        to_show.push("negative_repetitions");
+                                        to_show.push("positive_repetitions");
                                         to_show.push("spacing");
                                     }
                                     Ok(geometry::Repetition::Infinite) => {
-                                        to_hide.push("repetitions");
+                                        to_hide.push("negative_repetitions");
+                                        to_hide.push("positive_repetitions");
                                         to_show.push("spacing");
                                     }
                                     _ => {
-                                        to_hide.push("repetitions");
+                                        to_hide.push("negative_repetitions");
+                                        to_hide.push("positive_repetitions");
                                         to_hide.push("spacing");
                                     }
                                 }

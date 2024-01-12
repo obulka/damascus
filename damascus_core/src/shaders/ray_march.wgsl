@@ -1998,7 +1998,7 @@ fn transform_position(
         );
     }
     if (bool((*primitive).modifiers & ELONGATE)) {
-        transformed_ray -= clamp(
+        transformed_position -= clamp(
             transformed_position,
             -(*primitive).elongation,
             (*primitive).elongation,
@@ -2016,15 +2016,78 @@ fn transform_position(
 }
 
 
+/**
+ * Compute the modified value resulting from the interaction between
+ * two objects. The corresponding colour will be placed in colour1, and
+ * the corresponding surface will be placed in colour9.
+ *
+ * @arg modifications: The modification to perform:
+ *     Each bit will enable a modification:
+ *         bit 7: subtraction
+ *         bit 8: intersection
+ *         bit 9: smooth union
+ *         bit 10: smooth subtraction
+ *         bit 11: smooth intersection
+ *     any other value will default to union.
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg blendSize: The amount to blend between the objects.
+ *
+ * @returns: The nearest, modified value.
+ */
+fn blend_primitives(
+    distance_to_primitive: f32,
+    primitive: ptr<function, Primitive>,
+    transformed_parent: ptr<function, TransformedPrimitive>,
+) -> f32 {
+    // if (modifications & SUBTRACTION)
+    // {
+    //     return subtraction(value0, value1);
+    // }
+    // if (modifications & INTERSECTION)
+    // {
+    //     return intersection(value0, value1);
+    // }
+    // if (modifications & SMOOTH_UNION)
+    // {
+    //     return smoothUnion(value0, value1, blendSize);
+    // }
+    // if (modifications & SMOOTH_SUBTRACTION)
+    // {
+    //     return smoothSubtraction(value0, value1, blendSize);
+    // }
+    // if (modifications & SMOOTH_INTERSECTION)
+    // {
+    //     return smoothIntersection(value0, value1, blendSize);
+    // }
+    return select(
+        (*transformed_parent).distance_to_position,
+        distance_to_primitive,
+        abs(distance_to_primitive) < abs((*transformed_parent).distance_to_position),
+    );
+}
+
+
+const MAX_PRIMITIVE_DEPTH: u32 = 512u;
+
+struct TransformedPrimitive {
+    distance_to_position: f32,
+    modifiers: u32,
+    blend_strength: f32,
+    num_children: u32,
+}
+
+
 fn min_distance_to_primitive(
     position: vec3<f32>,
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
 ) -> f32 {
-    var num_primitives_on_stack: u32 = 0u;
-    var primitive_stack: array<Primitive, MAX_PRIMITIVES>;
     var min_distance: f32 = _render_params.ray_marcher.max_distance;
+    var stack_length: u32 = 0u;
 
+    // Load stack with pre-processed data
+    var primitive_stack: array<TransformedPrimitive, MAX_PRIMITIVE_DEPTH>;
     for (
         var primitive_index = 0u;
         primitive_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
@@ -2032,27 +2095,86 @@ fn min_distance_to_primitive(
     ) {
         var primitive: Primitive = _primitives.primitives[primitive_index];
 
-        if (primitive.num_children == 0u) {
-            var transformed_position: vec3<f32> = transform_position(position, &primitive);
-            var distance_to_current: f32 = distance_to_primitive(
-                transformed_position,
-                &primitive,
-            );
-            distance_to_current = modify_distance(distance_to_current, &primitive);
+        // var transformed_position: vec3<f32>;
+        // if (stack_length == 0u) {
+        //     transformed_position = position;
+        // } else {
+        //     transformed_position = primitive_stack[stack_length - 1u].position;
+        // }
 
-            if (abs(distance_to_current) < abs(min_distance)) {
-                min_distance = distance_to_current;
-                *closest_primitive = primitive;
-            }
+        var transformed_position: vec3<f32> = transform_position(
+            position,
+            &primitive,
+        );
+        var distance_to_current: f32 = distance_to_primitive(
+            transformed_position,
+            &primitive,
+        );
+        distance_to_current = modify_distance(distance_to_current, &primitive);
 
-            if (num_primitives_on_stack > 0u) {
-                var parent_primitive: Primitive = primitive_stack[num_primitives_on_stack - 1u];
-            }
-        } else {
-            primitive_stack[num_primitives_on_stack] = primitive;
-            num_primitives_on_stack++;
+        if (abs(distance_to_current) < abs(min_distance)) {
+            min_distance = distance_to_current;
+            *closest_primitive = primitive;
         }
+
+        // if (primitive.num_children == 0u) {
+        //     if (stack_length > 0u) {
+        //         var stack_index: u32 = stack_length - 1u;
+        //         loop {
+        //             var parent: TransformedPrimitive = primitive_stack[stack_index];
+
+        //             distance_to_current = blend_primitives(
+        //                 distance_to_current,
+        //                 &primitive,
+        //                 &parent,
+        //             );
+        //             if (abs(distance_to_current) < abs(min_distance)) {
+        //                 min_distance = distance_to_current;
+        //                 *closest_primitive = primitive;
+        //             }
+
+        //             if stack_index == 0u {
+        //                 loop {
+        //                     primitive_stack[stack_index].num_children--;
+
+        //                     if stack_index == stack_length - 1u {
+        //                         if primitive_stack[stack_index].num_children == 0u {
+        //                             stack_length = stack_index;
+        //                             stack_index = 0u;
+        //                         } else {
+        //                             break;
+        //                         }
+        //                     }
+        //                     continuing {
+        //                         stack_index++;
+        //                     }
+        //                 }
+        //                 break;
+        //             }
+        //             continuing {
+        //                 stack_index--;
+        //             }
+        //         }
+        //     }
+        //     else if (abs(distance_to_current) < abs(min_distance)) {
+        //         min_distance = distance_to_current;
+        //         *closest_primitive = primitive;
+        //     }
+        // } else {
+        //     primitive_stack[stack_length] = TransformedPrimitive(
+        //         distance_to_current,
+        //         primitive.modifiers,
+        //         primitive.blend_strength,
+        //         primitive.num_children,
+        //     );
+        //     stack_length++;
+        // }
     }
+
+    // var stack_index: u32 = stack_length - 1u;
+    // loop {
+    //     var child: TransformedPrimitive = primitive_stack[stack_index];
+    // }
 
     return min_distance;
 }
@@ -2098,7 +2220,7 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
 // lights.wgsl
 
 
-const MAX_LIGHTS: u32 = 512u; // const not supported in the current version
+const MAX_LIGHTS: u32 = 512u;
 
 
 struct Light {

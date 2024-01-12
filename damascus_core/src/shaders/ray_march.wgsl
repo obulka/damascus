@@ -1876,20 +1876,20 @@ fn distance_to_primitive(
  *
  * @returns: The modified ray position that results in repetion.
  */
-fn symmetric_finite_repetition(
-    position: vec3<f32>,
-    primitive: ptr<function, Primitive>,
-) -> vec3<f32> {
-    return (
-        position
-        - (*primitive).spacing
-        * clamp(
-            round(position / (*primitive).spacing),
-            -(*primitive).negative_repetitions,
-            (*primitive).positive_repetitions,
-        )
-    );
-}
+// fn symmetric_finite_repetition(
+//     position: vec3<f32>,
+//     primitive: ptr<function, Primitive>,
+// ) -> vec3<f32> {
+//     return (
+//         position
+//         - (*primitive).spacing
+//         * clamp(
+//             round(position / (*primitive).spacing),
+//             -(*primitive).negative_repetitions,
+//             (*primitive).positive_repetitions,
+//         )
+//     );
+// }
 
 
 /**
@@ -1911,10 +1911,14 @@ fn mirrored_finite_repetition(
     );
     var repeated_position: vec3<f32> = position - (*primitive).spacing * space_partition_id;
 
-    return vec3(
-        select(-repeated_position.x, repeated_position.x, (i32(space_partition_id.x) & 1) == 0),
-        select(-repeated_position.y, repeated_position.y, (i32(space_partition_id.y) & 1) == 0),
-        select(-repeated_position.z, repeated_position.z, (i32(space_partition_id.z) & 1) == 0),
+    return select(
+        -repeated_position,
+        repeated_position,
+        vec3<bool>(
+            (i32(space_partition_id.x) & 1) == 0,
+            (i32(space_partition_id.y) & 1) == 0,
+            (i32(space_partition_id.z) & 1) == 0,
+        ),
     );
 }
 
@@ -1936,50 +1940,15 @@ fn mirrored_infinite_repetition(
     var space_partition_id: vec3<f32> = round(position / (*primitive).spacing);
     var repeated_position: vec3<f32> = position - (*primitive).spacing * space_partition_id;
 
-    return vec3(
-        select(-repeated_position.x, repeated_position.x, (i32(space_partition_id.x) & 1) == 0),
-        select(-repeated_position.y, repeated_position.y, (i32(space_partition_id.y) & 1) == 0),
-        select(-repeated_position.z, repeated_position.z, (i32(space_partition_id.z) & 1) == 0),
+    return select(
+        -repeated_position,
+        repeated_position,
+        vec3<bool>(
+            (i32(space_partition_id.x) & 1) == 0,
+            (i32(space_partition_id.y) & 1) == 0,
+            (i32(space_partition_id.z) & 1) == 0,
+        ),
     );
-}
-
-
-/**
- * Modify the position of a ray, resulting in various effects.
- *
- * @arg position: The position of the ray.
- * @arg primitive: The primitive which determines the modifiers.
- *
- * @returns: The modified position of the ray.
- */
-fn modify_shape(
-    position: vec3<f32>,
-    primitive: ptr<function, Primitive>,
-) -> vec3<f32> {
-    var modified_position: vec3<f32> = position;
-    if (bool((*primitive).modifiers & FINITE_REPETITION)) {
-        modified_position = mirrored_finite_repetition(position, primitive);
-    } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
-        modified_position = mirrored_infinite_repetition(position, primitive);
-    }
-    if (bool((*primitive).modifiers & ELONGATE)) {
-        modified_position -= clamp(
-            modified_position,
-            -(*primitive).elongation,
-            (*primitive).elongation,
-        );
-    }
-    // if ((*primitive).modifiers & MIRROR_X) {
-    //     modified_position = mirrorX(position);
-    // }
-    // if ((*primitive).modifiers & MIRROR_Y) {
-    //     modified_position = mirrorY(position);
-    // }
-    // if ((*primitive).modifiers & MIRROR_Z) {
-    //     modified_position = mirrorZ(position);
-    // }
-
-    return modified_position;
 }
 
 
@@ -2017,7 +1986,27 @@ fn transform_ray(
         (*primitive).transform.inverse_rotation
         * (ray_origin - (*primitive).transform.translation)
     );
-    return modify_shape(transformed_ray, primitive);
+    if (bool((*primitive).modifiers & FINITE_REPETITION)) {
+        transformed_ray = mirrored_finite_repetition(transformed_ray, primitive);
+    } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
+        transformed_ray = mirrored_infinite_repetition(transformed_ray, primitive);
+    }
+    if (bool((*primitive).modifiers & ELONGATE)) {
+        transformed_ray -= clamp(
+            transformed_ray,
+            -(*primitive).elongation,
+            (*primitive).elongation,
+        );
+    }
+    return select(
+        transformed_ray,
+        abs(transformed_ray),
+        vec3<bool>(
+            bool((*primitive).modifiers & MIRROR_X),
+            bool((*primitive).modifiers & MIRROR_Y),
+            bool((*primitive).modifiers & MIRROR_Z),
+        ),
+    );
 }
 
 

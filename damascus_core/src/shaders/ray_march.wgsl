@@ -2084,74 +2084,6 @@ fn mix_materials(
 }
 
 
-fn fast_blend_primitives(
-    distance_to_parent: f32,
-    distance_to_child: f32,
-    parent: ptr<function, Primitive>,
-) -> f32 {
-    switch (*parent).modifiers & 3968u {
-        case 128u {
-            // Subtraction
-            return max(-distance_to_parent, distance_to_child);
-        }
-        case 256u {
-            // Intersection
-            return max(distance_to_parent, distance_to_child);
-        }
-        case 512u {
-            // Smooth Union
-            var smoothing: f32 = saturate_f32(
-                0.5
-                + 0.5
-                * (abs(distance_to_child) - abs(distance_to_parent))
-                / (*parent).blend_strength
-            );
-            return mix(
-                distance_to_child,
-                distance_to_parent,
-                smoothing,
-            ) - (*parent).blend_strength * smoothing * (1. - smoothing);
-        }
-        case 1024u {
-            // Smooth Subtraction
-            var smoothing: f32 = saturate_f32(
-                0.5
-                - 0.5
-                * (distance_to_child + distance_to_parent)
-                / (*parent).blend_strength
-            );
-            return mix(
-                distance_to_child,
-                -distance_to_parent,
-                smoothing,
-            ) + (*parent).blend_strength * smoothing * (1. - smoothing);
-        }
-        case 2048u {
-            // Smooth Intersection
-            var smoothing: f32 = saturate_f32(
-                0.5
-                - 0.5
-                * (distance_to_child - distance_to_parent)
-                / (*parent).blend_strength
-            );
-            return mix(
-                distance_to_child,
-                distance_to_parent,
-                smoothing,
-            ) + (*parent).blend_strength * smoothing * (1. - smoothing);
-        }
-        default {
-            // Union
-            return select(
-                distance_to_parent,
-                distance_to_child,
-                abs(distance_to_child) < abs(distance_to_parent),
-            );
-        }
-    }
-}
-
-
 fn blend_primitives(
     distance_to_parent: f32,
     distance_to_child: f32,
@@ -2233,66 +2165,6 @@ fn blend_primitives(
 }
 
 
-fn fast_min_distance_to_primitive(
-    position: vec3<f32>,
-    pixel_footprint: f32,
-) -> f32 {
-    var min_distance: f32 = _render_params.ray_marcher.max_distance;
-    var parent: Primitive;
-    var child: Primitive;
-    for (
-        var parent_index = 0u;
-        parent_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
-        parent_index++
-    ) {
-        parent = _primitives.primitives[parent_index];
-
-        var parent_position: vec3<f32> = transform_position(
-            position,
-            &parent,
-        );
-        var distance_to_parent: f32 = distance_to_primitive(
-            parent_position,
-            &parent,
-        );
-        distance_to_parent = modify_distance(distance_to_parent, &parent);
-
-        for (
-            var child_index = parent_index + 1u;
-            child_index <= parent_index + parent.num_children;
-            child_index++
-        ) {
-            child = _primitives.primitives[child_index];
-
-            var child_position: vec3<f32> = transform_position(
-                position,
-                &child,
-            );
-            var distance_to_child: f32 = distance_to_primitive(
-                child_position,
-                &child,
-            );
-            distance_to_child = modify_distance(distance_to_child, &child);
-
-            distance_to_parent = fast_blend_primitives(
-                distance_to_parent,
-                distance_to_child,
-                &parent,
-            );
-        }
-        parent_index += parent.num_children;
-
-        min_distance = select(
-            min_distance,
-            distance_to_parent,
-            abs(distance_to_parent) < abs(min_distance),
-        );
-    }
-
-    return min_distance;
-}
-
-
 fn min_distance_to_primitive(
     position: vec3<f32>,
     pixel_footprint: f32,
@@ -2365,23 +2237,28 @@ fn min_distance_to_primitive(
  * @returns: The normalized surface normal.
  */
 fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
+    var primitive: Primitive;
     var normal_offset = vec2(0.5773, -0.5773);
     return normalize(
-        normal_offset.xyy * fast_min_distance_to_primitive(
+        normal_offset.xyy * min_distance_to_primitive(
             position + normal_offset.xyy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
+            &primitive,
         )
-        + normal_offset.yyx * fast_min_distance_to_primitive(
+        + normal_offset.yyx * min_distance_to_primitive(
             position + normal_offset.yyx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
+            &primitive,
         )
-        + normal_offset.yxy * fast_min_distance_to_primitive(
+        + normal_offset.yxy * min_distance_to_primitive(
             position + normal_offset.yxy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
+            &primitive,
         )
-        + normal_offset.xxx * fast_min_distance_to_primitive(
+        + normal_offset.xxx * min_distance_to_primitive(
             position + normal_offset.xxx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
+            &primitive,
         )
     );
 }
@@ -2573,14 +2450,16 @@ fn sample_ambient_occlusion(
     amount: f32,
     iterations: u32,
 ) -> f32 {
+    var primitive: Primitive;
     var occlusion: f32 = 0.;
     var occlusion_scale_factor: f32 = 1.;
     for (var iteration=0u; iteration < iterations; iteration++)
     {
         var step_distance: f32 = 0.001 + 0.15 * f32(iteration) / 4.;
-        var distance_to_closest_object: f32 = abs(fast_min_distance_to_primitive(
+        var distance_to_closest_object: f32 = abs(min_distance_to_primitive(
             ray_origin + step_distance * surface_normal,
             _render_params.ray_marcher.hit_tolerance,
+            &primitive,
         ));
         occlusion += (step_distance - distance_to_closest_object) * occlusion_scale_factor;
         occlusion_scale_factor *= 0.95;
@@ -2611,6 +2490,8 @@ fn sample_soft_shadow(
     distance_to_shade_point: f32,
     hardness: f32,
 ) -> f32 {
+    var primitive: Primitive;
+
     var distance_travelled: f32 = 0.;
     var shadow_intensity: f32 = 1.;
     var last_step_distance: f32 = 3.40282346638528859812e38; // FLT_MAX
@@ -2623,9 +2504,10 @@ fn sample_soft_shadow(
         distance_travelled < distance_to_shade_point
         && iterations < _render_params.ray_marcher.max_ray_steps / 2u
     ) {
-        var step_distance: f32 = abs(fast_min_distance_to_primitive(
+        var step_distance: f32 = abs(min_distance_to_primitive(
             position,
             pixel_footprint,
+            &primitive,
         ));
         var step_distance_squared: f32 = step_distance * step_distance;
         var soft_offset: f32 = step_distance_squared / (2. * last_step_distance);
@@ -2667,6 +2549,8 @@ fn sample_shadow(
     ray_direction: vec3<f32>,
     distance_to_shade_point: f32,
 ) -> f32 {
+    var primitive: Primitive;
+
     var distance_travelled: f32 = 0.;
     var iterations: u32 = 0u;
     var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
@@ -2675,9 +2559,10 @@ fn sample_shadow(
         distance_travelled < distance_to_shade_point
         && iterations < _render_params.ray_marcher.max_ray_steps / 2u
     ) {
-        var step_distance: f32 = abs(fast_min_distance_to_primitive(
+        var step_distance: f32 = abs(min_distance_to_primitive(
             position,
             pixel_footprint,
+            &primitive,
         ));
 
         if (step_distance < pixel_footprint) {

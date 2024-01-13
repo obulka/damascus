@@ -2016,6 +2016,13 @@ fn transform_position(
 }
 
 
+const SUBTRACTION: u32 = 128u;
+const INTERSECTION: u32 = 256u;
+const SMOOTH_UNION: u32 = 512u;
+const SMOOTH_SUBTRACTION: u32 = 1024u;
+const SMOOTH_INTERSECTION: u32 = 2048u;
+
+
 /**
  * Compute the modified value resulting from the interaction between
  * two objects. The corresponding colour will be placed in colour1, and
@@ -2036,45 +2043,56 @@ fn transform_position(
  * @returns: The nearest, modified value.
  */
 fn blend_primitives(
-    distance_to_primitive: f32,
-    primitive: ptr<function, Primitive>,
-    transformed_parent: ptr<function, TransformedPrimitive>,
+    distance_to_parent: f32,
+    distance_to_child: f32,
+    parent: ptr<function, Primitive>,
 ) -> f32 {
-    // if (modifications & SUBTRACTION)
-    // {
-    //     return subtraction(value0, value1);
-    // }
-    // if (modifications & INTERSECTION)
-    // {
-    //     return intersection(value0, value1);
-    // }
-    // if (modifications & SMOOTH_UNION)
-    // {
-    //     return smoothUnion(value0, value1, blendSize);
-    // }
-    // if (modifications & SMOOTH_SUBTRACTION)
-    // {
-    //     return smoothSubtraction(value0, value1, blendSize);
-    // }
-    // if (modifications & SMOOTH_INTERSECTION)
-    // {
-    //     return smoothIntersection(value0, value1, blendSize);
-    // }
+    if (bool((*parent).modifiers & SUBTRACTION)) {
+        return max(-distance_to_parent, distance_to_child);
+    } else if (bool((*parent).modifiers & INTERSECTION)) {
+        return max(distance_to_parent, distance_to_child);
+    } else if (bool((*parent).modifiers & SMOOTH_UNION)) {
+        var smoothing: f32 = saturate_f32(
+            0.5
+            + 0.5
+            * (abs(distance_to_child) - abs(distance_to_parent))
+            / (*parent).blend_strength
+        );
+        return mix(
+            distance_to_child,
+            distance_to_parent,
+            smoothing,
+        ) - (*parent).blend_strength * smoothing * (1. - smoothing);
+    } else if (bool((*parent).modifiers & SMOOTH_SUBTRACTION)) {
+        var smoothing: f32 = saturate_f32(
+            0.5
+            - 0.5
+            * (distance_to_child + distance_to_parent)
+            / (*parent).blend_strength
+        );
+        return mix(
+            distance_to_child,
+            -distance_to_parent,
+            smoothing,
+        ) + (*parent).blend_strength * smoothing * (1. - smoothing);
+    } else if (bool((*parent).modifiers & SMOOTH_INTERSECTION)) {
+        var smoothing: f32 = saturate_f32(
+            0.5
+            - 0.5
+            * (distance_to_child - distance_to_parent)
+            / (*parent).blend_strength
+        );
+        return mix(
+            distance_to_child,
+            distance_to_parent,
+            smoothing,
+        ) + (*parent).blend_strength * smoothing * (1. - smoothing);
+    }
     return select(
-        (*transformed_parent).distance_to_position,
-        distance_to_primitive,
-        abs(distance_to_primitive) < abs((*transformed_parent).distance_to_position),
+        distance_to_parent,
+        distance_to_child,
+        abs(distance_to_child) < abs(distance_to_parent),
     );
-}
-
-
-const MAX_PRIMITIVE_DEPTH: u32 = 512u;
-
-struct TransformedPrimitive {
-    distance_to_position: f32,
-    modifiers: u32,
-    blend_strength: f32,
-    num_children: u32,
 }
 
 
@@ -2084,97 +2102,55 @@ fn min_distance_to_primitive(
     closest_primitive: ptr<function, Primitive>,
 ) -> f32 {
     var min_distance: f32 = _render_params.ray_marcher.max_distance;
-    var stack_length: u32 = 0u;
-
-    // Load stack with pre-processed data
-    var primitive_stack: array<TransformedPrimitive, MAX_PRIMITIVE_DEPTH>;
+    var parent: Primitive;
+    var child: Primitive;
     for (
-        var primitive_index = 0u;
-        primitive_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
-        primitive_index++
+        var parent_index = 0u;
+        parent_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
+        parent_index++
     ) {
-        var primitive: Primitive = _primitives.primitives[primitive_index];
+        parent = _primitives.primitives[parent_index];
 
-        // var transformed_position: vec3<f32>;
-        // if (stack_length == 0u) {
-        //     transformed_position = position;
-        // } else {
-        //     transformed_position = primitive_stack[stack_length - 1u].position;
-        // }
-
-        var transformed_position: vec3<f32> = transform_position(
+        var parent_position: vec3<f32> = transform_position(
             position,
-            &primitive,
+            &parent,
         );
-        var distance_to_current: f32 = distance_to_primitive(
-            transformed_position,
-            &primitive,
+        var distance_to_parent: f32 = distance_to_primitive(
+            parent_position,
+            &parent,
         );
-        distance_to_current = modify_distance(distance_to_current, &primitive);
+        distance_to_parent = modify_distance(distance_to_parent, &parent);
 
-        if (abs(distance_to_current) < abs(min_distance)) {
-            min_distance = distance_to_current;
-            *closest_primitive = primitive;
+        for (
+            var child_index = parent_index + 1u;
+            child_index <= parent_index + parent.num_children;
+            child_index++
+        ) {
+            child = _primitives.primitives[child_index];
+
+            var child_position: vec3<f32> = transform_position(
+                position,
+                &child,
+            );
+            var distance_to_child: f32 = distance_to_primitive(
+                child_position,
+                &child,
+            );
+            distance_to_child = modify_distance(distance_to_child, &child);
+
+            distance_to_parent = blend_primitives(
+                distance_to_parent,
+                distance_to_child,
+                &parent,
+            );
         }
+        parent_index += parent.num_children;
 
-        // if (primitive.num_children == 0u) {
-        //     if (stack_length > 0u) {
-        //         var stack_index: u32 = stack_length - 1u;
-        //         loop {
-        //             var parent: TransformedPrimitive = primitive_stack[stack_index];
-
-        //             distance_to_current = blend_primitives(
-        //                 distance_to_current,
-        //                 &primitive,
-        //                 &parent,
-        //             );
-        //             if (abs(distance_to_current) < abs(min_distance)) {
-        //                 min_distance = distance_to_current;
-        //                 *closest_primitive = primitive;
-        //             }
-
-        //             if stack_index == 0u {
-        //                 loop {
-        //                     primitive_stack[stack_index].num_children--;
-
-        //                     if stack_index == stack_length - 1u {
-        //                         if primitive_stack[stack_index].num_children == 0u {
-        //                             stack_length = stack_index;
-        //                             stack_index = 0u;
-        //                         } else {
-        //                             break;
-        //                         }
-        //                     }
-        //                     continuing {
-        //                         stack_index++;
-        //                     }
-        //                 }
-        //                 break;
-        //             }
-        //             continuing {
-        //                 stack_index--;
-        //             }
-        //         }
-        //     }
-        //     else if (abs(distance_to_current) < abs(min_distance)) {
-        //         min_distance = distance_to_current;
-        //         *closest_primitive = primitive;
-        //     }
-        // } else {
-        //     primitive_stack[stack_length] = TransformedPrimitive(
-        //         distance_to_current,
-        //         primitive.modifiers,
-        //         primitive.blend_strength,
-        //         primitive.num_children,
-        //     );
-        //     stack_length++;
-        // }
+        if (abs(distance_to_parent) < abs(min_distance)) {
+            min_distance = distance_to_parent;
+            *closest_primitive = parent;
+        }
     }
-
-    // var stack_index: u32 = stack_length - 1u;
-    // loop {
-    //     var child: TransformedPrimitive = primitive_stack[stack_index];
-    // }
 
     return min_distance;
 }

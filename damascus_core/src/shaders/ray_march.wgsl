@@ -2165,9 +2165,9 @@ fn blend_primitives(
     switch (*parent).modifiers & 3968u {
         case 128u {
             // Subtraction
-            var negative_parent_distance = -distance_to_parent;
-            select_material(parent, child, negative_parent_distance < distance_to_child);
-            return max(negative_parent_distance, distance_to_child);
+            var negative_child_distance = -distance_to_child;
+            select_material(parent, child, negative_child_distance > distance_to_parent);
+            return max(negative_child_distance, distance_to_parent);
         }
         case 256u {
             // Intersection
@@ -2194,13 +2194,13 @@ fn blend_primitives(
             var smoothing: f32 = saturate_f32(
                 0.5
                 - 0.5
-                * (distance_to_child + distance_to_parent)
+                * (distance_to_parent + distance_to_child)
                 / (*parent).blend_strength
             );
-            mix_materials(child, parent, smoothing);
+            mix_materials(parent, child, smoothing);
             return mix(
-                distance_to_child,
-                -distance_to_parent,
+                distance_to_parent,
+                -distance_to_child,
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }

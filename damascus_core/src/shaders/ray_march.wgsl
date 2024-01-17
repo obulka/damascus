@@ -2025,67 +2025,136 @@ fn mix_materials(
     smoothing: f32,
 ) {
     (*primitive_0).material.diffuse_colour = mix(
-        (*primitive_1).material.diffuse_colour,
         (*primitive_0).material.diffuse_colour,
+        (*primitive_1).material.diffuse_colour,
         smoothing,
     );
     (*primitive_0).material.specular_probability = mix(
-        (*primitive_1).material.specular_probability,
         (*primitive_0).material.specular_probability,
+        (*primitive_1).material.specular_probability,
         smoothing,
     );
     (*primitive_0).material.specular_roughness = mix(
-        (*primitive_1).material.specular_roughness,
         (*primitive_0).material.specular_roughness,
+        (*primitive_1).material.specular_roughness,
         smoothing,
     );
     (*primitive_0).material.specular_colour = mix(
-        (*primitive_1).material.specular_colour,
         (*primitive_0).material.specular_colour,
+        (*primitive_1).material.specular_colour,
         smoothing,
     );
     (*primitive_0).material.transmissive_probability = mix(
-        (*primitive_1).material.transmissive_probability,
         (*primitive_0).material.transmissive_probability,
+        (*primitive_1).material.transmissive_probability,
         smoothing,
     );
     (*primitive_0).material.transmissive_roughness = mix(
-        (*primitive_1).material.transmissive_roughness,
         (*primitive_0).material.transmissive_roughness,
+        (*primitive_1).material.transmissive_roughness,
         smoothing,
     );
     (*primitive_0).material.transmissive_colour = mix(
-        (*primitive_1).material.transmissive_colour,
         (*primitive_0).material.transmissive_colour,
+        (*primitive_1).material.transmissive_colour,
         smoothing,
     );
     (*primitive_0).material.emissive_probability = mix(
-        (*primitive_1).material.emissive_probability,
         (*primitive_0).material.emissive_probability,
+        (*primitive_1).material.emissive_probability,
         smoothing,
     );
     (*primitive_0).material.emissive_colour = mix(
-        (*primitive_1).material.emissive_colour,
         (*primitive_0).material.emissive_colour,
+        (*primitive_1).material.emissive_colour,
         smoothing,
     );
     (*primitive_0).material.refractive_index = mix(
-        (*primitive_1).material.refractive_index,
         (*primitive_0).material.refractive_index,
+        (*primitive_1).material.refractive_index,
         smoothing,
     );
     (*primitive_0).material.scattering_coefficient = mix(
-        (*primitive_1).material.scattering_coefficient,
         (*primitive_0).material.scattering_coefficient,
+        (*primitive_1).material.scattering_coefficient,
         smoothing,
     );
     (*primitive_0).material.scattering_colour = mix(
-        (*primitive_1).material.scattering_colour,
         (*primitive_0).material.scattering_colour,
+        (*primitive_1).material.scattering_colour,
         smoothing,
     );
+    (*primitive_1).material = (*primitive_0).material;
 }
 
+
+fn select_material(
+    primitive_0: ptr<function, Primitive>,
+    primitive_1: ptr<function, Primitive>,
+    choice: bool,
+) {
+    (*primitive_0).material.diffuse_colour = select(
+        (*primitive_0).material.diffuse_colour,
+        (*primitive_1).material.diffuse_colour,
+        choice,
+    );
+    (*primitive_0).material.specular_probability = select(
+        (*primitive_0).material.specular_probability,
+        (*primitive_1).material.specular_probability,
+        choice,
+    );
+    (*primitive_0).material.specular_roughness = select(
+        (*primitive_0).material.specular_roughness,
+        (*primitive_1).material.specular_roughness,
+        choice,
+    );
+    (*primitive_0).material.specular_colour = select(
+        (*primitive_0).material.specular_colour,
+        (*primitive_1).material.specular_colour,
+        choice,
+    );
+    (*primitive_0).material.transmissive_probability = select(
+        (*primitive_0).material.transmissive_probability,
+        (*primitive_1).material.transmissive_probability,
+        choice,
+    );
+    (*primitive_0).material.transmissive_roughness = select(
+        (*primitive_0).material.transmissive_roughness,
+        (*primitive_1).material.transmissive_roughness,
+        choice,
+    );
+    (*primitive_0).material.transmissive_colour = select(
+        (*primitive_0).material.transmissive_colour,
+        (*primitive_1).material.transmissive_colour,
+        choice,
+    );
+    (*primitive_0).material.emissive_probability = select(
+        (*primitive_0).material.emissive_probability,
+        (*primitive_1).material.emissive_probability,
+        choice,
+    );
+    (*primitive_0).material.emissive_colour = select(
+        (*primitive_0).material.emissive_colour,
+        (*primitive_1).material.emissive_colour,
+        choice,
+    );
+    (*primitive_0).material.refractive_index = select(
+        (*primitive_0).material.refractive_index,
+        (*primitive_1).material.refractive_index,
+        choice,
+    );
+    (*primitive_0).material.scattering_coefficient = select(
+        (*primitive_0).material.scattering_coefficient,
+        (*primitive_1).material.scattering_coefficient,
+        choice,
+    );
+    (*primitive_0).material.scattering_colour = select(
+        (*primitive_0).material.scattering_colour,
+        (*primitive_1).material.scattering_colour,
+        choice,
+    );
+    (*primitive_1).material = (*primitive_0).material;
+}
 
 fn blend_primitives(
     distance_to_parent: f32,
@@ -2097,19 +2166,13 @@ fn blend_primitives(
         case 128u {
             // Subtraction
             var negative_parent_distance = -distance_to_parent;
-            if negative_parent_distance < distance_to_child {
-                (*parent).material = (*child).material;
-                return distance_to_child;
-            }
-            return negative_parent_distance;
+            select_material(parent, child, negative_parent_distance < distance_to_child);
+            return max(negative_parent_distance, distance_to_child);
         }
         case 256u {
             // Intersection
-            if distance_to_parent < distance_to_child {
-                (*parent).material = (*child).material;
-                return distance_to_child;
-            }
-            return distance_to_parent;
+            select_material(parent, child, distance_to_parent < distance_to_child);
+            return max(distance_to_parent, distance_to_child);
         }
         case 512u {
             // Smooth Union
@@ -2119,7 +2182,7 @@ fn blend_primitives(
                 * (abs(distance_to_child) - abs(distance_to_parent))
                 / (*parent).blend_strength
             );
-            mix_materials(parent, child, smoothing);
+            mix_materials(child, parent, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,
@@ -2134,7 +2197,7 @@ fn blend_primitives(
                 * (distance_to_child + distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_materials(parent, child, smoothing);
+            mix_materials(child, parent, smoothing);
             return mix(
                 distance_to_child,
                 -distance_to_parent,
@@ -2149,7 +2212,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_materials(parent, child, smoothing);
+            mix_materials(child, parent, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,
@@ -2158,11 +2221,9 @@ fn blend_primitives(
         }
         default {
             // Union
-            if abs(distance_to_child) < abs(distance_to_parent) {
-                (*parent).material = (*child).material;
-                return distance_to_child;
-            }
-            return distance_to_parent;
+            var child_closest: bool = abs(distance_to_child) < abs(distance_to_parent);
+            select_material(parent, child, child_closest);
+            return select(distance_to_parent, distance_to_child, child_closest);
         }
     }
 }
@@ -2190,20 +2251,61 @@ fn min_distance_to_children(
     parent: ptr<function, Primitive>,
 ) -> f32 {
     var combined_distance: f32 = distance_to_parent;
+
+    var current_parent_index: u32 = parent_index;
+    var next_parent_index: u32 = parent_index;
+    var child_index = parent_index + 1u;
+
+    var num_children_to_process: u32 = (*parent).num_children;
+    var children_processed: u32 = 0u;
+
+    var searching_for_next_parent: bool = true;
     var child: Primitive;
-    for (
-        var child_index = parent_index + 1u;
-        child_index <= parent_index + (*parent).num_children;
-        child_index++
-    ) {
-        child = _primitives.primitives[child_index];
-        combined_distance = min_distance_to_child(
-            position,
-            combined_distance,
-            parent,
-            &child,
-        );
-        child_index += child.num_children;
+    // Continue until all grandchildren have been processed
+    loop {
+        // Process all immediate children breadth first
+        // ie. no grandchildren
+        loop {
+            if (child_index > current_parent_index + (*parent).num_children) {
+                break;
+            }
+
+            child = _primitives.primitives[child_index];
+            combined_distance = min_distance_to_child(
+                position,
+                combined_distance,
+                parent,
+                &child,
+            );
+
+            if searching_for_next_parent && child.num_children > 0u {
+                searching_for_next_parent = false;
+                next_parent_index = child_index;
+            }
+
+            child_index += child.num_children;
+            children_processed++;
+
+            continuing {
+                child_index++;
+            }
+        }
+        if num_children_to_process <= children_processed {
+            break;
+        }
+
+        continuing {
+            current_parent_index = select(
+                next_parent_index,
+                child_index,
+                searching_for_next_parent,
+            );
+            child = _primitives.primitives[current_parent_index];
+            child.material = (*parent).material;
+            *parent = child;
+            child_index = current_parent_index + 1u;
+            searching_for_next_parent = true;
+        }
     }
 
     return combined_distance;

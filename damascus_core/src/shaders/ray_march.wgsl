@@ -2358,6 +2358,7 @@ fn signed_distance_to_scene(
     var primitive: Primitive;
     var primitives_to_process: u32 = min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
     var primitives_processed = 0u;
+    var hit_tolerance: f32 = _render_params.ray_marcher.hit_tolerance + pixel_footprint;
     loop {
         if primitives_processed >= primitives_to_process {
             break;
@@ -2369,7 +2370,7 @@ fn signed_distance_to_scene(
 
         if (
             !bool(primitive.modifiers & BOUNDING_VOLUME)
-            || signed_distance_field <= _render_params.ray_marcher.hit_tolerance + pixel_footprint
+            || signed_distance_field <= hit_tolerance
         ) {
             signed_distance_field = distance_to_descendants(
                 position,

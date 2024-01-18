@@ -2262,7 +2262,7 @@ fn min_distance_to_children(
 
     var current_parent_index: u32 = parent_index;
     var next_parent_index: u32 = current_parent_index;
-    var child_index = current_parent_index + 1u;
+    var child_index: u32 = current_parent_index + 1u;
 
     var num_children_to_process: u32 = (*parent).num_children;
     var children_processed: u32 = 0u;
@@ -2270,46 +2270,16 @@ fn min_distance_to_children(
     var searching_for_next_parent: bool = true;
     var child: Primitive;
 
-    // Continue until all grandchildren have been processed
     loop {
         // Process all immediate children breadth first
         // ie. no grandchildren
-        loop {
-            if child_index > current_parent_index + (*parent).num_children {
+        if child_index > current_parent_index + (*parent).num_children {
+            // If all children have been processed, stop
+            if num_children_to_process <= children_processed {
                 break;
             }
 
-            child = _primitives.primitives[child_index];
-            distance_to_family = min_distance_to_child(
-                position,
-                distance_to_family,
-                parent,
-                &child,
-            );
-            // Increment the counter tracking the number of children
-            // processed so far
-            children_processed++;
-
-            // If this child has children record its index to use as the
-            // next parent. This ensures the first, deepest child with
-            // children is processed first
-            if searching_for_next_parent && child.num_children > 0u {
-                searching_for_next_parent = false;
-                next_parent_index = child_index;
-            }
-            // Skip the children of this child, for now
-            child_index += child.num_children;
-
-            continuing {
-                child_index++;
-            }
-        }
-        // If all children have been processed, break
-        if num_children_to_process <= children_processed {
-            break;
-        }
-
-        continuing {
+            // Continue until all grandchildren have been processed
             // The next parent will either be the one we found at the current
             // depth, or at most the current child index
             current_parent_index = select(
@@ -2323,10 +2293,37 @@ fn min_distance_to_children(
 
             // Update the child index to point to the first child of the
             // new parent
-            child_index = current_parent_index + 1u;
+            child_index = current_parent_index;
 
             // Reset this flag so we can find the next parent
             searching_for_next_parent = true;
+
+            continue;
+        }
+
+        child = _primitives.primitives[child_index];
+        distance_to_family = min_distance_to_child(
+            position,
+            distance_to_family,
+            parent,
+            &child,
+        );
+        // Increment the counter tracking the number of children
+        // processed so far
+        children_processed++;
+
+        // If this child has children record its index to use as the
+        // next parent. This ensures the first, deepest child with
+        // children is processed first
+        if searching_for_next_parent && child.num_children > 0u {
+            searching_for_next_parent = false;
+            next_parent_index = child_index;
+        }
+        // Skip the children of this child, for now
+        child_index += child.num_children;
+
+        continuing {
+            child_index++;
         }
     }
 

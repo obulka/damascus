@@ -344,16 +344,16 @@ fn normal(vector_0: vec3<f32>, vector_1: vec3<f32>) -> vec3<f32> {
     var perpendicular_vector: vec3<f32> = cross(vector_0, vector_1);
     // If the two axes are too closely aligned it creates artifacts
     // so check the magnitude of the cross product before normalizing
-    if (length(perpendicular_vector) > 0.001) {
+    if length(perpendicular_vector) > 0.001 {
         return normalize(perpendicular_vector);
     }
     // If the vectors are too closely aligned use any perpendicular axis
     perpendicular_vector = cross(vec3(0., 1., 0.), vector_1);
-    if (length(perpendicular_vector) > 0.001) {
+    if length(perpendicular_vector) > 0.001 {
         return normalize(perpendicular_vector);
     }
     perpendicular_vector = cross(vec3(1., 0., 0.), vector_1);
-    if (length(perpendicular_vector) > 0.001) {
+    if length(perpendicular_vector) > 0.001 {
         return normalize(perpendicular_vector);
     }
     return normalize(cross(vec3(0., 0., 1.), vector_1));
@@ -379,7 +379,7 @@ fn align_with_direction(
     vector_to_align: vec3<f32>,
 ) -> vec3<f32> {
     var angle: f32 = angle_between_vec3f(unaligned_axis, alignment_direction);
-    if (angle == 0.) {
+    if angle == 0. {
         return vector_to_align;
     }
     var rotation_axis: vec3<f32> = normal(unaligned_axis, alignment_direction);
@@ -392,12 +392,12 @@ fn power_of_u32(base: f32, exponent: u32) -> f32 {
     var base_: f32 = base;
     var exponent_: u32 = exponent;
     var result: f32 = 1.;
-    for (;;) {
-        if (bool(exponent_ & 1u)) {
+    loop {
+        if bool(exponent_ & 1u) {
             result *= base_;
         }
         exponent_ >>= 1u;
-        if (!bool(exponent_)) {
+        if !bool(exponent_) {
             break;
         }
         base_ *= base_;
@@ -626,10 +626,10 @@ fn distance_to_cut_sphere(
         cut_radius * cylindrical_position.y - cut_height * cylindrical_position.x,
     );
 
-    if (nearest_is_spherical < 0.) {
+    if nearest_is_spherical < 0. {
         // Closest point is on the surface of the sphere
         return length(cylindrical_position) - radius;
-    } else if (cylindrical_position.x < cut_radius) {
+    } else if cylindrical_position.x < cut_radius {
         // Closest point is within the cut surface
         return -cut_height + cylindrical_position.y;
     } else {
@@ -1140,10 +1140,10 @@ fn distance_to_rounded_cone(
 
     var position_projected_on_cone: f32 = dot(cylindrical_position, parallel);
 
-    if (position_projected_on_cone < 0.) {
+    if position_projected_on_cone < 0. {
         // Closest point is on the lower sphere
         return length(cylindrical_position) - lower_radius;
-    } else if (position_projected_on_cone > parallel_y * height) {
+    } else if position_projected_on_cone > parallel_y * height {
         // Closest point is on the upper sphere
         return length(cylindrical_position - vec2(0., height)) - upper_radius;
     }
@@ -1192,7 +1192,7 @@ fn distance_to_capped_torus(
     var abs_x_position = vec3(abs(position.x), position.yz);
 
     var cap_factor: f32;
-    if (cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y) {
+    if cap_direction.y * abs_x_position.x > cap_direction.x * abs_x_position.y {
         // project position on xy-plane onto the direction we are capping at
         cap_factor = dot(abs_x_position.xy, cap_direction.xy);
     } else {
@@ -1293,11 +1293,11 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
 
     var three_position: vec3<f32> = 3. * abs_position;
     var change_of_axes: vec3<f32>;
-    if (three_position.x < position_sum_to_extent) {
+    if three_position.x < position_sum_to_extent {
         change_of_axes = abs_position;
-    } else if (three_position.y < position_sum_to_extent) {
+    } else if three_position.y < position_sum_to_extent {
         change_of_axes = abs_position.yzx;
-    } else if (three_position.z < position_sum_to_extent) {
+    } else if three_position.z < position_sum_to_extent {
         change_of_axes = abs_position.zxy;
     } else {
         return position_sum_to_extent * 0.57735027;
@@ -1481,12 +1481,12 @@ fn schlick_reflection_coefficient(
     parallel_coefficient *= parallel_coefficient;
 
     var cos_x: f32 = -dot(surface_normal_direction, incident_ray_direction);
-    if (incident_refractive_index > refracted_refractive_index) {
+    if incident_refractive_index > refracted_refractive_index {
         var refractive_ratio: f32 = incident_refractive_index / refracted_refractive_index;
         var sin_transmitted_squared: f32 = refractive_ratio * refractive_ratio * (
             1. - cos_x * cos_x
         );
-        if (sin_transmitted_squared > 1.) {
+        if sin_transmitted_squared > 1. {
             return 1.;
         }
         cos_x = sqrt(1. - sin_transmitted_squared);
@@ -1537,7 +1537,7 @@ fn sample_material(
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
 
-    if (specular_probability > 0. || transmissive_probability > 0.) {
+    if specular_probability > 0. || transmissive_probability > 0. {
         // Adjust probabilities according to fresnel
 
         var incident_refractive_index: f32 = 1.; // TODO add nested dielectrics
@@ -1565,7 +1565,7 @@ fn sample_material(
     // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
-    if (specular_probability > 0. && rng <= specular_probability) {
+    if specular_probability > 0. && rng <= specular_probability {
         // Specular bounce
         var ideal_specular_direction: vec3<f32> = reflect(
             (*ray).direction,
@@ -1751,7 +1751,7 @@ fn mirrored_infinite_repetition(
  */
 fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
     var modified_distance: f32 = distance;
-    if (bool((*primitive).modifiers & HOLLOW)) {
+    if bool((*primitive).modifiers & HOLLOW) {
         modified_distance = abs(modified_distance) - (*primitive).wall_thickness;
     }
     return modified_distance - (*primitive).edge_radius;
@@ -1774,18 +1774,18 @@ fn transform_position(
         (*primitive).transform.inverse_rotation
         * (position - (*primitive).transform.translation)
     );
-    if (bool((*primitive).modifiers & FINITE_REPETITION)) {
+    if bool((*primitive).modifiers & FINITE_REPETITION) {
         transformed_position = mirrored_finite_repetition(
             transformed_position,
             primitive,
         );
-    } else if (bool((*primitive).modifiers & INFINITE_REPETITION)) {
+    } else if bool((*primitive).modifiers & INFINITE_REPETITION) {
         transformed_position = mirrored_infinite_repetition(
             transformed_position,
             primitive,
         );
     }
-    if (bool((*primitive).modifiers & ELONGATE)) {
+    if bool((*primitive).modifiers & ELONGATE) {
         transformed_position -= clamp(
             transformed_position,
             -(*primitive).elongation,
@@ -1812,7 +1812,7 @@ fn transform_position(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_primitive(
+fn min_distance_to_primitive(
     position: vec3<f32>,
     primitive: ptr<function, Primitive>,
 ) -> f32 {
@@ -2165,21 +2165,29 @@ fn blend_primitives(
     switch (*parent).modifiers & 3968u {
         case 128u {
             // Subtraction
-            var negative_child_distance = -distance_to_child;
-            select_material(parent, child, negative_child_distance > distance_to_parent);
-            return max(negative_child_distance, distance_to_parent);
+            var negative_child_distance: f32 = -distance_to_child;
+            var parent_closer_than_negative_child: bool = (
+                negative_child_distance > distance_to_parent
+            );
+            select_material(parent, child, parent_closer_than_negative_child);
+            return select(
+                distance_to_parent,
+                negative_child_distance,
+                parent_closer_than_negative_child,
+            );
         }
         case 256u {
             // Intersection
-            select_material(parent, child, distance_to_parent < distance_to_child);
-            return max(distance_to_parent, distance_to_child);
+            var parent_closest: bool = distance_to_parent < distance_to_child;
+            select_material(parent, child, parent_closest);
+            return select(distance_to_parent, distance_to_child, parent_closest);
         }
         case 512u {
             // Smooth Union
             var smoothing: f32 = saturate_f32(
                 0.5
                 + 0.5
-                * (abs(distance_to_child) - abs(distance_to_parent))
+                * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
             mix_materials(child, parent, smoothing);
@@ -2221,7 +2229,7 @@ fn blend_primitives(
         }
         default {
             // Union
-            var child_closest: bool = abs(distance_to_child) < abs(distance_to_parent);
+            var child_closest: bool = distance_to_child < distance_to_parent;
             select_material(parent, child, child_closest);
             return select(distance_to_parent, distance_to_child, child_closest);
         }
@@ -2237,7 +2245,7 @@ fn min_distance_to_child(
 ) -> f32 {
     return blend_primitives(
         distance_to_parent,
-        distance_to_primitive(position, child),
+        min_distance_to_primitive(position, child),
         parent,
         child,
     );
@@ -2250,79 +2258,79 @@ fn min_distance_to_children(
     parent_index: u32,
     parent: ptr<function, Primitive>,
 ) -> f32 {
-    var combined_distance: f32 = distance_to_parent;
+    var distance_to_family: f32 = distance_to_parent;
 
     var current_parent_index: u32 = parent_index;
-    var next_parent_index: u32 = parent_index;
-    var child_index = parent_index + 1u;
+    var next_parent_index: u32 = current_parent_index;
+    var child_index = current_parent_index + 1u;
 
     var num_children_to_process: u32 = (*parent).num_children;
     var children_processed: u32 = 0u;
 
     var searching_for_next_parent: bool = true;
     var child: Primitive;
+
     // Continue until all grandchildren have been processed
     loop {
         // Process all immediate children breadth first
         // ie. no grandchildren
         loop {
-            if (child_index > current_parent_index + (*parent).num_children) {
+            if child_index > current_parent_index + (*parent).num_children {
                 break;
             }
 
             child = _primitives.primitives[child_index];
-            combined_distance = min_distance_to_child(
+            distance_to_family = min_distance_to_child(
                 position,
-                combined_distance,
+                distance_to_family,
                 parent,
                 &child,
             );
+            // Increment the counter tracking the number of children
+            // processed so far
+            children_processed++;
 
+            // If this child has children record its index to use as the
+            // next parent. This ensures the first, deepest child with
+            // children is processed first
             if searching_for_next_parent && child.num_children > 0u {
                 searching_for_next_parent = false;
                 next_parent_index = child_index;
             }
-
+            // Skip the children of this child, for now
             child_index += child.num_children;
-            children_processed++;
 
             continuing {
                 child_index++;
             }
         }
+        // If all children have been processed, break
         if num_children_to_process <= children_processed {
             break;
         }
 
         continuing {
+            // The next parent will either be the one we found at the current
+            // depth, or at most the current child index
             current_parent_index = select(
                 next_parent_index,
                 child_index,
                 searching_for_next_parent,
             );
-            child = _primitives.primitives[current_parent_index];
-            child.material = (*parent).material;
-            *parent = child;
+            // Get the next parent and apply the current blended material
+            *parent = _primitives.primitives[current_parent_index];
+            (*parent).material = child.material;
+
+            // Update the child index to point to the first child of the
+            // new parent
             child_index = current_parent_index + 1u;
+
+            // Reset this flag so we can find the next parent
             searching_for_next_parent = true;
         }
     }
 
-    return combined_distance;
-}
-
-
-fn min_distance_to_primitive(
-    position: vec3<f32>,
-    primitive_index: u32,
-    primitive: ptr<function, Primitive>,
-) -> f32 {
-    return min_distance_to_children(
-        position,
-        distance_to_primitive(position, primitive),
-        primitive_index,
-        primitive,
-    );
+    return distance_to_family;
 }
 
 
@@ -2339,15 +2347,16 @@ fn min_distance_to_scene(
         primitive_index++
     ) {
         primitive = _primitives.primitives[primitive_index];
-        var distance_to_primitive: f32 = min_distance_to_primitive(
+        var num_children: u32 = primitive.num_children;
+        var distance_to_primitive: f32 = min_distance_to_children(
             position,
+            min_distance_to_primitive(position, &primitive),
             primitive_index,
             &primitive,
         );
+        primitive_index += num_children;
 
-        primitive_index += primitive.num_children;
-
-        if (abs(distance_to_primitive) < abs(min_distance)) {
+        if abs(distance_to_primitive) < abs(min_distance) {
             min_distance = distance_to_primitive;
             *closest_primitive = primitive;
         }
@@ -2449,7 +2458,7 @@ fn multiple_importance_sample(
  * @returns: The probability distribution function.
  */
 fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
-    if (visible_surface_area == 0.) {
+    if visible_surface_area == 0. {
         return 1. / num_lights;
     } else {
         return 1. / num_lights / visible_surface_area;
@@ -2648,7 +2657,7 @@ fn sample_soft_shadow(
             / positive_part_f32(distance_travelled - soft_offset),
         );
 
-        if (step_distance < pixel_footprint) {
+        if step_distance < pixel_footprint {
             shadow_intensity = saturate_f32(shadow_intensity);
             return shadow_intensity * shadow_intensity * (3. - 2. * shadow_intensity);
         }
@@ -2696,7 +2705,7 @@ fn sample_shadow(
             &primitive,
         ));
 
-        if (step_distance < pixel_footprint) {
+        if step_distance < pixel_footprint {
             return 0.;
         }
 
@@ -2738,7 +2747,7 @@ fn sample_non_physical_light(
     switch light.light_type {
         case 0u {
             var shadow_intensity_at_position: f32;
-            if (bool(light.soften_shadows)) {
+            if bool(light.soften_shadows) {
                 shadow_intensity_at_position = sample_soft_shadow(
                     surface_position,
                     light_direction,
@@ -2757,7 +2766,7 @@ fn sample_non_physical_light(
         }
         case 1u {
             var shadow_intensity_at_position: f32;
-            if (bool(light.soften_shadows)) {
+            if bool(light.soften_shadows) {
                 shadow_intensity_at_position = sample_soft_shadow(
                     surface_position,
                     light_direction,
@@ -2843,7 +2852,7 @@ fn sample_light(
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 0.;
 
-    if (light_id < _render_params.scene.num_non_physical_lights)
+    if light_id < _render_params.scene.num_non_physical_lights
     {
         light_colour = sample_non_physical_light(
             position,
@@ -2854,8 +2863,7 @@ fn sample_light(
         );
         light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
     }
-    // else if (light_id - _lightTextureWidth - sampleHDRI < numEmissive)
-    // {
+    // else if light_id - _lightTextureWidth - sampleHDRI < numEmissive {
     //     float actualDistance;
     //     float3 actualDirection = light_direction;
     //     float3 lightNormal;
@@ -2973,7 +2981,7 @@ fn light_sampling(
     material_pdf: f32,
     sample_all_lights: bool,
 ) -> vec3<f32> {
-    if (sample_all_lights) {
+    if sample_all_lights {
         return sample_lights(
             seed,
             throughput,
@@ -3207,7 +3215,7 @@ fn material_interaction(
     }
 
     var material_geometry_factor: f32;
-    if (light_sampling_material_pdf > 0.) {
+    if light_sampling_material_pdf > 0. {
         material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     } else {
         material_geometry_factor = 1.;
@@ -3285,7 +3293,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
         distance_since_last_bounce += step_distance;
 
         // Have we hit the nearest object?
-        if (step_distance < pixel_footprint) {
+        if step_distance < pixel_footprint {
             bounces++;
             var intersection_position = position_on_ray + step_distance * (*ray).direction;
 
@@ -3330,7 +3338,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 || (roulette && exit_probability <= rng)
             ) {
                 break;
-            } else if (roulette) {
+            } else if roulette {
                 // Account for the lost intensity from the early exits
                 (*ray).throughput /= vec3(exit_probability);
             }
@@ -3341,14 +3349,14 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
 
             // Update the random seed for the next iteration
             path_seed = random_vec3f(path_seed.zxy + seed);
-        } else if (dynamic_level_of_detail) {
+        } else if dynamic_level_of_detail {
             pixel_footprint += _render_params.ray_marcher.hit_tolerance * step_distance;
         }
 
         last_step_distance = signed_step_distance;
         iterations++;
     }
-    if (_render_params.ray_marcher.output_aov > BEAUTY_AOV) {
+    if _render_params.ray_marcher.output_aov > BEAUTY_AOV {
         (*ray).colour = final_aovs(
             _render_params.ray_marcher.output_aov,
             bounces,

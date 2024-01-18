@@ -1812,7 +1812,7 @@ fn transform_position(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn min_distance_to_primitive(
+fn distance_to_primitive(
     position: vec3<f32>,
     primitive: ptr<function, Primitive>,
 ) -> f32 {
@@ -2237,49 +2237,35 @@ fn blend_primitives(
 }
 
 
-fn min_distance_to_child(
+fn signed_distance_to_primitive(
     position: vec3<f32>,
-    distance_to_parent: f32,
-    parent: ptr<function, Primitive>,
-    child: ptr<function, Primitive>,
+    primitive_index: u32,
+    primitive: ptr<function, Primitive>,
 ) -> f32 {
-    return blend_primitives(
-        distance_to_parent,
-        min_distance_to_primitive(position, child),
-        parent,
-        child,
-    );
-}
+    var signed_distance_field: f32 = distance_to_primitive(position, primitive);
 
-
-fn min_distance_to_children(
-    position: vec3<f32>,
-    distance_to_parent: f32,
-    parent_index: u32,
-    parent: ptr<function, Primitive>,
-) -> f32 {
-    var distance_to_family: f32 = distance_to_parent;
-
-    var current_parent_index: u32 = parent_index;
+    var current_parent_index: u32 = primitive_index;
     var next_parent_index: u32 = current_parent_index;
     var child_index: u32 = current_parent_index + 1u;
 
-    var num_children_to_process: u32 = (*parent).num_children;
+    var num_children_to_process: u32 = (*primitive).num_children;
     var children_processed: u32 = 0u;
 
     var searching_for_next_parent: bool = true;
     var child: Primitive;
 
+    // Process all immediate children breadth first
+    // Then step into children and process all grandchildren breadth first
+    // continuing until all relatives are processed
     loop {
-        // Process all immediate children breadth first
-        // ie. no grandchildren
-        if child_index > current_parent_index + (*parent).num_children {
-            // If all children have been processed, stop
+        // If there are no more direct children
+        if child_index > current_parent_index + (*primitive).num_children {
+            // If all children & grandchildren have been processed, stop
             if num_children_to_process <= children_processed {
                 break;
             }
 
-            // Continue until all grandchildren have been processed
+            // Otherwise, continue until all grandchildren have been processed.
             // The next parent will either be the one we found at the current
             // depth, or at most the current child index
             current_parent_index = select(
@@ -2288,8 +2274,8 @@ fn min_distance_to_children(
                 searching_for_next_parent,
             );
             // Get the next parent and apply the current blended material
-            *parent = _primitives.primitives[current_parent_index];
-            (*parent).material = child.material;
+            *primitive = _primitives.primitives[current_parent_index];
+            (*primitive).material = child.material;
 
             // Update the child index to point to the first child of the
             // new parent
@@ -2301,11 +2287,13 @@ fn min_distance_to_children(
             continue;
         }
 
+        // Get and process the child, blending the material and distance
+        // in the chosen manner
         child = _primitives.primitives[child_index];
-        distance_to_family = min_distance_to_child(
-            position,
-            distance_to_family,
-            parent,
+        signed_distance_field = blend_primitives(
+            signed_distance_field,
+            distance_to_primitive(position, &child),
+            primitive,
             &child,
         );
         // Increment the counter tracking the number of children
@@ -2323,15 +2311,16 @@ fn min_distance_to_children(
         child_index += child.num_children;
 
         continuing {
+            // Continue to the next child
             child_index++;
         }
     }
 
-    return distance_to_family;
+    return signed_distance_field;
 }
 
 
-fn min_distance_to_scene(
+fn signed_distance_to_scene(
     position: vec3<f32>,
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
@@ -2345,18 +2334,19 @@ fn min_distance_to_scene(
     ) {
         primitive = _primitives.primitives[primitive_index];
         var num_children: u32 = primitive.num_children;
-        var distance_to_primitive: f32 = min_distance_to_children(
+        var distance_to_primitive: f32 = signed_distance_to_primitive(
             position,
-            min_distance_to_primitive(position, &primitive),
             primitive_index,
             &primitive,
         );
-        primitive_index += num_children;
 
-        if abs(distance_to_primitive) < abs(min_distance) {
-            min_distance = distance_to_primitive;
-            *closest_primitive = primitive;
-        }
+        var primitive_closest: bool = abs(distance_to_primitive) < abs(min_distance);
+        min_distance = select(min_distance, distance_to_primitive, primitive_closest);
+        select_material(closest_primitive, &primitive, primitive_closest);
+
+        // Skip all children, they were processed in the
+        // `signed_distance_to_primitive` function
+        primitive_index += num_children;
     }
 
     return min_distance;
@@ -2377,22 +2367,22 @@ fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f3
     var primitive: Primitive;
     var normal_offset = vec2(0.5773, -0.5773);
     return normalize(
-        normal_offset.xyy * min_distance_to_scene(
+        normal_offset.xyy * signed_distance_to_scene(
             position + normal_offset.xyy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &primitive,
         )
-        + normal_offset.yyx * min_distance_to_scene(
+        + normal_offset.yyx * signed_distance_to_scene(
             position + normal_offset.yyx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &primitive,
         )
-        + normal_offset.yxy * min_distance_to_scene(
+        + normal_offset.yxy * signed_distance_to_scene(
             position + normal_offset.yxy * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &primitive,
         )
-        + normal_offset.xxx * min_distance_to_scene(
+        + normal_offset.xxx * signed_distance_to_scene(
             position + normal_offset.xxx * _render_params.ray_marcher.hit_tolerance,
             pixel_footprint,
             &primitive,
@@ -2593,7 +2583,7 @@ fn sample_ambient_occlusion(
     for (var iteration=0u; iteration < iterations; iteration++)
     {
         var step_distance: f32 = 0.001 + 0.15 * f32(iteration) / 4.;
-        var distance_to_closest_object: f32 = abs(min_distance_to_scene(
+        var distance_to_closest_object: f32 = abs(signed_distance_to_scene(
             ray_origin + step_distance * surface_normal,
             _render_params.ray_marcher.hit_tolerance,
             &primitive,
@@ -2641,7 +2631,7 @@ fn sample_soft_shadow(
         distance_travelled < distance_to_shade_point
         && iterations < _render_params.ray_marcher.max_ray_steps / 2u
     ) {
-        var step_distance: f32 = abs(min_distance_to_scene(
+        var step_distance: f32 = abs(signed_distance_to_scene(
             position,
             pixel_footprint,
             &primitive,
@@ -2696,7 +2686,7 @@ fn sample_shadow(
         distance_travelled < distance_to_shade_point
         && iterations < _render_params.ray_marcher.max_ray_steps / 2u
     ) {
-        var step_distance: f32 = abs(min_distance_to_scene(
+        var step_distance: f32 = abs(signed_distance_to_scene(
             position,
             pixel_footprint,
             &primitive,
@@ -3276,7 +3266,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
 
         var nearest_primitive: Primitive;
         // Keep the signed distance so we know whether or not we are inside the object
-        var signed_step_distance = min_distance_to_scene(
+        var signed_step_distance = signed_distance_to_scene(
             position_on_ray,
             pixel_footprint,
             &nearest_primitive,

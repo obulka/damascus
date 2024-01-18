@@ -1619,6 +1619,7 @@ const MIRROR_X: u32 = 8u;
 const MIRROR_Y: u32 = 16u;
 const MIRROR_Z: u32 = 32u;
 const HOLLOW: u32 = 64u;
+const BOUNDING_VOLUME: u32 = 4096u;
 
 const MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
 
@@ -1642,7 +1643,7 @@ struct Primitive {
     wall_thickness: f32,
     edge_radius: f32,
     elongation: vec3<f32>,
-    num_children: u32,
+    num_descendants: u32,
     dimensional_data: vec4<f32>,
 }
 
@@ -2237,18 +2238,24 @@ fn blend_primitives(
 }
 
 
-fn signed_distance_to_primitive(
+fn distance_to_descendants(
     position: vec3<f32>,
-    primitive_index: u32,
-    primitive: ptr<function, Primitive>,
+    pixel_footprint: f32,
+    distance_to_earliest_ancestor: f32,
+    earliest_ancestor_index: u32,
+    family: ptr<function, Primitive>,
 ) -> f32 {
-    var signed_distance_field: f32 = distance_to_primitive(position, primitive);
+    var distance_to_family: f32 = select(
+        distance_to_earliest_ancestor,
+        _render_params.ray_marcher.max_distance,
+        bool((*family).modifiers & BOUNDING_VOLUME),
+    );
 
-    var current_parent_index: u32 = primitive_index;
+    var current_parent_index: u32 = earliest_ancestor_index;
     var next_parent_index: u32 = current_parent_index;
     var child_index: u32 = current_parent_index + 1u;
 
-    var num_children_to_process: u32 = (*primitive).num_children;
+    var num_descendants_to_process: u32 = (*family).num_descendants;
     var children_processed: u32 = 0u;
 
     var searching_for_next_parent: bool = true;
@@ -2259,9 +2266,9 @@ fn signed_distance_to_primitive(
     // continuing until all relatives are processed
     loop {
         // If there are no more direct children
-        if child_index > current_parent_index + (*primitive).num_children {
+        if child_index > current_parent_index + (*family).num_descendants {
             // If all children & grandchildren have been processed, stop
-            if num_children_to_process <= children_processed {
+            if num_descendants_to_process <= children_processed {
                 break;
             }
 
@@ -2274,8 +2281,8 @@ fn signed_distance_to_primitive(
                 searching_for_next_parent,
             );
             // Get the next parent and apply the current blended material
-            *primitive = _primitives.primitives[current_parent_index];
-            (*primitive).material = child.material;
+            *family = _primitives.primitives[current_parent_index];
+            (*family).material = child.material;
 
             // Update the child index to point to the first child of the
             // new parent
@@ -2290,12 +2297,7 @@ fn signed_distance_to_primitive(
         // Get and process the child, blending the material and distance
         // in the chosen manner
         child = _primitives.primitives[child_index];
-        signed_distance_field = blend_primitives(
-            signed_distance_field,
-            distance_to_primitive(position, &child),
-            primitive,
-            &child,
-        );
+        var distance_to_child: f32 = distance_to_primitive(position, &child);
         // Increment the counter tracking the number of children
         // processed so far
         children_processed++;
@@ -2303,12 +2305,36 @@ fn signed_distance_to_primitive(
         // If this child has children record its index to use as the
         // next parent. This ensures the first, deepest child with
         // children is processed first
-        if searching_for_next_parent && child.num_children > 0u {
+        if searching_for_next_parent && child.num_descendants > 0u {
             searching_for_next_parent = false;
             next_parent_index = child_index;
         }
+
+        // if (
+        //     bool(child.modifiers & BOUNDING_VOLUME)
+        //     && distance_to_child > _render_params.ray_marcher.hit_tolerance + pixel_footprint
+        // ) {
+        //     children_processed += child.num_descendants;
+        //     child_index += child.num_descendants;
+        //     continue;
+        // } 
+        if bool((*family).modifiers & BOUNDING_VOLUME) {
+            distance_to_family = select(
+                distance_to_family,
+                distance_to_child,
+                abs(distance_to_child) < abs(distance_to_family),
+            );
+        } else {
+            distance_to_family = blend_primitives(
+                distance_to_family,
+                distance_to_child,
+                family,
+                &child,
+            );
+        }
+
         // Skip the children of this child, for now
-        child_index += child.num_children;
+        child_index += child.num_descendants;
 
         continuing {
             // Continue to the next child
@@ -2316,7 +2342,7 @@ fn signed_distance_to_primitive(
         }
     }
 
-    return signed_distance_field;
+    return distance_to_family;
 }
 
 
@@ -2325,31 +2351,52 @@ fn signed_distance_to_scene(
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
 ) -> f32 {
-    var min_distance: f32 = _render_params.ray_marcher.max_distance;
+    var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
     var primitive: Primitive;
-    for (
-        var primitive_index = 0u;
-        primitive_index < min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
-        primitive_index++
-    ) {
-        primitive = _primitives.primitives[primitive_index];
-        var num_children: u32 = primitive.num_children;
-        var distance_to_primitive: f32 = signed_distance_to_primitive(
+    var primitives_to_process: u32 = min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
+    var primitives_processed = 0u;
+    loop {
+        if primitives_processed >= primitives_to_process {
+            break;
+        }
+
+        primitive = _primitives.primitives[primitives_processed];
+        var num_descendants: u32 = primitive.num_descendants;
+        var signed_distance_field: f32 = distance_to_primitive(position, &primitive);
+
+        if (
+            bool(primitive.modifiers & BOUNDING_VOLUME)
+            && signed_distance_field > _render_params.ray_marcher.hit_tolerance + pixel_footprint
+        ) {
+            continue;
+        }
+
+        signed_distance_field = distance_to_descendants(
             position,
-            primitive_index,
+            pixel_footprint,
+            signed_distance_field,
+            primitives_processed,
             &primitive,
         );
 
-        var primitive_closest: bool = abs(distance_to_primitive) < abs(min_distance);
-        min_distance = select(min_distance, distance_to_primitive, primitive_closest);
-        select_material(closest_primitive, &primitive, primitive_closest);
+        continuing {
+            var primitive_is_new_closest: bool = (
+                abs(signed_distance_field) < abs(distance_to_scene)
+            );
+            distance_to_scene = select(
+                distance_to_scene,
+                signed_distance_field,
+                primitive_is_new_closest,
+            );
+            select_material(closest_primitive, &primitive, primitive_is_new_closest);
 
-        // Skip all children, they were processed in the
-        // `signed_distance_to_primitive` function
-        primitive_index += num_children;
+            // Skip all children, they were processed in the
+            // `signed_distance_to_primitive` function
+            primitives_processed += num_descendants + 1u;
+        }
     }
 
-    return min_distance;
+    return distance_to_scene;
 }
 
 

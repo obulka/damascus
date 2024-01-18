@@ -94,7 +94,7 @@ pub struct GPUPrimitive {
     wall_thickness: f32,
     edge_radius: f32,
     elongation: Vec3,
-    num_children: u32,
+    num_descendants: u32,
     dimensional_data: Vec4,
 }
 
@@ -116,7 +116,7 @@ pub struct Primitive {
     pub elongate: bool,
     pub elongation: Vec3,
     pub bounding_volume: bool,
-    pub num_children: u32,
+    pub num_descendants: u32,
     pub dimensional_data: Vec4,
 }
 
@@ -139,7 +139,7 @@ impl Default for Primitive {
             elongate: false,
             elongation: Vec3::ZERO,
             bounding_volume: false,
-            num_children: 0,
+            num_descendants: 0,
             dimensional_data: Vec4::ONE,
         }
     }
@@ -175,7 +175,7 @@ impl Primitive {
             wall_thickness: self.wall_thickness,
             edge_radius: self.edge_radius,
             elongation: self.elongation,
-            num_children: self.num_children,
+            num_descendants: self.num_descendants,
             dimensional_data: self.dimensional_data,
         }
         .as_std140()

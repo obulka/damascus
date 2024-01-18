@@ -344,7 +344,7 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Primitive => {
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
-            let mut children = evaluator.input_primitive("children")?;
+            let mut descendants = evaluator.input_primitive("children")?;
             let material = evaluator.input_material("material")?;
             let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
 
@@ -490,7 +490,7 @@ pub fn evaluate_node(
             let elongation = evaluator.input_vector3("elongation")?;
             let bounding_volume = evaluator.input_bool("bounding_volume")?;
             let world_matrix = evaluator.input_matrix4("world_matrix")?;
-            for child in children.iter_mut() {
+            for child in descendants.iter_mut() {
                 child.world_matrix = world_matrix * child.world_matrix;
             }
 
@@ -511,12 +511,12 @@ pub fn evaluate_node(
                 blend_type: blend_type,
                 blend_strength: blend_strength,
                 bounding_volume: bounding_volume,
-                num_children: children.len() as u32,
+                num_descendants: descendants.len() as u32,
                 dimensional_data: dimensional_data,
             };
 
             scene_primitives.push(primitive);
-            scene_primitives.append(&mut children);
+            scene_primitives.append(&mut descendants);
             evaluator.output_primitive("out", scene_primitives)
         }
         DamascusNodeTemplate::RayMarcher => {

@@ -2240,7 +2240,7 @@ fn blend_primitives(
 
 fn distance_to_descendants(
     position: vec3<f32>,
-    pixel_footprint: f32,
+    hit_tolerance: f32,
     distance_to_earliest_ancestor: f32,
     earliest_ancestor_index: u32,
     family: ptr<function, Primitive>,
@@ -2312,15 +2312,6 @@ fn distance_to_descendants(
             false,
             found_next_parent,
         );
-
-        // if (
-        //     bool(child.modifiers & BOUNDING_VOLUME)
-        //     && distance_to_child > _render_params.ray_marcher.hit_tolerance + pixel_footprint
-        // ) {
-        //     children_processed += child.num_descendants;
-        //     child_index += child.num_descendants;
-        //     continue;
-        // }
         distance_to_family = select(
             blend_primitives(
                 distance_to_family,
@@ -2336,7 +2327,7 @@ fn distance_to_descendants(
             bool((*family).modifiers & BOUNDING_VOLUME),
         );
 
-        // Skip the children of this child, for now
+        // Skip the descendants of this child, for now
         child_index += child.num_descendants;
 
         continuing {
@@ -2374,7 +2365,7 @@ fn signed_distance_to_scene(
         ) {
             signed_distance_field = distance_to_descendants(
                 position,
-                pixel_footprint,
+                hit_tolerance,
                 signed_distance_field,
                 primitives_processed,
                 &primitive,
@@ -2391,7 +2382,7 @@ fn signed_distance_to_scene(
         );
         select_material(closest_primitive, &primitive, primitive_is_new_closest);
 
-        // Skip all children, they were processed in the
+        // Skip all descendants, they were processed in the
         // `signed_distance_to_primitive` function
         primitives_processed += num_descendants + 1u;
     }

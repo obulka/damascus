@@ -2312,20 +2312,20 @@ fn distance_to_descendants(
             false,
             found_next_parent,
         );
-        distance_to_family = select(
-            blend_primitives(
+        if bool((*family).modifiers & BOUNDING_VOLUME) {
+            distance_to_family = select(
+                distance_to_family,
+                distance_to_child,
+                abs(distance_to_child) < abs(distance_to_family),
+            );
+        } else {
+            distance_to_family = blend_primitives(
                 distance_to_family,
                 distance_to_child,
                 family,
                 &child,
-            ),
-            select(
-                distance_to_family,
-                distance_to_child,
-                abs(distance_to_child) < abs(distance_to_family),
-            ),
-            bool((*family).modifiers & BOUNDING_VOLUME),
-        );
+            );
+        }
 
         // Skip the descendants of this child, for now
         child_index += child.num_descendants;

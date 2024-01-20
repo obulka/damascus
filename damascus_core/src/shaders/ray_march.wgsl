@@ -2251,10 +2251,6 @@ fn distance_to_descendants(
         _render_params.ray_marcher.max_distance,
         parent_is_bounding_volume,
     );
-    var out_of_parents_boundary: bool = (
-        parent_is_bounding_volume
-        && distance_to_family > hit_tolerance
-    );
 
     var current_parent_index: u32 = earliest_ancestor_index;
     var next_parent_index: u32 = current_parent_index;
@@ -2289,24 +2285,6 @@ fn distance_to_descendants(
             *family = _primitives.primitives[current_parent_index];
             (*family).material = child.material;
             parent_is_bounding_volume = bool((*family).modifiers & BOUNDING_VOLUME);
-            out_of_parents_boundary = (
-                parent_is_bounding_volume
-                && distance_to_family > hit_tolerance
-            );
-
-            // // If we are outside of the parent volume, skip it and its children
-            // current_parent_index += select(
-            //     0u,
-            //     (*family).num_descendants,
-            //     out_of_parents_boundary,
-            // );
-            // // Increment the counter tracking the number of children
-            // // processed so far
-            // children_processed += select(
-            //     0u,
-            //     (*family).num_descendants,
-            //     out_of_parents_boundary,
-            // );
 
             // Update the child index to point to the first child of the
             // new parent
@@ -2343,13 +2321,15 @@ fn distance_to_descendants(
             found_next_parent,
         );
 
-        if out_of_childs_boundary || out_of_parents_boundary {
+        if out_of_childs_boundary || parent_is_bounding_volume {
+            var child_closest: bool = abs(distance_to_child) < abs(distance_to_family);
             distance_to_family = select(
                 distance_to_family,
                 distance_to_child,
-                abs(distance_to_child) < abs(distance_to_family),
+                child_closest,
             );
-        } else if !child_is_bounding_volume && !parent_is_bounding_volume {
+            select_material(family, &child, child_closest);
+        } else if !child_is_bounding_volume {
             distance_to_family = blend_primitives(
                 distance_to_family,
                 distance_to_child,

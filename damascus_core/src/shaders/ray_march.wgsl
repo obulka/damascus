@@ -2350,6 +2350,7 @@ fn distance_to_descendants(
         if out_of_childs_boundary {
             // If we are outside the childs boundary use the distance to the
             // boundary in a simple union with our current distance
+            // and mark all children as processed
             descendants_processed += child.num_descendants;
 
             var child_closest: bool = distance_to_child < distance_to_family;

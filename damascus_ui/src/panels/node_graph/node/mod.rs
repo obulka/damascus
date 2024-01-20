@@ -1064,6 +1064,24 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             .with_hidden(),
                     ),
                 );
+                input_bool(
+                    graph,
+                    "bounding_volume",
+                    Bool::new(default_primitive.bounding_volume).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "If enabled, this object will act as a bounding volume
+                            for all its children. This means that until a ray hits
+                            the bounding volume, none of the child object's signed
+                            distance fields will be computed. This can vastly
+                            improve performance, especially when many complex
+                            objects are far from the camera. This option does
+                            not always play well with lighting effects that depend
+                            on the number of iterations in the computation such
+                            as 'ambient occlusion' and 'softened shadows' due
+                            to the variation near the surface of the bounding object."
+                        }),
+                    ),
+                );
                 input_combo_box(
                     graph,
                     "blend_type",
@@ -1138,24 +1156,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         UIData::default()
                             .with_tooltip("The elongation of the object along the respective axes.")
                             .with_hidden(),
-                    ),
-                );
-                input_bool(
-                    graph,
-                    "bounding_volume",
-                    Bool::new(default_primitive.bounding_volume).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "If enabled, this object will act as a bounding volume
-                            for all its children. This means that until a ray hits
-                            the bounding volume, none of the child object's signed
-                            distance fields will be computed. This can vastly
-                            improve performance, especially when many complex
-                            objects are far from the camera. This option does
-                            not always play well with lighting effects that depend
-                            on the number of iterations in the computation such
-                            as 'ambient occlusion' and 'softened shadows' due
-                            to the variation near the surface of the bounding object."
-                        }),
                     ),
                 );
                 output_primitive(graph, "out");

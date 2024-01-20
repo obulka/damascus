@@ -481,6 +481,7 @@ pub fn evaluate_node(
             let negative_repetitions = evaluator.input_uint_vector3("negative_repetitions")?;
             let positive_repetitions = evaluator.input_uint_vector3("positive_repetitions")?;
             let spacing = evaluator.input_vector3("spacing")?;
+            let bounding_volume = evaluator.input_bool("bounding_volume")?;
             let blend_type = evaluator.input_combo_box::<geometry::BlendType>("blend_type")?;
             let blend_strength = evaluator.input_float("blend_strength")?;
             let mirror = evaluator.input_bool_vector3("mirror")?;
@@ -488,7 +489,6 @@ pub fn evaluate_node(
             let wall_thickness = evaluator.input_float("wall_thickness")?;
             let elongate = evaluator.input_bool("elongate")?;
             let elongation = evaluator.input_vector3("elongation")?;
-            let bounding_volume = evaluator.input_bool("bounding_volume")?;
             let world_matrix = evaluator.input_matrix4("world_matrix")?;
             for child in descendants.iter_mut() {
                 child.world_matrix = world_matrix * child.world_matrix;

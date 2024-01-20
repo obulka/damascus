@@ -3275,15 +3275,13 @@ fn material_interaction(
         );
     }
 
-    var material_geometry_factor: f32;
-    if light_sampling_material_pdf > 0. {
-        material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
-    } else {
-        material_geometry_factor = 1.;
-    }
+    var material_geometry_factor: f32 = select(
+        1.,
+        saturate_f32(dot((*ray).direction, surface_normal)),
+        light_sampling_material_pdf > 0.,
+    );
 
-    // TODO
-    var radius: f32 = 1.;
+    var radius: f32 = (*primitive).dimensional_data.x;
     var visible_surface_area: f32 = TWO_PI * radius * radius;
 
     (*ray).colour += multiple_importance_sample(
@@ -3354,7 +3352,8 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
         distance_since_last_bounce += step_distance;
 
         // Have we hit the nearest object?
-        if step_distance < pixel_footprint {
+        var hit_object: bool = step_distance < pixel_footprint;
+        if hit_object {
             bounces++;
             var intersection_position = position_on_ray + step_distance * (*ray).direction;
 
@@ -3410,22 +3409,27 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
 
             // Update the random seed for the next iteration
             path_seed = random_vec3f(path_seed.zxy + seed);
-        } else if dynamic_level_of_detail {
-            pixel_footprint += _render_params.ray_marcher.hit_tolerance * step_distance;
         }
+        pixel_footprint += select(
+            0.,
+            _render_params.ray_marcher.hit_tolerance * step_distance,
+            dynamic_level_of_detail && !hit_object,
+        );
 
         last_step_distance = signed_step_distance;
         iterations++;
     }
-    if _render_params.ray_marcher.output_aov > BEAUTY_AOV {
-        (*ray).colour = final_aovs(
+
+    (*ray).colour = select(
+        (*ray).colour,
+        final_aovs(
             _render_params.ray_marcher.output_aov,
             bounces,
             iterations,
             distance_travelled,
-        );
-        // TODO object id in alpha after you can sample
-    }
+        ),
+        _render_params.ray_marcher.output_aov > BEAUTY_AOV,
+    );
 }
 
 

@@ -1,7 +1,17 @@
 use strum::{Display, EnumIter, EnumString};
 
 #[derive(
-    Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Default,
+    Display,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum AOVs {
     #[default]

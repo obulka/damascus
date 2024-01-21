@@ -663,18 +663,13 @@ fn distance_to_hollow_sphere(
 
     var cut_radius: f32 = sqrt(radius * radius - cut_height * cut_height);
 
-    if (
-        cut_height * cylindrical_position.x
-        < cut_radius * cylindrical_position.y
-    ) {
+    return select(
+        // Closest point is on the spherical surface
+        abs(length(cylindrical_position) - radius) - half_thickness,
         // Closest point is on the rim
-        return length(
-            cylindrical_position
-            - vec2(cut_radius, cut_height)
-        ) - half_thickness;
-    }
-    // Closest point is on the spherical surface
-    return abs(length(cylindrical_position) - radius) - half_thickness;
+        length(cylindrical_position - vec2(cut_radius, cut_height)) - half_thickness,
+        cut_height * cylindrical_position.x < cut_radius * cylindrical_position.y,
+    );
 }
 
 
@@ -714,20 +709,19 @@ fn distance_to_death_star(
 
     var cut_radius: f32 = sqrt(additive_sphere_radius_squared - cut_height * cut_height);
 
-    if (
-        subtractive_sphere_height * positive_part_f32(cut_radius - cylindrical_position.x)
-        < cylindrical_position.y * cut_radius - cylindrical_position.x * cut_height
-    ) {
-        // Closest point is on the rim
-        return length(cylindrical_position - vec2(cut_radius, cut_height));
-    }
-    return max(
-        // Closest point to the solid sphere
-        length(cylindrical_position) - additive_sphere_radius,
-        // Closest point to the hollowed portion
-        subtractive_sphere_radius - length(
-            cylindrical_position - vec2(0., subtractive_sphere_height)
+    return select(
+        max(
+            // Closest point to the solid sphere
+            length(cylindrical_position) - additive_sphere_radius,
+            // Closest point to the hollowed portion
+            subtractive_sphere_radius - length(
+                cylindrical_position - vec2(0., subtractive_sphere_height)
+            ),
         ),
+        // Closest point is on the rim
+        length(cylindrical_position - vec2(cut_radius, cut_height)),
+        subtractive_sphere_height * positive_part_f32(cut_radius - cylindrical_position.x)
+        < cylindrical_position.y * cut_radius - cylindrical_position.x * cut_height,
     );
 }
 
@@ -1344,8 +1338,8 @@ fn distance_to_mandelbulb(
     *trap_colour = abs_position;
 
     var dradius: f32 = 1.;
-    for (var iteration=0u; iteration < iterations; iteration++)
-    {
+    var iteration: u32 = 0u;
+    loop {
         dradius = power * pow(radius_squared, (power - 1.) / 2.) * dradius + 1.;
 
         var current_radius: f32 = length(current_position);
@@ -1362,7 +1356,9 @@ fn distance_to_mandelbulb(
         *trap_colour = min(*trap_colour, abs_position);
 
         radius_squared = dot2_vec3f(current_position);
-        if(radius_squared > max_square_radius) {
+
+        iteration++;
+        if iteration >= iterations || radius_squared > max_square_radius {
             break;
         }
     }
@@ -3305,7 +3301,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
+fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray>) {
     var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_params.ray_marcher.roulette);
     var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
@@ -3364,10 +3360,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             );
 
             // Early exit for the various AOVs that are not 'beauty'
-            if (
-                _render_params.ray_marcher.output_aov > BEAUTY_AOV
-                && _render_params.ray_marcher.output_aov < STATS_AOV
-            ) {
+            if exit_early_with_aov {
                 (*ray).colour = early_exit_aovs(
                     _render_params.ray_marcher.output_aov,
                     intersection_position,
@@ -3439,10 +3432,15 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var seed = random_vec3f(_render_params.ray_marcher.seeds + frag_coord_seed);
     var pixel_colour = vec3(0.);
 
+    var exit_early_with_aov: bool = (
+        _render_params.ray_marcher.output_aov > BEAUTY_AOV
+        && _render_params.ray_marcher.output_aov < STATS_AOV
+    );
+
     for (var path=1u; path <= _render_params.ray_marcher.paths_per_pixel; path++) {
         var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
 
-        march_path(seed, &ray);
+        march_path(seed, exit_early_with_aov, &ray);
 
         pixel_colour += ray.colour;
 

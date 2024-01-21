@@ -327,6 +327,7 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Material => {
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
+            let diffuse_texture = evaluator.input_procedural_texture("diffuse_texture")?;
             let specular_probability = evaluator.input_float("specular_probability")?;
             let specular_roughness = evaluator.input_float("specular_roughness")?;
             let specular_colour = evaluator.input_vector3("specular_colour")?;
@@ -343,6 +344,7 @@ pub fn evaluate_node(
                 "out",
                 materials::Material {
                     diffuse_colour: diffuse_colour,
+                    diffuse_texture: diffuse_texture.to_gpu(),
                     specular_probability: specular_probability,
                     specular_roughness: specular_roughness,
                     specular_colour: specular_colour,

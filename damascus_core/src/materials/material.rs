@@ -1,10 +1,13 @@
 use crevice::std140::AsStd140;
 use glam::Vec3;
 
+use super::{GPUProceduralTexture, ProceduralTexture};
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct Material {
     pub diffuse_colour: Vec3,
+    pub diffuse_texture: GPUProceduralTexture,
     pub specular_probability: f32,
     pub specular_roughness: f32,
     pub specular_colour: Vec3,
@@ -22,6 +25,7 @@ impl Default for Material {
     fn default() -> Self {
         Material {
             diffuse_colour: Vec3::ONE,
+            diffuse_texture: ProceduralTexture::default().to_gpu(),
             specular_probability: 0.,
             specular_roughness: 0.,
             specular_colour: Vec3::ONE,

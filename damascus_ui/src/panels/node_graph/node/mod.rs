@@ -558,6 +558,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         )
                         .as_colour(),
                 );
+                input_procedural_texture(
+                    graph,
+                    "diffuse_texture",
+                    materials::ProceduralTexture::default(),
+                );
                 input_float(
                     graph,
                     "specular_probability",

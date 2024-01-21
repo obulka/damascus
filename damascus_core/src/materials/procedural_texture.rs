@@ -25,7 +25,7 @@ pub enum ProceduralTextureType {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
 pub struct GPUProceduralTexture {
     texture_type: u32,
     black_point: f32,
@@ -56,7 +56,7 @@ impl Default for ProceduralTexture {
 }
 
 impl ProceduralTexture {
-    pub fn to_gpu(&self) -> Std140GPUProceduralTexture {
+    pub fn to_gpu(&self) -> GPUProceduralTexture {
         GPUProceduralTexture {
             texture_type: self.texture_type as u32,
             black_point: self.black_point,
@@ -64,6 +64,5 @@ impl ProceduralTexture {
             lift: self.lift,
             gamma: self.gamma,
         }
-        .as_std140()
     }
 }

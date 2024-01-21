@@ -8,6 +8,7 @@ use eframe::{
     egui_wgpu::{self, wgpu},
     wgpu::util::DeviceExt,
 };
+use glam;
 
 use damascus_core::{
     geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
@@ -230,9 +231,24 @@ impl Viewport3d {
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
 
-        // self.angle += response.drag_delta().x * 0.01;
         self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
+
+        let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
+            glam::Mat4::from_quat(glam::Quat::from_euler(
+                glam::EulerRot::XYZ,
+                0.00015 * response.drag_delta().y,
+                0.00015 * response.drag_delta().x,
+                0.,
+            ))
+        } else {
+            glam::Mat4::from_translation(glam::Vec3::new(
+                -0.0015 * response.drag_delta().x,
+                0.0015 * response.drag_delta().y,
+                -0.015 * ui.input(|i| i.scroll_delta.y),
+            ))
+        };
+        self.renderer.scene.render_camera.world_matrix *= camera_transform;
 
         // Clone locals so we can move them into the paint callback:
         let render_parameters = self.renderer.as_render_parameters();

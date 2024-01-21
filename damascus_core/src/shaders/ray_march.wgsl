@@ -2016,6 +2016,16 @@ fn distance_to_primitive(
 }
 
 
+fn checkerboard(
+    ray: ptr<function, Ray>,
+    primitive: ptr<function, Primitive>,
+) -> vec3<f32> {
+    var square_signal: vec3<f32> = sign(fract((*ray).origin * 0.5) - 0.5);
+
+    return vec3(0.5 - 0.5 * square_signal.x * square_signal.y * square_signal.z);
+}
+
+
 fn mix_materials(
     primitive_0: ptr<function, Primitive>,
     primitive_1: ptr<function, Primitive>,

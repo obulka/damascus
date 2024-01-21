@@ -344,7 +344,7 @@ pub fn evaluate_node(
                 "out",
                 materials::Material {
                     diffuse_colour: diffuse_colour,
-                    diffuse_texture: diffuse_texture.to_gpu(),
+                    diffuse_texture: diffuse_texture,
                     specular_probability: specular_probability,
                     specular_roughness: specular_roughness,
                     specular_colour: specular_colour,

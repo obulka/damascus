@@ -1436,10 +1436,10 @@ fn distance_to_mandelbox(
 // materials/material.wgsl
 
 struct ProceduralTexture {
-    texture_type: u32,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
+    // texture_type: u32,
+    // black_point: f32,
+    // white_point: f32,
+    // lift: f32,
     gamma: f32,
 }
 

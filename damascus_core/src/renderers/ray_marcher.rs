@@ -1,14 +1,14 @@
-use crevice::std140::AsStd140;
+use crevice::std430::AsStd430;
 use glam::Vec3;
 use rand::random;
 
 use crate::{
     renderers::AOVs,
-    scene::{Scene, Std140SceneParameters},
+    scene::{Scene, Std430SceneParameters},
 };
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPURayMarcher {
     paths_per_pixel: u32,
     roulette: u32,
@@ -35,10 +35,10 @@ pub struct GPURayMarcher {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd430)]
 pub struct RenderParameters {
-    ray_marcher: Std140GPURayMarcher,
-    scene: Std140SceneParameters,
+    ray_marcher: Std430GPURayMarcher,
+    scene: Std430SceneParameters,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -95,7 +95,7 @@ impl Default for RayMarcher {
 }
 
 impl RayMarcher {
-    pub fn to_gpu(&self) -> Std140GPURayMarcher {
+    pub fn to_gpu(&self) -> Std430GPURayMarcher {
         GPURayMarcher {
             paths_per_pixel: self.paths_per_pixel.max(1),
             roulette: self.roulette as u32,
@@ -116,14 +116,14 @@ impl RayMarcher {
             output_aov: self.output_aov as u32,
             latlong: self.latlong as u32,
         }
-        .as_std140()
+        .as_std430()
     }
 
-    pub fn as_render_parameters(&self) -> Std140RenderParameters {
+    pub fn as_render_parameters(&self) -> Std430RenderParameters {
         RenderParameters {
             ray_marcher: self.to_gpu(),
             scene: self.scene.create_scene_parameters(),
         }
-        .as_std140()
+        .as_std430()
     }
 }

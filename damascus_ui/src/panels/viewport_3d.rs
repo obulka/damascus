@@ -11,9 +11,9 @@ use eframe::{
 use glam;
 
 use damascus_core::{
-    geometry::{camera::Std140GPUCamera, Std140GPUPrimitive},
-    lights::Std140GPULight,
-    renderers::{RayMarcher, Std140RenderParameters},
+    geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
+    lights::Std430GPULight,
+    renderers::{RayMarcher, Std430RenderParameters},
     scene::Scene,
     shaders,
 };
@@ -325,10 +325,10 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
-        render_parameters: Std140RenderParameters,
-        render_camera: Std140GPUCamera,
-        primitives: [Std140GPUPrimitive; Scene::MAX_PRIMITIVES],
-        lights: [Std140GPULight; Scene::MAX_LIGHTS],
+        render_parameters: Std430RenderParameters,
+        render_camera: Std430GPUCamera,
+        primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
+        lights: [Std430GPULight; Scene::MAX_LIGHTS],
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(

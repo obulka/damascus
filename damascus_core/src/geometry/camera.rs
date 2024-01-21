@@ -1,8 +1,8 @@
-use crevice::std140::AsStd140;
+use crevice::std430::AsStd430;
 use glam::{Mat4, Vec4};
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
     enable_depth_of_field: u32,
     aperture: f32,
@@ -91,7 +91,7 @@ impl Camera {
         )
     }
 
-    pub fn to_gpu(&self) -> Std140GPUCamera {
+    pub fn to_gpu(&self) -> Std430GPUCamera {
         GPUCamera {
             enable_depth_of_field: self.enable_depth_of_field as u32,
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
@@ -107,6 +107,6 @@ impl Camera {
             )
             .inverse(),
         }
-        .as_std140()
+        .as_std430()
     }
 }

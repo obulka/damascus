@@ -1,13 +1,13 @@
-use crevice::std140::AsStd140;
+use crevice::std430::AsStd430;
 use glam::{BVec3, Mat3, Mat4, UVec3, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use super::materials::Material;
+use super::materials::{GPUMaterial, Material};
 
 pub mod camera;
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Copy, Clone, AsStd430, serde::Serialize, serde::Deserialize)]
 pub struct Transform {
     translation: Vec3,
     inverse_rotation: Mat3,
@@ -81,11 +81,11 @@ pub enum Repetition {
 }
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, AsStd140)]
+#[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUPrimitive {
     shape: u32,
     transform: Transform,
-    material: Material,
+    material: GPUMaterial,
     modifiers: u32,
     negative_repetitions: Vec3,
     positive_repetitions: Vec3,
@@ -146,7 +146,7 @@ impl Default for Primitive {
 }
 
 impl Primitive {
-    pub fn to_gpu(&self) -> Std140GPUPrimitive {
+    pub fn to_gpu(&self) -> Std430GPUPrimitive {
         let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
         GPUPrimitive {
             shape: self.shape as u32,
@@ -155,7 +155,7 @@ impl Primitive {
                 inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),
                 uniform_scale: scale.x,
             },
-            material: self.material,
+            material: self.material.to_gpu(),
             modifiers: self.repetition as u32
                 | if self.elongate { 4 } else { 0 }
                 | if self.mirror.x { 8 } else { 0 }
@@ -178,6 +178,6 @@ impl Primitive {
             num_descendants: self.num_descendants,
             dimensional_data: self.dimensional_data,
         }
-        .as_std140()
+        .as_std430()
     }
 }

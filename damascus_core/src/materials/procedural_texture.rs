@@ -1,4 +1,4 @@
-use crevice::std140::AsStd140;
+use crevice::std430::AsStd430;
 use strum::{Display, EnumIter, EnumString};
 
 #[derive(
@@ -25,12 +25,12 @@ pub enum ProceduralTextureType {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd140, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUProceduralTexture {
-    texture_type: u32,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
+    // texture_type: u32,
+    // black_point: f32,
+    // white_point: f32,
+    // lift: f32,
     gamma: f32,
 }
 
@@ -58,10 +58,10 @@ impl Default for ProceduralTexture {
 impl ProceduralTexture {
     pub fn to_gpu(&self) -> GPUProceduralTexture {
         GPUProceduralTexture {
-            texture_type: self.texture_type as u32,
-            black_point: self.black_point,
-            white_point: self.white_point,
-            lift: self.lift,
+            // texture_type: self.texture_type as u32,
+            // black_point: self.black_point,
+            // white_point: self.white_point,
+            // lift: self.lift,
             gamma: self.gamma,
         }
     }

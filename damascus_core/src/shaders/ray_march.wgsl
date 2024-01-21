@@ -3327,7 +3327,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
     while (
         distance_travelled < _render_params.ray_marcher.max_distance
         && iterations < _render_params.ray_marcher.max_ray_steps
-        && sum_component_vec3f((*ray).throughput) > _render_params.ray_marcher.hit_tolerance
+        && sum_component_vec3f((*ray).throughput) > pixel_footprint
         && length((*ray).colour) < _render_params.ray_marcher.max_brightness
     ) {
         position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;

@@ -203,6 +203,21 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::Primitive { value })
         }
 
+        fn input_procedural_texture(
+            &mut self,
+            name: &str,
+        ) -> anyhow::Result<materials::ProceduralTexture> {
+            self.evaluate_input(name)?.try_to_procedural_texture()
+        }
+
+        fn output_procedural_texture(
+            &mut self,
+            name: &str,
+            value: materials::ProceduralTexture,
+        ) -> anyhow::Result<DamascusValueType> {
+            self.populate_output(name, DamascusValueType::ProceduralTexture { value })
+        }
+
         fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
             self.evaluate_input(name)?.try_to_ray_marcher()
         }
@@ -518,6 +533,25 @@ pub fn evaluate_node(
             scene_primitives.push(primitive);
             scene_primitives.append(&mut descendants);
             evaluator.output_primitive("out", scene_primitives)
+        }
+        DamascusNodeTemplate::ProceduralTexture => {
+            let texture_type =
+                evaluator.input_combo_box::<materials::ProceduralTextureType>("texture_type")?;
+            let black_point = evaluator.input_float("black_point")?;
+            let white_point = evaluator.input_float("white_point")?;
+            let lift = evaluator.input_float("lift")?;
+            let gamma = evaluator.input_float("gamma")?;
+
+            evaluator.output_procedural_texture(
+                "out",
+                materials::ProceduralTexture {
+                    texture_type: texture_type,
+                    black_point: black_point,
+                    white_point: white_point,
+                    lift: lift,
+                    gamma: gamma,
+                },
+            )
         }
         DamascusNodeTemplate::RayMarcher => {
             let scene = evaluator.input_scene("scene")?;

@@ -51,6 +51,7 @@ pub enum DamascusValueType {
     Light { value: Vec<lights::Light> },
     Material { value: materials::Material },
     Primitive { value: Vec<geometry::Primitive> },
+    ProceduralTexture { value: materials::ProceduralTexture },
     RayMarcher { value: renderers::RayMarcher },
     Scene { value: scene::Scene },
 }
@@ -216,6 +217,15 @@ impl DamascusValueType {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Primitive", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a material
+    pub fn try_to_procedural_texture(self) -> anyhow::Result<materials::ProceduralTexture> {
+        if let DamascusValueType::ProceduralTexture { value } = self {
+            Ok(value)
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to ProceduralTexture", self)
         }
     }
 

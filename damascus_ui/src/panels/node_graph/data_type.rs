@@ -30,6 +30,7 @@ pub enum DamascusDataType {
     Light,
     Material,
     Primitive,
+    ProceduralTexture,
     RayMarcher,
     Scene,
 }
@@ -44,6 +45,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Light => egui::Color32::from_rgb(255, 204, 128),
             DamascusDataType::Material => egui::Color32::from_rgb(255, 102, 0),
             DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
+            DamascusDataType::ProceduralTexture => egui::Color32::from_rgb(14, 73, 9),
             DamascusDataType::RayMarcher => egui::Color32::from_rgb(19, 216, 157),
             DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
@@ -69,6 +71,7 @@ impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
             DamascusDataType::Light => "light",
             DamascusDataType::Material => "material",
             DamascusDataType::Primitive => "primitive",
+            DamascusDataType::ProceduralTexture => "procedural texture",
             DamascusDataType::RayMarcher => "ray marcher",
             DamascusDataType::Scene => "scene",
         })

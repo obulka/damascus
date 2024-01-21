@@ -30,6 +30,7 @@ pub enum DamascusNodeTemplate {
     Light,
     Material,
     Primitive,
+    ProceduralTexture,
     RayMarcher,
     Scene,
 }
@@ -64,6 +65,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::Light => "light",
             DamascusNodeTemplate::Material => "material",
             DamascusNodeTemplate::Primitive => "primitive",
+            DamascusNodeTemplate::ProceduralTexture => "procedural texture",
             DamascusNodeTemplate::RayMarcher => "ray marcher",
             DamascusNodeTemplate::Scene => "scene",
         })
@@ -267,6 +269,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
             };
 
+        let input_procedural_texture =
+            |graph: &mut DamascusGraph, name: &str, default: materials::ProceduralTexture| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    DamascusDataType::ProceduralTexture,
+                    DamascusValueType::ProceduralTexture { value: default },
+                    InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
+
         let input_ray_marcher =
             |graph: &mut DamascusGraph, name: &str, default: renderers::RayMarcher| {
                 graph.add_input_param(
@@ -307,6 +321,13 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         };
         let output_primitive = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
+        };
+        let output_procedural_texture = |graph: &mut DamascusGraph, name: &str| {
+            graph.add_output_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::ProceduralTexture,
+            );
         };
         let output_ray_marcher = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::RayMarcher);
@@ -1159,6 +1180,56 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     ),
                 );
                 output_primitive(graph, "out");
+            }
+            DamascusNodeTemplate::ProceduralTexture => {
+                let default_procedural_texture = materials::ProceduralTexture::default();
+                input_combo_box(
+                    graph,
+                    "texture_type",
+                    ComboBox::from_enum::<materials::ProceduralTextureType>(
+                        default_procedural_texture.texture_type,
+                    )
+                    .with_ui_data(UIData::default().with_tooltip(indoc! {
+                        "TODO",
+                    })),
+                );
+                input_float(
+                    graph,
+                    "black_point",
+                    Float::new(default_procedural_texture.black_point).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "TODO"
+                        }),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "white_point",
+                    Float::new(default_procedural_texture.white_point).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "TODO"
+                        }),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "lift",
+                    Float::new(default_procedural_texture.lift).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "TODO"
+                        }),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "gamma",
+                    Float::new(default_procedural_texture.gamma).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "TODO"
+                        }),
+                    ),
+                );
+                output_procedural_texture(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {
                 let default_ray_marcher = renderers::RayMarcher::default();

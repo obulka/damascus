@@ -1854,11 +1854,11 @@ fn mirrored_infinite_repetition(
  * @returns: The modified distance to the primitive.
  */
 fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
-    var modified_distance: f32 = distance;
-    if bool((*primitive).modifiers & HOLLOW) {
-        modified_distance = abs(modified_distance) - (*primitive).wall_thickness;
-    }
-    return modified_distance - (*primitive).edge_radius;
+    return select(
+        distance,
+        abs(distance) - (*primitive).wall_thickness,
+        bool((*primitive).modifiers & HOLLOW),
+    ) - (*primitive).edge_radius;
 }
 
 

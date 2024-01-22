@@ -1878,6 +1878,7 @@ fn transform_position(
         (*primitive).transform.inverse_rotation
         * (position - (*primitive).transform.translation)
     );
+    // Perform finite or infinite repetition if enabled
     transformed_position = select(
         select(
             transformed_position,
@@ -1893,6 +1894,7 @@ fn transform_position(
         ),
         bool((*primitive).modifiers & FINITE_REPETITION),
     );
+    // Perform elongation if enabled
     transformed_position -= select(
         vec3(0.),
         clamp(
@@ -1902,6 +1904,7 @@ fn transform_position(
         ),
         bool((*primitive).modifiers & ELONGATE),
     );
+    // Perform mirroring if enabled
     return select(
         transformed_position,
         abs(transformed_position),

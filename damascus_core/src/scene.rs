@@ -29,7 +29,7 @@ impl Scene {
 
     pub fn create_gpu_primitives(&self) -> [Std430GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [Primitive::default().to_gpu().as_std430(); Self::MAX_PRIMITIVES];
-        for index in 0..self.primitives.len().min(Scene::MAX_PRIMITIVES) {
+        for index in 0..self.primitives.len().min(Self::MAX_PRIMITIVES) {
             primitive_array[index] = self.primitives[index].to_gpu().as_std430();
         }
         primitive_array
@@ -37,13 +37,13 @@ impl Scene {
 
     pub fn create_gpu_lights(&self) -> [Std430GPULight; Self::MAX_LIGHTS] {
         let mut light_array = [Light::default().to_gpu().as_std430(); Self::MAX_LIGHTS];
-        for index in 0..self.lights.len().min(Scene::MAX_LIGHTS) {
+        for index in 0..self.lights.len().min(Self::MAX_LIGHTS) {
             light_array[index] = self.lights[index].to_gpu().as_std430();
         }
         light_array
     }
 
-    fn num_emissive_prims(&self) -> u32 {
+    fn num_emissive_prims(&self) -> usize {
         let mut count = 0;
         for primitive in self.primitives.iter() {
             if primitive.material.emissive_probability > 0. {
@@ -55,9 +55,9 @@ impl Scene {
 
     pub fn create_scene_parameters(&self) -> GPUSceneParameters {
         return GPUSceneParameters {
-            num_primitives: self.primitives.len() as u32,
-            num_lights: self.lights.len() as u32 + self.num_emissive_prims(),
-            num_non_physical_lights: self.lights.len() as u32,
+            num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
+            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_prims()) as u32,
+            num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,
         };
     }
 }

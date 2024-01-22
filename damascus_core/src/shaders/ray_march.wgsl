@@ -78,26 +78,6 @@ fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
 }
 
 
-// fn max_component_vec4f(vector_: vec4<f32>) -> f32 {
-//     return max(vector_.x, max(vector_.y, max(vector_.z, vector_.w)));
-// }
-
-
-// fn min_component_vec2f(vector_: vec2<f32>) -> f32 {
-//     return min(vector_.x, vector_.y);
-// }
-
-
-// fn min_component_vec3f(vector_: vec3<f32>) -> f32 {
-//     return min(vector_.x, min(vector_.y, vector_.z));
-// }
-
-
-// fn min_component_vec4f(vector_: vec4<f32>) -> f32 {
-//     return min(vector_.x, min(vector_.y, min(vector_.z, vector_.w)));
-// }
-
-
 /**
  * The positive part of the vector. Ie. any negative values will be 0.
  *
@@ -851,7 +831,8 @@ fn distance_to_rhombus(
     var f: f32 = clamp((s.x - s.y) / dot2_vec2f(half_width_height), -1., 1.);
 
     var inside: f32 = sign(
-        dot(abs_position.xy, half_width_height.yx) - half_width_height.x * half_width_height.y,
+        dot(abs_position.xy, half_width_height.yx)
+        - half_width_height.x * half_width_height.y,
     );
 
     var rhombus_to_position = vec2(
@@ -1103,7 +1084,10 @@ fn distance_to_capped_cone(
         -1.,
         cone_edge_to_position.x < 0. && cone_top_or_bottom_to_position.y < 0.,
     );
-    return inside * min_length_vec2f(cone_top_or_bottom_to_position, cone_edge_to_position);
+    return inside * min_length_vec2f(
+        cone_top_or_bottom_to_position,
+        cone_edge_to_position,
+    );
 }
 
 
@@ -1259,7 +1243,11 @@ fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> 
         sign(abs_position.y - half_height) * length(
             abs_position.xy
             - vec2(
-                clamp(abs_position.x, -cos_sin_tan.z * half_height, cos_sin_tan.z * half_height),
+                clamp(
+                    abs_position.x,
+                    -cos_sin_tan.z * half_height,
+                    cos_sin_tan.z * half_height,
+                ),
                 half_height,
             ),
         ),
@@ -1678,7 +1666,7 @@ fn sample_material(
         (*ray).direction = normalize(mix(
             ideal_specular_direction,
             diffuse_direction,
-            (*primitive).material.specular_roughness * (*primitive).material.specular_roughness,
+            (*primitive).material.specular_roughness, // Assume roughness squared by CPU
         ));
 
         // Offset the point so that it doesn't get trapped on the surface.
@@ -2672,7 +2660,9 @@ fn distance_to_descendants_with_primitive(
     // Check if the topmost primmitive is a bounding volume
     var family_is_bounded: bool = bool((*family).modifiers & BOUNDING_VOLUME);
     // And if we are outside that bounding volume if so
-    var out_of_familys_boundary: bool = family_is_bounded && distance_to_family > hit_tolerance;
+    var out_of_familys_boundary: bool = (
+        family_is_bounded && distance_to_family > hit_tolerance
+    );
 
     // If we are inside the bounding volume we don't want the initial distance
     // to be to the boundary, so set it to the maximum distance instead.
@@ -2816,10 +2806,9 @@ fn signed_distance_to_scene_with_primitive(
 ) -> f32 {
     var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
     var primitive: Primitive;
-    var primitives_to_process: u32 = min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_params.ray_marcher.hit_tolerance + pixel_footprint;
-    while primitives_processed < primitives_to_process {
+    while primitives_processed < _render_params.scene.num_primitives {
         primitive = _primitives.primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
@@ -2865,7 +2854,9 @@ fn distance_to_descendants(
     // Check if the topmost primmitive is a bounding volume
     var family_is_bounded: bool = bool((*family).modifiers & BOUNDING_VOLUME);
     // And if we are outside that bounding volume if so
-    var out_of_familys_boundary: bool = family_is_bounded && distance_to_family > hit_tolerance;
+    var out_of_familys_boundary: bool = (
+        family_is_bounded && distance_to_family > hit_tolerance
+    );
 
     // If we are inside the bounding volume we don't want the initial distance
     // to be to the boundary, so set it to the maximum distance instead.
@@ -3005,10 +2996,9 @@ fn signed_distance_to_scene(
 ) -> f32 {
     var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
     var primitive: Primitive;
-    var primitives_to_process: u32 = min(_render_params.scene.num_primitives, MAX_PRIMITIVES);
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_params.ray_marcher.hit_tolerance + pixel_footprint;
-    while primitives_processed < primitives_to_process {
+    while primitives_processed < _render_params.scene.num_primitives {
         primitive = _primitives.primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
@@ -3770,7 +3760,12 @@ fn early_exit_aovs(
 }
 
 
-fn final_aovs(aov_type: u32, bounces: u32, iterations: u32, distance_travelled: f32) -> vec3<f32> {
+fn final_aovs(
+    aov_type: u32,
+    bounces: u32,
+    iterations: u32,
+    distance_travelled: f32,
+) -> vec3<f32> {
     switch aov_type {
         case 5u {
             return vec3(

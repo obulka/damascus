@@ -9,8 +9,8 @@ use super::{
 };
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, Default, AsStd430)]
-pub struct SceneParameters {
+#[derive(Debug, Copy, Clone, AsStd430)]
+pub struct GPUSceneParameters {
     num_primitives: u32,
     num_lights: u32,
     num_non_physical_lights: u32,
@@ -28,17 +28,17 @@ impl Scene {
     pub const MAX_LIGHTS: usize = 512;
 
     pub fn create_gpu_primitives(&self) -> [Std430GPUPrimitive; Self::MAX_PRIMITIVES] {
-        let mut primitive_array = [Primitive::default().to_gpu(); Self::MAX_PRIMITIVES];
+        let mut primitive_array = [Primitive::default().to_gpu().as_std430(); Self::MAX_PRIMITIVES];
         for index in 0..self.primitives.len().min(Scene::MAX_PRIMITIVES) {
-            primitive_array[index] = self.primitives[index].to_gpu();
+            primitive_array[index] = self.primitives[index].to_gpu().as_std430();
         }
         primitive_array
     }
 
     pub fn create_gpu_lights(&self) -> [Std430GPULight; Self::MAX_LIGHTS] {
-        let mut light_array = [Light::default().to_gpu(); Self::MAX_LIGHTS];
+        let mut light_array = [Light::default().to_gpu().as_std430(); Self::MAX_LIGHTS];
         for index in 0..self.lights.len().min(Scene::MAX_LIGHTS) {
-            light_array[index] = self.lights[index].to_gpu();
+            light_array[index] = self.lights[index].to_gpu().as_std430();
         }
         light_array
     }
@@ -53,12 +53,11 @@ impl Scene {
         count
     }
 
-    pub fn create_scene_parameters(&self) -> Std430SceneParameters {
-        return SceneParameters {
+    pub fn create_scene_parameters(&self) -> GPUSceneParameters {
+        return GPUSceneParameters {
             num_primitives: self.primitives.len() as u32,
             num_lights: self.lights.len() as u32 + self.num_emissive_prims(),
             num_non_physical_lights: self.lights.len() as u32,
-        }
-        .as_std430();
+        };
     }
 }

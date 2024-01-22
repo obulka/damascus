@@ -91,7 +91,7 @@ impl Camera {
         )
     }
 
-    pub fn to_gpu(&self) -> Std430GPUCamera {
+    fn to_gpu(&self) -> GPUCamera {
         GPUCamera {
             enable_depth_of_field: self.enable_depth_of_field as u32,
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
@@ -107,6 +107,9 @@ impl Camera {
             )
             .inverse(),
         }
-        .as_std430()
+    }
+
+    pub fn as_std_430(&self) -> Std430GPUCamera {
+        self.to_gpu().as_std430()
     }
 }

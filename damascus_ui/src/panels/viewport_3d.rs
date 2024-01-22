@@ -80,7 +80,7 @@ impl Viewport3d {
         // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.to_gpu()]),
+            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_bind_group_layout =
@@ -252,7 +252,7 @@ impl Viewport3d {
 
         // Clone locals so we can move them into the paint callback:
         let render_parameters = self.renderer.as_render_parameters();
-        let render_camera = self.renderer.scene.render_camera.to_gpu();
+        let render_camera = self.renderer.scene.render_camera.as_std_430();
         let primitives = self.renderer.scene.create_gpu_primitives();
         let lights = self.renderer.scene.create_gpu_lights();
 

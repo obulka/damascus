@@ -4,7 +4,7 @@ use rand::random;
 
 use crate::{
     renderers::AOVs,
-    scene::{Scene, Std430SceneParameters},
+    scene::{GPUSceneParameters, Scene},
 };
 
 #[repr(C)]
@@ -37,8 +37,8 @@ pub struct GPURayMarcher {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct RenderParameters {
-    ray_marcher: Std430GPURayMarcher,
-    scene: Std430SceneParameters,
+    ray_marcher: GPURayMarcher,
+    scene: GPUSceneParameters,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -95,7 +95,7 @@ impl Default for RayMarcher {
 }
 
 impl RayMarcher {
-    pub fn to_gpu(&self) -> Std430GPURayMarcher {
+    fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
             paths_per_pixel: self.paths_per_pixel.max(1),
             roulette: self.roulette as u32,
@@ -116,7 +116,6 @@ impl RayMarcher {
             output_aov: self.output_aov as u32,
             latlong: self.latlong as u32,
         }
-        .as_std430()
     }
 
     pub fn as_render_parameters(&self) -> Std430RenderParameters {

@@ -146,7 +146,7 @@ impl Default for Primitive {
 }
 
 impl Primitive {
-    pub fn to_gpu(&self) -> Std430GPUPrimitive {
+    pub fn to_gpu(&self) -> GPUPrimitive {
         let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
         GPUPrimitive {
             shape: self.shape as u32,
@@ -178,6 +178,5 @@ impl Primitive {
             num_descendants: self.num_descendants,
             dimensional_data: self.dimensional_data,
         }
-        .as_std430()
     }
 }

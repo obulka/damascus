@@ -65,7 +65,7 @@ impl Default for Light {
 }
 
 impl Light {
-    pub fn to_gpu(&self) -> Std430GPULight {
+    pub fn to_gpu(&self) -> GPULight {
         GPULight {
             light_type: self.light_type as u32,
             dimensional_data: self.dimensional_data,
@@ -75,6 +75,5 @@ impl Light {
             shadow_hardness: self.shadow_hardness,
             soften_shadows: self.soften_shadows as u32,
         }
-        .as_std430()
     }
 }

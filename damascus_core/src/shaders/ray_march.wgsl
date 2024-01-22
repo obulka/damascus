@@ -1878,24 +1878,30 @@ fn transform_position(
         (*primitive).transform.inverse_rotation
         * (position - (*primitive).transform.translation)
     );
-    if bool((*primitive).modifiers & FINITE_REPETITION) {
-        transformed_position = mirrored_finite_repetition(
+    transformed_position = select(
+        select(
+            transformed_position,
+            mirrored_infinite_repetition(
+                transformed_position,
+                primitive,
+            ),
+            bool((*primitive).modifiers & INFINITE_REPETITION),
+        ),
+        mirrored_finite_repetition(
             transformed_position,
             primitive,
-        );
-    } else if bool((*primitive).modifiers & INFINITE_REPETITION) {
-        transformed_position = mirrored_infinite_repetition(
-            transformed_position,
-            primitive,
-        );
-    }
-    if bool((*primitive).modifiers & ELONGATE) {
-        transformed_position -= clamp(
+        ),
+        bool((*primitive).modifiers & FINITE_REPETITION),
+    );
+    transformed_position -= select(
+        vec3(0.),
+        clamp(
             transformed_position,
             -(*primitive).elongation,
             (*primitive).elongation,
-        );
-    }
+        ),
+        bool((*primitive).modifiers & ELONGATE),
+    );
     return select(
         transformed_position,
         abs(transformed_position),

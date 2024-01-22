@@ -2648,7 +2648,7 @@ fn blend_distances(
 }
 
 
-fn distance_to_descendants_with_primitive(
+fn find_nearest_descendant(
     position: vec3<f32>,
     hit_tolerance: f32,
     earliest_ancestor_index: u32,
@@ -2799,11 +2799,11 @@ fn distance_to_descendants_with_primitive(
 }
 
 
-fn signed_distance_to_scene_with_primitive(
+fn find_nearest_primitive(
     position: vec3<f32>,
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
-) -> f32 {
+) {
     var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
     var primitive: Primitive;
     var primitives_processed = 0u;
@@ -2812,7 +2812,7 @@ fn signed_distance_to_scene_with_primitive(
         primitive = _primitives.primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
-        var signed_distance_field: f32 = distance_to_descendants_with_primitive(
+        var signed_distance_field: f32 = find_nearest_descendant(
             position,
             hit_tolerance,
             primitives_processed,
@@ -2837,8 +2837,6 @@ fn signed_distance_to_scene_with_primitive(
         // `distance_to_descendants` function
         primitives_processed += num_descendants + 1u;
     }
-
-    return distance_to_scene;
 }
 
 
@@ -3966,8 +3964,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
             }
 
             var nearest_primitive: Primitive;
-            // Keep the signed distance so we know whether or not we are inside the object
-            signed_step_distance = signed_distance_to_scene_with_primitive(
+            find_nearest_primitive(
                 position_on_ray,
                 pixel_footprint,
                 &nearest_primitive,

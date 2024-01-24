@@ -1530,6 +1530,7 @@ struct ProceduralTexture {
     gamma: f32,
 }
 
+
 struct Material {
     diffuse_colour: vec3<f32>,
     diffuse_texture: ProceduralTexture,
@@ -2955,13 +2956,7 @@ fn distance_to_descendants(
             // boundary in a simple union with our current distance
             // and mark all children as processed
             descendants_processed += child.num_descendants;
-
-            var child_closest: bool = distance_to_child < distance_to_family;
-            distance_to_family = select(
-                distance_to_family,
-                distance_to_child,
-                child_closest,
-            );
+            distance_to_family = min(distance_to_family, distance_to_child);
         } else if !child_is_bounding_volume {
             // Otherwise, as long as the child isn't a bounding volume,
             // we can perform the normal blending operation

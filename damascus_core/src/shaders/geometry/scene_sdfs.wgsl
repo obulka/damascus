@@ -185,7 +185,7 @@ fn find_nearest_primitive(
         );
 
         // Skip all descendants, they were processed in the
-        // `distance_to_descendants` function
+        // `find_nearest_descendant` function
         primitives_processed += num_descendants + 1u;
     }
 }

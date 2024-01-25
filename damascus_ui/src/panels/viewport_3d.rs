@@ -181,7 +181,7 @@ impl Viewport3d {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(shaders::RAY_MARCH_SHADER)).into(),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader())).into(),
         });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {

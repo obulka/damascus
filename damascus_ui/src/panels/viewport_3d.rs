@@ -13,8 +13,8 @@ use glam;
 use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
-    renderers::{RayMarcher, Std430RenderParameters},
-    scene::Scene,
+    renderers::{RayMarcher, Std430GPURayMarcher},
+    scene::{Scene, Std430GPUSceneParameters},
     shaders,
 };
 
@@ -44,135 +44,136 @@ impl Viewport3d {
 
         let device = &wgpu_render_state.device;
 
-        // Render globals buffer
+        // Uniform Buffers
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render globals buffer"),
-                contents: bytemuck::cast_slice(&[viewport3d.renderer.as_render_parameters()]),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                contents: bytemuck::cast_slice(&[viewport3d.renderer.render_parameters()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
-        let render_parameters_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d render globals bind group layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
+        let scene_parameters_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("viewport 3d render globals buffer"),
+                contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.scene_parameters()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
-        let render_parameters_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d render globals bind group"),
-            layout: &render_parameters_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: render_parameters_buffer.as_entire_binding(),
-            }],
-        });
-
-        // Render camera uniform buffer
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
-        let render_camera_bind_group_layout =
+        let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d camera bind group layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                label: Some("viewport 3d render globals bind group layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                }],
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                ],
             });
-
-        let render_camera_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d render camera bind group"),
-            layout: &render_camera_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: render_camera_buffer.as_entire_binding(),
-            }],
+        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("viewport 3d render globals bind group"),
+            layout: &uniform_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: render_parameters_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: scene_parameters_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: render_camera_buffer.as_entire_binding(),
+                },
+            ],
         });
 
-        // Primitive storage buffer
+        // Storage Buffers for scene
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
-        let primitives_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d primitives bind group layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                }],
-            });
-
-        let primitives_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d primitives bind group"),
-            layout: &primitives_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: primitives_buffer.as_entire_binding(),
-            }],
-        });
-
-        // Light storage buffer
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d lights buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_lights()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
-        let lights_bind_group_layout =
+        let scene_storage_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d lights bind group layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                label: Some("viewport 3d primitives bind group layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                }],
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                ],
             });
 
-        let lights_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d lights bind group"),
-            layout: &lights_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: lights_buffer.as_entire_binding(),
-            }],
+        let scene_storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("viewport 3d primitives bind group"),
+            layout: &scene_storage_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: primitives_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: lights_buffer.as_entire_binding(),
+                },
+            ],
         });
 
         // Create the pipeline
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("viewport 3d pipeline layout"),
-            bind_group_layouts: &[
-                &render_parameters_bind_group_layout,
-                &render_camera_bind_group_layout,
-                &primitives_bind_group_layout,
-                &lights_bind_group_layout,
-            ],
+            bind_group_layouts: &[&uniform_bind_group_layout, &scene_storage_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -212,13 +213,12 @@ impl Viewport3d {
             .paint_callback_resources
             .insert(RenderResources {
                 render_pipeline,
-                render_parameters_bind_group,
+                uniform_bind_group,
                 render_parameters_buffer,
-                render_camera_bind_group,
+                scene_parameters_buffer,
                 render_camera_buffer,
-                primitives_bind_group,
+                scene_storage_bind_group,
                 primitives_buffer,
-                lights_bind_group,
                 lights_buffer,
             });
 
@@ -248,7 +248,8 @@ impl Viewport3d {
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
 
         // Clone locals so we can move them into the paint callback:
-        let render_parameters = self.renderer.as_render_parameters();
+        let render_parameters = self.renderer.render_parameters();
+        let scene_parameters = self.renderer.scene.scene_parameters();
         let render_camera = self.renderer.scene.render_camera.as_std_430();
         let primitives = self.renderer.scene.create_gpu_primitives();
         let lights = self.renderer.scene.create_gpu_lights();
@@ -268,6 +269,7 @@ impl Viewport3d {
                     device,
                     queue,
                     render_parameters,
+                    scene_parameters,
                     render_camera,
                     primitives,
                     lights,
@@ -307,13 +309,12 @@ impl Viewport3d {
 
 struct RenderResources {
     render_pipeline: wgpu::RenderPipeline,
-    render_parameters_bind_group: wgpu::BindGroup,
+    uniform_bind_group: wgpu::BindGroup,
     render_parameters_buffer: wgpu::Buffer,
-    render_camera_bind_group: wgpu::BindGroup,
+    scene_parameters_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
-    primitives_bind_group: wgpu::BindGroup,
+    scene_storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
-    lights_bind_group: wgpu::BindGroup,
     lights_buffer: wgpu::Buffer,
 }
 
@@ -322,7 +323,8 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
-        render_parameters: Std430RenderParameters,
+        render_parameters: Std430GPURayMarcher,
+        scene_parameters: Std430GPUSceneParameters,
         render_camera: Std430GPUCamera,
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
@@ -332,6 +334,11 @@ impl RenderResources {
             &self.render_parameters_buffer,
             0,
             bytemuck::cast_slice(&[render_parameters]),
+        );
+        queue.write_buffer(
+            &self.scene_parameters_buffer,
+            0,
+            bytemuck::cast_slice(&[scene_parameters]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,
@@ -349,10 +356,8 @@ impl RenderResources {
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
         render_pass.set_pipeline(&self.render_pipeline);
 
-        render_pass.set_bind_group(0, &self.render_parameters_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.render_camera_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.primitives_bind_group, &[]);
-        render_pass.set_bind_group(3, &self.lights_bind_group, &[]);
+        render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.scene_storage_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

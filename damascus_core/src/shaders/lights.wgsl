@@ -16,7 +16,7 @@ struct Lights {
     lights: array<Light, MAX_LIGHTS>,
 }
 
-@group(3) @binding(0)
+@group(1) @binding(1)
 var<storage, read> _lights: Lights;
 
 /**
@@ -84,7 +84,7 @@ fn sample_non_physical_light_data(
     switch light.light_type {
         case 0u {
             // Directional light
-            *distance_to_light = _render_params.ray_marcher.max_distance;
+            *distance_to_light = _render_parameters.max_distance;
             *light_direction = normalize(-light.dimensional_data);
         }
         case 1u {
@@ -190,7 +190,7 @@ fn sample_ambient_occlusion(
         var step_distance: f32 = 0.001 + 0.15 * f32(iteration) / 4.;
         var distance_to_closest_object: f32 = abs(signed_distance_to_scene(
             ray_origin + step_distance * surface_normal,
-            _render_params.ray_marcher.hit_tolerance,
+            _render_parameters.hit_tolerance,
         ));
         occlusion += (step_distance - distance_to_closest_object) * occlusion_scale_factor;
         occlusion_scale_factor *= 0.95;
@@ -226,12 +226,12 @@ fn sample_soft_shadow(
     var last_step_distance: f32 = 3.40282346638528859812e38; // FLT_MAX
 
     var iterations: u32 = 0u;
-    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
+    var pixel_footprint: f32 = _render_parameters.hit_tolerance;
 
     var position: vec3<f32> = ray_origin;
     while (
         distance_travelled < distance_to_shade_point
-        && iterations < _render_params.ray_marcher.max_ray_steps / 2u
+        && iterations < _render_parameters.max_ray_steps / 2u
     ) {
         var step_distance: f32 = abs(signed_distance_to_scene(
             position,
@@ -253,7 +253,7 @@ fn sample_soft_shadow(
         last_step_distance = step_distance;
         position += ray_direction * step_distance;
         distance_travelled += step_distance;
-        pixel_footprint += step_distance * _render_params.ray_marcher.hit_tolerance;
+        pixel_footprint += step_distance * _render_parameters.hit_tolerance;
         iterations++;
     }
 
@@ -279,11 +279,11 @@ fn sample_shadow(
 ) -> f32 {
     var distance_travelled: f32 = 0.;
     var iterations: u32 = 0u;
-    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
+    var pixel_footprint: f32 = _render_parameters.hit_tolerance;
     var position: vec3<f32> = ray_origin;
     while (
         distance_travelled < distance_to_shade_point
-        && iterations < _render_params.ray_marcher.max_ray_steps / 2u
+        && iterations < _render_parameters.max_ray_steps / 2u
     ) {
         var step_distance: f32 = abs(signed_distance_to_scene(
             position,
@@ -296,7 +296,7 @@ fn sample_shadow(
 
         position += ray_direction * step_distance;
         distance_travelled += step_distance;
-        pixel_footprint += step_distance * _render_params.ray_marcher.hit_tolerance;
+        pixel_footprint += step_distance * _render_parameters.hit_tolerance;
         iterations++;
     }
 
@@ -437,7 +437,7 @@ fn sample_light(
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 0.;
 
-    if light_id < _render_params.scene.num_non_physical_lights
+    if light_id < _scene_parameters.num_non_physical_lights
     {
         light_colour = sample_non_physical_light(
             position,
@@ -508,7 +508,7 @@ fn sample_lights(
 ) -> vec3<f32> {
     var light_colour = vec3(0.);
 
-    for (var light_id=0u; light_id < _render_params.scene.num_lights; light_id++) {
+    for (var light_id=0u; light_id < _scene_parameters.num_lights; light_id++) {
         var light_direction: vec3<f32> = surface_normal;
         var distance_to_light: f32 = 0.;
 

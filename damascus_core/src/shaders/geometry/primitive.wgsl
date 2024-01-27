@@ -31,5 +31,5 @@ struct Primitives {
 }
 
 
-@group(2) @binding(0)
+@group(1) @binding(0)
 var<storage, read> _primitives: Primitives;

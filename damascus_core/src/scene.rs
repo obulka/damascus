@@ -12,7 +12,7 @@ use super::{
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUSceneParameters {
-    atmosphere: GPUMaterial,
+    // atmosphere: GPUMaterial,
     num_primitives: u32,
     num_lights: u32,
     num_non_physical_lights: u32,
@@ -29,6 +29,15 @@ pub struct Scene {
 impl Scene {
     pub const MAX_PRIMITIVES: usize = 512;
     pub const MAX_LIGHTS: usize = 512;
+
+    fn to_gpu(&self) -> GPUSceneParameters {
+        GPUSceneParameters {
+            // atmosphere: self.atmosphere.to_gpu(),
+            num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
+            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_prims()) as u32,
+            num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,
+        }
+    }
 
     pub fn create_gpu_primitives(&self) -> [Std430GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [Primitive::default().to_gpu().as_std430(); Self::MAX_PRIMITIVES];
@@ -56,12 +65,7 @@ impl Scene {
         count
     }
 
-    pub fn create_scene_parameters(&self) -> GPUSceneParameters {
-        return GPUSceneParameters {
-            atmosphere: self.atmosphere.to_gpu(),
-            num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
-            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_prims()) as u32,
-            num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,
-        };
+    pub fn scene_parameters(&self) -> Std430GPUSceneParameters {
+        self.to_gpu().as_std430()
     }
 }

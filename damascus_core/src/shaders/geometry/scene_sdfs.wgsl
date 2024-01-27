@@ -19,7 +19,7 @@ fn find_nearest_descendant(
     // to be to the boundary, so set it to the maximum distance instead.
     distance_to_family = select(
         distance_to_family,
-        _render_params.ray_marcher.max_distance,
+        _render_parameters.max_distance,
         family_is_bounded && !out_of_familys_boundary,
     );
 
@@ -155,11 +155,11 @@ fn find_nearest_primitive(
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
 ) {
-    var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
+    var distance_to_scene: f32 = _render_parameters.max_distance;
     var primitive: Primitive;
     var primitives_processed = 0u;
-    var hit_tolerance: f32 = _render_params.ray_marcher.hit_tolerance + pixel_footprint;
-    while primitives_processed < _render_params.scene.num_primitives {
+    var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
+    while primitives_processed < _scene_parameters.num_primitives {
         primitive = _primitives.primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
@@ -211,7 +211,7 @@ fn distance_to_descendants(
     // to be to the boundary, so set it to the maximum distance instead.
     distance_to_family = select(
         distance_to_family,
-        _render_params.ray_marcher.max_distance,
+        _render_parameters.max_distance,
         family_is_bounded && !out_of_familys_boundary,
     );
 
@@ -337,11 +337,11 @@ fn signed_distance_to_scene(
     position: vec3<f32>,
     pixel_footprint: f32,
 ) -> f32 {
-    var distance_to_scene: f32 = _render_params.ray_marcher.max_distance;
+    var distance_to_scene: f32 = _render_parameters.max_distance;
     var primitive: Primitive;
     var primitives_processed = 0u;
-    var hit_tolerance: f32 = _render_params.ray_marcher.hit_tolerance + pixel_footprint;
-    while primitives_processed < _render_params.scene.num_primitives {
+    var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
+    while primitives_processed < _scene_parameters.num_primitives {
         primitive = _primitives.primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 

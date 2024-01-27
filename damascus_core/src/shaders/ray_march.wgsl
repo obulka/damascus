@@ -70,8 +70,8 @@ fn material_interaction(
     );
 
     if (
-        _render_params.scene.num_lights > 0u
-        && _render_params.ray_marcher.max_light_sampling_bounces > 0u
+        _scene_parameters.num_lights > 0u
+        && _render_parameters.max_light_sampling_bounces > 0u
         && light_sampling_material_pdf > 0.
     ) {
         // Perform MIS light sampling
@@ -99,7 +99,7 @@ fn material_interaction(
         (*primitive).material.emissive_colour * (*primitive).material.emissive_probability,
         (*ray).throughput,
         previous_material_pdf,
-        sample_lights_pdf(f32(_render_params.scene.num_lights), visible_surface_area),
+        sample_lights_pdf(f32(_scene_parameters.num_lights), visible_surface_area),
     );
 
     (*ray).throughput *= material_brdf * material_geometry_factor / material_pdf;
@@ -118,10 +118,10 @@ fn material_interaction(
  */
 fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray>) {
     var path_seed: vec3<f32> = seed;
-    var roulette = bool(_render_params.ray_marcher.roulette);
-    var dynamic_level_of_detail = bool(_render_params.ray_marcher.dynamic_level_of_detail);
+    var roulette = bool(_render_parameters.roulette);
+    var dynamic_level_of_detail = bool(_render_parameters.dynamic_level_of_detail);
 
-    var sample_all_lights = bool(_render_params.ray_marcher.sample_all_lights);
+    var sample_all_lights = bool(_render_parameters.sample_all_lights);
 
     var distance_travelled: f32 = 0.;
     var distance_since_last_bounce = 0.;
@@ -131,7 +131,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
     var iterations: u32 = 0u;
     var bounces: u32 = 0u;
 
-    var pixel_footprint: f32 = _render_params.ray_marcher.hit_tolerance;
+    var pixel_footprint: f32 = _render_parameters.hit_tolerance;
 
     var previous_material_pdf: f32 = 1.;
 
@@ -140,10 +140,10 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
     // March the ray
     while (
-        distance_travelled < _render_params.ray_marcher.max_distance
-        && iterations < _render_params.ray_marcher.max_ray_steps
+        distance_travelled < _render_parameters.max_distance
+        && iterations < _render_parameters.max_ray_steps
         && sum_component_vec3f((*ray).throughput) > pixel_footprint
-        && length((*ray).colour) < _render_params.ray_marcher.max_brightness
+        && length((*ray).colour) < _render_parameters.max_brightness
     ) {
         position_on_ray = (*ray).origin + distance_since_last_bounce * (*ray).direction;
 
@@ -175,7 +175,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
             // Early exit for the various AOVs that are not 'beauty'
             if exit_early_with_aov {
                 (*ray).colour = early_exit_aovs(
-                    _render_params.ray_marcher.output_aov,
+                    _render_parameters.output_aov,
                     intersection_position,
                     intersection_position, // TODO world to local
                     surface_normal,
@@ -193,7 +193,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
             previous_material_pdf = material_interaction(
                 path_seed,
                 step_distance,
-                2. * pixel_footprint * _render_params.ray_marcher.shadow_bias,
+                2. * pixel_footprint * _render_parameters.shadow_bias,
                 distance_since_last_bounce,
                 intersection_position,
                 surface_normal,
@@ -207,7 +207,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
             var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f((*ray).throughput);
             if (
-                bounces >= _render_params.ray_marcher.max_bounces
+                bounces >= _render_parameters.max_bounces
                 || (roulette && exit_probability <= rng)
             ) {
                 break;
@@ -218,14 +218,14 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
             distance_since_last_bounce = 0.;
             // Reset the pixel footprint so multiple reflections don't reduce precision
-            pixel_footprint = _render_params.ray_marcher.hit_tolerance;
+            pixel_footprint = _render_parameters.hit_tolerance;
 
             // Update the random seed for the next iteration
             path_seed = random_vec3f(path_seed.zxy + seed);
         }
         pixel_footprint += select(
             0.,
-            _render_params.ray_marcher.hit_tolerance * step_distance,
+            _render_parameters.hit_tolerance * step_distance,
             dynamic_level_of_detail && !hit_object,
         );
 
@@ -236,12 +236,12 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
     (*ray).colour = select(
         (*ray).colour,
         final_aovs(
-            _render_params.ray_marcher.output_aov,
+            _render_parameters.output_aov,
             bounces,
             iterations,
             distance_travelled,
         ),
-        _render_params.ray_marcher.output_aov > BEAUTY_AOV,
+        _render_parameters.output_aov > BEAUTY_AOV,
     );
 }
 
@@ -249,15 +249,15 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = random_vec3f(_render_params.ray_marcher.seeds + frag_coord_seed);
+    var seed = random_vec3f(_render_parameters.seeds + frag_coord_seed);
     var pixel_colour = vec3(0.);
 
     var exit_early_with_aov: bool = (
-        _render_params.ray_marcher.output_aov > BEAUTY_AOV
-        && _render_params.ray_marcher.output_aov < STATS_AOV
+        _render_parameters.output_aov > BEAUTY_AOV
+        && _render_parameters.output_aov < STATS_AOV
     );
 
-    for (var path=1u; path <= _render_params.ray_marcher.paths_per_pixel; path++) {
+    for (var path=1u; path <= _render_parameters.paths_per_pixel; path++) {
         var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
 
         march_path(seed, exit_early_with_aov, &ray);
@@ -267,5 +267,5 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
         seed = random_vec3f(seed.yzx + frag_coord_seed);
     }
 
-    return vec4(pixel_colour, 1.) / f32(_render_params.ray_marcher.paths_per_pixel);
+    return vec4(pixel_colour, 1.) / f32(_render_parameters.paths_per_pixel);
 }

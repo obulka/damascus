@@ -24,4 +24,4 @@ pub enum AOVs {
 }
 
 mod ray_marcher;
-pub use ray_marcher::{RayMarcher, Std430RenderParameters};
+pub use ray_marcher::{RayMarcher, Std430GPURayMarcher};

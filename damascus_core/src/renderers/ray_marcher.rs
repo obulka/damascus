@@ -2,10 +2,7 @@ use crevice::std430::AsStd430;
 use glam::Vec3;
 use rand::random;
 
-use crate::{
-    renderers::AOVs,
-    scene::{GPUSceneParameters, Scene},
-};
+use crate::{renderers::AOVs, scene::Scene};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -32,13 +29,6 @@ pub struct GPURayMarcher {
     output_aov: u32,
     // TODO resolution
     latlong: u32,
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
-pub struct RenderParameters {
-    ray_marcher: GPURayMarcher,
-    scene: GPUSceneParameters,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -118,11 +108,7 @@ impl RayMarcher {
         }
     }
 
-    pub fn as_render_parameters(&self) -> Std430RenderParameters {
-        RenderParameters {
-            ray_marcher: self.to_gpu(),
-            scene: self.scene.create_scene_parameters(),
-        }
-        .as_std430()
+    pub fn render_parameters(&self) -> Std430GPURayMarcher {
+        self.to_gpu().as_std430()
     }
 }

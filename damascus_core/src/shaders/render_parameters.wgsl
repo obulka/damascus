@@ -1,13 +1,5 @@
 
-struct SceneParameters {
-    atmosphere: Material,
-    num_primitives: u32,
-    num_lights: u32,
-    num_non_physical_lights: u32,
-}
-
-
-struct RayMarcherParameters {
+struct RenderParameters {
     paths_per_pixel: u32,
     roulette: u32,
     max_distance: f32,
@@ -28,13 +20,16 @@ struct RayMarcherParameters {
     latlong: u32,
 }
 
-
-struct RenderParameters {
-    ray_marcher: RayMarcherParameters,
-    scene: SceneParameters,
+struct SceneParameters {
+    num_primitives: u32,
+    num_lights: u32,
+    num_non_physical_lights: u32,
 }
 
 
 // Global render settings
 @group(0) @binding(0)
-var<storage, read> _render_params: RenderParameters;
+var<uniform> _render_parameters: RenderParameters;
+
+@group(0) @binding(1)
+var<uniform> _scene_parameters: SceneParameters;

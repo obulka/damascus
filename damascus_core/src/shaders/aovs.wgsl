@@ -39,9 +39,9 @@ fn final_aovs(
     switch aov_type {
         case 5u {
             return vec3(
-                f32(bounces) / f32(_render_params.ray_marcher.max_bounces),
-                f32(iterations) / f32(_render_params.ray_marcher.max_ray_steps),
-                distance_travelled / _render_params.ray_marcher.max_distance,
+                f32(bounces) / f32(_render_parameters.max_bounces),
+                f32(iterations) / f32(_render_parameters.max_ray_steps),
+                distance_travelled / _render_parameters.max_distance,
             );
         }
         default {

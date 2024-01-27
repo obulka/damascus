@@ -1,4 +1,5 @@
 use crevice::std430::AsStd430;
+use glam::Vec3;
 
 use super::{
     geometry::{
@@ -17,12 +18,26 @@ pub struct GPUSceneParameters {
     num_non_physical_lights: u32,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Scene {
     pub render_camera: Camera,
     pub primitives: Vec<Primitive>,
     pub lights: Vec<Light>,
     pub atmosphere: Material,
+}
+
+impl Default for Scene {
+    fn default() -> Self {
+        let mut atmosphere = Material::default();
+        atmosphere.diffuse_colour = Vec3::ZERO;
+        atmosphere.refractive_index = 1.;
+        Self {
+            render_camera: Camera::default(),
+            primitives: vec![],
+            lights: vec![],
+            atmosphere: atmosphere,
+        }
+    }
 }
 
 impl Scene {

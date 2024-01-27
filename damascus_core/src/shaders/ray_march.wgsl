@@ -174,11 +174,12 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
             // Early exit for the various AOVs that are not 'beauty'
             if exit_early_with_aov {
-                (*ray).colour = early_exit_aovs(
+                early_exit_aovs(
                     _render_parameters.output_aov,
                     intersection_position,
                     intersection_position, // TODO world to local
                     surface_normal,
+                    ray,
                 );
                 return;
             }
@@ -233,15 +234,19 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
         iterations++;
     }
 
-    (*ray).colour = select(
-        (*ray).colour,
-        final_aovs(
-            _render_parameters.output_aov,
-            bounces,
-            iterations,
-            distance_travelled,
-        ),
-        _render_parameters.output_aov > BEAUTY_AOV,
+    var final_position: vec3<f32> = (
+        (*ray).origin
+        + (*ray).direction
+        * (distance_since_last_bounce + _render_parameters.max_distance - distance_travelled)
+    );
+
+    final_aovs(
+        _render_parameters.output_aov,
+        bounces,
+        iterations,
+        distance_travelled,
+        final_position,
+        ray,
     );
 }
 

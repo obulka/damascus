@@ -182,14 +182,14 @@ fn sample_material(
 }
 
 
-fn checkerboard(position: vec3<f32>) -> vec3<f32> {
-    var square_signal: vec3<f32> = sign(fract(position * 0.5) - 0.5);
+fn checkerboard(seed: vec3<f32>) -> vec3<f32> {
+    var square_signal: vec3<f32> = sign(fract(seed * 0.5) - 0.5);
     return vec3(0.5 - 0.5 * square_signal.x * square_signal.y * square_signal.z);
 }
 
 
 fn procedurally_texture(
-    position: vec3<f32>,
+    seed: vec3<f32>,
     colour: vec3<f32>,
     procedural_texture: ProceduralTexture,
 ) -> vec3<f32> {
@@ -200,7 +200,7 @@ fn procedurally_texture(
         }
         case 1u {}
         case 2u {
-            textured_colour *= checkerboard(position);
+            textured_colour *= checkerboard(seed);
         }
     }
     return pow(

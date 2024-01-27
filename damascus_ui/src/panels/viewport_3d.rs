@@ -13,6 +13,7 @@ use glam;
 use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
+    materials::Std430GPUMaterial,
     renderers::{RayMarcher, Std430GPURayMarcher},
     scene::{Scene, Std430GPUSceneParameters},
     shaders,
@@ -128,6 +129,11 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_lights()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
+        let atmosphere_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("viewport 3d render globals buffer"),
+            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.atmosphere()]),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+        });
         let scene_storage_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d primitives bind group layout"),
@@ -152,6 +158,16 @@ impl Viewport3d {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
                 ],
             });
 
@@ -166,6 +182,10 @@ impl Viewport3d {
                 wgpu::BindGroupEntry {
                     binding: 1,
                     resource: lights_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: atmosphere_buffer.as_entire_binding(),
                 },
             ],
         });
@@ -220,6 +240,7 @@ impl Viewport3d {
                 scene_storage_bind_group,
                 primitives_buffer,
                 lights_buffer,
+                atmosphere_buffer,
             });
 
         Some(viewport3d)
@@ -253,6 +274,7 @@ impl Viewport3d {
         let render_camera = self.renderer.scene.render_camera.as_std_430();
         let primitives = self.renderer.scene.create_gpu_primitives();
         let lights = self.renderer.scene.create_gpu_lights();
+        let atmosphere = self.renderer.scene.atmosphere();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -273,6 +295,7 @@ impl Viewport3d {
                     render_camera,
                     primitives,
                     lights,
+                    atmosphere,
                 );
                 Vec::new()
             })
@@ -316,6 +339,7 @@ struct RenderResources {
     scene_storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
+    atmosphere_buffer: wgpu::Buffer,
 }
 
 impl RenderResources {
@@ -328,6 +352,7 @@ impl RenderResources {
         render_camera: Std430GPUCamera,
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
+        atmosphere: Std430GPUMaterial,
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
@@ -351,6 +376,11 @@ impl RenderResources {
             bytemuck::cast_slice(&[primitives]),
         );
         queue.write_buffer(&self.lights_buffer, 0, bytemuck::cast_slice(&[lights]));
+        queue.write_buffer(
+            &self.atmosphere_buffer,
+            0,
+            bytemuck::cast_slice(&[atmosphere]),
+        );
     }
 
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {

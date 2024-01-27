@@ -25,6 +25,11 @@ struct Material {
 }
 
 
+// TODO this could be uniform but can't get the alignment right
+@group(1) @binding(2)
+var<storage, read> _atmosphere: Material;
+
+
 /**
  * Compute the schlick, simplified fresnel reflection coefficient.
  *

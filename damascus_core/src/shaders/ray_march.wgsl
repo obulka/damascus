@@ -9,7 +9,6 @@
 // Ray Marching shader
 //
 
-#include RenderParameters
 #include Ray
 #include Math
 #include Random
@@ -17,6 +16,7 @@
 #include Materials
 #include Primitive
 #include PrimitiveModifiers
+#include RenderParameters
 #include SceneSDFs
 #include Normals
 #include Lights

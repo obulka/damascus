@@ -603,14 +603,16 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Scene => {
             let render_camera = evaluator.input_camera("render_camera")?;
-            let lights = evaluator.input_light("lights")?;
             let primitives = evaluator.input_primitive("primitives")?;
+            let lights = evaluator.input_light("lights")?;
+            let atmosphere = evaluator.input_material("atmosphere")?;
             evaluator.output_scene(
                 "out",
                 scene::Scene {
                     render_camera: render_camera,
                     lights: lights,
                     primitives: primitives,
+                    atmosphere: atmosphere,
                 },
             )
         }

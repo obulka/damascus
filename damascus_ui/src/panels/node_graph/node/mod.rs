@@ -1438,6 +1438,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_camera(graph, "render_camera", default_scene.render_camera);
                 input_primitive(graph, "primitives", default_scene.primitives);
                 input_light(graph, "lights", default_scene.lights);
+                input_material(graph, "atmosphere", default_scene.atmosphere);
                 output_scene(graph, "out");
             }
         }

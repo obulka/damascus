@@ -6,11 +6,13 @@ use super::{
         {Primitive, Std430GPUPrimitive},
     },
     lights::{Light, Std430GPULight},
+    materials::{GPUMaterial, Material},
 };
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUSceneParameters {
+    atmosphere: GPUMaterial,
     num_primitives: u32,
     num_lights: u32,
     num_non_physical_lights: u32,
@@ -21,6 +23,7 @@ pub struct Scene {
     pub render_camera: Camera,
     pub primitives: Vec<Primitive>,
     pub lights: Vec<Light>,
+    pub atmosphere: Material,
 }
 
 impl Scene {
@@ -55,6 +58,7 @@ impl Scene {
 
     pub fn create_scene_parameters(&self) -> GPUSceneParameters {
         return GPUSceneParameters {
+            atmosphere: self.atmosphere.to_gpu(),
             num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
             num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_prims()) as u32,
             num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,

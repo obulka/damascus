@@ -1,5 +1,6 @@
 
 struct SceneParameters {
+    atmosphere: Material,
     num_primitives: u32,
     num_lights: u32,
     num_non_physical_lights: u32,
@@ -36,4 +37,4 @@ struct RenderParameters {
 
 // Global render settings
 @group(0) @binding(0)
-var<uniform> _render_params: RenderParameters;
+var<storage, read> _render_params: RenderParameters;

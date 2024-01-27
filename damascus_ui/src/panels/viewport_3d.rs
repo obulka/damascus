@@ -49,10 +49,7 @@ impl Viewport3d {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render globals buffer"),
                 contents: bytemuck::cast_slice(&[viewport3d.renderer.as_render_parameters()]),
-                // Mapping at creation (as done by the create_buffer_init utility)
-                // doesn't require us to to add the MAP_WRITE usage
-                // (this *happens* to workaround this bug )
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             });
         let render_parameters_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -61,7 +58,7 @@ impl Viewport3d {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },

@@ -47,8 +47,11 @@ fn final_aovs(
                 _atmosphere.diffuse_texture,
             );
         }
-        case 1u {
+        case 1u, 2u {
             (*ray).colour = world_position;
+        }
+        case 3u {
+            (*ray).colour = vec3(0.);
         }
         case 4u {
             // Depth

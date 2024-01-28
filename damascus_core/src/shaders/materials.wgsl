@@ -80,6 +80,10 @@ fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Diele
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
 }
 
+fn peek_previous_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
+    return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth - 2u];
+}
+
 
 /**
  * Compute the schlick, simplified fresnel reflection coefficient.
@@ -163,9 +167,15 @@ fn sample_material(
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
 
-    // TODO: is_exiting
     var incident_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-    var refracted_dielectric: Dielectric = dielectric_from_primitive(primitive);
+    var is_exiting: bool = is_exiting_primitive(primitive, &incident_dielectric);
+
+    var refracted_dielectric: Dielectric;
+    if is_exiting {
+        refracted_dielectric = peek_previous_dielectric(nested_dielectrics);
+    } else {
+        refracted_dielectric = dielectric_from_primitive(primitive);
+    }
 
     // Compute the reflectivity values
     var reflectivity: f32 = schlick_reflection_coefficient(
@@ -225,12 +235,11 @@ fn sample_material(
 
             *material_brdf = vec3(1.);
 
-            // TODO
-            // if is_exiting {
-            //     pop_dielectric(nested_dielectrics);
-            // } else {
-            //     push_dielectric();
-            // }
+            if is_exiting {
+                pop_dielectric(nested_dielectrics);
+            } else {
+                push_dielectric(refracted_dielectric, nested_dielectrics);
+            }
 
             var probability_over_pi = transmissive_probability / PI;
             *light_sampling_pdf = 0.;

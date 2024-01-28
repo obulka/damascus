@@ -57,15 +57,14 @@ fn is_child_of(child: ptr<function, Primitive>, prospective_parent_id: u32) -> b
 
 fn is_exiting_primitive(
     primitive: ptr<function, Primitive>,
-    nested_dielectrics: ptr<function, NestedDielectrics>,
+    current_dielectric: ptr<function, Dielectric>,
 ) -> bool {
-    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
     return (
-        current_dielectric.id > 0u
+        (*current_dielectric).id > 0u
         && (
-            current_dielectric.id == (*primitive).id
-            || is_parent_of(primitive, current_dielectric.id)
-            || is_child_of(primitive, current_dielectric.id)
+            (*current_dielectric).id == (*primitive).id
+            || is_parent_of(primitive, (*current_dielectric).id)
+            || is_child_of(primitive, (*current_dielectric).id)
         )
     );
 }

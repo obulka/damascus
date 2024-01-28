@@ -1,6 +1,5 @@
 use crevice::std430::AsStd430;
 use glam::Vec3;
-use rand::random;
 
 use crate::{renderers::AOVs, scene::Scene};
 
@@ -64,20 +63,20 @@ impl Default for RayMarcher {
             scene: Scene::default(),
             paths_per_pixel: 1,
             roulette: true,
-            max_distance: 100.0,
+            max_distance: 100.,
             max_ray_steps: 1000,
             max_bounces: 1,
             hit_tolerance: 0.0001,
-            shadow_bias: 1.0,
+            shadow_bias: 1.,
             max_brightness: 999999999.9,
-            seeds: Vec3::new(random::<f32>(), random::<f32>(), random::<f32>()),
+            seeds: Vec3::new(1., 2., 3.),
             dynamic_level_of_detail: true,
             max_light_sampling_bounces: 1,
             sample_hdri: false,
             sample_all_lights: true,
-            light_sampling_bias: 1.0,
+            light_sampling_bias: 1.,
             secondary_sampling: false,
-            hdri_offset_angle: 0.0,
+            hdri_offset_angle: 0.,
             output_aov: AOVs::default(),
             latlong: false,
         }

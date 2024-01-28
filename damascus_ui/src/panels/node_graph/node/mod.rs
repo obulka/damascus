@@ -641,9 +641,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "refractive_index",
-                    Float::new(default_material.refractive_index).with_ui_data(
-                        UIData::default().with_tooltip("The index of refraction of the material."),
-                    ),
+                    Float::new(default_material.refractive_index)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The index of refraction of the material."),
+                        )
+                        .with_range(0.1..=5.),
                 );
                 input_float(
                     graph,

@@ -190,9 +190,30 @@ fn sample_material(
     // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
-    if (
+    if specular_probability > 0. && rng <= specular_probability {
+        // Specular bounce
+        var ideal_specular_direction: vec3<f32> = reflect(
+            (*ray).direction,
+            surface_normal,
+        );
+
+        (*ray).direction = normalize(mix(
+            ideal_specular_direction,
+            diffuse_direction,
+            (*primitive).material.specular_roughness, // Assume roughness squared by CPU
+        ));
+
+        // Offset the point so that it doesn't get trapped on the surface.
+        (*ray).origin += offset * surface_normal;
+
+        *material_brdf = (*primitive).material.specular_colour;
+
+        var probability_over_pi = specular_probability / PI;
+        *light_sampling_pdf = 0.;
+        return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
+    } else if (
         (*primitive).material.transmissive_probability > 0.
-        && rng <= transmissive_probability
+        && rng <= transmissive_probability + specular_probability
     ) {
         // Transmissive bounce
         var refractive_ratio: f32 = (
@@ -220,6 +241,8 @@ fn sample_material(
             // Offset the point so that it doesn't get trapped on the surface.
             (*ray).origin -= offset * surface_normal;
 
+            *material_brdf = vec3(1.);
+
             // TODO
             // if is_exiting {
             //     pop_dielectric(nested_dielectrics);
@@ -232,31 +255,26 @@ fn sample_material(
             return probability_over_pi * dot(ideal_refracted_direction, (*ray).direction);
         } else {
             // Reflect instead
-            specular_probability = transmissive_probability;
+            var ideal_specular_direction: vec3<f32> = reflect(
+                (*ray).direction,
+                surface_normal,
+            );
+
+            (*ray).direction = normalize(mix(
+                ideal_specular_direction,
+                diffuse_direction,
+                (*primitive).material.specular_roughness, // Assume roughness squared by CPU
+            ));
+
+            // Offset the point so that it doesn't get trapped on the surface.
+            (*ray).origin += offset * surface_normal;
+
+            *material_brdf = (*primitive).material.specular_colour;
+
+            var probability_over_pi = transmissive_probability / PI;
+            *light_sampling_pdf = 0.;
+            return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
         }
-    }
-
-    if specular_probability > 0. && rng <= specular_probability + transmissive_probability {
-        // Specular bounce
-        var ideal_specular_direction: vec3<f32> = reflect(
-            (*ray).direction,
-            surface_normal,
-        );
-
-        (*ray).direction = normalize(mix(
-            ideal_specular_direction,
-            diffuse_direction,
-            (*primitive).material.specular_roughness, // Assume roughness squared by CPU
-        ));
-
-        // Offset the point so that it doesn't get trapped on the surface.
-        (*ray).origin += offset * surface_normal;
-
-        *material_brdf = (*primitive).material.specular_colour;
-
-        var probability_over_pi = specular_probability / PI;
-        *light_sampling_pdf = 0.;
-        return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
     } else {
         // Diffuse bounce
         (*ray).direction = diffuse_direction;

@@ -66,7 +66,9 @@ impl Material {
             specular_probability: self.specular_probability,
             specular_roughness: self.specular_roughness,
             specular_colour: self.specular_colour,
-            transmissive_probability: self.transmissive_probability,
+            transmissive_probability: self
+                .transmissive_probability
+                .min(1. - self.specular_probability),
             transmissive_roughness: self.transmissive_roughness,
             transmissive_colour: self.transmissive_colour,
             emissive_probability: self.emissive_probability,

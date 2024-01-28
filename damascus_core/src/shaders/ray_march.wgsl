@@ -211,7 +211,14 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
                 bounces >= _render_parameters.max_bounces
                 || (roulette && exit_probability <= rng)
             ) {
-                break;
+                final_aovs(
+                    _render_parameters.output_aov,
+                    bounces,
+                    iterations,
+                    distance_travelled,
+                    ray,
+                );
+                return;
             } else if roulette {
                 // Account for the lost intensity from the early exits
                 (*ray).throughput /= vec3(exit_probability);
@@ -240,7 +247,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
         * (distance_since_last_bounce + _render_parameters.max_distance - distance_travelled)
     );
 
-    final_aovs(
+    ray_miss_aovs(
         _render_parameters.output_aov,
         bounces,
         iterations,

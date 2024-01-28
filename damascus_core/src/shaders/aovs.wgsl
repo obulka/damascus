@@ -36,6 +36,26 @@ fn final_aovs(
     bounces: u32,
     iterations: u32,
     distance_travelled: f32,
+    ray: ptr<function, Ray>,
+) {
+    switch aov_type {
+        case 5u {
+            (*ray).colour = vec3(
+                f32(bounces) / f32(_render_parameters.max_bounces),
+                f32(iterations) / f32(_render_parameters.max_ray_steps),
+                distance_travelled / _render_parameters.max_distance,
+            );
+        }
+        default {}
+    }
+}
+
+
+fn ray_miss_aovs(
+    aov_type: u32,
+    bounces: u32,
+    iterations: u32,
+    distance_travelled: f32,
     world_position: vec3<f32>,
     ray: ptr<function, Ray>,
 ) {

@@ -3,8 +3,6 @@ use std::collections::HashMap;
 use eframe::egui;
 use egui_node_graph::{GraphEditorState, NodeResponse};
 
-use damascus_core::renderers::RayMarcher;
-
 use super::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,

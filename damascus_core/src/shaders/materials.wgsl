@@ -55,6 +55,7 @@ fn dielectric_from_atmosphere() -> Dielectric {
 
 fn dielectric_from_primitive(primitive: ptr<function, Primitive>) -> Dielectric {
     return Dielectric(
+        (*primitive).id,
         (*primitive).material.refractive_index,
     );
 }

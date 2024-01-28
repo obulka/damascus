@@ -20,6 +20,7 @@ pub enum AOVs {
     LocalPosition,
     Normals,
     Depth,
+    Cryptomatte,
     Stats,
 }
 

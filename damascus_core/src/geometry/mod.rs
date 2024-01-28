@@ -83,6 +83,7 @@ pub enum Repetition {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUPrimitive {
+    pub id: u32,
     shape: u32,
     transform: Transform,
     material: GPUMaterial,
@@ -149,6 +150,7 @@ impl Primitive {
     pub fn to_gpu(&self) -> GPUPrimitive {
         let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
         GPUPrimitive {
+            id: 0,
             shape: self.shape as u32,
             transform: Transform {
                 translation: translation,

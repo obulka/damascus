@@ -10,6 +10,7 @@ struct Transform {
 
 
 struct Primitive {
+    id: u32,
     shape: u32,
     transform: Transform, // Could we just make this a world matrix?
     material: Material,
@@ -33,3 +34,19 @@ struct Primitives {
 
 @group(1) @binding(0)
 var<storage, read> _primitives: Primitives;
+
+
+fn is_parent_of(parent: ptr<function, Primitive>, child: ptr<function, Primitive>) -> bool {
+    return (
+        (*parent).id < (*child).id
+        && (*parent).id + (*parent).num_descendants >= (*child).id
+    );
+}
+
+
+fn is_child_of(child: ptr<function, Primitive>, parent: ptr<function, Primitive>) -> bool {
+    return (
+        (*parent).id < (*child).id
+        && (*parent).id + (*parent).num_descendants >= (*child).id
+    );
+}

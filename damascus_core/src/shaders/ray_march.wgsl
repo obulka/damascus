@@ -177,6 +177,13 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
                 pixel_footprint,
             );
 
+            var nearest_primitive: Primitive;
+            find_nearest_primitive(
+                position_on_ray,
+                pixel_footprint,
+                &nearest_primitive,
+            );
+
             // Early exit for the various AOVs that are not 'beauty'
             if exit_early_with_aov {
                 early_exit_aovs(
@@ -184,17 +191,11 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
                     intersection_position,
                     intersection_position, // TODO world to local
                     surface_normal,
+                    nearest_primitive.id,
                     ray,
                 );
                 return;
             }
-
-            var nearest_primitive: Primitive;
-            find_nearest_primitive(
-                position_on_ray,
-                pixel_footprint,
-                &nearest_primitive,
-            );
 
             previous_material_pdf = material_interaction(
                 path_seed,

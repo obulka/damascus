@@ -55,7 +55,9 @@ impl Scene {
     pub fn create_gpu_primitives(&self) -> [Std430GPUPrimitive; Self::MAX_PRIMITIVES] {
         let mut primitive_array = [Primitive::default().to_gpu().as_std430(); Self::MAX_PRIMITIVES];
         for index in 0..self.primitives.len().min(Self::MAX_PRIMITIVES) {
-            primitive_array[index] = self.primitives[index].to_gpu().as_std430();
+            let mut primitive = self.primitives[index].to_gpu();
+            primitive.id = (index + 1) as u32;
+            primitive_array[index] = primitive.as_std430();
         }
         primitive_array
     }

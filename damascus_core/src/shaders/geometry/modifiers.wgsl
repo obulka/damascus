@@ -662,6 +662,12 @@ fn mix_materials(
         smoothing,
     );
     (*primitive_1).material = (*primitive_0).material;
+    (*primitive_0).id = select(
+        (*primitive_0).id,
+        (*primitive_1).id,
+        smoothing > 0.5,
+    );
+    (*primitive_1).id = (*primitive_0).id;
 }
 
 
@@ -731,6 +737,12 @@ fn select_material(
         choice,
     );
     (*primitive_1).material = (*primitive_0).material;
+    (*primitive_0).id = select(
+        (*primitive_0).id,
+        (*primitive_1).id,
+        choice,
+    );
+    (*primitive_1).id = (*primitive_0).id;
 }
 
 fn blend_primitives(

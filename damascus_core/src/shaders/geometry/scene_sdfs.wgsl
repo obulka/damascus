@@ -72,6 +72,7 @@ fn find_nearest_descendant(
             );
             // Get the next parent and apply the current blended material
             *family = _primitives.primitives[current_parent_index];
+            (*family).id = child.id;
             (*family).material = child.material;
 
             // Update the child index to point to the first child of the

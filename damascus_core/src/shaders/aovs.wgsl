@@ -1,6 +1,6 @@
 
 const BEAUTY_AOV: u32 = 0u;
-const STATS_AOV: u32 = 5u;
+const STATS_AOV: u32 = 6u;
 
 
 fn early_exit_aovs(
@@ -8,6 +8,7 @@ fn early_exit_aovs(
     world_position: vec3<f32>,
     local_position: vec3<f32>,
     surface_normal: vec3<f32>,
+    primitive_id: u32,
     ray: ptr<function, Ray>,
 ) {
     switch aov_type {
@@ -24,6 +25,9 @@ fn early_exit_aovs(
             // Depth
             (*ray).colour = vec3(abs(world_to_camera_space(world_position).z));
         }
+        case 5u {
+            (*ray).colour = random_vec3f(f32(primitive_id) * vec3(1., 2., 3.));
+        }
         default {
             (*ray).colour = vec3(-1.); // Invalid!!
         }
@@ -39,7 +43,7 @@ fn final_aovs(
     ray: ptr<function, Ray>,
 ) {
     switch aov_type {
-        case 5u {
+        case 6u {
             (*ray).colour = vec3(
                 f32(bounces) / f32(_render_parameters.max_bounces),
                 f32(iterations) / f32(_render_parameters.max_ray_steps),
@@ -70,14 +74,11 @@ fn ray_miss_aovs(
         case 1u, 2u {
             (*ray).colour = world_position;
         }
-        case 3u {
-            (*ray).colour = vec3(0.);
-        }
         case 4u {
             // Depth
             (*ray).colour = vec3(abs(world_to_camera_space(world_position).z));
         }
-        case 5u {
+        case 6u {
             (*ray).colour = vec3(
                 f32(bounces) / f32(_render_parameters.max_bounces),
                 f32(iterations) / f32(_render_parameters.max_ray_steps),
@@ -85,7 +86,7 @@ fn ray_miss_aovs(
             );
         }
         default {
-            (*ray).colour = vec3(-1.); // Invalid!!
+            (*ray).colour = vec3(0.);
         }
     }
 }

@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use eframe::egui;
 use egui_node_graph::{GraphEditorState, NodeResponse};
 
+use damascus_core::renderers::RayMarcher;
+
 use super::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
@@ -181,18 +183,22 @@ impl eframe::App for Damascus {
                         // DamascusValueType::Mat4 { value } => {}
                         // DamascusValueType::Image { value } => {}
                         DamascusValueType::Camera { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.render_camera = value;
                         }
                         DamascusValueType::Light { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.lights = value;
                         }
                         DamascusValueType::Primitive { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.primitives = value;
                         }
                         DamascusValueType::RayMarcher { value } => {
                             viewport_3d.renderer = value;
                         }
                         DamascusValueType::Scene { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene = value;
                         }
                         _ => {}

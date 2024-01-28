@@ -72,7 +72,7 @@ impl Default for RayMarcher {
             max_brightness: 999999999.9,
             seeds: Vec3::new(random::<f32>(), random::<f32>(), random::<f32>()),
             dynamic_level_of_detail: true,
-            max_light_sampling_bounces: 7,
+            max_light_sampling_bounces: 1,
             sample_hdri: false,
             sample_all_lights: true,
             light_sampling_bias: 1.0,
@@ -110,5 +110,25 @@ impl RayMarcher {
 
     pub fn render_parameters(&self) -> Std430GPURayMarcher {
         self.to_gpu().as_std430()
+    }
+
+    pub fn reset_render_parameters(&mut self) {
+        let default_ray_marcher = Self::default();
+
+        self.paths_per_pixel = default_ray_marcher.paths_per_pixel;
+        self.roulette = default_ray_marcher.roulette;
+        self.max_distance = default_ray_marcher.max_distance;
+        self.max_ray_steps = default_ray_marcher.max_ray_steps;
+        self.max_bounces = default_ray_marcher.max_bounces;
+        self.hit_tolerance = default_ray_marcher.hit_tolerance;
+        self.shadow_bias = default_ray_marcher.shadow_bias;
+        self.max_brightness = default_ray_marcher.max_brightness;
+        self.seeds = default_ray_marcher.seeds;
+        self.dynamic_level_of_detail = default_ray_marcher.dynamic_level_of_detail;
+        self.max_light_sampling_bounces = default_ray_marcher.max_light_sampling_bounces;
+        self.sample_hdri = default_ray_marcher.sample_hdri;
+        self.sample_all_lights = default_ray_marcher.sample_all_lights;
+        self.light_sampling_bias = default_ray_marcher.light_sampling_bias;
+        self.secondary_sampling = default_ray_marcher.secondary_sampling;
     }
 }

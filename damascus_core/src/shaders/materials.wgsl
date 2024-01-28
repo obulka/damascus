@@ -1,4 +1,7 @@
 
+const NESTED_DIELECTRIC_DEPTH: u32 = 4u;
+
+
 struct ProceduralTexture {
     texture_type: u32,
     black_point: f32,
@@ -25,9 +28,54 @@ struct Material {
 }
 
 
+struct Dielectric {
+    refractive_index: f32,
+}
+
+
+struct NestedDielectrics {
+    current_depth: u32,
+    nested_dielectrics: array<Dielectric, NESTED_DIELECTRIC_DEPTH>,
+}
+
+
 // TODO this could be uniform but can't get the alignment right
 @group(1) @binding(2)
 var<storage, read> _atmosphere: Material;
+
+
+fn dielectric_from_atmosphere() -> Dielectric {
+    return Dielectric(
+        _atmosphere.refractive_index,
+    );
+}
+
+
+fn dielectric_from_primitive(primitive: ptr<function, Primitive>) -> Dielectric {
+    return Dielectric(
+        (*primitive).material.refractive_index,
+    );
+}
+
+
+fn push_dielectric(
+    dielectric: Dielectric,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
+) {
+    (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth] = dielectric;
+    (*nested_dielectrics).current_depth++;
+}
+
+
+fn peek_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
+    return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth - 1u];
+}
+
+
+fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
+    (*nested_dielectrics).current_depth--;
+    return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
+}
 
 
 /**
@@ -99,6 +147,7 @@ fn sample_material(
     surface_normal: vec3<f32>,
     offset: f32,
     primitive: ptr<function, Primitive>,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
     ray: ptr<function, Ray>,
     material_brdf: ptr<function, vec3<f32>>,
     light_sampling_pdf: ptr<function, f32>,
@@ -111,18 +160,20 @@ fn sample_material(
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
 
+    var incident_dielectric: Dielectric;
+    var refracted_dielectric: Dielectric;
+
     if specular_probability > 0. || transmissive_probability > 0. {
         // Adjust probabilities according to fresnel
-
-        var incident_refractive_index: f32 = 1.; // TODO add nested dielectrics
-        var refracted_refractive_index: f32 = (*primitive).material.refractive_index; // TODO ^
+        incident_dielectric = peek_dielectric(nested_dielectrics);
+        refracted_dielectric = dielectric_from_primitive(primitive); // TODO: is_exiting
 
         // Compute the refraction values
         var reflectivity: f32 = schlick_reflection_coefficient(
             (*ray).direction,
             surface_normal,
-            incident_refractive_index,
-            refracted_refractive_index,
+            incident_dielectric.refractive_index,
+            refracted_dielectric.refractive_index,
         );
 
         specular_probability = (
@@ -139,7 +190,53 @@ fn sample_material(
     // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
     var material_pdf: f32;
-    if specular_probability > 0. && rng <= specular_probability {
+    if (
+        (*primitive).material.transmissive_probability > 0.
+        && rng <= transmissive_probability
+    ) {
+        // Transmissive bounce
+        var refractive_ratio: f32 = (
+            incident_dielectric.refractive_index
+            / refracted_dielectric.refractive_index
+        );
+        var cos_incident: f32 = -dot((*ray).direction, surface_normal);
+        var sin_transmitted_squared: f32 = refractive_ratio * refractive_ratio * (
+            1. - cos_incident * cos_incident
+        );
+
+        if sin_transmitted_squared <= 1. {
+            // Refract
+            var cos_transmitted = sqrt(1. - sin_transmitted_squared);
+            var ideal_refracted_direction: vec3<f32> = normalize(
+                refractive_ratio * (*ray).direction
+                + (refractive_ratio * cos_incident - cos_transmitted) * surface_normal
+            );
+            (*ray).direction = normalize(mix(
+                ideal_refracted_direction,
+                -diffuse_direction,
+                (*primitive).material.transmissive_roughness, // Assume roughness squared by CPU
+            ));
+
+            // Offset the point so that it doesn't get trapped on the surface.
+            (*ray).origin -= offset * surface_normal;
+
+            // TODO
+            // if is_exiting {
+            //     pop_dielectric(nested_dielectrics);
+            // } else {
+            //     push_dielectric();
+            // }
+
+            var probability_over_pi = transmissive_probability / PI;
+            *light_sampling_pdf = 0.;
+            return probability_over_pi * dot(ideal_refracted_direction, (*ray).direction);
+        } else {
+            // Reflect instead
+            specular_probability = transmissive_probability;
+        }
+    }
+
+    if specular_probability > 0. && rng <= specular_probability + transmissive_probability {
         // Specular bounce
         var ideal_specular_direction: vec3<f32> = reflect(
             (*ray).direction,
@@ -160,12 +257,6 @@ fn sample_material(
         var probability_over_pi = specular_probability / PI;
         *light_sampling_pdf = 0.;
         return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
-    } else if (
-        (*primitive).material.transmissive_probability > 0.
-        && rng <= transmissive_probability + specular_probability
-    ) {
-        // Transmissive bounce
-        return 1.;
     } else {
         // Diffuse bounce
         (*ray).direction = diffuse_direction;

@@ -54,6 +54,7 @@ fn material_interaction(
     sample_all_lights: bool,
     ray: ptr<function, Ray>,
     primitive: ptr<function, Primitive>,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
 ) -> f32 {
     (*ray).origin = intersection_position;
 
@@ -64,6 +65,7 @@ fn material_interaction(
         surface_normal,
         offset,
         primitive,
+        nested_dielectrics,
         ray,
         &material_brdf,
         &light_sampling_material_pdf,
@@ -117,6 +119,9 @@ fn material_interaction(
  * @returns: The ray colour.
  */
 fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray>) {
+    var nested_dielectrics: NestedDielectrics;
+    push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
+
     var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_parameters.roulette);
     var dynamic_level_of_detail = bool(_render_parameters.dynamic_level_of_detail);
@@ -202,6 +207,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
                 sample_all_lights,
                 ray,
                 &nearest_primitive,
+                &nested_dielectrics,
             );
 
             // Exit if we have reached the bounce limit or with a random chance

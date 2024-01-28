@@ -36,17 +36,36 @@ struct Primitives {
 var<storage, read> _primitives: Primitives;
 
 
-fn is_parent_of(parent: ptr<function, Primitive>, child: ptr<function, Primitive>) -> bool {
+fn is_parent_of(parent: ptr<function, Primitive>, prospective_child_id: u32) -> bool {
     return (
-        (*parent).id < (*child).id
-        && (*parent).id + (*parent).num_descendants >= (*child).id
+        (*parent).id < prospective_child_id
+        && (*parent).id + (*parent).num_descendants >= prospective_child_id
     );
 }
 
 
-fn is_child_of(child: ptr<function, Primitive>, parent: ptr<function, Primitive>) -> bool {
+fn is_child_of(child: ptr<function, Primitive>, prospective_parent_id: u32) -> bool {
     return (
-        (*parent).id < (*child).id
-        && (*parent).id + (*parent).num_descendants >= (*child).id
+        prospective_parent_id < (*child).id
+        && (
+            prospective_parent_id
+            + _primitives.primitives[prospective_parent_id - 1u].num_descendants
+        ) >= (*child).id
+    );
+}
+
+
+fn is_exiting_primitive(
+    primitive: ptr<function, Primitive>,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
+) -> bool {
+    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
+    return (
+        current_dielectric.id > 0u
+        && (
+            current_dielectric.id == (*primitive).id
+            || is_parent_of(primitive, current_dielectric.id)
+            || is_child_of(primitive, current_dielectric.id)
+        )
     );
 }

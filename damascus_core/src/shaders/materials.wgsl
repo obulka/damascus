@@ -29,6 +29,7 @@ struct Material {
 
 
 struct Dielectric {
+    id: u32,
     refractive_index: f32,
 }
 
@@ -46,6 +47,7 @@ var<storage, read> _atmosphere: Material;
 
 fn dielectric_from_atmosphere() -> Dielectric {
     return Dielectric(
+        0u,
         _atmosphere.refractive_index,
     );
 }

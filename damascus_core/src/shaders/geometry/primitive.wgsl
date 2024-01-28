@@ -12,7 +12,7 @@ struct Transform {
 struct Primitive {
     id: u32,
     shape: u32,
-    transform: Transform, // Could we just make this a world matrix?
+    transform: Transform,
     material: Material,
     modifiers: u32,
     negative_repetitions: vec3<f32>,

@@ -160,8 +160,9 @@ fn sample_material(
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
 
+    // TODO: is_exiting
     var incident_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-    var refracted_dielectric: Dielectric = dielectric_from_primitive(primitive); // TODO: is_exiting
+    var refracted_dielectric: Dielectric = dielectric_from_primitive(primitive);
 
     // Compute the reflectivity values
     var reflectivity: f32 = schlick_reflection_coefficient(
@@ -231,9 +232,10 @@ fn sample_material(
             var probability_over_pi = transmissive_probability / PI;
             *light_sampling_pdf = 0.;
             return probability_over_pi * dot(ideal_refracted_direction, (*ray).direction);
-        } else {
-            specular_probability = transmissive_probability;
         }
+
+        // Reflect instead
+        specular_probability = transmissive_probability;
     }
     if specular_probability > 0. && rng <= specular_probability + transmissive_probability {
         // Specular bounce

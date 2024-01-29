@@ -60,11 +60,18 @@ fn ray_miss_aovs(
     bounces: u32,
     iterations: u32,
     distance_travelled: f32,
-    world_position: vec3<f32>,
     ray: ptr<function, Ray>,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
 ) {
+    var world_position: vec3<f32> = (*ray).origin + (*ray).direction * distance_travelled;
+
     switch aov_type {
         case 0u {
+            sample_equiangular(
+                distance_travelled,
+                ray,
+                nested_dielectrics,
+            );
             (*ray).colour += (*ray).throughput * procedurally_texture(
                 world_position,
                 _atmosphere.diffuse_colour,

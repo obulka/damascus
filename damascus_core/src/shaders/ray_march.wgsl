@@ -45,9 +45,8 @@
  */
 fn material_interaction(
     seed: vec3<f32>,
-    step_distance: f32,
     offset: f32,
-    distance: f32,
+    distance_since_last_bounce: f32,
     intersection_position: vec3<f32>,
     surface_normal: vec3<f32>,
     previous_material_pdf: f32,
@@ -57,6 +56,12 @@ fn material_interaction(
     nested_dielectrics: ptr<function, NestedDielectrics>,
 ) -> f32 {
     (*ray).origin = intersection_position;
+
+    sample_equiangular(
+        distance_since_last_bounce,
+        ray,
+        nested_dielectrics,
+    );
 
     var material_brdf: vec3<f32>;
     var light_sampling_material_pdf: f32;
@@ -199,7 +204,6 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
             previous_material_pdf = material_interaction(
                 path_seed,
-                step_distance,
                 2. * pixel_footprint * _render_parameters.shadow_bias,
                 distance_since_last_bounce,
                 intersection_position,
@@ -248,19 +252,19 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
         iterations++;
     }
 
-    var final_position: vec3<f32> = (
-        (*ray).origin
-        + (*ray).direction
-        * (distance_since_last_bounce + _render_parameters.max_distance - distance_travelled)
+    var corrected_distance = (
+        distance_since_last_bounce
+        + _render_parameters.max_distance
+        - distance_travelled
     );
 
     ray_miss_aovs(
         _render_parameters.output_aov,
         bounces,
         iterations,
-        distance_travelled,
-        final_position,
+        corrected_distance,
         ray,
+        &nested_dielectrics,
     );
 }
 

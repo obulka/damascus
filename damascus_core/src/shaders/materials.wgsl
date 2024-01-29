@@ -30,6 +30,8 @@ struct Material {
 struct Dielectric {
     id: u32,
     refractive_index: f32,
+    transmissive_colour: vec3<f32>,
+    scattering_colour: vec3<f32>,
 }
 
 
@@ -48,6 +50,8 @@ fn dielectric_from_atmosphere() -> Dielectric {
     return Dielectric(
         0u,
         _atmosphere.refractive_index,
+        _atmosphere.transmissive_colour,
+        _atmosphere.scattering_colour,
     );
 }
 
@@ -56,6 +60,8 @@ fn dielectric_from_primitive(primitive: ptr<function, Primitive>) -> Dielectric 
     return Dielectric(
         (*primitive).id,
         (*primitive).material.refractive_index,
+        (*primitive).material.transmissive_colour,
+        (*primitive).material.scattering_colour,
     );
 }
 
@@ -345,4 +351,16 @@ fn procedurally_texture(
             );
         }
     }
+}
+
+
+fn sample_equiangular(
+    distance_since_last_bounce: f32,
+    ray: ptr<function, Ray>,
+    nested_dielectrics: ptr<function, NestedDielectrics>,
+) {
+    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
+    (*ray).throughput *= exp(
+        -current_dielectric.transmissive_colour * distance_since_last_bounce,
+    );
 }

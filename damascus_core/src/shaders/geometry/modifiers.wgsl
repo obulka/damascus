@@ -651,11 +651,6 @@ fn mix_materials(
         (*primitive_1).material.refractive_index,
         smoothing,
     );
-    (*primitive_0).material.scattering_coefficient = mix(
-        (*primitive_0).material.scattering_coefficient,
-        (*primitive_1).material.scattering_coefficient,
-        smoothing,
-    );
     (*primitive_0).material.scattering_colour = mix(
         (*primitive_0).material.scattering_colour,
         (*primitive_1).material.scattering_colour,
@@ -724,11 +719,6 @@ fn select_material(
     (*primitive_0).material.refractive_index = select(
         (*primitive_0).material.refractive_index,
         (*primitive_1).material.refractive_index,
-        choice,
-    );
-    (*primitive_0).material.scattering_coefficient = select(
-        (*primitive_0).material.scattering_coefficient,
-        (*primitive_1).material.scattering_coefficient,
         choice,
     );
     (*primitive_0).material.scattering_colour = select(

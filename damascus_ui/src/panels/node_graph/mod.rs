@@ -333,7 +333,8 @@ pub fn evaluate_node(
             let specular_colour = evaluator.input_vector3("specular_colour")?;
             let transmissive_probability = evaluator.input_float("transmissive_probability")?;
             let transmissive_roughness = evaluator.input_float("transmissive_roughness")?;
-            let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
+            let extinction_coefficient = evaluator.input_float("extinction_coefficient")?;
+            let extinction_colour = evaluator.input_vector3("extinction_colour")?;
             let emissive_probability = evaluator.input_float("emissive_probability")?;
             let emissive_colour = evaluator.input_vector3("emissive_colour")?;
             let refractive_index = evaluator.input_float("refractive_index")?;
@@ -350,7 +351,8 @@ pub fn evaluate_node(
                     specular_colour: specular_colour,
                     transmissive_probability: transmissive_probability,
                     transmissive_roughness: transmissive_roughness * transmissive_roughness,
-                    transmissive_colour: transmissive_colour,
+                    extinction_coefficient: extinction_coefficient,
+                    extinction_colour: extinction_colour,
                     emissive_probability: emissive_probability,
                     emissive_colour: emissive_colour,
                     refractive_index: refractive_index,

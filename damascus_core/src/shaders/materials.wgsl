@@ -23,7 +23,6 @@ struct Material {
     emissive_probability: f32,
     emissive_colour: vec3<f32>,
     refractive_index: f32,
-    scattering_coefficient: f32,
     scattering_colour: vec3<f32>,
 }
 
@@ -166,6 +165,7 @@ fn sample_material(
 
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
+    var diffuse_probability: f32 =  1. - specular_probability - transmissive_probability;
 
     var incident_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
     var is_exiting: bool = is_exiting_primitive(primitive, &incident_dielectric);
@@ -177,7 +177,7 @@ fn sample_material(
         refracted_dielectric = dielectric_from_primitive(primitive);
     }
 
-    // Compute the reflectivity values
+    // Compute reflectivity for fresnel
     var reflectivity: f32 = schlick_reflection_coefficient(
         (*ray).direction,
         surface_normal,
@@ -188,14 +188,19 @@ fn sample_material(
     // Adjust probabilities according to fresnel
     specular_probability = select(
         specular_probability,
-        (specular_probability + f32(transmissive_probability > 0.))
-        * mix(specular_probability, 1., reflectivity),
+        (specular_probability + f32(transmissive_probability > 0.)) * mix(
+            specular_probability,
+            1.,
+            reflectivity,
+        ),
         specular_probability > 0. || transmissive_probability > 0.,
     );
     transmissive_probability = select(
         transmissive_probability,
-        transmissive_probability * (1. - specular_probability)
-        / (1. - (*primitive).material.specular_probability),
+        (
+            transmissive_probability * (1. - specular_probability)
+            / (1. - (*primitive).material.specular_probability)
+        ),
         (specular_probability > 0. || transmissive_probability > 0.)
         && (*primitive).material.specular_probability < 1.,
     );
@@ -249,7 +254,10 @@ fn sample_material(
         // Reflect instead
         specular_probability = transmissive_probability;
     }
-    if specular_probability > 0. && rng <= specular_probability + transmissive_probability {
+    if (
+        diffuse_probability <= 0.
+        || (specular_probability > 0. && rng <= specular_probability + transmissive_probability)
+    ) {
         // Specular bounce
         var ideal_specular_direction: vec3<f32> = reflect(
             (*ray).direction,
@@ -292,26 +300,49 @@ fn checkerboard(seed: vec3<f32>) -> vec3<f32> {
 }
 
 
+fn grade(
+    lift: f32,
+    black_point: f32,
+    white_point: f32,
+    gamma: f32,
+    colour: vec3<f32>,
+) -> vec3<f32> {
+    return pow(
+        (1. - lift) * saturate_vec3f(colour - black_point) / (white_point - black_point) + lift,
+        vec3(1. / gamma),
+    );
+}
+
+
 fn procedurally_texture(
     seed: vec3<f32>,
     colour: vec3<f32>,
-    procedural_texture: ProceduralTexture,
+    texture: ProceduralTexture,
 ) -> vec3<f32> {
-    var textured_colour: vec3<f32> = colour;
-    switch procedural_texture.texture_type {
+    switch texture.texture_type {
         case 0u, default {
-            return textured_colour;
+            // None
+            return colour;
         }
-        case 1u {}
+        case 1u {
+            // Grade
+            return grade(
+                texture.lift,
+                texture.black_point,
+                texture.white_point,
+                texture.gamma,
+                colour,
+            );
+        }
         case 2u {
-            textured_colour *= checkerboard(seed);
+            // Checkerboard
+            return colour * grade(
+                texture.lift,
+                texture.black_point,
+                texture.white_point,
+                texture.gamma,
+                checkerboard(seed),
+            );
         }
     }
-    return pow(
-        (1. - procedural_texture.lift)
-        * saturate_vec3f(textured_colour - procedural_texture.black_point)
-        / (procedural_texture.white_point - procedural_texture.black_point)
-        + procedural_texture.lift,
-        vec3(1. / procedural_texture.gamma),
-    );
 }

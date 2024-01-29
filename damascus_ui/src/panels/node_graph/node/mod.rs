@@ -610,13 +610,21 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             .with_tooltip("The roughness when transmitted through the material."),
                     ),
                 );
+                input_float(
+                    graph,
+                    "extinction_coefficient",
+                    Float::new(default_material.extinction_coefficient).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The extinction coefficient of the material."),
+                    ),
+                );
                 input_vector3(
                     graph,
-                    "transmissive_colour",
-                    Vec3::from_vec3(default_material.transmissive_colour)
+                    "extinction_colour",
+                    Vec3::from_vec3(default_material.extinction_colour)
                         .with_ui_data(
                             UIData::default()
-                                .with_tooltip("The transmissive colour of the material."),
+                                .with_tooltip("The extinction colour of the material."),
                         )
                         .as_colour(),
                 );
@@ -1231,11 +1239,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "gamma",
-                    Float::new(default_procedural_texture.gamma).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
+                    Float::new(default_procedural_texture.gamma)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "TODO"
-                        }),
-                    ),
+                        }))
+                        .with_range(0.01..=5.),
                 );
                 output_procedural_texture(graph, "out");
             }

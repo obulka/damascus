@@ -1,5 +1,5 @@
-
-const NESTED_DIELECTRIC_DEPTH: u32 = 4u;
+// Increasing OR decreasing this number seems to negatively affect performance
+const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
 
 
 struct ProceduralTexture {
@@ -71,7 +71,10 @@ fn push_dielectric(
     nested_dielectrics: ptr<function, NestedDielectrics>,
 ) {
     (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth] = dielectric;
-    (*nested_dielectrics).current_depth++;
+    (*nested_dielectrics).current_depth = min(
+        NESTED_DIELECTRIC_DEPTH,
+        (*nested_dielectrics).current_depth + 1u,
+    )
 }
 
 
@@ -81,7 +84,11 @@ fn peek_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Diel
 
 
 fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
-    (*nested_dielectrics).current_depth--;
+    (*nested_dielectrics).current_depth = select(
+        0u,
+        (*nested_dielectrics).current_depth - 1u,
+        (*nested_dielectrics).current_depth > 0u,
+    )
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
 }
 

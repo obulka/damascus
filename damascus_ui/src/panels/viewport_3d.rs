@@ -263,7 +263,11 @@ impl Viewport3d {
             glam::Mat4::from_translation(glam::Vec3::new(
                 -0.0015 * response.drag_delta().x,
                 0.0015 * response.drag_delta().y,
-                -0.015 * ui.input(|i| i.scroll_delta.y),
+                if response.hovered() {
+                    -0.015 * ui.input(|i| i.scroll_delta.y)
+                } else {
+                    0.
+                },
             ))
         };
         self.renderer.scene.render_camera.world_matrix *= camera_transform;

@@ -237,6 +237,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
             distance_since_last_bounce = 0.;
             // Reset the pixel footprint so multiple reflections don't reduce precision
+            // If this isn't done artifacts can appear after refraction/reflection
             pixel_footprint = _render_parameters.hit_tolerance;
 
             // Update the random seed for the next iteration

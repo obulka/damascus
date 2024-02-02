@@ -249,7 +249,7 @@ fn sample_material(
             ));
 
             // Offset the point so that it doesn't get trapped on the surface.
-            (*ray).origin -= offset * surface_normal;
+            (*ray).origin += offset * ((*ray).direction - surface_normal);
 
             *material_brdf = vec3(1.);
 

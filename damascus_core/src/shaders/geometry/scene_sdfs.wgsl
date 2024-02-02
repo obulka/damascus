@@ -73,6 +73,7 @@ fn find_nearest_descendant(
             // Get the next parent and apply the current blended material
             *family = _primitives.primitives[current_parent_index];
             (*family).id = child.id;
+            (*family).num_descendants = child.num_descendants;
             (*family).material = child.material;
 
             // Update the child index to point to the first child of the
@@ -123,7 +124,7 @@ fn find_nearest_descendant(
                 distance_to_child,
                 child_closest,
             );
-            select_material(family, &child, child_closest);
+            select_primitive(family, &child, child_closest);
         } else if !child_is_bounding_volume {
             // Otherwise, as long as the child isn't a bounding volume,
             // we can perform the normal blending operation
@@ -179,7 +180,7 @@ fn find_nearest_primitive(
             signed_distance_field,
             primitive_is_new_closest,
         );
-        select_material(
+        select_primitive(
             closest_primitive,
             &primitive,
             primitive_is_new_closest,

@@ -596,7 +596,7 @@ fn distance_to_primitive(
 }
 
 
-fn mix_materials(
+fn mix_primitives(
     primitive_0: ptr<function, Primitive>,
     primitive_1: ptr<function, Primitive>,
     smoothing: f32,
@@ -662,11 +662,16 @@ fn mix_materials(
         (*primitive_1).id,
         smoothing > 0.5,
     );
+    (*primitive_0).num_descendants = select(
+        (*primitive_0).num_descendants,
+        (*primitive_1).num_descendants,
+        smoothing > 0.5,
+    );
     (*primitive_1).id = (*primitive_0).id;
 }
 
 
-fn select_material(
+fn select_primitive(
     primitive_0: ptr<function, Primitive>,
     primitive_1: ptr<function, Primitive>,
     choice: bool,
@@ -732,6 +737,11 @@ fn select_material(
         (*primitive_1).id,
         choice,
     );
+    (*primitive_0).num_descendants = select(
+        (*primitive_0).num_descendants,
+        (*primitive_1).num_descendants,
+        choice,
+    );
     (*primitive_1).id = (*primitive_0).id;
 }
 
@@ -748,7 +758,7 @@ fn blend_primitives(
             var parent_closer_than_negative_child: bool = (
                 negative_child_distance > distance_to_parent
             );
-            select_material(parent, child, parent_closer_than_negative_child);
+            select_primitive(parent, child, parent_closer_than_negative_child);
             return select(
                 distance_to_parent,
                 negative_child_distance,
@@ -758,7 +768,7 @@ fn blend_primitives(
         case 256u {
             // Intersection
             var parent_closest: bool = distance_to_parent < distance_to_child;
-            select_material(parent, child, parent_closest);
+            select_primitive(parent, child, parent_closest);
             return select(distance_to_parent, distance_to_child, parent_closest);
         }
         case 512u {
@@ -769,7 +779,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_materials(child, parent, smoothing);
+            mix_primitives(child, parent, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,
@@ -784,7 +794,7 @@ fn blend_primitives(
                 * (distance_to_parent + distance_to_child)
                 / (*parent).blend_strength
             );
-            mix_materials(parent, child, smoothing);
+            mix_primitives(parent, child, smoothing);
             return mix(
                 distance_to_parent,
                 -distance_to_child,
@@ -799,7 +809,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_materials(child, parent, smoothing);
+            mix_primitives(child, parent, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,
@@ -809,7 +819,7 @@ fn blend_primitives(
         default {
             // Union
             var child_closest: bool = distance_to_child < distance_to_parent;
-            select_material(parent, child, child_closest);
+            select_primitive(parent, child, child_closest);
             return select(distance_to_parent, distance_to_child, child_closest);
         }
     }

@@ -26,6 +26,7 @@ fn early_exit_aovs(
             (*ray).colour = vec3(abs(world_to_camera_space(world_position).z));
         }
         case 5u {
+            // Cryptomatte
             (*ray).colour = random_vec3f(f32(primitive_id) * vec3(1., 2., 3.));
         }
         default {

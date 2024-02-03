@@ -270,11 +270,35 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 }
 
 
+@group(2) @binding(0)
+var _progressive_rendering_texture: texture_storage_2d<f32, read_write>;
+
+
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
     var seed = random_vec3f(_render_parameters.seeds + frag_coord_seed);
+
+
+    var progressive_rendering_texture_dimensions: vec2<u32> = textureDimensions(
+        _progressive_rendering_texture,
+    );
+
+
     var pixel_colour = vec3(0.);
+    if _render_parameters.paths_per_pixel == 1 {
+        var current_pixel_indices: vec2<u32> = (
+            (1. + in.uv_coordinate)
+            * progressive_rendering_texture_dimensions
+            / 2.
+        );
+        pixel_colour = textureLoad
+            _progressive_rendering_texture,
+            current_pixel_indices,
+        );
+        
+    }
+
 
     var exit_early_with_aov: bool = (
         _render_parameters.output_aov > BEAUTY_AOV

@@ -631,9 +631,9 @@ fn mix_primitives(
         (*primitive_1).material.transmissive_roughness,
         smoothing,
     );
-    (*primitive_0).material.transmissive_colour = mix(
-        (*primitive_0).material.transmissive_colour,
-        (*primitive_1).material.transmissive_colour,
+    (*primitive_0).material.extinction_colour = mix(
+        (*primitive_0).material.extinction_colour,
+        (*primitive_1).material.extinction_colour,
         smoothing,
     );
     (*primitive_0).material.emissive_probability = mix(
@@ -706,9 +706,9 @@ fn select_primitive(
         (*primitive_1).material.transmissive_roughness,
         choice,
     );
-    (*primitive_0).material.transmissive_colour = select(
-        (*primitive_0).material.transmissive_colour,
-        (*primitive_1).material.transmissive_colour,
+    (*primitive_0).material.extinction_colour = select(
+        (*primitive_0).material.extinction_colour,
+        (*primitive_1).material.extinction_colour,
         choice,
     );
     (*primitive_0).material.emissive_probability = select(

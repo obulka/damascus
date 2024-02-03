@@ -610,6 +610,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             .with_tooltip("The roughness when transmitted through the material."),
                     ),
                 );
+                input_vector3(
+                    graph,
+                    "transmissive_colour",
+                    Vec3::from_vec3(default_material.transmissive_colour)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The transmitted colour of the material."),
+                        )
+                        .as_colour(),
+                );
                 input_float(
                     graph,
                     "extinction_coefficient",
@@ -617,16 +627,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         UIData::default()
                             .with_tooltip("The extinction coefficient of the material."),
                     ),
-                );
-                input_vector3(
-                    graph,
-                    "extinction_colour",
-                    Vec3::from_vec3(default_material.extinction_colour)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The extinction colour of the material."),
-                        )
-                        .as_colour(),
                 );
                 input_float(
                     graph,

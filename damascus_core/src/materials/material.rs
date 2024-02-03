@@ -13,7 +13,7 @@ pub struct GPUMaterial {
     specular_colour: Vec3,
     transmissive_probability: f32,
     transmissive_roughness: f32,
-    transmissive_colour: Vec3,
+    extinction_colour: Vec3,
     emissive_probability: f32,
     emissive_colour: Vec3,
     refractive_index: f32,
@@ -30,7 +30,7 @@ pub struct Material {
     pub transmissive_probability: f32,
     pub transmissive_roughness: f32,
     pub extinction_coefficient: f32,
-    pub extinction_colour: Vec3,
+    pub transmissive_colour: Vec3,
     pub emissive_probability: f32,
     pub emissive_colour: Vec3,
     pub refractive_index: f32,
@@ -48,8 +48,8 @@ impl Default for Material {
             specular_colour: Vec3::ONE,
             transmissive_probability: 0.,
             transmissive_roughness: 0.,
+            transmissive_colour: Vec3::ONE,
             extinction_coefficient: 0.,
-            extinction_colour: Vec3::ONE,
             emissive_probability: 0.,
             emissive_colour: Vec3::new(1., 0.8, 0.5),
             refractive_index: 1.3,
@@ -71,7 +71,7 @@ impl Material {
                 .transmissive_probability
                 .min(1. - self.specular_probability),
             transmissive_roughness: self.transmissive_roughness,
-            transmissive_colour: (1. - self.extinction_colour.clamp(Vec3::ZERO, Vec3::ONE))
+            extinction_colour: (1. - self.transmissive_colour.clamp(Vec3::ZERO, Vec3::ONE))
                 * self.extinction_coefficient,
             emissive_probability: self.emissive_probability,
             emissive_colour: self.emissive_colour,

@@ -271,7 +271,7 @@ fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray
 
 
 @group(2) @binding(0)
-var _progressive_rendering_texture: texture_storage_2d<f32, read_write>;
+var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 
 @fragment
@@ -280,19 +280,19 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var seed = random_vec3f(_render_parameters.seeds + frag_coord_seed);
 
 
-    var progressive_rendering_texture_dimensions: vec2<u32> = textureDimensions(
+    var progressive_rendering_texture_dimensions: vec2<i32> = textureDimensions(
         _progressive_rendering_texture,
     );
 
 
-    var pixel_colour = vec3(0.);
-    if _render_parameters.paths_per_pixel == 1 {
-        var current_pixel_indices: vec2<u32> = (
-            (1. + in.uv_coordinate)
-            * progressive_rendering_texture_dimensions
+    var pixel_colour = vec4(0.);
+    if _render_parameters.paths_per_pixel > 1u {
+        var current_pixel_indices: vec2<u32> = vec2<u32>(
+            (1. + in.uv_coordinate.xy)
+            * vec2<f32>(progressive_rendering_texture_dimensions)
             / 2.
         );
-        pixel_colour = textureLoad
+        pixel_colour = textureLoad(
             _progressive_rendering_texture,
             current_pixel_indices,
         );
@@ -310,10 +310,10 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
 
         march_path(seed, exit_early_with_aov, &ray);
 
-        pixel_colour += ray.colour;
+        pixel_colour += vec4(ray.colour, 1.);
 
         seed = random_vec3f(seed.yzx + frag_coord_seed);
     }
 
-    return vec4(pixel_colour, 1.) / f32(_render_parameters.paths_per_pixel);
+    return pixel_colour / f32(_render_parameters.paths_per_pixel);
 }

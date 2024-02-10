@@ -296,7 +296,6 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
             _progressive_rendering_texture,
             current_pixel_indices,
         );
-        
     }
 
 

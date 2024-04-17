@@ -1250,16 +1250,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::RayMarcher => {
                 let default_ray_marcher = renderers::RayMarcher::default();
                 input_scene(graph, "scene", default_ray_marcher.scene);
-                input_uint(
-                    graph,
-                    "paths_per_pixel",
-                    UnsignedInteger::new(default_ray_marcher.paths_per_pixel)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip("The number of paths to march for each pixel."),
-                        )
-                        .with_range(1..=100),
-                );
                 input_bool(
                     graph,
                     "roulette",

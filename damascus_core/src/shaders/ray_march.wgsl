@@ -277,42 +277,44 @@ var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = random_vec3f(_render_parameters.seeds + frag_coord_seed);
-
+    var seed = random_vec3f(
+        _render_parameters.seeds
+        + frag_coord_seed
+        + random_f32(_render_stats.paths_rendered_per_pixel)
+    );
 
     var progressive_rendering_texture_dimensions: vec2<i32> = textureDimensions(
         _progressive_rendering_texture,
     );
 
-
-    var pixel_colour = vec4(0.);
-    if _render_parameters.paths_per_pixel > 1u {
-        var current_pixel_indices: vec2<u32> = vec2<u32>(
-            (1. + in.uv_coordinate.xy)
-            * vec2<f32>(progressive_rendering_texture_dimensions)
-            / 2.
-        );
-        pixel_colour = textureLoad(
-            _progressive_rendering_texture,
-            current_pixel_indices,
-        );
-    }
-
+    var current_pixel_indices: vec2<u32> = vec2<u32>(
+        (1. + in.uv_coordinate.xy)
+        * vec2<f32>(progressive_rendering_texture_dimensions)
+        / 2.
+    );
+    var pixel_colour = textureLoad(
+        _progressive_rendering_texture,
+        current_pixel_indices,
+    );
 
     var exit_early_with_aov: bool = (
         _render_parameters.output_aov > BEAUTY_AOV
         && _render_parameters.output_aov < STATS_AOV
     );
 
-    for (var path=1u; path <= _render_parameters.paths_per_pixel; path++) {
-        var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
+    var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
 
-        march_path(seed, exit_early_with_aov, &ray);
+    march_path(seed, exit_early_with_aov, &ray);
 
-        pixel_colour += vec4(ray.colour, 1.);
+    pixel_colour = (
+        _render_stats.paths_rendered_per_pixel * pixel_colour + vec4(ray.colour, 1.)
+    ) / (_render_stats.paths_rendered_per_pixel + 1.);
 
-        seed = random_vec3f(seed.yzx + frag_coord_seed);
-    }
+    textureStore(
+        _progressive_rendering_texture,
+        current_pixel_indices,
+        pixel_colour,
+    );
 
-    return pixel_colour / f32(_render_parameters.paths_per_pixel);
+    return pixel_colour;
 }

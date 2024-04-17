@@ -7,10 +7,12 @@
 fn main() {
     use eframe::egui::Visuals;
 
-    let options = eframe::NativeOptions {
+    let mut options = eframe::NativeOptions {
         renderer: eframe::Renderer::Wgpu,
         ..Default::default()
     };
+    options.wgpu_options.device_descriptor.features =
+        eframe::wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES;
 
     let _ = eframe::run_native(
         "damascus",

@@ -1,6 +1,5 @@
 
 struct RenderParameters {
-    paths_per_pixel: u32,
     roulette: u32,
     max_distance: f32,
     max_ray_steps: u32,
@@ -26,6 +25,9 @@ struct SceneParameters {
     num_non_physical_lights: u32,
 }
 
+struct RenderStats {
+    paths_rendered_per_pixel: f32,
+}
 
 // Global render settings
 @group(0) @binding(0)
@@ -33,3 +35,6 @@ var<uniform> _render_parameters: RenderParameters;
 
 @group(0) @binding(1)
 var<uniform> _scene_parameters: SceneParameters;
+
+@group(0) @binding(2)
+var<uniform> _render_stats: RenderStats;

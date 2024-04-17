@@ -559,7 +559,6 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::RayMarcher => {
             let scene = evaluator.input_scene("scene")?;
-            let paths_per_pixel = evaluator.input_uint("paths_per_pixel")?;
             let roulette = evaluator.input_bool("roulette")?;
             let max_distance = evaluator.input_float("max_distance")?;
             let max_ray_steps = evaluator.input_uint("max_ray_steps")?;
@@ -582,7 +581,6 @@ pub fn evaluate_node(
                 "out",
                 renderers::RayMarcher {
                     scene: scene,
-                    paths_per_pixel: paths_per_pixel,
                     roulette: roulette,
                     max_distance: max_distance,
                     max_ray_steps: max_ray_steps,

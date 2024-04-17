@@ -14,29 +14,25 @@ use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
-    renderers::{RayMarcher, Std430GPURayMarcher},
+    renderers::{RayMarcher, RenderStats, Std430GPURayMarcher, Std430GPURenderStats},
     scene::{Scene, Std430GPUSceneParameters},
     shaders,
 };
 
 pub struct Viewport3d {
+    pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
-    frame_counter: u32,
-    previous_frame_time: SystemTime,
-    fps: f32,
-    pub renderer: RayMarcher,
+    render_stats: RenderStats,
 }
 
 impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let viewport3d = Self {
+            renderer: RayMarcher::default(),
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
-            frame_counter: 1,
-            previous_frame_time: SystemTime::now(),
-            fps: 0.,
-            renderer: RayMarcher::default(),
+            render_stats: RenderStats::default(),
         };
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -48,16 +44,21 @@ impl Viewport3d {
         // Uniform Buffers
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d render globals buffer"),
+                label: Some("viewport 3d render parameter buffer"),
                 contents: bytemuck::cast_slice(&[viewport3d.renderer.render_parameters()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let scene_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d render globals buffer"),
+                label: Some("viewport 3d scene parameter buffer"),
                 contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.scene_parameters()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
+        let render_stats_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("viewport 3d render progress buffer"),
+            contents: bytemuck::cast_slice(&[viewport3d.render_stats.as_std_430()]),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+        });
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
@@ -89,6 +90,16 @@ impl Viewport3d {
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 3,
                         visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Uniform,
@@ -113,6 +124,10 @@ impl Viewport3d {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
+                    resource: render_stats_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
                     resource: render_camera_buffer.as_entire_binding(),
                 },
             ],
@@ -191,31 +206,33 @@ impl Viewport3d {
         });
 
         // Create the texture to render to and initialize from
-        let texture_size = 256u32;
-        // let texture_descriptor = wgpu::TextureDescriptor {
-        //     size: wgpu::Extent3d {
-        //         width: texture_size,
-        //         height: texture_size,
-        //         depth_or_array_layers: 1,
-        //     },
-        //     mip_level_count: 1,
-        //     sample_count: 1,
-        //     dimension: wgpu::TextureDimension::D2,
-        //     format: wgpu::TextureFormat::Rgba32Float,
-        //     usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-        //     label: Some("viewport 3d progressive rendering texture"),
-        //     view_formats: &[],
-        // };
-        // let texture = device.create_texture(&texture_descriptor);
-        // let texture_view = texture.create_view(&Default::default());
+        let texture_size = 512u32;
+        let texture_descriptor = wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width: texture_size,
+                height: texture_size,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba32Float,
+            usage: wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::STORAGE_BINDING
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            label: Some("viewport 3d progressive rendering texture"),
+            view_formats: &[],
+        };
+        let texture = device.create_texture(&texture_descriptor);
+        let texture_view = texture.create_view(&Default::default());
 
-        let progressive_rendering_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            size: ((std::mem::size_of::<f32>() as u32) * texture_size * texture_size)
-                as wgpu::BufferAddress,
-            usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::COPY_DST,
-            label: Some("viewport 3d progressive rendering buffer"),
-            mapped_at_creation: false,
-        });
+        // let progressive_rendering_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        //     size: ((std::mem::size_of::<f32>() as u32) * texture_size * texture_size)
+        //         as wgpu::BufferAddress,
+        //     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+        //     label: Some("viewport 3d progressive rendering buffer"),
+        //     mapped_at_creation: false,
+        // });
         let progressive_rendering_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d progressive rendering bind group layout"),
@@ -237,14 +254,18 @@ impl Viewport3d {
                 layout: &progressive_rendering_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: progressive_rendering_buffer.as_entire_binding(),
+                    resource: wgpu::BindingResource::TextureView(&texture_view),
                 }],
             });
 
         // Create the pipeline
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("viewport 3d pipeline layout"),
-            bind_group_layouts: &[&uniform_bind_group_layout, &scene_storage_bind_group_layout],
+            bind_group_layouts: &[
+                &uniform_bind_group_layout,
+                &scene_storage_bind_group_layout,
+                &progressive_rendering_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -287,20 +308,24 @@ impl Viewport3d {
                 uniform_bind_group,
                 render_parameters_buffer,
                 scene_parameters_buffer,
+                render_stats_buffer,
                 render_camera_buffer,
                 scene_storage_bind_group,
                 primitives_buffer,
                 lights_buffer,
                 atmosphere_buffer,
                 progressive_rendering_bind_group,
-                progressive_rendering_buffer,
             });
 
         Some(viewport3d)
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        let (rect, response) = ui.allocate_exact_size(egui::vec2(256., 256.), egui::Sense::drag());
+        let (rect, response) = ui.allocate_exact_size(
+            // ui.available_size(),
+            egui::vec2(512., 512.),
+            egui::Sense::drag(),
+        );
 
         self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
@@ -332,6 +357,7 @@ impl Viewport3d {
         let primitives = self.renderer.scene.create_gpu_primitives();
         let lights = self.renderer.scene.create_gpu_lights();
         let atmosphere = self.renderer.scene.atmosphere();
+        let render_stats = self.render_stats.as_std_430();
 
         // The callback function for WGPU is in two stages: prepare, and paint.
         //
@@ -353,6 +379,7 @@ impl Viewport3d {
                     primitives,
                     lights,
                     atmosphere,
+                    render_stats,
                 );
                 Vec::new()
             })
@@ -369,21 +396,24 @@ impl Viewport3d {
         ui.painter().add(callback);
 
         if self.enable_frame_rate_overlay {
-            if self.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.previous_frame_time) {
+            if self.render_stats.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.render_stats.previous_frame_time) {
                     Ok(frame_time) => {
-                        self.fps = self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                        self.render_stats.fps =
+                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
                     }
                     Err(_) => panic!("SystemTime before UNIX EPOCH!"),
                 }
 
-                self.previous_frame_time = SystemTime::now();
-                self.frame_counter = 1;
+                self.render_stats.previous_frame_time = SystemTime::now();
+                self.render_stats.frame_counter = 1;
             } else {
-                self.frame_counter += 1;
+                self.render_stats.frame_counter += 1;
             }
-            ui.label(format!("{:?} fps", self.fps));
+            ui.label(format!("{:?} fps", self.render_stats.fps));
         }
+
+        self.render_stats.paths_rendered_per_pixel += 1;
     }
 }
 
@@ -392,13 +422,13 @@ struct RenderResources {
     uniform_bind_group: wgpu::BindGroup,
     render_parameters_buffer: wgpu::Buffer,
     scene_parameters_buffer: wgpu::Buffer,
+    render_stats_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
     scene_storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
     atmosphere_buffer: wgpu::Buffer,
     progressive_rendering_bind_group: wgpu::BindGroup,
-    progressive_rendering_buffer: wgpu::Buffer,
 }
 
 impl RenderResources {
@@ -412,6 +442,7 @@ impl RenderResources {
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
         atmosphere: Std430GPUMaterial,
+        render_stats: Std430GPURenderStats,
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
@@ -423,6 +454,11 @@ impl RenderResources {
             &self.scene_parameters_buffer,
             0,
             bytemuck::cast_slice(&[scene_parameters]),
+        );
+        queue.write_buffer(
+            &self.render_stats_buffer,
+            0,
+            bytemuck::cast_slice(&[render_stats]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,
@@ -447,6 +483,7 @@ impl RenderResources {
 
         render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
         render_pass.set_bind_group(1, &self.scene_storage_bind_group, &[]);
+        render_pass.set_bind_group(2, &self.progressive_rendering_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

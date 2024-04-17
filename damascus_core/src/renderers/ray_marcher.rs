@@ -6,7 +6,6 @@ use crate::{renderers::AOVs, scene::Scene};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPURayMarcher {
-    paths_per_pixel: u32,
     roulette: u32,
     max_distance: f32,
     max_ray_steps: u32,
@@ -33,7 +32,6 @@ pub struct GPURayMarcher {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RayMarcher {
     pub scene: Scene,
-    pub paths_per_pixel: u32,
     pub roulette: bool,
     pub max_distance: f32,
     pub max_ray_steps: u32,
@@ -61,7 +59,6 @@ impl Default for RayMarcher {
     fn default() -> Self {
         RayMarcher {
             scene: Scene::default(),
-            paths_per_pixel: 1,
             roulette: true,
             max_distance: 100.,
             max_ray_steps: 1000,
@@ -86,7 +83,6 @@ impl Default for RayMarcher {
 impl RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
-            paths_per_pixel: self.paths_per_pixel.max(1),
             roulette: self.roulette as u32,
             max_distance: self.max_distance,
             max_ray_steps: self.max_ray_steps,
@@ -114,7 +110,6 @@ impl RayMarcher {
     pub fn reset_render_parameters(&mut self) {
         let default_ray_marcher = Self::default();
 
-        self.paths_per_pixel = default_ray_marcher.paths_per_pixel;
         self.roulette = default_ray_marcher.roulette;
         self.max_distance = default_ray_marcher.max_distance;
         self.max_ray_steps = default_ray_marcher.max_ray_steps;

@@ -415,6 +415,10 @@ impl Viewport3d {
 
         self.render_stats.paths_rendered_per_pixel += 1;
     }
+
+    pub fn reset_render(&mut self) {
+        self.render_stats.paths_rendered_per_pixel = 0;
+    }
 }
 
 struct RenderResources {

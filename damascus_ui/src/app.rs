@@ -143,7 +143,10 @@ impl eframe::App for Damascus {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
                     DamascusResponse::SetActiveNode(node) => {
-                        self.user_state.active_node = Some(node)
+                        self.user_state.active_node = Some(node);
+                        if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
+                            viewport_3d.reset_render();
+                        }
                     }
                     DamascusResponse::ClearActiveNode => self.user_state.active_node = None,
                     DamascusResponse::InputValueChanged(node_id, node_template, input_name) => {
@@ -153,6 +156,10 @@ impl eframe::App for Damascus {
                             node_id,
                             &input_name,
                         );
+
+                        if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
+                            viewport_3d.reset_render();
+                        }
                     }
                 }
             }

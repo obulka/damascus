@@ -127,7 +127,7 @@ fn schlick_reflection_coefficient(
         var sin_transmitted_squared: f32 = refractive_ratio * refractive_ratio * (
             1. - cos_x * cos_x
         );
-        if sin_transmitted_squared > 1. {
+        if sin_transmitted_squared >= 1. {
             return 1.;
         }
         cos_x = sqrt(1. - sin_transmitted_squared);
@@ -223,6 +223,7 @@ fn sample_material(
     var material_pdf: f32;
     if (
         (*primitive).material.transmissive_probability > 0.
+        && transmissive_probability > 0.
         && rng <= transmissive_probability
     ) {
         // Transmissive bounce
@@ -235,7 +236,7 @@ fn sample_material(
             1. - cos_incident * cos_incident
         );
 
-        if sin_transmitted_squared <= 1. {
+        if sin_transmitted_squared < 1. {
             // Refract
             var cos_transmitted = sqrt(1. - sin_transmitted_squared);
             var ideal_refracted_direction: vec3<f32> = normalize(

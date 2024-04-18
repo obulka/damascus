@@ -73,7 +73,6 @@ fn find_nearest_descendant(
             // Get the next parent and apply the current blended material
             *family = _primitives.primitives[current_parent_index];
             (*family).id = child.id;
-            (*family).num_descendants = child.num_descendants;
             (*family).material = child.material;
 
             // Update the child index to point to the first child of the
@@ -190,6 +189,10 @@ fn find_nearest_primitive(
         // `find_nearest_descendant` function
         primitives_processed += num_descendants + 1u;
     }
+    // Set the number of descendants to be that of the closest primitive
+    (*closest_primitive).num_descendants = (
+        _primitives.primitives[(*closest_primitive).id - 1u].num_descendants
+    );
 }
 
 

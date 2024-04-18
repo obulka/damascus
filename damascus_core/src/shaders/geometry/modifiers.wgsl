@@ -662,11 +662,6 @@ fn mix_primitives(
         (*primitive_1).id,
         smoothing > 0.5,
     );
-    (*primitive_0).num_descendants = select(
-        (*primitive_0).num_descendants,
-        (*primitive_1).num_descendants,
-        smoothing > 0.5,
-    );
     (*primitive_1).id = (*primitive_0).id;
 }
 
@@ -735,11 +730,6 @@ fn select_primitive(
     (*primitive_0).id = select(
         (*primitive_0).id,
         (*primitive_1).id,
-        choice,
-    );
-    (*primitive_0).num_descendants = select(
-        (*primitive_0).num_descendants,
-        (*primitive_1).num_descendants,
         choice,
     );
     (*primitive_1).id = (*primitive_0).id;

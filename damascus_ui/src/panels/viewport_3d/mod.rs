@@ -9,6 +9,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
+use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
@@ -24,15 +25,19 @@ pub struct Viewport3d {
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
     render_stats: RenderStats,
+    renderer_hash: Key<OrderedFloatPolicy>,
 }
 
 impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
+        let renderer = RayMarcher::default();
+        let renderer_hash = to_key_with_ordered_float(&renderer).ok()?;
         let viewport3d = Self {
-            renderer: RayMarcher::default(),
+            renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
             render_stats: RenderStats::default(),
+            renderer_hash: renderer_hash,
         };
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -206,11 +211,10 @@ impl Viewport3d {
         });
 
         // Create the texture to render to and initialize from
-        let texture_size = 512u32;
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: texture_size,
-                height: texture_size,
+                width: 2048u32,
+                height: 1024u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -225,14 +229,6 @@ impl Viewport3d {
         };
         let texture = device.create_texture(&texture_descriptor);
         let texture_view = texture.create_view(&Default::default());
-
-        // let progressive_rendering_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-        //     size: ((std::mem::size_of::<f32>() as u32) * texture_size * texture_size)
-        //         as wgpu::BufferAddress,
-        //     usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-        //     label: Some("viewport 3d progressive rendering buffer"),
-        //     mapped_at_creation: false,
-        // });
         let progressive_rendering_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d progressive rendering bind group layout"),
@@ -323,7 +319,7 @@ impl Viewport3d {
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) = ui.allocate_exact_size(
             // ui.available_size(),
-            egui::vec2(512., 512.),
+            egui::vec2(2048., 1024.),
             egui::Sense::drag(),
         );
 
@@ -349,6 +345,15 @@ impl Viewport3d {
             ))
         };
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
+
+        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
+            if new_hash != self.renderer_hash {
+                self.render_stats.paths_rendered_per_pixel = 0;
+                self.renderer_hash = new_hash;
+            }
+        } else {
+            panic!("Cannot hash node graph!")
+        }
 
         // Clone locals so we can move them into the paint callback:
         let render_parameters = self.renderer.render_parameters();
@@ -414,10 +419,6 @@ impl Viewport3d {
         }
 
         self.render_stats.paths_rendered_per_pixel += 1;
-    }
-
-    pub fn reset_render(&mut self) {
-        self.render_stats.paths_rendered_per_pixel = 0;
     }
 }
 

@@ -137,16 +137,10 @@ impl eframe::App for Damascus {
             })
             .inner;
         for node_response in graph_response.node_responses {
-            // Here, we ignore all other graph events. But you may find
-            // some use for them. For example, by playing a sound when a new
-            // connection is created
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
                     DamascusResponse::SetActiveNode(node) => {
                         self.user_state.active_node = Some(node);
-                        if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
-                            viewport_3d.reset_render();
-                        }
                     }
                     DamascusResponse::ClearActiveNode => self.user_state.active_node = None,
                     DamascusResponse::InputValueChanged(node_id, node_template, input_name) => {
@@ -156,10 +150,6 @@ impl eframe::App for Damascus {
                             node_id,
                             &input_name,
                         );
-
-                        if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
-                            viewport_3d.reset_render();
-                        }
                     }
                 }
             }

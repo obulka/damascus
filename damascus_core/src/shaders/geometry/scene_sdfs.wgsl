@@ -189,7 +189,7 @@ fn find_nearest_primitive(
         // `find_nearest_descendant` function
         primitives_processed += num_descendants + 1u;
     }
-    // Set the number of descendants to be that of the closest primitive
+    // Ensure the number of descendants is that of the closest primitive
     (*closest_primitive).num_descendants = (
         _primitives.primitives[(*closest_primitive).id - 1u].num_descendants
     );

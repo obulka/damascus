@@ -123,9 +123,14 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: vec3<f32>, exit_early_with_aov: bool, ray: ptr<function, Ray>) {
+fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
+
+    var exit_early_with_aov: bool = (
+        _render_parameters.output_aov > BEAUTY_AOV
+        && _render_parameters.output_aov < STATS_AOV
+    );
 
     var path_seed: vec3<f32> = seed;
     var roulette = bool(_render_parameters.roulette);
@@ -283,38 +288,35 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
         + random_f32(_render_stats.paths_rendered_per_pixel)
     );
 
-    var progressive_rendering_texture_dimensions: vec2<i32> = textureDimensions(
+    var progressive_rendering_texture_dimensions = vec2<f32>(
+        textureDimensions(_progressive_rendering_texture),
+    );
+
+    // Add a random offset to the uv_coordinates for anti-aliasing 
+    var current_pixel_indices: vec2<f32> = uv_to_pixels(
+        in.uv_coordinate.xy,
+        progressive_rendering_texture_dimensions,
+    );
+    var uv_coordinates: vec2<f32> = pixels_to_uv(
+        current_pixel_indices + random_vec2f(seed.xy),
+        progressive_rendering_texture_dimensions,
+    );
+
+    // Create and march a ray
+    var ray: Ray = create_render_camera_ray(seed, uv_coordinates);
+    march_path(seed, &ray);
+
+    // Read, update, and store the current value for our pixel
+    // so that the render can be done progressively
+    var texture_coordinates = vec2<u32>(current_pixel_indices);
+    var pixel_colour: vec4<f32> = textureLoad(
         _progressive_rendering_texture,
+        texture_coordinates,
     );
-
-    var current_pixel_indices: vec2<u32> = vec2<u32>(
-        (1. + in.uv_coordinate.xy)
-        * vec2<f32>(progressive_rendering_texture_dimensions)
-        / 2.
-    );
-    var pixel_colour = textureLoad(
-        _progressive_rendering_texture,
-        current_pixel_indices,
-    );
-
-    var exit_early_with_aov: bool = (
-        _render_parameters.output_aov > BEAUTY_AOV
-        && _render_parameters.output_aov < STATS_AOV
-    );
-
-    var ray: Ray = create_render_camera_ray(seed, in.uv_coordinate);
-
-    march_path(seed, exit_early_with_aov, &ray);
-
     pixel_colour = (
         _render_stats.paths_rendered_per_pixel * pixel_colour + vec4(ray.colour, 1.)
     ) / (_render_stats.paths_rendered_per_pixel + 1.);
-
-    textureStore(
-        _progressive_rendering_texture,
-        current_pixel_indices,
-        pixel_colour,
-    );
+    textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;
 }

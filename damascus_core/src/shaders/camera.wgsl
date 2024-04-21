@@ -13,6 +13,32 @@ struct Camera {
 var<uniform> _render_camera: Camera;
 
 
+/**
+ * Convert location of a pixel in an image into uv.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The uv position.
+ */
+fn pixels_to_uv(pixel_coordinates: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
+    return 2. * pixel_coordinates / resolution - 1.;
+}
+
+
+/**
+ * Convert location of a pixel in an image from uv.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+fn uv_to_pixels(pixel_coordinates: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
+    return (pixel_coordinates + 1.) * resolution / 2.;
+}
+
+
 fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
     return (
         _render_camera.inverse_world_matrix
@@ -26,7 +52,7 @@ fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
  *
  * @arg uv_coordinate: The UV position in the resulting image.
  */
-fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
+fn create_ray(uv_coordinate: vec2<f32>) -> Ray {
     return Ray(
         vec3(
             _render_camera.world_matrix[3][0],
@@ -36,7 +62,7 @@ fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
         normalize((
             _render_camera.world_matrix
             * vec4(
-                (_render_camera.inverse_projection_matrix * uv_coordinate).xyz,
+                (_render_camera.inverse_projection_matrix * vec4(uv_coordinate, 0., 1.)).xyz,
                 0.,
             )
         ).xyz),
@@ -53,7 +79,7 @@ fn create_ray(uv_coordinate: vec4<f32>) -> Ray {
  * @arg seed: The seed to use in randomization.
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
-fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec4<f32>) -> Ray {
+fn create_render_camera_ray(seed: vec3<f32>, uv_coordinate: vec2<f32>) -> Ray {
     // if (bool(_render_params.ray_marcher.latlong))
     // {
     //     // create_latlong_ray(

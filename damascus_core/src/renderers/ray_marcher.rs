@@ -25,7 +25,6 @@ pub struct GPURayMarcher {
     // TODO precomputed irradiance
     // TODO variance & adaptive sampling
     output_aov: u32,
-    // TODO resolution
     latlong: u32,
 }
 

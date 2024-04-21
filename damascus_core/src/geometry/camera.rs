@@ -60,32 +60,31 @@ impl Camera {
         focal_length / f_stop / 1000.0
     }
 
-    fn projection_matrix(
-        focal_length: f32,
-        horizontal_aperture: f32,
-        aspect_ratio: f32,
-        near_plane: f32,
-        far_plane: f32,
-    ) -> Mat4 {
-        let far_to_near_plane_distance = far_plane - near_plane;
+    fn projection_matrix(&self) -> Mat4 {
+        let far_to_near_plane_distance = self.far_plane - self.near_plane;
         Mat4::from_cols(
-            Vec4::new(2. * focal_length / horizontal_aperture, 0., 0., 0.),
+            Vec4::new(
+                2. * self.focal_length / self.horizontal_aperture,
+                0.,
+                0.,
+                0.,
+            ),
             Vec4::new(
                 0.,
-                2. * focal_length / horizontal_aperture * aspect_ratio,
+                2. * self.focal_length / self.horizontal_aperture * self.aspect_ratio,
                 0.,
                 0.,
             ),
             Vec4::new(
                 0.,
                 0.,
-                -(far_plane + near_plane) / far_to_near_plane_distance,
+                -(self.far_plane + self.near_plane) / far_to_near_plane_distance,
                 -1.,
             ),
             Vec4::new(
                 0.,
                 0.,
-                -2. * (far_plane * near_plane) / far_to_near_plane_distance,
+                -2. * (self.far_plane * self.near_plane) / far_to_near_plane_distance,
                 0.,
             ),
         )
@@ -98,14 +97,7 @@ impl Camera {
             focal_distance: self.focal_distance,
             world_matrix: self.world_matrix,
             inverse_world_matrix: self.world_matrix.inverse(),
-            inverse_projection_matrix: Self::projection_matrix(
-                self.focal_length,
-                self.horizontal_aperture,
-                self.aspect_ratio,
-                self.near_plane,
-                self.far_plane,
-            )
-            .inverse(),
+            inverse_projection_matrix: self.projection_matrix().inverse(),
         }
     }
 

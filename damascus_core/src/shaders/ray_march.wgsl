@@ -309,12 +309,10 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     // Read, update, and store the current value for our pixel
     // so that the render can be done progressively
     var texture_coordinates = vec2<u32>(current_pixel_indices);
-    var pixel_colour: vec4<f32> = textureLoad(
-        _progressive_rendering_texture,
-        texture_coordinates,
-    );
-    pixel_colour = (
-        _render_stats.paths_rendered_per_pixel * pixel_colour + vec4(ray.colour, 1.)
+    var pixel_colour: vec4<f32> = (
+        _render_stats.paths_rendered_per_pixel
+        * textureLoad(_progressive_rendering_texture, texture_coordinates)
+        + vec4(ray.colour, 1.)
     ) / (_render_stats.paths_rendered_per_pixel + 1.);
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 

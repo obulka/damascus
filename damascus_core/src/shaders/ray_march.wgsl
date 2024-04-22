@@ -4,7 +4,6 @@
 // Please see the LICENSE file that is included as part of this package.
 
 
-
 //
 // Ray Marching shader
 //

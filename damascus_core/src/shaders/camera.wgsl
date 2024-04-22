@@ -48,27 +48,36 @@ fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
 
 
 /**
- * Generate a ray out of a camera.
+ * Get the position of the render camera.
  *
- * @arg uv_coordinate: The UV position in the resulting image.
+ * @returns: The position of the render camera.
  */
-fn create_ray(uv_coordinate: vec2<f32>) -> Ray {
-    return Ray(
-        vec3(
-            _render_camera.world_matrix[3][0],
-            _render_camera.world_matrix[3][1],
-            _render_camera.world_matrix[3][2],
-        ),
-        normalize((
-            _render_camera.world_matrix
-            * vec4(
-                (_render_camera.inverse_projection_matrix * vec4(uv_coordinate, 0., 1.)).xyz,
-                0.,
-            )
-        ).xyz),
-        vec3(0.),
-        vec3(1.),
+fn render_camera_position() -> vec3<f32> {
+    return vec3(
+        _render_camera.world_matrix[3][0],
+        _render_camera.world_matrix[3][1],
+        _render_camera.world_matrix[3][2],
     );
+}
+
+
+/**
+ * Get the rotation of the render camera.
+ *
+ * @returns: The rotation of the render camera.
+ */
+fn render_camera_rotation() -> mat3x3<f32> {
+    var rotation_matrix = mat3x3<f32>();
+    rotation_matrix[0][0] = _render_camera.world_matrix[0][0];
+    rotation_matrix[0][1] = _render_camera.world_matrix[0][1];
+    rotation_matrix[0][2] = _render_camera.world_matrix[0][2];
+    rotation_matrix[1][0] = _render_camera.world_matrix[1][0];
+    rotation_matrix[1][1] = _render_camera.world_matrix[1][1];
+    rotation_matrix[1][2] = _render_camera.world_matrix[1][2];
+    rotation_matrix[2][0] = _render_camera.world_matrix[2][0];
+    rotation_matrix[2][1] = _render_camera.world_matrix[2][1];
+    rotation_matrix[2][2] = _render_camera.world_matrix[2][2];
+    return rotation_matrix;
 }
 
 
@@ -80,15 +89,28 @@ fn create_ray(uv_coordinate: vec2<f32>) -> Ray {
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
 fn create_render_camera_ray(seed: vec2<f32>, uv_coordinate: vec2<f32>) -> Ray {
-    // if (bool(_render_params.ray_marcher.latlong))
-    // {
-    //     // create_latlong_ray(
-    //     //     uv_coordinate,
-    //     //     ray_origin,
-    //     //     ray_direction,
-    //     // );
-    // }
-    var ray: Ray = create_ray(uv_coordinate);
+    if (bool(_render_parameters.latlong)) {
+        return Ray(
+            render_camera_position(),
+            render_camera_rotation() * spherical_unit_vector_to_cartesion(
+                uv_coordinate_to_angles(uv_coordinate.xy),
+            ),
+            vec3(0.),
+            vec3(1.),
+        );
+    }
+    var ray = Ray(
+        render_camera_position(),
+        normalize((
+            _render_camera.world_matrix
+            * vec4(
+                (_render_camera.inverse_projection_matrix * vec4(uv_coordinate, 0., 1.)).xyz,
+                0.,
+            )
+        ).xyz),
+        vec3(0.),
+        vec3(1.),
+    );
 
     if (!bool(_render_camera.enable_depth_of_field)) {
         return ray;

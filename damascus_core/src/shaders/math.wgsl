@@ -321,3 +321,35 @@ fn power_of_u32(base: f32, exponent: u32) -> f32 {
 
     return result;
 }
+
+
+/**
+ * Convert a spherical unit vector (unit radius) to cartesion.
+ *
+ * @arg angles: The spherical angles in radians.
+ *
+ * @returns: The equivalent cartesion vector.
+ */
+fn spherical_unit_vector_to_cartesion(angles: vec2<f32>) -> vec3<f32> {
+    var sin_phi: f32 = sin(angles.y);
+    return vec3(
+        cos(angles.x) * sin_phi,
+        cos(angles.y),
+        sin(angles.x) * sin_phi,
+    );
+}
+
+
+/**
+ * Convert the uv coordinate in a latlong image to angles.
+ *
+ * @arg uv_coordinate: The uv coordinate.
+ *
+ * @returns: The equivalent angles in radians.
+ */
+fn uv_coordinate_to_angles(uv_coordinate: vec2<f32>) -> vec2<f32> {
+    return vec2(
+        (uv_coordinate.x + 1.) * PI,
+        (1. - uv_coordinate.y) * PI / 2.,
+    );
+}

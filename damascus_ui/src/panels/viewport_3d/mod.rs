@@ -312,8 +312,8 @@ impl Viewport3d {
     fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: 1024u32,
-                height: 512u32,
+                width: 4096u32,
+                height: 2160u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,

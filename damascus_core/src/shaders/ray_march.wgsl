@@ -303,7 +303,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     );
 
     // Create and march a ray
-    var ray: Ray = create_render_camera_ray(seed, uv_coordinates);
+    var ray: Ray = create_render_camera_ray(seed.zy, uv_coordinates);
     march_path(seed, &ray);
 
     // Read, update, and store the current value for our pixel

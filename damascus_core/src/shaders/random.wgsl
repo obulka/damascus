@@ -88,3 +88,16 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
         cosine_direction_in_z_hemisphere(seed),
     ));
 }
+
+
+/**
+ * Create a random point that lies within the unit circle.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random point, (radius, angle) in the unit circle.
+ */
+fn uniform_point_in_unit_circle(seed: vec2<f32>) -> vec2<f32>
+{
+    return vec2<f32>(sqrt(random_f32(seed.x)), 2. * PI * random_f32(seed.y));
+}

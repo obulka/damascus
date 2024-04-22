@@ -1,8 +1,8 @@
-// Copyright 2022 by Owen Bulka.
+// Copyright 2024 by Owen Bulka.
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
-// Please see the LICENSE.md file that should have been included as part
-// of this package.
+// Please see the LICENSE file that is included as part of this package.
+
 
 
 //

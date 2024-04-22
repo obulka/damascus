@@ -1,3 +1,8 @@
+// Copyright 2024 by Owen Bulka.
+// All rights reserved.
+// This file is released under the "MIT License Agreement".
+// Please see the LICENSE file that is included as part of this package.
+
 
 const PI: f32 = 3.141592653589793;
 const TWO_PI: f32 = 6.28318530718;

@@ -46,7 +46,73 @@ impl Viewport3d {
 
         let device = &wgpu_render_state.device;
 
-        // Uniform Buffers
+        // Uniforms
+        let (
+            render_parameters_buffer,
+            scene_parameters_buffer,
+            render_stats_buffer,
+            render_camera_buffer,
+        ) = Self::create_uniform_buffers(device, &viewport3d);
+        let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
+            device,
+            &render_parameters_buffer,
+            &scene_parameters_buffer,
+            &render_stats_buffer,
+            &render_camera_buffer,
+        );
+
+        // Storage
+        let (primitives_buffer, lights_buffer, atmosphere_buffer) =
+            Self::create_storage_buffers(device, &viewport3d);
+        let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
+            device,
+            &primitives_buffer,
+            &lights_buffer,
+            &atmosphere_buffer,
+        );
+
+        // Create the texture to render to and initialize from
+        let texture_view = Self::create_progressive_rendering_texture(device);
+        let (progressive_rendering_bind_group_layout, progressive_rendering_bind_group) =
+            Self::create_progressive_rendering_binding(device, &texture_view);
+
+        // Create the pipeline
+        let render_pipeline = Self::create_render_pipeline(
+            device,
+            wgpu_render_state.target_format,
+            &uniform_bind_group_layout,
+            &storage_bind_group_layout,
+            &progressive_rendering_bind_group_layout,
+        );
+
+        // Because the graphics pipeline must have the same lifetime as the egui render pass,
+        // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
+        // `paint_callback_resources` type map, which is stored alongside the render pass.
+        wgpu_render_state
+            .renderer
+            .write()
+            .paint_callback_resources
+            .insert(RenderResources {
+                render_pipeline,
+                uniform_bind_group,
+                render_parameters_buffer,
+                scene_parameters_buffer,
+                render_stats_buffer,
+                render_camera_buffer,
+                storage_bind_group,
+                primitives_buffer,
+                lights_buffer,
+                atmosphere_buffer,
+                progressive_rendering_bind_group,
+            });
+
+        Some(viewport3d)
+    }
+
+    fn create_uniform_buffers(
+        device: &Arc<wgpu::Device>,
+        viewport3d: &Self,
+    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render parameter buffer"),
@@ -69,6 +135,22 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
+
+        (
+            render_parameters_buffer,
+            scene_parameters_buffer,
+            render_stats_buffer,
+            render_camera_buffer,
+        )
+    }
+
+    fn create_uniform_binding(
+        device: &Arc<wgpu::Device>,
+        render_parameters_buffer: &wgpu::Buffer,
+        scene_parameters_buffer: &wgpu::Buffer,
+        render_stats_buffer: &wgpu::Buffer,
+        render_camera_buffer: &wgpu::Buffer,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d uniform bind group layout"),
@@ -138,7 +220,13 @@ impl Viewport3d {
             ],
         });
 
-        // Storage Buffers for scene
+        (uniform_bind_group_layout, uniform_bind_group)
+    }
+
+    fn create_storage_buffers(
+        device: &Arc<wgpu::Device>,
+        viewport3d: &Self,
+    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
@@ -154,7 +242,17 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.atmosphere()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
-        let scene_storage_bind_group_layout =
+
+        (primitives_buffer, lights_buffer, atmosphere_buffer)
+    }
+
+    fn create_storage_binding(
+        device: &Arc<wgpu::Device>,
+        primitives_buffer: &wgpu::Buffer,
+        lights_buffer: &wgpu::Buffer,
+        atmosphere_buffer: &wgpu::Buffer,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let storage_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d scene storage bind group layout"),
                 entries: &[
@@ -190,10 +288,9 @@ impl Viewport3d {
                     },
                 ],
             });
-
-        let scene_storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: Some("viewport 3d scene storage bind group"),
-            layout: &scene_storage_bind_group_layout,
+            layout: &storage_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -210,11 +307,14 @@ impl Viewport3d {
             ],
         });
 
-        // Create the texture to render to and initialize from
+        (storage_bind_group_layout, storage_bind_group)
+    }
+
+    fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: 2048u32,
-                height: 1024u32,
+                width: 1024u32,
+                height: 512u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -226,7 +326,13 @@ impl Viewport3d {
             view_formats: &[],
         };
         let texture = device.create_texture(&texture_descriptor);
-        let texture_view = texture.create_view(&Default::default());
+        texture.create_view(&Default::default())
+    }
+
+    fn create_progressive_rendering_binding(
+        device: &Arc<wgpu::Device>,
+        texture_view: &wgpu::TextureView,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let progressive_rendering_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("viewport 3d progressive rendering bind group layout"),
@@ -248,17 +354,29 @@ impl Viewport3d {
                 layout: &progressive_rendering_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                    resource: wgpu::BindingResource::TextureView(texture_view),
                 }],
             });
 
-        // Create the pipeline
+        (
+            progressive_rendering_bind_group_layout,
+            progressive_rendering_bind_group,
+        )
+    }
+
+    fn create_render_pipeline(
+        device: &Arc<wgpu::Device>,
+        texture_format: wgpu::TextureFormat,
+        uniform_bind_group_layout: &wgpu::BindGroupLayout,
+        storage_bind_group_layout: &wgpu::BindGroupLayout,
+        progressive_rendering_bind_group_layout: &wgpu::BindGroupLayout,
+    ) -> wgpu::RenderPipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("viewport 3d pipeline layout"),
             bind_group_layouts: &[
-                &uniform_bind_group_layout,
-                &scene_storage_bind_group_layout,
-                &progressive_rendering_bind_group_layout,
+                uniform_bind_group_layout,
+                storage_bind_group_layout,
+                progressive_rendering_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });
@@ -268,7 +386,7 @@ impl Viewport3d {
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader())).into(),
         });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("viewport 3d render pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
@@ -279,7 +397,7 @@ impl Viewport3d {
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: "fs_main",
-                targets: &[Some(wgpu_render_state.target_format.into())],
+                targets: &[Some(texture_format.into())],
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleStrip,
@@ -288,42 +406,20 @@ impl Viewport3d {
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
-        });
-
-        // Because the graphics pipeline must have the same lifetime as the egui render pass,
-        // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
-        // `paint_callback_resources` type map, which is stored alongside the render pass.
-        wgpu_render_state
-            .renderer
-            .write()
-            .paint_callback_resources
-            .insert(RenderResources {
-                render_pipeline,
-                uniform_bind_group,
-                render_parameters_buffer,
-                scene_parameters_buffer,
-                render_stats_buffer,
-                render_camera_buffer,
-                scene_storage_bind_group,
-                primitives_buffer,
-                lights_buffer,
-                atmosphere_buffer,
-                progressive_rendering_bind_group,
-            });
-
-        Some(viewport3d)
+        })
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let (rect, response) = ui.allocate_exact_size(
-            // ui.available_size(),
-            egui::vec2(2048., 1024.),
+            ui.available_size(),
+            // egui::vec2(2048., 1024.),
             egui::Sense::drag(),
         );
 
         self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
 
+        // Allow some basic camera movement
         let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
             glam::Mat4::from_quat(glam::Quat::from_euler(
                 glam::EulerRot::XYZ,
@@ -344,6 +440,7 @@ impl Viewport3d {
         };
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
 
+        // Check if the nodegraph has changed and reset the render if it has
         if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.renderer_hash {
                 self.render_stats.paths_rendered_per_pixel = 0;
@@ -353,7 +450,7 @@ impl Viewport3d {
             panic!("Cannot hash node graph!")
         }
 
-        // Clone locals so we can move them into the paint callback:
+        // Clone locals so we can move them into the paint callback
         let render_parameters = self.renderer.render_parameters();
         let scene_parameters = self.renderer.scene.scene_parameters();
         let render_camera = self.renderer.scene.render_camera.as_std_430();
@@ -427,7 +524,7 @@ struct RenderResources {
     scene_parameters_buffer: wgpu::Buffer,
     render_stats_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
-    scene_storage_bind_group: wgpu::BindGroup,
+    storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
     atmosphere_buffer: wgpu::Buffer,
@@ -485,7 +582,7 @@ impl RenderResources {
         render_pass.set_pipeline(&self.render_pipeline);
 
         render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.scene_storage_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
         render_pass.set_bind_group(2, &self.progressive_rendering_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);

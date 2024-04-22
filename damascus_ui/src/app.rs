@@ -33,15 +33,15 @@ const PERSISTENCE_KEY: &str = "damascus";
 impl Damascus {
     /// Called once before the first frame.
     /// Load previous app state (if any).
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let state = cc
+    pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
+        let state = creation_context
             .storage
             .and_then(|storage| eframe::get_value(storage, PERSISTENCE_KEY))
             .unwrap_or_default();
         Self {
             state,
             user_state: DamascusGraphState::default(),
-            viewport_3d: Viewport3d::new(cc),
+            viewport_3d: Viewport3d::new(creation_context),
         }
     }
 }

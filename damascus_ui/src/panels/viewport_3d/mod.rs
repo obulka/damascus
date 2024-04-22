@@ -43,7 +43,6 @@ impl Viewport3d {
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
         // from `eframe::Frame` when you don't have a `CreationContext` available.
         let wgpu_render_state = creation_context.wgpu_render_state.as_ref()?;
-
         let device = &wgpu_render_state.device;
 
         // Uniforms

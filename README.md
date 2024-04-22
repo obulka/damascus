@@ -5,6 +5,8 @@ This is very much still a work in progress, and future breaking changes are all 
 
 ![damascus_example](https://github.com/obulka/damascus/assets/21975584/968c6d2b-340f-42ab-b479-236e4cafbf3d)
 
+![damascus_test](https://github.com/obulka/damascus/assets/21975584/d7e2d5af-1f1d-4943-8857-a3ce69a707f6)
+
 ### Running the project
 
 Simply clone the repo and run `cargo run --release` to build and launch the application.

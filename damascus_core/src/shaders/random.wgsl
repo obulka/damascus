@@ -75,12 +75,12 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
         vec3(0., 1., 0.),
         abs(axis.x) > 1e-6,
     );
-    var rotation_axis: vec3<f32> = normalize(cross(secondary_axis, axis));
-    var perpendicular_axis: vec3<f32> = cross(axis, rotation_axis);
+    var perpendicular_axis: vec3<f32> = normalize(cross(secondary_axis, axis));
+    var basis_axis: vec3<f32> = cross(axis, perpendicular_axis);
 
     return normalize(
-        rotation_axis * cos(angle) * r
-        + perpendicular_axis * sin(angle) * r
+        perpendicular_axis * cos(angle) * r
+        + basis_axis * sin(angle) * r
         + axis * sqrt(1. - uniform_random_numbers.x)
     );
 }

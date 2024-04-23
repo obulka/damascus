@@ -79,7 +79,7 @@ fn ray_miss_aovs(
                 nested_dielectrics,
             );
             (*ray).colour += (*ray).throughput * procedurally_texture(
-                world_position,
+                vec4(world_position, distance_travelled / 1000.),
                 _atmosphere.diffuse_colour,
                 _atmosphere.diffuse_texture,
             );

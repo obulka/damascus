@@ -314,9 +314,14 @@ fn sample_material(
 }
 
 
-fn checkerboard(seed: vec3<f32>) -> vec3<f32> {
-    var square_signal: vec3<f32> = sign(fract(seed * 0.5) - 0.5);
-    return vec3(0.5 - 0.5 * square_signal.x * square_signal.y * square_signal.z);
+fn checkerboard(seed: vec4<f32>) -> vec3<f32> {
+    var normalized_seed: vec3<f32> = normalize(seed.xyz);
+    var spherical_seed = vec2(
+        atan2(normalized_seed.x, normalized_seed.z),
+        acos(normalized_seed.y),
+    ) * seed.w;
+    var square_signal: vec2<f32> = sign(fract(spherical_seed * 0.5) - 0.5);
+    return vec3(0.5 - 0.5 * square_signal.x * square_signal.y);
 }
 
 
@@ -335,7 +340,7 @@ fn grade(
 
 
 fn procedurally_texture(
-    seed: vec3<f32>,
+    seed: vec4<f32>,
     colour: vec3<f32>,
     texture: ProceduralTexture,
 ) -> vec3<f32> {

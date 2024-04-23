@@ -284,7 +284,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     var seed = random_vec3f(
         _render_parameters.seeds
         + frag_coord_seed
-        + random_f32(_render_stats.paths_rendered_per_pixel)
+        + _render_stats.paths_rendered_per_pixel
     );
 
     var progressive_rendering_texture_dimensions = vec2<f32>(
@@ -302,7 +302,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     );
 
     // Create and march a ray
-    var ray: Ray = create_render_camera_ray(seed.zy, uv_coordinates);
+    var ray: Ray = create_render_camera_ray(seed.zx, uv_coordinates);
     march_path(seed, &ray);
 
     // Read, update, and store the current value for our pixel

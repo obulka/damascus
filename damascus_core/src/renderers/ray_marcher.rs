@@ -88,9 +88,9 @@ impl RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
             roulette: self.roulette as u32,
-            max_distance: self.max_distance,
-            max_ray_steps: self.max_ray_steps,
-            max_bounces: self.max_bounces.max(0),
+            max_distance: self.max_distance.max(1e-8),
+            max_ray_steps: self.max_ray_steps.max(1),
+            max_bounces: self.max_bounces.max(1),
             hit_tolerance: self.hit_tolerance.max(0.),
             shadow_bias: self.shadow_bias,
             max_brightness: self.max_brightness,

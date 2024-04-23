@@ -58,27 +58,6 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
 
 /**
  * Create a random unit vector in the hemisphere aligned along the
- * z-axis, with a distribution that is cosine weighted.
- *
- * @arg seed: The random seed.
- *
- * @returns: A random unit vector.
- */
-fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
-{
-    var uniform_random_numbers: vec2<f32> = random_vec2f(seed);
-    var r: f32 = sqrt(uniform_random_numbers.x);
-    var angle: f32 = TWO_PI * uniform_random_numbers.y;
-
-    var x: f32 = r * cos(angle);
-    var y: f32 = r * sin(angle);
-
-    return vec3(x, y, sqrt(positive_part_f32(1. - uniform_random_numbers.x)));
-}
-
-
-/**
- * Create a random unit vector in the hemisphere aligned along the
  * given axis, with a distribution that is cosine weighted.
  *
  * @arg seed: The random seed.
@@ -87,11 +66,23 @@ fn cosine_direction_in_z_hemisphere(seed: vec2<f32>) -> vec3<f32>
  * @returns: A random unit vector.
  */
 fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32> {
-    return normalize(align_with_direction(
-        vec3(0., 0., 1.),
-        axis,
-        cosine_direction_in_z_hemisphere(seed),
-    ));
+    var uniform_random_numbers: vec2<f32> = random_vec2f(seed);
+    var r: f32 = sqrt(uniform_random_numbers.x);
+    var angle: f32 = TWO_PI * uniform_random_numbers.y;
+
+    var secondary_axis: vec3<f32> = select(
+        vec3(1., 0., 0.),
+        vec3(0., 1., 0.),
+        abs(axis.x) > 1e-6,
+    );
+    var rotation_axis: vec3<f32> = normalize(cross(secondary_axis, axis));
+    var perpendicular_axis: vec3<f32> = cross(axis, rotation_axis);
+
+    return normalize(
+        rotation_axis * cos(angle) * r
+        + perpendicular_axis * sin(angle) * r
+        + axis * sqrt(1. - uniform_random_numbers.x)
+    );
 }
 
 

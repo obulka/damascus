@@ -1,6 +1,6 @@
 # damascus
 
-![example workflow](https://github.com/obulka/damascus/actions/workflows/rust.yml/badge.svg)
+![example workflow](https://github.com/obulka/damascus/actions/workflows/rust.yml/badge.svg?event=push)
 
 Damascus is a ray marcher/path tracer with a node-based gui, written entirely in Rust and WGSL.
 

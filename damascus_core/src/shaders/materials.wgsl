@@ -10,6 +10,7 @@ const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
 
 struct ProceduralTexture {
     texture_type: u32,
+    scale: f32,
     black_point: f32,
     white_point: f32,
     lift: f32,
@@ -321,7 +322,7 @@ fn checkerboard(seed: vec4<f32>) -> vec3<f32> {
         acos(normalized_seed.y),
     ) * seed.w;
     var square_signal: vec2<f32> = sign(fract(spherical_seed * 0.5) - 0.5);
-    return vec3(0.5 - 0.5 * square_signal.x * square_signal.y);
+    return vec3(0.5 - 0.25 * square_signal.x * square_signal.y);
 }
 
 
@@ -332,9 +333,16 @@ fn grade(
     gamma: f32,
     colour: vec3<f32>,
 ) -> vec3<f32> {
-    return pow(
-        (1. - lift) * saturate_vec3f(colour - black_point) / (white_point - black_point) + lift,
-        vec3(1. / gamma),
+    return select(
+        pow(
+            (1. - lift)
+            * saturate_vec3f(colour - black_point)
+            / (white_point - black_point)
+            + lift,
+            vec3(1. / gamma),
+        ),
+        vec3<f32>(),
+        white_point == black_point,
     );
 }
 
@@ -366,7 +374,7 @@ fn procedurally_texture(
                 texture.black_point,
                 texture.white_point,
                 texture.gamma,
-                checkerboard(seed),
+                checkerboard(seed / texture.scale),
             );
         }
     }

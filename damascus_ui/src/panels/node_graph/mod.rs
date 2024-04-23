@@ -546,6 +546,7 @@ pub fn evaluate_node(
         DamascusNodeTemplate::ProceduralTexture => {
             let texture_type =
                 evaluator.input_combo_box::<materials::ProceduralTextureType>("texture_type")?;
+            let scale = evaluator.input_float("scale")?;
             let black_point = evaluator.input_float("black_point")?;
             let white_point = evaluator.input_float("white_point")?;
             let lift = evaluator.input_float("lift")?;
@@ -555,6 +556,7 @@ pub fn evaluate_node(
                 "out",
                 materials::ProceduralTexture {
                     texture_type: texture_type,
+                    scale: scale,
                     black_point: black_point,
                     white_point: white_point,
                     lift: lift,

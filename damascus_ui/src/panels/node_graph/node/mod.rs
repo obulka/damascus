@@ -1216,6 +1216,15 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_float(
                     graph,
+                    "scale",
+                    Float::new(default_procedural_texture.scale)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "TODO"
+                        }))
+                        .with_range(0.001..=1.),
+                );
+                input_float(
+                    graph,
                     "black_point",
                     Float::new(default_procedural_texture.black_point).with_ui_data(
                         UIData::default().with_tooltip(indoc! {

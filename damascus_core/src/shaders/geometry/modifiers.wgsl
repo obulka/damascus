@@ -196,34 +196,52 @@ fn distance_to_textured_primitive(
 
     var distance: f32;
     switch (*primitive).shape {
-        case 0u, default { // cannot use const, maybe version too old
-            distance = distance_to_sphere(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-            );
-        }
-        case 1u {
-            distance = distance_to_ellipsoid(
-                transformed_position,
-                (*primitive).dimensional_data.xyz,
-            );
-        }
-        case 2u {
-            distance = distance_to_cut_sphere(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 3u {
-            distance = distance_to_hollow_sphere(
+        case 0u { // cannot use const, maybe wgsl version too old
+            distance = distance_to_capped_cone(
                 transformed_position,
                 (*primitive).dimensional_data.x,
                 (*primitive).dimensional_data.y,
                 (*primitive).dimensional_data.z,
             );
         }
+        case 1u {
+            distance = distance_to_capped_torus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                radians((*primitive).dimensional_data.z),
+            );
+        }
+        case 2u {
+            distance = distance_to_capsule(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 3u {
+            distance = distance_to_cone(
+                transformed_position,
+                radians((*primitive).dimensional_data.x),
+                (*primitive).dimensional_data.y,
+            );
+        }
         case 4u {
+            distance = distance_to_cut_sphere(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 5u {
+            distance = distance_to_cylinder(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 6u {
             distance = distance_to_death_star(
                 transformed_position,
                 (*primitive).dimensional_data.x,
@@ -231,51 +249,31 @@ fn distance_to_textured_primitive(
                 (*primitive).dimensional_data.z,
             );
         }
-        case 5u {
-            distance = distance_to_solid_angle(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                radians((*primitive).dimensional_data.y),
-            );
-        }
-        case 6u {
-            distance = distance_to_rectangular_prism(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
         case 7u {
-            distance = distance_to_rectangular_prism_frame(
+            distance = distance_to_ellipsoid(
                 transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-                (*primitive).dimensional_data.w,
+                (*primitive).dimensional_data.xyz,
             );
         }
         case 8u {
-            distance = distance_to_rhombus(
+            distance = distance_to_hexagonal_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 9u {
+            distance = distance_to_hollow_sphere(
                 transformed_position,
                 (*primitive).dimensional_data.x,
                 (*primitive).dimensional_data.y,
                 (*primitive).dimensional_data.z,
-                (*primitive).dimensional_data.w,
-            );
-        }
-        case 9u {
-            distance = distance_to_triangular_prism(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
             );
         }
         case 10u {
-            distance = distance_to_cylinder(
+            distance = distance_to_infinite_cone(
                 transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
+                radians((*primitive).dimensional_data.x),
             );
         }
         case 11u {
@@ -285,64 +283,6 @@ fn distance_to_textured_primitive(
             );
         }
         case 12u {
-            distance = distance_to_plane(
-                transformed_position,
-                normalize((*primitive).dimensional_data.xyz),
-            );
-        }
-        case 13u {
-            distance = distance_to_capsule(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 14u {
-            distance = distance_to_cone(
-                transformed_position,
-                radians((*primitive).dimensional_data.x),
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 15u {
-            distance = distance_to_infinite_cone(
-                transformed_position,
-                radians((*primitive).dimensional_data.x),
-            );
-        }
-        case 16u {
-            distance = distance_to_capped_cone(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 17u {
-            distance = distance_to_rounded_cone(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 18u {
-            distance = distance_to_torus(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 19u {
-            distance = distance_to_capped_torus(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                radians((*primitive).dimensional_data.z),
-            );
-        }
-        case 20u {
             distance = distance_to_link(
                 transformed_position,
                 (*primitive).dimensional_data.x,
@@ -350,31 +290,7 @@ fn distance_to_textured_primitive(
                 (*primitive).dimensional_data.z,
             );
         }
-        case 21u {
-            distance = distance_to_hexagonal_prism(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 22u {
-            distance = distance_to_octahedron(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-            );
-        }
-        case 23u {
-            var colour = vec3(1.);
-            distance = distance_to_textured_mandelbulb(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                u32((*primitive).dimensional_data.y),
-                (*primitive).dimensional_data.z,
-                &colour,
-            );
-            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
-        }
-        case 24u {
+        case 13u {
             var colour = vec3(1.);
             distance = distance_to_textured_mandelbox(
                 transformed_position,
@@ -385,6 +301,90 @@ fn distance_to_textured_primitive(
                 &colour,
             );
             (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
+        }
+        case 14u {
+            var colour = vec3(1.);
+            distance = distance_to_textured_mandelbulb(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                u32((*primitive).dimensional_data.y),
+                (*primitive).dimensional_data.z,
+                &colour,
+            );
+            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
+        }
+        case 15u {
+            distance = distance_to_octahedron(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+            );
+        }
+        case 16u {
+            distance = distance_to_plane(
+                transformed_position,
+                normalize((*primitive).dimensional_data.xyz),
+            );
+        }
+        case 17u {
+            distance = distance_to_rectangular_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 18u {
+            distance = distance_to_rectangular_prism_frame(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+                (*primitive).dimensional_data.w,
+            );
+        }
+        case 19u {
+            distance = distance_to_rhombus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+                (*primitive).dimensional_data.w,
+            );
+        }
+        case 20u {
+            distance = distance_to_rounded_cone(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 21u {
+            distance = distance_to_solid_angle(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                radians((*primitive).dimensional_data.y),
+            );
+        }
+        case 22u, default {
+            distance = distance_to_sphere(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+            );
+        }
+        case 23u {
+            distance = distance_to_torus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 24u {
+            distance = distance_to_triangular_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
         }
     }
 
@@ -411,34 +411,52 @@ fn distance_to_primitive(
 
     var distance: f32;
     switch (*primitive).shape {
-        case 0u, default { // cannot use const, maybe version too old
-            distance = distance_to_sphere(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-            );
-        }
-        case 1u {
-            distance = distance_to_ellipsoid(
-                transformed_position,
-                (*primitive).dimensional_data.xyz,
-            );
-        }
-        case 2u {
-            distance = distance_to_cut_sphere(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 3u {
-            distance = distance_to_hollow_sphere(
+        case 0u {
+            distance = distance_to_capped_cone(
                 transformed_position,
                 (*primitive).dimensional_data.x,
                 (*primitive).dimensional_data.y,
                 (*primitive).dimensional_data.z,
             );
         }
+        case 1u {
+            distance = distance_to_capped_torus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                radians((*primitive).dimensional_data.z),
+            );
+        }
+        case 2u {
+            distance = distance_to_capsule(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 3u {
+            distance = distance_to_cone(
+                transformed_position,
+                radians((*primitive).dimensional_data.x),
+                (*primitive).dimensional_data.y,
+            );
+        }
         case 4u {
+            distance = distance_to_cut_sphere(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 5u {
+            distance = distance_to_cylinder(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 6u {
             distance = distance_to_death_star(
                 transformed_position,
                 (*primitive).dimensional_data.x,
@@ -446,51 +464,31 @@ fn distance_to_primitive(
                 (*primitive).dimensional_data.z,
             );
         }
-        case 5u {
-            distance = distance_to_solid_angle(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                radians((*primitive).dimensional_data.y),
-            );
-        }
-        case 6u {
-            distance = distance_to_rectangular_prism(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
         case 7u {
-            distance = distance_to_rectangular_prism_frame(
+            distance = distance_to_ellipsoid(
                 transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-                (*primitive).dimensional_data.w,
+                (*primitive).dimensional_data.xyz,
             );
         }
         case 8u {
-            distance = distance_to_rhombus(
+            distance = distance_to_hexagonal_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 9u {
+            distance = distance_to_hollow_sphere(
                 transformed_position,
                 (*primitive).dimensional_data.x,
                 (*primitive).dimensional_data.y,
                 (*primitive).dimensional_data.z,
-                (*primitive).dimensional_data.w,
-            );
-        }
-        case 9u {
-            distance = distance_to_triangular_prism(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
             );
         }
         case 10u {
-            distance = distance_to_cylinder(
+            distance = distance_to_infinite_cone(
                 transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
+                radians((*primitive).dimensional_data.x),
             );
         }
         case 11u {
@@ -500,64 +498,6 @@ fn distance_to_primitive(
             );
         }
         case 12u {
-            distance = distance_to_plane(
-                transformed_position,
-                normalize((*primitive).dimensional_data.xyz),
-            );
-        }
-        case 13u {
-            distance = distance_to_capsule(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 14u {
-            distance = distance_to_cone(
-                transformed_position,
-                radians((*primitive).dimensional_data.x),
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 15u {
-            distance = distance_to_infinite_cone(
-                transformed_position,
-                radians((*primitive).dimensional_data.x),
-            );
-        }
-        case 16u {
-            distance = distance_to_capped_cone(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 17u {
-            distance = distance_to_rounded_cone(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                (*primitive).dimensional_data.z,
-            );
-        }
-        case 18u {
-            distance = distance_to_torus(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-            );
-        }
-        case 19u {
-            distance = distance_to_capped_torus(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
-                radians((*primitive).dimensional_data.z),
-            );
-        }
-        case 20u {
             distance = distance_to_link(
                 transformed_position,
                 (*primitive).dimensional_data.x,
@@ -565,20 +505,16 @@ fn distance_to_primitive(
                 (*primitive).dimensional_data.z,
             );
         }
-        case 21u {
-            distance = distance_to_hexagonal_prism(
+        case 13u {
+            distance = distance_to_mandelbox(
                 transformed_position,
                 (*primitive).dimensional_data.x,
-                (*primitive).dimensional_data.y,
+                i32((*primitive).dimensional_data.y),
+                (*primitive).dimensional_data.z,
+                (*primitive).dimensional_data.w,
             );
         }
-        case 22u {
-            distance = distance_to_octahedron(
-                transformed_position,
-                (*primitive).dimensional_data.x,
-            );
-        }
-        case 23u {
+        case 14u {
             distance = distance_to_mandelbulb(
                 transformed_position,
                 (*primitive).dimensional_data.x,
@@ -586,13 +522,77 @@ fn distance_to_primitive(
                 (*primitive).dimensional_data.z,
             );
         }
-        case 24u {
-            distance = distance_to_mandelbox(
+        case 15u {
+            distance = distance_to_octahedron(
                 transformed_position,
                 (*primitive).dimensional_data.x,
-                i32((*primitive).dimensional_data.y),
+            );
+        }
+        case 16u {
+            distance = distance_to_plane(
+                transformed_position,
+                normalize((*primitive).dimensional_data.xyz),
+            );
+        }
+        case 17u {
+            distance = distance_to_rectangular_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 18u {
+            distance = distance_to_rectangular_prism_frame(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
                 (*primitive).dimensional_data.z,
                 (*primitive).dimensional_data.w,
+            );
+        }
+        case 19u {
+            distance = distance_to_rhombus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+                (*primitive).dimensional_data.w,
+            );
+        }
+        case 20u {
+            distance = distance_to_rounded_cone(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+                (*primitive).dimensional_data.z,
+            );
+        }
+        case 21u {
+            distance = distance_to_solid_angle(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                radians((*primitive).dimensional_data.y),
+            );
+        }
+        case 22u, default {
+            distance = distance_to_sphere(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+            );
+        }
+        case 23u {
+            distance = distance_to_torus(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
+            );
+        }
+        case 24u {
+            distance = distance_to_triangular_prism(
+                transformed_position,
+                (*primitive).dimensional_data.x,
+                (*primitive).dimensional_data.y,
             );
         }
     }

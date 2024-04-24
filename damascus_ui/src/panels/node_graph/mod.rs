@@ -373,15 +373,54 @@ pub fn evaluate_node(
             let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
 
             let dimensional_data = match shape {
-                geometry::Shapes::Sphere => {
-                    glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
-                }
-                geometry::Shapes::Ellipsoid => {
-                    glam::Vec4::from((evaluator.input_vector3("radii")?, 0.))
-                }
+                geometry::Shapes::CappedCone | geometry::Shapes::RoundedCone => glam::Vec4::new(
+                    evaluator.input_float("height")?,
+                    evaluator.input_float("lower_radius")?,
+                    evaluator.input_float("upper_radius")?,
+                    0.,
+                ),
+                geometry::Shapes::CappedTorus => glam::Vec4::new(
+                    evaluator.input_float("ring_radius")?,
+                    evaluator.input_float("tube_radius")?,
+                    evaluator.input_float("cap_angle")?,
+                    0.,
+                ),
+                geometry::Shapes::Capsule => glam::Vec4::new(
+                    evaluator.input_float("radius")?,
+                    evaluator.input_float("negative_height")?,
+                    evaluator.input_float("positive_height")?,
+                    0.,
+                ),
+                geometry::Shapes::Cone => glam::Vec4::new(
+                    evaluator.input_float("angle")?,
+                    evaluator.input_float("height")?,
+                    0.,
+                    0.,
+                ),
                 geometry::Shapes::CutSphere => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
+                    0.,
+                    0.,
+                ),
+                geometry::Shapes::Cylinder => glam::Vec4::new(
+                    evaluator.input_float("radius")?,
+                    evaluator.input_float("height")?,
+                    0.,
+                    0.,
+                ),
+                geometry::Shapes::DeathStar => glam::Vec4::new(
+                    evaluator.input_float("radius")?,
+                    evaluator.input_float("hollow_radius")?,
+                    evaluator.input_float("hollow_height")?,
+                    0.,
+                ),
+                geometry::Shapes::Ellipsoid => {
+                    glam::Vec4::from((evaluator.input_vector3("radii")?, 0.))
+                }
+                geometry::Shapes::HexagonalPrism => glam::Vec4::new(
+                    evaluator.input_float("height")?,
+                    evaluator.input_float("depth")?,
                     0.,
                     0.,
                 ),
@@ -391,18 +430,36 @@ pub fn evaluate_node(
                     evaluator.input_float("thickness")?,
                     0.,
                 ),
-                geometry::Shapes::DeathStar => glam::Vec4::new(
-                    evaluator.input_float("radius")?,
-                    evaluator.input_float("hollow_radius")?,
-                    evaluator.input_float("hollow_height")?,
+                geometry::Shapes::InfiniteCone => {
+                    glam::Vec4::new(evaluator.input_float("angle")?, 0., 0., 0.)
+                }
+                geometry::Shapes::InfiniteCylinder => {
+                    glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
+                }
+                geometry::Shapes::Link => glam::Vec4::new(
+                    evaluator.input_float("ring_radius")?,
+                    evaluator.input_float("tube_radius")?,
+                    evaluator.input_float("height")?,
                     0.,
                 ),
-                geometry::Shapes::SolidAngle => glam::Vec4::new(
-                    evaluator.input_float("radius")?,
-                    evaluator.input_float("solid_angle")?,
-                    0.,
+                geometry::Shapes::Mandelbox => glam::Vec4::new(
+                    evaluator.input_float("scale")?,
+                    evaluator.input_uint("iterations")? as f32,
+                    evaluator.input_float("min_square_radius")?,
+                    evaluator.input_float("folding_limit")?,
+                ),
+                geometry::Shapes::Mandelbulb => glam::Vec4::new(
+                    evaluator.input_float("power")?,
+                    evaluator.input_uint("iterations")? as f32,
+                    evaluator.input_float("max_square_radius")?,
                     0.,
                 ),
+                geometry::Shapes::Octahedron => {
+                    glam::Vec4::new(evaluator.input_float("radial_extent")?, 0., 0., 0.)
+                }
+                geometry::Shapes::Plane => {
+                    glam::Vec4::from((evaluator.input_vector3("normal")?, 0.))
+                }
                 geometry::Shapes::RectangularPrism => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
@@ -421,83 +478,26 @@ pub fn evaluate_node(
                     evaluator.input_float("depth")?,
                     evaluator.input_float("corner_radius")?,
                 ),
-                geometry::Shapes::TriangularPrism => glam::Vec4::new(
-                    evaluator.input_float("base")?,
-                    evaluator.input_float("depth")?,
-                    0.,
-                    0.,
-                ),
-                geometry::Shapes::Cylinder => glam::Vec4::new(
+                geometry::Shapes::SolidAngle => glam::Vec4::new(
                     evaluator.input_float("radius")?,
-                    evaluator.input_float("height")?,
+                    evaluator.input_float("solid_angle")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::InfiniteCylinder => {
+                geometry::Shapes::Sphere => {
                     glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
                 }
-                geometry::Shapes::Plane => {
-                    glam::Vec4::from((evaluator.input_vector3("normal")?, 0.))
-                }
-                geometry::Shapes::Capsule => glam::Vec4::new(
-                    evaluator.input_float("radius")?,
-                    evaluator.input_float("negative_height")?,
-                    evaluator.input_float("positive_height")?,
-                    0.,
-                ),
-                geometry::Shapes::Cone => glam::Vec4::new(
-                    evaluator.input_float("angle")?,
-                    evaluator.input_float("height")?,
-                    0.,
-                    0.,
-                ),
-                geometry::Shapes::InfiniteCone => {
-                    glam::Vec4::new(evaluator.input_float("angle")?, 0., 0., 0.)
-                }
-                geometry::Shapes::CappedCone | geometry::Shapes::RoundedCone => glam::Vec4::new(
-                    evaluator.input_float("height")?,
-                    evaluator.input_float("lower_radius")?,
-                    evaluator.input_float("upper_radius")?,
-                    0.,
-                ),
                 geometry::Shapes::Torus => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::CappedTorus => glam::Vec4::new(
-                    evaluator.input_float("ring_radius")?,
-                    evaluator.input_float("tube_radius")?,
-                    evaluator.input_float("cap_angle")?,
-                    0.,
-                ),
-                geometry::Shapes::Link => glam::Vec4::new(
-                    evaluator.input_float("ring_radius")?,
-                    evaluator.input_float("tube_radius")?,
-                    evaluator.input_float("height")?,
-                    0.,
-                ),
-                geometry::Shapes::HexagonalPrism => glam::Vec4::new(
-                    evaluator.input_float("height")?,
+                geometry::Shapes::TriangularPrism => glam::Vec4::new(
+                    evaluator.input_float("base")?,
                     evaluator.input_float("depth")?,
                     0.,
                     0.,
-                ),
-                geometry::Shapes::Octahedron => {
-                    glam::Vec4::new(evaluator.input_float("radial_extent")?, 0., 0., 0.)
-                }
-                geometry::Shapes::Mandelbulb => glam::Vec4::new(
-                    evaluator.input_float("power")?,
-                    evaluator.input_uint("iterations")? as f32,
-                    evaluator.input_float("max_square_radius")?,
-                    0.,
-                ),
-                geometry::Shapes::Mandelbox => glam::Vec4::new(
-                    evaluator.input_float("scale")?,
-                    evaluator.input_uint("iterations")? as f32,
-                    evaluator.input_float("min_square_radius")?,
-                    evaluator.input_float("folding_limit")?,
                 ),
             };
             let edge_radius = evaluator.input_float("edge_radius")?;

@@ -4,7 +4,7 @@
 // Please see the LICENSE file that is included as part of this package.
 
 
-const MAX_PRIMITIVES: u32 = 512u; // const not supported in the current version
+const MAX_PRIMITIVES: u32 = 512u;
 
 
 struct Transform {

@@ -80,29 +80,78 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             match input_param.value() {
                                 DamascusValueType::ComboBox { ref value } => {
                                     match value.as_enum::<geometry::Shapes>() {
-                                        Ok(geometry::Shapes::Sphere) => {
-                                            to_show.push("radius");
+                                        Ok(geometry::Shapes::CappedCone)
+                                        | Ok(geometry::Shapes::RoundedCone) => {
+                                            to_show.push("height");
+                                            to_show.push("lower_radius");
+                                            to_show.push("upper_radius");
                                         }
-                                        Ok(geometry::Shapes::Ellipsoid) => {
-                                            to_show.push("radii");
+                                        Ok(geometry::Shapes::CappedTorus) => {
+                                            to_show.push("ring_radius");
+                                            to_show.push("tube_radius");
+                                            to_show.push("cap_angle");
+                                        }
+                                        Ok(geometry::Shapes::Capsule) => {
+                                            to_show.push("radius");
+                                            to_show.push("negative_height");
+                                            to_show.push("positive_height");
+                                        }
+                                        Ok(geometry::Shapes::Cone) => {
+                                            to_show.push("angle");
+                                            to_show.push("height");
                                         }
                                         Ok(geometry::Shapes::CutSphere) => {
                                             to_show.push("radius");
                                             to_show.push("height");
                                         }
-                                        Ok(geometry::Shapes::HollowSphere) => {
+                                        Ok(geometry::Shapes::Cylinder) => {
                                             to_show.push("radius");
                                             to_show.push("height");
-                                            to_show.push("thickness");
                                         }
                                         Ok(geometry::Shapes::DeathStar) => {
                                             to_show.push("radius");
                                             to_show.push("hollow_radius");
                                             to_show.push("hollow_height");
                                         }
-                                        Ok(geometry::Shapes::SolidAngle) => {
+                                        Ok(geometry::Shapes::Ellipsoid) => {
+                                            to_show.push("radii");
+                                        }
+                                        Ok(geometry::Shapes::HexagonalPrism) => {
+                                            to_show.push("height");
+                                            to_show.push("depth");
+                                        }
+                                        Ok(geometry::Shapes::HollowSphere) => {
                                             to_show.push("radius");
-                                            to_show.push("solid_angle");
+                                            to_show.push("height");
+                                            to_show.push("thickness");
+                                        }
+                                        Ok(geometry::Shapes::InfiniteCone) => {
+                                            to_show.push("angle");
+                                        }
+                                        Ok(geometry::Shapes::InfiniteCylinder) => {
+                                            to_show.push("radius");
+                                        }
+                                        Ok(geometry::Shapes::Link) => {
+                                            to_show.push("ring_radius");
+                                            to_show.push("tube_radius");
+                                            to_show.push("height");
+                                        }
+                                        Ok(geometry::Shapes::Mandelbox) => {
+                                            to_show.push("scale");
+                                            to_show.push("iterations");
+                                            to_show.push("min_square_radius");
+                                            to_show.push("folding_limit");
+                                        }
+                                        Ok(geometry::Shapes::Mandelbulb) => {
+                                            to_show.push("power");
+                                            to_show.push("iterations");
+                                            to_show.push("max_square_radius");
+                                        }
+                                        Ok(geometry::Shapes::Octahedron) => {
+                                            to_show.push("radial_extent");
+                                        }
+                                        Ok(geometry::Shapes::Plane) => {
+                                            to_show.push("normal");
                                         }
                                         Ok(geometry::Shapes::RectangularPrism) => {
                                             to_show.push("width");
@@ -121,70 +170,20 @@ impl NodeCallbacks for PrimitiveCallbacks {
                                             to_show.push("depth");
                                             to_show.push("corner_radius");
                                         }
-                                        Ok(geometry::Shapes::TriangularPrism) => {
-                                            to_show.push("base");
-                                            to_show.push("depth");
-                                        }
-                                        Ok(geometry::Shapes::Cylinder) => {
+                                        Ok(geometry::Shapes::SolidAngle) => {
                                             to_show.push("radius");
-                                            to_show.push("height");
+                                            to_show.push("solid_angle");
                                         }
-
-                                        Ok(geometry::Shapes::InfiniteCylinder) => {
+                                        Ok(geometry::Shapes::Sphere) => {
                                             to_show.push("radius");
-                                        }
-                                        Ok(geometry::Shapes::Plane) => {
-                                            to_show.push("normal");
-                                        }
-                                        Ok(geometry::Shapes::Capsule) => {
-                                            to_show.push("radius");
-                                            to_show.push("negative_height");
-                                            to_show.push("positive_height");
-                                        }
-                                        Ok(geometry::Shapes::Cone) => {
-                                            to_show.push("angle");
-                                            to_show.push("height");
-                                        }
-                                        Ok(geometry::Shapes::InfiniteCone) => {
-                                            to_show.push("angle");
-                                        }
-                                        Ok(geometry::Shapes::CappedCone)
-                                        | Ok(geometry::Shapes::RoundedCone) => {
-                                            to_show.push("height");
-                                            to_show.push("lower_radius");
-                                            to_show.push("upper_radius");
                                         }
                                         Ok(geometry::Shapes::Torus) => {
                                             to_show.push("ring_radius");
                                             to_show.push("tube_radius");
                                         }
-                                        Ok(geometry::Shapes::CappedTorus) => {
-                                            to_show.push("ring_radius");
-                                            to_show.push("tube_radius");
-                                            to_show.push("cap_angle");
-                                        }
-                                        Ok(geometry::Shapes::Link) => {
-                                            to_show.push("ring_radius");
-                                            to_show.push("tube_radius");
-                                            to_show.push("height");
-                                        }
-                                        Ok(geometry::Shapes::HexagonalPrism) => {
-                                            to_show.push("height");
+                                        Ok(geometry::Shapes::TriangularPrism) => {
+                                            to_show.push("base");
                                             to_show.push("depth");
-                                        }
-                                        Ok(geometry::Shapes::Octahedron) => {
-                                            to_show.push("radial_extent");
-                                        }
-                                        Ok(geometry::Shapes::Mandelbulb) => {
-                                            to_show.push("power");
-                                            to_show.push("iterations");
-                                            to_show.push("max_square_radius");
-                                        }
-                                        Ok(geometry::Shapes::Mandelbox) => {
-                                            to_show.push("scale");
-                                            to_show.push("iterations");
-                                            to_show.push("min_square_radius");
-                                            to_show.push("folding_limit");
                                         }
                                         _ => {}
                                     }

@@ -10,37 +10,12 @@
 // https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 //
 
-// const SPHERE: u32 = 0u;
-// const ELLIPSOID: u32 = 1u;
-// const CUT_SPHERE: u32 = 2u;
-// const HOLLOW_SPHERE: u32 = 3u;
-// const DEATH_STAR: u32 = 4u;
-// const SOLID_ANGLE: u32 = 5u;
-// const RECTANGULAR_PRISM: u32 = 6u;
-// const RECTANGULAR_PRISM_FRAME: u32 = 7u;
-// const RHOMBUS: u32 = 8u;
-// const TRIANGULAR_PRISM: u32 = 9u;
-// const CYLINDER: u32 = 10u;
-// const INFINITE_CYLINDER: u32 = 11u;
-// const PLANE: u32 = 12u;
-// const CAPSULE: u32 = 13u;
-// const CONE: u32 = 14u;
-// const INFINITE_CONE: u32 = 15u;
-// const CAPPED_CONE: u32 = 16u;
-// const ROUNDED_CONE: u32 = 17u;
-// const TORUS: u32 = 18u;
-// const CAPPED_TORUS: u32 = 19u;
-// const LINK: u32 = 20u;
-// const HEXAGONAL_PRISM: u32 = 21u;
-// const OCTAHEDRON: u32 = 22u;
-// const MANDELBULB: u32 = 23u;
-// const MANDELBOX: u32 = 24u;
-
 // const DIFFUSE_TRAP: u32 = 8192u;
 // const SPECULAR_TRAP: u32 = 16384u;
 // const EXTINCTION_TRAP: u32 = 32768u;
 // const EMISSION_TRAP: u32 = 65536u;
 // const SCATTERING_TRAP: u32 = 131072u;
+
 
 /**
  * Compute the min distance from a point to a circle.

@@ -75,28 +75,18 @@ fn material_interaction(
         &light_sampling_material_pdf,
     );
 
-    if (
-        _scene_parameters.num_lights > 0u
-        && _render_parameters.max_light_sampling_bounces > 0u
-        && light_sampling_material_pdf > 0.
-    ) {
+    var material_geometry_factor: f32 = 1.;
+    if (light_sampling_material_pdf > 0. && _scene_parameters.num_lights > 0u) {
         // Perform MIS light sampling
         (*ray).colour += light_sampling(
             seed,
-            (*ray).throughput,
-            material_brdf,
+            ray,
             surface_normal,
-            (*ray).origin,
+            material_brdf,
             light_sampling_material_pdf,
-            sample_all_lights,
         );
+        material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     }
-
-    var material_geometry_factor: f32 = select(
-        1.,
-        saturate_f32(dot((*ray).direction, surface_normal)),
-        light_sampling_material_pdf > 0.,
-    );
 
     var radius: f32 = (*primitive).dimensional_data.x;
     var visible_surface_area: f32 = TWO_PI * radius * radius;

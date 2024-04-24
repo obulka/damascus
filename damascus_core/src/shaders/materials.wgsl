@@ -260,6 +260,7 @@ fn sample_material(
             (*ray).origin += offset * ((*ray).direction - surface_normal);
 
             *material_brdf = vec3(1.);
+            *light_sampling_pdf = 0.;
 
             if is_exiting {
                 pop_dielectric(nested_dielectrics);
@@ -267,9 +268,11 @@ fn sample_material(
                 push_dielectric(refracted_dielectric, nested_dielectrics);
             }
 
-            var probability_over_pi = transmissive_probability / PI;
-            *light_sampling_pdf = 0.;
-            return probability_over_pi * dot(ideal_refracted_direction, (*ray).direction);
+            return (
+                transmissive_probability
+                * dot(ideal_refracted_direction, (*ray).direction)
+                / PI
+            );
         }
 
         // Reflect instead
@@ -295,10 +298,13 @@ fn sample_material(
         (*ray).origin += offset * surface_normal;
 
         *material_brdf = (*primitive).material.specular_colour;
-
-        var probability_over_pi = specular_probability / PI;
         *light_sampling_pdf = 0.;
-        return probability_over_pi * dot(ideal_specular_direction, (*ray).direction);
+
+        return (
+            specular_probability
+            * dot(ideal_specular_direction, (*ray).direction)
+            / PI
+        );
     } else {
         // Diffuse bounce
         (*ray).direction = diffuse_direction;

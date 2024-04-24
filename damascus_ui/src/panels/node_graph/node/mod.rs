@@ -1302,7 +1302,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             "Limits the number of times the rays can intersect
                             an object per subpixel."
                         }))
-                        .with_range(0..=100),
+                        .with_range(1..=100),
                 );
                 input_float(
                     graph,

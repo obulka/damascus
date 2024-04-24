@@ -330,7 +330,6 @@ fn light_sampling(
     material_pdf: f32,
 ) -> vec3<f32> {
     var light_id = u32(f32(_scene_parameters.num_lights) * vec3f_to_random_f32(seed));
-    var light_direction: vec3<f32> = surface_normal;
     var distance_to_light: f32 = 0.;
     var light_sampling_pdf: f32 = 1.;
     var light_colour = vec3(0.);
@@ -343,16 +342,24 @@ fn light_sampling(
             surface_normal,
             &light_geometry_factor,
         );
-    }
-    // else if (light_id < _scene_parameters.num_lights)
-    // {
-    //     light_sampling_pdf = samplePhysicalLightData(
-    //         (*ray).origin,
-    //         emissiveIndices[light_id - _lightTextureWidth],
-    //         numLights,
-    //         light_direction,
-    //         distance_to_light
-    //     );
+    // } else {
+    //     var light_direction: vec3<f32>;
+    //     if (light_id >= _scene_parameters.num_lights) {
+    //         hdriLightData(
+    //             surface_normal,
+    //             light_direction,
+    //             distance_to_light
+    //         );
+    //         light_sampling_pdf =  1. / _scene_parameters.num_lights;
+    //     } else {
+    //         light_sampling_pdf = samplePhysicalLightData(
+    //             (*ray).origin,
+    //             emissiveIndices[light_id - _lightTextureWidth],
+    //             numLights,
+    //             light_direction,
+    //             distance_to_light
+    //         );
+    //     }
     //     float actualDistance;
     //     float3 actualDirection = light_direction;
     //     float3 lightNormal;
@@ -374,14 +381,7 @@ fn light_sampling(
     //         lightNormal,
     //         actualDistance
     //     );
-    // } else {
-    //     hdriLightData(
-    //         surface_normal,
-    //         light_direction,
-    //         distance_to_light
-    //     );
-    //     light_sampling_pdf =  sample_lights_pdf(max(1, numLights), 1.);
-    // }
+    }
 
     return multiple_importance_sample(
         light_colour,

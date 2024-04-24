@@ -164,17 +164,17 @@ impl Primitive {
             },
             material: self.material.to_gpu(),
             modifiers: self.repetition as u32
-                | if self.elongate { 4 } else { 0 }
-                | if self.mirror.x { 8 } else { 0 }
-                | if self.mirror.y { 16 } else { 0 }
-                | if self.mirror.z { 32 } else { 0 }
-                | if self.hollow { 64 } else { 0 }
+                | (self.elongate as u32) << 2
+                | (self.mirror.x as u32) << 3
+                | (self.mirror.y as u32) << 4
+                | (self.mirror.z as u32) << 5
+                | (self.hollow as u32) << 6
                 | if self.blend_type > BlendType::Union && !self.bounding_volume {
                     1 << self.blend_type as u32 + BlendType::COUNT as u32
                 } else {
                     0
                 }
-                | if self.bounding_volume { 4096 } else { 0 },
+                | (self.bounding_volume as u32) << 12,
             negative_repetitions: self.negative_repetitions.as_vec3(),
             positive_repetitions: self.positive_repetitions.as_vec3(),
             spacing: self.spacing,

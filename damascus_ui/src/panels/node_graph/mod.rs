@@ -566,7 +566,6 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::RayMarcher => {
             let scene = evaluator.input_scene("scene")?;
-            let roulette = evaluator.input_bool("roulette")?;
             let max_distance = evaluator.input_float("max_distance")?;
             let max_ray_steps = evaluator.input_uint("max_ray_steps")?;
             let max_bounces = evaluator.input_uint("max_bounces")?;
@@ -576,11 +575,9 @@ pub fn evaluate_node(
             let seeds = evaluator.input_vector3("seeds")?;
             let dynamic_level_of_detail = evaluator.input_bool("dynamic_level_of_detail")?;
             let max_light_sampling_bounces = evaluator.input_uint("max_light_sampling_bounces")?;
-            let sample_hdri = evaluator.input_bool("sample_hdri")?;
-            let sample_all_lights = evaluator.input_bool("sample_all_lights")?;
+            let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
-            let hdri_offset_angle = evaluator.input_float("hdri_offset_angle")?;
             let latlong = evaluator.input_bool("latlong")?;
             let output_aov = evaluator.input_combo_box::<renderers::AOVs>("output_aov")?;
 
@@ -588,7 +585,6 @@ pub fn evaluate_node(
                 "out",
                 renderers::RayMarcher {
                     scene: scene,
-                    roulette: roulette,
                     max_distance: max_distance,
                     max_ray_steps: max_ray_steps,
                     max_bounces: max_bounces,
@@ -598,11 +594,9 @@ pub fn evaluate_node(
                     seeds: seeds,
                     dynamic_level_of_detail: dynamic_level_of_detail,
                     max_light_sampling_bounces: max_light_sampling_bounces,
-                    sample_hdri: sample_hdri,
-                    sample_all_lights: sample_all_lights,
+                    sample_atmosphere: sample_atmosphere,
                     light_sampling_bias: light_sampling_bias,
                     secondary_sampling: secondary_sampling,
-                    hdri_offset_angle: hdri_offset_angle,
                     output_aov: output_aov,
                     latlong: latlong,
                 },

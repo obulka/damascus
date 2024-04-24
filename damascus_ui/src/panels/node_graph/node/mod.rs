@@ -1264,16 +1264,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
             DamascusNodeTemplate::RayMarcher => {
                 let default_ray_marcher = renderers::RayMarcher::default();
                 input_scene(graph, "scene", default_ray_marcher.scene);
-                input_bool(
-                    graph,
-                    "roulette",
-                    Bool::new(default_ray_marcher.roulette).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "Randomly terminate rays with a probability proportional
-                            to the remaining strength, or throughput of a ray."
-                        }),
-                    ),
-                );
                 input_float(
                     graph,
                     "max_distance",
@@ -1372,22 +1362,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_bool(
                     graph,
-                    "sample_hdri",
-                    Bool::new(default_ray_marcher.sample_hdri).with_ui_data(
+                    "sample_atmosphere",
+                    Bool::new(default_ray_marcher.sample_atmosphere).with_ui_data(
                         UIData::default().with_tooltip(indoc! {
-                            "Include the HDRI in the list of lights that can be
-                            sampled during light sampling.\nTODO"
-                        }),
-                    ),
-                );
-                input_bool(
-                    graph,
-                    "sample_all_lights",
-                    Bool::new(default_ray_marcher.sample_all_lights).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "Sample every light in the scene during light sampling,
-                            rather than just one random one. This will reduce noise
-                            quickly but slow things down.\nTODO"
+                            "Include the skybox in the list of lights that can be
+                            sampled during light sampling."
                         }),
                     ),
                 );
@@ -1416,15 +1395,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         }),
                     ),
                 );
-                input_float(
-                    graph,
-                    "hdri_offset_angle",
-                    Float::new(default_ray_marcher.hdri_offset_angle)
-                        .with_ui_data(UIData::default().with_tooltip(
-                            "Rotate the hdri image by this amount around the y-axis.\nTODO",
-                        ))
-                        .with_range(0.0..=360.),
-                );
                 input_combo_box(
                     graph,
                     "output_aov",
@@ -1441,9 +1411,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     graph,
                     "latlong",
                     Bool::new(default_ray_marcher.latlong).with_ui_data(
-                        UIData::default().with_tooltip(
-                            "Output a LatLong, 360 degree field of view image.\nTODO",
-                        ),
+                        UIData::default()
+                            .with_tooltip("Output a LatLong, 360 degree field of view image."),
                     ),
                 );
                 output_ray_marcher(graph, "out");

@@ -94,7 +94,7 @@ fn render_camera_rotation() -> mat3x3<f32> {
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
 fn create_render_camera_ray(seed: vec2<f32>, uv_coordinate: vec2<f32>) -> Ray {
-    if (bool(_render_parameters.latlong)) {
+    if (bool(_render_parameters.flags & LATLONG)) {
         return Ray(
             render_camera_position(),
             render_camera_rotation() * spherical_unit_vector_to_cartesion(

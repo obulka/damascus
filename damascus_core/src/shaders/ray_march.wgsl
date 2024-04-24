@@ -49,7 +49,6 @@ fn material_interaction(
     intersection_position: vec3<f32>,
     surface_normal: vec3<f32>,
     previous_material_pdf: f32,
-    sample_all_lights: bool,
     ray: ptr<function, Ray>,
     primitive: ptr<function, Primitive>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
@@ -122,10 +121,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     );
 
     var path_seed: vec3<f32> = seed;
-    var roulette = bool(_render_parameters.roulette);
-    var dynamic_level_of_detail = bool(_render_parameters.dynamic_level_of_detail);
-
-    var sample_all_lights = bool(_render_parameters.sample_all_lights);
+    var dynamic_level_of_detail = bool(_render_parameters.flags & DYNAMIC_LEVEL_OF_DETAIL);
 
     var distance_travelled: f32 = 0.;
     var distance_since_last_bounce = 0.;
@@ -203,7 +199,6 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                 intersection_position,
                 surface_normal,
                 previous_material_pdf,
-                sample_all_lights,
                 ray,
                 &nearest_primitive,
                 &nested_dielectrics,
@@ -212,10 +207,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             // Exit if we have reached the bounce limit or with a random chance
             var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f((*ray).throughput);
-            if (
-                bounces >= _render_parameters.max_bounces
-                || (roulette && exit_probability <= rng)
-            ) {
+            if (bounces >= _render_parameters.max_bounces || exit_probability < rng) {
                 final_aovs(
                     _render_parameters.output_aov,
                     bounces,
@@ -224,10 +216,10 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
                     ray,
                 );
                 return;
-            } else if roulette {
-                // Account for the lost intensity from the early exits
-                (*ray).throughput /= vec3(exit_probability);
             }
+
+            // Account for the lost intensity from the early exits
+            (*ray).throughput /= vec3(exit_probability);
 
             distance_since_last_bounce = 0.;
             // Reset the pixel footprint so multiple reflections don't reduce precision

@@ -18,3 +18,8 @@ Simply clone the repo and run `cargo run --release` to build and launch the appl
 
 Right click in the node graph panel to bring up the node selection dialog. Once a node is placed you can middle click and drag to pan over the node graph.
 
+If this is your first time using the application the following is a very minimal scene that you can copy as a starting point. Note that the only value that was changed from the default was the z component of the translation on the camera's axis node. If you do not change this, the camera will be inside of the primitive sphere, while the directional light shines from outside, resulting in nothing but black, which is not particularly exciting.
+
+![minimal](https://github.com/obulka/damascus/assets/21975584/5221d94d-1d9f-47f4-a3cf-2f9b932c889b)
+
+Now try playing with the various parameters, such as the "shape" on the primitive node, and "light_type" on the light node. Then you can also try adding more nodes, such as a material for the primitive, or an axis to move it. Child primitives combined with the various blend types can result in interesting shapes. Have fun!

@@ -22,4 +22,4 @@ If this is your first time using the application the following is a very minimal
 
 ![minimal](https://github.com/obulka/damascus/assets/21975584/5221d94d-1d9f-47f4-a3cf-2f9b932c889b)
 
-Now try playing with the various parameters, such as the "shape" on the primitive node, and "light_type" on the light node. Then you can also try adding more nodes, such as a material for the primitive, or an axis to move it. Child primitives combined with the various blend types can result in interesting shapes. Have fun!
+Now try playing with the various parameters, such as the "shape" on the primitive node, and "light_type" on the light node. Hover over the parameter labels to see a tooltip describing the function of the parameter. Then you can also try adding more nodes, such as a material for the primitive, or an axis to move it. Child primitives combined with the various blend types can result in interesting shapes. Have fun!

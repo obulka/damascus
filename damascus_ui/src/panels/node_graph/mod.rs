@@ -574,6 +574,7 @@ pub fn evaluate_node(
             let max_brightness = evaluator.input_float("max_brightness")?;
             let seeds = evaluator.input_vector3("seeds")?;
             let dynamic_level_of_detail = evaluator.input_bool("dynamic_level_of_detail")?;
+            let equiangular_samples = evaluator.input_uint("equiangular_samples")?;
             let max_light_sampling_bounces = evaluator.input_uint("max_light_sampling_bounces")?;
             let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
@@ -593,6 +594,7 @@ pub fn evaluate_node(
                     max_brightness: max_brightness,
                     seeds: seeds,
                     dynamic_level_of_detail: dynamic_level_of_detail,
+                    equiangular_samples: equiangular_samples,
                     max_light_sampling_bounces: max_light_sampling_bounces,
                     sample_atmosphere: sample_atmosphere,
                     light_sampling_bias: light_sampling_bias,

@@ -75,7 +75,7 @@ fn negative_part_f32(value: f32) -> f32 {
  *
  * @returns: The sum of the components.
  */
-fn sum_component_vec3f(vector_: vec3<f32>) -> f32 {
+fn element_sum_vec3f(vector_: vec3<f32>) -> f32 {
     return vector_.x + vector_.y + vector_.z;
 }
 

@@ -1349,6 +1349,18 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_uint(
                     graph,
+                    "equiangular_samples",
+                    UnsignedInteger::new(default_ray_marcher.equiangular_samples)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The number of equi-angular samples to perform if
+                            the extinction/scattering coefficients are greater
+                            than 0. This enables participating media such as
+                            fog/smoke/clouds to be traced."
+                        }))
+                        .with_range(0..=10),
+                );
+                input_uint(
+                    graph,
                     "max_light_sampling_bounces",
                     UnsignedInteger::new(default_ray_marcher.max_light_sampling_bounces)
                         .with_ui_data(UIData::default().with_tooltip(indoc! {

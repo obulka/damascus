@@ -18,6 +18,7 @@ pub struct GPURayMarcher {
     shadow_bias: f32,
     max_brightness: f32,
     seeds: Vec3,
+    equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     // TODO variance & adaptive sampling
@@ -36,6 +37,7 @@ pub struct RayMarcher {
     pub max_brightness: f32,
     pub seeds: Vec3,
     pub dynamic_level_of_detail: bool,
+    pub equiangular_samples: u32,
     pub max_light_sampling_bounces: u32,
     pub sample_atmosphere: bool,
     pub light_sampling_bias: f32,
@@ -58,6 +60,7 @@ impl Default for RayMarcher {
             max_brightness: 999999999.9,
             seeds: Vec3::new(1., 2., 3.),
             dynamic_level_of_detail: true,
+            equiangular_samples: 0,
             max_light_sampling_bounces: 1,
             sample_atmosphere: false,
             light_sampling_bias: 1.,
@@ -78,6 +81,7 @@ impl RayMarcher {
             shadow_bias: self.shadow_bias,
             max_brightness: self.max_brightness,
             seeds: self.seeds,
+            equiangular_samples: self.equiangular_samples,
             max_light_sampling_bounces: self.max_light_sampling_bounces,
             light_sampling_bias: self.light_sampling_bias,
             output_aov: self.output_aov as u32,
@@ -103,6 +107,7 @@ impl RayMarcher {
         self.max_brightness = default_ray_marcher.max_brightness;
         self.seeds = default_ray_marcher.seeds;
         self.dynamic_level_of_detail = default_ray_marcher.dynamic_level_of_detail;
+        self.equiangular_samples = default_ray_marcher.equiangular_samples;
         self.max_light_sampling_bounces = default_ray_marcher.max_light_sampling_bounces;
         self.sample_atmosphere = default_ray_marcher.sample_atmosphere;
         self.light_sampling_bias = default_ray_marcher.light_sampling_bias;

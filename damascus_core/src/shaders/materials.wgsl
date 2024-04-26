@@ -392,8 +392,18 @@ fn sample_equiangular(
     ray: ptr<function, Ray>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
 ) {
+    // Get the material properties of the dielectric the ray is currently in
     var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-    (*ray).throughput *= exp(
-        -current_dielectric.extinction_colour * distance_since_last_bounce,
-    );
+
+    // If equiangular sampling is disabled or the dielectric does not scatter
+    // light, compute the extinction and exit early
+    if (
+        _render_parameters.equiangular_samples == 0u
+        || element_sum_vec3f(current_dielectric.scattering_colour) == 0.
+    ) {
+        (*ray).throughput *= exp(
+            -current_dielectric.extinction_colour * distance_since_last_bounce,
+        );
+        return;
+    }
 }

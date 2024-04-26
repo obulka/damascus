@@ -19,6 +19,7 @@ struct RenderParameters {
     shadow_bias: f32,
     max_brightness: f32,
     seeds: vec3<f32>,
+    equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,

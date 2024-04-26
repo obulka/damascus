@@ -15,6 +15,7 @@ fn random_f32(seed: f32) -> f32 {
     return fract(sin(73.1 * seed + 91.3458) * 47453.5453);
 }
 
+
 /**
  * Get a random value on the interval [0, 1].
  *

@@ -27,7 +27,6 @@ struct Material {
     transmissive_probability: f32,
     transmissive_roughness: f32,
     extinction_colour: vec3<f32>,
-    emissive_probability: f32,
     emissive_colour: vec3<f32>,
     refractive_index: f32,
     scattering_colour: vec3<f32>,
@@ -98,6 +97,7 @@ fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Diele
     )
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
 }
+
 
 fn peek_previous_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth - 2u];

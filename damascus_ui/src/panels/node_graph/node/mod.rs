@@ -635,12 +635,12 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_float(
                     graph,
-                    "emissive_probability",
-                    Float::new(default_material.emissive_probability).with_ui_data(
-                        UIData::default().with_tooltip(
-                            "The probability that light will be emitted from the material.",
-                        ),
-                    ),
+                    "emissive_intensity",
+                    Float::new(default_material.emissive_intensity)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The intensity of light that will be emitted from the material.",
+                        ))
+                        .with_range(0.0..=100.0),
                 );
                 input_vector3(
                     graph,

@@ -78,7 +78,7 @@ impl Scene {
     fn num_emissive_prims(&self) -> usize {
         let mut count = 0;
         for primitive in self.primitives.iter() {
-            if primitive.material.emissive_probability > 0. {
+            if primitive.material.scaled_emissive_colour().length() > 0. {
                 count += 1;
             }
         }

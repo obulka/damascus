@@ -87,11 +87,11 @@ fn material_interaction(
         material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     }
 
-    var radius: f32 = (*primitive).dimensional_data.x;
+    var radius: f32 = length((*primitive).dimensional_data); // Not very correct for most shapes
     var visible_surface_area: f32 = TWO_PI * radius * radius;
 
     (*ray).colour += multiple_importance_sample(
-        (*primitive).material.emissive_colour * (*primitive).material.emissive_probability,
+        (*primitive).material.emissive_colour,
         (*ray).throughput,
         previous_material_pdf,
         sample_lights_pdf(f32(_scene_parameters.num_lights), visible_surface_area),
@@ -219,7 +219,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             }
 
             // Account for the lost intensity from the early exits
-            (*ray).throughput /= vec3(exit_probability);
+            (*ray).throughput /= exit_probability;
 
             distance_since_last_bounce = 0.;
             // Reset the pixel footprint so multiple reflections don't reduce precision
@@ -227,7 +227,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             pixel_footprint = _render_parameters.hit_tolerance;
 
             // Update the random seed for the next iteration
-            path_seed = random_vec3f(path_seed.zxy + seed);
+            path_seed = random_vec3f(path_seed.zxy + f32(bounces));
         }
         pixel_footprint += select(
             0.,
@@ -262,22 +262,22 @@ var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = random_vec3f(
-        _render_parameters.seeds
-        + frag_coord_seed
-        + _render_stats.paths_rendered_per_pixel
-    );
-
     var progressive_rendering_texture_dimensions = vec2<f32>(
         textureDimensions(_progressive_rendering_texture),
     );
-
     // Add a random offset to the uv_coordinates for anti-aliasing 
     var current_pixel_indices: vec2<f32> = uv_to_pixels(
         in.uv_coordinate.xy,
         progressive_rendering_texture_dimensions,
     );
+
+    var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
+    var seed = vec3(137.723, 2111.74, 1723.337) * random_vec3f(
+        _render_parameters.seeds
+        + frag_coord_seed
+        + _render_stats.paths_rendered_per_pixel
+    ) + vec3(713.9312, 1173.97, 9712.4323) * vec2f_to_random_f32(current_pixel_indices);
+
     var uv_coordinates: vec2<f32> = pixels_to_uv(
         current_pixel_indices + random_vec2f(seed.xy),
         progressive_rendering_texture_dimensions,

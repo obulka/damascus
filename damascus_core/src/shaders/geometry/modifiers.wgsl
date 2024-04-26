@@ -641,11 +641,6 @@ fn mix_primitives(
         (*primitive_1).material.extinction_colour,
         smoothing,
     );
-    (*primitive_0).material.emissive_probability = mix(
-        (*primitive_0).material.emissive_probability,
-        (*primitive_1).material.emissive_probability,
-        smoothing,
-    );
     (*primitive_0).material.emissive_colour = mix(
         (*primitive_0).material.emissive_colour,
         (*primitive_1).material.emissive_colour,
@@ -709,11 +704,6 @@ fn select_primitive(
     (*primitive_0).material.extinction_colour = select(
         (*primitive_0).material.extinction_colour,
         (*primitive_1).material.extinction_colour,
-        choice,
-    );
-    (*primitive_0).material.emissive_probability = select(
-        (*primitive_0).material.emissive_probability,
-        (*primitive_1).material.emissive_probability,
         choice,
     );
     (*primitive_0).material.emissive_colour = select(

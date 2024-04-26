@@ -340,7 +340,7 @@ pub fn evaluate_node(
             let transmissive_roughness = evaluator.input_float("transmissive_roughness")?;
             let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
             let extinction_coefficient = evaluator.input_float("extinction_coefficient")?;
-            let emissive_probability = evaluator.input_float("emissive_probability")?;
+            let emissive_intensity = evaluator.input_float("emissive_intensity")?;
             let emissive_colour = evaluator.input_vector3("emissive_colour")?;
             let refractive_index = evaluator.input_float("refractive_index")?;
             let scattering_coefficient = evaluator.input_float("scattering_coefficient")?;
@@ -358,7 +358,7 @@ pub fn evaluate_node(
                     transmissive_roughness: transmissive_roughness * transmissive_roughness,
                     transmissive_colour: transmissive_colour,
                     extinction_coefficient: extinction_coefficient,
-                    emissive_probability: emissive_probability,
+                    emissive_intensity: emissive_intensity,
                     emissive_colour: emissive_colour,
                     refractive_index: refractive_index,
                     scattering_coefficient: scattering_coefficient,

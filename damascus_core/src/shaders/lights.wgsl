@@ -335,9 +335,9 @@ fn light_sampling(
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 1.;
 
-    if (light_id <= _scene_parameters.num_non_physical_lights) {
+    if (light_id < _scene_parameters.num_non_physical_lights) {
         light_colour = sample_non_physical_light(
-            min(light_id, _scene_parameters.num_lights - 1u),
+            light_id,
             (*ray).origin,
             surface_normal,
             &light_geometry_factor,

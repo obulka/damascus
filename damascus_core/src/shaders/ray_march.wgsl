@@ -272,11 +272,11 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     );
 
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = vec3(137.723, 2111.74, 1723.337) * random_vec3f(
+    var seed = vec3(8377.72, 2111.74, 1723.33) * random_vec3f(
         _render_parameters.seeds
         + frag_coord_seed
         + _render_stats.paths_rendered_per_pixel
-    ) + vec3(713.9312, 1173.97, 9712.4323) * vec2f_to_random_f32(current_pixel_indices);
+    ) + vec3(7131.93, 1173.97, 9712.43) * vec2f_to_random_f32(current_pixel_indices);
 
     var uv_coordinates: vec2<f32> = pixels_to_uv(
         current_pixel_indices + random_vec2f(seed.xy),

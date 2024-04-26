@@ -12,7 +12,7 @@
  * @returns: A random value on the interval [0, 1].
  */
 fn random_f32(seed: f32) -> f32 {
-    return fract(sin(seed * 91.3458) * 47453.5453123);
+    return fract(sin(73.1 * seed + 91.3458) * 47453.5453);
 }
 
 /**
@@ -24,8 +24,8 @@ fn random_f32(seed: f32) -> f32 {
  */
 fn random_vec2f(seed: vec2<f32>) -> vec2<f32> {
     return vec2(
-        random_f32(seed.x),
-        random_f32(seed.y),
+        fract(sin(13.157 * seed.x + 71.743) * 7513.471),
+        fract(sin(97.519 * seed.y + 113.591) * 47453.5453),
     );
 }
 
@@ -39,9 +39,9 @@ fn random_vec2f(seed: vec2<f32>) -> vec2<f32> {
  */
 fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
     return vec3(
-        random_f32(seed.x),
-        random_f32(seed.y),
-        random_f32(seed.z),
+        fract(sin(75.19 * seed.x + 71.743) * 7513.471),
+        fract(sin(15.73 * seed.y + 113.591) * 47453.553),
+        fract(sin(7.37 * seed.z + 147.781) * 8769.132),
     );
 }
 

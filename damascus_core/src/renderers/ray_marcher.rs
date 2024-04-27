@@ -58,12 +58,12 @@ impl Default for RayMarcher {
             hit_tolerance: 0.0001,
             shadow_bias: 1.,
             max_brightness: 999999999.9,
-            seeds: Vec3::new(1., 2., 3.),
+            seeds: Vec3::new(1111., 2222., 3333.),
             dynamic_level_of_detail: true,
             equiangular_samples: 0,
             max_light_sampling_bounces: 1,
             sample_atmosphere: false,
-            light_sampling_bias: 1.,
+            light_sampling_bias: 0.,
             secondary_sampling: false,
             output_aov: AOVs::default(),
             latlong: false,
@@ -83,7 +83,7 @@ impl RayMarcher {
             seeds: self.seeds,
             equiangular_samples: self.equiangular_samples,
             max_light_sampling_bounces: self.max_light_sampling_bounces,
-            light_sampling_bias: self.light_sampling_bias,
+            light_sampling_bias: self.light_sampling_bias * self.light_sampling_bias,
             output_aov: self.output_aov as u32,
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1

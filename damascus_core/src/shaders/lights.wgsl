@@ -360,6 +360,62 @@ fn sample_non_physical_light(
 }
 
 
+fn sample_physical_light(
+    seed: vec3<f32>,
+    light_index: u32,
+    surface_position: vec3<f32>,
+    surface_normal: vec3<f32>,
+    light_geometry_factor: ptr<function, f32>,
+) -> vec3<f32> {
+
+    // TODO create a LUT of emissive object indices and use that to get
+    // the emissive primitive and its position
+    var light_position: vec3<f32> = vec3();
+    var visible_surface_area: f32 = 2.0f * PI;// * radius * radius;
+
+    var light_normal: vec3<f32> = cosine_direction_in_hemisphere(
+        seed.xy,
+        normalize(surface_position - light_position),
+    );
+    var light_direction: vec3<f32> = light_position + lightNormal * radius - pointOnSurface;
+    var distance_to_light: f32 = length(light_direction);
+
+    light_direction = normalize(mix(
+        normalize(light_direction),
+        cosine_direction_in_hemisphere(seed.y + seed.zx, surface_normal),
+        _render_parameters.light_sampling_bias,
+    ));
+
+    light_sampling_pdf = sample_lights_pdf(
+        _scene_parameters.num_lights,
+        visible_surface_area,
+    );
+
+    float actualDistance;
+    float3 actualDirection = light_direction;
+    float3 lightNormal;
+    light_colour = marchPath(
+        position,
+        seed,
+        sampleHDRI,
+        distance_to_light * 2.,
+        nestedDielectrics,
+        numNestedDielectrics,
+        numEmissive,
+        position + distance_to_light * light_direction,
+        actualDistance,
+        actualDirection,
+        lightNormal
+    );
+    light_geometry_factor = geometryFactor(
+        actualDirection,
+        lightNormal,
+        actualDistance
+    );
+    return vec3<f32>();
+}
+
+
 /**
  * Perform direct illumination light sampling.
  *
@@ -394,45 +450,14 @@ fn light_sampling(
             surface_normal,
             &light_geometry_factor,
         );
-    // } else {
-    //     var light_direction: vec3<f32>;
-    //     if (light_id >= _scene_parameters.num_lights) {
-    //         hdriLightData(
-    //             surface_normal,
-    //             light_direction,
-    //             distance_to_light
-    //         );
-    //         light_sampling_pdf =  1. / _scene_parameters.num_lights;
-    //     } else {
-    //         light_sampling_pdf = samplePhysicalLightData(
-    //             (*ray).origin,
-    //             emissiveIndices[light_id - _lightTextureWidth],
-    //             numLights,
-    //             light_direction,
-    //             distance_to_light
-    //         );
-    //     }
-    //     float actualDistance;
-    //     float3 actualDirection = light_direction;
-    //     float3 lightNormal;
-    //     light_colour = marchPath(
-    //         position,
-    //         seed,
-    //         sampleHDRI,
-    //         distance_to_light * 2.,
-    //         nestedDielectrics,
-    //         numNestedDielectrics,
-    //         numEmissive,
-    //         position + distance_to_light * light_direction,
-    //         actualDistance,
-    //         actualDirection,
-    //         lightNormal
-    //     );
-    //     light_geometry_factor = geometryFactor(
-    //         actualDirection,
-    //         lightNormal,
-    //         actualDistance
-    //     );
+    } else {
+        light_colour = sample_physical_light(
+            seed,
+            light_id - _scene_parameters.num_non_physical_lights,
+            (*ray).origin,
+            surface_normal,
+            &light_geometry_factor,
+        );
     }
 
     return multiple_importance_sample(

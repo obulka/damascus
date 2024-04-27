@@ -87,8 +87,10 @@ fn material_interaction(
         material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     }
 
-    var radius: f32 = length((*primitive).dimensional_data); // Not very correct for most shapes
-    var visible_surface_area: f32 = TWO_PI * radius * radius;
+    var radius: f32 = length(
+        (*primitive).transform.uniform_scale * (*primitive).dimensional_data,
+    );
+    var visible_surface_area: f32 = TWO_PI * radius * radius; // Not correct for most shapes
 
     (*ray).colour += multiple_importance_sample(
         (*primitive).material.emissive_colour,

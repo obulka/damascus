@@ -65,6 +65,58 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
 
 
 /**
+ * Get the probability distribution function for equi-angular sampling.
+ *
+ * @arg step_distance: A uniform step distance along the ray.
+ * @arg max_ray_distance: The maximum distance the ray can travel.
+ * @arg ray: The ray.
+ * @arg light_position: The position of the light.
+ * @arg distance: The equi-angular distance along the ray.
+ *
+ * @returns: The probability distribution function.
+ */
+fn sample_equiangular_pdf(
+    step_distance: f32,
+    max_ray_distance: f32,
+    light_position: vec3<f32>,
+    ray: ptr<function, Ray>,
+    distance: ptr<function, f32>,
+) -> f32 {
+    // Get the coordinate of the closest point to the light along an
+    // infinite ray
+    var delta: f32 = dot(light_position - (*ray).origin, (*ray).direction);
+
+    // Get distance this point is from light
+    var distance_to_light: f32 = length(
+        (*ray).origin + delta * (*ray).direction - light_position,
+    );
+
+    if (distance_to_light == 0.) {
+        *distance = 0.;
+        return 1.;
+    }
+
+    // Get the angle of the endpoints
+    var theta_a: f32 = atan2(-delta, distance_to_light);
+    var theta_b: f32 = atan2(max_ray_distance - delta, distance_to_light);
+
+    // Take a sample
+    var sample: f32 = distance_to_light * tan(mix(theta_a, theta_b, step_distance));
+
+    *distance = delta + sample;
+
+    if (theta_a != theta_b) {
+        return (
+            distance_to_light
+            / ((theta_b - theta_a) * (distance_to_light * distance_to_light + sample * sample))
+        );
+    }
+
+    return 1.;
+}
+
+
+/**
  * Get the direction, distance, and intensity of a light.
  *
  * @arg intensity: The light intensity.

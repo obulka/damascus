@@ -52,7 +52,8 @@ impl Scene {
     fn to_gpu(&self) -> GPUSceneParameters {
         GPUSceneParameters {
             num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
-            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_prims()) as u32,
+            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_primitives())
+                as u32,
             num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,
         }
     }
@@ -75,7 +76,7 @@ impl Scene {
         light_array
     }
 
-    fn num_emissive_prims(&self) -> usize {
+    fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
         for primitive in self.primitives.iter() {
             if primitive.material.scaled_emissive_colour().length() > 0. {
@@ -83,6 +84,22 @@ impl Scene {
             }
         }
         count
+    }
+
+    pub fn emissive_primitive_indices(&self) -> [u32; Self::MAX_PRIMITIVES] {
+        let mut emissive_indices = [0; Self::MAX_PRIMITIVES];
+        let mut emissive_count = 0;
+        for (index, primitive) in self.primitives.iter().enumerate() {
+            if emissive_count >= Self::MAX_PRIMITIVES {
+                break;
+            }
+            if primitive.material.scaled_emissive_colour().length() == 0. {
+                continue;
+            }
+            emissive_indices[emissive_count] = index as u32;
+            emissive_count += 1;
+        }
+        emissive_indices
     }
 
     pub fn scene_parameters(&self) -> Std430GPUSceneParameters {

@@ -17,12 +17,15 @@ struct Light {
     soften_shadows: u32,
 }
 
+
 struct Lights {
     lights: array<Light, MAX_LIGHTS>,
 }
 
+
 @group(1) @binding(1)
 var<storage, read> _lights: Lights;
+
 
 /**
  * Perform multiple importance sampling by combining probability
@@ -366,52 +369,70 @@ fn sample_physical_light(
     surface_position: vec3<f32>,
     surface_normal: vec3<f32>,
     light_geometry_factor: ptr<function, f32>,
+    light_sampling_pdf: ptr<function, f32>,
 ) -> vec3<f32> {
-
-    // TODO create a LUT of emissive object indices and use that to get
-    // the emissive primitive and its position
-    var light_position: vec3<f32> = vec3();
-    var visible_surface_area: f32 = 2.0f * PI;// * radius * radius;
+    var emissive_primitive: Primitive = _primitives.primitives[
+        _emissive_indices[light_index].index
+    ];
+    var light_position: vec3<f32> = emissive_primitive.transform.translation;
+    var radius: f32 = length(
+        emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,
+    );
 
     var light_normal: vec3<f32> = cosine_direction_in_hemisphere(
         seed.xy,
         normalize(surface_position - light_position),
     );
-    var light_direction: vec3<f32> = light_position + lightNormal * radius - pointOnSurface;
+    var light_direction: vec3<f32> = light_position - surface_position + light_normal * length(
+        emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,
+    );
     var distance_to_light: f32 = length(light_direction);
-
     light_direction = normalize(mix(
         normalize(light_direction),
         cosine_direction_in_hemisphere(seed.y + seed.zx, surface_normal),
         _render_parameters.light_sampling_bias,
     ));
 
-    light_sampling_pdf = sample_lights_pdf(
-        _scene_parameters.num_lights,
-        visible_surface_area,
-    );
+    *light_geometry_factor = dot(surface_normal, light_direction);
+    if *light_geometry_factor <= 0. {
+        *light_geometry_factor = 0.;
+        return vec3<f32>();
+    }
 
-    float actualDistance;
-    float3 actualDirection = light_direction;
-    float3 lightNormal;
-    light_colour = marchPath(
-        position,
-        seed,
-        sampleHDRI,
-        distance_to_light * 2.,
-        nestedDielectrics,
-        numNestedDielectrics,
-        numEmissive,
-        position + distance_to_light * light_direction,
-        actualDistance,
-        actualDirection,
-        lightNormal
-    );
-    light_geometry_factor = geometryFactor(
-        actualDirection,
-        lightNormal,
-        actualDistance
-    );
+    var distance_travelled: f32 = 0.;
+    var iterations: u32 = 0u;
+    var pixel_footprint: f32 = _render_parameters.hit_tolerance;
+    var position: vec3<f32> = surface_position;
+    while (
+        distance_travelled < distance_to_light
+        && iterations < _render_parameters.max_ray_steps / 2u
+    ) {
+        var step_distance: f32 = abs(signed_distance_to_scene(
+            position,
+            pixel_footprint,
+        ));
+
+        if step_distance < pixel_footprint {
+            var nearest_primitive: Primitive;
+            find_nearest_primitive(
+                position,
+                pixel_footprint,
+                &nearest_primitive,
+            );
+            *light_geometry_factor /=  distance_travelled * distance_travelled;
+            var radius: f32 = length(
+                nearest_primitive.transform.uniform_scale * nearest_primitive.dimensional_data,
+            );
+            *light_sampling_pdf /= 2.0f * PI * radius * radius;
+            return nearest_primitive.material.emissive_colour;
+        }
+
+        position += light_direction * step_distance;
+        distance_travelled += step_distance;
+        pixel_footprint += step_distance * _render_parameters.hit_tolerance;
+        iterations++;
+    }
+
     return vec3<f32>();
 }
 
@@ -439,7 +460,7 @@ fn light_sampling(
 ) -> vec3<f32> {
     var light_id = u32(f32(_scene_parameters.num_lights) * vec3f_to_random_f32(seed));
     var distance_to_light: f32 = 0.;
-    var light_sampling_pdf: f32 = 1.;
+    var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 1.;
 
@@ -453,10 +474,14 @@ fn light_sampling(
     } else {
         light_colour = sample_physical_light(
             seed,
-            light_id - _scene_parameters.num_non_physical_lights,
+            min(
+                light_id - _scene_parameters.num_non_physical_lights,
+                _scene_parameters.num_lights - _scene_parameters.num_non_physical_lights - 1u,
+            ),
             (*ray).origin,
             surface_normal,
             &light_geometry_factor,
+            &light_sampling_pdf,
         );
     }
 

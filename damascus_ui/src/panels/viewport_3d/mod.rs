@@ -56,6 +56,7 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_stats_buffer,
             render_camera_buffer,
+            emissive_primitive_indices_buffer,
         ) = Self::create_uniform_buffers(device, &viewport3d);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
@@ -63,6 +64,7 @@ impl Viewport3d {
             &scene_parameters_buffer,
             &render_stats_buffer,
             &render_camera_buffer,
+            &emissive_primitive_indices_buffer,
         );
 
         // Storage
@@ -103,6 +105,7 @@ impl Viewport3d {
                 scene_parameters_buffer,
                 render_stats_buffer,
                 render_camera_buffer,
+                emissive_primitive_indices_buffer,
                 storage_bind_group,
                 primitives_buffer,
                 lights_buffer,
@@ -116,7 +119,13 @@ impl Viewport3d {
     fn create_uniform_buffers(
         device: &Arc<wgpu::Device>,
         viewport3d: &Self,
-    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
+    ) -> (
+        wgpu::Buffer,
+        wgpu::Buffer,
+        wgpu::Buffer,
+        wgpu::Buffer,
+        wgpu::Buffer,
+    ) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render parameter buffer"),
@@ -139,12 +148,22 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
+        let emissive_primitive_indices_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("viewport 3d emissive primitive ids"),
+                contents: bytemuck::cast_slice(&[viewport3d
+                    .renderer
+                    .scene
+                    .emissive_primitive_indices()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            });
 
         (
             render_parameters_buffer,
             scene_parameters_buffer,
             render_stats_buffer,
             render_camera_buffer,
+            emissive_primitive_indices_buffer,
         )
     }
 
@@ -154,6 +173,7 @@ impl Viewport3d {
         scene_parameters_buffer: &wgpu::Buffer,
         render_stats_buffer: &wgpu::Buffer,
         render_camera_buffer: &wgpu::Buffer,
+        emissive_primitive_indices_buffer: &wgpu::Buffer,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -199,6 +219,16 @@ impl Viewport3d {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 4,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
                 ],
             });
         let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -219,6 +249,10 @@ impl Viewport3d {
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
+                    resource: render_camera_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
                     resource: render_camera_buffer.as_entire_binding(),
                 },
             ],
@@ -458,6 +492,7 @@ impl Viewport3d {
         let render_parameters = self.renderer.render_parameters();
         let scene_parameters = self.renderer.scene.scene_parameters();
         let render_camera = self.renderer.scene.render_camera.as_std_430();
+        let emissive_primitive_indices = self.renderer.scene.emissive_primitive_indices();
         let primitives = self.renderer.scene.create_gpu_primitives();
         let lights = self.renderer.scene.create_gpu_lights();
         let atmosphere = self.renderer.scene.atmosphere();
@@ -480,6 +515,7 @@ impl Viewport3d {
                     render_parameters,
                     scene_parameters,
                     render_camera,
+                    emissive_primitive_indices,
                     primitives,
                     lights,
                     atmosphere,
@@ -528,6 +564,7 @@ struct RenderResources {
     scene_parameters_buffer: wgpu::Buffer,
     render_stats_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
+    emissive_primitive_indices_buffer: wgpu::Buffer,
     storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
@@ -543,6 +580,7 @@ impl RenderResources {
         render_parameters: Std430GPURayMarcher,
         scene_parameters: Std430GPUSceneParameters,
         render_camera: Std430GPUCamera,
+        emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
         atmosphere: Std430GPUMaterial,
@@ -568,6 +606,11 @@ impl RenderResources {
             &self.render_camera_buffer,
             0,
             bytemuck::cast_slice(&[render_camera]),
+        );
+        queue.write_buffer(
+            &self.emissive_primitive_indices_buffer,
+            0,
+            bytemuck::cast_slice(&[emissive_primitive_indices]),
         );
         queue.write_buffer(
             &self.primitives_buffer,

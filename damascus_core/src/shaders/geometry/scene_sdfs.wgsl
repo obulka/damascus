@@ -195,9 +195,12 @@ fn find_nearest_primitive(
         primitives_processed += num_descendants + 1u;
     }
     // Ensure the number of descendants is that of the closest primitive
-    (*closest_primitive).num_descendants = (
-        _primitives.primitives[(*closest_primitive).id - 1u].num_descendants
+    var unmodified_closest_primitive: Primitive = (
+        _primitives.primitives[(*closest_primitive).id - 1u]
     );
+    (*closest_primitive).num_descendants = unmodified_closest_primitive.num_descendants;
+    (*closest_primitive).dimensional_data = unmodified_closest_primitive.dimensional_data;
+    (*closest_primitive).transform = unmodified_closest_primitive.transform;
 }
 
 

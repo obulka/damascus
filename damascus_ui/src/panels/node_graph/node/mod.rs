@@ -13,8 +13,8 @@ use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use super::{
     value_type::{
-        BVec3, Bool, Colour, ComboBox, DamascusValueType, Float, Integer, Mat3, Mat4, RangedInput,
-        UIData, UIInput, UVec3, UnsignedInteger, Vec2, Vec3, Vec4,
+        BVec3, Bool, Colour, ComboBox, DamascusValueType, Float, Mat4, RangedInput, UIData,
+        UIInput, UVec3, UnsignedInteger, Vec3,
     },
     DamascusDataType, DamascusGraph, DamascusGraphState, DamascusResponse,
 };
@@ -127,16 +127,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_int = |graph: &mut DamascusGraph, name: &str, default: Integer| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Integer,
-                DamascusValueType::Integer { value: default },
-                InputParamKind::ConstantOnly,
-                true,
-            );
-        };
+        // let input_int = |graph: &mut DamascusGraph, name: &str, default: Integer| {
+        //     graph.add_input_param(
+        //         node_id,
+        //         name.to_string(),
+        //         DamascusDataType::Integer,
+        //         DamascusValueType::Integer { value: default },
+        //         InputParamKind::ConstantOnly,
+        //         true,
+        //     );
+        // };
         let input_uint = |graph: &mut DamascusGraph, name: &str, default: UnsignedInteger| {
             graph.add_input_param(
                 node_id,
@@ -167,16 +167,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: Vec2| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Vec2,
-                DamascusValueType::Vec2 { value: default },
-                InputParamKind::ConstantOnly,
-                true,
-            );
-        };
+        // let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: Vec2| {
+        //     graph.add_input_param(
+        //         node_id,
+        //         name.to_string(),
+        //         DamascusDataType::Vec2,
+        //         DamascusValueType::Vec2 { value: default },
+        //         InputParamKind::ConstantOnly,
+        //         true,
+        //     );
+        // };
         let input_vector3 = |graph: &mut DamascusGraph, name: &str, default: Vec3| {
             graph.add_input_param(
                 node_id,
@@ -187,26 +187,26 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Vec4,
-                DamascusValueType::Vec4 { value: default },
-                InputParamKind::ConstantOnly,
-                true,
-            );
-        };
-        let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: Mat3| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Mat3,
-                DamascusValueType::Mat3 { value: default },
-                InputParamKind::ConstantOnly,
-                true,
-            );
-        };
+        // let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
+        //     graph.add_input_param(
+        //         node_id,
+        //         name.to_string(),
+        //         DamascusDataType::Vec4,
+        //         DamascusValueType::Vec4 { value: default },
+        //         InputParamKind::ConstantOnly,
+        //         true,
+        //     );
+        // };
+        // let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: Mat3| {
+        //     graph.add_input_param(
+        //         node_id,
+        //         name.to_string(),
+        //         DamascusDataType::Mat3,
+        //         DamascusValueType::Mat3 { value: default },
+        //         InputParamKind::ConstantOnly,
+        //         true,
+        //     );
+        // };
         let input_matrix4 = |graph: &mut DamascusGraph, name: &str, default: Mat4| {
             graph.add_input_param(
                 node_id,
@@ -217,16 +217,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        let input_image = |graph: &mut DamascusGraph, name: &str, default: ndarray::Array4<f32>| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::Image,
-                DamascusValueType::Image { value: default },
-                InputParamKind::ConnectionOnly,
-                true,
-            );
-        };
+        // let input_image = |graph: &mut DamascusGraph, name: &str, default: ndarray::Array4<f32>| {
+        //     graph.add_input_param(
+        //         node_id,
+        //         name.to_string(),
+        //         DamascusDataType::Image,
+        //         DamascusValueType::Image { value: default },
+        //         InputParamKind::ConnectionOnly,
+        //         true,
+        //     );
+        // };
         let input_camera =
             |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
                 graph.add_input_param(
@@ -238,7 +238,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     true,
                 );
             };
-
         let input_light = |graph: &mut DamascusGraph, name: &str, default: Vec<lights::Light>| {
             graph.add_input_param(
                 node_id,
@@ -249,7 +248,6 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-
         let input_material =
             |graph: &mut DamascusGraph, name: &str, default: materials::Material| {
                 graph.add_input_param(
@@ -285,19 +283,17 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     true,
                 );
             };
-
-        let input_ray_marcher =
-            |graph: &mut DamascusGraph, name: &str, default: renderers::RayMarcher| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::RayMarcher,
-                    DamascusValueType::RayMarcher { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
-
+        // let input_ray_marcher =
+        //     |graph: &mut DamascusGraph, name: &str, default: renderers::RayMarcher| {
+        //         graph.add_input_param(
+        //             node_id,
+        //             name.to_string(),
+        //             DamascusDataType::RayMarcher,
+        //             DamascusValueType::RayMarcher { value: default },
+        //             InputParamKind::ConnectionOnly,
+        //             true,
+        //         );
+        //     };
         let input_scene = |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
             graph.add_input_param(
                 node_id,
@@ -312,9 +308,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
         let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
         };
-        let output_image = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Image);
-        };
+        // let output_image = |graph: &mut DamascusGraph, name: &str| {
+        //     graph.add_output_param(node_id, name.to_string(), DamascusDataType::Image);
+        // };
         let output_camera = |graph: &mut DamascusGraph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
         };

@@ -99,9 +99,9 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_enum::<E>()
         }
 
-        fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
-            self.evaluate_input(name)?.try_to_int()
-        }
+        // fn input_int(&mut self, name: &str) -> anyhow::Result<i32> {
+        //     self.evaluate_input(name)?.try_to_int()
+        // }
 
         fn input_uint(&mut self, name: &str) -> anyhow::Result<u32> {
             self.evaluate_input(name)?.try_to_uint()
@@ -115,21 +115,21 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_float()
         }
 
-        fn input_vector2(&mut self, name: &str) -> anyhow::Result<glam::Vec2> {
-            self.evaluate_input(name)?.try_to_vec2()
-        }
+        // fn input_vector2(&mut self, name: &str) -> anyhow::Result<glam::Vec2> {
+        //     self.evaluate_input(name)?.try_to_vec2()
+        // }
 
         fn input_vector3(&mut self, name: &str) -> anyhow::Result<glam::Vec3> {
             self.evaluate_input(name)?.try_to_vec3()
         }
 
-        fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
-            self.evaluate_input(name)?.try_to_vec4()
-        }
+        // fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
+        //     self.evaluate_input(name)?.try_to_vec4()
+        // }
 
-        fn input_matrix3(&mut self, name: &str) -> anyhow::Result<glam::Mat3> {
-            self.evaluate_input(name)?.try_to_mat3()
-        }
+        // fn input_matrix3(&mut self, name: &str) -> anyhow::Result<glam::Mat3> {
+        //     self.evaluate_input(name)?.try_to_mat3()
+        // }
 
         fn input_matrix4(&mut self, name: &str) -> anyhow::Result<glam::Mat4> {
             self.evaluate_input(name)?.try_to_mat4()
@@ -148,17 +148,17 @@ pub fn evaluate_node(
             )
         }
 
-        fn input_image(&mut self, name: &str) -> anyhow::Result<ndarray::Array4<f32>> {
-            self.evaluate_input(name)?.try_to_image()
-        }
+        // fn input_image(&mut self, name: &str) -> anyhow::Result<ndarray::Array4<f32>> {
+        //     self.evaluate_input(name)?.try_to_image()
+        // }
 
-        fn output_image(
-            &mut self,
-            name: &str,
-            value: ndarray::Array4<f32>,
-        ) -> anyhow::Result<DamascusValueType> {
-            self.populate_output(name, DamascusValueType::Image { value })
-        }
+        // fn output_image(
+        //     &mut self,
+        //     name: &str,
+        //     value: ndarray::Array4<f32>,
+        // ) -> anyhow::Result<DamascusValueType> {
+        //     self.populate_output(name, DamascusValueType::Image { value })
+        // }
 
         fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
             self.evaluate_input(name)?.try_to_camera()
@@ -223,9 +223,9 @@ pub fn evaluate_node(
             self.populate_output(name, DamascusValueType::ProceduralTexture { value })
         }
 
-        fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
-            self.evaluate_input(name)?.try_to_ray_marcher()
-        }
+        // fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
+        //     self.evaluate_input(name)?.try_to_ray_marcher()
+        // }
 
         fn output_ray_marcher(
             &mut self,

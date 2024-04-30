@@ -551,7 +551,7 @@ impl Viewport3d {
                 self.render_stats.frame_counter += 1;
             }
             ui.label(format!(
-                "{:?} paths @ {:?} fps",
+                "{:} paths @ {:.2} fps",
                 self.render_stats.paths_rendered_per_pixel, self.render_stats.fps,
             ));
         }

@@ -2,7 +2,7 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
-
+use bytemuck::{Pod, Zeroable};
 use crevice::std430::AsStd430;
 use glam::Vec3;
 
@@ -21,6 +21,33 @@ pub struct GPUSceneParameters {
     num_primitives: u32,
     num_lights: u32,
     num_non_physical_lights: u32,
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, Pod, Zeroable)]
+pub struct Std430GPUEmissiveIndex {
+    index: u32,
+    _padding0: u32,
+    _padding1: u32,
+    _padding2: u32,
+}
+
+impl Default for Std430GPUEmissiveIndex {
+    fn default() -> Self {
+        Self {
+            index: 0,
+            _padding0: 0,
+            _padding1: 0,
+            _padding2: 0,
+        }
+    }
+}
+
+impl Std430GPUEmissiveIndex {
+    pub fn index(&mut self, index: u32) -> Self {
+        self.index = index;
+        *self
+    }
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -86,8 +113,8 @@ impl Scene {
         count
     }
 
-    pub fn emissive_primitive_indices(&self) -> [u32; Self::MAX_PRIMITIVES] {
-        let mut emissive_indices = [0; Self::MAX_PRIMITIVES];
+    pub fn emissive_primitive_indices(&self) -> [Std430GPUEmissiveIndex; Self::MAX_PRIMITIVES] {
+        let mut emissive_indices = [Std430GPUEmissiveIndex::default(); Self::MAX_PRIMITIVES];
         let mut emissive_count = 0;
         for (index, primitive) in self.primitives.iter().enumerate() {
             if emissive_count >= Self::MAX_PRIMITIVES {
@@ -96,7 +123,8 @@ impl Scene {
             if primitive.material.scaled_emissive_colour().length() == 0. {
                 continue;
             }
-            emissive_indices[emissive_count] = index as u32;
+            emissive_indices[emissive_count] =
+                Std430GPUEmissiveIndex::default().index(index as u32);
             emissive_count += 1;
         }
         emissive_indices

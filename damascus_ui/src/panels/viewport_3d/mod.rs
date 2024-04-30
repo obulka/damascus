@@ -21,7 +21,7 @@ use damascus_core::{
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
     renderers::{RayMarcher, RenderStats, Std430GPURayMarcher, Std430GPURenderStats},
-    scene::{Scene, Std430GPUSceneParameters},
+    scene::{Scene, Std430GPUEmissiveIndex, Std430GPUSceneParameters},
     shaders,
 };
 
@@ -253,7 +253,7 @@ impl Viewport3d {
                 },
                 wgpu::BindGroupEntry {
                     binding: 4,
-                    resource: render_camera_buffer.as_entire_binding(),
+                    resource: emissive_primitive_indices_buffer.as_entire_binding(),
                 },
             ],
         });
@@ -583,7 +583,7 @@ impl RenderResources {
         render_parameters: Std430GPURayMarcher,
         scene_parameters: Std430GPUSceneParameters,
         render_camera: Std430GPUCamera,
-        emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
+        emissive_primitive_indices: [Std430GPUEmissiveIndex; Scene::MAX_PRIMITIVES],
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
         atmosphere: Std430GPUMaterial,

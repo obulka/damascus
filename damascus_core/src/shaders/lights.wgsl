@@ -419,7 +419,10 @@ fn sample_physical_light(
                 pixel_footprint,
                 &nearest_primitive,
             );
-            *light_geometry_factor /=  distance_travelled * distance_travelled;
+            *light_geometry_factor /=  max(
+                distance_travelled * distance_travelled,
+                pixel_footprint,
+            );
             var radius: f32 = length(
                 nearest_primitive.transform.uniform_scale * nearest_primitive.dimensional_data,
             );

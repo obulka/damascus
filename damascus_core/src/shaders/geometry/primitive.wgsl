@@ -41,13 +41,8 @@ struct Primitives {
 var<storage, read> _primitives: Primitives;
 
 
-struct EmissiveIndex {
-    @size(16) index: u32,
-}
-
-
-@group(0) @binding(4)
-var<uniform> _emissive_indices: array<EmissiveIndex, MAX_PRIMITIVES>;
+@group(1) @binding(3)
+var<storage, read> _emissive_indices: array<u32, MAX_PRIMITIVES>;
 
 
 fn is_parent_of(parent: ptr<function, Primitive>, prospective_child_id: u32) -> bool {

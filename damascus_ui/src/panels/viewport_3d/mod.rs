@@ -21,7 +21,7 @@ use damascus_core::{
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
     renderers::{RayMarcher, RenderStats, Std430GPURayMarcher, Std430GPURenderStats},
-    scene::{Scene, Std430GPUEmissiveIndex, Std430GPUSceneParameters},
+    scene::{Scene, Std430GPUSceneParameters},
     shaders,
 };
 
@@ -56,7 +56,6 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_stats_buffer,
             render_camera_buffer,
-            emissive_primitive_indices_buffer,
         ) = Self::create_uniform_buffers(device, &viewport3d);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
@@ -64,17 +63,21 @@ impl Viewport3d {
             &scene_parameters_buffer,
             &render_stats_buffer,
             &render_camera_buffer,
-            &emissive_primitive_indices_buffer,
         );
 
         // Storage
-        let (primitives_buffer, lights_buffer, atmosphere_buffer) =
-            Self::create_storage_buffers(device, &viewport3d);
+        let (
+            primitives_buffer,
+            lights_buffer,
+            atmosphere_buffer,
+            emissive_primitive_indices_buffer,
+        ) = Self::create_storage_buffers(device, &viewport3d);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
             &lights_buffer,
             &atmosphere_buffer,
+            &emissive_primitive_indices_buffer,
         );
 
         // Create the texture to render to and initialize from
@@ -105,11 +108,11 @@ impl Viewport3d {
                 scene_parameters_buffer,
                 render_stats_buffer,
                 render_camera_buffer,
-                emissive_primitive_indices_buffer,
                 storage_bind_group,
                 primitives_buffer,
                 lights_buffer,
                 atmosphere_buffer,
+                emissive_primitive_indices_buffer,
                 progressive_rendering_bind_group,
             });
 
@@ -119,13 +122,7 @@ impl Viewport3d {
     fn create_uniform_buffers(
         device: &Arc<wgpu::Device>,
         viewport3d: &Self,
-    ) -> (
-        wgpu::Buffer,
-        wgpu::Buffer,
-        wgpu::Buffer,
-        wgpu::Buffer,
-        wgpu::Buffer,
-    ) {
+    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render parameter buffer"),
@@ -148,22 +145,12 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
-        let emissive_primitive_indices_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d emissive primitive ids"),
-                contents: bytemuck::cast_slice(&[viewport3d
-                    .renderer
-                    .scene
-                    .emissive_primitive_indices()]),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-            });
 
         (
             render_parameters_buffer,
             scene_parameters_buffer,
             render_stats_buffer,
             render_camera_buffer,
-            emissive_primitive_indices_buffer,
         )
     }
 
@@ -173,7 +160,6 @@ impl Viewport3d {
         scene_parameters_buffer: &wgpu::Buffer,
         render_stats_buffer: &wgpu::Buffer,
         render_camera_buffer: &wgpu::Buffer,
-        emissive_primitive_indices_buffer: &wgpu::Buffer,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -219,16 +205,6 @@ impl Viewport3d {
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 4,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
                 ],
             });
         let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -251,10 +227,6 @@ impl Viewport3d {
                     binding: 3,
                     resource: render_camera_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
-                    binding: 4,
-                    resource: emissive_primitive_indices_buffer.as_entire_binding(),
-                },
             ],
         });
 
@@ -264,7 +236,7 @@ impl Viewport3d {
     fn create_storage_buffers(
         device: &Arc<wgpu::Device>,
         viewport3d: &Self,
-    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
+    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
@@ -280,8 +252,22 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.atmosphere()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
+        let emissive_primitive_indices_buffer =
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("viewport 3d emissive primitive ids"),
+                contents: bytemuck::cast_slice(&[viewport3d
+                    .renderer
+                    .scene
+                    .emissive_primitive_indices()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+            });
 
-        (primitives_buffer, lights_buffer, atmosphere_buffer)
+        (
+            primitives_buffer,
+            lights_buffer,
+            atmosphere_buffer,
+            emissive_primitive_indices_buffer,
+        )
     }
 
     fn create_storage_binding(
@@ -289,6 +275,7 @@ impl Viewport3d {
         primitives_buffer: &wgpu::Buffer,
         lights_buffer: &wgpu::Buffer,
         atmosphere_buffer: &wgpu::Buffer,
+        emissive_primitive_indices_buffer: &wgpu::Buffer,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let storage_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -324,6 +311,16 @@ impl Viewport3d {
                         },
                         count: None,
                     },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    },
                 ],
             });
         let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -341,6 +338,10 @@ impl Viewport3d {
                 wgpu::BindGroupEntry {
                     binding: 2,
                     resource: atmosphere_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: emissive_primitive_indices_buffer.as_entire_binding(),
                 },
             ],
         });
@@ -515,10 +516,10 @@ impl Viewport3d {
                     render_parameters,
                     scene_parameters,
                     render_camera,
-                    emissive_primitive_indices,
                     primitives,
                     lights,
                     atmosphere,
+                    emissive_primitive_indices,
                     render_stats,
                 );
                 Vec::new()
@@ -567,11 +568,11 @@ struct RenderResources {
     scene_parameters_buffer: wgpu::Buffer,
     render_stats_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
-    emissive_primitive_indices_buffer: wgpu::Buffer,
     storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
     atmosphere_buffer: wgpu::Buffer,
+    emissive_primitive_indices_buffer: wgpu::Buffer,
     progressive_rendering_bind_group: wgpu::BindGroup,
 }
 
@@ -583,10 +584,10 @@ impl RenderResources {
         render_parameters: Std430GPURayMarcher,
         scene_parameters: Std430GPUSceneParameters,
         render_camera: Std430GPUCamera,
-        emissive_primitive_indices: [Std430GPUEmissiveIndex; Scene::MAX_PRIMITIVES],
         primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
         atmosphere: Std430GPUMaterial,
+        emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
         render_stats: Std430GPURenderStats,
     ) {
         // Update our uniform buffer with the angle from the UI
@@ -611,11 +612,6 @@ impl RenderResources {
             bytemuck::cast_slice(&[render_camera]),
         );
         queue.write_buffer(
-            &self.emissive_primitive_indices_buffer,
-            0,
-            bytemuck::cast_slice(&[emissive_primitive_indices]),
-        );
-        queue.write_buffer(
             &self.primitives_buffer,
             0,
             bytemuck::cast_slice(&[primitives]),
@@ -625,6 +621,11 @@ impl RenderResources {
             &self.atmosphere_buffer,
             0,
             bytemuck::cast_slice(&[atmosphere]),
+        );
+        queue.write_buffer(
+            &self.emissive_primitive_indices_buffer,
+            0,
+            bytemuck::cast_slice(&[emissive_primitive_indices]),
         );
     }
 

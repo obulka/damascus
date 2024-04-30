@@ -371,9 +371,7 @@ fn sample_physical_light(
     light_geometry_factor: ptr<function, f32>,
     light_sampling_pdf: ptr<function, f32>,
 ) -> vec3<f32> {
-    var emissive_primitive: Primitive = _primitives.primitives[
-        _emissive_indices[light_index].index
-    ];
+    var emissive_primitive: Primitive = _primitives.primitives[_emissive_indices[light_index]];
     var light_position: vec3<f32> = emissive_primitive.transform.translation;
     var radius: f32 = length(
         emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,

@@ -10,9 +10,10 @@
 
 #include Ray
 #include Math
+#include Noise
 #include Random
 #include PrimitiveSDFs
-#include Materials
+#include Material
 #include Primitive
 #include PrimitiveModifiers
 #include RenderParameters

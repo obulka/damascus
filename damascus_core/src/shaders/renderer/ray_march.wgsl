@@ -210,7 +210,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             // Exit if we have reached the bounce limit or with a random chance
             var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f((*ray).throughput);
-            if (bounces >= _render_parameters.max_bounces || exit_probability < rng) {
+            if (bounces >= _render_parameters.max_bounces || exit_probability <= rng) {
                 final_aovs(
                     _render_parameters.output_aov,
                     bounces,

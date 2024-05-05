@@ -332,37 +332,65 @@ pub fn evaluate_node(
         }
         DamascusNodeTemplate::Material => {
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
-            let diffuse_texture = evaluator.input_procedural_texture("diffuse_texture")?;
+            let diffuse_colour_texture =
+                evaluator.input_procedural_texture("diffuse_colour_texture")?;
             let specular_probability = evaluator.input_float("specular_probability")?;
+            let specular_probability_texture =
+                evaluator.input_procedural_texture("specular_probability_texture")?;
             let specular_roughness = evaluator.input_float("specular_roughness")?;
+            let specular_roughness_texture =
+                evaluator.input_procedural_texture("specular_roughness_texture")?;
             let specular_colour = evaluator.input_vector3("specular_colour")?;
+            let specular_colour_texture =
+                evaluator.input_procedural_texture("specular_colour_texture")?;
             let transmissive_probability = evaluator.input_float("transmissive_probability")?;
+            let transmissive_probability_texture =
+                evaluator.input_procedural_texture("transmissive_probability_texture")?;
             let transmissive_roughness = evaluator.input_float("transmissive_roughness")?;
-            let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
+            let transmissive_roughness_texture =
+                evaluator.input_procedural_texture("transmissive_roughness_texture")?;
             let extinction_coefficient = evaluator.input_float("extinction_coefficient")?;
+            let transmissive_colour = evaluator.input_vector3("transmissive_colour")?;
+            let transmissive_colour_texture =
+                evaluator.input_procedural_texture("transmissive_colour_texture")?;
             let emissive_intensity = evaluator.input_float("emissive_intensity")?;
             let emissive_colour = evaluator.input_vector3("emissive_colour")?;
+            let emissive_colour_texture =
+                evaluator.input_procedural_texture("emissive_colour_texture")?;
             let refractive_index = evaluator.input_float("refractive_index")?;
+            let refractive_index_texture =
+                evaluator.input_procedural_texture("refractive_index_texture")?;
             let scattering_coefficient = evaluator.input_float("scattering_coefficient")?;
             let scattering_colour = evaluator.input_vector3("scattering_colour")?;
+            let scattering_colour_texture =
+                evaluator.input_procedural_texture("scattering_colour_texture")?;
 
             evaluator.output_material(
                 "out",
                 materials::Material {
                     diffuse_colour: diffuse_colour,
-                    diffuse_texture: diffuse_texture,
+                    diffuse_colour_texture: diffuse_colour_texture,
                     specular_probability: specular_probability,
+                    specular_probability_texture: specular_probability_texture,
                     specular_roughness: specular_roughness * specular_roughness,
+                    specular_roughness_texture: specular_roughness_texture,
                     specular_colour: specular_colour,
+                    specular_colour_texture: specular_colour_texture,
                     transmissive_probability: transmissive_probability,
+                    transmissive_probability_texture: transmissive_probability_texture,
                     transmissive_roughness: transmissive_roughness * transmissive_roughness,
-                    transmissive_colour: transmissive_colour,
+                    transmissive_roughness_texture: transmissive_roughness_texture,
                     extinction_coefficient: extinction_coefficient,
+                    transmissive_colour: transmissive_colour,
+                    transmissive_colour_texture: transmissive_colour_texture,
                     emissive_intensity: emissive_intensity,
                     emissive_colour: emissive_colour,
+                    emissive_colour_texture: emissive_colour_texture,
                     refractive_index: refractive_index,
+                    refractive_index_texture: refractive_index_texture,
                     scattering_coefficient: scattering_coefficient,
                     scattering_colour: scattering_colour,
+                    scattering_colour_texture: scattering_colour_texture,
                 },
             )
         }

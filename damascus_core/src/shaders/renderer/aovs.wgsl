@@ -78,8 +78,8 @@ fn ray_miss_aovs(
                 ray,
                 nested_dielectrics,
             );
-            var texture: ProceduralTexture = _atmosphere.diffuse_texture;
-            (*ray).colour += (*ray).throughput * procedurally_texture(
+            var texture: ProceduralTexture = _atmosphere.diffuse_colour_texture;
+            (*ray).colour += (*ray).throughput * procedurally_texture_vec3f(
                 vec4((*ray).direction, 10.),
                 _atmosphere.diffuse_colour,
                 &texture,

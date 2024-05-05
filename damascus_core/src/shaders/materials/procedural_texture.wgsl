@@ -297,14 +297,14 @@ fn turbulence_noise(
 }
 
 
-fn checkerboard(seed: vec4<f32>) -> vec3<f32> {
+fn checkerboard(seed: vec4<f32>) -> f32 {
     var normalized_seed: vec3<f32> = normalize(seed.xyz);
     var spherical_seed = vec2(
         atan2(normalized_seed.x, normalized_seed.z),
         acos(normalized_seed.y),
     ) * seed.w;
     var square_signal: vec2<f32> = sign(fract(spherical_seed * 0.5) - 0.5);
-    return vec3(0.5 - 0.25 * square_signal.x * square_signal.y);
+    return 0.5 - 0.25 * square_signal.x * square_signal.y;
 }
 
 
@@ -352,7 +352,37 @@ fn grade_vec3(colour: vec3<f32>, texture: ptr<function, ProceduralTexture>) -> v
 }
 
 
-fn procedurally_texture(
+fn procedurally_texture_f32(
+    seed: vec4<f32>,
+    colour: f32,
+    texture: ptr<function, ProceduralTexture>,
+) -> f32 {
+    switch (*texture).texture_type {
+        case 0u, default {
+            // None
+            return colour;
+        }
+        case 1u {
+            // Grade
+            return grade_f32(colour, texture);
+        }
+        case 2u {
+            // Checkerboard
+            return colour * grade_f32(checkerboard(seed / (*texture).scale), texture);
+        }
+        case 3u {
+            // FBM Noise
+            return colour * grade_f32(fractal_brownian_motion_noise(seed, texture), texture);
+        }
+        case 4u {
+            // Turbulence Noise
+            return colour * grade_f32(turbulence_noise(seed, texture), texture);
+        }
+    }
+}
+
+
+fn procedurally_texture_vec3f(
     seed: vec4<f32>,
     colour: vec3<f32>,
     texture: ptr<function, ProceduralTexture>,
@@ -368,7 +398,7 @@ fn procedurally_texture(
         }
         case 2u {
             // Checkerboard
-            return colour * grade_vec3(checkerboard(seed / (*texture).scale), texture);
+            return colour * vec3(grade_f32(checkerboard(seed / (*texture).scale), texture));
         }
         case 3u {
             // FBM Noise

@@ -564,8 +564,8 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 input_procedural_texture(
                     graph,
-                    "diffuse_texture",
-                    materials::ProceduralTexture::default(),
+                    "diffuse_colour_texture",
+                    default_material.diffuse_colour_texture,
                 );
                 input_float(
                     graph,
@@ -577,6 +577,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         }),
                     ),
                 );
+                input_procedural_texture(
+                    graph,
+                    "specular_probability_texture",
+                    default_material.specular_probability_texture,
+                );
                 input_float(
                     graph,
                     "specular_roughness",
@@ -586,6 +591,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         ),
                     ),
                 );
+                input_procedural_texture(
+                    graph,
+                    "specular_roughness_texture",
+                    default_material.specular_roughness_texture,
+                );
                 input_vector3(
                     graph,
                     "specular_colour",
@@ -594,6 +604,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                             UIData::default().with_tooltip("The specular colour of the material."),
                         )
                         .as_colour(),
+                );
+                input_procedural_texture(
+                    graph,
+                    "specular_colour_texture",
+                    default_material.specular_colour_texture,
                 );
                 input_float(
                     graph,
@@ -606,12 +621,30 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         }),
                     ),
                 );
+                input_procedural_texture(
+                    graph,
+                    "transmissive_probability_texture",
+                    default_material.transmissive_probability_texture,
+                );
                 input_float(
                     graph,
                     "transmissive_roughness",
                     Float::new(default_material.transmissive_roughness).with_ui_data(
                         UIData::default()
                             .with_tooltip("The roughness when transmitted through the material."),
+                    ),
+                );
+                input_procedural_texture(
+                    graph,
+                    "transmissive_roughness_texture",
+                    default_material.transmissive_roughness_texture,
+                );
+                input_float(
+                    graph,
+                    "extinction_coefficient",
+                    Float::new(default_material.extinction_coefficient).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The extinction coefficient of the material."),
                     ),
                 );
                 input_vector3(
@@ -624,13 +657,10 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         )
                         .as_colour(),
                 );
-                input_float(
+                input_procedural_texture(
                     graph,
-                    "extinction_coefficient",
-                    Float::new(default_material.extinction_coefficient).with_ui_data(
-                        UIData::default()
-                            .with_tooltip("The extinction coefficient of the material."),
-                    ),
+                    "transmissive_colour_texture",
+                    default_material.transmissive_colour_texture,
                 );
                 input_float(
                     graph,
@@ -650,6 +680,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                         )
                         .as_colour(),
                 );
+                input_procedural_texture(
+                    graph,
+                    "emissive_colour_texture",
+                    default_material.emissive_colour_texture,
+                );
                 input_float(
                     graph,
                     "refractive_index",
@@ -659,6 +694,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                                 .with_tooltip("The index of refraction of the material."),
                         )
                         .with_range(0.1..=5.),
+                );
+                input_procedural_texture(
+                    graph,
+                    "refractive_index_texture",
+                    default_material.refractive_index_texture,
                 );
                 input_float(
                     graph,
@@ -677,6 +717,11 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                                 .with_tooltip("The scattering colour of the material."),
                         )
                         .as_colour(),
+                );
+                input_procedural_texture(
+                    graph,
+                    "scattering_colour_texture",
+                    default_material.scattering_colour_texture,
                 );
                 output_material(graph, "out");
             }

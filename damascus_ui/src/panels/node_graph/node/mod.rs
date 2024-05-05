@@ -14,7 +14,7 @@ use damascus_core::{geometry, lights, materials, renderers, scene};
 use super::{
     value_type::{
         BVec3, Bool, Colour, ComboBox, DamascusValueType, Float, Mat4, RangedInput, UIData,
-        UIInput, UVec3, UnsignedInteger, Vec3,
+        UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
     },
     DamascusDataType, DamascusGraph, DamascusGraphState, DamascusResponse,
 };
@@ -22,7 +22,7 @@ use super::{
 mod callbacks;
 mod node_data;
 pub use callbacks::NodeCallbacks;
-use callbacks::{LightCallbacks, PrimitiveCallbacks};
+use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
 pub use node_data::DamascusNodeData;
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -48,6 +48,9 @@ impl NodeCallbacks for DamascusNodeTemplate {
             }
             DamascusNodeTemplate::Primitive => {
                 PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
+            }
+            DamascusNodeTemplate::ProceduralTexture => {
+                ProceduralTextureCallbacks.input_value_changed(graph, node_id, input_name)
             }
             _ => {}
         }
@@ -187,16 +190,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 true,
             );
         };
-        // let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
-        //     graph.add_input_param(
-        //         node_id,
-        //         name.to_string(),
-        //         DamascusDataType::Vec4,
-        //         DamascusValueType::Vec4 { value: default },
-        //         InputParamKind::ConstantOnly,
-        //         true,
-        //     );
-        // };
+        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                DamascusDataType::Vec4,
+                DamascusValueType::Vec4 { value: default },
+                InputParamKind::ConstantOnly,
+                true,
+            );
+        };
         // let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: Mat3| {
         //     graph.add_input_param(
         //         node_id,
@@ -1206,55 +1209,164 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                     ComboBox::from_enum::<materials::ProceduralTextureType>(
                         default_procedural_texture.texture_type,
                     )
-                    .with_ui_data(UIData::default().with_tooltip(indoc! {
-                        "TODO",
-                    })),
+                    .with_ui_data(UIData::default().with_tooltip("The type of texture to use.")),
                 );
-                input_float(
+                input_vector4(
                     graph,
                     "scale",
-                    Float::new(default_procedural_texture.scale)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "TODO"
-                        }))
-                        .with_range(0.001..=1.),
+                    Vec4::from_vec4(default_procedural_texture.scale).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The scale factor of the texture.")
+                            .with_hidden(),
+                    ),
                 );
                 input_float(
                     graph,
                     "black_point",
                     Float::new(default_procedural_texture.black_point).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "TODO"
-                        }),
+                        UIData::default()
+                            .with_tooltip("The black point of the texture.")
+                            .with_hidden(),
                     ),
                 );
                 input_float(
                     graph,
                     "white_point",
                     Float::new(default_procedural_texture.white_point).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "TODO"
-                        }),
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "The white point of the texture."
+                            })
+                            .with_hidden(),
                     ),
                 );
                 input_float(
                     graph,
                     "lift",
                     Float::new(default_procedural_texture.lift).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "TODO"
-                        }),
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "The lift to apply to the texture."
+                            })
+                            .with_hidden(),
                     ),
+                );
+                input_float(
+                    graph,
+                    "gain",
+                    Float::new(default_procedural_texture.gain)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The gain to apply to the texture colour.")
+                                .with_hidden(),
+                        )
+                        .with_range(0.0001..=10.),
+                );
+                input_uint(
+                    graph,
+                    "octaves",
+                    UnsignedInteger::new(default_procedural_texture.octaves)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The number of different frequencies to superimpose.")
+                                .with_hidden(),
+                        )
+                        .with_range(1..=12),
+                );
+                input_float(
+                    graph,
+                    "lacunarity",
+                    Float::new(default_procedural_texture.lacunarity)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The lacunarity is the initial frequency of the noise,
+                                    and the amount to scale the frequency for each octave."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(1.0..=10.),
+                );
+                input_float(
+                    graph,
+                    "amplitude_gain",
+                    Float::new(default_procedural_texture.amplitude_gain)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The gain to apply to the texture. This scales the
+                                    noise amplitude between octaves."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.0..=2.),
                 );
                 input_float(
                     graph,
                     "gamma",
                     Float::new(default_procedural_texture.gamma)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "TODO"
-                        }))
-                        .with_range(0.01..=5.),
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The gamma to apply to the texture. This is computed
+                                    by raising the colour to the power of 1/gamma."
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.01..=2.),
                 );
+                input_vector4(
+                    graph,
+                    "low_frequency_scale",
+                    Vec4::from_vec4(default_procedural_texture.low_frequency_scale).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The amount to scale lower frequencies between octaves.")
+                            .with_hidden(),
+                    ),
+                );
+                input_vector4(
+                    graph,
+                    "high_frequency_scale",
+                    Vec4::from_vec4(default_procedural_texture.high_frequency_scale).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The amount to scale higher frequencies between octaves.")
+                            .with_hidden(),
+                    ),
+                );
+                input_vector4(
+                    graph,
+                    "low_frequency_translation",
+                    Vec4::from_vec4(default_procedural_texture.low_frequency_translation)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(
+                                    "The amount to translate lower frequencies between octaves.",
+                                )
+                                .with_hidden(),
+                        ),
+                );
+                input_vector4(
+                    graph,
+                    "high_frequency_translation",
+                    Vec4::from_vec4(default_procedural_texture.high_frequency_translation)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(
+                                    "The amount to translate higher frequencies between octaves.",
+                                )
+                                .with_hidden(),
+                        ),
+                );
+                input_bool(
+                    graph,
+                    "invert",
+                    Bool::new(default_procedural_texture.invert).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("Invert the colour.")
+                            .with_hidden(),
+                    ),
+                );
+
                 output_procedural_texture(graph, "out");
             }
             DamascusNodeTemplate::RayMarcher => {

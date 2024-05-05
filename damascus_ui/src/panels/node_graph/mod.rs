@@ -123,9 +123,9 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_vec3()
         }
 
-        // fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
-        //     self.evaluate_input(name)?.try_to_vec4()
-        // }
+        fn input_vector4(&mut self, name: &str) -> anyhow::Result<glam::Vec4> {
+            self.evaluate_input(name)?.try_to_vec4()
+        }
 
         // fn input_matrix3(&mut self, name: &str) -> anyhow::Result<glam::Mat3> {
         //     self.evaluate_input(name)?.try_to_mat3()
@@ -546,11 +546,21 @@ pub fn evaluate_node(
         DamascusNodeTemplate::ProceduralTexture => {
             let texture_type =
                 evaluator.input_combo_box::<materials::ProceduralTextureType>("texture_type")?;
-            let scale = evaluator.input_float("scale")?;
+            let scale = evaluator.input_vector4("scale")?;
             let black_point = evaluator.input_float("black_point")?;
             let white_point = evaluator.input_float("white_point")?;
             let lift = evaluator.input_float("lift")?;
+            let gain = evaluator.input_float("gain")?;
+            let octaves = evaluator.input_uint("octaves")?;
+            let lacunarity = evaluator.input_float("lacunarity")?;
+            let amplitude_gain = evaluator.input_float("amplitude_gain")?;
             let gamma = evaluator.input_float("gamma")?;
+            let low_frequency_scale = evaluator.input_vector4("low_frequency_scale")?;
+            let high_frequency_scale = evaluator.input_vector4("high_frequency_scale")?;
+            let low_frequency_translation = evaluator.input_vector4("low_frequency_translation")?;
+            let high_frequency_translation =
+                evaluator.input_vector4("high_frequency_translation")?;
+            let invert = evaluator.input_bool("invert")?;
 
             evaluator.output_procedural_texture(
                 "out",
@@ -560,7 +570,16 @@ pub fn evaluate_node(
                     black_point: black_point,
                     white_point: white_point,
                     lift: lift,
+                    gain: gain,
+                    octaves: octaves,
+                    lacunarity: lacunarity,
+                    amplitude_gain: amplitude_gain,
                     gamma: gamma,
+                    low_frequency_scale: low_frequency_scale,
+                    high_frequency_scale: high_frequency_scale,
+                    low_frequency_translation: low_frequency_translation,
+                    high_frequency_translation: high_frequency_translation,
+                    invert: invert,
                 },
             )
         }

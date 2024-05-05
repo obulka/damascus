@@ -9,8 +9,10 @@ use super::{DamascusDataType, DamascusGraph, DamascusValueType, UIInput};
 
 mod light;
 mod primitive;
+mod procedural_texture;
 pub use light::LightCallbacks;
 pub use primitive::PrimitiveCallbacks;
+pub use procedural_texture::ProceduralTextureCallbacks;
 
 pub trait NodeCallbacks {
     fn show_input(&self, value_type: &mut DamascusValueType) {

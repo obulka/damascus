@@ -8,16 +8,6 @@
 const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
 
 
-struct ProceduralTexture {
-    texture_type: u32,
-    scale: f32,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
-    gamma: f32,
-}
-
-
 struct Material {
     diffuse_colour: vec3<f32>,
     diffuse_texture: ProceduralTexture,
@@ -317,93 +307,5 @@ fn sample_material(
         var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
         *light_sampling_pdf = probability_over_pi;
         return probability_over_pi * dot(diffuse_direction, surface_normal);
-    }
-}
-
-
-fn checkerboard(seed: vec4<f32>) -> vec3<f32> {
-    var normalized_seed: vec3<f32> = normalize(seed.xyz);
-    var spherical_seed = vec2(
-        atan2(normalized_seed.x, normalized_seed.z),
-        acos(normalized_seed.y),
-    ) * seed.w;
-    var square_signal: vec2<f32> = sign(fract(spherical_seed * 0.5) - 0.5);
-    return vec3(0.5 - 0.25 * square_signal.x * square_signal.y);
-}
-
-
-fn grade(
-    lift: f32,
-    black_point: f32,
-    white_point: f32,
-    gamma: f32,
-    colour: vec3<f32>,
-) -> vec3<f32> {
-    return select(
-        pow(
-            (1. - lift)
-            * saturate_vec3f(colour - black_point)
-            / (white_point - black_point)
-            + lift,
-            vec3(1. / gamma),
-        ),
-        vec3<f32>(),
-        white_point == black_point,
-    );
-}
-
-
-fn procedurally_texture(
-    seed: vec4<f32>,
-    colour: vec3<f32>,
-    texture: ProceduralTexture,
-) -> vec3<f32> {
-    switch texture.texture_type {
-        case 0u, default {
-            // None
-            return colour;
-        }
-        case 1u {
-            // Grade
-            return grade(
-                texture.lift,
-                texture.black_point,
-                texture.white_point,
-                texture.gamma,
-                colour,
-            );
-        }
-        case 2u {
-            // Checkerboard
-            return colour * grade(
-                texture.lift,
-                texture.black_point,
-                texture.white_point,
-                texture.gamma,
-                checkerboard(seed / texture.scale),
-            );
-        }
-    }
-}
-
-
-fn sample_equiangular(
-    distance_since_last_bounce: f32,
-    ray: ptr<function, Ray>,
-    nested_dielectrics: ptr<function, NestedDielectrics>,
-) {
-    // Get the material properties of the dielectric the ray is currently in
-    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-
-    // If equiangular sampling is disabled or the dielectric does not scatter
-    // light, compute the extinction and exit early
-    if (
-        _render_parameters.equiangular_samples == 0u
-        || element_sum_vec3f(current_dielectric.scattering_colour) == 0.
-    ) {
-        (*ray).throughput *= exp(
-            -current_dielectric.extinction_colour * distance_since_last_bounce,
-        );
-        return;
     }
 }

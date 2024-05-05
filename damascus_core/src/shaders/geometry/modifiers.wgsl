@@ -188,10 +188,11 @@ fn distance_to_textured_primitive(
         primitive,
     ) / (*primitive).transform.uniform_scale;
 
+    var texture: ProceduralTexture = (*primitive).material.diffuse_texture;
     (*primitive).material.diffuse_colour = procedurally_texture(
         vec4(transformed_position, length((*primitive).dimensional_data)),
         (*primitive).material.diffuse_colour,
-        (*primitive).material.diffuse_texture,
+        &texture,
     );
 
     var distance: f32;

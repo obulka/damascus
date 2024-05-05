@@ -10,9 +10,9 @@
 
 #include Ray
 #include Math
-#include Noise
 #include Random
 #include PrimitiveSDFs
+#include ProceduralTexture
 #include Material
 #include Primitive
 #include PrimitiveModifiers

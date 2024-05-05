@@ -133,6 +133,7 @@ fn find_nearest_descendant(
             // Otherwise, as long as the child isn't a bounding volume,
             // we can perform the normal blending operation
             distance_to_family = blend_primitives(
+                position,
                 distance_to_family,
                 distance_to_child,
                 family,

@@ -188,72 +188,6 @@ fn distance_to_textured_primitive(
         primitive,
     ) / (*primitive).transform.uniform_scale;
 
-    var procedural_texture_seed = vec4(
-        transformed_position,
-        length((*primitive).dimensional_data),
-    );
-
-    var texture: ProceduralTexture = (*primitive).material.diffuse_colour_texture;
-    (*primitive).material.diffuse_colour = procedurally_texture_vec3f(
-        procedural_texture_seed,
-        (*primitive).material.diffuse_colour,
-        &texture,
-    );
-    texture = (*primitive).material.specular_probability_texture;
-    (*primitive).material.specular_probability = procedurally_texture_f32(
-        procedural_texture_seed,
-        (*primitive).material.specular_probability,
-        &texture,
-    );
-    texture = (*primitive).material.specular_roughness_texture;
-    (*primitive).material.specular_roughness = procedurally_texture_f32(
-        procedural_texture_seed,
-        (*primitive).material.specular_roughness,
-        &texture,
-    );
-    texture = (*primitive).material.specular_colour_texture;
-    (*primitive).material.specular_colour = procedurally_texture_vec3f(
-        procedural_texture_seed,
-        (*primitive).material.specular_colour,
-        &texture,
-    );
-    texture = (*primitive).material.transmissive_probability_texture;
-    (*primitive).material.transmissive_probability = procedurally_texture_f32(
-        procedural_texture_seed,
-        (*primitive).material.transmissive_probability,
-        &texture,
-    );
-    texture = (*primitive).material.transmissive_roughness_texture;
-    (*primitive).material.transmissive_roughness = procedurally_texture_f32(
-        procedural_texture_seed,
-        (*primitive).material.transmissive_roughness,
-        &texture,
-    );
-    texture = (*primitive).material.extinction_colour_texture;
-    (*primitive).material.extinction_colour = procedurally_texture_vec3f(
-        procedural_texture_seed,
-        (*primitive).material.extinction_colour,
-        &texture,
-    );
-    texture = (*primitive).material.emissive_colour_texture;
-    (*primitive).material.emissive_colour = procedurally_texture_vec3f(
-        procedural_texture_seed,
-        (*primitive).material.emissive_colour,
-        &texture,
-    );
-    texture = (*primitive).material.refractive_index_texture;
-    (*primitive).material.refractive_index = procedurally_texture_f32(
-        procedural_texture_seed,
-        (*primitive).material.refractive_index,
-        &texture,
-    );
-    texture = (*primitive).material.scattering_colour_texture;
-    (*primitive).material.scattering_colour = procedurally_texture_vec3f(
-        procedural_texture_seed,
-        (*primitive).material.scattering_colour,
-        &texture,
-    );
-
     var distance: f32;
     switch (*primitive).shape {
         case 0u { // cannot use const, maybe wgsl version too old
@@ -791,6 +725,7 @@ fn select_primitive(
 }
 
 fn blend_primitives(
+    position: vec3<f32>,
     distance_to_parent: f32,
     distance_to_child: f32,
     parent: ptr<function, Primitive>,
@@ -803,6 +738,9 @@ fn blend_primitives(
             var parent_closer_than_negative_child: bool = (
                 negative_child_distance > distance_to_parent
             );
+            if parent_closer_than_negative_child {
+                texture_primitive(position, child);
+            }
             select_primitive(parent, child, parent_closer_than_negative_child);
             return select(
                 distance_to_parent,
@@ -813,6 +751,9 @@ fn blend_primitives(
         case 256u {
             // Intersection
             var parent_closest: bool = distance_to_parent < distance_to_child;
+            if parent_closest {
+                texture_primitive(position, child);
+            }
             select_primitive(parent, child, parent_closest);
             return select(distance_to_parent, distance_to_child, parent_closest);
         }
@@ -824,6 +765,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
+            texture_primitive(position, child);
             mix_primitives(child, parent, smoothing);
             return mix(
                 distance_to_child,
@@ -839,6 +781,7 @@ fn blend_primitives(
                 * (distance_to_parent + distance_to_child)
                 / (*parent).blend_strength
             );
+            texture_primitive(position, child);
             mix_primitives(parent, child, smoothing);
             return mix(
                 distance_to_parent,
@@ -854,6 +797,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
+            texture_primitive(position, child);
             mix_primitives(child, parent, smoothing);
             return mix(
                 distance_to_child,
@@ -864,6 +808,9 @@ fn blend_primitives(
         default {
             // Union
             var child_closest: bool = distance_to_child < distance_to_parent;
+            if child_closest {
+                texture_primitive(position, child);
+            }
             select_primitive(parent, child, child_closest);
             return select(distance_to_parent, distance_to_child, child_closest);
         }
@@ -932,4 +879,87 @@ fn blend_distances(
             return min(distance_to_parent, distance_to_child);
         }
     }
+}
+
+
+/**
+ * Modify the material of a primitive using its procedural textures.
+ *
+ * @arg position: The point to use as the seed.
+ * @arg primitive: The primitive to modify.
+ */
+fn texture_primitive(
+    position: vec3<f32>,
+    primitive: ptr<function, Primitive>,
+) {
+    var transformed_position: vec3<f32> = transform_position(
+        position,
+        primitive,
+    ) / (*primitive).transform.uniform_scale;
+
+    var procedural_texture_seed = vec4(
+        transformed_position,
+        length((*primitive).dimensional_data),
+    );
+
+    var texture: ProceduralTexture = (*primitive).material.diffuse_colour_texture;
+    (*primitive).material.diffuse_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.diffuse_colour,
+        &texture,
+    );
+    texture = (*primitive).material.specular_probability_texture;
+    (*primitive).material.specular_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.specular_probability,
+        &texture,
+    );
+    texture = (*primitive).material.specular_roughness_texture;
+    (*primitive).material.specular_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.specular_roughness,
+        &texture,
+    );
+    texture = (*primitive).material.specular_colour_texture;
+    (*primitive).material.specular_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.specular_colour,
+        &texture,
+    );
+    texture = (*primitive).material.transmissive_probability_texture;
+    (*primitive).material.transmissive_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.transmissive_probability,
+        &texture,
+    );
+    texture = (*primitive).material.transmissive_roughness_texture;
+    (*primitive).material.transmissive_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.transmissive_roughness,
+        &texture,
+    );
+    texture = (*primitive).material.extinction_colour_texture;
+    (*primitive).material.extinction_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.extinction_colour,
+        &texture,
+    );
+    texture = (*primitive).material.emissive_colour_texture;
+    (*primitive).material.emissive_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.emissive_colour,
+        &texture,
+    );
+    texture = (*primitive).material.refractive_index_texture;
+    (*primitive).material.refractive_index = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.refractive_index,
+        &texture,
+    );
+    texture = (*primitive).material.scattering_colour_texture;
+    (*primitive).material.scattering_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.scattering_colour,
+        &texture,
+    );
 }

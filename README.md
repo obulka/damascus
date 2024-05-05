@@ -10,6 +10,8 @@ This is very much still a work in progress, and future breaking changes are all 
 
 ![damascus_testing](https://github.com/obulka/damascus/assets/21975584/d3bd9ea1-a73e-4d58-aff8-3c606db46753)
 
+![noise test](https://github.com/obulka/damascus/assets/21975584/184488b5-954c-41b3-8936-3d827fad7f8c)
+
 ### Running the project
 
 Simply clone the repo and run `cargo run --release` to build and launch the application.

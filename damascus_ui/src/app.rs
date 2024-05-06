@@ -246,7 +246,7 @@ impl eframe::App for Damascus {
                         DamascusValueType::Scene { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene = value;
-                            viewport_3d.enable_camera_controls();
+                            viewport_3d.disable_camera_controls();
                         }
                         _ => {}
                     }

@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 
 use eframe::egui;
-use egui_node_graph::{GraphEditorState, NodeResponse};
+use egui_node_graph::{GraphEditorState, NodeFinder, NodeResponse};
 
 use damascus_core::{
     geometry::Primitive,
@@ -123,6 +123,7 @@ impl eframe::App for Damascus {
                 });
             });
         });
+
         egui::SidePanel::right("right")
             .resizable(true)
             .show_separator_line(false)
@@ -135,6 +136,18 @@ impl eframe::App for Damascus {
                 );
                 if response.dragged() && ui.ctx().input(|i| i.pointer.middle_down()) {
                     self.state.pan_zoom.pan += ui.ctx().input(|i| i.pointer.delta());
+                }
+
+                let editor_rect = ui.max_rect();
+                let cursor_in_editor = ui.rect_contains_pointer(editor_rect);
+                let mouse = &ui.ctx().input(|i| i.pointer.clone());
+                if mouse.secondary_released() && cursor_in_editor
+                // && !graph_response.cursor_in_finder
+                {
+                    let cursor_pos = ui
+                        .ctx()
+                        .input(|i| i.pointer.hover_pos().unwrap_or(egui::Pos2::ZERO));
+                    self.state.node_finder = Some(NodeFinder::new_at(cursor_pos));
                 }
             });
         egui::SidePanel::left("left")
@@ -150,8 +163,19 @@ impl eframe::App for Damascus {
                 if response.dragged() && ui.ctx().input(|i| i.pointer.middle_down()) {
                     self.state.pan_zoom.pan += ui.ctx().input(|i| i.pointer.delta());
                 }
-            });
 
+                let editor_rect = ui.max_rect();
+                let cursor_in_editor = ui.rect_contains_pointer(editor_rect);
+                let mouse = &ui.ctx().input(|i| i.pointer.clone());
+                if mouse.secondary_released() && cursor_in_editor
+                // && !graph_response.cursor_in_finder
+                {
+                    let cursor_pos = ui
+                        .ctx()
+                        .input(|i| i.pointer.hover_pos().unwrap_or(egui::Pos2::ZERO));
+                    self.state.node_finder = Some(NodeFinder::new_at(cursor_pos));
+                }
+            });
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)
             .default_height(300.0)

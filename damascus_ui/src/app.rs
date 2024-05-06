@@ -145,6 +145,10 @@ impl eframe::App for Damascus {
             .default_height(300.0)
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
+                if ui.ctx().input(|i| i.key_pressed(egui::Key::F)) {
+                    self.state.reset_zoom(ui);
+                }
+
                 self.state.draw_graph_editor(
                     ui,
                     AllDamascusNodeTemplates,

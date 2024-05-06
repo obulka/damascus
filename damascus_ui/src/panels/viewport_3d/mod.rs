@@ -471,7 +471,7 @@ impl Viewport3d {
                 -0.0015 * response.drag_delta().x,
                 0.0015 * response.drag_delta().y,
                 if response.hovered() {
-                    -0.015 * ui.input(|i| i.raw_scroll_delta.y)
+                    -0.015 * ui.input(|i| i.smooth_scroll_delta.y)
                 } else {
                     0.
                 },

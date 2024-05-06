@@ -29,6 +29,7 @@ pub struct Viewport3d {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
+    pub paused: bool,
     render_stats: RenderStats,
     renderer_hash: Key<OrderedFloatPolicy>,
 }
@@ -41,6 +42,7 @@ impl Viewport3d {
             renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
+            paused: false,
             render_stats: RenderStats::default(),
             renderer_hash: renderer_hash,
         };
@@ -449,6 +451,15 @@ impl Viewport3d {
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
+        if ui.input(|i| i.key_pressed(egui::Key::Space)) {
+            self.paused = !self.paused;
+        }
+        if !self.paused {
+            ui.ctx().request_repaint();
+        } else {
+            return;
+        }
+
         let (rect, response) = ui.allocate_exact_size(
             ui.available_size(),
             // egui::vec2(2048., 1024.),

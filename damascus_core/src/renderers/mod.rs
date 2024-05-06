@@ -37,36 +37,40 @@ pub use ray_marcher::{RayMarcher, Std430GPURayMarcher};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPURenderStats {
+pub struct GPURenderState {
     paths_rendered_per_pixel: f32,
+    flags: u32,
 }
 
-pub struct RenderStats {
+pub struct RenderState {
     pub frame_counter: u32,
     pub previous_frame_time: SystemTime,
     pub fps: f32,
     pub paths_rendered_per_pixel: u32,
+    pub paused: bool,
 }
 
-impl Default for RenderStats {
+impl Default for RenderState {
     fn default() -> Self {
         Self {
             frame_counter: 0,
             previous_frame_time: SystemTime::now(),
             fps: 60.,
             paths_rendered_per_pixel: 0,
+            paused: true,
         }
     }
 }
 
-impl RenderStats {
-    fn to_gpu(&self) -> GPURenderStats {
-        GPURenderStats {
+impl RenderState {
+    fn to_gpu(&self) -> GPURenderState {
+        GPURenderState {
             paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
+            flags: self.paused as u32,
         }
     }
 
-    pub fn as_std_430(&self) -> Std430GPURenderStats {
+    pub fn as_std_430(&self) -> Std430GPURenderState {
         self.to_gpu().as_std430()
     }
 }

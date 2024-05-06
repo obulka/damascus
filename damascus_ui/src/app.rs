@@ -8,6 +8,12 @@ use std::collections::HashMap;
 use eframe::egui;
 use egui_node_graph::{GraphEditorState, NodeResponse};
 
+use damascus_core::{
+    geometry::Primitive,
+    lights::{Light, Lights},
+    materials::Material,
+};
+
 use super::panels::{
     node_graph::{
         evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
@@ -117,17 +123,34 @@ impl eframe::App for Damascus {
                 });
             });
         });
-        // egui::SidePanel::right("properties")
-        //     .resizable(true)
-        //     .default_width(250.0)
-        //     .show(ctx, |ui| {
-        //         ui.vertical_centered(|ui| {
-        //             ui.heading("Right Panel");
-        //         });
-        //         egui::ScrollArea::vertical().show(ui, |ui| {
-        //             ui.label("test");
-        //         });
-        //     });
+        egui::SidePanel::right("right")
+            .resizable(true)
+            .show_separator_line(false)
+            .default_width(0.)
+            .show(ctx, |ui| {
+                ui.allocate_space(ui.available_size());
+                let response = ui.allocate_rect(
+                    ui.min_rect(),
+                    egui::Sense::click().union(egui::Sense::drag()),
+                );
+                if response.dragged() && ui.ctx().input(|i| i.pointer.middle_down()) {
+                    self.state.pan_zoom.pan += ui.ctx().input(|i| i.pointer.delta());
+                }
+            });
+        egui::SidePanel::left("left")
+            .resizable(true)
+            .show_separator_line(false)
+            .default_width(0.)
+            .show(ctx, |ui| {
+                ui.allocate_space(ui.available_size());
+                let response = ui.allocate_rect(
+                    ui.min_rect(),
+                    egui::Sense::click().union(egui::Sense::drag()),
+                );
+                if response.dragged() && ui.ctx().input(|i| i.pointer.middle_down()) {
+                    self.state.pan_zoom.pan += ui.ctx().input(|i| i.pointer.delta());
+                }
+            });
 
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)
@@ -147,8 +170,17 @@ impl eframe::App for Damascus {
                 match user_event {
                     DamascusResponse::SetActiveNode(node) => {
                         self.user_state.active_node = Some(node);
+                        if let Some(viewport_3d) = &mut self.viewport_3d {
+                            viewport_3d.enable();
+                            viewport_3d.play();
+                        }
                     }
-                    DamascusResponse::ClearActiveNode => self.user_state.active_node = None,
+                    DamascusResponse::ClearActiveNode => {
+                        self.user_state.active_node = None;
+                        if let Some(viewport_3d) = &mut self.viewport_3d {
+                            viewport_3d.disable();
+                        }
+                    }
                     DamascusResponse::InputValueChanged(node_id, node_template, input_name) => {
                         // Perform callbacks when inputs have changed
                         node_template.input_value_changed(
@@ -186,27 +218,56 @@ impl eframe::App for Damascus {
                         DamascusValueType::Camera { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.render_camera = value;
+                            viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
+                            viewport_3d.enable_camera_controls();
                         }
                         DamascusValueType::Light { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.lights = value;
+                            viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
+                            viewport_3d.enable_camera_controls();
+                        }
+                        DamascusValueType::Material { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
+                            viewport_3d.renderer.scene.clear_primitives();
+                            viewport_3d.renderer.scene.clear_lights();
+                            viewport_3d.renderer.scene.atmosphere = value;
+                            viewport_3d.enable_camera_controls();
+                        }
+                        DamascusValueType::ProceduralTexture { value } => {
+                            viewport_3d.renderer.reset_render_parameters();
+                            viewport_3d.renderer.scene.clear_primitives();
+                            viewport_3d.renderer.scene.clear_lights();
+                            viewport_3d.renderer.scene.atmosphere = Material::default();
+                            viewport_3d.renderer.scene.atmosphere.diffuse_colour_texture = value;
+                            viewport_3d.enable_camera_controls();
                         }
                         DamascusValueType::Primitive { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.primitives = value;
+                            viewport_3d.renderer.scene.lights = vec![Light {
+                                light_type: Lights::AmbientOcclusion,
+                                ..Default::default()
+                            }];
+                            viewport_3d.enable_camera_controls();
                         }
                         DamascusValueType::RayMarcher { value } => {
                             viewport_3d.renderer = value;
+                            viewport_3d.disable_camera_controls();
                         }
                         DamascusValueType::Scene { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene = value;
+                            viewport_3d.enable_camera_controls();
                         }
                         _ => {}
                     }
                 }
             } else {
                 self.user_state.active_node = None;
+                if let Some(viewport_3d) = &mut self.viewport_3d {
+                    viewport_3d.pause();
+                }
             }
         }
 

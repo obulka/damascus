@@ -273,12 +273,17 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
         in.uv_coordinate.xy,
         progressive_rendering_texture_dimensions,
     );
+    var texture_coordinates = vec2u(current_pixel_indices);
+    var pixel_colour: vec4f = textureLoad(_progressive_rendering_texture, texture_coordinates);
+    if bool(_render_state.flags & PAUSED) {
+        return select(vec4f(), pixel_colour, _render_state.paths_rendered_per_pixel > 0.);
+    }
 
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
     var seed = vec3(8377.72, 2111.74, 1723.33) * random_vec3f(
         _render_parameters.seeds
         + frag_coord_seed
-        + _render_stats.paths_rendered_per_pixel
+        + _render_state.paths_rendered_per_pixel
     ) + vec3(7131.93, 1173.97, 9712.43) * vec2f_to_random_f32(current_pixel_indices);
 
     var uv_coordinates: vec2f = pixels_to_uv(
@@ -292,12 +297,10 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
 
     // Read, update, and store the current value for our pixel
     // so that the render can be done progressively
-    var texture_coordinates = vec2<u32>(current_pixel_indices);
-    var pixel_colour: vec4f = (
-        _render_stats.paths_rendered_per_pixel
-        * textureLoad(_progressive_rendering_texture, texture_coordinates)
+    pixel_colour = (
+        _render_state.paths_rendered_per_pixel * pixel_colour
         + vec4(ray.colour, 1.)
-    ) / (_render_stats.paths_rendered_per_pixel + 1.);
+    ) / (_render_state.paths_rendered_per_pixel + 1.);
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;

@@ -487,7 +487,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_vector3(
                     graph,
                     "position",
-                    Vec3::from_vec3(glam::Vec3::ZERO).with_ui_data(
+                    Vec3::from_vec3(glam::Vec3::Y).with_ui_data(
                         UIData::default()
                             .with_tooltip("The position of the point light.")
                             .with_hidden(),

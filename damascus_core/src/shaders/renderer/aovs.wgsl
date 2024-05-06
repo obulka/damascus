@@ -80,7 +80,7 @@ fn ray_miss_aovs(
             );
             var texture: ProceduralTexture = _atmosphere.diffuse_colour_texture;
             (*ray).colour += (*ray).throughput * procedurally_texture_vec3f(
-                vec4((*ray).direction, 10.),
+                vec4((*ray).direction, 8.27447),
                 _atmosphere.diffuse_colour,
                 &texture,
             );

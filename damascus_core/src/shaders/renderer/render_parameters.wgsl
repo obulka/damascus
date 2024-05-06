@@ -4,11 +4,15 @@
 // Please see the LICENSE file that is included as part of this package.
 
 
-// Flag bit masks
+// ------- Flag bit masks --------
+// RenderParameters
 const DYNAMIC_LEVEL_OF_DETAIL: u32 = 1u;
 const SAMPLE_ATMOSPHERE: u32 = 2u;
 const SECONDARY_SAMPLING: u32 = 4u;
 const LATLONG: u32 = 8u;
+
+// RenderState
+const PAUSED: u32 = 1u;
 
 
 struct RenderParameters {
@@ -34,8 +38,9 @@ struct SceneParameters {
 }
 
 
-struct RenderStats {
+struct RenderState {
     paths_rendered_per_pixel: f32,
+    flags: u32,
 }
 
 
@@ -49,4 +54,4 @@ var<uniform> _scene_parameters: SceneParameters;
 
 
 @group(0) @binding(2)
-var<uniform> _render_stats: RenderStats;
+var<uniform> _render_state: RenderState;

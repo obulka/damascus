@@ -146,7 +146,7 @@ impl Default for Primitive {
             elongation: Vec3::ZERO,
             bounding_volume: false,
             num_descendants: 0,
-            dimensional_data: Vec4::ONE,
+            dimensional_data: 0.5 * Vec4::X,
         }
     }
 }

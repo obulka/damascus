@@ -20,7 +20,7 @@ use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
-    renderers::{RayMarcher, RenderStats, Std430GPURayMarcher, Std430GPURenderStats},
+    renderers::{RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState},
     scene::{Scene, Std430GPUSceneParameters},
     shaders,
 };
@@ -29,8 +29,9 @@ pub struct Viewport3d {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
-    pub paused: bool,
-    render_stats: RenderStats,
+    disabled: bool,
+    camera_controls_enabled: bool,
+    render_state: RenderState,
     renderer_hash: Key<OrderedFloatPolicy>,
 }
 
@@ -42,8 +43,9 @@ impl Viewport3d {
             renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
-            paused: false,
-            render_stats: RenderStats::default(),
+            disabled: true,
+            camera_controls_enabled: true,
+            render_state: RenderState::default(),
             renderer_hash: renderer_hash,
         };
 
@@ -56,14 +58,14 @@ impl Viewport3d {
         let (
             render_parameters_buffer,
             scene_parameters_buffer,
-            render_stats_buffer,
+            render_state_buffer,
             render_camera_buffer,
         ) = Self::create_uniform_buffers(device, &viewport3d);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
             &scene_parameters_buffer,
-            &render_stats_buffer,
+            &render_state_buffer,
             &render_camera_buffer,
         );
 
@@ -108,7 +110,7 @@ impl Viewport3d {
                 uniform_bind_group,
                 render_parameters_buffer,
                 scene_parameters_buffer,
-                render_stats_buffer,
+                render_state_buffer,
                 render_camera_buffer,
                 storage_bind_group,
                 primitives_buffer,
@@ -119,6 +121,30 @@ impl Viewport3d {
             });
 
         Some(viewport3d)
+    }
+
+    pub fn disable(&mut self) {
+        self.disabled = true;
+    }
+
+    pub fn enable(&mut self) {
+        self.disabled = false;
+    }
+
+    pub fn pause(&mut self) {
+        self.render_state.paused = true;
+    }
+
+    pub fn play(&mut self) {
+        self.render_state.paused = false;
+    }
+
+    pub fn disable_camera_controls(&mut self) {
+        self.camera_controls_enabled = false;
+    }
+
+    pub fn enable_camera_controls(&mut self) {
+        self.camera_controls_enabled = true;
     }
 
     fn create_uniform_buffers(
@@ -137,9 +163,9 @@ impl Viewport3d {
                 contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.scene_parameters()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
-        let render_stats_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render progress buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.render_stats.as_std_430()]),
+            contents: bytemuck::cast_slice(&[viewport3d.render_state.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -151,7 +177,7 @@ impl Viewport3d {
         (
             render_parameters_buffer,
             scene_parameters_buffer,
-            render_stats_buffer,
+            render_state_buffer,
             render_camera_buffer,
         )
     }
@@ -160,7 +186,7 @@ impl Viewport3d {
         device: &Arc<wgpu::Device>,
         render_parameters_buffer: &wgpu::Buffer,
         scene_parameters_buffer: &wgpu::Buffer,
-        render_stats_buffer: &wgpu::Buffer,
+        render_state_buffer: &wgpu::Buffer,
         render_camera_buffer: &wgpu::Buffer,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let uniform_bind_group_layout =
@@ -223,7 +249,7 @@ impl Viewport3d {
                 },
                 wgpu::BindGroupEntry {
                     binding: 2,
-                    resource: render_stats_buffer.as_entire_binding(),
+                    resource: render_state_buffer.as_entire_binding(),
                 },
                 wgpu::BindGroupEntry {
                     binding: 3,
@@ -354,8 +380,8 @@ impl Viewport3d {
     fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: 4096u32,
-                height: 2160u32,
+                width: 8192u32,
+                height: 8192u32,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -450,25 +476,12 @@ impl Viewport3d {
         })
     }
 
-    pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        if ui.input(|i| i.key_pressed(egui::Key::Space)) {
-            self.paused = !self.paused;
-        }
-        if !self.paused {
-            ui.ctx().request_repaint();
-        } else {
-            return;
-        }
-
-        let (rect, response) = ui.allocate_exact_size(
-            ui.available_size(),
-            // egui::vec2(2048., 1024.),
-            egui::Sense::drag(),
-        );
-
+    fn update_camera(&mut self, ui: &mut egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
-
+        if !self.camera_controls_enabled {
+            return;
+        }
         // Allow some basic camera movement
         let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
             glam::Mat4::from_quat(glam::Quat::from_euler(
@@ -489,11 +502,38 @@ impl Viewport3d {
             ))
         };
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
+    }
+
+    pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
+        let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
+
+        let hud_string = format!(
+            "{:} paths @ {:.2} fps @ {:.0}x{:.0}",
+            self.render_state.paths_rendered_per_pixel,
+            self.render_state.fps,
+            rect.max.x - rect.min.x,
+            rect.max.y - rect.min.y
+        );
+
+        if self.disabled {
+            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                ui.label(hud_string + " - viewer disabled, activate a node to enable it");
+            });
+            return;
+        }
+
+        ui.ctx().request_repaint();
+
+        if ui.input(|i| i.key_pressed(egui::Key::Space)) {
+            self.render_state.paused = !self.render_state.paused;
+        }
+
+        self.update_camera(ui, &rect, &response);
 
         // Check if the nodegraph has changed and reset the render if it has
         if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.renderer_hash {
-                self.render_stats.paths_rendered_per_pixel = 0;
+                self.render_state.paths_rendered_per_pixel = 0;
                 self.renderer_hash = new_hash;
             }
         } else {
@@ -510,32 +550,36 @@ impl Viewport3d {
                 lights: self.renderer.scene.create_gpu_lights(),
                 atmosphere: self.renderer.scene.atmosphere(),
                 emissive_primitive_indices: self.renderer.scene.emissive_primitive_indices(),
-                render_stats: self.render_stats.as_std_430(),
+                render_state: self.render_state.as_std_430(),
             },
         ));
 
+        if self.render_state.paused {
+            self.render_state.previous_frame_time = SystemTime::now();
+            self.render_state.frame_counter = 1;
+            ui.label(hud_string + " - viewer paused, press the spacebar to resume");
+            return;
+        }
+
         if self.enable_frame_rate_overlay {
-            if self.render_stats.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_stats.previous_frame_time) {
+            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
                     Ok(frame_time) => {
-                        self.render_stats.fps =
+                        self.render_state.fps =
                             self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
                     }
                     Err(_) => panic!("SystemTime before UNIX EPOCH!"),
                 }
 
-                self.render_stats.previous_frame_time = SystemTime::now();
-                self.render_stats.frame_counter = 1;
+                self.render_state.previous_frame_time = SystemTime::now();
+                self.render_state.frame_counter = 1;
             } else {
-                self.render_stats.frame_counter += 1;
+                self.render_state.frame_counter += 1;
             }
-            ui.label(format!(
-                "{:} paths @ {:.2} fps",
-                self.render_stats.paths_rendered_per_pixel, self.render_stats.fps,
-            ));
+            ui.label(hud_string);
         }
 
-        self.render_stats.paths_rendered_per_pixel += 1;
+        self.render_state.paths_rendered_per_pixel += 1;
     }
 }
 
@@ -547,7 +591,7 @@ struct Viewport3dCallback {
     lights: [Std430GPULight; Scene::MAX_LIGHTS],
     atmosphere: Std430GPUMaterial,
     emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
-    render_stats: Std430GPURenderStats,
+    render_state: Std430GPURenderState,
 }
 
 impl egui_wgpu::CallbackTrait for Viewport3dCallback {
@@ -570,7 +614,7 @@ impl egui_wgpu::CallbackTrait for Viewport3dCallback {
             self.lights,
             self.atmosphere,
             self.emissive_primitive_indices,
-            self.render_stats,
+            self.render_state,
         );
         Vec::new()
     }
@@ -591,7 +635,7 @@ struct RenderResources {
     uniform_bind_group: wgpu::BindGroup,
     render_parameters_buffer: wgpu::Buffer,
     scene_parameters_buffer: wgpu::Buffer,
-    render_stats_buffer: wgpu::Buffer,
+    render_state_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
     storage_bind_group: wgpu::BindGroup,
     primitives_buffer: wgpu::Buffer,
@@ -613,7 +657,7 @@ impl RenderResources {
         lights: [Std430GPULight; Scene::MAX_LIGHTS],
         atmosphere: Std430GPUMaterial,
         emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
-        render_stats: Std430GPURenderStats,
+        render_state: Std430GPURenderState,
     ) {
         // Update our uniform buffer with the angle from the UI
         queue.write_buffer(
@@ -627,9 +671,9 @@ impl RenderResources {
             bytemuck::cast_slice(&[scene_parameters]),
         );
         queue.write_buffer(
-            &self.render_stats_buffer,
+            &self.render_state_buffer,
             0,
-            bytemuck::cast_slice(&[render_stats]),
+            bytemuck::cast_slice(&[render_state]),
         );
         queue.write_buffer(
             &self.render_camera_buffer,

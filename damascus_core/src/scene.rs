@@ -109,4 +109,12 @@ impl Scene {
     pub fn atmosphere(&self) -> Std430GPUMaterial {
         self.atmosphere.to_gpu().as_std430()
     }
+
+    pub fn clear_primitives(&mut self) {
+        self.primitives.clear();
+    }
+
+    pub fn clear_lights(&mut self) {
+        self.lights.clear();
+    }
 }

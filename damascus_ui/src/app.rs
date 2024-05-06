@@ -133,6 +133,7 @@ impl eframe::App for Damascus {
             .resizable(true)
             .default_height(300.0)
             .show(ctx, |ui| {
+                ui.allocate_space(ui.available_size());
                 self.state.draw_graph_editor(
                     ui,
                     AllDamascusNodeTemplates,

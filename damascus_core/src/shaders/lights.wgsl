@@ -7,12 +7,19 @@
 const MAX_LIGHTS: u32 = 512u;
 
 
+
+const DIRECTIONAL: u32 = 0u;
+const POINT: u32 = 1u;
+const AMBIENT: u32 = 2u;
+const AMBIENT_OCCLUSION: u32 = 3u;
+
+
 struct Light {
     light_type: u32,
-    dimensional_data: vec3<f32>,
+    dimensional_data: vec3f,
     intensity: f32,
     falloff: u32,
-    colour: vec3<f32>,
+    colour: vec3f,
     shadow_hardness: f32,
     soften_shadows: u32,
 }
@@ -39,11 +46,11 @@ var<storage, read> _lights: Lights;
  * @returns: The multiple importance sampled colour.
  */
 fn multiple_importance_sample(
-    emittance: vec3<f32>,
-    throughput: vec3<f32>,
+    emittance: vec3f,
+    throughput: vec3f,
     pdf_0: f32,
     pdf_1: f32,
-) -> vec3<f32> {
+) -> vec3f {
     return emittance * throughput * balance_heuristic(pdf_0, pdf_1);
 }
 
@@ -81,7 +88,7 @@ fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
 fn sample_equiangular_pdf(
     step_distance: f32,
     max_ray_distance: f32,
-    light_position: vec3<f32>,
+    light_position: vec3f,
     ray: ptr<function, Ray>,
     distance: ptr<function, f32>,
 ) -> f32 {
@@ -145,8 +152,8 @@ fn light_intensity(light: ptr<function, Light>, distance_to_light: f32) -> f32 {
  * @returns: The occlusion value.
  */
 fn sample_ambient_occlusion(
-    ray_origin: vec3<f32>,
-    surface_normal: vec3<f32>,
+    ray_origin: vec3f,
+    surface_normal: vec3f,
     amount: f32,
     iterations: u32,
 ) -> f32 {
@@ -183,8 +190,8 @@ fn sample_ambient_occlusion(
  * @returns: The shadow intenstity.
  */
 fn sample_soft_shadow(
-    ray_origin: vec3<f32>,
-    ray_direction: vec3<f32>,
+    ray_origin: vec3f,
+    ray_direction: vec3f,
     distance_to_shade_point: f32,
     hardness: f32,
 ) -> f32 {
@@ -195,7 +202,7 @@ fn sample_soft_shadow(
     var iterations: u32 = 0u;
     var pixel_footprint: f32 = _render_parameters.hit_tolerance;
 
-    var position: vec3<f32> = ray_origin;
+    var position: vec3f = ray_origin;
     while (
         distance_travelled < distance_to_shade_point
         && iterations < _render_parameters.max_ray_steps / 2u
@@ -240,14 +247,14 @@ fn sample_soft_shadow(
  * @returns: The shadow intenstity.
  */
 fn sample_shadow(
-    ray_origin: vec3<f32>,
-    ray_direction: vec3<f32>,
+    ray_origin: vec3f,
+    ray_direction: vec3f,
     distance_to_shade_point: f32,
 ) -> f32 {
     var distance_travelled: f32 = 0.;
     var iterations: u32 = 0u;
     var pixel_footprint: f32 = _render_parameters.hit_tolerance;
-    var position: vec3<f32> = ray_origin;
+    var position: vec3f = ray_origin;
     while (
         distance_travelled < distance_to_shade_point
         && iterations < _render_parameters.max_ray_steps / 2u
@@ -286,17 +293,17 @@ fn sample_shadow(
  */
 fn sample_non_physical_light(
     light_index: u32,
-    surface_position: vec3<f32>,
-    surface_normal: vec3<f32>,
+    surface_position: vec3f,
+    surface_normal: vec3f,
     light_geometry_factor: ptr<function, f32>,
-) -> vec3<f32> {
+) -> vec3f {
     // Read the light properties
     var light: Light = _lights.lights[light_index];
 
     switch light.light_type {
-        case 0u {
+        case DIRECTIONAL {
             // Directional light
-            var light_direction: vec3<f32> = normalize(-light.dimensional_data);
+            var light_direction: vec3f = normalize(-light.dimensional_data);
             *light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
 
             var shadow_intensity_at_position: f32;
@@ -317,9 +324,9 @@ fn sample_non_physical_light(
 
             return light.colour * light.intensity * shadow_intensity_at_position;
         }
-        case 1u {
+        case POINT {
             // Point light
-            var light_direction: vec3<f32> = light.dimensional_data - surface_position;
+            var light_direction: vec3f = light.dimensional_data - surface_position;
             var distance_to_light: f32 = length(light_direction);
             light_direction = normalize(light_direction);
             *light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
@@ -346,11 +353,11 @@ fn sample_non_physical_light(
                 * shadow_intensity_at_position
             );
         }
-        case 2u, default {
+        case AMBIENT, default {
             // Ambient light, simply return the colour intensity.
             return light.intensity * light.colour;
         }
-        case 3u {
+        case AMBIENT_OCCLUSION {
             // Ambient Occlusion
             return light.colour * sample_ambient_occlusion(
                 surface_position,
@@ -364,24 +371,24 @@ fn sample_non_physical_light(
 
 
 fn sample_physical_light(
-    seed: vec3<f32>,
+    seed: vec3f,
     light_index: u32,
-    surface_position: vec3<f32>,
-    surface_normal: vec3<f32>,
+    surface_position: vec3f,
+    surface_normal: vec3f,
     light_geometry_factor: ptr<function, f32>,
     light_sampling_pdf: ptr<function, f32>,
-) -> vec3<f32> {
+) -> vec3f {
     var emissive_primitive: Primitive = _primitives.primitives[_emissive_indices[light_index]];
-    var light_position: vec3<f32> = emissive_primitive.transform.translation;
+    var light_position: vec3f = emissive_primitive.transform.translation;
     var radius: f32 = length(
         emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,
     );
 
-    var light_normal: vec3<f32> = cosine_direction_in_hemisphere(
+    var light_normal: vec3f = cosine_direction_in_hemisphere(
         seed.xy,
         normalize(surface_position - light_position),
     );
-    var light_direction: vec3<f32> = light_position - surface_position + light_normal * length(
+    var light_direction: vec3f = light_position - surface_position + light_normal * length(
         emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,
     );
     var distance_to_light: f32 = length(light_direction);
@@ -394,13 +401,13 @@ fn sample_physical_light(
     *light_geometry_factor = dot(surface_normal, light_direction);
     if *light_geometry_factor <= 0. {
         *light_geometry_factor = 0.;
-        return vec3<f32>();
+        return vec3f();
     }
 
     var distance_travelled: f32 = 0.;
     var iterations: u32 = 0u;
     var pixel_footprint: f32 = _render_parameters.hit_tolerance;
-    var position: vec3<f32> = surface_position;
+    var position: vec3f = surface_position;
     while (
         distance_travelled < distance_to_light
         && iterations < _render_parameters.max_ray_steps / 2u
@@ -434,7 +441,7 @@ fn sample_physical_light(
         iterations++;
     }
 
-    return vec3<f32>();
+    return vec3f();
 }
 
 
@@ -453,12 +460,12 @@ fn sample_physical_light(
  * @returns: The colour of the sampled light.
  */
 fn light_sampling(
-    seed: vec3<f32>,
+    seed: vec3f,
     ray: ptr<function, Ray>,
-    surface_normal: vec3<f32>,
-    material_brdf: vec3<f32>,
+    surface_normal: vec3f,
+    material_brdf: vec3f,
     material_pdf: f32,
-) -> vec3<f32> {
+) -> vec3f {
     var light_id = u32(f32(_scene_parameters.num_lights) * vec3f_to_random_f32(seed));
     var distance_to_light: f32 = 0.;
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);

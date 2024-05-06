@@ -4,6 +4,13 @@
 // Please see the LICENSE file that is included as part of this package.
 
 
+const NONE: u32 = 0u;
+const GRADE: u32 = 1u;
+const CHECKER_BOARD: u32 = 2u;
+const FBM_NOISE: u32 = 3u;
+const TURBULENCE_NOISE: u32 = 4u;
+
+
 var<private> PERM: array<u32, 512> = array<u32, 512>(
     151u, 160u, 137u, 91u, 90u, 15u, 131u, 13u, 201u, 95u, 96u, 53u, 194u, 233u,
     7u, 225u, 140u, 36u, 103u, 30u, 69u, 142u, 8u, 99u, 37u, 240u, 21u, 10u, 23u,
@@ -46,59 +53,59 @@ var<private> PERM: array<u32, 512> = array<u32, 512>(
 );
 
 
-var<private> GRAD4: array<vec4<f32>, 32> = array<vec4<f32>, 32>(
-    vec4<f32>(0., 1., 1., 1.), vec4<f32>(0., 1., 1., -1.),
-    vec4<f32>(0., 1., -1., 1.), vec4<f32>(0., 1., -1., -1.),
-    vec4<f32>(0., -1., 1., 1.), vec4<f32>(0., -1., 1., -1.),
-    vec4<f32>(0., -1., -1., 1.), vec4<f32>(0., -1., -1., -1.),
-    vec4<f32>(1., 0., 1., 1.), vec4<f32>(1., 0., 1., -1.),
-    vec4<f32>(1., 0., -1., 1.), vec4<f32>(1., 0., -1., -1.),
-    vec4<f32>(-1., 0., 1., 1.), vec4<f32>(-1., 0., 1., -1.),
-    vec4<f32>(-1., 0., -1., 1.), vec4<f32>(-1., 0., -1., -1.),
-    vec4<f32>(1., 1., 0., 1.), vec4<f32>(1., 1., 0., -1.),
-    vec4<f32>(1., -1., 0., 1.), vec4<f32>(1., -1., 0., -1.),
-    vec4<f32>(-1., 1., 0., 1.), vec4<f32>(-1., 1., 0., -1.),
-    vec4<f32>(-1., -1., 0., 1.), vec4<f32>(-1., -1., 0., -1.),
-    vec4<f32>(1., 1., 1., 0.), vec4<f32>(1., 1., -1., 0.),
-    vec4<f32>(1., -1., 1., 0.), vec4<f32>(1., -1., -1., 0.),
-    vec4<f32>(-1., 1., 1., 0.), vec4<f32>(-1., 1., -1., 0.),
-    vec4<f32>(-1., -1., 1., 0.), vec4<f32>(-1., -1., -1., 0.),
+var<private> GRAD4: array<vec4f, 32> = array<vec4f, 32>(
+    vec4(0., 1., 1., 1.), vec4(0., 1., 1., -1.),
+    vec4(0., 1., -1., 1.), vec4(0., 1., -1., -1.),
+    vec4(0., -1., 1., 1.), vec4(0., -1., 1., -1.),
+    vec4(0., -1., -1., 1.), vec4(0., -1., -1., -1.),
+    vec4(1., 0., 1., 1.), vec4(1., 0., 1., -1.),
+    vec4(1., 0., -1., 1.), vec4(1., 0., -1., -1.),
+    vec4(-1., 0., 1., 1.), vec4(-1., 0., 1., -1.),
+    vec4(-1., 0., -1., 1.), vec4(-1., 0., -1., -1.),
+    vec4(1., 1., 0., 1.), vec4(1., 1., 0., -1.),
+    vec4(1., -1., 0., 1.), vec4(1., -1., 0., -1.),
+    vec4(-1., 1., 0., 1.), vec4(-1., 1., 0., -1.),
+    vec4(-1., -1., 0., 1.), vec4(-1., -1., 0., -1.),
+    vec4(1., 1., 1., 0.), vec4(1., 1., -1., 0.),
+    vec4(1., -1., 1., 0.), vec4(1., -1., -1., 0.),
+    vec4(-1., 1., 1., 0.), vec4(-1., 1., -1., 0.),
+    vec4(-1., -1., 1., 0.), vec4(-1., -1., -1., 0.),
 );
 
 
-var<private> SIMPLEX: array<vec4<u32>, 64> = array<vec4<u32>, 64>(
-    vec4<u32>(0u, 1u, 2u, 3u), vec4<u32>(0u, 1u, 3u, 2u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 2u, 3u, 1u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(1u, 2u, 3u, 0u),
-    vec4<u32>(0u, 2u, 1u, 3u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 3u, 1u, 2u), vec4<u32>(0u, 3u, 2u, 1u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(1u, 3u, 2u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(1u, 2u, 0u, 3u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(1u, 3u, 0u, 2u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(2u, 3u, 0u, 1u), vec4<u32>(2u, 3u, 1u, 0u),
-    vec4<u32>(1u, 0u, 2u, 3u), vec4<u32>(1u, 0u, 3u, 2u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(2u, 0u, 3u, 1u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(2u, 1u, 3u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(2u, 0u, 1u, 3u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(3u, 0u, 1u, 2u), vec4<u32>(3u, 0u, 2u, 1u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(3u, 1u, 2u, 0u),
-    vec4<u32>(2u, 1u, 0u, 3u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(0u, 0u, 0u, 0u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(3u, 1u, 0u, 2u), vec4<u32>(0u, 0u, 0u, 0u),
-    vec4<u32>(3u, 2u, 0u, 1u), vec4<u32>(3u, 2u, 1u, 0u),
+var<private> SIMPLEX: array<vec4u, 64> = array<vec4u, 64>(
+    vec4(0u, 1u, 2u, 3u), vec4(0u, 1u, 3u, 2u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 2u, 3u, 1u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(1u, 2u, 3u, 0u),
+    vec4(0u, 2u, 1u, 3u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 3u, 1u, 2u), vec4(0u, 3u, 2u, 1u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(1u, 3u, 2u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(1u, 2u, 0u, 3u), vec4(0u, 0u, 0u, 0u),
+    vec4(1u, 3u, 0u, 2u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(2u, 3u, 0u, 1u), vec4(2u, 3u, 1u, 0u),
+    vec4(1u, 0u, 2u, 3u), vec4(1u, 0u, 3u, 2u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(2u, 0u, 3u, 1u),
+    vec4(0u, 0u, 0u, 0u), vec4(2u, 1u, 3u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(2u, 0u, 1u, 3u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(3u, 0u, 1u, 2u), vec4(3u, 0u, 2u, 1u),
+    vec4(0u, 0u, 0u, 0u), vec4(3u, 1u, 2u, 0u),
+    vec4(2u, 1u, 0u, 3u), vec4(0u, 0u, 0u, 0u),
+    vec4(0u, 0u, 0u, 0u), vec4(0u, 0u, 0u, 0u),
+    vec4(3u, 1u, 0u, 2u), vec4(0u, 0u, 0u, 0u),
+    vec4(3u, 2u, 0u, 1u), vec4(3u, 2u, 1u, 0u),
 );
 
 
@@ -108,7 +115,7 @@ const INVERT: u32 = 1u;
 
 struct ProceduralTexture {
     texture_type: u32,
-    scale: vec4<f32>,
+    scale: vec4f,
     black_point: f32,
     white_point: f32,
     lift: f32,
@@ -117,10 +124,10 @@ struct ProceduralTexture {
     lacunarity: f32,
     amplitude_gain: f32,
     gamma: f32,
-    low_frequency_scale: vec4<f32>,
-    high_frequency_scale: vec4<f32>,
-    low_frequency_translation: vec4<f32>,
-    high_frequency_translation: vec4<f32>,
+    low_frequency_scale: vec4f,
+    high_frequency_scale: vec4f,
+    low_frequency_translation: vec4f,
+    high_frequency_translation: vec4f,
     flags: u32,
 }
 
@@ -150,9 +157,9 @@ struct ProceduralTexture {
  * @returns: Noise value in the range [-1, 1], value of 0 on all integer
  *     coordinates.
  */
-fn perlin_simplex_noise(seed: vec4<f32>) -> f32 {
-    var i: vec4<f32> = floor(seed + element_sum_vec4f(seed) * 0.309016994);
-    var x0: vec4<f32> = seed - i + element_sum_vec4f(i) * G4;
+fn perlin_simplex_noise(seed: vec4f) -> f32 {
+    var i: vec4f = floor(seed + element_sum_vec4f(seed) * 0.309016994);
+    var x0: vec4f = seed - i + element_sum_vec4f(i) * G4;
 
     var c: u32 = (
         (u32(x0.x > x0.y) << 5u)
@@ -162,16 +169,16 @@ fn perlin_simplex_noise(seed: vec4<f32>) -> f32 {
         | (u32(x0.y > x0.w) << 1u)
         | u32(x0.z > x0.w)
     );
-    var i1 = vec4<u32>(SIMPLEX[c] >= vec4(3u));
-    var i2 = vec4<u32>(SIMPLEX[c] >= vec4(2u));
-    var i3 = vec4<u32>(SIMPLEX[c] >= vec4(1u));
+    var i1 = vec4u(SIMPLEX[c] >= vec4(3u));
+    var i2 = vec4u(SIMPLEX[c] >= vec4(2u));
+    var i3 = vec4u(SIMPLEX[c] >= vec4(1u));
 
-    var x1: vec4<f32> = x0 - vec4<f32>(i1) + G4;
-    var x2: vec4<f32> = x0 - vec4<f32>(i2) + 2. * G4;
-    var x3: vec4<f32> = x0 - vec4<f32>(i3) + 3. * G4;
-    var x4: vec4<f32> = x0 - 1. + 4. * G4;
+    var x1: vec4f = x0 - vec4f(i1) + G4;
+    var x2: vec4f = x0 - vec4f(i2) + 2. * G4;
+    var x3: vec4f = x0 - vec4f(i3) + 3. * G4;
+    var x4: vec4f = x0 - 1. + 4. * G4;
 
-    var ii = vec4<u32>(vec4<i32>(i) & vec4<i32>(255));
+    var ii = vec4u(vec4i(i) & vec4i(255));
 
     var gi0: u32 = PERM[ii.x + PERM[ii.y + PERM[ii.z + PERM[ii.w]]]] % 32u;
     var gi1: u32 = PERM[
@@ -219,15 +226,15 @@ fn perlin_simplex_noise(seed: vec4<f32>) -> f32 {
  * @returns: The noise value in the range [-1, 1].
  */
 fn fractal_brownian_motion_noise(
-    seed: vec4<f32>,
+    seed: vec4f,
     texture: ptr<function, ProceduralTexture>,
 ) -> f32 {
     var output: f32 = 0.;
     var frequency: f32 = (*texture).lacunarity;
     var amplitude: f32 = 1.;
     var max_amplitude: f32 = 0.;
-    var translation: vec4<f32>;
-    var scale: vec4<f32>;
+    var translation: vec4f;
+    var scale: vec4f;
 
     for (var octave=0u; octave < (*texture).octaves; octave++) {
         var octave_fraction = f32(octave) / f32((*texture).octaves);
@@ -261,15 +268,15 @@ fn fractal_brownian_motion_noise(
  * @returns: The noise value in the range [0, 1].
  */
 fn turbulence_noise(
-    seed: vec4<f32>,
+    seed: vec4f,
     texture: ptr<function, ProceduralTexture>,
 ) -> f32 {
     var output: f32 = 0.;
     var frequency: f32 = (*texture).lacunarity;
     var amplitude: f32 = 1.;
     var max_amplitude: f32 = 0.;
-    var translation: vec4<f32>;
-    var scale: vec4<f32>;
+    var translation: vec4f;
+    var scale: vec4f;
 
     for (var octave=0u; octave < (*texture).octaves; octave++) {
         var octave_fraction = f32(octave) / f32((*texture).octaves);
@@ -297,13 +304,13 @@ fn turbulence_noise(
 }
 
 
-fn checkerboard(seed: vec4<f32>) -> f32 {
-    var normalized_seed: vec3<f32> = normalize(seed.xyz);
+fn checkerboard(seed: vec4f) -> f32 {
+    var normalized_seed: vec3f = normalize(seed.xyz);
     var spherical_seed = vec2(
         atan2(normalized_seed.x, normalized_seed.z),
         acos(normalized_seed.y),
     ) * seed.w;
-    var square_signal: vec2<f32> = sign(fract(spherical_seed * 0.5) - 0.5);
+    var square_signal: vec2f = sign(fract(spherical_seed * 0.5) - 0.5);
     return 0.5 - 0.25 * square_signal.x * square_signal.y;
 }
 
@@ -330,7 +337,7 @@ fn grade_f32(colour: f32, texture: ptr<function, ProceduralTexture>) -> f32 {
 }
 
 
-fn grade_vec3(colour: vec3<f32>, texture: ptr<function, ProceduralTexture>) -> vec3<f32> {
+fn grade_vec3(colour: vec3f, texture: ptr<function, ProceduralTexture>) -> vec3f {
     return select(
         pow(
             (*texture).gain * (
@@ -346,35 +353,35 @@ fn grade_vec3(colour: vec3<f32>, texture: ptr<function, ProceduralTexture>) -> v
             ),
             vec3(1. / (*texture).gamma),
         ),
-        vec3<f32>(),
+        vec3f(),
         (*texture).white_point == (*texture).black_point,
     );
 }
 
 
 fn procedurally_texture_f32(
-    seed: vec4<f32>,
+    seed: vec4f,
     colour: f32,
     texture: ptr<function, ProceduralTexture>,
 ) -> f32 {
     switch (*texture).texture_type {
-        case 0u, default {
+        case NONE, default {
             // None
             return colour;
         }
-        case 1u {
+        case GRADE {
             // Grade
             return grade_f32(colour, texture);
         }
-        case 2u {
+        case CHECKER_BOARD {
             // Checkerboard
             return colour * grade_f32(checkerboard(seed / (*texture).scale), texture);
         }
-        case 3u {
+        case FBM_NOISE {
             // FBM Noise
             return colour * grade_f32(fractal_brownian_motion_noise(seed, texture), texture);
         }
-        case 4u {
+        case TURBULENCE_NOISE {
             // Turbulence Noise
             return colour * grade_f32(turbulence_noise(seed, texture), texture);
         }
@@ -383,28 +390,28 @@ fn procedurally_texture_f32(
 
 
 fn procedurally_texture_vec3f(
-    seed: vec4<f32>,
-    colour: vec3<f32>,
+    seed: vec4f,
+    colour: vec3f,
     texture: ptr<function, ProceduralTexture>,
-) -> vec3<f32> {
+) -> vec3f {
     switch (*texture).texture_type {
-        case 0u, default {
+        case NONE, default {
             // None
             return colour;
         }
-        case 1u {
+        case GRADE {
             // Grade
             return grade_vec3(colour, texture);
         }
-        case 2u {
+        case CHECKER_BOARD {
             // Checkerboard
             return colour * vec3(grade_f32(checkerboard(seed / (*texture).scale), texture));
         }
-        case 3u {
+        case FBM_NOISE {
             // FBM Noise
             return colour * vec3(grade_f32(fractal_brownian_motion_noise(seed, texture), texture));
         }
-        case 4u {
+        case TURBULENCE_NOISE {
             // Turbulence Noise
             return colour * vec3(grade_f32(turbulence_noise(seed, texture), texture));
         }

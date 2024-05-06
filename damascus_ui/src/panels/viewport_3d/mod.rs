@@ -100,7 +100,7 @@ impl Viewport3d {
         wgpu_render_state
             .renderer
             .write()
-            .paint_callback_resources
+            .callback_resources
             .insert(RenderResources {
                 render_pipeline,
                 uniform_bind_group,
@@ -471,7 +471,7 @@ impl Viewport3d {
                 -0.0015 * response.drag_delta().x,
                 0.0015 * response.drag_delta().y,
                 if response.hovered() {
-                    -0.015 * ui.input(|i| i.scroll_delta.y)
+                    -0.015 * ui.input(|i| i.raw_scroll_delta.y)
                 } else {
                     0.
                 },
@@ -489,52 +489,19 @@ impl Viewport3d {
             panic!("Cannot hash node graph!")
         }
 
-        // Clone locals so we can move them into the paint callback
-        let render_parameters = self.renderer.render_parameters();
-        let scene_parameters = self.renderer.scene.scene_parameters();
-        let render_camera = self.renderer.scene.render_camera.as_std_430();
-        let emissive_primitive_indices = self.renderer.scene.emissive_primitive_indices();
-        let primitives = self.renderer.scene.create_gpu_primitives();
-        let lights = self.renderer.scene.create_gpu_lights();
-        let atmosphere = self.renderer.scene.atmosphere();
-        let render_stats = self.render_stats.as_std_430();
-
-        // The callback function for WGPU is in two stages: prepare, and paint.
-        //
-        // The prepare callback is called every frame before paint and is given access to the wgpu
-        // Device and Queue, which can be used, for instance, to update buffers and uniforms before
-        // rendering.
-        //
-        // The paint callback is called after prepare and is given access to the render pass, which
-        // can be used to issue draw commands.
-        let cb = egui_wgpu::CallbackFn::new()
-            .prepare(move |device, queue, _encoder, paint_callback_resources| {
-                let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.prepare(
-                    device,
-                    queue,
-                    render_parameters,
-                    scene_parameters,
-                    render_camera,
-                    primitives,
-                    lights,
-                    atmosphere,
-                    emissive_primitive_indices,
-                    render_stats,
-                );
-                Vec::new()
-            })
-            .paint(move |_info, rpass, paint_callback_resources| {
-                let resources: &RenderResources = paint_callback_resources.get().unwrap();
-                resources.paint(rpass);
-            });
-
-        let callback = egui::PaintCallback {
+        ui.painter().add(egui_wgpu::Callback::new_paint_callback(
             rect,
-            callback: Arc::new(cb),
-        };
-
-        ui.painter().add(callback);
+            Viewport3dCallback {
+                render_parameters: self.renderer.render_parameters(),
+                scene_parameters: self.renderer.scene.scene_parameters(),
+                render_camera: self.renderer.scene.render_camera.as_std_430(),
+                primitives: self.renderer.scene.create_gpu_primitives(),
+                lights: self.renderer.scene.create_gpu_lights(),
+                atmosphere: self.renderer.scene.atmosphere(),
+                emissive_primitive_indices: self.renderer.scene.emissive_primitive_indices(),
+                render_stats: self.render_stats.as_std_430(),
+            },
+        ));
 
         if self.enable_frame_rate_overlay {
             if self.render_stats.frame_counter % self.frames_to_update_fps == 0 {
@@ -558,6 +525,53 @@ impl Viewport3d {
         }
 
         self.render_stats.paths_rendered_per_pixel += 1;
+    }
+}
+
+struct Viewport3dCallback {
+    render_parameters: Std430GPURayMarcher,
+    scene_parameters: Std430GPUSceneParameters,
+    render_camera: Std430GPUCamera,
+    primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
+    lights: [Std430GPULight; Scene::MAX_LIGHTS],
+    atmosphere: Std430GPUMaterial,
+    emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
+    render_stats: Std430GPURenderStats,
+}
+
+impl egui_wgpu::CallbackTrait for Viewport3dCallback {
+    fn prepare(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
+        _egui_encoder: &mut wgpu::CommandEncoder,
+        resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        let resources: &RenderResources = resources.get().unwrap();
+        resources.prepare(
+            device,
+            queue,
+            self.render_parameters,
+            self.scene_parameters,
+            self.render_camera,
+            self.primitives,
+            self.lights,
+            self.atmosphere,
+            self.emissive_primitive_indices,
+            self.render_stats,
+        );
+        Vec::new()
+    }
+
+    fn paint<'a>(
+        &self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        resources: &'a egui_wgpu::CallbackResources,
+    ) {
+        let resources: &RenderResources = resources.get().unwrap();
+        resources.paint(render_pass);
     }
 }
 

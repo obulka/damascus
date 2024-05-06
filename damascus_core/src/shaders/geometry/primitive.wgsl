@@ -8,8 +8,8 @@ const MAX_PRIMITIVES: u32 = 512u;
 
 
 struct Transform {
-    translation: vec3<f32>,
-    inverse_rotation: mat3x3<f32>,
+    translation: vec3f,
+    inverse_rotation: mat3x3f,
     uniform_scale: f32,
 }
 
@@ -20,15 +20,15 @@ struct Primitive {
     transform: Transform,
     material: Material,
     modifiers: u32,
-    negative_repetitions: vec3<f32>,
-    positive_repetitions: vec3<f32>,
-    spacing: vec3<f32>,
+    negative_repetitions: vec3f,
+    positive_repetitions: vec3f,
+    spacing: vec3f,
     blend_strength: f32,
     wall_thickness: f32,
     edge_radius: f32,
-    elongation: vec3<f32>,
+    elongation: vec3f,
     num_descendants: u32,
-    dimensional_data: vec4<f32>,
+    dimensional_data: vec4f,
 }
 
 

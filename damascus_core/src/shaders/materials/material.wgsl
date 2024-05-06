@@ -9,25 +9,25 @@ const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
 
 
 struct Material {
-    diffuse_colour: vec3<f32>,
+    diffuse_colour: vec3f,
     diffuse_colour_texture: ProceduralTexture,
     specular_probability: f32,
     specular_probability_texture: ProceduralTexture,
     specular_roughness: f32,
     specular_roughness_texture: ProceduralTexture,
-    specular_colour: vec3<f32>,
+    specular_colour: vec3f,
     specular_colour_texture: ProceduralTexture,
     transmissive_probability: f32,
     transmissive_probability_texture: ProceduralTexture,
     transmissive_roughness: f32,
     transmissive_roughness_texture: ProceduralTexture,
-    extinction_colour: vec3<f32>,
+    extinction_colour: vec3f,
     extinction_colour_texture: ProceduralTexture,
-    emissive_colour: vec3<f32>,
+    emissive_colour: vec3f,
     emissive_colour_texture: ProceduralTexture,
     refractive_index: f32,
     refractive_index_texture: ProceduralTexture,
-    scattering_colour: vec3<f32>,
+    scattering_colour: vec3f,
     scattering_colour_texture: ProceduralTexture,
 }
 
@@ -35,8 +35,8 @@ struct Material {
 struct Dielectric {
     id: u32,
     refractive_index: f32,
-    extinction_colour: vec3<f32>,
-    scattering_colour: vec3<f32>,
+    extinction_colour: vec3f,
+    scattering_colour: vec3f,
 }
 
 
@@ -79,7 +79,7 @@ fn push_dielectric(
     (*nested_dielectrics).current_depth = min(
         NESTED_DIELECTRIC_DEPTH,
         (*nested_dielectrics).current_depth + 1u,
-    )
+    );
 }
 
 
@@ -93,7 +93,7 @@ fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Diele
         0u,
         (*nested_dielectrics).current_depth - 1u,
         (*nested_dielectrics).current_depth > 0u,
-    )
+    );
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
 }
 
@@ -116,8 +116,8 @@ fn peek_previous_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>
  * @returns: The reflection coefficient.
  */
 fn schlick_reflection_coefficient(
-    incident_ray_direction: vec3<f32>,
-    surface_normal_direction: vec3<f32>,
+    incident_ray_direction: vec3f,
+    surface_normal_direction: vec3f,
     incident_refractive_index: f32,
     refracted_refractive_index: f32,
 ) -> f32 {
@@ -168,16 +168,16 @@ fn schlick_reflection_coefficient(
  * @returns: The material PDF.
  */
 fn sample_material(
-    seed: vec3<f32>,
-    surface_normal: vec3<f32>,
+    seed: vec3f,
+    surface_normal: vec3f,
     offset: f32,
     primitive: ptr<function, Primitive>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
     ray: ptr<function, Ray>,
-    material_brdf: ptr<function, vec3<f32>>,
+    material_brdf: ptr<function, vec3f>,
     light_sampling_pdf: ptr<function, f32>,
 ) -> f32 {
-    var diffuse_direction: vec3<f32> = cosine_direction_in_hemisphere(
+    var diffuse_direction: vec3f = cosine_direction_in_hemisphere(
         seed.xy,
         surface_normal,
     );
@@ -245,7 +245,7 @@ fn sample_material(
         if sin_transmitted_squared < 1. {
             // Refract
             var cos_transmitted = sqrt(1. - sin_transmitted_squared);
-            var ideal_refracted_direction: vec3<f32> = normalize(
+            var ideal_refracted_direction: vec3f = normalize(
                 refractive_ratio * (*ray).direction
                 + (refractive_ratio * cos_incident - cos_transmitted) * surface_normal
             );
@@ -282,7 +282,7 @@ fn sample_material(
         || (specular_probability > 0. && rng <= specular_probability + transmissive_probability)
     ) {
         // Specular bounce
-        var ideal_specular_direction: vec3<f32> = reflect(
+        var ideal_specular_direction: vec3f = reflect(
             (*ray).direction,
             surface_normal,
         );

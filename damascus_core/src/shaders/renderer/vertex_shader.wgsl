@@ -5,16 +5,16 @@
 
 
 struct VertexOut {
-    @location(0) uv_coordinate: vec4<f32>,
-    @builtin(position) frag_coordinate: vec4<f32>,
+    @location(0) uv_coordinate: vec4f,
+    @builtin(position) frag_coordinate: vec4f,
 }
 
 
-var<private> v_positions: array<vec2<f32>, 4> = array<vec2<f32>, 4>(
-    vec2<f32>(1., 1.),
-    vec2<f32>(-1., 1.),
-    vec2<f32>(1., -1.),
-    vec2<f32>(-1., -1.),
+var<private> v_positions: array<vec2f, 4> = array<vec2f, 4>(
+    vec2f(1., 1.),
+    vec2f(-1., 1.),
+    vec2f(1., -1.),
+    vec2f(-1., -1.),
 );
 
 

@@ -289,7 +289,7 @@ impl WidgetValueTrait for DamascusValueType {
             DamascusValueType::Mat3 { value } => value.create_ui(ui, param_name),
             DamascusValueType::Mat4 { value } => value.create_ui(ui, param_name),
             _ => {
-                ui.label(param_name);
+                ui.add(egui::Label::new(param_name).selectable(false));
                 false
             }
         };
@@ -322,7 +322,7 @@ impl WidgetValueTrait for DamascusValueType {
         match self {
             DamascusValueType::Mat4 { value } => value.create_parameter_label(ui, param_name),
             _ => {
-                ui.label(param_name);
+                ui.add(egui::Label::new(param_name).selectable(false));
             }
         }
 

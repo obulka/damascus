@@ -5,7 +5,7 @@
 
 
 fn find_nearest_descendant(
-    position: vec3<f32>,
+    position: vec3f,
     hit_tolerance: f32,
     earliest_ancestor_index: u32,
     family: ptr<function, Primitive>,
@@ -157,7 +157,7 @@ fn find_nearest_descendant(
 
 
 fn find_nearest_primitive(
-    position: vec3<f32>,
+    position: vec3f,
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
 ) {
@@ -205,7 +205,7 @@ fn find_nearest_primitive(
 
 
 fn distance_to_descendants(
-    position: vec3<f32>,
+    position: vec3f,
     hit_tolerance: f32,
     earliest_ancestor_index: u32,
     family: ptr<function, Primitive>,
@@ -347,7 +347,7 @@ fn distance_to_descendants(
 
 
 fn signed_distance_to_scene(
-    position: vec3<f32>,
+    position: vec3f,
     pixel_footprint: f32,
 ) -> f32 {
     var distance_to_scene: f32 = _render_parameters.max_distance;

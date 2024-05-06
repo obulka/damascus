@@ -27,10 +27,11 @@ pub trait UIInput<T> {
 
     fn create_parameter_label(&self, ui: &mut egui::Ui, label: &str) {
         if let Some(tooltip) = &self.ui_data().tooltip() {
-            ui.label(label).on_hover_text(tooltip);
+            ui.add(egui::Label::new(label).selectable(false))
+                .on_hover_text(tooltip);
             return;
         }
-        ui.label(label);
+        ui.add(egui::Label::new(label).selectable(false));
     }
 
     #[inline]

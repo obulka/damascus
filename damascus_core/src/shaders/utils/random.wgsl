@@ -23,7 +23,7 @@ fn random_f32(seed: f32) -> f32 {
  *
  * @returns: A random value on the interval [0, 1].
  */
-fn random_vec2f(seed: vec2<f32>) -> vec2<f32> {
+fn random_vec2f(seed: vec2f) -> vec2f {
     return vec2(
         fract(sin(13.157 * seed.x + 71.743) * 7513.471),
         fract(sin(97.519 * seed.y + 113.591) * 47453.5453),
@@ -38,7 +38,7 @@ fn random_vec2f(seed: vec2<f32>) -> vec2<f32> {
  *
  * @returns: A random value on the interval [0, 1].
  */
-fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
+fn random_vec3f(seed: vec3f) -> vec3f {
     return vec3(
         fract(sin(75.19 * seed.x + 71.743) * 7513.471),
         fract(sin(15.73 * seed.y + 113.591) * 47453.553),
@@ -47,12 +47,12 @@ fn random_vec3f(seed: vec3<f32>) -> vec3<f32> {
 }
 
 
-fn vec2f_to_random_f32(seed: vec2<f32>) -> f32 {
+fn vec2f_to_random_f32(seed: vec2f) -> f32 {
     return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453123);
 }
 
 
-fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
+fn vec3f_to_random_f32(seed: vec3f) -> f32 {
     return fract(sin(dot(seed, vec3(12.9898, 78.233, 34.532))) * 43758.5453123);
 }
 
@@ -66,18 +66,18 @@ fn vec3f_to_random_f32(seed: vec3<f32>) -> f32 {
  *
  * @returns: A random unit vector.
  */
-fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32> {
-    var uniform_random_numbers: vec2<f32> = random_vec2f(seed);
+fn cosine_direction_in_hemisphere(seed: vec2f, axis: vec3f) -> vec3f {
+    var uniform_random_numbers: vec2f = random_vec2f(seed);
     var r: f32 = sqrt(uniform_random_numbers.x);
     var angle: f32 = TWO_PI * uniform_random_numbers.y;
 
-    var secondary_axis: vec3<f32> = select(
+    var secondary_axis: vec3f = select(
         vec3(1., 0., 0.),
         vec3(0., 1., 0.),
         abs(axis.x) > 1e-6,
     );
-    var perpendicular_axis: vec3<f32> = normalize(cross(secondary_axis, axis));
-    var basis_axis: vec3<f32> = cross(axis, perpendicular_axis);
+    var perpendicular_axis: vec3f = normalize(cross(secondary_axis, axis));
+    var basis_axis: vec3f = cross(axis, perpendicular_axis);
 
     return normalize(
         perpendicular_axis * cos(angle) * r
@@ -94,6 +94,6 @@ fn cosine_direction_in_hemisphere(seed: vec2<f32>, axis: vec3<f32>) -> vec3<f32>
  *
  * @returns: A random point, (radius, angle) in the unit circle.
  */
-fn uniform_point_in_unit_circle(seed: vec2<f32>) -> vec2<f32> {
-    return vec2<f32>(sqrt(random_f32(seed.x)), TWO_PI * random_f32(seed.y));
+fn uniform_point_in_unit_circle(seed: vec2f) -> vec2f {
+    return vec2f(sqrt(random_f32(seed.x)), TWO_PI * random_f32(seed.y));
 }

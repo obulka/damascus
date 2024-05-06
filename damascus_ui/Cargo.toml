@@ -9,8 +9,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 damascus_core = { path = "../damascus_core" }
 anyhow = "1.0"
-eframe = { version = "0.21", features = ["persistence", "wgpu"]}
-egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", features = ["persistence"]}
+eframe = { version = "0.27", features = ["persistence", "wgpu"]}
+egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", branch = "feature/update-egui-version", features = ["persistence"] }
 glam = { version = "0.24", features = ["serde"] }
 indoc = "2"
 serde = "1.0"

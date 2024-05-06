@@ -10,9 +10,9 @@ const STATS_AOV: u32 = 6u;
 
 fn early_exit_aovs(
     aov_type: u32,
-    world_position: vec3<f32>,
-    local_position: vec3<f32>,
-    surface_normal: vec3<f32>,
+    world_position: vec3f,
+    local_position: vec3f,
+    surface_normal: vec3f,
     primitive_id: u32,
     ray: ptr<function, Ray>,
 ) {
@@ -69,7 +69,7 @@ fn ray_miss_aovs(
     ray: ptr<function, Ray>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
 ) {
-    var world_position: vec3<f32> = (*ray).origin + (*ray).direction * distance_travelled;
+    var world_position: vec3f = (*ray).origin + (*ray).direction * distance_travelled;
 
     switch aov_type {
         case 0u {

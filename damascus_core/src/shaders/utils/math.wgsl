@@ -9,12 +9,12 @@ const TWO_PI: f32 = 6.28318530718;
 
 
 // wish we could overload functions
-fn max_component_vec2f(vector_: vec2<f32>) -> f32 {
+fn max_component_vec2f(vector_: vec2f) -> f32 {
     return max(vector_.x, vector_.y);
 }
 
 
-fn max_component_vec3f(vector_: vec3<f32>) -> f32 {
+fn max_component_vec3f(vector_: vec3f) -> f32 {
     return max(vector_.x, max(vector_.y, vector_.z));
 }
 
@@ -38,7 +38,7 @@ fn positive_part_f32(value: f32) -> f32 {
  *
  * @returns: The positive part of the vector.
  */
-fn positive_part_vec2f(value: vec2<f32>) -> vec2<f32> {
+fn positive_part_vec2f(value: vec2f) -> vec2f {
     return max(value, vec2(0.));
 }
 
@@ -50,7 +50,7 @@ fn positive_part_vec2f(value: vec2<f32>) -> vec2<f32> {
  *
  * @returns: The positive part of the vector.
  */
-fn positive_part_vec3f(value: vec3<f32>) -> vec3<f32> {
+fn positive_part_vec3f(value: vec3f) -> vec3f {
     return max(value, vec3(0.));
 }
 
@@ -75,7 +75,7 @@ fn negative_part_f32(value: f32) -> f32 {
  *
  * @returns: The sum of the components.
  */
-fn element_sum_vec3f(vector_: vec3<f32>) -> f32 {
+fn element_sum_vec3f(vector_: vec3f) -> f32 {
     return vector_.x + vector_.y + vector_.z;
 }
 
@@ -87,7 +87,7 @@ fn element_sum_vec3f(vector_: vec3<f32>) -> f32 {
  *
  * @returns: The sum of the components.
  */
-fn element_sum_vec4f(vector_: vec4<f32>) -> f32 {
+fn element_sum_vec4f(vector_: vec4f) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
 
@@ -98,7 +98,7 @@ fn element_sum_vec4f(vector_: vec4<f32>) -> f32 {
  *
  * @returns: Cylindrical coordinates symmetric about the y-axis.
  */
-fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
+fn cartesian_to_cylindrical(coordinates: vec3f) -> vec2f {
     return vec2(length(coordinates.xz), coordinates.y);
 }
 
@@ -110,7 +110,7 @@ fn cartesian_to_cylindrical(coordinates: vec3<f32>) -> vec2<f32> {
  *
  * @returns: The dot product.
  */
-fn dot2_vec2f(vector_: vec2<f32>) -> f32 {
+fn dot2_vec2f(vector_: vec2f) -> f32 {
     return dot(vector_, vector_);
 }
 
@@ -122,7 +122,7 @@ fn dot2_vec2f(vector_: vec2<f32>) -> f32 {
  *
  * @returns: The dot product.
  */
-fn dot2_vec3f(vector_: vec3<f32>) -> f32 {
+fn dot2_vec3f(vector_: vec3f) -> f32 {
     return dot(vector_, vector_);
 }
 
@@ -137,7 +137,7 @@ fn dot2_vec3f(vector_: vec3<f32>) -> f32 {
  *
  * @returns: The shorter of the two lengths
  */
-fn min_length_vec2f(vector_0: vec2<f32>, vector_1: vec2<f32>) -> f32 {
+fn min_length_vec2f(vector_0: vec2f, vector_1: vec2f) -> f32 {
     return sqrt(min(dot2_vec2f(vector_0), dot2_vec2f(vector_1)));
 }
 
@@ -167,7 +167,7 @@ fn saturate_f32(value: f32) -> f32 {
  *
  * @returns: The clamped value
  */
-fn saturate_vec3f(value: vec3<f32>) -> vec3<f32> {
+fn saturate_vec3f(value: vec3f) -> vec3f {
     return clamp(value, vec3(0.), vec3(1.));
 }
 
@@ -180,7 +180,7 @@ fn saturate_vec3f(value: vec3<f32>) -> vec3<f32> {
  *
  * @returns: The signed length of the vector.
  */
-fn sdf_length_vec2f(vector_: vec2<f32>) -> f32 {
+fn sdf_length_vec2f(vector_: vec2f) -> f32 {
     return (
         length(positive_part_vec2f(vector_))
         - negative_part_f32(max_component_vec2f(vector_))
@@ -196,7 +196,7 @@ fn sdf_length_vec2f(vector_: vec2<f32>) -> f32 {
  *
  * @returns: The signed length of the vector.
  */
-fn sdf_length_vec3f(vector_: vec3<f32>) -> f32 {
+fn sdf_length_vec3f(vector_: vec3f) -> f32 {
     return (
         length(positive_part_vec3f(vector_))
         - negative_part_f32(max_component_vec3f(vector_))
@@ -243,7 +243,7 @@ fn power_of_u32(base: f32, exponent: u32) -> f32 {
  *
  * @returns: The equivalent cartesion vector.
  */
-fn spherical_unit_vector_to_cartesion(angles: vec2<f32>) -> vec3<f32> {
+fn spherical_unit_vector_to_cartesion(angles: vec2f) -> vec3f {
     var sin_phi: f32 = sin(angles.y);
     return vec3(
         cos(angles.x) * sin_phi,
@@ -260,7 +260,7 @@ fn spherical_unit_vector_to_cartesion(angles: vec2<f32>) -> vec3<f32> {
  *
  * @returns: The equivalent angles in radians.
  */
-fn uv_coordinate_to_angles(uv_coordinate: vec2<f32>) -> vec2<f32> {
+fn uv_coordinate_to_angles(uv_coordinate: vec2f) -> vec2f {
     return vec2(
         (uv_coordinate.x + 1.) * PI,
         (1. - uv_coordinate.y) * PI / 2.,

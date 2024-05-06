@@ -8,9 +8,9 @@ struct Camera {
     enable_depth_of_field: u32, // bool isn't host-shareable?
     aperture: f32,
     focal_distance: f32,
-    world_matrix: mat4x4<f32>,
-    inverse_world_matrix: mat4x4<f32>,
-    inverse_projection_matrix: mat4x4<f32>,
+    world_matrix: mat4x4f,
+    inverse_world_matrix: mat4x4f,
+    inverse_projection_matrix: mat4x4f,
 }
 
 
@@ -26,7 +26,7 @@ var<uniform> _render_camera: Camera;
  *
  * @returns: The uv position.
  */
-fn pixels_to_uv(pixel_coordinates: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
+fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return 2. * pixel_coordinates / resolution - 1.;
 }
 
@@ -39,12 +39,12 @@ fn pixels_to_uv(pixel_coordinates: vec2<f32>, resolution: vec2<f32>) -> vec2<f32
  *
  * @returns: The pixel indices.
  */
-fn uv_to_pixels(pixel_coordinates: vec2<f32>, resolution: vec2<f32>) -> vec2<f32> {
+fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return (pixel_coordinates + 1.) * resolution / 2.;
 }
 
 
-fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
+fn world_to_camera_space(world_position: vec3f) -> vec3f {
     return (
         _render_camera.inverse_world_matrix
         * vec4(world_position, 1.)
@@ -57,7 +57,7 @@ fn world_to_camera_space(world_position: vec3<f32>) -> vec3<f32> {
  *
  * @returns: The position of the render camera.
  */
-fn render_camera_position() -> vec3<f32> {
+fn render_camera_position() -> vec3f {
     return vec3(
         _render_camera.world_matrix[3][0],
         _render_camera.world_matrix[3][1],
@@ -71,8 +71,8 @@ fn render_camera_position() -> vec3<f32> {
  *
  * @returns: The rotation of the render camera.
  */
-fn render_camera_rotation() -> mat3x3<f32> {
-    var rotation_matrix = mat3x3<f32>();
+fn render_camera_rotation() -> mat3x3f {
+    var rotation_matrix = mat3x3f();
     rotation_matrix[0][0] = _render_camera.world_matrix[0][0];
     rotation_matrix[0][1] = _render_camera.world_matrix[0][1];
     rotation_matrix[0][2] = _render_camera.world_matrix[0][2];
@@ -93,7 +93,7 @@ fn render_camera_rotation() -> mat3x3<f32> {
  * @arg seed: The seed to use in randomization.
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
-fn create_render_camera_ray(seed: vec2<f32>, uv_coordinate: vec2<f32>) -> Ray {
+fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
     if (bool(_render_parameters.flags & LATLONG)) {
         return Ray(
             render_camera_position(),
@@ -122,29 +122,29 @@ fn create_render_camera_ray(seed: vec2<f32>, uv_coordinate: vec2<f32>) -> Ray {
     }
 
     // Depth of field
-    var camera_forward: vec3<f32> = (
+    var camera_forward: vec3f = (
         _render_camera.world_matrix * vec4(0., 0., -1., 0.)
     ).xyz;
-    var camera_right: vec3<f32> = (
+    var camera_right: vec3f = (
         _render_camera.world_matrix * vec4(1., 0., 0., 0.)
     ).xyz;
-    var camera_up: vec3<f32> = (
+    var camera_up: vec3f = (
         _render_camera.world_matrix * vec4(0., 1., 0., 0.)
     ).xyz;
 
-    var focal_plane_point: vec3<f32> = (
+    var focal_plane_point: vec3f = (
         ray.origin + camera_forward * _render_camera.focal_distance
     );
-    var focal_plane_normal: vec3<f32> = -camera_forward;
+    var focal_plane_normal: vec3f = -camera_forward;
 
     var focal_point_distance: f32 = (
         (dot(focal_plane_normal, focal_plane_point) - dot(ray.origin, focal_plane_normal))
         / dot(ray.direction, focal_plane_normal)
     );
-    var focal_point: vec3<f32> = ray.origin + focal_point_distance * ray.direction;
+    var focal_point: vec3f = ray.origin + focal_point_distance * ray.direction;
 
-    var point_in_unit_circle: vec2<f32> = uniform_point_in_unit_circle(seed);
-    var offset: vec2<f32> = point_in_unit_circle.x * _render_camera.aperture * vec2(
+    var point_in_unit_circle: vec2f = uniform_point_in_unit_circle(seed);
+    var offset: vec2f = point_in_unit_circle.x * _render_camera.aperture * vec2(
         cos(point_in_unit_circle.y),
         sin(point_in_unit_circle.y),
     );

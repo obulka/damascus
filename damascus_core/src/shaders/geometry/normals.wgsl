@@ -14,7 +14,7 @@
  *
  * @returns: The normalized surface normal.
  */
-fn estimate_surface_normal(position: vec3<f32>, pixel_footprint: f32) -> vec3<f32> {
+fn estimate_surface_normal(position: vec3f, pixel_footprint: f32) -> vec3f {
     var normal_offset = vec2(0.5773, -0.5773);
     return normalize(
         normal_offset.xyy * signed_distance_to_scene(

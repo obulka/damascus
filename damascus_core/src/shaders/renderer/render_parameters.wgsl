@@ -18,7 +18,7 @@ struct RenderParameters {
     hit_tolerance: f32,
     shadow_bias: f32,
     max_brightness: f32,
-    seeds: vec3<f32>,
+    seeds: vec3f,
     equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,

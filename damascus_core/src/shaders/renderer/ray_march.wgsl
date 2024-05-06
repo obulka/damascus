@@ -44,11 +44,11 @@
  * @returns: The material pdf.
  */
 fn material_interaction(
-    seed: vec3<f32>,
+    seed: vec3f,
     offset: f32,
     distance_since_last_bounce: f32,
-    intersection_position: vec3<f32>,
-    surface_normal: vec3<f32>,
+    intersection_position: vec3f,
+    surface_normal: vec3f,
     previous_material_pdf: f32,
     ray: ptr<function, Ray>,
     primitive: ptr<function, Primitive>,
@@ -62,7 +62,7 @@ fn material_interaction(
         nested_dielectrics,
     );
 
-    var material_brdf: vec3<f32>;
+    var material_brdf: vec3f;
     var light_sampling_material_pdf: f32;
     var material_pdf: f32 = sample_material(
         seed,
@@ -114,7 +114,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
+fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
 
@@ -123,7 +123,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
         && _render_parameters.output_aov < STATS_AOV
     );
 
-    var path_seed: vec3<f32> = seed;
+    var path_seed: vec3f = seed;
     var dynamic_level_of_detail = bool(_render_parameters.flags & DYNAMIC_LEVEL_OF_DETAIL);
 
     var distance_travelled: f32 = 0.;
@@ -139,7 +139,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
     var previous_material_pdf: f32 = 1.;
 
     // Data for the next ray
-    var position_on_ray: vec3<f32> = (*ray).origin;
+    var position_on_ray: vec3f = (*ray).origin;
 
     // March the ray
     while (
@@ -170,7 +170,7 @@ fn march_path(seed: vec3<f32>, ray: ptr<function, Ray>) {
             var intersection_position = position_on_ray + step_distance * (*ray).direction;
 
             // The normal to the surface at that position
-            var surface_normal: vec3<f32> = sign(last_step_distance) * estimate_surface_normal(
+            var surface_normal: vec3f = sign(last_step_distance) * estimate_surface_normal(
                 intersection_position,
                 pixel_footprint,
             );
@@ -264,12 +264,12 @@ var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 
 @fragment
-fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
-    var progressive_rendering_texture_dimensions = vec2<f32>(
+fn fs_main(in: VertexOut) -> @location(0) vec4f {
+    var progressive_rendering_texture_dimensions = vec2f(
         textureDimensions(_progressive_rendering_texture),
     );
     // Add a random offset to the uv_coordinates for anti-aliasing 
-    var current_pixel_indices: vec2<f32> = uv_to_pixels(
+    var current_pixel_indices: vec2f = uv_to_pixels(
         in.uv_coordinate.xy,
         progressive_rendering_texture_dimensions,
     );
@@ -281,7 +281,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
         + _render_stats.paths_rendered_per_pixel
     ) + vec3(7131.93, 1173.97, 9712.43) * vec2f_to_random_f32(current_pixel_indices);
 
-    var uv_coordinates: vec2<f32> = pixels_to_uv(
+    var uv_coordinates: vec2f = pixels_to_uv(
         current_pixel_indices + random_vec2f(seed.xy),
         progressive_rendering_texture_dimensions,
     );
@@ -293,7 +293,7 @@ fn fs_main(in: VertexOut) -> @location(0) vec4<f32> {
     // Read, update, and store the current value for our pixel
     // so that the render can be done progressively
     var texture_coordinates = vec2<u32>(current_pixel_indices);
-    var pixel_colour: vec4<f32> = (
+    var pixel_colour: vec4f = (
         _render_stats.paths_rendered_per_pixel
         * textureLoad(_progressive_rendering_texture, texture_coordinates)
         + vec4(ray.colour, 1.)

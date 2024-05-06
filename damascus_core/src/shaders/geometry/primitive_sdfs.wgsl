@@ -17,6 +17,33 @@
 // const SCATTERING_TRAP: u32 = 131072u;
 
 
+const CAPPED_CONE: u32 = 0u;
+const CAPPED_TORUS: u32 = 1u;
+const CAPSULE: u32 = 2u;
+const CONE: u32 = 3u;
+const CUT_SPHERE: u32 = 4u;
+const CYLINDER: u32 = 5u;
+const DEATH_STAR: u32 = 6u;
+const ELLIPSOID: u32 = 7u;
+const HEXAGONAL_PRISM: u32 = 8u;
+const HOLLOW_SPHERE: u32 = 9u;
+const INFINITE_CONE: u32 = 10u;
+const INFINITE_CYLINDER: u32 = 11u;
+const LINK: u32 = 12u;
+const MANDELBOX: u32 = 13u;
+const MANDELBULB: u32 = 14u;
+const OCTAHEDRON: u32 = 15u;
+const PLANE: u32 = 16u;
+const RECTANGULAR_PRISM: u32 = 17u;
+const RECTANGULAR_PRISM_FRAME: u32 = 18u;
+const RHOMBUS: u32 = 19u;
+const ROUNDED_CONE: u32 = 20u;
+const SOLID_ANGLE: u32 = 21u;
+const SPHERE: u32 = 22u;
+const TORUS: u32 = 23u;
+const TRIANGULAR_PRISM: u32 = 24u;
+
+
 /**
  * Compute the min distance from a point to a circle.
  *
@@ -25,7 +52,7 @@
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_circle(position: vec2<f32>, radius: f32) -> f32 {
+fn distance_to_circle(position: vec2f, radius: f32) -> f32 {
     return length(position) - radius;
 }
 
@@ -38,7 +65,7 @@ fn distance_to_circle(position: vec2<f32>, radius: f32) -> f32 {
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_sphere(position: vec3<f32>, radius: f32) -> f32 {
+fn distance_to_sphere(position: vec3f, radius: f32) -> f32 {
     return length(position) - radius;
 }
 
@@ -51,10 +78,10 @@ fn distance_to_sphere(position: vec3<f32>, radius: f32) -> f32 {
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
+fn distance_to_ellipsoid(position: vec3f, radii: vec3f) -> f32 {
     // Components of this vector that are < 1 are inside the ellipse
     // when projected onto the plane the respective axis is normal to
-    var transformed_position: vec3<f32> = position / radii;
+    var transformed_position: vec3f = position / radii;
 
     // If this length is < 1 we are inside the ellipsoid
     var scaled_length: f32 = length(transformed_position);
@@ -75,11 +102,11 @@ fn distance_to_ellipsoid(position: vec3<f32>, radii: vec3<f32>) -> f32 {
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_cut_sphere(
-    position: vec3<f32>,
+    position: vec3f,
     radius: f32,
     cut_height: f32,
 ) -> f32 {
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // The radius of the circle made by slicing the sphere
     var cut_radius_squared: f32 = radius * radius - cut_height * cut_height;
@@ -124,14 +151,14 @@ fn distance_to_cut_sphere(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_hollow_sphere(
-    position: vec3<f32>,
+    position: vec3f,
     radius: f32,
     cut_height: f32,
     thickness: f32,
 ) -> f32 {
     var half_thickness: f32 = thickness / 2.;
 
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     var cut_radius: f32 = sqrt(radius * radius - cut_height * cut_height);
 
@@ -162,12 +189,12 @@ fn distance_to_hollow_sphere(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_death_star(
-    position: vec3<f32>,
+    position: vec3f,
     additive_sphere_radius: f32,
     subtractive_sphere_radius: f32,
     subtractive_sphere_height: f32,
 ) -> f32 {
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     var additive_sphere_radius_squared: f32 = additive_sphere_radius * additive_sphere_radius;
 
@@ -211,11 +238,11 @@ fn distance_to_death_star(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_solid_angle(
-    position: vec3<f32>,
+    position: vec3f,
     radius: f32,
     angle: f32,
 ) -> f32 {
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // The direction from the tip of the conical portion to where it
     // meets the sphere
@@ -251,7 +278,7 @@ fn distance_to_solid_angle(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_rectangular_prism(
-    position: vec3<f32>,
+    position: vec3f,
     width: f32,
     height: f32,
     depth: f32,
@@ -277,14 +304,14 @@ fn distance_to_rectangular_prism(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_rectangular_prism_frame(
-    position: vec3<f32>,
+    position: vec3f,
     width: f32,
     height: f32,
     depth: f32,
     thickness: f32,
 ) -> f32 {
     var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
-    var inner_reflected: vec3<f32> = abs(prism_to_position + thickness) - thickness;
+    var inner_reflected: vec3f = abs(prism_to_position + thickness) - thickness;
 
     return min(
         sdf_length_vec3f(vec3(prism_to_position.x, inner_reflected.yz)),
@@ -310,16 +337,16 @@ fn distance_to_rectangular_prism_frame(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_rhombus(
-    position: vec3<f32>,
+    position: vec3f,
     width: f32,
     height: f32,
     depth: f32,
     corner_radius: f32,
 ) -> f32 {
-    var abs_position: vec3<f32> = abs(position);
+    var abs_position: vec3f = abs(position);
     var half_width_height = vec2(width, height) / 2.;
 
-    var s: vec2<f32> = half_width_height * (half_width_height - 2. * abs_position.xy);
+    var s: vec2f = half_width_height * (half_width_height - 2. * abs_position.xy);
     var f: f32 = clamp((s.x - s.y) / dot2_vec2f(half_width_height), -1., 1.);
 
     var inside: f32 = sign(
@@ -349,7 +376,7 @@ fn distance_to_rhombus(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_triangular_prism(position: vec3<f32>, base: f32, depth: f32) -> f32 {
+fn distance_to_triangular_prism(position: vec3f, base: f32, depth: f32) -> f32 {
     // 0.28867513459f = tan(PI / 6.) / 2., converts base length
     // to the min distance from centroid to edge of triangle
 
@@ -377,12 +404,12 @@ fn distance_to_triangular_prism(position: vec3<f32>, base: f32, depth: f32) -> f
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_cylinder(
-    position: vec3<f32>,
+    position: vec3f,
     radius: f32,
     height: f32,
 ) -> f32 {
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
-    var cylindrical_position: vec2<f32> = abs(cartesian_to_cylindrical(position));
+    var cylindrical_position: vec2f = abs(cartesian_to_cylindrical(position));
     var cylinder_to_position = cylindrical_position - vec2(radius, height / 2.);
 
     return sdf_length_vec2f(cylinder_to_position);
@@ -398,7 +425,7 @@ fn distance_to_cylinder(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_infinite_cylinder(position: vec3<f32>, radius: f32) -> f32 {
+fn distance_to_infinite_cylinder(position: vec3f, radius: f32) -> f32 {
     return distance_to_circle(position.xz, radius);
 }
 
@@ -413,7 +440,7 @@ fn distance_to_infinite_cylinder(position: vec3<f32>, radius: f32) -> f32 {
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_plane(position: vec3<f32>, normal: vec3<f32>) -> f32 {
+fn distance_to_plane(position: vec3f, normal: vec3f) -> f32 {
     return dot(position, normal);
 }
 
@@ -432,7 +459,7 @@ fn distance_to_plane(position: vec3<f32>, normal: vec3<f32>) -> f32 {
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_capsule(
-    position: vec3<f32>,
+    position: vec3f,
     radius: f32,
     negative_height: f32,
     positive_height: f32,
@@ -457,20 +484,20 @@ fn distance_to_capsule(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_cone(position: vec3<f32>, angle: f32, height: f32) -> f32 {
+fn distance_to_cone(position: vec3f, angle: f32, height: f32) -> f32 {
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // The cylindrical coordinates of the edge of the cone base
     var cylindrical_bound = vec2(abs(height * tan(angle)), height);
 
     // Vector from the top surface of the cone to the position given
-    var cone_top_to_position: vec2<f32> = cylindrical_position - cylindrical_bound * vec2(
+    var cone_top_to_position: vec2f = cylindrical_position - cylindrical_bound * vec2(
         saturate_f32(cylindrical_position.x / cylindrical_bound.x),
         1.,
     );
     // Vector from the edge of the cone to the position given
-    var cone_edge_to_position: vec2<f32> = (
+    var cone_edge_to_position: vec2f = (
         cylindrical_position - cylindrical_bound * saturate_f32(
             dot(cylindrical_position, cylindrical_bound)
             / dot2_vec2f(cylindrical_bound),
@@ -504,12 +531,12 @@ fn distance_to_cone(position: vec3<f32>, angle: f32, height: f32) -> f32 {
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_infinite_cone(position: vec3<f32>, angle: f32) -> f32 {
+fn distance_to_infinite_cone(position: vec3f, angle: f32) -> f32 {
     // The normalized cylindrical coordinates of the edge of the cone base
-    var cone_edge_direction: vec2<f32> = vec2(sin(angle), cos(angle));
+    var cone_edge_direction: vec2f = vec2(sin(angle), cos(angle));
 
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // -1 if the position is inside the cone, +1 if it is outside
     var inside: f32 = sign(
@@ -542,13 +569,13 @@ fn distance_to_infinite_cone(position: vec3<f32>, angle: f32) -> f32 {
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_capped_cone(
-    position: vec3<f32>,
+    position: vec3f,
     height: f32,
     lower_radius: f32,
     upper_radius: f32,
 ) -> f32 {
     var half_height: f32 = height / 2.;
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // The 'corners' are the apparent corners when the shape is
     // projected onto the xy-plane
@@ -562,7 +589,7 @@ fn distance_to_capped_cone(
         ),
         abs(cylindrical_position.y) - half_height,
     );
-    var cone_edge_to_position: vec2<f32> = (
+    var cone_edge_to_position: vec2f = (
         cylindrical_position
         - upper_corner
         + lower_to_upper_corner * saturate_f32(
@@ -596,12 +623,12 @@ fn distance_to_capped_cone(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_rounded_cone(
-    position: vec3<f32>,
+    position: vec3f,
     height: f32,
     lower_radius: f32,
     upper_radius: f32,
 ) -> f32 {
-    var cylindrical_position: vec2<f32> = cartesian_to_cylindrical(position);
+    var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // Get the unit vector that is normal to the conical surface in 2D
     var parallel_x: f32 = (upper_radius - lower_radius) / height;
@@ -633,7 +660,7 @@ fn distance_to_rounded_cone(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_torus(position: vec3<f32>, ring_radius: f32, tube_radius: f32) -> f32 {
+fn distance_to_torus(position: vec3f, ring_radius: f32, tube_radius: f32) -> f32 {
     return distance_to_circle(
         vec2(distance_to_circle(position.xy, ring_radius), position.z),
         tube_radius,
@@ -653,7 +680,7 @@ fn distance_to_torus(position: vec3<f32>, ring_radius: f32, tube_radius: f32) ->
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_capped_torus(
-    position: vec3<f32>,
+    position: vec3f,
     ring_radius: f32,
     tube_radius: f32,
     cap_angle: f32,
@@ -690,7 +717,7 @@ fn distance_to_capped_torus(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_link(
-    position: vec3<f32>,
+    position: vec3f,
     ring_radius: f32,
     tube_radius: f32,
     height: f32,
@@ -719,12 +746,12 @@ fn distance_to_link(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> f32 {
+fn distance_to_hexagonal_prism(position: vec3f, height: f32, depth: f32) -> f32 {
     // precomputed -cos(-PI / 6.), -sin(-PI / 6.), -tan(-PI / 6.)
     var cos_sin_tan = vec3(-0.86602540378, 0.5, 0.57735026919);
     var half_height: f32 = height / 2.;
 
-    var abs_position: vec3<f32> = abs(position);
+    var abs_position: vec3f = abs(position);
     abs_position += vec3(
         2. * cos_sin_tan.xy * negative_part_f32(dot(cos_sin_tan.xy, abs_position.xy)),
         0.,
@@ -760,13 +787,13 @@ fn distance_to_hexagonal_prism(position: vec3<f32>, height: f32, depth: f32) -> 
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
-    var abs_position: vec3<f32> = abs(position);
+fn distance_to_octahedron(position: vec3f, radial_extent: f32) -> f32 {
+    var abs_position: vec3f = abs(position);
 
     var position_sum_to_extent: f32 = dot(abs_position, vec3(1.)) - radial_extent;
 
-    var three_position: vec3<f32> = 3. * abs_position;
-    var change_of_axes: vec3<f32>;
+    var three_position: vec3f = 3. * abs_position;
+    var change_of_axes: vec3f;
     if three_position.x < position_sum_to_extent {
         change_of_axes = abs_position;
     } else if three_position.y < position_sum_to_extent {
@@ -805,16 +832,16 @@ fn distance_to_octahedron(position: vec3<f32>, radial_extent: f32) -> f32 {
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_textured_mandelbulb(
-    position: vec3<f32>,
+    position: vec3f,
     power: f32,
     iterations: u32,
     max_square_radius: f32,
-    trap_colour: ptr<function, vec3<f32>>,
+    trap_colour: ptr<function, vec3f>,
 ) -> f32 {
-    var current_position: vec3<f32> = position;
+    var current_position: vec3f = position;
     var radius_squared: f32 = dot2_vec3f(current_position);
 
-    var abs_position: vec3<f32> = abs(current_position);
+    var abs_position: vec3f = abs(current_position);
     *trap_colour = abs_position;
 
     var dradius: f32 = 1.;
@@ -863,15 +890,15 @@ fn distance_to_textured_mandelbulb(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_mandelbulb(
-    position: vec3<f32>,
+    position: vec3f,
     power: f32,
     iterations: u32,
     max_square_radius: f32,
 ) -> f32 {
-    var current_position: vec3<f32> = position;
+    var current_position: vec3f = position;
     var radius_squared: f32 = dot2_vec3f(current_position);
 
-    var abs_position: vec3<f32> = abs(current_position);
+    var abs_position: vec3f = abs(current_position);
 
     var dradius: f32 = 1.;
     var iteration: u32 = 0u;
@@ -902,16 +929,16 @@ fn distance_to_mandelbulb(
 }
 
 
-fn box_fold(position: vec3<f32>, folding_limit: vec3<f32>) -> vec3<f32> {
+fn box_fold(position: vec3f, folding_limit: vec3f) -> vec3f {
     return clamp(position, -folding_limit, folding_limit) * 2. - position;
 }
 
 
 fn sphere_fold(
-    position: vec4<f32>,
+    position: vec4f,
     radius_squared: f32,
     min_square_radius: f32,
-) -> vec4<f32> {
+) -> vec4f {
     return position * saturate_f32(
         max(min_square_radius / radius_squared, min_square_radius),
     );
@@ -930,16 +957,16 @@ fn sphere_fold(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_textured_mandelbox(
-    position: vec3<f32>,
+    position: vec3f,
     scale: f32,
     iterations: i32,
     min_square_radius: f32,
     folding_limit: f32,
-    trap_colour: ptr<function, vec3<f32>>,
+    trap_colour: ptr<function, vec3f>,
 ) -> f32 {
     var scale_vector = vec4(scale, scale, scale, abs(scale)) / min_square_radius;
     var initial_position = vec4(position, 1.);
-    var current_position: vec4<f32> = initial_position;
+    var current_position: vec4f = initial_position;
 
     var folding_limit_vec3f = vec3(folding_limit);
 
@@ -979,7 +1006,7 @@ fn distance_to_textured_mandelbox(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_mandelbox(
-    position: vec3<f32>,
+    position: vec3f,
     scale: f32,
     iterations: i32,
     min_square_radius: f32,
@@ -987,7 +1014,7 @@ fn distance_to_mandelbox(
 ) -> f32 {
     var scale_vector = vec4(scale, scale, scale, abs(scale)) / min_square_radius;
     var initial_position = vec4(position, 1.);
-    var current_position: vec4<f32> = initial_position;
+    var current_position: vec4f = initial_position;
 
     var folding_limit_vec3f = vec3(folding_limit);
 

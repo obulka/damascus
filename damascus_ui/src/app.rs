@@ -131,6 +131,9 @@ impl eframe::App for Damascus {
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
                 self.state.graph_editor_interaction(ui);
+                if ui.rect_contains_pointer(ui.max_rect()) {
+                    self.state.pan_zoom.enable_zoom_from_out_of_rect = true;
+                }
             });
         egui::SidePanel::left("left")
             .resizable(true)
@@ -139,6 +142,9 @@ impl eframe::App for Damascus {
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
                 self.state.graph_editor_interaction(ui);
+                if ui.rect_contains_pointer(ui.max_rect()) {
+                    self.state.pan_zoom.enable_zoom_from_out_of_rect = true;
+                }
             });
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)
@@ -157,6 +163,7 @@ impl eframe::App for Damascus {
                 )
             })
             .inner;
+        self.state.pan_zoom.enable_zoom_from_out_of_rect = false;
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {

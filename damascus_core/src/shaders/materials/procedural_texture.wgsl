@@ -194,23 +194,23 @@ fn perlin_simplex_noise(seed: vec4f) -> f32 {
 
     var n: f32 = 0.;
 
-    var t0: f32 = max(0.6 - dot(x0, x0), 0.);
+    var t0: f32 = positive_part_f32(0.6 - dot(x0, x0));
     t0 *= t0;
     n += t0 * t0 * dot(GRAD4[gi0], x0);
 
-    var t1: f32 = max(0.6 - dot(x1, x1), 0.);
+    var t1: f32 = positive_part_f32(0.6 - dot(x1, x1));
     t1 *= t1;
     n += t1 * t1 * dot(GRAD4[gi1], x1);
 
-    var t2: f32 = max(0.6 - dot(x2, x2), 0.);
+    var t2: f32 = positive_part_f32(0.6 - dot(x2, x2));
     t2 *= t2;
     n += t2 * t2 * dot(GRAD4[gi2], x2);
 
-    var t3: f32 = max(0.6 - dot(x3, x3), 0.);
+    var t3: f32 = positive_part_f32(0.6 - dot(x3, x3));
     t3 *= t3;
     n += t3 * t3 * dot(GRAD4[gi3], x3);
 
-    var t4: f32 = max(0.6 - dot(x4, x4), 0.);
+    var t4: f32 = positive_part_f32(0.6 - dot(x4, x4));
     t4 *= t4;
     n += t4 * t4 * dot(GRAD4[gi4], x4);
 

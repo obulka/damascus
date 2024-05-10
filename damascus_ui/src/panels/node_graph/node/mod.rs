@@ -1219,14 +1219,16 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 input_float(
                     graph,
                     "wall_thickness",
-                    Float::new(default_primitive.wall_thickness).with_ui_data(
-                        UIData::default()
-                            .with_tooltip(indoc! {
-                                "The thickness of the walls of the shape, if
-                                the shape is hollow.",
-                            })
-                            .with_hidden(),
-                    ),
+                    Float::new(default_primitive.wall_thickness)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The thickness of the walls of the shape, if
+                                    the shape is hollow.",
+                                })
+                                .with_hidden(),
+                        )
+                        .with_range(0.001..=1.),
                 );
                 input_bool(
                     graph,

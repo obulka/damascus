@@ -132,6 +132,9 @@ fn transform_position(
         (*primitive).transform.inverse_rotation
         * (position - (*primitive).transform.translation)
     );
+
+    texture_primitive(transformed_position, primitive);
+
     // Perform finite or infinite repetition if enabled
     transformed_position = select(
         select(
@@ -148,6 +151,7 @@ fn transform_position(
         ),
         bool((*primitive).modifiers & FINITE_REPETITION),
     );
+
     // Perform elongation if enabled
     transformed_position -= select(
         vec3(0.),
@@ -265,8 +269,6 @@ fn distance_to_textured_primitive(
         position,
         primitive,
     ) / (*primitive).transform.uniform_scale;
-
-    texture_primitive(transformed_position, primitive);
 
     var distance: f32;
     switch (*primitive).shape {

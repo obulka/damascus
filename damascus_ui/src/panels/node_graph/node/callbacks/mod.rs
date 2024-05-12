@@ -5,7 +5,7 @@
 
 use egui_node_graph::NodeId;
 
-use super::{DamascusDataType, DamascusGraph, DamascusValueType, UIInput};
+use super::{DamascusDataType, DamascusGraph, DamascusGraphState, DamascusValueType, UIInput};
 
 mod light;
 mod primitive;

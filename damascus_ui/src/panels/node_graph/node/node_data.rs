@@ -13,7 +13,7 @@ use super::{
 /// The NodeData holds a custom data struct inside each node. It's useful to
 /// store additional information that doesn't live in parameters. For this
 /// example, the node data stores the template (i.e. the "type") of the node.
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct DamascusNodeData {
     pub template: DamascusNodeTemplate,
 }
@@ -33,7 +33,7 @@ impl NodeDataTrait for DamascusNodeData {
         &self,
         ui: &mut egui::Ui,
         node_id: NodeId,
-        _graph: &Graph<DamascusNodeData, DamascusDataType, DamascusValueType>,
+        _graph: &Graph<Self, Self::DataType, Self::ValueType, Self::UserState>,
         user_state: &mut Self::UserState,
     ) -> Vec<NodeResponse<DamascusResponse, DamascusNodeData>>
     where

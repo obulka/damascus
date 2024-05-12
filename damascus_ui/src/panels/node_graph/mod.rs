@@ -25,7 +25,8 @@ pub use node_graph_state::DamascusGraphState;
 pub use response::DamascusResponse;
 pub use value_type::{Bool, DamascusValueType, Mat4, UIInput};
 
-pub type DamascusGraph = Graph<DamascusNodeData, DamascusDataType, DamascusValueType>;
+pub type DamascusGraph =
+    Graph<DamascusNodeData, DamascusDataType, DamascusValueType, DamascusGraphState>;
 type OutputsCache = HashMap<OutputId, DamascusValueType>;
 
 /// Recursively evaluates all dependencies of this node, then evaluates the node itself.

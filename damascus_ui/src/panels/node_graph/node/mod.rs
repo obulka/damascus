@@ -91,7 +91,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
     fn build_node(
         &self,
-        graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType>,
+        graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType, Self::UserState>,
         _user_state: &mut Self::UserState,
         node_id: NodeId,
     ) {

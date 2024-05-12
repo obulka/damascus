@@ -7,7 +7,9 @@ use egui_node_graph::{InputParam, NodeId};
 
 use damascus_core::geometry;
 
-use super::{DamascusDataType, DamascusGraph, DamascusValueType, NodeCallbacks, UIInput};
+use super::{
+    DamascusDataType, DamascusGraph, DamascusGraphState, DamascusValueType, NodeCallbacks, UIInput,
+};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct PrimitiveCallbacks;
@@ -31,21 +33,24 @@ impl NodeCallbacks for PrimitiveCallbacks {
             let mut to_show = vec![];
             if let Ok(input_id) = node.get_input(input_name) {
                 if let Some(input_param) = graph.inputs.get(input_id) {
-                    let mut blend_type_changed =
-                        |blend_type_input: &InputParam<DamascusDataType, DamascusValueType>| {
-                            match blend_type_input.value() {
-                                DamascusValueType::ComboBox { ref value } => {
-                                    if let Ok(blend_type) = value.as_enum::<geometry::BlendType>() {
-                                        if blend_type >= geometry::BlendType::SmoothUnion {
-                                            to_show.push("blend_strength");
-                                        } else {
-                                            to_hide.push("blend_strength");
-                                        }
+                    let mut blend_type_changed = |blend_type_input: &InputParam<
+                        DamascusDataType,
+                        DamascusValueType,
+                        DamascusGraphState,
+                    >| {
+                        match blend_type_input.value() {
+                            DamascusValueType::ComboBox { ref value } => {
+                                if let Ok(blend_type) = value.as_enum::<geometry::BlendType>() {
+                                    if blend_type >= geometry::BlendType::SmoothUnion {
+                                        to_show.push("blend_strength");
+                                    } else {
+                                        to_hide.push("blend_strength");
                                     }
                                 }
-                                _ => {}
                             }
-                        };
+                            _ => {}
+                        }
+                    };
                     match input_name.as_str() {
                         "shape" => {
                             to_hide.extend([

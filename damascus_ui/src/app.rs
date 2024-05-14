@@ -45,7 +45,7 @@ impl Damascus {
     /// Called once before the first frame.
     /// Load previous app state (if any).
     pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
-        let state = creation_context
+        let state: DamascusEditorState = creation_context
             .storage
             .and_then(|storage| eframe::get_value(storage, PERSISTENCE_KEY))
             .unwrap_or_default();
@@ -64,7 +64,16 @@ impl eframe::App for Damascus {
     }
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        if ctx.input(|i| {
+            i.key_pressed(egui::Key::N) && i.modifiers.matches_logically(egui::Modifiers::CTRL)
+        }) {
+            if let Some(storage) = frame.storage_mut() {
+                self.state = DamascusEditorState::default();
+                self.user_state = DamascusGraphState::default();
+                self.save(storage);
+            }
+        }
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {

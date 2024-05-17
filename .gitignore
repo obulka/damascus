@@ -1,7 +1,7 @@
 /target
 **/*.rs.bk
 Cargo.lock
-assets
+test
 
 
 # Added by cargo

@@ -4,8 +4,11 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 
 use eframe::egui;
+use egui_modal;
 use egui_node_graph::{GraphEditorState, NodeResponse};
 
 use damascus_core::{
@@ -22,6 +25,7 @@ use super::panels::{
     },
     viewport_3d::Viewport3d,
 };
+use super::widgets::dialog;
 
 type DamascusEditorState = GraphEditorState<
     DamascusNodeData,
@@ -74,6 +78,12 @@ impl eframe::App for Damascus {
                 self.save(storage);
             }
         }
+        let mut modal =
+            egui_modal::Modal::new(ctx, "error_dialog_modal").with_style(&egui_modal::ModalStyle {
+                ..Default::default()
+            });
+        modal.show_dialog();
+
         egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
                 ui.menu_button("File", |ui| {
@@ -93,11 +103,52 @@ impl eframe::App for Damascus {
                             save_file = Some(path.display().to_string());
                         }
                         if let Some(file_path) = save_file {
-                            println!(
-                                "Saving: {:#?}\n\n to: {:?}",
-                                serde_yaml::to_string(&self.state.graph),
-                                file_path,
-                            );
+                            let mut file_result = File::create(&file_path);
+                            match file_result {
+                                Ok(mut file) => {
+                                    let serialization_result =
+                                        serde_yaml::to_string(&self.state.graph);
+                                    match serialization_result {
+                                        Ok(serialization) => {
+                                            let file_write_result =
+                                                file.write_all(serialization.as_bytes());
+                                            match file_write_result {
+                                                Ok(_) => {
+                                                    dialog::success(
+                                                        &modal,
+                                                        "Success",
+                                                        &format!("File saved at {:}", file_path),
+                                                    );
+                                                }
+                                                Err(_) => {
+                                                    dialog::error(
+                                                        &modal,
+                                                        "File Write Error",
+                                                        &format!(
+                                                            "Could not save file at {:}",
+                                                            file_path
+                                                        ),
+                                                    );
+                                                }
+                                            }
+                                        }
+                                        Err(_) => {
+                                            dialog::error(
+                                                &modal,
+                                                "Node Graph Serialization Error",
+                                                &format!("Could not save file at {:}", file_path),
+                                            );
+                                        }
+                                    }
+                                }
+                                Err(_) => {
+                                    dialog::error(
+                                        &modal,
+                                        "File Creation Error",
+                                        &format!("Could not save file at {:}", file_path),
+                                    );
+                                }
+                            }
                         }
                         ui.close_menu();
                     }

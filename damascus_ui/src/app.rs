@@ -68,15 +68,12 @@ impl eframe::App for Damascus {
     }
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if ctx.input(|i| {
             i.key_pressed(egui::Key::N) && i.modifiers.matches_logically(egui::Modifiers::CTRL)
         }) {
             self.state = DamascusEditorState::default();
             self.user_state = DamascusGraphState::default();
-            // if let Some(storage) = frame.storage_mut() {
-            //     self.save(storage);
-            // }
         }
         let mut modal =
             egui_modal::Modal::new(ctx, "error_dialog_modal").with_style(&egui_modal::ModalStyle {

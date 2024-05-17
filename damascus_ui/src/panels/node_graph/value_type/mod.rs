@@ -14,9 +14,7 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use super::{
-    node::DamascusNodeData, node_graph_state::DamascusGraphState, response::DamascusResponse,
-};
+use super::{node::NodeData, response::NodeGraphResponse, state::NodeGraphState};
 
 mod inputs;
 pub use inputs::{
@@ -35,7 +33,7 @@ pub use ui_data::UIData;
 /// up to the user code in this example to make sure no parameter is created
 /// with a DataType of Float and a ValueType of Vec2.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub enum DamascusValueType {
+pub enum NodeValueType {
     // Base types
     Bool { value: Bool },
     BVec3 { value: BVec3 },
@@ -61,7 +59,7 @@ pub enum DamascusValueType {
     Scene { value: scene::Scene },
 }
 
-impl Default for DamascusValueType {
+impl Default for NodeValueType {
     fn default() -> Self {
         // NOTE: This is just a dummy `Default` implementation. The library
         // requires it to circumvent some internal borrow checker issues.
@@ -71,10 +69,10 @@ impl Default for DamascusValueType {
     }
 }
 
-impl DamascusValueType {
+impl NodeValueType {
     /// Tries to downcast this value type to a bool
     pub fn try_to_bool(self) -> anyhow::Result<bool> {
-        if let DamascusValueType::Bool { value } = self {
+        if let NodeValueType::Bool { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to bool", self)
@@ -83,7 +81,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a BVec3
     pub fn try_to_bvec3(self) -> anyhow::Result<glam::BVec3> {
-        if let DamascusValueType::BVec3 { value } = self {
+        if let NodeValueType::BVec3 { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to BVec3", self)
@@ -92,7 +90,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to an int
     pub fn try_to_int(self) -> anyhow::Result<i32> {
-        if let DamascusValueType::Integer { value } = self {
+        if let NodeValueType::Integer { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to int", self)
@@ -101,7 +99,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a uint
     pub fn try_to_uint(self) -> anyhow::Result<u32> {
-        if let DamascusValueType::UnsignedInteger { value } = self {
+        if let NodeValueType::UnsignedInteger { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to uint", self)
@@ -110,7 +108,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a UVec3
     pub fn try_to_uvec3(self) -> anyhow::Result<glam::UVec3> {
-        if let DamascusValueType::UVec3 { value } = self {
+        if let NodeValueType::UVec3 { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to UVec3", self)
@@ -119,7 +117,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to an enum
     pub fn try_to_enum<E: IntoEnumIterator + Display + FromStr>(self) -> anyhow::Result<E> {
-        if let DamascusValueType::ComboBox { value } = self {
+        if let NodeValueType::ComboBox { value } = self {
             value.as_enum::<E>()
         } else {
             anyhow::bail!("Invalid cast from {:?} to combo_box", self)
@@ -128,7 +126,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a float
     pub fn try_to_float(self) -> anyhow::Result<f32> {
-        if let DamascusValueType::Float { value } = self {
+        if let NodeValueType::Float { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to float", self)
@@ -137,7 +135,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a vector2
     pub fn try_to_vec2(self) -> anyhow::Result<glam::Vec2> {
-        if let DamascusValueType::Vec2 { value } = self {
+        if let NodeValueType::Vec2 { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec2", self)
@@ -146,7 +144,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a vector3
     pub fn try_to_vec3(self) -> anyhow::Result<glam::Vec3> {
-        if let DamascusValueType::Vec3 { value } = self {
+        if let NodeValueType::Vec3 { value } = self {
             Ok(value.as_vec3())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec3", self)
@@ -155,7 +153,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a vector4
     pub fn try_to_vec4(self) -> anyhow::Result<glam::Vec4> {
-        if let DamascusValueType::Vec4 { value } = self {
+        if let NodeValueType::Vec4 { value } = self {
             Ok(value.as_vec4())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec4", self)
@@ -164,7 +162,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a mat3
     pub fn try_to_mat3(self) -> anyhow::Result<glam::Mat3> {
-        if let DamascusValueType::Mat3 { value } = self {
+        if let NodeValueType::Mat3 { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat3", self)
@@ -173,7 +171,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a mat4
     pub fn try_to_mat4(self) -> anyhow::Result<glam::Mat4> {
-        if let DamascusValueType::Mat4 { value } = self {
+        if let NodeValueType::Mat4 { value } = self {
             Ok(*value.value())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Mat4", self)
@@ -182,7 +180,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to an image
     pub fn try_to_image(self) -> anyhow::Result<ndarray::Array4<f32>> {
-        if let DamascusValueType::Image { value } = self {
+        if let NodeValueType::Image { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Image", self)
@@ -191,7 +189,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a camera
     pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
-        if let DamascusValueType::Camera { value } = self {
+        if let NodeValueType::Camera { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Camera", self)
@@ -200,7 +198,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a primitive
     pub fn try_to_light(self) -> anyhow::Result<Vec<lights::Light>> {
-        if let DamascusValueType::Light { value } = self {
+        if let NodeValueType::Light { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Light", self)
@@ -209,7 +207,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a material
     pub fn try_to_material(self) -> anyhow::Result<materials::Material> {
-        if let DamascusValueType::Material { value } = self {
+        if let NodeValueType::Material { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Material", self)
@@ -218,7 +216,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a primitive
     pub fn try_to_primitive(self) -> anyhow::Result<Vec<geometry::Primitive>> {
-        if let DamascusValueType::Primitive { value } = self {
+        if let NodeValueType::Primitive { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Primitive", self)
@@ -227,7 +225,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a material
     pub fn try_to_procedural_texture(self) -> anyhow::Result<materials::ProceduralTexture> {
-        if let DamascusValueType::ProceduralTexture { value } = self {
+        if let NodeValueType::ProceduralTexture { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to ProceduralTexture", self)
@@ -236,7 +234,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a ray_marcher
     pub fn try_to_ray_marcher(self) -> anyhow::Result<renderers::RayMarcher> {
-        if let DamascusValueType::RayMarcher { value } = self {
+        if let NodeValueType::RayMarcher { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to RayMarcher", self)
@@ -245,7 +243,7 @@ impl DamascusValueType {
 
     /// Tries to downcast this value type to a scene
     pub fn try_to_scene(self) -> anyhow::Result<scene::Scene> {
-        if let DamascusValueType::Scene { value } = self {
+        if let NodeValueType::Scene { value } = self {
             Ok(value)
         } else {
             anyhow::bail!("Invalid cast from {:?} to Scene", self)
@@ -253,10 +251,10 @@ impl DamascusValueType {
     }
 }
 
-impl WidgetValueTrait for DamascusValueType {
-    type Response = DamascusResponse;
-    type UserState = DamascusGraphState;
-    type NodeData = DamascusNodeData;
+impl WidgetValueTrait for NodeValueType {
+    type Response = NodeGraphResponse;
+    type UserState = NodeGraphState;
+    type NodeData = NodeData;
 
     /// This method will be called for each input parameter with a widget with an disconnected
     /// input only. To display UI for connected inputs use [`WidgetValueTrait::value_widget_connected`].
@@ -274,20 +272,20 @@ impl WidgetValueTrait for DamascusValueType {
         // This trait is used to tell the library which UI to display for the
         // inline parameter widgets.
         let value_changed = match self {
-            DamascusValueType::Bool { value } => value.create_ui(ui, param_name),
-            DamascusValueType::BVec3 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::ComboBox { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Integer { value } => RangedInput::create_ui(value, ui, param_name),
-            DamascusValueType::UnsignedInteger { value } => {
+            NodeValueType::Bool { value } => value.create_ui(ui, param_name),
+            NodeValueType::BVec3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::ComboBox { value } => value.create_ui(ui, param_name),
+            NodeValueType::Integer { value } => RangedInput::create_ui(value, ui, param_name),
+            NodeValueType::UnsignedInteger { value } => {
                 RangedInput::create_ui(value, ui, param_name)
             }
-            DamascusValueType::UVec3 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
-            DamascusValueType::Vec2 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Vec3 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Vec4 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Mat3 { value } => value.create_ui(ui, param_name),
-            DamascusValueType::Mat4 { value } => value.create_ui(ui, param_name),
+            NodeValueType::UVec3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
+            NodeValueType::Vec2 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Vec3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Vec4 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Mat3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Mat4 { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
                 false
@@ -295,7 +293,7 @@ impl WidgetValueTrait for DamascusValueType {
         };
 
         if value_changed {
-            return vec![DamascusResponse::InputValueChanged(
+            return vec![NodeGraphResponse::InputValueChanged(
                 node_id,
                 node_data.template,
                 param_name.to_string(),
@@ -320,7 +318,7 @@ impl WidgetValueTrait for DamascusValueType {
         _node_data: &Self::NodeData,
     ) -> Vec<Self::Response> {
         match self {
-            DamascusValueType::Mat4 { value } => value.create_parameter_label(ui, param_name),
+            NodeValueType::Mat4 { value } => value.create_parameter_label(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
             }

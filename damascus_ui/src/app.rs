@@ -9,7 +9,7 @@ use std::io::{BufReader, Read, Write};
 
 use eframe::egui;
 use egui_modal;
-use egui_node_graph::{GraphEditorState, NodeResponse};
+use egui_node_graph::NodeResponse;
 
 use damascus_core::{
     geometry::Primitive,
@@ -19,27 +19,14 @@ use damascus_core::{
 
 use super::panels::{
     node_graph::{
-        evaluate_node, AllDamascusNodeTemplates, Bool, DamascusDataType, DamascusGraphState,
-        DamascusNodeData, DamascusNodeTemplate, DamascusResponse, DamascusValueType, NodeCallbacks,
-        UIInput,
+        evaluate_node, Bool, NodeCallbacks, NodeGraph, NodeGraphResponse, NodeValueType, UIInput,
     },
     viewport_3d::Viewport3d,
 };
 use super::widgets::dialog;
 
-type DamascusEditorState = GraphEditorState<
-    DamascusNodeData,
-    DamascusDataType,
-    DamascusValueType,
-    DamascusNodeTemplate,
-    DamascusGraphState,
->;
-
 pub struct Damascus {
-    // The `GraphEditorState` is the top-level object. You "register" all your
-    // custom types by specifying it as its generic parameters.
-    state: DamascusEditorState,
-    user_state: DamascusGraphState,
+    node_graph: NodeGraph,
     viewport_3d: Option<Viewport3d>,
 }
 
@@ -49,13 +36,8 @@ impl Damascus {
     /// Called once before the first frame.
     /// Load previous app state (if any).
     pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
-        let state: DamascusEditorState = creation_context
-            .storage
-            .and_then(|storage| eframe::get_value(storage, PERSISTENCE_KEY))
-            .unwrap_or_default();
         Self {
-            state,
-            user_state: DamascusGraphState::default(),
+            node_graph: NodeGraph::new(creation_context, PERSISTENCE_KEY),
             viewport_3d: Viewport3d::new(creation_context),
         }
     }
@@ -64,7 +46,7 @@ impl Damascus {
 impl eframe::App for Damascus {
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, PERSISTENCE_KEY, &self.state);
+        eframe::set_value(storage, PERSISTENCE_KEY, self.node_graph.editor_state());
     }
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
@@ -72,8 +54,7 @@ impl eframe::App for Damascus {
         if ctx.input(|i| {
             i.key_pressed(egui::Key::N) && i.modifiers.matches_logically(egui::Modifiers::CTRL)
         }) {
-            self.state = DamascusEditorState::default();
-            self.user_state = DamascusGraphState::default();
+            self.node_graph.clear();
         }
         let mut modal =
             egui_modal::Modal::new(ctx, "error_dialog_modal").with_style(&egui_modal::ModalStyle {
@@ -97,8 +78,7 @@ impl eframe::App for Damascus {
                                     match buf_reader.read_to_string(&mut contents) {
                                         Ok(_) => match serde_yaml::from_str(&contents) {
                                             Ok(state) => {
-                                                self.state = state;
-                                                self.user_state = DamascusGraphState::default();
+                                                self.node_graph.set_editor_state(state);
                                             }
                                             Err(err) => {
                                                 dialog::error(
@@ -138,36 +118,38 @@ impl eframe::App for Damascus {
                         }
                         if let Some(file_path) = save_file {
                             match File::create(&file_path) {
-                                Ok(mut file) => match serde_yaml::to_string(&self.state) {
-                                    Ok(serialization) => {
-                                        match file.write_all(serialization.as_bytes()) {
-                                            Ok(_) => {
-                                                dialog::success(
-                                                    &modal,
-                                                    "Success",
-                                                    &format!("File saved at {:}", file_path),
-                                                );
-                                            }
-                                            Err(_) => {
-                                                dialog::error(
-                                                    &modal,
-                                                    "File Write Error",
-                                                    &format!(
-                                                        "Could not save file at {:}",
-                                                        file_path
-                                                    ),
-                                                );
+                                Ok(mut file) => {
+                                    match serde_yaml::to_string(self.node_graph.editor_state()) {
+                                        Ok(serialization) => {
+                                            match file.write_all(serialization.as_bytes()) {
+                                                Ok(_) => {
+                                                    dialog::success(
+                                                        &modal,
+                                                        "Success",
+                                                        &format!("File saved at {:}", file_path),
+                                                    );
+                                                }
+                                                Err(_) => {
+                                                    dialog::error(
+                                                        &modal,
+                                                        "File Write Error",
+                                                        &format!(
+                                                            "Could not save file at {:}",
+                                                            file_path
+                                                        ),
+                                                    );
+                                                }
                                             }
                                         }
+                                        Err(_) => {
+                                            dialog::error(
+                                                &modal,
+                                                "Node Graph Serialization Error",
+                                                &format!("Could not save file at {:}", file_path),
+                                            );
+                                        }
                                     }
-                                    Err(_) => {
-                                        dialog::error(
-                                            &modal,
-                                            "Node Graph Serialization Error",
-                                            &format!("Could not save file at {:}", file_path),
-                                        );
-                                    }
-                                },
+                                }
                                 Err(_) => {
                                     dialog::error(
                                         &modal,
@@ -211,66 +193,28 @@ impl eframe::App for Damascus {
             });
         });
 
-        egui::SidePanel::right("right")
-            .resizable(true)
-            .show_separator_line(false)
-            .default_width(0.)
-            .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
-                self.state.graph_editor_interaction(ui);
-                if ui.rect_contains_pointer(ui.max_rect()) {
-                    self.state.pan_zoom.enable_zoom_from_out_of_rect = true;
-                }
-            });
-        egui::SidePanel::left("left")
-            .resizable(true)
-            .show_separator_line(false)
-            .default_width(0.)
-            .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
-                self.state.graph_editor_interaction(ui);
-                if ui.rect_contains_pointer(ui.max_rect()) {
-                    self.state.pan_zoom.enable_zoom_from_out_of_rect = true;
-                }
-            });
-        let graph_response = egui::TopBottomPanel::bottom("bottom")
-            .resizable(true)
-            .default_height(300.0)
-            .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
-                if ui.ctx().input(|i| i.key_pressed(egui::Key::F)) {
-                    self.state.reset_zoom(ui);
-                }
+        let graph_response = self.node_graph.show(ctx);
 
-                self.state.draw_graph_editor(
-                    ui,
-                    AllDamascusNodeTemplates,
-                    &mut self.user_state,
-                    Vec::default(),
-                )
-            })
-            .inner;
-        self.state.pan_zoom.enable_zoom_from_out_of_rect = false;
         for node_response in graph_response.node_responses {
             if let NodeResponse::User(user_event) = node_response {
                 match user_event {
-                    DamascusResponse::SetActiveNode(node) => {
-                        self.user_state.active_node = Some(node);
+                    NodeGraphResponse::SetActiveNode(node) => {
+                        self.node_graph.user_state_mut().active_node = Some(node);
                         if let Some(viewport_3d) = &mut self.viewport_3d {
                             viewport_3d.enable();
                             viewport_3d.play();
                         }
                     }
-                    DamascusResponse::ClearActiveNode => {
-                        self.user_state.active_node = None;
+                    NodeGraphResponse::ClearActiveNode => {
+                        self.node_graph.user_state_mut().active_node = None;
                         if let Some(viewport_3d) = &mut self.viewport_3d {
                             viewport_3d.disable();
                         }
                     }
-                    DamascusResponse::InputValueChanged(node_id, node_template, input_name) => {
+                    NodeGraphResponse::InputValueChanged(node_id, node_template, input_name) => {
                         // Perform callbacks when inputs have changed
                         node_template.input_value_changed(
-                            &mut self.state.graph,
+                            &mut self.node_graph.editor_state_mut().graph,
                             node_id,
                             &input_name,
                         );
@@ -279,9 +223,19 @@ impl eframe::App for Damascus {
             }
         }
 
-        if let Some(node) = self.user_state.active_node {
-            if self.state.graph.nodes.contains_key(node) {
-                let value_type = match evaluate_node(&self.state.graph, node, &mut HashMap::new()) {
+        if let Some(node) = self.node_graph.user_state().active_node {
+            if self
+                .node_graph
+                .editor_state()
+                .graph
+                .nodes
+                .contains_key(node)
+            {
+                let value_type = match evaluate_node(
+                    &self.node_graph.editor_state().graph,
+                    node,
+                    &mut HashMap::new(),
+                ) {
                     Ok(value) => value,
                     Err(error) => {
                         ctx.debug_painter().text(
@@ -292,35 +246,35 @@ impl eframe::App for Damascus {
                             egui::Color32::RED,
                         );
 
-                        DamascusValueType::Bool {
+                        NodeValueType::Bool {
                             value: Bool::new(false),
                         }
                     }
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match value_type {
-                        // DamascusValueType::Mat4 { value } => {}
-                        // DamascusValueType::Image { value } => {}
-                        DamascusValueType::Camera { value } => {
+                        // NodeValueType::Mat4 { value } => {}
+                        // NodeValueType::Image { value } => {}
+                        NodeValueType::Camera { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.render_camera = value;
                             viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
                             viewport_3d.enable_camera_controls();
                         }
-                        DamascusValueType::Light { value } => {
+                        NodeValueType::Light { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.lights = value;
                             viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
                             viewport_3d.enable_camera_controls();
                         }
-                        DamascusValueType::Material { value } => {
+                        NodeValueType::Material { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.clear_primitives();
                             viewport_3d.renderer.scene.clear_lights();
                             viewport_3d.renderer.scene.atmosphere = value;
                             viewport_3d.enable_camera_controls();
                         }
-                        DamascusValueType::ProceduralTexture { value } => {
+                        NodeValueType::ProceduralTexture { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.clear_primitives();
                             viewport_3d.renderer.scene.clear_lights();
@@ -328,7 +282,7 @@ impl eframe::App for Damascus {
                             viewport_3d.renderer.scene.atmosphere.diffuse_colour_texture = value;
                             viewport_3d.enable_camera_controls();
                         }
-                        DamascusValueType::Primitive { value } => {
+                        NodeValueType::Primitive { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.primitives = value;
                             viewport_3d.renderer.scene.lights = vec![Light {
@@ -337,11 +291,11 @@ impl eframe::App for Damascus {
                             }];
                             viewport_3d.enable_camera_controls();
                         }
-                        DamascusValueType::RayMarcher { value } => {
+                        NodeValueType::RayMarcher { value } => {
                             viewport_3d.renderer = value;
                             viewport_3d.disable_camera_controls();
                         }
-                        DamascusValueType::Scene { value } => {
+                        NodeValueType::Scene { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene = value;
                             viewport_3d.disable_camera_controls();
@@ -350,7 +304,7 @@ impl eframe::App for Damascus {
                     }
                 }
             } else {
-                self.user_state.active_node = None;
+                self.node_graph.user_state_mut().active_node = None;
                 if let Some(viewport_3d) = &mut self.viewport_3d {
                     viewport_3d.pause();
                 }

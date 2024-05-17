@@ -7,13 +7,13 @@ use egui_node_graph::NodeId;
 
 use damascus_core::lights;
 
-use super::{DamascusGraph, DamascusValueType, NodeCallbacks};
+use super::{Graph, NodeCallbacks, NodeValueType};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct LightCallbacks;
 
 impl NodeCallbacks for LightCallbacks {
-    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
+    fn input_value_changed(&self, graph: &mut Graph, node_id: NodeId, input_name: &String) {
         if input_name != "light_type" {
             return;
         }
@@ -23,7 +23,7 @@ impl NodeCallbacks for LightCallbacks {
             if let Ok(input_id) = node.get_input(input_name) {
                 if let Some(input_param) = graph.inputs.get(input_id) {
                     match input_param.value() {
-                        DamascusValueType::ComboBox { ref value } => {
+                        NodeValueType::ComboBox { ref value } => {
                             match value.as_enum::<lights::Lights>() {
                                 Ok(lights::Lights::Directional) => {
                                     to_show.push("direction");

@@ -6,23 +6,21 @@
 use eframe::egui;
 use egui_node_graph::{Graph, NodeDataTrait, NodeId, NodeResponse, UserResponseTrait};
 
-use super::{
-    DamascusDataType, DamascusGraphState, DamascusNodeTemplate, DamascusResponse, DamascusValueType,
-};
+use super::{NodeDataType, NodeGraphResponse, NodeGraphState, NodeTemplate, NodeValueType};
 
 /// The NodeData holds a custom data struct inside each node. It's useful to
 /// store additional information that doesn't live in parameters. For this
 /// example, the node data stores the template (i.e. the "type") of the node.
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
-pub struct DamascusNodeData {
-    pub template: DamascusNodeTemplate,
+pub struct NodeData {
+    pub template: NodeTemplate,
 }
 
-impl NodeDataTrait for DamascusNodeData {
-    type Response = DamascusResponse;
-    type UserState = DamascusGraphState;
-    type DataType = DamascusDataType;
-    type ValueType = DamascusValueType;
+impl NodeDataTrait for NodeData {
+    type Response = NodeGraphResponse;
+    type UserState = NodeGraphState;
+    type DataType = NodeDataType;
+    type ValueType = NodeValueType;
 
     // This method will be called when drawing each node. This allows adding
     // extra ui elements inside the nodes. In this case, we create an "active"
@@ -35,9 +33,9 @@ impl NodeDataTrait for DamascusNodeData {
         node_id: NodeId,
         _graph: &Graph<Self, Self::DataType, Self::ValueType, Self::UserState>,
         user_state: &mut Self::UserState,
-    ) -> Vec<NodeResponse<DamascusResponse, DamascusNodeData>>
+    ) -> Vec<NodeResponse<NodeGraphResponse, NodeData>>
     where
-        DamascusResponse: UserResponseTrait,
+        NodeGraphResponse: UserResponseTrait,
     {
         // This logic is entirely up to the user. In this case, we check if the
         // current node we're drawing is the active one, by comparing against
@@ -56,14 +54,16 @@ impl NodeDataTrait for DamascusNodeData {
         // has been drawn. See below at the update method for an example.
         if !is_active {
             if ui.button("👁 Set active").clicked() {
-                responses.push(NodeResponse::User(DamascusResponse::SetActiveNode(node_id)));
+                responses.push(NodeResponse::User(NodeGraphResponse::SetActiveNode(
+                    node_id,
+                )));
             }
         } else {
             let button =
                 egui::Button::new(egui::RichText::new("👁 Active").color(egui::Color32::BLACK))
                     .fill(egui::Color32::GOLD);
             if ui.add(button).clicked() {
-                responses.push(NodeResponse::User(DamascusResponse::ClearActiveNode));
+                responses.push(NodeResponse::User(NodeGraphResponse::ClearActiveNode));
             }
         }
 

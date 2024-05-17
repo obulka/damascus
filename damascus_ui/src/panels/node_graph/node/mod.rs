@@ -5,7 +5,7 @@
 
 use std::borrow::Cow;
 
-use egui_node_graph::{Graph, InputParamKind, NodeId, NodeTemplateIter, NodeTemplateTrait};
+use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
@@ -13,23 +13,23 @@ use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use super::{
     value_type::{
-        BVec3, Bool, Colour, ComboBox, DamascusValueType, Float, Mat4, RangedInput, UIData,
-        UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
+        BVec3, Bool, Colour, ComboBox, Float, Mat4, NodeValueType, RangedInput, UIData, UIInput,
+        UVec3, UnsignedInteger, Vec3, Vec4,
     },
-    DamascusDataType, DamascusGraph, DamascusGraphState, DamascusResponse,
+    Graph, NodeDataType, NodeGraphResponse, NodeGraphState,
 };
 
 mod callbacks;
 mod node_data;
 pub use callbacks::NodeCallbacks;
 use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
-pub use node_data::DamascusNodeData;
+pub use node_data::NodeData;
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the
 /// library how to convert a NodeTemplate into a Node.
 #[derive(Clone, Copy, EnumIter, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub enum DamascusNodeTemplate {
+pub enum NodeTemplate {
     Axis,
     Camera,
     Light,
@@ -40,16 +40,19 @@ pub enum DamascusNodeTemplate {
     Scene,
 }
 
-impl NodeCallbacks for DamascusNodeTemplate {
-    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
+impl NodeCallbacks for NodeTemplate {
+    fn input_value_changed(
+        &self,
+        graph: &mut Graph,
+        node_id: egui_node_graph::NodeId,
+        input_name: &String,
+    ) {
         match self {
-            DamascusNodeTemplate::Light => {
-                LightCallbacks.input_value_changed(graph, node_id, input_name)
-            }
-            DamascusNodeTemplate::Primitive => {
+            NodeTemplate::Light => LightCallbacks.input_value_changed(graph, node_id, input_name),
+            NodeTemplate::Primitive => {
                 PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
             }
-            DamascusNodeTemplate::ProceduralTexture => {
+            NodeTemplate::ProceduralTexture => {
                 ProceduralTextureCallbacks.input_value_changed(graph, node_id, input_name)
             }
             _ => {}
@@ -59,23 +62,23 @@ impl NodeCallbacks for DamascusNodeTemplate {
 
 // A trait for the node kinds, which tells the library how to build new nodes
 // from the templates in the node finder
-impl NodeTemplateTrait for DamascusNodeTemplate {
-    type NodeData = DamascusNodeData;
-    type DataType = DamascusDataType;
-    type ValueType = DamascusValueType;
-    type UserState = DamascusGraphState;
+impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
+    type NodeData = NodeData;
+    type DataType = NodeDataType;
+    type ValueType = NodeValueType;
+    type UserState = NodeGraphState;
     type CategoryType = (); // TODO think about adding categories
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusNodeTemplate::Axis => "axis",
-            DamascusNodeTemplate::Camera => "camera",
-            DamascusNodeTemplate::Light => "light",
-            DamascusNodeTemplate::Material => "material",
-            DamascusNodeTemplate::Primitive => "primitive",
-            DamascusNodeTemplate::ProceduralTexture => "procedural texture",
-            DamascusNodeTemplate::RayMarcher => "ray marcher",
-            DamascusNodeTemplate::Scene => "scene",
+            NodeTemplate::Axis => "axis",
+            NodeTemplate::Camera => "camera",
+            NodeTemplate::Light => "light",
+            NodeTemplate::Material => "material",
+            NodeTemplate::Primitive => "primitive",
+            NodeTemplate::ProceduralTexture => "procedural texture",
+            NodeTemplate::RayMarcher => "ray marcher",
+            NodeTemplate::Scene => "scene",
         })
     }
 
@@ -86,262 +89,255 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
     }
 
     fn user_data(&self, _user_state: &mut Self::UserState) -> Self::NodeData {
-        DamascusNodeData { template: *self }
+        NodeData { template: *self }
     }
 
     fn build_node(
         &self,
-        graph: &mut Graph<Self::NodeData, Self::DataType, Self::ValueType, Self::UserState>,
+        graph: &mut Graph,
         _user_state: &mut Self::UserState,
-        node_id: NodeId,
+        node_id: egui_node_graph::NodeId,
     ) {
         // The nodes are created empty by default. This function needs to take
         // care of creating the desired inputs and outputs based on the template
 
         // We define some closures here to avoid boilerplate. Note that this is
         // entirely optional.
-        let input_bool = |graph: &mut DamascusGraph, name: &str, default: Bool| {
+        let input_bool = |graph: &mut Graph, name: &str, default: Bool| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Bool,
-                DamascusValueType::Bool { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::Bool,
+                NodeValueType::Bool { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        let input_bool_vector3 = |graph: &mut DamascusGraph, name: &str, default: BVec3| {
+        let input_bool_vector3 = |graph: &mut Graph, name: &str, default: BVec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::BVec3,
-                DamascusValueType::BVec3 { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::BVec3,
+                NodeValueType::BVec3 { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        let input_combo_box = |graph: &mut DamascusGraph, name: &str, default: ComboBox| {
+        let input_combo_box = |graph: &mut Graph, name: &str, default: ComboBox| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::ComboBox,
-                DamascusValueType::ComboBox { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::ComboBox,
+                NodeValueType::ComboBox { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        // let input_int = |graph: &mut DamascusGraph, name: &str, default: Integer| {
+        // let input_int = |graph: &mut Graph, name: &str, default: Integer| {
         //     graph.add_input_param(
         //         node_id,
         //         name.to_string(),
-        //         DamascusDataType::Integer,
-        //         DamascusValueType::Integer { value: default },
-        //         InputParamKind::ConstantOnly,
+        //         NodeDataType::Integer,
+        //         NodeValueType::Integer { value: default },
+        //         egui_node_graph::InputParamKind::ConstantOnly,
         //         true,
         //     );
         // };
-        let input_uint = |graph: &mut DamascusGraph, name: &str, default: UnsignedInteger| {
+        let input_uint = |graph: &mut Graph, name: &str, default: UnsignedInteger| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::UnsignedInteger,
-                DamascusValueType::UnsignedInteger { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::UnsignedInteger,
+                NodeValueType::UnsignedInteger { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        let input_uint_vector3 = |graph: &mut DamascusGraph, name: &str, default: UVec3| {
+        let input_uint_vector3 = |graph: &mut Graph, name: &str, default: UVec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::UVec3,
-                DamascusValueType::UVec3 { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::UVec3,
+                NodeValueType::UVec3 { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        let input_float = |graph: &mut DamascusGraph, name: &str, default: Float| {
+        let input_float = |graph: &mut Graph, name: &str, default: Float| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Float,
-                DamascusValueType::Float { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::Float,
+                NodeValueType::Float { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        // let input_vector2 = |graph: &mut DamascusGraph, name: &str, default: Vec2| {
+        // let input_vector2 = |graph: &mut Graph, name: &str, default: Vec2| {
         //     graph.add_input_param(
         //         node_id,
         //         name.to_string(),
-        //         DamascusDataType::Vec2,
-        //         DamascusValueType::Vec2 { value: default },
-        //         InputParamKind::ConstantOnly,
+        //         NodeDataType::Vec2,
+        //         NodeValueType::Vec2 { value: default },
+        //         egui_node_graph::InputParamKind::ConstantOnly,
         //         true,
         //     );
         // };
-        let input_vector3 = |graph: &mut DamascusGraph, name: &str, default: Vec3| {
+        let input_vector3 = |graph: &mut Graph, name: &str, default: Vec3| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Vec3,
-                DamascusValueType::Vec3 { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::Vec3,
+                NodeValueType::Vec3 { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        let input_vector4 = |graph: &mut DamascusGraph, name: &str, default: Vec4| {
+        let input_vector4 = |graph: &mut Graph, name: &str, default: Vec4| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Vec4,
-                DamascusValueType::Vec4 { value: default },
-                InputParamKind::ConstantOnly,
+                NodeDataType::Vec4,
+                NodeValueType::Vec4 { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
         };
-        // let input_matrix3 = |graph: &mut DamascusGraph, name: &str, default: Mat3| {
+        // let input_matrix3 = |graph: &mut Graph, name: &str, default: Mat3| {
         //     graph.add_input_param(
         //         node_id,
         //         name.to_string(),
-        //         DamascusDataType::Mat3,
-        //         DamascusValueType::Mat3 { value: default },
-        //         InputParamKind::ConstantOnly,
+        //         NodeDataType::Mat3,
+        //         NodeValueType::Mat3 { value: default },
+        //         egui_node_graph::InputParamKind::ConstantOnly,
         //         true,
         //     );
         // };
-        let input_matrix4 = |graph: &mut DamascusGraph, name: &str, default: Mat4| {
+        let input_matrix4 = |graph: &mut Graph, name: &str, default: Mat4| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Mat4,
-                DamascusValueType::Mat4 { value: default },
-                InputParamKind::ConnectionOrConstant,
+                NodeDataType::Mat4,
+                NodeValueType::Mat4 { value: default },
+                egui_node_graph::InputParamKind::ConnectionOrConstant,
                 true,
             );
         };
-        // let input_image = |graph: &mut DamascusGraph, name: &str, default: ndarray::Array4<f32>| {
+        // let input_image = |graph: &mut Graph, name: &str, default: ndarray::Array4<f32>| {
         //     graph.add_input_param(
         //         node_id,
         //         name.to_string(),
-        //         DamascusDataType::Image,
-        //         DamascusValueType::Image { value: default },
-        //         InputParamKind::ConnectionOnly,
+        //         NodeDataType::Image,
+        //         NodeValueType::Image { value: default },
+        //         egui_node_graph::InputParamKind::ConnectionOnly,
         //         true,
         //     );
         // };
-        let input_camera =
-            |graph: &mut DamascusGraph, name: &str, default: geometry::camera::Camera| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Camera,
-                    DamascusValueType::Camera { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
-        let input_light = |graph: &mut DamascusGraph, name: &str, default: Vec<lights::Light>| {
+        let input_camera = |graph: &mut Graph, name: &str, default: geometry::camera::Camera| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Light,
-                DamascusValueType::Light { value: default },
-                InputParamKind::ConnectionOnly,
+                NodeDataType::Camera,
+                NodeValueType::Camera { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
                 true,
             );
         };
-        let input_material =
-            |graph: &mut DamascusGraph, name: &str, default: materials::Material| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Material,
-                    DamascusValueType::Material { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
+        let input_light = |graph: &mut Graph, name: &str, default: Vec<lights::Light>| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::Light,
+                NodeValueType::Light { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
+        let input_material = |graph: &mut Graph, name: &str, default: materials::Material| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::Material,
+                NodeValueType::Material { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
 
-        let input_primitive =
-            |graph: &mut DamascusGraph, name: &str, default: Vec<geometry::Primitive>| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    DamascusDataType::Primitive,
-                    DamascusValueType::Primitive { value: default },
-                    InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
+        let input_primitive = |graph: &mut Graph, name: &str, default: Vec<geometry::Primitive>| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::Primitive,
+                NodeValueType::Primitive { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
 
         let input_procedural_texture =
-            |graph: &mut DamascusGraph, name: &str, default: materials::ProceduralTexture| {
+            |graph: &mut Graph, name: &str, default: materials::ProceduralTexture| {
                 graph.add_input_param(
                     node_id,
                     name.to_string(),
-                    DamascusDataType::ProceduralTexture,
-                    DamascusValueType::ProceduralTexture { value: default },
-                    InputParamKind::ConnectionOnly,
+                    NodeDataType::ProceduralTexture,
+                    NodeValueType::ProceduralTexture { value: default },
+                    egui_node_graph::InputParamKind::ConnectionOnly,
                     true,
                 );
             };
         // let input_ray_marcher =
-        //     |graph: &mut DamascusGraph, name: &str, default: renderers::RayMarcher| {
+        //     |graph: &mut Graph, name: &str, default: renderers::RayMarcher| {
         //         graph.add_input_param(
         //             node_id,
         //             name.to_string(),
-        //             DamascusDataType::RayMarcher,
-        //             DamascusValueType::RayMarcher { value: default },
-        //             InputParamKind::ConnectionOnly,
+        //             NodeDataType::RayMarcher,
+        //             NodeValueType::RayMarcher { value: default },
+        //             egui_node_graph::InputParamKind::ConnectionOnly,
         //             true,
         //         );
         //     };
-        let input_scene = |graph: &mut DamascusGraph, name: &str, default: scene::Scene| {
+        let input_scene = |graph: &mut Graph, name: &str, default: scene::Scene| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                DamascusDataType::Scene,
-                DamascusValueType::Scene { value: default },
-                InputParamKind::ConnectionOnly,
+                NodeDataType::Scene,
+                NodeValueType::Scene { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
                 true,
             );
         };
 
-        let output_matrix4 = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Mat4);
+        let output_matrix4 = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Mat4);
         };
-        // let output_image = |graph: &mut DamascusGraph, name: &str| {
-        //     graph.add_output_param(node_id, name.to_string(), DamascusDataType::Image);
+        // let output_image = |graph: &mut Graph, name: &str| {
+        //     graph.add_output_param(node_id, name.to_string(), NodeDataType::Image);
         // };
-        let output_camera = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Camera);
+        let output_camera = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Camera);
         };
-        let output_light = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Light);
+        let output_light = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Light);
         };
-        let output_material = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Material);
+        let output_material = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Material);
         };
-        let output_primitive = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Primitive);
+        let output_primitive = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Primitive);
         };
-        let output_procedural_texture = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(
-                node_id,
-                name.to_string(),
-                DamascusDataType::ProceduralTexture,
-            );
+        let output_procedural_texture = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::ProceduralTexture);
         };
-        let output_ray_marcher = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::RayMarcher);
+        let output_ray_marcher = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::RayMarcher);
         };
-        let output_scene = |graph: &mut DamascusGraph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), DamascusDataType::Scene);
+        let output_scene = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Scene);
         };
 
         match self {
-            DamascusNodeTemplate::Axis => {
+            NodeTemplate::Axis => {
                 input_matrix4(
                     graph,
                     "axis",
@@ -374,7 +370,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_matrix4(graph, "out");
             }
-            DamascusNodeTemplate::Camera => {
+            NodeTemplate::Camera => {
                 let default_camera = geometry::camera::Camera::default();
                 input_float(
                     graph,
@@ -449,7 +445,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_camera(graph, "out");
             }
-            DamascusNodeTemplate::Light => {
+            NodeTemplate::Light => {
                 let default_light = lights::Light::default();
                 input_light(graph, "lights", vec![]);
                 input_matrix4(
@@ -551,7 +547,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_light(graph, "out");
             }
-            DamascusNodeTemplate::Material => {
+            NodeTemplate::Material => {
                 let default_material = materials::Material::default();
                 input_vector3(
                     graph,
@@ -725,7 +721,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_material(graph, "out");
             }
-            DamascusNodeTemplate::Primitive => {
+            NodeTemplate::Primitive => {
                 let default_primitive = geometry::Primitive::default();
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
@@ -1248,7 +1244,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_primitive(graph, "out");
             }
-            DamascusNodeTemplate::ProceduralTexture => {
+            NodeTemplate::ProceduralTexture => {
                 let default_procedural_texture = materials::ProceduralTexture::default();
                 input_combo_box(
                     graph,
@@ -1416,7 +1412,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
 
                 output_procedural_texture(graph, "out");
             }
-            DamascusNodeTemplate::RayMarcher => {
+            NodeTemplate::RayMarcher => {
                 let default_ray_marcher = renderers::RayMarcher::default();
                 input_scene(graph, "scene", default_ray_marcher.scene);
                 input_float(
@@ -1584,7 +1580,7 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
                 );
                 output_ray_marcher(graph, "out");
             }
-            DamascusNodeTemplate::Scene => {
+            NodeTemplate::Scene => {
                 let default_scene = scene::Scene::default();
                 input_camera(graph, "render_camera", default_scene.render_camera);
                 input_primitive(graph, "primitives", default_scene.primitives);
@@ -1596,9 +1592,9 @@ impl NodeTemplateTrait for DamascusNodeTemplate {
     }
 }
 
-pub struct AllDamascusNodeTemplates;
-impl NodeTemplateIter for AllDamascusNodeTemplates {
-    type Item = DamascusNodeTemplate;
+pub struct AllNodeTemplates;
+impl egui_node_graph::NodeTemplateIter for AllNodeTemplates {
+    type Item = NodeTemplate;
 
     fn all_kinds(&self) -> Vec<Self::Item> {
         // This function must return a list of node kinds, which the node finder

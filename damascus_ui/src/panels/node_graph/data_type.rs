@@ -8,13 +8,13 @@ use std::borrow::Cow;
 use eframe::egui;
 use egui_node_graph::DataTypeTrait;
 
-use super::DamascusGraphState;
+use super::NodeGraphState;
 
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow
 /// attaching incompatible datatypes.
 #[derive(Clone, PartialEq, Debug, Eq, serde::Serialize, serde::Deserialize)]
-pub enum DamascusDataType {
+pub enum NodeDataType {
     // Base types
     Bool,
     BVec3,
@@ -41,44 +41,44 @@ pub enum DamascusDataType {
 }
 
 // A trait for the data types, to tell the library how to display them
-impl DataTypeTrait<DamascusGraphState> for DamascusDataType {
-    fn data_type_color(&self, _user_state: &mut DamascusGraphState) -> egui::Color32 {
+impl DataTypeTrait<NodeGraphState> for NodeDataType {
+    fn data_type_color(&self, _user_state: &mut NodeGraphState) -> egui::Color32 {
         match self {
-            DamascusDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
-            DamascusDataType::Image => egui::Color32::from_rgb(243, 230, 255),
-            DamascusDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
-            DamascusDataType::Light => egui::Color32::from_rgb(255, 204, 128),
-            DamascusDataType::Material => egui::Color32::from_rgb(255, 102, 0),
-            DamascusDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
-            DamascusDataType::ProceduralTexture => egui::Color32::from_rgb(14, 73, 9),
-            DamascusDataType::RayMarcher => egui::Color32::from_rgb(19, 216, 157),
-            DamascusDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
+            NodeDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
+            NodeDataType::Image => egui::Color32::from_rgb(243, 230, 255),
+            NodeDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
+            NodeDataType::Light => egui::Color32::from_rgb(255, 204, 128),
+            NodeDataType::Material => egui::Color32::from_rgb(255, 102, 0),
+            NodeDataType::Primitive => egui::Color32::from_rgb(38, 109, 211),
+            NodeDataType::ProceduralTexture => egui::Color32::from_rgb(14, 73, 9),
+            NodeDataType::RayMarcher => egui::Color32::from_rgb(19, 216, 157),
+            NodeDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
             _ => egui::Color32::WHITE,
         }
     }
 
     fn name(&self) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            DamascusDataType::Bool => "boolean",
-            DamascusDataType::BVec3 => "3d boolean vector",
-            DamascusDataType::ComboBox => "combo box",
-            DamascusDataType::Integer => "integer",
-            DamascusDataType::UnsignedInteger => "unsigned integer",
-            DamascusDataType::UVec3 => "3d unsigned integer vector",
-            DamascusDataType::Float => "scalar float",
-            DamascusDataType::Vec2 => "2d vector",
-            DamascusDataType::Vec3 => "3d vector",
-            DamascusDataType::Vec4 => "4d vector",
-            DamascusDataType::Mat3 => "3x3 matrix",
-            DamascusDataType::Mat4 => "4x4 matrix",
-            DamascusDataType::Image => "image",
-            DamascusDataType::Camera => "camera",
-            DamascusDataType::Light => "light",
-            DamascusDataType::Material => "material",
-            DamascusDataType::Primitive => "primitive",
-            DamascusDataType::ProceduralTexture => "procedural texture",
-            DamascusDataType::RayMarcher => "ray marcher",
-            DamascusDataType::Scene => "scene",
+            NodeDataType::Bool => "boolean",
+            NodeDataType::BVec3 => "3d boolean vector",
+            NodeDataType::ComboBox => "combo box",
+            NodeDataType::Integer => "integer",
+            NodeDataType::UnsignedInteger => "unsigned integer",
+            NodeDataType::UVec3 => "3d unsigned integer vector",
+            NodeDataType::Float => "scalar float",
+            NodeDataType::Vec2 => "2d vector",
+            NodeDataType::Vec3 => "3d vector",
+            NodeDataType::Vec4 => "4d vector",
+            NodeDataType::Mat3 => "3x3 matrix",
+            NodeDataType::Mat4 => "4x4 matrix",
+            NodeDataType::Image => "image",
+            NodeDataType::Camera => "camera",
+            NodeDataType::Light => "light",
+            NodeDataType::Material => "material",
+            NodeDataType::Primitive => "primitive",
+            NodeDataType::ProceduralTexture => "procedural texture",
+            NodeDataType::RayMarcher => "ray marcher",
+            NodeDataType::Scene => "scene",
         })
     }
 }

@@ -7,15 +7,13 @@ use egui_node_graph::{InputParam, NodeId};
 
 use damascus_core::geometry;
 
-use super::{
-    DamascusDataType, DamascusGraph, DamascusGraphState, DamascusValueType, NodeCallbacks, UIInput,
-};
+use super::{Graph, NodeCallbacks, NodeDataType, NodeGraphState, NodeValueType, UIInput};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct PrimitiveCallbacks;
 
 impl NodeCallbacks for PrimitiveCallbacks {
-    fn input_value_changed(&self, graph: &mut DamascusGraph, node_id: NodeId, input_name: &String) {
+    fn input_value_changed(&self, graph: &mut Graph, node_id: NodeId, input_name: &String) {
         if ![
             "bounding_volume",
             "shape",
@@ -34,12 +32,12 @@ impl NodeCallbacks for PrimitiveCallbacks {
             if let Ok(input_id) = node.get_input(input_name) {
                 if let Some(input_param) = graph.inputs.get(input_id) {
                     let mut blend_type_changed = |blend_type_input: &InputParam<
-                        DamascusDataType,
-                        DamascusValueType,
-                        DamascusGraphState,
+                        NodeDataType,
+                        NodeValueType,
+                        NodeGraphState,
                     >| {
                         match blend_type_input.value() {
-                            DamascusValueType::ComboBox { ref value } => {
+                            NodeValueType::ComboBox { ref value } => {
                                 if let Ok(blend_type) = value.as_enum::<geometry::BlendType>() {
                                     if blend_type >= geometry::BlendType::SmoothUnion {
                                         to_show.push("blend_strength");
@@ -83,7 +81,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
                                 "folding_limit",
                             ]);
                             match input_param.value() {
-                                DamascusValueType::ComboBox { ref value } => {
+                                NodeValueType::ComboBox { ref value } => {
                                     match value.as_enum::<geometry::Shapes>() {
                                         Ok(geometry::Shapes::CappedCone)
                                         | Ok(geometry::Shapes::RoundedCone) => {
@@ -197,7 +195,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             }
                         }
                         "repetition" => match input_param.value() {
-                            DamascusValueType::ComboBox { ref value } => {
+                            NodeValueType::ComboBox { ref value } => {
                                 match value.as_enum::<geometry::Repetition>() {
                                     Ok(geometry::Repetition::Finite) => {
                                         to_show.push("negative_repetitions");
@@ -220,7 +218,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
                         },
                         "blend_type" => blend_type_changed(input_param),
                         "hollow" => match input_param.value() {
-                            DamascusValueType::Bool { ref value } => {
+                            NodeValueType::Bool { ref value } => {
                                 if *value.value() {
                                     to_show.push("wall_thickness");
                                 } else {
@@ -230,7 +228,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             _ => {}
                         },
                         "elongate" => match input_param.value() {
-                            DamascusValueType::Bool { ref value } => {
+                            NodeValueType::Bool { ref value } => {
                                 if *value.value() {
                                     to_show.push("elongation");
                                 } else {
@@ -240,7 +238,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             _ => {}
                         },
                         "bounding_volume" => match input_param.value() {
-                            DamascusValueType::Bool { ref value } => {
+                            NodeValueType::Bool { ref value } => {
                                 if *value.value() {
                                     to_hide.push("blend_strength");
                                     to_hide.push("blend_type");

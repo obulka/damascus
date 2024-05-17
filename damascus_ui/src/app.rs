@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 use std::fs::File;
-use std::io::Write;
+use std::io::{BufReader, Read, Write};
 
 use eframe::egui;
 use egui_modal;
@@ -62,7 +62,7 @@ impl Damascus {
 }
 
 impl eframe::App for Damascus {
-    /// Called by the frame work to save state before shutdown.
+    /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, PERSISTENCE_KEY, &self.state);
     }
@@ -72,11 +72,11 @@ impl eframe::App for Damascus {
         if ctx.input(|i| {
             i.key_pressed(egui::Key::N) && i.modifiers.matches_logically(egui::Modifiers::CTRL)
         }) {
-            if let Some(storage) = frame.storage_mut() {
-                self.state = DamascusEditorState::default();
-                self.user_state = DamascusGraphState::default();
-                self.save(storage);
-            }
+            self.state = DamascusEditorState::default();
+            self.user_state = DamascusGraphState::default();
+            // if let Some(storage) = frame.storage_mut() {
+            //     self.save(storage);
+            // }
         }
         let mut modal =
             egui_modal::Modal::new(ctx, "error_dialog_modal").with_style(&egui_modal::ModalStyle {
@@ -93,7 +93,44 @@ impl eframe::App for Damascus {
                             load_file = Some(path.display().to_string());
                         }
                         if let Some(file_path) = load_file {
-                            println!("Loading: {:?}", file_path);
+                            match File::open(&file_path) {
+                                Ok(file) => {
+                                    let mut buf_reader = BufReader::new(file);
+                                    let mut contents = String::new();
+                                    match buf_reader.read_to_string(&mut contents) {
+                                        Ok(_) => match serde_yaml::from_str(&contents) {
+                                            Ok(state) => {
+                                                self.state = state;
+                                                self.user_state = DamascusGraphState::default();
+                                            }
+                                            Err(err) => {
+                                                dialog::error(
+                                                    &modal,
+                                                    "Deserialization Error",
+                                                    &format!(
+                                                        "Could not load node graph from {:?}",
+                                                        err
+                                                    ),
+                                                );
+                                            }
+                                        },
+                                        Err(_) => {
+                                            dialog::error(
+                                                &modal,
+                                                "File Read Error",
+                                                &format!("Could not read file from {:}", file_path),
+                                            );
+                                        }
+                                    }
+                                }
+                                Err(_) => {
+                                    dialog::error(
+                                        &modal,
+                                        "File Open Error",
+                                        &format!("Could not open file from {:}", file_path),
+                                    );
+                                }
+                            }
                         }
                         ui.close_menu();
                     }
@@ -104,7 +141,7 @@ impl eframe::App for Damascus {
                         }
                         if let Some(file_path) = save_file {
                             match File::create(&file_path) {
-                                Ok(mut file) => match serde_yaml::to_string(&self.state.graph) {
+                                Ok(mut file) => match serde_yaml::to_string(&self.state) {
                                     Ok(serialization) => {
                                         match file.write_all(serialization.as_bytes()) {
                                             Ok(_) => {

@@ -20,10 +20,6 @@ Simply clone the repo and run `cargo run --release` to build and launch the appl
 
 ### Usage
 
-Right click in the node graph panel to bring up the node selection dialog. Once a node is placed you can middle click and drag to pan over the node graph.
+If this is your first time using the application, you can go to `file->load` in the toolbar and load the scene at `assets/basic_scene.dm`. Click `Set active` on the `ray marcher` node to view the scene. You can middle click and drag to pan over the node graph, and scroll to zoom in and out. Click and drag on the background to box-select nodes, and you can hold down `shift` to expand the current selection. You can then drag the selected nodes around. The `delete` key will remove all selected nodes. `ctrl+c` to copy the selected nodes, and `ctrl+V` to paste. `ctrl+N` will clear the scene. If any node prior to the `scene` node is selected you can pan the camera by left/middle clicking and dragging, and rotate the camera with right click and drag. You can scroll the mouse wheel over the viewer to move the camera in and out. 
 
-If this is your first time using the application the following is a very minimal scene that you can copy as a starting point. Note that the only value that was changed from the default was the z component of the translation on the camera's axis node. If you do not change this, the camera will be inside of the primitive sphere, while the directional light shines from outside, resulting in nothing but black, which is not particularly exciting.
-
-![minimal](https://github.com/obulka/damascus/assets/21975584/5221d94d-1d9f-47f4-a3cf-2f9b932c889b)
-
-Now try playing with the various parameters, such as the "shape" on the primitive node, and "light_type" on the light node. Hover over the parameter labels to see a tooltip describing the function of the parameter. Then you can also try adding more nodes, such as a material for the primitive, or an axis to move it. Child primitives combined with the various blend types can result in interesting shapes. Have fun!
+Now try playing with the various parameters, such as the `shape` on the primitive node, and `light_type` on the light node. Hover over the parameter labels to see a tooltip describing the function of the parameter. Then you can also try adding more nodes, such as a new `primitive`. Right click in the node graph panel to bring up the node selection dialog. Plug the new `primitive` into the existing one's `children` input and use the various `blend_type`s to create interesting composite shapes.

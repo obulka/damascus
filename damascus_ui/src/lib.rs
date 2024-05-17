@@ -9,6 +9,7 @@
 
 mod app;
 mod panels;
+mod toolbar;
 mod widgets;
 
 pub use app::Damascus;

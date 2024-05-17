@@ -4,11 +4,8 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
 
 use eframe::egui;
-use egui_modal;
 use egui_node_graph::NodeResponse;
 
 use damascus_core::{
@@ -23,7 +20,7 @@ use super::panels::{
     },
     viewport_3d::Viewport3d,
 };
-use super::widgets::dialog;
+use super::toolbar::show_toolbar;
 
 pub struct Damascus {
     node_graph: NodeGraph,
@@ -56,142 +53,8 @@ impl eframe::App for Damascus {
         }) {
             self.node_graph.clear();
         }
-        let mut modal =
-            egui_modal::Modal::new(ctx, "error_dialog_modal").with_style(&egui_modal::ModalStyle {
-                ..Default::default()
-            });
-        modal.show_dialog();
 
-        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                ui.menu_button("File", |ui| {
-                    if ui.button("load").clicked() {
-                        let mut load_file: Option<String> = None;
-                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                            load_file = Some(path.display().to_string());
-                        }
-                        if let Some(file_path) = load_file {
-                            match File::open(&file_path) {
-                                Ok(file) => {
-                                    let mut buf_reader = BufReader::new(file);
-                                    let mut contents = String::new();
-                                    match buf_reader.read_to_string(&mut contents) {
-                                        Ok(_) => match serde_yaml::from_str(&contents) {
-                                            Ok(state) => {
-                                                self.node_graph.set_editor_state(state);
-                                            }
-                                            Err(err) => {
-                                                dialog::error(
-                                                    &modal,
-                                                    "Deserialization Error",
-                                                    &format!(
-                                                        "Could not load node graph from {:?}",
-                                                        err
-                                                    ),
-                                                );
-                                            }
-                                        },
-                                        Err(_) => {
-                                            dialog::error(
-                                                &modal,
-                                                "File Read Error",
-                                                &format!("Could not read file from {:}", file_path),
-                                            );
-                                        }
-                                    }
-                                }
-                                Err(_) => {
-                                    dialog::error(
-                                        &modal,
-                                        "File Open Error",
-                                        &format!("Could not open file from {:}", file_path),
-                                    );
-                                }
-                            }
-                        }
-                        ui.close_menu();
-                    }
-                    if ui.button("save").clicked() {
-                        let mut save_file: Option<String> = None;
-                        if let Some(path) = rfd::FileDialog::new().pick_file() {
-                            save_file = Some(path.display().to_string());
-                        }
-                        if let Some(file_path) = save_file {
-                            match File::create(&file_path) {
-                                Ok(mut file) => {
-                                    match serde_yaml::to_string(self.node_graph.editor_state()) {
-                                        Ok(serialization) => {
-                                            match file.write_all(serialization.as_bytes()) {
-                                                Ok(_) => {
-                                                    dialog::success(
-                                                        &modal,
-                                                        "Success",
-                                                        &format!("File saved at {:}", file_path),
-                                                    );
-                                                }
-                                                Err(_) => {
-                                                    dialog::error(
-                                                        &modal,
-                                                        "File Write Error",
-                                                        &format!(
-                                                            "Could not save file at {:}",
-                                                            file_path
-                                                        ),
-                                                    );
-                                                }
-                                            }
-                                        }
-                                        Err(_) => {
-                                            dialog::error(
-                                                &modal,
-                                                "Node Graph Serialization Error",
-                                                &format!("Could not save file at {:}", file_path),
-                                            );
-                                        }
-                                    }
-                                }
-                                Err(_) => {
-                                    dialog::error(
-                                        &modal,
-                                        "File Creation Error",
-                                        &format!("Could not save file at {:}", file_path),
-                                    );
-                                }
-                            }
-                        }
-                        ui.close_menu();
-                    }
-                    // ui.menu_button("SubMenu", |ui| {
-                    //     ui.menu_button("SubMenu", |ui| {
-                    //         if ui.button("Open...").clicked() {
-                    //             ui.close_menu();
-                    //         }
-                    //         let _ = ui.button("Item");
-                    //     });
-                    //     ui.menu_button("SubMenu", |ui| {
-                    //         if ui.button("Open...").clicked() {
-                    //             ui.close_menu();
-                    //         }
-                    //         let _ = ui.button("Item");
-                    //     });
-                    //     let _ = ui.button("Item");
-                    //     if ui.button("Open...").clicked() {
-                    //         ui.close_menu();
-                    //     }
-                    // });
-                    // ui.menu_button("SubMenu", |ui| {
-                    //     let _ = ui.button("Item1");
-                    //     let _ = ui.button("Item2");
-                    //     let _ = ui.button("Item3");
-                    //     let _ = ui.button("Item4");
-                    //     if ui.button("Open...").clicked() {
-                    //         ui.close_menu();
-                    //     }
-                    // });
-                    // let _ = ui.button("Very long text for this item");
-                });
-            });
-        });
+        show_toolbar(ctx, &mut self.node_graph);
 
         let graph_response = self.node_graph.show(ctx);
 

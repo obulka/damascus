@@ -2,7 +2,7 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
-use egui_node_graph::{GraphEditorState, NodeId};
+use egui_node_graph::{GraphEditorState, NodeId, UserStateTrait};
 
 use super::{NodeData, NodeDataType, NodeTemplate, NodeValueType};
 
@@ -13,6 +13,8 @@ use super::{NodeData, NodeDataType, NodeTemplate, NodeValueType};
 pub struct NodeGraphState {
     pub active_node: Option<NodeId>,
 }
+
+impl UserStateTrait for NodeGraphState {}
 
 pub type NodeGraphEditorState =
     GraphEditorState<NodeData, NodeDataType, NodeValueType, NodeTemplate, NodeGraphState>;

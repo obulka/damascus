@@ -70,9 +70,6 @@ impl eframe::App for Damascus {
                     }
                     NodeGraphResponse::ClearActiveNode => {
                         self.node_graph.user_state_mut().active_node = None;
-                        if let Some(viewport_3d) = &mut self.viewport_3d {
-                            viewport_3d.disable();
-                        }
                     }
                     NodeGraphResponse::InputValueChanged(node_id, node_template, input_name) => {
                         // Perform callbacks when inputs have changed
@@ -116,8 +113,6 @@ impl eframe::App for Damascus {
                 };
                 if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
                     match value_type {
-                        // NodeValueType::Mat4 { value } => {}
-                        // NodeValueType::Image { value } => {}
                         NodeValueType::Camera { value } => {
                             viewport_3d.renderer.reset_render_parameters();
                             viewport_3d.renderer.scene.render_camera = value;
@@ -168,9 +163,11 @@ impl eframe::App for Damascus {
                 }
             } else {
                 self.node_graph.user_state_mut().active_node = None;
-                if let Some(viewport_3d) = &mut self.viewport_3d {
-                    viewport_3d.pause();
-                }
+            }
+        }
+        if self.node_graph.user_state().active_node.is_none() {
+            if let Some(viewport_3d) = &mut self.viewport_3d {
+                viewport_3d.disable();
             }
         }
 

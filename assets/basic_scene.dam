@@ -6700,58 +6700,58 @@ node_positions:
 - value: null
   version: 0
 - value:
-    x: 1333.572
-    y: -61.604614
+    x: 953.6863
+    y: 34.880905
   version: 3
 - value:
-    x: 1048.4265
-    y: 13.734192
+    x: 780.7369
+    y: 80.57623
   version: 3
 - value:
-    x: 771.3644
-    y: -50.594543
+    x: 612.6903
+    y: 41.55887
   version: 3
 - value:
-    x: 1726.4617
-    y: 182.26099
+    x: 1191.9861
+    y: 182.79294
   version: 1
 - value:
-    x: 1914.8278
-    y: 117.808716
+    x: 1306.2354
+    y: 143.70059
   version: 1
 - value:
-    x: 1341.0967
-    y: 193.9943
+    x: 958.2503
+    y: 189.90953
   version: 1
 - value:
-    x: 1345.6233
-    y: 581.8655
+    x: 960.9958
+    y: 425.16534
   version: 1
 - value:
-    x: 1312.601
-    y: 907.5979
+    x: 940.96674
+    y: 622.7322
   version: 1
 - value:
-    x: 1032.8799
-    y: 910.195
+    x: 771.3074
+    y: 624.3071
   version: 1
 - value:
-    x: 985.37054
-    y: 664.424
+    x: 742.4915
+    y: 475.23972
   version: 1
 - value:
-    x: 925.5736
-    y: 179.8096
+    x: 706.22266
+    y: 181.30609
   version: 1
 - value:
-    x: 553.25244
-    y: 179.72858
+    x: 480.3984
+    y: 181.25694
   version: 1
 node_finder: null
 pan_zoom:
   pan:
-    x: -345.88184
-    y: -19.008545
-  zoom: 0.9048365
+    x: 35.225098
+    y: -32.843872
+  zoom: 0.54881126
   enable_zoom_from_out_of_rect: false
 _user_state: null

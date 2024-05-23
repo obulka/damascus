@@ -3,7 +3,7 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 use eframe::egui;
-use egui_node_graph::GraphResponse;
+use egui_node_graph::{GraphResponse, NodeResponse};
 
 mod data_type;
 mod graph;
@@ -94,11 +94,49 @@ impl NodeGraph {
                     self.editor_state.reset_zoom(ui);
                 }
 
+                let mut copy_selected: bool = false;
+                let mut pasted = String::new();
+
+                ui.ctx().input(|input| {
+                    for event in input.events.iter() {
+                        match event {
+                            egui::Event::Copy => {
+                                // App freezes if we set copied_text here, so flag and do it later
+                                copy_selected = true;
+                            }
+                            egui::Event::Paste(text) => {
+                                // App freezes if we paste here, so clone the text and do it later
+                                pasted = text.to_string();
+                            }
+                            _ => {}
+                        }
+                    }
+                });
+
+                let mut responses = vec![];
+
+                if copy_selected {
+                    if let Ok(serialized_state) =
+                        serde_json::to_string_pretty(&self.editor_state.from_selected())
+                    {
+                        ui.output_mut(|output| {
+                            output.copied_text = serialized_state;
+                        });
+                    }
+                } else if !pasted.is_empty() {
+                    if let Ok(mut deserialized_editor_state) = serde_json::from_str(&pasted) {
+                        let new_nodes = self.editor_state.merge(ui, &mut deserialized_editor_state);
+                        for node_id in new_nodes.into_iter() {
+                            responses.push(NodeResponse::CreatedNode(node_id));
+                        }
+                    }
+                }
+
                 self.editor_state.draw_graph_editor(
                     ui,
                     AllNodeTemplates,
                     &mut self.user_state,
-                    Vec::default(),
+                    responses,
                 )
             })
             .inner;

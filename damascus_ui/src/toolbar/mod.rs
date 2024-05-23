@@ -41,7 +41,7 @@ pub fn show_toolbar(ctx: &egui::Context, node_graph: &mut NodeGraph) {
                             );
                             return;
                         };
-                        let Ok(state) = serde_yaml::from_str(&contents) else {
+                        let Ok(state) = serde_json::from_str(&contents) else {
                             dialog::error(
                                 &modal,
                                 "Deserialization Error",
@@ -66,7 +66,8 @@ pub fn show_toolbar(ctx: &egui::Context, node_graph: &mut NodeGraph) {
                             );
                             return;
                         };
-                        let Ok(serialization) = serde_yaml::to_string(node_graph.editor_state())
+                        let Ok(serialization) =
+                            serde_json::to_string_pretty(node_graph.editor_state())
                         else {
                             dialog::error(
                                 &modal,

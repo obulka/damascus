@@ -22,7 +22,13 @@ use super::panels::{
 };
 use super::toolbar::show_toolbar;
 
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct Context {
+    pub file_path: Option<String>,
+}
+
 pub struct Damascus {
+    context: Context,
     node_graph: NodeGraph,
     viewport_3d: Option<Viewport3d>,
 }
@@ -34,6 +40,7 @@ impl Damascus {
     /// Load previous app state (if any).
     pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
         Self {
+            context: Context::default(),
             node_graph: NodeGraph::new(creation_context, PERSISTENCE_KEY),
             viewport_3d: Viewport3d::new(creation_context),
         }
@@ -45,6 +52,11 @@ impl eframe::App for Damascus {
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
         eframe::set_value(storage, PERSISTENCE_KEY, self.node_graph.editor_state());
     }
+
+    fn auto_save_interval(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(10)
+    }
+
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -54,7 +66,7 @@ impl eframe::App for Damascus {
             self.node_graph.clear();
         }
 
-        show_toolbar(ctx, &mut self.node_graph);
+        show_toolbar(ctx, &mut self.context, &mut self.node_graph);
 
         let graph_response = self.node_graph.show(ctx);
 

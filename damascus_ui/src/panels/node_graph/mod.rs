@@ -68,7 +68,9 @@ impl NodeGraph {
         let window_rect: egui::Rect =
             ctx.input(|input| input.viewport().inner_rect.unwrap_or(egui::Rect::ZERO));
         let window_width = window_rect.max.x - window_rect.min.x;
+        let window_height = window_rect.max.y - window_rect.min.y;
         let mut right_panel_width: f32 = 0.;
+        let mut panel_height: f32 = window_height;
         egui::SidePanel::right("right")
             .resizable(true)
             .show_separator_line(false)
@@ -77,6 +79,7 @@ impl NodeGraph {
             .show(ctx, |ui| {
                 let (_id, rect) = ui.allocate_space(ui.available_size());
                 right_panel_width = rect.max.x - rect.min.x;
+                panel_height = rect.max.y - rect.min.y;
                 self.editor_state.graph_editor_interaction(ui);
                 if ui.rect_contains_pointer(ui.max_rect()) {
                     self.editor_state.pan_zoom.enable_zoom_from_out_of_rect = true;
@@ -97,8 +100,16 @@ impl NodeGraph {
         let graph_response = egui::TopBottomPanel::bottom("bottom")
             .resizable(true)
             .default_height(300.0)
+            .max_height(panel_height - Self::MIN_PANEL_GAP * 0.5625)
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
+                ui.set_clip_rect(egui::Rect {
+                    min: egui::Pos2::new(
+                        0.,
+                        window_height - panel_height - 4., // Not sure where this 4 offset comes from
+                    ),
+                    max: egui::Pos2::new(window_width, window_height),
+                });
                 if ui.ctx().input(|input| input.key_pressed(egui::Key::F)) {
                     self.editor_state.reset_zoom(ui);
                 }

@@ -517,7 +517,12 @@ impl Viewport3d {
 
         if self.disabled {
             ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.label(hud_string + " - viewer disabled, activate a node to enable it");
+                ui.add(
+                    egui::Label::new(
+                        hud_string + " - viewer disabled, activate a node to enable it",
+                    )
+                    .truncate(true),
+                );
             });
             return;
         }
@@ -557,7 +562,10 @@ impl Viewport3d {
         if self.render_state.paused {
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
-            ui.label(hud_string + " - viewer paused, press the spacebar to resume");
+            ui.add(
+                egui::Label::new(hud_string + " - viewer paused, press the spacebar to resume")
+                    .truncate(true),
+            );
             return;
         }
 
@@ -576,7 +584,7 @@ impl Viewport3d {
             } else {
                 self.render_state.frame_counter += 1;
             }
-            ui.label(hud_string);
+            ui.add(egui::Label::new(hud_string).truncate(true));
         }
 
         self.render_state.paths_rendered_per_pixel += 1;

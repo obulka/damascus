@@ -25,6 +25,8 @@ pub struct NodeGraph {
 }
 
 impl NodeGraph {
+    const MIN_PANEL_GAP: f32 = 100.;
+
     pub fn new(creation_context: &eframe::CreationContext<'_>, persistence_key: &str) -> Self {
         let editor_state: NodeGraphEditorState = creation_context
             .storage
@@ -63,12 +65,18 @@ impl NodeGraph {
     }
 
     pub fn show(&mut self, ctx: &egui::Context) -> GraphResponse<NodeGraphResponse, NodeData> {
+        let window_rect: egui::Rect =
+            ctx.input(|input| input.viewport().inner_rect.unwrap_or(egui::Rect::ZERO));
+        let window_width = window_rect.max.x - window_rect.min.x;
+        let mut right_panel_width: f32 = 0.;
         egui::SidePanel::right("right")
             .resizable(true)
             .show_separator_line(false)
             .default_width(0.)
+            .max_width(window_width - Self::MIN_PANEL_GAP)
             .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
+                let (_id, rect) = ui.allocate_space(ui.available_size());
+                right_panel_width = rect.max.x - rect.min.x;
                 self.editor_state.graph_editor_interaction(ui);
                 if ui.rect_contains_pointer(ui.max_rect()) {
                     self.editor_state.pan_zoom.enable_zoom_from_out_of_rect = true;
@@ -78,6 +86,7 @@ impl NodeGraph {
             .resizable(true)
             .show_separator_line(false)
             .default_width(0.)
+            .max_width(window_width - right_panel_width - Self::MIN_PANEL_GAP)
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
                 self.editor_state.graph_editor_interaction(ui);
@@ -90,7 +99,7 @@ impl NodeGraph {
             .default_height(300.0)
             .show(ctx, |ui| {
                 ui.allocate_space(ui.available_size());
-                if ui.ctx().input(|i| i.key_pressed(egui::Key::F)) {
+                if ui.ctx().input(|input| input.key_pressed(egui::Key::F)) {
                     self.editor_state.reset_zoom(ui);
                 }
 

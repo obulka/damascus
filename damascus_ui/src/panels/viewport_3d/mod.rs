@@ -495,7 +495,7 @@ impl Viewport3d {
                 -0.0015 * response.drag_delta().x,
                 0.0015 * response.drag_delta().y,
                 if response.hovered() {
-                    -0.015 * ui.input(|i| i.smooth_scroll_delta.y)
+                    -0.015 * ui.input(|input| input.smooth_scroll_delta.y)
                 } else {
                     0.
                 },
@@ -524,7 +524,7 @@ impl Viewport3d {
 
         ui.ctx().request_repaint();
 
-        if ui.input(|i| i.key_pressed(egui::Key::Space)) {
+        if ui.input(|input| input.key_pressed(egui::Key::Space)) {
             self.render_state.paused = !self.render_state.paused;
         }
 

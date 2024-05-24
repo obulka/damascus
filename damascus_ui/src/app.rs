@@ -24,7 +24,7 @@ use super::toolbar::show_toolbar;
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Context {
-    pub file_path: Option<String>,
+    pub working_file: Option<String>,
 }
 
 pub struct Damascus {
@@ -60,8 +60,17 @@ impl eframe::App for Damascus {
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        if ctx.input(|i| {
-            i.key_pressed(egui::Key::N) && i.modifiers.matches_logically(egui::Modifiers::CTRL)
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(
+            if let Some(working_file) = &self.context.working_file {
+                format!("damascus - {:}", working_file)
+            } else {
+                "damascus".to_owned()
+            },
+        ));
+
+        if ctx.input(|input| {
+            input.key_pressed(egui::Key::N)
+                && input.modifiers.matches_logically(egui::Modifiers::CTRL)
         }) {
             self.node_graph.clear();
         }

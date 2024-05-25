@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use eframe::egui;
+use eframe::egui::NumExt;
 use egui_node_graph::NodeResponse;
 
 use damascus_core::{
@@ -192,14 +193,28 @@ impl eframe::App for Damascus {
             }
         }
 
-        egui::CentralPanel::default()
-            .frame(egui::Frame::default())
+        let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
+        let default_width: f32 = (screen_size.x - 32.).at_most(720.);
+
+        egui::Window::new("viewer")
+            .default_width(default_width)
+            .default_height(default_width * 0.5625)
+            .max_width((screen_size.x * 0.9).min(8192.))
+            .max_height((screen_size.y * 0.9).min(8192.))
+            .resizable(true)
+            .movable(true)
+            .constrain(true)
             .show(ctx, |ui| {
-                egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        viewport_3d.custom_painting(ui);
-                    }
-                });
+                egui::Frame::canvas(ui.style())
+                    .outer_margin(2.)
+                    .show(ui, |ui| {
+                        if let Some(viewport_3d) = &mut self.viewport_3d {
+                            viewport_3d.custom_painting(ui);
+                        }
+                    });
+                if let Some(viewport_3d) = &self.viewport_3d {
+                    ui.add(egui::Label::new(&viewport_3d.stats_text).truncate(true));
+                }
             });
     }
 }

@@ -29,6 +29,7 @@ pub struct Viewport3d {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
+    pub stats_text: String,
     disabled: bool,
     camera_controls_enabled: bool,
     render_state: RenderState,
@@ -43,6 +44,7 @@ impl Viewport3d {
             renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
+            stats_text: String::new(),
             disabled: true,
             camera_controls_enabled: true,
             render_state: RenderState::default(),
@@ -505,9 +507,13 @@ impl Viewport3d {
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        let (rect, response) = ui.allocate_exact_size(ui.available_size(), egui::Sense::drag());
+        let mut available_size: egui::Vec2 = ui.available_size().round();
+        available_size.y -= 50.;
+        let (mut rect, response) = ui.allocate_exact_size(available_size, egui::Sense::drag());
+        rect.min = rect.min.round();
+        rect.max = rect.max.round();
 
-        let hud_string = format!(
+        self.stats_text = format!(
             "{:} paths @ {:.2} fps @ {:.0}x{:.0}",
             self.render_state.paths_rendered_per_pixel,
             self.render_state.fps,
@@ -516,14 +522,7 @@ impl Viewport3d {
         );
 
         if self.disabled {
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                ui.add(
-                    egui::Label::new(
-                        hud_string + " - viewer disabled, activate a node to enable it",
-                    )
-                    .truncate(true),
-                );
-            });
+            self.stats_text += " - viewer disabled, activate a node to enable it";
             return;
         }
 
@@ -562,10 +561,7 @@ impl Viewport3d {
         if self.render_state.paused {
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
-            ui.add(
-                egui::Label::new(hud_string + " - viewer paused, press the spacebar to resume")
-                    .truncate(true),
-            );
+            self.stats_text += " - viewer paused, press the spacebar to resume";
             return;
         }
 
@@ -584,7 +580,6 @@ impl Viewport3d {
             } else {
                 self.render_state.frame_counter += 1;
             }
-            ui.add(egui::Label::new(hud_string).truncate(true));
         }
 
         self.render_state.paths_rendered_per_pixel += 1;

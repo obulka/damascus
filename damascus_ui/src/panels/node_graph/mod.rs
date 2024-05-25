@@ -25,8 +25,6 @@ pub struct NodeGraph {
 }
 
 impl NodeGraph {
-    const MIN_PANEL_GAP: f32 = 100.;
-
     pub fn new(creation_context: &eframe::CreationContext<'_>, persistence_key: &str) -> Self {
         let editor_state: NodeGraphEditorState = creation_context
             .storage
@@ -65,51 +63,12 @@ impl NodeGraph {
     }
 
     pub fn show(&mut self, ctx: &egui::Context) -> GraphResponse<NodeGraphResponse, NodeData> {
-        let window_rect: egui::Rect =
-            ctx.input(|input| input.viewport().inner_rect.unwrap_or(egui::Rect::ZERO));
-        let window_width = window_rect.max.x - window_rect.min.x;
-        let window_height = window_rect.max.y - window_rect.min.y;
-        let mut right_panel_width: f32 = 0.;
-        let mut panel_height: f32 = window_height;
-        egui::SidePanel::right("right")
-            .resizable(true)
-            .show_separator_line(false)
-            .default_width(0.)
-            .max_width(window_width - Self::MIN_PANEL_GAP)
+        egui::CentralPanel::default()
             .show(ctx, |ui| {
-                let (_id, rect) = ui.allocate_space(ui.available_size());
-                right_panel_width = rect.max.x - rect.min.x;
-                panel_height = rect.max.y - rect.min.y;
-                self.editor_state.graph_editor_interaction(ui);
-                if ui.rect_contains_pointer(ui.max_rect()) {
-                    self.editor_state.pan_zoom.enable_zoom_from_out_of_rect = true;
-                }
-            });
-        egui::SidePanel::left("left")
-            .resizable(true)
-            .show_separator_line(false)
-            .default_width(0.)
-            .max_width(window_width - right_panel_width - Self::MIN_PANEL_GAP)
-            .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
-                self.editor_state.graph_editor_interaction(ui);
-                if ui.rect_contains_pointer(ui.max_rect()) {
-                    self.editor_state.pan_zoom.enable_zoom_from_out_of_rect = true;
-                }
-            });
-        let graph_response = egui::TopBottomPanel::bottom("bottom")
-            .resizable(true)
-            .default_height(300.0)
-            .max_height(panel_height - Self::MIN_PANEL_GAP * 0.5625)
-            .show(ctx, |ui| {
-                ui.allocate_space(ui.available_size());
-                ui.set_clip_rect(egui::Rect {
-                    min: egui::Pos2::new(
-                        0.,
-                        window_height - panel_height - 4., // Not sure where this 4 offset comes from
-                    ),
-                    max: egui::Pos2::new(window_width, window_height),
-                });
+                let (_id, mut rect) = ui.allocate_space(ui.available_size());
+                rect.min.y -= 8.;
+                ui.set_clip_rect(rect);
+
                 if ui.ctx().input(|input| input.key_pressed(egui::Key::F)) {
                     self.editor_state.reset_zoom(ui);
                 }
@@ -159,9 +118,6 @@ impl NodeGraph {
                     responses,
                 )
             })
-            .inner;
-        self.editor_state.pan_zoom.enable_zoom_from_out_of_rect = false;
-
-        graph_response
+            .inner
     }
 }

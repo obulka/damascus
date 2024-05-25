@@ -6,7 +6,6 @@
 use std::collections::HashMap;
 
 use eframe::egui;
-use eframe::egui::NumExt;
 use egui_node_graph::NodeResponse;
 
 use damascus_core::{
@@ -194,13 +193,13 @@ impl eframe::App for Damascus {
         }
 
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-        let default_width: f32 = (screen_size.x - 32.).at_most(720.);
+        let default_width: f32 = (screen_size.x - 32.).min(720.);
 
         egui::Window::new("viewer")
             .default_width(default_width)
-            .default_height(default_width * 0.5625)
-            .max_width((screen_size.x * 0.9).min(8192.))
-            .max_height((screen_size.y * 0.9).min(8192.))
+            .default_height((default_width * 0.5625).round())
+            .max_width((screen_size.x * 0.9).round().min(8192.))
+            .max_height((screen_size.y * 0.9).round().min(8192.))
             .resizable(true)
             .movable(true)
             .constrain(true)

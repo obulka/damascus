@@ -478,7 +478,7 @@ impl Viewport3d {
         })
     }
 
-    fn update_camera(&mut self, ui: &mut egui::Ui, rect: &egui::Rect, response: &egui::Response) {
+    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         self.renderer.scene.render_camera.aspect_ratio =
             (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
         if !self.camera_controls_enabled {
@@ -511,8 +511,6 @@ impl Viewport3d {
             ui.available_size().round() - egui::Vec2::splat(17.),
             egui::Sense::drag(),
         );
-        rect.min = rect.min.round();
-        rect.max = rect.max.round();
 
         self.stats_text = format!(
             "{:} paths @ {:.2} fps @ {:.0}x{:.0}",

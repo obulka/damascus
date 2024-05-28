@@ -193,24 +193,21 @@ impl eframe::App for Damascus {
         }
 
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-        let default_width: f32 = (screen_size.x - 32.).min(720.);
 
         egui::Window::new("viewer")
-            .default_width(default_width)
-            .default_height((default_width * 0.5625).round())
+            .default_width(720.)
+            .default_height(405.)
             .max_width((screen_size.x * 0.9).round().min(8192.))
             .max_height((screen_size.y * 0.9).round().min(8192.))
             .resizable(true)
             .movable(true)
             .constrain(true)
             .show(ctx, |ui| {
-                egui::Frame::canvas(ui.style())
-                    .outer_margin(2.)
-                    .show(ui, |ui| {
-                        if let Some(viewport_3d) = &mut self.viewport_3d {
-                            viewport_3d.custom_painting(ui);
-                        }
-                    });
+                egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                    if let Some(viewport_3d) = &mut self.viewport_3d {
+                        viewport_3d.custom_painting(ui);
+                    }
+                });
                 if let Some(viewport_3d) = &self.viewport_3d {
                     ui.add(egui::Label::new(&viewport_3d.stats_text).truncate(true));
                 }

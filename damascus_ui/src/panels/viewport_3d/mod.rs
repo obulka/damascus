@@ -507,7 +507,7 @@ impl Viewport3d {
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        let (mut rect, response) = ui.allocate_at_least(
+        let (rect, response) = ui.allocate_at_least(
             ui.available_size().round() - egui::Vec2::splat(17.),
             egui::Sense::drag(),
         );

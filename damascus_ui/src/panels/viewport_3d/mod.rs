@@ -128,6 +128,7 @@ impl Viewport3d {
     }
 
     pub fn disable(&mut self) {
+        self.pause();
         self.disabled = true;
     }
 
@@ -135,12 +136,28 @@ impl Viewport3d {
         self.disabled = false;
     }
 
+    pub fn enabled(&mut self) -> bool {
+        !self.disabled
+    }
+
     pub fn pause(&mut self) {
         self.render_state.paused = true;
     }
 
     pub fn play(&mut self) {
-        self.render_state.paused = false;
+        if !self.disabled {
+            self.render_state.paused = false;
+        }
+    }
+
+    pub fn toggle_play_pause(&mut self) {
+        if !self.disabled {
+            self.render_state.paused = !self.render_state.paused;
+        }
+    }
+
+    pub fn paused(&self) -> bool {
+        self.render_state.paused
     }
 
     pub fn disable_camera_controls(&mut self) {
@@ -508,10 +525,9 @@ impl Viewport3d {
     }
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
-        let (rect, response) = ui.allocate_at_least(
-            ui.available_size().round() - egui::Vec2::splat(17.),
-            egui::Sense::drag(),
-        );
+        let mut available_size: egui::Vec2 = ui.available_size().round();
+        available_size.y -= 100.;
+        let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
         self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
             .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
@@ -532,7 +548,7 @@ impl Viewport3d {
         ui.ctx().request_repaint();
 
         if ui.input(|input| input.key_pressed(egui::Key::Space)) {
-            self.render_state.paused = !self.render_state.paused;
+            self.toggle_play_pause();
         }
 
         self.update_camera(ui, &rect, &response);
@@ -564,7 +580,6 @@ impl Viewport3d {
         if self.render_state.paused {
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
-            self.stats_text += " - viewer paused, press the spacebar to resume";
             return;
         }
 

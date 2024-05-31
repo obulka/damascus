@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use eframe::egui;
+use eframe::egui::{self, include_image};
 use egui_node_graph::NodeResponse;
 
 use damascus_core::{
@@ -217,7 +217,26 @@ impl eframe::App for Damascus {
                         viewport_3d.custom_painting(ui);
                     }
                 });
-                if let Some(viewport_3d) = &self.viewport_3d {
+                if let Some(viewport_3d) = &mut self.viewport_3d {
+                    let style = ui.style_mut();
+                    style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
+                    style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
+                    style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
+                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                        let pause_icon = egui::Image::new(if viewport_3d.paused() {
+                            include_image!("../assets/icons/pause.svg")
+                        } else {
+                            include_image!("../assets/icons/play.svg")
+                        })
+                        .fit_to_exact_size(egui::Vec2::splat(20.));
+                        if ui
+                            .add_enabled(viewport_3d.enabled(), egui::ImageButton::new(pause_icon))
+                            .clicked()
+                        {
+                            viewport_3d.toggle_play_pause();
+                        }
+                    });
+
                     ui.add(egui::Label::new(&viewport_3d.stats_text).truncate(true));
                 }
             });

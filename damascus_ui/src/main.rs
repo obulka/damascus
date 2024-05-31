@@ -45,6 +45,7 @@ fn main() {
         options,
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
+            egui_extras::install_image_loaders(&cc.egui_ctx);
             Box::new(damascus_ui::Damascus::new(cc))
         }),
     );

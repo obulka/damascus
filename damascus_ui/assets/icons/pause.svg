@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="70"
+   height="74"
+   viewBox="0 0 70 74"
+   version="1.1"
+   id="svg5"
+   inkscape:export-filename="bitmap.svg"
+   inkscape:export-xdpi="129.83"
+   inkscape:export-ydpi="129.83"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#272727"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#000000"
+     inkscape:document-units="px"
+     showgrid="true"
+     showguides="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid132"
+       originx="0"
+       originy="0"
+       color="#838383"
+       opacity="0.14117647"
+       empcolor="#999999"
+       empopacity="0.30196078"
+       dotted="true"
+       empspacing="5" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="shadow"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-15,-13)">
+    <rect
+       style="fill:#0a0a0a;fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+       id="rect6769-6"
+       width="23"
+       height="70"
+       x="19"
+       y="17" />
+    <rect
+       style="fill:#0a0a0a;fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+       id="rect6769-7"
+       width="23"
+       height="70"
+       x="62"
+       y="17" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="icon"
+     transform="translate(-15,-13)">
+    <rect
+       style="fill:#6e6e6e;fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+       id="rect6769"
+       width="23"
+       height="70"
+       x="15"
+       y="13" />
+    <rect
+       style="fill:#6e6e6e;fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+       id="rect6771"
+       width="23"
+       height="70"
+       x="58"
+       y="13" />
+  </g>
+</svg>

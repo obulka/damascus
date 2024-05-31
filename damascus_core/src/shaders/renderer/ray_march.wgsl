@@ -265,20 +265,27 @@ var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 @fragment
 fn fs_main(in: VertexOut) -> @location(0) vec4f {
-    var progressive_rendering_texture_dimensions = vec2f(
-        textureDimensions(_progressive_rendering_texture),
-    );
-    // Add a random offset to the uv_coordinates for anti-aliasing 
+    // Use the UV coordinates and resolution to get texture coordinates
     var current_pixel_indices: vec2f = uv_to_pixels(
         in.uv_coordinate.xy,
-        progressive_rendering_texture_dimensions,
+        _render_state.resolution,
     );
     var texture_coordinates = vec2u(current_pixel_indices);
-    var pixel_colour: vec4f = textureLoad(_progressive_rendering_texture, texture_coordinates);
+
+    // Load the current state of the progressive render, unless this is
+    // the first path, in which case initialise as black
+    var pixel_colour: vec4f = select(
+        vec4f(),
+        textureLoad(_progressive_rendering_texture, texture_coordinates),
+        _render_state.paths_rendered_per_pixel > 0.,
+    );
+
+    // If the render is paused just return the current texture value
     if bool(_render_state.flags & PAUSED) {
-        return select(vec4f(), pixel_colour, _render_state.paths_rendered_per_pixel > 0.);
+        return pixel_colour;
     }
 
+    // Create a random seed which will be different for each pixel
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
     var seed = vec3(8377.72, 2111.74, 1723.33) * random_vec3f(
         _render_parameters.seeds
@@ -286,9 +293,13 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
         + _render_state.paths_rendered_per_pixel
     ) + vec3(7131.93, 1173.97, 9712.43) * vec2f_to_random_f32(current_pixel_indices);
 
+    // Get modified UV coordinates with a random offset from the original
+    // without straying outside the bounds of the current pixel. This
+    // provides antialiasing for free
     var uv_coordinates: vec2f = pixels_to_uv(
+        // Add a random offset to the uv_coordinates for anti-aliasing 
         current_pixel_indices + random_vec2f(seed.xy),
-        progressive_rendering_texture_dimensions,
+        _render_state.resolution,
     );
 
     // Create and march a ray

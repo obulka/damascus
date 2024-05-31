@@ -40,6 +40,7 @@ struct SceneParameters {
 
 struct RenderState {
     paths_rendered_per_pixel: f32,
+    resolution: vec2f,
     flags: u32,
 }
 

@@ -25,6 +25,8 @@ use damascus_core::{
     shaders,
 };
 
+use crate::MAX_TEXTURE_DIMENSION;
+
 pub struct Viewport3d {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
@@ -382,8 +384,8 @@ impl Viewport3d {
     fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
-                width: 8192u32,
-                height: 8192u32,
+                width: MAX_TEXTURE_DIMENSION,
+                height: MAX_TEXTURE_DIMENSION,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
@@ -479,8 +481,7 @@ impl Viewport3d {
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        self.renderer.scene.render_camera.aspect_ratio =
-            (rect.max.x - rect.min.x) / (rect.max.y - rect.min.y);
+        self.renderer.scene.render_camera.aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
             return;
         }
@@ -511,6 +512,9 @@ impl Viewport3d {
             ui.available_size().round() - egui::Vec2::splat(17.),
             egui::Sense::drag(),
         );
+
+        self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
+            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
 
         self.stats_text = format!(
             "{:} paths @ {:.2} fps @ {:.0}x{:.0}",

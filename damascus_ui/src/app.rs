@@ -21,6 +21,7 @@ use super::panels::{
     viewport_3d::Viewport3d,
 };
 use super::toolbar::show_toolbar;
+use super::MAX_TEXTURE_DIMENSION;
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Context {
@@ -197,8 +198,16 @@ impl eframe::App for Damascus {
         egui::Window::new("viewer")
             .default_width(720.)
             .default_height(405.)
-            .max_width((screen_size.x * 0.9).round().min(8192.))
-            .max_height((screen_size.y * 0.9).round().min(8192.))
+            .max_width(
+                (screen_size.x * 0.9)
+                    .round()
+                    .min(MAX_TEXTURE_DIMENSION as f32),
+            )
+            .max_height(
+                (screen_size.y * 0.9)
+                    .round()
+                    .min(MAX_TEXTURE_DIMENSION as f32),
+            )
             .resizable(true)
             .movable(true)
             .constrain(true)

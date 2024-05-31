@@ -6,6 +6,7 @@
 use std::time::SystemTime;
 
 use crevice::std430::AsStd430;
+use glam::{UVec2, Vec2};
 use strum::{Display, EnumIter, EnumString};
 
 #[derive(
@@ -39,6 +40,7 @@ pub use ray_marcher::{RayMarcher, Std430GPURayMarcher};
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPURenderState {
     paths_rendered_per_pixel: f32,
+    resolution: Vec2,
     flags: u32,
 }
 
@@ -47,6 +49,7 @@ pub struct RenderState {
     pub previous_frame_time: SystemTime,
     pub fps: f32,
     pub paths_rendered_per_pixel: u32,
+    pub resolution: UVec2,
     pub paused: bool,
 }
 
@@ -57,6 +60,7 @@ impl Default for RenderState {
             previous_frame_time: SystemTime::now(),
             fps: 60.,
             paths_rendered_per_pixel: 0,
+            resolution: UVec2::ZERO,
             paused: true,
         }
     }
@@ -66,6 +70,7 @@ impl RenderState {
     fn to_gpu(&self) -> GPURenderState {
         GPURenderState {
             paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
+            resolution: self.resolution.as_vec2(),
             flags: self.paused as u32,
         }
     }

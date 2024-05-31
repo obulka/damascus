@@ -13,3 +13,5 @@ mod toolbar;
 mod widgets;
 
 pub use app::Damascus;
+
+pub const MAX_TEXTURE_DIMENSION: u32 = 8192;

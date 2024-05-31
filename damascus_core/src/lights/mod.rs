@@ -30,20 +30,6 @@ pub struct GPULight {
     soften_shadows: u32,
 }
 
-impl Default for GPULight {
-    fn default() -> Self {
-        GPULight {
-            light_type: Lights::Directional as u32,
-            dimensional_data: Vec3::new(0., -1., 0.),
-            intensity: 1.,
-            falloff: 2,
-            colour: Vec3::new(1., 0.8, 0.5),
-            shadow_hardness: 1.,
-            soften_shadows: 0,
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Light {
     pub light_type: Lights,
@@ -62,7 +48,7 @@ impl Default for Light {
             dimensional_data: Vec3::new(0., -1., 0.),
             intensity: 1.,
             falloff: 2,
-            colour: Vec3::new(1., 0.8, 0.5),
+            colour: Vec3::ONE,
             shadow_hardness: 1.,
             soften_shadows: false,
         }

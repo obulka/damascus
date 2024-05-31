@@ -1507,7 +1507,7 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 6
       }
     ],
     "inputs": [
@@ -2794,7 +2794,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": false,
+                "value": true,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -2963,7 +2963,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 16.0,
+                "value": 0.5,
                 "ui_data": {
                   "tooltip": "The f-stop of the camera.",
                   "hidden": false
@@ -2995,7 +2995,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 2.0,
+                "value": 6.0,
                 "ui_data": {
                   "tooltip": "The focal distance of the camera.",
                   "hidden": false
@@ -5785,8 +5785,8 @@
               "value": {
                 "value": [
                   1.0,
-                  0.8000001,
-                  0.5
+                  1.0,
+                  1.0
                 ],
                 "ui_data": {
                   "tooltip": "The light colour.",
@@ -7560,9 +7560,9 @@
             "Vec3": {
               "value": {
                 "value": [
-                  1.0,
-                  1.0,
-                  1.0
+                  0.54150337,
+                  0.9438158,
+                  0.5255958
                 ],
                 "ui_data": {
                   "tooltip": "The diffuse colour of the material.",
@@ -9088,6 +9088,98 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "outputs": [
@@ -9274,6 +9366,10 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 4
       }
     ],
     "connections": [
@@ -9870,15 +9966,7 @@
       "version": 3
     },
     {
-      "idx": 1,
-      "version": 3
-    },
-    {
       "idx": 4,
-      "version": 1
-    },
-    {
-      "idx": 5,
       "version": 1
     },
     {
@@ -9894,7 +9982,11 @@
       "version": 1
     },
     {
-      "idx": 11,
+      "idx": 7,
+      "version": 1
+    },
+    {
+      "idx": 10,
       "version": 1
     },
     {
@@ -9902,11 +9994,15 @@
       "version": 1
     },
     {
-      "idx": 7,
+      "idx": 11,
       "version": 1
     },
     {
-      "idx": 10,
+      "idx": 1,
+      "version": 3
+    },
+    {
+      "idx": 5,
       "version": 1
     }
   ],
@@ -9920,96 +10016,108 @@
     },
     {
       "value": {
-        "x": 194.89697,
-        "y": -25.77417
+        "x": -616.2798,
+        "y": -1125.992
       },
       "version": 3
     },
     {
       "value": {
-        "x": 39.473633,
-        "y": 15.290436
+        "x": -914.49365,
+        "y": -1047.2012
       },
       "version": 3
     },
     {
       "value": {
-        "x": -111.541504,
-        "y": -19.772217
+        "x": -1204.2493,
+        "y": -1114.4753
       },
       "version": 3
     },
     {
       "value": {
-        "x": 409.04846,
-        "y": 107.14816
+        "x": -205.38159,
+        "y": -870.9532
       },
       "version": 1
     },
     {
       "value": {
-        "x": 511.71912,
-        "y": 72.01767
+        "x": -8.384277,
+        "y": -938.358
       },
       "version": 1
     },
     {
       "value": {
-        "x": 198.99927,
-        "y": 113.54367
+        "x": -608.40967,
+        "y": -858.68036
       },
       "version": 1
     },
     {
       "value": {
-        "x": 201.4668,
-        "y": 324.9577
+        "x": -603.67065,
+        "y": -453.03674
       },
       "version": 1
     },
     {
       "value": {
-        "x": 183.46692,
-        "y": 502.503
+        "x": -638.2129,
+        "y": -112.37573
       },
       "version": 1
     },
     {
       "value": {
-        "x": 31.00061,
-        "y": 503.91797
+        "x": -930.7534,
+        "y": -109.66199
       },
       "version": 1
     },
     {
       "value": {
-        "x": 6.7163086,
-        "y": 383.48227
+        "x": -977.3445,
+        "y": -340.7433
       },
       "version": 1
     },
     {
       "value": {
-        "x": -27.488403,
-        "y": 105.81201
+        "x": -1042.9753,
+        "y": -873.5169
       },
       "version": 1
     },
     {
       "value": {
-        "x": -230.42725,
-        "y": 105.76758
+        "x": -1432.3555,
+        "y": -873.6015
       },
       "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
     }
   ],
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 1157.7499,
-      "y": -317.4532
+      "x": 3168.8816,
+      "y": 1485.5016
     },
-    "zoom": 0.49319366,
+    "zoom": 0.9462997,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

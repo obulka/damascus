@@ -79,7 +79,7 @@ impl Default for Material {
             transmissive_colour: Vec3::ONE,
             transmissive_colour_texture: ProceduralTexture::default(),
             emissive_intensity: 0.,
-            emissive_colour: Vec3::new(1., 0.8, 0.5),
+            emissive_colour: Vec3::ONE,
             emissive_colour_texture: ProceduralTexture::default(),
             refractive_index: 1.3,
             refractive_index_texture: ProceduralTexture::default(),

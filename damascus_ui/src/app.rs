@@ -224,9 +224,9 @@ impl eframe::App for Damascus {
                     style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
                     ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                         let pause_icon = egui::Image::new(if viewport_3d.paused() {
-                            include_image!("../assets/icons/pause.svg")
-                        } else {
                             include_image!("../assets/icons/play.svg")
+                        } else {
+                            include_image!("../assets/icons/pause.svg")
                         })
                         .fit_to_exact_size(egui::Vec2::splat(20.));
                         if ui

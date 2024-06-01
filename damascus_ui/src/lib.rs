@@ -7,10 +7,9 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![allow(long_running_const_eval)]
 
-mod app;
-mod panels;
-mod toolbar;
-mod widgets;
+pub mod app;
+pub mod toolbar;
+pub mod widgets;
 
 pub use app::Damascus;
 

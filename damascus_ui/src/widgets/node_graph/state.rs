@@ -4,7 +4,7 @@
 // Please see the LICENSE file that is included as part of this package.
 use egui_node_graph::{GraphEditorState, NodeId, UserStateTrait};
 
-use super::{NodeData, NodeDataType, NodeTemplate, NodeValueType};
+use super::node::{value_type::NodeValueType, NodeData, NodeDataType, NodeTemplate};
 
 /// The graph 'global' state. This state struct is passed around to the node and
 /// parameter drawing callbacks. The contents of this struct are entirely up to

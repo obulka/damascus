@@ -5,8 +5,7 @@ use eframe::egui;
 use egui_modal;
 
 use super::app::Context;
-use super::panels::node_graph::NodeGraph;
-use super::widgets::dialog;
+use super::widgets::{dialog, node_graph::NodeGraph};
 
 fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal) {
     let Ok(mut file) = File::create(file_path) else {

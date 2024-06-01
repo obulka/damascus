@@ -13,10 +13,11 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use super::data_type::NodeDataType;
-use super::node::{NodeData, NodeTemplate};
-use super::state::NodeGraphState;
-use super::value_type::{Mat4, NodeValueType, UIInput};
+use super::node::{
+    value_type::{Mat4, NodeValueType, UIInput},
+    NodeData, NodeDataType, NodeTemplate,
+};
+use super::NodeGraphState;
 
 pub type Graph = egui_node_graph::Graph<NodeData, NodeDataType, NodeValueType, NodeGraphState>;
 type OutputsCache = HashMap<egui_node_graph::OutputId, NodeValueType>;

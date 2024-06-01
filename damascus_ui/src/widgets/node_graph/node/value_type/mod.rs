@@ -14,7 +14,10 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use super::{node::NodeData, response::NodeGraphResponse, state::NodeGraphState};
+use super::{
+    super::{NodeGraphResponse, NodeGraphState},
+    NodeData,
+};
 
 mod inputs;
 pub use inputs::{

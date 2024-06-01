@@ -11,19 +11,21 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
-use super::{
-    value_type::{
-        BVec3, Bool, Colour, ComboBox, Float, Mat4, NodeValueType, RangedInput, UIData, UIInput,
-        UVec3, UnsignedInteger, Vec3, Vec4,
-    },
-    Graph, NodeDataType, NodeGraphResponse, NodeGraphState,
-};
+use super::{Graph, NodeGraphResponse, NodeGraphState};
 
-mod callbacks;
+pub mod callbacks;
+mod data_type;
 mod node_data;
-pub use callbacks::NodeCallbacks;
+pub mod value_type;
+
+use callbacks::NodeCallbacks;
 use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
+pub use data_type::NodeDataType;
 pub use node_data::NodeData;
+use value_type::{
+    BVec3, Bool, Colour, ComboBox, Float, Mat4, NodeValueType, RangedInput, UIData, UIInput, UVec3,
+    UnsignedInteger, Vec3, Vec4,
+};
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the

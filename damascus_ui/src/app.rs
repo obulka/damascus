@@ -5,23 +5,21 @@
 
 use std::collections::HashMap;
 
-use eframe::egui::{self, include_image};
+use eframe::egui;
 use egui_node_graph::NodeResponse;
 
-use damascus_core::{
-    geometry::Primitive,
-    lights::{Light, Lights},
-    materials::Material,
-};
-
-use super::panels::{
-    node_graph::{
-        evaluate_node, Bool, NodeCallbacks, NodeGraph, NodeGraphResponse, NodeValueType, UIInput,
-    },
-    viewport_3d::Viewport3d,
-};
 use super::toolbar::show_toolbar;
-use super::MAX_TEXTURE_DIMENSION;
+use super::widgets::{
+    node_graph::{
+        evaluate_node,
+        node::{
+            callbacks::NodeCallbacks,
+            value_type::{Bool, NodeValueType, UIInput},
+        },
+        NodeGraph, NodeGraphResponse,
+    },
+    viewport::Viewport,
+};
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Context {
@@ -31,7 +29,7 @@ pub struct Context {
 pub struct Damascus {
     context: Context,
     node_graph: NodeGraph,
-    viewport_3d: Option<Viewport3d>,
+    viewport: Viewport,
 }
 
 const PERSISTENCE_KEY: &str = "damascus";
@@ -43,7 +41,7 @@ impl Damascus {
         Self {
             context: Context::default(),
             node_graph: NodeGraph::new(creation_context, PERSISTENCE_KEY),
-            viewport_3d: Viewport3d::new(creation_context),
+            viewport: Viewport::new(creation_context),
         }
     }
 }
@@ -85,10 +83,7 @@ impl eframe::App for Damascus {
                 match user_event {
                     NodeGraphResponse::SetActiveNode(node) => {
                         self.node_graph.user_state_mut().active_node = Some(node);
-                        if let Some(viewport_3d) = &mut self.viewport_3d {
-                            viewport_3d.enable();
-                            viewport_3d.play();
-                        }
+                        self.viewport.enable_and_play();
                     }
                     NodeGraphResponse::ClearActiveNode => {
                         self.node_graph.user_state_mut().active_node = None;
@@ -133,112 +128,38 @@ impl eframe::App for Damascus {
                         }
                     }
                 };
-                if let Some(ref mut viewport_3d) = &mut self.viewport_3d {
-                    match value_type {
-                        NodeValueType::Camera { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene.render_camera = value;
-                            viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
-                            viewport_3d.enable_camera_controls();
-                        }
-                        NodeValueType::Light { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene.lights = value;
-                            viewport_3d.renderer.scene.primitives = vec![Primitive::default()];
-                            viewport_3d.enable_camera_controls();
-                        }
-                        NodeValueType::Material { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene.clear_primitives();
-                            viewport_3d.renderer.scene.clear_lights();
-                            viewport_3d.renderer.scene.atmosphere = value;
-                            viewport_3d.enable_camera_controls();
-                        }
-                        NodeValueType::ProceduralTexture { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene.clear_primitives();
-                            viewport_3d.renderer.scene.clear_lights();
-                            viewport_3d.renderer.scene.atmosphere = Material::default();
-                            viewport_3d.renderer.scene.atmosphere.diffuse_colour_texture = value;
-                            viewport_3d.enable_camera_controls();
-                        }
-                        NodeValueType::Primitive { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene.primitives = value;
-                            viewport_3d.renderer.scene.lights = vec![Light {
-                                light_type: Lights::AmbientOcclusion,
-                                ..Default::default()
-                            }];
-                            viewport_3d.enable_camera_controls();
-                        }
-                        NodeValueType::RayMarcher { value } => {
-                            viewport_3d.renderer = value;
-                            viewport_3d.disable_camera_controls();
-                        }
-                        NodeValueType::Scene { value } => {
-                            viewport_3d.renderer.reset_render_parameters();
-                            viewport_3d.renderer.scene = value;
-                            viewport_3d.disable_camera_controls();
-                        }
-                        _ => {}
+                match value_type {
+                    NodeValueType::Camera { value } => {
+                        self.viewport.default_renderer_with_camera(value);
                     }
+                    NodeValueType::Light { value } => {
+                        self.viewport.default_renderer_with_lights(value)
+                    }
+                    NodeValueType::Material { value } => {
+                        self.viewport.default_renderer_with_atmosphere(value)
+                    }
+                    NodeValueType::ProceduralTexture { value } => {
+                        self.viewport.default_renderer_with_texture(value)
+                    }
+                    NodeValueType::Primitive { value } => {
+                        self.viewport.default_renderer_with_primitives(value)
+                    }
+                    NodeValueType::RayMarcher { value } => {
+                        self.viewport.set_3d_renderer(value);
+                    }
+                    NodeValueType::Scene { value } => {
+                        self.viewport.default_renderer_with_scene(value);
+                    }
+                    _ => {}
                 }
             } else {
                 self.node_graph.user_state_mut().active_node = None;
             }
         }
         if self.node_graph.user_state().active_node.is_none() {
-            if let Some(viewport_3d) = &mut self.viewport_3d {
-                viewport_3d.disable();
-            }
+            self.viewport.disable();
         }
 
-        let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-
-        egui::Window::new("viewer")
-            .default_width(720.)
-            .default_height(405.)
-            .max_width(
-                (screen_size.x * 0.9)
-                    .round()
-                    .min(MAX_TEXTURE_DIMENSION as f32),
-            )
-            .max_height(
-                (screen_size.y * 0.9)
-                    .round()
-                    .min(MAX_TEXTURE_DIMENSION as f32),
-            )
-            .resizable(true)
-            .movable(true)
-            .constrain(true)
-            .show(ctx, |ui| {
-                egui::Frame::canvas(ui.style()).show(ui, |ui| {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        viewport_3d.custom_painting(ui);
-                    }
-                });
-                if let Some(viewport_3d) = &mut self.viewport_3d {
-                    let style = ui.style_mut();
-                    style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
-                    style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
-                    style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                        let pause_icon = egui::Image::new(if viewport_3d.paused() {
-                            include_image!("../assets/icons/play.svg")
-                        } else {
-                            include_image!("../assets/icons/pause.svg")
-                        })
-                        .fit_to_exact_size(egui::Vec2::splat(20.));
-                        if ui
-                            .add_enabled(viewport_3d.enabled(), egui::ImageButton::new(pause_icon))
-                            .clicked()
-                        {
-                            viewport_3d.toggle_play_pause();
-                        }
-                    });
-
-                    ui.add(egui::Label::new(&viewport_3d.stats_text).truncate(true));
-                }
-            });
+        self.viewport.show(ctx);
     }
 }

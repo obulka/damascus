@@ -6,12 +6,13 @@
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, Colour, UIData, UIInput};
+use super::{create_drag_value_ui, Collapsible, Colour, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Vec4 {
     value: [f32; 4],
     ui_data: UIData,
+    collapsed: bool,
     pub is_colour: bool,
 }
 
@@ -73,5 +74,19 @@ impl Colour<[f32; 4]> for Vec4 {
 
     fn is_colour_mut(&mut self) -> &mut bool {
         &mut self.is_colour
+    }
+}
+
+impl Collapsible<[f32; 4]> for Vec4 {
+    fn collapse(&mut self) {
+        self.collapsed = true;
+    }
+
+    fn expand(&mut self) {
+        self.collapsed = false;
+    }
+
+    fn collapsed(&self) -> bool {
+        self.collapsed
     }
 }

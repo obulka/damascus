@@ -119,6 +119,22 @@ pub trait Colour<T>: UIInput<T> {
     fn is_colour_mut(&mut self) -> &mut bool;
 }
 
+pub trait Collapsible<T>: UIInput<T> {
+    fn collapse(&mut self);
+
+    fn expand(&mut self);
+
+    fn collapsed(&self) -> bool;
+
+    fn toggle_collapsed(&mut self) {
+        if self.collapsed() {
+            self.expand();
+        } else {
+            self.collapse();
+        }
+    }
+}
+
 pub fn create_drag_value_ui<T: eframe::emath::Numeric>(
     ui: &mut egui::Ui,
     value: &mut T,

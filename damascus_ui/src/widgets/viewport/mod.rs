@@ -26,6 +26,8 @@ pub struct Viewport {
 }
 
 impl Viewport {
+    pub const ICON_SIZE: f32 = 20.;
+
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Self {
         Self {
             viewport_3d: Viewport3d::new(creation_context),
@@ -152,7 +154,7 @@ impl Viewport {
                         } else {
                             PAUSE_ICON
                         })
-                        .fit_to_exact_size(egui::Vec2::splat(20.));
+                        .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
                         if ui
                             .add_enabled(viewport_3d.enabled(), egui::ImageButton::new(pause_icon))
                             .clicked()

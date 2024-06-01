@@ -526,7 +526,7 @@ impl Viewport3d {
 
     pub fn custom_painting(&mut self, ui: &mut egui::Ui) {
         let mut available_size: egui::Vec2 = ui.available_size().round();
-        available_size.y -= 100.;
+        available_size.y -= 48.;
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
         self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)

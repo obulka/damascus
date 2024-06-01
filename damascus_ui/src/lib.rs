@@ -8,6 +8,7 @@
 #![allow(long_running_const_eval)]
 
 pub mod app;
+pub mod icons;
 pub mod toolbar;
 pub mod widgets;
 

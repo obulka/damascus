@@ -2,7 +2,7 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
-use eframe::egui::{self, include_image};
+use eframe::egui;
 
 use damascus_core::{
     geometry::{camera::Camera, Primitive},
@@ -16,7 +16,10 @@ mod viewport_3d;
 
 pub use viewport_3d::Viewport3d;
 
-use crate::MAX_TEXTURE_DIMENSION;
+use crate::{
+    icons::{PAUSE_ICON, PLAY_ICON},
+    MAX_TEXTURE_DIMENSION,
+};
 
 pub struct Viewport {
     viewport_3d: Option<Viewport3d>,
@@ -145,9 +148,9 @@ impl Viewport {
                     style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
                     ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                         let pause_icon = egui::Image::new(if viewport_3d.paused() {
-                            include_image!("../../../assets/icons/play.svg")
+                            PLAY_ICON
                         } else {
-                            include_image!("../../../assets/icons/pause.svg")
+                            PAUSE_ICON
                         })
                         .fit_to_exact_size(egui::Vec2::splat(20.));
                         if ui

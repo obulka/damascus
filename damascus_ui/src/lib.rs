@@ -9,7 +9,6 @@
 
 pub mod app;
 pub mod icons;
-pub mod toolbar;
 pub mod widgets;
 
 pub use app::Damascus;

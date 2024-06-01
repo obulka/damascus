@@ -10,7 +10,6 @@ use eframe::egui;
 use egui_node_graph::NodeResponse;
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
-use super::toolbar::show_toolbar;
 use super::widgets::{
     node_graph::{
         evaluate_node,
@@ -20,6 +19,7 @@ use super::widgets::{
         },
         NodeGraph, NodeGraphResponse,
     },
+    toolbar::show_toolbar,
     viewport::Viewport,
 };
 

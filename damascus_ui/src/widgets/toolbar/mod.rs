@@ -4,8 +4,8 @@ use std::io::{BufReader, Read, Write};
 use eframe::egui;
 use egui_modal;
 
-use super::app::Context;
-use super::widgets::{dialog, node_graph::NodeGraph};
+use super::{dialog, node_graph::NodeGraph};
+use crate::app::Context;
 
 fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal, success_dialog: bool) {
     let Ok(mut file) = File::create(file_path) else {

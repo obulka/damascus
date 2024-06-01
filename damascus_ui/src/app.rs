@@ -99,7 +99,7 @@ impl eframe::App for Damascus {
         eframe::set_value(storage, PERSISTENCE_KEY, self.node_graph.editor_state());
     }
 
-    fn auto_save_interval(&self) -> std::time::Duration {
+    fn auto_save_interval(&self) -> Duration {
         Duration::from_secs(10)
     }
 

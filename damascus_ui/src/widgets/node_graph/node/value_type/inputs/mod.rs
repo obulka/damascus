@@ -8,6 +8,7 @@ use core::ops::RangeInclusive;
 use eframe::egui;
 
 use super::UIData;
+use crate::icons::Icons;
 
 pub mod boolean;
 pub mod boolean_vec3;
@@ -120,6 +121,31 @@ pub trait Colour<T>: UIInput<T> {
 }
 
 pub trait Collapsible<T>: UIInput<T> {
+    fn with_collapsed(self) -> Self;
+
+    fn collapse_button(&mut self, ui: &mut egui::Ui) -> bool {
+        let toggle_icon = egui::Image::new(if self.collapsed() {
+            Icons::ArrowRight.source()
+        } else {
+            Icons::ArrowLeft.source()
+        })
+        .maintain_aspect_ratio(true)
+        .fit_to_exact_size(egui::Vec2::splat(ui.available_size().y / 2.));
+
+        if ui
+            .add_enabled(self.collapse_enabled(), egui::ImageButton::new(toggle_icon))
+            .clicked()
+        {
+            self.toggle_collapsed();
+            return true;
+        }
+        false
+    }
+
+    fn collapse_enabled(&self) -> bool {
+        true
+    }
+
     fn collapse(&mut self);
 
     fn expand(&mut self);

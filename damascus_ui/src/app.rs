@@ -10,17 +10,20 @@ use eframe::egui;
 use egui_node_graph::NodeResponse;
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
-use super::widgets::{
-    node_graph::{
-        evaluate_node,
-        node::{
-            callbacks::NodeCallbacks,
-            value_type::{Bool, NodeValueType, UIInput},
+use super::{
+    icons::Icons,
+    widgets::{
+        node_graph::{
+            evaluate_node,
+            node::{
+                callbacks::NodeCallbacks,
+                value_type::{Bool, NodeValueType, UIInput},
+            },
+            NodeGraph, NodeGraphResponse,
         },
-        NodeGraph, NodeGraphResponse,
+        toolbar::show_toolbar,
+        viewport::Viewport,
     },
-    toolbar::show_toolbar,
-    viewport::Viewport,
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -60,7 +63,7 @@ pub struct Damascus {
 const PERSISTENCE_KEY: &str = "damascus";
 
 impl Damascus {
-    const LAZY_UPDATE_DELAY: f32 = 0.5;
+    const LAZY_UPDATE_DELAY: f32 = 0.3;
 
     /// Called once before the first frame.
     /// Load previous app state (if any).
@@ -90,6 +93,12 @@ impl Damascus {
                 "damascus".to_owned()
             },
         ));
+
+        // Egui does not automatically evict images from cache
+        // so if it loads in a small icon then the ui rescales the icons
+        // will be blurry, so we manually forget them occasionally
+        Icons::ArrowRight.forget(ctx);
+        Icons::ArrowLeft.forget(ctx);
     }
 }
 

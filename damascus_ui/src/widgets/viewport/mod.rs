@@ -16,10 +16,7 @@ mod viewport_3d;
 
 pub use viewport_3d::Viewport3d;
 
-use crate::{
-    icons::{PAUSE_ICON, PLAY_ICON},
-    MAX_TEXTURE_DIMENSION,
-};
+use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
 
 pub struct Viewport {
     viewport_3d: Option<Viewport3d>,
@@ -138,21 +135,29 @@ impl Viewport {
             .movable(true)
             .constrain(true)
             .show(ctx, |ui| {
-                egui::Frame::canvas(ui.style()).show(ui, |ui| {
+                let style = ui.style_mut();
+                style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
+                style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
+                style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
+
+                let controls_height: f32 = (Self::ICON_SIZE
+                    + style.spacing.button_padding.y
+                    + style.spacing.item_spacing.y)
+                    * 2.;
+
+                egui::Frame::canvas(style).show(ui, |ui| {
                     if let Some(viewport_3d) = &mut self.viewport_3d {
-                        viewport_3d.custom_painting(ui);
+                        let mut available_size: egui::Vec2 = ui.available_size().round();
+                        available_size.y -= controls_height;
+                        viewport_3d.custom_painting(ui, available_size);
                     }
                 });
                 if let Some(viewport_3d) = &mut self.viewport_3d {
-                    let style = ui.style_mut();
-                    style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
-                    style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
-                    style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
                     ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                         let pause_icon = egui::Image::new(if viewport_3d.paused() {
-                            PLAY_ICON
+                            Icons::Play.source()
                         } else {
-                            PAUSE_ICON
+                            Icons::Pause.source()
                         })
                         .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
                         if ui

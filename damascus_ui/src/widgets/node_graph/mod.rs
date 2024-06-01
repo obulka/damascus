@@ -61,6 +61,11 @@ impl NodeGraph {
     pub fn show(&mut self, ctx: &egui::Context) -> GraphResponse<NodeGraphResponse, NodeData> {
         egui::CentralPanel::default()
             .show(ctx, |ui| {
+                let style = ui.style_mut();
+                style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
+                style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
+                style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
+
                 let (_id, mut rect) = ui.allocate_space(ui.available_size());
                 rect.min.y -= 8.;
                 ui.set_clip_rect(rect);

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="icons.svg"
+   inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+   inkscape:export-xdpi="126.87919"
+   inkscape:export-ydpi="126.87919"
+   inkscape:version="1.2 (1:1.2.1+202207142221+cd75a1ee6d)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#272727"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#000000"
+     inkscape:document-units="px"
+     showgrid="true"
+     showguides="true"
+     inkscape:zoom="15"
+     inkscape:cx="39.566667"
+     inkscape:cy="49.433333"
+     inkscape:window-width="3784"
+     inkscape:window-height="2096"
+     inkscape:window-x="1976"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer4">
+    <inkscape:grid
+       type="xygrid"
+       id="grid132"
+       originx="0"
+       originy="0"
+       color="#838383"
+       opacity="0.14117647"
+       empcolor="#999999"
+       empopacity="0.30196078"
+       dotted="true"
+       empspacing="5" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <linearGradient
+       id="linearGradient7359"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#6d6881;stop-opacity:1;"
+         offset="0"
+         id="stop7357" />
+    </linearGradient>
+    <linearGradient
+       id="shadow"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#0a0a0a;stop-opacity:1;"
+         offset="0"
+         id="stop7174" />
+    </linearGradient>
+    <linearGradient
+       id="icon"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#6e6e6e;stop-opacity:1;"
+         offset="0"
+         id="stop7168" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#icon"
+       id="linearGradient7172"
+       x1="15"
+       y1="48"
+       x2="81"
+       y2="48"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#shadow"
+       id="linearGradient7178"
+       x1="19"
+       y1="52"
+       x2="85"
+       y2="52"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#icon"
+       id="linearGradient7361"
+       x1="14.5"
+       y1="47.977753"
+       x2="82.067528"
+       y2="47.977753"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#shadow"
+       id="linearGradient7405"
+       x1="24.5"
+       y1="49.477753"
+       x2="92.067528"
+       y2="49.477753"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#shadow"
+       id="linearGradient7407"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="49.477753"
+       x2="92.067528"
+       y2="49.477753"
+       gradientTransform="translate(0,2.5)" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="pause"
+     style="display:inline">
+    <g
+       inkscape:label="pause shadow"
+       inkscape:groupmode="layer"
+       id="layer1"
+       style="fill:url(#linearGradient7178);fill-opacity:1"
+       inkscape:export-filename="../damascus_ui/assets/icons/pause.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <rect
+         style="fill:url(#linearGradient7178);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         id="rect6769-6"
+         width="23"
+         height="70"
+         x="19"
+         y="17" />
+      <rect
+         style="fill:url(#linearGradient7178);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         id="rect6769-7"
+         width="23"
+         height="70"
+         x="62"
+         y="17" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="layer2"
+       inkscape:label="pause icon"
+       style="fill:url(#linearGradient7172);fill-opacity:1">
+      <rect
+         style="display:inline;fill:url(#linearGradient7172);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         id="rect6769"
+         width="23"
+         height="70"
+         x="15"
+         y="13" />
+      <rect
+         style="display:inline;fill:url(#linearGradient7172);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         id="rect6771"
+         width="23"
+         height="70"
+         x="58"
+         y="13" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="play"
+     style="display:inline">
+    <g
+       inkscape:groupmode="layer"
+       id="layer6"
+       inkscape:label="play shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:url(#linearGradient7407);fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+         d="M 25,17 V 87 L 91,54 Z"
+         id="path7355-3" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="layer5"
+       inkscape:label="play icon">
+      <path
+         style="fill:url(#linearGradient7361);fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+         d="M 15,13 V 83 L 81,50 Z"
+         id="path7355" />
+    </g>
+  </g>
+</svg>

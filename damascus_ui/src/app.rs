@@ -4,9 +4,11 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
 
 use eframe::egui;
 use egui_node_graph::NodeResponse;
+use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use super::toolbar::show_toolbar;
 use super::widgets::{
@@ -24,9 +26,32 @@ use super::widgets::{
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Context {
     pub working_file: Option<String>,
+    pub working_file_hash: Option<Key<OrderedFloatPolicy>>,
+}
+
+impl Context {
+    pub fn update(&mut self, working_file: String, node_graph: &NodeGraph) {
+        self.working_file = Some(working_file);
+        self.working_file_hash =
+            if let Ok(hash) = to_key_with_ordered_float(node_graph.editor_state()) {
+                Some(hash)
+            } else {
+                None
+            }
+    }
+
+    pub fn dirty(&self, node_graph: &NodeGraph) -> bool {
+        if let Some(working_file_hash) = &self.working_file_hash {
+            if let Ok(new_hash) = to_key_with_ordered_float(node_graph.editor_state()) {
+                return new_hash != *working_file_hash;
+            }
+        }
+        true
+    }
 }
 
 pub struct Damascus {
+    last_lazy_update: SystemTime,
     context: Context,
     node_graph: NodeGraph,
     viewport: Viewport,
@@ -35,14 +60,36 @@ pub struct Damascus {
 const PERSISTENCE_KEY: &str = "damascus";
 
 impl Damascus {
+    const LAZY_UPDATE_DELAY: f32 = 0.5;
+
     /// Called once before the first frame.
     /// Load previous app state (if any).
     pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
         Self {
+            last_lazy_update: SystemTime::now()
+                - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
             context: Context::default(),
             node_graph: NodeGraph::new(creation_context, PERSISTENCE_KEY),
             viewport: Viewport::new(creation_context),
         }
+    }
+
+    fn lazy_update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Title(
+            if let Some(working_file) = &self.context.working_file {
+                format!(
+                    "damascus - {:}{:}",
+                    working_file,
+                    if self.context.dirty(&self.node_graph) {
+                        "*"
+                    } else {
+                        ""
+                    }
+                )
+            } else {
+                "damascus".to_owned()
+            },
+        ));
     }
 }
 
@@ -53,19 +100,20 @@ impl eframe::App for Damascus {
     }
 
     fn auto_save_interval(&self) -> std::time::Duration {
-        std::time::Duration::from_secs(10)
+        Duration::from_secs(10)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        ctx.send_viewport_cmd(egui::ViewportCommand::Title(
-            if let Some(working_file) = &self.context.working_file {
-                format!("damascus - {:}", working_file)
-            } else {
-                "damascus".to_owned()
-            },
-        ));
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+        if let Ok(duration_since_lazy_update) =
+            SystemTime::now().duration_since(self.last_lazy_update)
+        {
+            if duration_since_lazy_update.as_secs_f32() >= Self::LAZY_UPDATE_DELAY {
+                self.lazy_update(ctx, frame);
+                self.last_lazy_update = SystemTime::now();
+            }
+        }
 
         if ctx.input(|input| {
             input.key_pressed(egui::Key::N)

@@ -7,7 +7,7 @@ use egui_modal;
 use super::app::Context;
 use super::widgets::{dialog, node_graph::NodeGraph};
 
-fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal) {
+fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal, success_dialog: bool) {
     let Ok(mut file) = File::create(file_path) else {
         dialog::error(
             modal,
@@ -32,7 +32,9 @@ fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal) {
         );
         return;
     };
-    dialog::success(&modal, "Success", &format!("File saved at {:}", file_path));
+    if success_dialog {
+        dialog::success(&modal, "Success", &format!("File saved at {:}", file_path));
+    }
 }
 
 fn load(file_path: &str, node_graph: &mut NodeGraph, modal: &egui_modal::Modal) {
@@ -94,6 +96,8 @@ pub fn show_toolbar(
                         .matches_exact(egui::Modifiers::CTRL | egui::Modifiers::SHIFT)
             });
 
+            let success_dialog: bool = !save_requested;
+
             ui.menu_button("File", |ui| {
                 load_requested |= ui
                     .add(egui::Button::new("load").shortcut_text("Ctrl+L"))
@@ -119,12 +123,12 @@ pub fn show_toolbar(
                 if let Some(path) = file_dialog.pick_file() {
                     let file_path: String = path.display().to_string();
                     load(&file_path, node_graph, &modal);
-                    context.working_file = Some(file_path.to_string());
+                    context.update(file_path.to_string(), node_graph);
                 }
             } else if save_requested {
                 if let Some(file_path) = &context.working_file {
-                    save(file_path, node_graph, &modal);
-                    context.working_file = Some(file_path.to_string());
+                    save(file_path, node_graph, &modal, success_dialog);
+                    context.update(file_path.to_string(), node_graph);
                     saved = true;
                 }
             }
@@ -138,8 +142,8 @@ pub fn show_toolbar(
                 }
                 if let Some(path) = file_dialog.save_file() {
                     let file_path: String = path.display().to_string();
-                    save(&file_path, node_graph, &modal);
-                    context.working_file = Some(file_path);
+                    save(&file_path, node_graph, &modal, true);
+                    context.update(file_path, node_graph);
                 }
             }
         });

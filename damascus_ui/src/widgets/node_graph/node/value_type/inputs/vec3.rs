@@ -6,12 +6,13 @@
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, Colour, UIData, UIInput};
+use super::{create_drag_value_ui, Collapsible, Colour, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Vec3 {
     value: [f32; 3],
     ui_data: UIData,
+    collapsed: bool,
     pub is_colour: bool,
 }
 
@@ -41,11 +42,17 @@ impl UIInput<[f32; 3]> for Vec3 {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
-            has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
-            has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
-            if self.is_colour {
+            if self.collapsed() {
+                self.value[1] = self.value[0];
+                self.value[2] = self.value[0];
+            } else {
+                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
+            }
+            if self.is_colour && !self.collapsed() {
                 has_changed |= ui.color_edit_button_rgb(&mut self.value).changed();
             }
+            has_changed |= self.collapse_button(ui);
         });
         has_changed
     }
@@ -70,5 +77,24 @@ impl Colour<[f32; 3]> for Vec3 {
 
     fn is_colour_mut(&mut self) -> &mut bool {
         &mut self.is_colour
+    }
+}
+
+impl Collapsible<[f32; 3]> for Vec3 {
+    fn with_collapsed(mut self) -> Self {
+        self.collapsed = true;
+        self
+    }
+
+    fn collapse(&mut self) {
+        self.collapsed = true;
+    }
+
+    fn expand(&mut self) {
+        self.collapsed = false;
+    }
+
+    fn collapsed(&self) -> bool {
+        self.collapsed
     }
 }

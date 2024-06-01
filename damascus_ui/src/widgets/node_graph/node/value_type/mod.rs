@@ -23,7 +23,7 @@ mod inputs;
 pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, combo_box::ComboBox, float::Float, integer::Integer,
     mat3::Mat3, mat4::Mat4, unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3,
-    vec2::Vec2, vec3::Vec3, vec4::Vec4, Colour, RangedInput, UIInput,
+    vec2::Vec2, vec3::Vec3, vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;

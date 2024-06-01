@@ -345,241 +345,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "label": "material",
-          "inputs": [
-            [
-              "diffuse_colour",
-              {
-                "idx": 46,
-                "version": 1
-              }
-            ],
-            [
-              "diffuse_colour_texture",
-              {
-                "idx": 47,
-                "version": 1
-              }
-            ],
-            [
-              "specular_probability",
-              {
-                "idx": 48,
-                "version": 1
-              }
-            ],
-            [
-              "specular_probability_texture",
-              {
-                "idx": 49,
-                "version": 1
-              }
-            ],
-            [
-              "specular_roughness",
-              {
-                "idx": 50,
-                "version": 1
-              }
-            ],
-            [
-              "specular_roughness_texture",
-              {
-                "idx": 51,
-                "version": 1
-              }
-            ],
-            [
-              "specular_colour",
-              {
-                "idx": 52,
-                "version": 1
-              }
-            ],
-            [
-              "specular_colour_texture",
-              {
-                "idx": 53,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_probability",
-              {
-                "idx": 54,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_probability_texture",
-              {
-                "idx": 55,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_roughness",
-              {
-                "idx": 56,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_roughness_texture",
-              {
-                "idx": 57,
-                "version": 1
-              }
-            ],
-            [
-              "extinction_coefficient",
-              {
-                "idx": 58,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_colour",
-              {
-                "idx": 59,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_colour_texture",
-              {
-                "idx": 60,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_intensity",
-              {
-                "idx": 61,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_colour",
-              {
-                "idx": 62,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_colour_texture",
-              {
-                "idx": 63,
-                "version": 1
-              }
-            ],
-            [
-              "refractive_index",
-              {
-                "idx": 64,
-                "version": 1
-              }
-            ],
-            [
-              "refractive_index_texture",
-              {
-                "idx": 65,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_coefficient",
-              {
-                "idx": 66,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_colour",
-              {
-                "idx": 67,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_colour_texture",
-              {
-                "idx": 68,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 2,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Material"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 3,
-            "version": 1
-          },
-          "label": "axis",
-          "inputs": [
-            [
-              "axis",
-              {
-                "idx": 69,
-                "version": 1
-              }
-            ],
-            [
-              "translate",
-              {
-                "idx": 70,
-                "version": 1
-              }
-            ],
-            [
-              "rotate",
-              {
-                "idx": 71,
-                "version": 1
-              }
-            ],
-            [
-              "uniform_scale",
-              {
-                "idx": 72,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 3,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Axis"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -714,56 +485,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 6,
-            "version": 1
-          },
-          "label": "axis",
-          "inputs": [
-            [
-              "axis",
-              {
-                "idx": 85,
-                "version": 1
-              }
-            ],
-            [
-              "translate",
-              {
-                "idx": 86,
-                "version": 1
-              }
-            ],
-            [
-              "rotate",
-              {
-                "idx": 87,
-                "version": 1
-              }
-            ],
-            [
-              "uniform_scale",
-              {
-                "idx": 88,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 6,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Axis"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -919,189 +642,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 9,
-            "version": 1
-          },
-          "label": "material",
-          "inputs": [
-            [
-              "diffuse_colour",
-              {
-                "idx": 104,
-                "version": 1
-              }
-            ],
-            [
-              "diffuse_colour_texture",
-              {
-                "idx": 105,
-                "version": 1
-              }
-            ],
-            [
-              "specular_probability",
-              {
-                "idx": 106,
-                "version": 1
-              }
-            ],
-            [
-              "specular_probability_texture",
-              {
-                "idx": 107,
-                "version": 1
-              }
-            ],
-            [
-              "specular_roughness",
-              {
-                "idx": 108,
-                "version": 1
-              }
-            ],
-            [
-              "specular_roughness_texture",
-              {
-                "idx": 109,
-                "version": 1
-              }
-            ],
-            [
-              "specular_colour",
-              {
-                "idx": 110,
-                "version": 1
-              }
-            ],
-            [
-              "specular_colour_texture",
-              {
-                "idx": 111,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_probability",
-              {
-                "idx": 112,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_probability_texture",
-              {
-                "idx": 113,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_roughness",
-              {
-                "idx": 114,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_roughness_texture",
-              {
-                "idx": 115,
-                "version": 1
-              }
-            ],
-            [
-              "extinction_coefficient",
-              {
-                "idx": 116,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_colour",
-              {
-                "idx": 117,
-                "version": 1
-              }
-            ],
-            [
-              "transmissive_colour_texture",
-              {
-                "idx": 118,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_intensity",
-              {
-                "idx": 119,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_colour",
-              {
-                "idx": 120,
-                "version": 1
-              }
-            ],
-            [
-              "emissive_colour_texture",
-              {
-                "idx": 121,
-                "version": 1
-              }
-            ],
-            [
-              "refractive_index",
-              {
-                "idx": 122,
-                "version": 1
-              }
-            ],
-            [
-              "refractive_index_texture",
-              {
-                "idx": 123,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_coefficient",
-              {
-                "idx": 124,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_colour",
-              {
-                "idx": 125,
-                "version": 1
-              }
-            ],
-            [
-              "scattering_colour_texture",
-              {
-                "idx": 126,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 9,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Material"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -1240,262 +782,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 11,
-            "version": 1
-          },
-          "label": "procedural texture",
-          "inputs": [
-            [
-              "texture_type",
-              {
-                "idx": 143,
-                "version": 1
-              }
-            ],
-            [
-              "scale",
-              {
-                "idx": 144,
-                "version": 1
-              }
-            ],
-            [
-              "black_point",
-              {
-                "idx": 145,
-                "version": 1
-              }
-            ],
-            [
-              "white_point",
-              {
-                "idx": 146,
-                "version": 1
-              }
-            ],
-            [
-              "lift",
-              {
-                "idx": 147,
-                "version": 1
-              }
-            ],
-            [
-              "gain",
-              {
-                "idx": 148,
-                "version": 1
-              }
-            ],
-            [
-              "octaves",
-              {
-                "idx": 149,
-                "version": 1
-              }
-            ],
-            [
-              "lacunarity",
-              {
-                "idx": 150,
-                "version": 1
-              }
-            ],
-            [
-              "amplitude_gain",
-              {
-                "idx": 151,
-                "version": 1
-              }
-            ],
-            [
-              "gamma",
-              {
-                "idx": 152,
-                "version": 1
-              }
-            ],
-            [
-              "low_frequency_scale",
-              {
-                "idx": 153,
-                "version": 1
-              }
-            ],
-            [
-              "high_frequency_scale",
-              {
-                "idx": 154,
-                "version": 1
-              }
-            ],
-            [
-              "low_frequency_translation",
-              {
-                "idx": 155,
-                "version": 1
-              }
-            ],
-            [
-              "high_frequency_translation",
-              {
-                "idx": 156,
-                "version": 1
-              }
-            ],
-            [
-              "invert",
-              {
-                "idx": 157,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 11,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "ProceduralTexture"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 12,
-            "version": 1
-          },
-          "label": "procedural texture",
-          "inputs": [
-            [
-              "texture_type",
-              {
-                "idx": 158,
-                "version": 1
-              }
-            ],
-            [
-              "scale",
-              {
-                "idx": 159,
-                "version": 1
-              }
-            ],
-            [
-              "black_point",
-              {
-                "idx": 160,
-                "version": 1
-              }
-            ],
-            [
-              "white_point",
-              {
-                "idx": 161,
-                "version": 1
-              }
-            ],
-            [
-              "lift",
-              {
-                "idx": 162,
-                "version": 1
-              }
-            ],
-            [
-              "gain",
-              {
-                "idx": 163,
-                "version": 1
-              }
-            ],
-            [
-              "octaves",
-              {
-                "idx": 164,
-                "version": 1
-              }
-            ],
-            [
-              "lacunarity",
-              {
-                "idx": 165,
-                "version": 1
-              }
-            ],
-            [
-              "amplitude_gain",
-              {
-                "idx": 166,
-                "version": 1
-              }
-            ],
-            [
-              "gamma",
-              {
-                "idx": 167,
-                "version": 1
-              }
-            ],
-            [
-              "low_frequency_scale",
-              {
-                "idx": 168,
-                "version": 1
-              }
-            ],
-            [
-              "high_frequency_scale",
-              {
-                "idx": 169,
-                "version": 1
-              }
-            ],
-            [
-              "low_frequency_translation",
-              {
-                "idx": 170,
-                "version": 1
-              }
-            ],
-            [
-              "high_frequency_translation",
-              {
-                "idx": 171,
-                "version": 1
-              }
-            ],
-            [
-              "invert",
-              {
-                "idx": 172,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 12,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "ProceduralTexture"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       }
     ],
     "inputs": [
@@ -3406,1205 +2698,112 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 46,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  0.61978686,
-                  1.0,
-                  0.5538405
-                ],
-                "ui_data": {
-                  "tooltip": "The diffuse colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 47,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 48,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.5,
-                "ui_data": {
-                  "tooltip": "The probability that light will be specularly reflected\nwhen it interacts with this material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 49,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 50,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The roughness of the material when specularly reflected.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 51,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 52,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The specular colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 53,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 54,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The probability that light will be transmitted through\nthe material (before accounting for Fresnel) when it\ninteracts with this material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 55,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 56,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The roughness when transmitted through the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 57,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 58,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The extinction coefficient of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 59,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The transmitted colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 60,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 61,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The intensity of light that will be emitted from the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 100.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 62,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The emissive colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 63,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 64,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.3,
-                "ui_data": {
-                  "tooltip": "The index of refraction of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 5.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 65,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 66,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The scattering coefficient of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 67,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The scattering colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 68,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 69,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "value": {
-            "Mat4": {
-              "value": {
-                "value": [
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The parent axis.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConnectionOrConstant",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 70,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The translation of this axis.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 71,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The rotation of this axis.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 72,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The uniform scale of this axis.\n\nWe use uniform scale because the signed distance \nfields cannot have their individual axes scaled.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.01,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -4853,7 +3052,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": true,
+                "value": false,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -5017,149 +3216,20 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 85,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "value": {
-            "Mat4": {
-              "value": {
-                "value": [
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The parent axis.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConnectionOrConstant",
-          "node": {
-            "idx": 6,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 86,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The translation of this axis.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 6,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 87,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The rotation of this axis.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 6,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 88,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The uniform scale of this axis.\n\nWe use uniform scale because the signed distance \nfields cannot have their individual axes scaled.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.01,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 6,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -6090,1060 +4160,96 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 104,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The diffuse colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 105,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 106,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The probability that light will be specularly reflected\nwhen it interacts with this material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 107,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 108,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The roughness of the material when specularly reflected.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 109,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 110,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The specular colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 111,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 112,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The probability that light will be transmitted through\nthe material (before accounting for Fresnel) when it\ninteracts with this material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 113,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 114,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The roughness when transmitted through the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 115,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 116,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The extinction coefficient of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 117,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The transmitted colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 118,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 119,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The intensity of light that will be emitted from the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 100.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 120,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The emissive colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 121,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 122,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.3,
-                "ui_data": {
-                  "tooltip": "The index of refraction of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 5.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 123,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 124,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The scattering coefficient of the material.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 125,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The scattering colour of the material.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": true
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 126,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "value": {
-            "ProceduralTexture": {
-              "value": {
-                "texture_type": "None",
-                "scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "black_point": 0.0,
-                "white_point": 1.0,
-                "lift": 0.0,
-                "gain": 1.0,
-                "octaves": 10,
-                "lacunarity": 2.0,
-                "amplitude_gain": 0.75,
-                "gamma": 1.0,
-                "low_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "high_frequency_scale": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "low_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "high_frequency_translation": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "invert": false
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -7727,7 +4833,7 @@
           "value": {
             "UnsignedInteger": {
               "value": {
-                "value": 2,
+                "value": 1,
                 "ui_data": {
                   "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
                   "hidden": false
@@ -8125,992 +5231,124 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 143,
-            "version": 1
-          },
-          "typ": "ComboBox",
-          "value": {
-            "ComboBox": {
-              "value": {
-                "selected": "Checkerboard",
-                "options": [
-                  "None",
-                  "Grade",
-                  "Checkerboard",
-                  "FBMNoise",
-                  "TurbulenceNoise"
-                ],
-                "ui_data": {
-                  "tooltip": "The type of texture to use.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 144,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The scale factor of the texture.",
-                  "hidden": false
-                },
-                "collapsed": true,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 145,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The black point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 146,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The white point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 147,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The lift to apply to the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 148,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture colour.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0001,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 149,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 10,
-                "ui_data": {
-                  "tooltip": "The number of different frequencies to superimpose.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 1,
-                  "end": 12
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 150,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 2.0,
-                "ui_data": {
-                  "tooltip": "The lacunarity is the initial frequency of the noise,\nand the amount to scale the frequency for each octave.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 1.0,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 151,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.75,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture. This scales the\nnoise amplitude between octaves.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 152,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.01,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 153,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale lower frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 154,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale higher frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 155,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to translate lower frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 156,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to translate higher frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 157,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "Invert the colour.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 158,
-            "version": 1
-          },
-          "typ": "ComboBox",
-          "value": {
-            "ComboBox": {
-              "value": {
-                "selected": "TurbulenceNoise",
-                "options": [
-                  "None",
-                  "Grade",
-                  "Checkerboard",
-                  "FBMNoise",
-                  "TurbulenceNoise"
-                ],
-                "ui_data": {
-                  "tooltip": "The type of texture to use.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 159,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The scale factor of the texture.",
-                  "hidden": false
-                },
-                "collapsed": true,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 160,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.68,
-                "ui_data": {
-                  "tooltip": "The black point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 161,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.84,
-                "ui_data": {
-                  "tooltip": "The white point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 162,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.06,
-                "ui_data": {
-                  "tooltip": "The lift to apply to the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 163,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.2,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture colour.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0001,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 164,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 10,
-                "ui_data": {
-                  "tooltip": "The number of different frequencies to superimpose.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 1,
-                  "end": 12
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 165,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 3.3,
-                "ui_data": {
-                  "tooltip": "The lacunarity is the initial frequency of the noise,\nand the amount to scale the frequency for each octave.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 1.0,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 166,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.75,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture. This scales the\nnoise amplitude between octaves.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 167,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.01,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 168,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale lower frequencies between octaves.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 169,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale higher frequencies between octaves.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 170,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to translate lower frequencies between octaves.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 171,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to translate higher frequencies between octaves.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 172,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": true,
-                "ui_data": {
-                  "tooltip": "Invert the colour.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       }
     ],
     "outputs": [
@@ -9134,34 +5372,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "typ": "Material",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 3,
-            "version": 1
-          },
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -9194,19 +5410,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 6,
-            "version": 1
-          },
-          "node": {
-            "idx": 6,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -9239,19 +5444,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 9,
-            "version": 1
-          },
-          "node": {
-            "idx": 9,
-            "version": 1
-          },
-          "typ": "Material",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -9269,34 +5463,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 11,
-            "version": 1
-          },
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 12,
-            "version": 1
-          },
-          "node": {
-            "idx": 12,
-            "version": 1
-          },
-          "typ": "ProceduralTexture",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       }
     ],
     "connections": [
@@ -9313,13 +5485,6 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 2,
-          "version": 1
-        },
-        "version": 1
-      },
-      {
         "value": null,
         "version": 0
       },
@@ -9432,13 +5597,6 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 3,
-          "version": 1
-        },
-        "version": 1
-      },
-      {
         "value": null,
         "version": 0
       },
@@ -9495,11 +5653,16 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 12,
-          "version": 1
-        },
-        "version": 1
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
       },
       {
         "value": null,
@@ -9637,11 +5800,8 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 6,
-          "version": 1
-        },
-        "version": 1
+        "value": null,
+        "version": 0
       },
       {
         "value": null,
@@ -9693,13 +5853,6 @@
         "version": 1
       },
       {
-        "value": {
-          "idx": 9,
-          "version": 1
-        },
-        "version": 1
-      },
-      {
         "value": null,
         "version": 0
       },
@@ -9748,11 +5901,12 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 11,
-          "version": 1
-        },
-        "version": 1
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
       },
       {
         "value": null,
@@ -9853,31 +6007,7 @@
       "version": 1
     },
     {
-      "idx": 2,
-      "version": 1
-    },
-    {
-      "idx": 3,
-      "version": 1
-    },
-    {
-      "idx": 5,
-      "version": 1
-    },
-    {
-      "idx": 6,
-      "version": 1
-    },
-    {
       "idx": 7,
-      "version": 1
-    },
-    {
-      "idx": 8,
-      "version": 1
-    },
-    {
-      "idx": 9,
       "version": 1
     },
     {
@@ -9889,11 +6019,11 @@
       "version": 1
     },
     {
-      "idx": 11,
+      "idx": 8,
       "version": 1
     },
     {
-      "idx": 12,
+      "idx": 5,
       "version": 1
     }
   ],
@@ -9907,96 +6037,78 @@
     },
     {
       "value": {
-        "x": 483.14777,
-        "y": 2421.6917
+        "x": -230.1643,
+        "y": 1626.4944
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -247.25952,
+        "y": 1445.155
       },
       "version": 1
     },
     {
       "value": {
-        "x": 193.44379,
-        "y": 2450.6213
+        "x": -438.94556,
+        "y": 1451.3319
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": 43.91089,
+        "y": 1642.6104
       },
       "version": 1
     },
     {
       "value": {
-        "x": 247.69843,
-        "y": 2754.2761
+        "x": -228.04883,
+        "y": 1893.4197
       },
       "version": 1
     },
     {
+      "value": null,
+      "version": 0
+    },
+    {
       "value": {
-        "x": 467.07404,
-        "y": 2251.19
+        "x": 185.78906,
+        "y": 1618.106
       },
       "version": 1
     },
     {
-      "value": {
-        "x": 273.10223,
-        "y": 2299.6638
-      },
-      "version": 1
+      "value": null,
+      "version": 0
     },
     {
-      "value": {
-        "x": 92.43512,
-        "y": 2264.3955
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": 740.8432,
-        "y": 2436.8445
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": 479.92206,
-        "y": 2639.8416
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": 448.75458,
-        "y": 2842.7642
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": 874.24164,
-        "y": 2413.804
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": 280.399,
-        "y": 2897.7766
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -58.155457,
-        "y": 2448.7075
-      },
-      "version": 1
+      "value": null,
+      "version": 0
     }
   ],
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 834.1685,
-      "y": -2186.2178
+      "x": 1459.9376,
+      "y": -1258.6089
     },
-    "zoom": 0.54506326,
+    "zoom": 0.57970923,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

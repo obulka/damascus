@@ -226,12 +226,6 @@ fn texture_primitive(
     //     (*primitive).material.transmissive_roughness,
     //     &texture,
     // );
-    // texture = (*primitive).material.extinction_colour_texture;
-    // (*primitive).material.extinction_colour = procedurally_texture_vec3f(
-    //     procedural_texture_seed,
-    //     (*primitive).material.extinction_colour,
-    //     &texture,
-    // );
     // texture = (*primitive).material.emissive_colour_texture;
     // (*primitive).material.emissive_colour = procedurally_texture_vec3f(
     //     procedural_texture_seed,
@@ -242,12 +236,6 @@ fn texture_primitive(
     // (*primitive).material.refractive_index = procedurally_texture_f32(
     //     procedural_texture_seed,
     //     (*primitive).material.refractive_index,
-    //     &texture,
-    // );
-    // texture = (*primitive).material.scattering_colour_texture;
-    // (*primitive).material.scattering_colour = procedurally_texture_vec3f(
-    //     procedural_texture_seed,
-    //     (*primitive).material.scattering_colour,
     //     &texture,
     // );
 }

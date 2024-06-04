@@ -24,6 +24,3 @@ ndarray = { version = "0.15.6", features = ["serde"] }
 rfd = "0.12"
 strum = { version = "0.25", features = ["derive"] }
 #undo_2 = "0.1" # one day...
-
-[profile.release]
-lto = true

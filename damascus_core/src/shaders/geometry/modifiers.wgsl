@@ -117,7 +117,26 @@ fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
 
 
 /**
- * Transform a ray's location.
+ * Transform and rotate a position.
+ *
+ * @arg position: The location the ray originates from.
+ * @arg primitive: The primitive which determines the transformation.
+ *
+ * @returns: The transformed position.
+ */
+fn rotate_translate_position(
+    position: vec3f,
+    primitive: ptr<function, Primitive>,
+) -> vec3f {
+    return (
+        (*primitive).transform.inverse_rotation
+        * (position - (*primitive).transform.translation)
+    );
+}
+
+
+/**
+ * Mirror/elongate/repeate primitive at a position.
  *
  * @arg position: The location the ray originates from.
  * @arg primitive: The primitive which determines the transformation.
@@ -128,25 +147,18 @@ fn transform_position(
     position: vec3f,
     primitive: ptr<function, Primitive>,
 ) -> vec3f {
-    var transformed_position: vec3f = (
-        (*primitive).transform.inverse_rotation
-        * (position - (*primitive).transform.translation)
-    );
-
-    texture_primitive(transformed_position, primitive);
-
     // Perform finite or infinite repetition if enabled
-    transformed_position = select(
+    var transformed_position: vec3f = select(
         select(
-            transformed_position,
+            position,
             mirrored_infinite_repetition(
-                transformed_position,
+                position,
                 primitive,
             ),
             bool((*primitive).modifiers & INFINITE_REPETITION),
         ),
         mirrored_finite_repetition(
-            transformed_position,
+            position,
             primitive,
         ),
         bool((*primitive).modifiers & FINITE_REPETITION),
@@ -253,8 +265,10 @@ fn distance_to_textured_primitive(
     position: vec3f,
     primitive: ptr<function, Primitive>,
 ) -> f32 {
-    var transformed_position: vec3f = transform_position(
-        position,
+    var transformed_position: vec3f = rotate_translate_position(position, primitive);
+    texture_primitive(transformed_position, primitive);
+    transformed_position = transform_position(
+        transformed_position,
         primitive,
     ) / (*primitive).transform.uniform_scale;
 
@@ -469,7 +483,10 @@ fn distance_to_primitive(
     primitive: ptr<function, Primitive>,
 ) -> f32 {
     var transformed_position: vec3f = transform_position(
-        position,
+        rotate_translate_position(
+            position,
+            primitive,
+        ),
         primitive,
     ) / (*primitive).transform.uniform_scale;
 

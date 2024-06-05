@@ -1496,6 +1496,139 @@
           }
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 14,
+            "version": 1
+          },
+          "label": "procedural texture",
+          "inputs": [
+            [
+              "texture_type",
+              {
+                "idx": 188,
+                "version": 1
+              }
+            ],
+            [
+              "scale",
+              {
+                "idx": 189,
+                "version": 1
+              }
+            ],
+            [
+              "black_point",
+              {
+                "idx": 190,
+                "version": 1
+              }
+            ],
+            [
+              "white_point",
+              {
+                "idx": 191,
+                "version": 1
+              }
+            ],
+            [
+              "lift",
+              {
+                "idx": 192,
+                "version": 1
+              }
+            ],
+            [
+              "gain",
+              {
+                "idx": 193,
+                "version": 1
+              }
+            ],
+            [
+              "octaves",
+              {
+                "idx": 194,
+                "version": 1
+              }
+            ],
+            [
+              "lacunarity",
+              {
+                "idx": 195,
+                "version": 1
+              }
+            ],
+            [
+              "amplitude_gain",
+              {
+                "idx": 196,
+                "version": 1
+              }
+            ],
+            [
+              "gamma",
+              {
+                "idx": 197,
+                "version": 1
+              }
+            ],
+            [
+              "low_frequency_scale",
+              {
+                "idx": 198,
+                "version": 1
+              }
+            ],
+            [
+              "high_frequency_scale",
+              {
+                "idx": 199,
+                "version": 1
+              }
+            ],
+            [
+              "low_frequency_translation",
+              {
+                "idx": 200,
+                "version": 1
+              }
+            ],
+            [
+              "high_frequency_translation",
+              {
+                "idx": 201,
+                "version": 1
+              }
+            ],
+            [
+              "invert",
+              {
+                "idx": 202,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 14,
+                "version": 1
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "ProceduralTexture"
+          }
+        },
+        "version": 1
       }
     ],
     "inputs": [
@@ -3512,7 +3645,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.5,
+                "value": 0.66,
                 "ui_data": {
                   "tooltip": "The probability that light will be specularly reflected\nwhen it interacts with this material.",
                   "hidden": false
@@ -3704,8 +3837,8 @@
               "value": {
                 "value": [
                   1.0,
-                  0.10136008,
-                  0.10136008
+                  0.45159447,
+                  0.45159447
                 ],
                 "ui_data": {
                   "tooltip": "The specular colour of the material.",
@@ -5941,7 +6074,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.0,
+                "value": 1.3,
                 "ui_data": {
                   "tooltip": "The intensity of the light.",
                   "hidden": false
@@ -6931,7 +7064,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.3,
+                "value": 1.0,
                 "ui_data": {
                   "tooltip": "The index of refraction of the material.",
                   "hidden": false
@@ -8922,7 +9055,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.0,
+                "value": 0.42,
                 "ui_data": {
                   "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
                   "hidden": false
@@ -9034,7 +9167,7 @@
                   "tooltip": "The amount to translate lower frequencies between octaves.",
                   "hidden": false
                 },
-                "collapsed": false,
+                "collapsed": true,
                 "is_colour": false
               }
             }
@@ -9069,7 +9202,7 @@
                   "tooltip": "The amount to translate higher frequencies between octaves.",
                   "hidden": false
                 },
-                "collapsed": false,
+                "collapsed": true,
                 "is_colour": false
               }
             }
@@ -9105,6 +9238,560 @@
           "kind": "ConstantOnly",
           "node": {
             "idx": 12,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 188,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "TurbulenceNoise",
+                "options": [
+                  "None",
+                  "Grade",
+                  "Checkerboard",
+                  "FBMNoise",
+                  "TurbulenceNoise"
+                ],
+                "ui_data": {
+                  "tooltip": "The type of texture to use.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 189,
+            "version": 1
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  21.0,
+                  21.0,
+                  21.0,
+                  21.0
+                ],
+                "ui_data": {
+                  "tooltip": "The scale factor of the texture.",
+                  "hidden": false
+                },
+                "collapsed": true,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 190,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.65,
+                "ui_data": {
+                  "tooltip": "The black point of the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 191,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.9,
+                "ui_data": {
+                  "tooltip": "The white point of the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 192,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The lift to apply to the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 193,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.0,
+                "ui_data": {
+                  "tooltip": "The gain to apply to the texture colour.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0001,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 194,
+            "version": 1
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 10,
+                "ui_data": {
+                  "tooltip": "The number of different frequencies to superimpose.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 1,
+                  "end": 12
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 195,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 3.3,
+                "ui_data": {
+                  "tooltip": "The lacunarity is the initial frequency of the noise,\nand the amount to scale the frequency for each octave.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 196,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The gain to apply to the texture. This scales the\nnoise amplitude between octaves.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 197,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.01,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 198,
+            "version": 1
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to scale lower frequencies between octaves.",
+                  "hidden": false
+                },
+                "collapsed": true,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 199,
+            "version": 1
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to scale higher frequencies between octaves.",
+                  "hidden": false
+                },
+                "collapsed": true,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 200,
+            "version": 1
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  -5.2,
+                  -5.0,
+                  -5.0,
+                  -5.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to translate lower frequencies between octaves.",
+                  "hidden": false
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 201,
+            "version": 1
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to translate higher frequencies between octaves.",
+                  "hidden": false
+                },
+                "collapsed": true,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 202,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": true,
+                "ui_data": {
+                  "tooltip": "Invert the colour.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 14,
             "version": 1
           },
           "shown_inline": true,
@@ -9291,6 +9978,25 @@
           },
           "node": {
             "idx": 12,
+            "version": 1
+          },
+          "typ": "ProceduralTexture",
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 14,
+            "version": 1
+          },
+          "node": {
+            "idx": 14,
             "version": 1
           },
           "typ": "ProceduralTexture",
@@ -9522,8 +10228,11 @@
         "version": 0
       },
       {
-        "value": null,
-        "version": 0
+        "value": {
+          "idx": 14,
+          "version": 1
+        },
+        "version": 1
       },
       {
         "value": null,
@@ -9881,10 +10590,6 @@
       "version": 1
     },
     {
-      "idx": 10,
-      "version": 1
-    },
-    {
       "idx": 4,
       "version": 1
     },
@@ -9894,6 +10599,14 @@
     },
     {
       "idx": 12,
+      "version": 1
+    },
+    {
+      "idx": 14,
+      "version": 1
+    },
+    {
+      "idx": 10,
       "version": 1
     }
   ],
@@ -9907,85 +10620,96 @@
     },
     {
       "value": {
-        "x": 4.178955,
-        "y": 2654.9268
+        "x": -4342.1606,
+        "y": 2030.6272
       },
       "version": 1
     },
     {
       "value": {
-        "x": -257.9558,
-        "y": 2681.1038
+        "x": -4631.868,
+        "y": 2059.56
       },
       "version": 1
     },
     {
       "value": {
-        "x": -208.86365,
-        "y": 2955.8618
+        "x": -4577.6133,
+        "y": 2363.2139
       },
       "version": 1
     },
     {
       "value": {
-        "x": -10.364136,
-        "y": 2500.651
+        "x": -4358.231,
+        "y": 1860.1293
       },
       "version": 1
     },
     {
       "value": {
-        "x": -185.87805,
-        "y": 2544.5117
+        "x": -4552.206,
+        "y": 1908.6023
       },
       "version": 1
     },
     {
       "value": {
-        "x": -349.35138,
-        "y": 2512.5989
+        "x": -4732.8774,
+        "y": 1873.3333
       },
       "version": 1
     },
     {
       "value": {
-        "x": 237.35193,
-        "y": 2668.6382
+        "x": -4084.4631,
+        "y": 2045.7825
       },
       "version": 1
     },
     {
       "value": {
-        "x": 1.2608643,
-        "y": 2852.318
+        "x": -4345.3867,
+        "y": 2248.783
       },
       "version": 1
     },
     {
       "value": {
-        "x": -26.941284,
-        "y": 3035.9297
+        "x": -4376.5537,
+        "y": 2451.7007
       },
       "version": 1
     },
     {
       "value": {
-        "x": 358.0564,
-        "y": 2647.791
+        "x": -3951.072,
+        "y": 2022.7424
       },
       "version": 1
     },
     {
       "value": {
-        "x": -179.27625,
-        "y": 3085.708
+        "x": -4544.917,
+        "y": 2506.7144
       },
       "version": 1
     },
     {
       "value": {
-        "x": -485.61084,
-        "y": 2679.3726
+        "x": -4883.4673,
+        "y": 2057.6484
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -4883.9375,
+        "y": 2282.5588
       },
       "version": 1
     }
@@ -9993,10 +10717,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 1346.2878,
-      "y": -2385.4133
+      "x": 5652.1733,
+      "y": -1790.2642
     },
-    "zoom": 0.4931935,
+    "zoom": 0.5450624,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

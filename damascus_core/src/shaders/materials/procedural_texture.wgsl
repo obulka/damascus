@@ -218,43 +218,45 @@ fn perlin_simplex_noise(seed: vec4f) -> f32 {
 
 
 /**
- * fBM noise.
+ * Octave noise.
  *
  * @arg seed: The noise seed.
+ * @arg texture: The texture properties.
+ * @arg turbulence: Use the absolute value of the simplex noise if true.
  *
  * @returns: The noise value in the range [-1, 1].
  */
 fn octave_noise(
     seed: vec4f,
-    texture: ptr<function, ProceduralTexture>,
+    texture: ProceduralTexture,
     turbulence: bool,
 ) -> f32 {
     var output: f32 = 0.;
-    var frequency: f32 = (*texture).lacunarity;
+    var frequency: f32 = texture.lacunarity;
     var amplitude: f32 = 1.;
     var max_amplitude: f32 = 0.;
     var translation: vec4f;
     var scale: vec4f;
 
-    for (var octave=0u; octave < (*texture).octaves; octave++) {
-        var octave_fraction = f32(octave) / f32((*texture).octaves);
+    for (var octave=0u; octave < texture.octaves; octave++) {
+        var octave_fraction = f32(octave) / f32(texture.octaves);
         scale = (
-            ((*texture).high_frequency_scale * octave_fraction)
-            + ((*texture).low_frequency_scale * (1. - octave_fraction))
+            (texture.high_frequency_scale * octave_fraction)
+            + (texture.low_frequency_scale * (1. - octave_fraction))
         );
         translation = (
-            ((*texture).high_frequency_translation * octave_fraction)
-            + ((*texture).low_frequency_translation * (1. - octave_fraction))
+            (texture.high_frequency_translation * octave_fraction)
+            + (texture.low_frequency_translation * (1. - octave_fraction))
         );
 
         var simplex_noise: f32 = amplitude * perlin_simplex_noise(
-            (seed * scale + translation) * frequency / (*texture).scale,
+            (seed / scale - translation) * frequency / texture.scale,
         );
         output += select(simplex_noise, abs(simplex_noise), turbulence);
 
-        frequency *= (*texture).lacunarity;
+        frequency *= texture.lacunarity;
         max_amplitude += amplitude;
-        amplitude *= (*texture).amplitude_gain;
+        amplitude *= texture.amplitude_gain;
     }
 
     return abs(output / max_amplitude);
@@ -272,46 +274,46 @@ fn checkerboard(seed: vec4f) -> f32 {
 }
 
 
-fn grade_f32(colour: f32, texture: ptr<function, ProceduralTexture>) -> f32 {
+fn grade_f32(colour: f32, texture: ProceduralTexture) -> f32 {
     return select(
         pow(
-            (*texture).gain * (
-                (1. - (*texture).lift)
+            texture.gain * (
+                (1. - texture.lift)
                 * saturate_f32(
                     select(
                         colour,
                         1. - colour,
-                        bool((*texture).flags & INVERT),
-                    ) - (*texture).black_point,
-                ) / ((*texture).white_point - (*texture).black_point)
-                + (*texture).lift
+                        bool(texture.flags & INVERT),
+                    ) - texture.black_point,
+                ) / (texture.white_point - texture.black_point)
+                + texture.lift
             ),
-            1. / (*texture).gamma,
+            1. / texture.gamma,
         ),
         0.,
-        (*texture).white_point == (*texture).black_point,
+        texture.white_point == texture.black_point,
     );
 }
 
 
-fn grade_vec3(colour: vec3f, texture: ptr<function, ProceduralTexture>) -> vec3f {
+fn grade_vec3(colour: vec3f, texture: ProceduralTexture) -> vec3f {
     return select(
         pow(
-            (*texture).gain * (
-                (1. - (*texture).lift)
+            texture.gain * (
+                (1. - texture.lift)
                 * saturate_vec3f(
                     select(
                         colour,
                         1. - colour,
-                        bool((*texture).flags & INVERT),
-                    ) - (*texture).black_point,
-                ) / ((*texture).white_point - (*texture).black_point)
-                + (*texture).lift
+                        bool(texture.flags & INVERT),
+                    ) - texture.black_point,
+                ) / (texture.white_point - texture.black_point)
+                + texture.lift
             ),
-            vec3(1. / (*texture).gamma),
+            vec3(1. / texture.gamma),
         ),
         vec3f(),
-        (*texture).white_point == (*texture).black_point,
+        texture.white_point == texture.black_point,
     );
 }
 
@@ -319,9 +321,9 @@ fn grade_vec3(colour: vec3f, texture: ptr<function, ProceduralTexture>) -> vec3f
 fn procedurally_texture_f32(
     seed: vec4f,
     colour: f32,
-    texture: ptr<function, ProceduralTexture>,
+    texture: ProceduralTexture,
 ) -> f32 {
-    switch (*texture).texture_type {
+    switch texture.texture_type {
         case NONE, default {
             // None
             return colour;
@@ -332,12 +334,12 @@ fn procedurally_texture_f32(
         }
         case CHECKER_BOARD {
             // Checkerboard
-            return colour * grade_f32(checkerboard(seed / (*texture).scale), texture);
+            return colour * grade_f32(checkerboard(seed / texture.scale), texture);
         }
         case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
             return colour * grade_f32(
-                octave_noise(seed, texture, (*texture).texture_type == TURBULENCE_NOISE),
+                octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
                 texture,
             );
         }
@@ -348,9 +350,9 @@ fn procedurally_texture_f32(
 fn procedurally_texture_vec3f(
     seed: vec4f,
     colour: vec3f,
-    texture: ptr<function, ProceduralTexture>,
+    texture: ProceduralTexture,
 ) -> vec3f {
-    switch (*texture).texture_type {
+    switch texture.texture_type {
         case NONE, default {
             // None
             return colour;
@@ -361,12 +363,12 @@ fn procedurally_texture_vec3f(
         }
         case CHECKER_BOARD {
             // Checkerboard
-            return colour * vec3(grade_f32(checkerboard(seed / (*texture).scale), texture));
+            return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture));
         }
         case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
             return colour * vec3(grade_f32(
-                octave_noise(seed, texture, (*texture).texture_type == TURBULENCE_NOISE),
+                octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
                 texture,
             ));
         }

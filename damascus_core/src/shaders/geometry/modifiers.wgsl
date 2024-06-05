@@ -208,6 +208,18 @@ fn texture_primitive(
         (*primitive).material.diffuse_colour,
         &texture,
     );
+    // texture = (*primitive).material.specular_colour_texture;
+    // (*primitive).material.specular_colour = procedurally_texture_vec3f(
+    //     procedural_texture_seed,
+    //     (*primitive).material.specular_colour,
+    //     &texture,
+    // );
+    // texture = (*primitive).material.emissive_colour_texture;
+    // (*primitive).material.emissive_colour = procedurally_texture_vec3f(
+    //     procedural_texture_seed,
+    //     (*primitive).material.emissive_colour,
+    //     &texture,
+    // );
     // texture = (*primitive).material.specular_probability_texture;
     // (*primitive).material.specular_probability = procedurally_texture_f32(
     //     procedural_texture_seed,
@@ -220,12 +232,6 @@ fn texture_primitive(
     //     (*primitive).material.specular_roughness,
     //     &texture,
     // );
-    // texture = (*primitive).material.specular_colour_texture;
-    // (*primitive).material.specular_colour = procedurally_texture_vec3f(
-    //     procedural_texture_seed,
-    //     (*primitive).material.specular_colour,
-    //     &texture,
-    // );
     // texture = (*primitive).material.transmissive_probability_texture;
     // (*primitive).material.transmissive_probability = procedurally_texture_f32(
     //     procedural_texture_seed,
@@ -236,12 +242,6 @@ fn texture_primitive(
     // (*primitive).material.transmissive_roughness = procedurally_texture_f32(
     //     procedural_texture_seed,
     //     (*primitive).material.transmissive_roughness,
-    //     &texture,
-    // );
-    // texture = (*primitive).material.emissive_colour_texture;
-    // (*primitive).material.emissive_colour = procedurally_texture_vec3f(
-    //     procedural_texture_seed,
-    //     (*primitive).material.emissive_colour,
     //     &texture,
     // );
     // texture = (*primitive).material.refractive_index_texture;

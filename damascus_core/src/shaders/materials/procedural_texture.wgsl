@@ -10,6 +10,9 @@ const CHECKER_BOARD: u32 = 2u;
 const FBM_NOISE: u32 = 3u;
 const TURBULENCE_NOISE: u32 = 4u;
 
+const G4: f32 = 0.138196601;
+const INVERT: u32 = 1u;
+
 
 var<private> PERM: array<u32, 512> = array<u32, 512>(
     151u, 160u, 137u, 91u, 90u, 15u, 131u, 13u, 201u, 95u, 96u, 53u, 194u, 233u,
@@ -107,10 +110,6 @@ var<private> SIMPLEX: array<vec4u, 64> = array<vec4u, 64>(
     vec4(3u, 1u, 0u, 2u), vec4(0u, 0u, 0u, 0u),
     vec4(3u, 2u, 0u, 1u), vec4(3u, 2u, 1u, 0u),
 );
-
-
-const G4: f32 = 0.138196601;
-const INVERT: u32 = 1u;
 
 
 struct ProceduralTexture {
@@ -225,9 +224,10 @@ fn perlin_simplex_noise(seed: vec4f) -> f32 {
  *
  * @returns: The noise value in the range [-1, 1].
  */
-fn fractal_brownian_motion_noise(
+fn octave_noise(
     seed: vec4f,
     texture: ptr<function, ProceduralTexture>,
+    turbulence: bool,
 ) -> f32 {
     var output: f32 = 0.;
     var frequency: f32 = (*texture).lacunarity;
@@ -247,9 +247,10 @@ fn fractal_brownian_motion_noise(
             + ((*texture).low_frequency_translation * (1. - octave_fraction))
         );
 
-        output += amplitude * perlin_simplex_noise(
+        var simplex_noise: f32 = amplitude * perlin_simplex_noise(
             (seed * scale + translation) * frequency / (*texture).scale,
         );
+        output += select(simplex_noise, abs(simplex_noise), turbulence);
 
         frequency *= (*texture).lacunarity;
         max_amplitude += amplitude;
@@ -257,50 +258,6 @@ fn fractal_brownian_motion_noise(
     }
 
     return abs(output / max_amplitude);
-}
-
-
-/**
- * Turbulence noise.
- *
- * @arg seed: The noise seed.
- *
- * @returns: The noise value in the range [0, 1].
- */
-fn turbulence_noise(
-    seed: vec4f,
-    texture: ptr<function, ProceduralTexture>,
-) -> f32 {
-    var output: f32 = 0.;
-    var frequency: f32 = (*texture).lacunarity;
-    var amplitude: f32 = 1.;
-    var max_amplitude: f32 = 0.;
-    var translation: vec4f;
-    var scale: vec4f;
-
-    for (var octave=0u; octave < (*texture).octaves; octave++) {
-        var octave_fraction = f32(octave) / f32((*texture).octaves);
-        scale = (
-            ((*texture).high_frequency_scale * octave_fraction)
-            + ((*texture).low_frequency_scale * (1. - octave_fraction))
-        );
-        translation = (
-            ((*texture).high_frequency_translation * octave_fraction)
-            + ((*texture).low_frequency_translation * (1. - octave_fraction))
-        );
-
-        output += abs(
-            amplitude * perlin_simplex_noise(
-                (seed * scale + translation) * frequency / (*texture).scale,
-            )
-        );
-
-        frequency *= (*texture).lacunarity;
-        max_amplitude += amplitude;
-        amplitude *= (*texture).amplitude_gain;
-    }
-
-    return output / max_amplitude;
 }
 
 
@@ -377,13 +334,12 @@ fn procedurally_texture_f32(
             // Checkerboard
             return colour * grade_f32(checkerboard(seed / (*texture).scale), texture);
         }
-        case FBM_NOISE {
+        case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
-            return colour * grade_f32(fractal_brownian_motion_noise(seed, texture), texture);
-        }
-        case TURBULENCE_NOISE {
-            // Turbulence Noise
-            return colour * grade_f32(turbulence_noise(seed, texture), texture);
+            return colour * grade_f32(
+                octave_noise(seed, texture, (*texture).texture_type == TURBULENCE_NOISE),
+                texture,
+            );
         }
     }
 }
@@ -407,13 +363,12 @@ fn procedurally_texture_vec3f(
             // Checkerboard
             return colour * vec3(grade_f32(checkerboard(seed / (*texture).scale), texture));
         }
-        case FBM_NOISE {
+        case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
-            return colour * vec3(grade_f32(fractal_brownian_motion_noise(seed, texture), texture));
-        }
-        case TURBULENCE_NOISE {
-            // Turbulence Noise
-            return colour * vec3(grade_f32(turbulence_noise(seed, texture), texture));
+            return colour * vec3(grade_f32(
+                octave_noise(seed, texture, (*texture).texture_type == TURBULENCE_NOISE),
+                texture,
+            ));
         }
     }
 }

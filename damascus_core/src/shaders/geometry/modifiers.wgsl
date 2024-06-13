@@ -16,6 +16,7 @@ const INTERSECTION: u32 = 256u;
 const SMOOTH_UNION: u32 = 512u;
 const SMOOTH_SUBTRACTION: u32 = 1024u;
 const SMOOTH_INTERSECTION: u32 = 2048u;
+const BLEND_TYPE_MASK: u32 = 3968u;
 const BOUNDING_VOLUME: u32 = 4096u;
 
 
@@ -814,7 +815,7 @@ fn blend_primitives(
     parent: ptr<function, Primitive>,
     child: ptr<function, Primitive>,
 ) -> f32 {
-    switch (*parent).modifiers & 3968u {
+    switch (*parent).modifiers & BLEND_TYPE_MASK {
         case SUBTRACTION {
             var negative_child_distance: f32 = -distance_to_child;
             var parent_closer_than_negative_child: bool = (
@@ -889,7 +890,7 @@ fn blend_distances(
     distance_to_child: f32,
     parent: ptr<function, Primitive>,
 ) -> f32 {
-    switch (*parent).modifiers & 3968u {
+    switch (*parent).modifiers & BLEND_TYPE_MASK {
         case SUBTRACTION {
             return max(distance_to_parent, -distance_to_child);
         }

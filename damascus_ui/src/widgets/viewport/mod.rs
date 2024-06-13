@@ -2,7 +2,7 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
-use eframe::egui;
+use eframe::{egui, egui_wgpu};
 
 use damascus_core::{
     geometry::{camera::Camera, Primitive},
@@ -28,6 +28,23 @@ impl Viewport {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Self {
         Self {
             viewport_3d: Viewport3d::new(creation_context),
+        }
+    }
+
+    pub fn reconstruct_render_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+        if let Some(viewport) = &mut self.viewport_3d {
+            wgpu_render_state
+                .renderer
+                .write()
+                .callback_resources
+                .clear();
+            viewport.construct_render_pipeline(wgpu_render_state);
+        }
+    }
+
+    pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+        if let Some(viewport) = &mut self.viewport_3d {
+            viewport.recompile_shader(wgpu_render_state);
         }
     }
 

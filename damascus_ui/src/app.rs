@@ -217,6 +217,10 @@ impl eframe::App for Damascus {
             self.viewport.disable();
         }
 
+        // if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+        //     self.viewport.recompile_shader(wgpu_render_state);
+        // }
+
         self.viewport.show(ctx);
     }
 }

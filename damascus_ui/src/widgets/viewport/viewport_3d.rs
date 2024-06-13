@@ -42,7 +42,7 @@ impl Viewport3d {
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Option<Self> {
         let renderer = RayMarcher::default();
         let renderer_hash = to_key_with_ordered_float(&renderer).ok()?;
-        let viewport3d = Self {
+        let mut viewport3d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
@@ -55,7 +55,17 @@ impl Viewport3d {
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
         // from `eframe::Frame` when you don't have a `CreationContext` available.
-        let wgpu_render_state = creation_context.wgpu_render_state.as_ref()?;
+        Self::construct_render_pipeline(
+            &mut viewport3d,
+            creation_context.wgpu_render_state.as_ref()?,
+        );
+
+        Some(viewport3d)
+    }
+
+    pub fn construct_render_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+        self.reset_render();
+
         let device = &wgpu_render_state.device;
 
         // Uniforms
@@ -64,7 +74,7 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = Self::create_uniform_buffers(device, &viewport3d);
+        ) = self.create_uniform_buffers(device);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -79,7 +89,7 @@ impl Viewport3d {
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = Self::create_storage_buffers(device, &viewport3d);
+        ) = self.create_storage_buffers(device);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -112,19 +122,42 @@ impl Viewport3d {
             .insert(RenderResources {
                 render_pipeline,
                 uniform_bind_group,
+                uniform_bind_group_layout,
                 render_parameters_buffer,
                 scene_parameters_buffer,
                 render_state_buffer,
                 render_camera_buffer,
                 storage_bind_group,
+                storage_bind_group_layout,
                 primitives_buffer,
                 lights_buffer,
                 atmosphere_buffer,
                 emissive_primitive_indices_buffer,
                 progressive_rendering_bind_group,
+                progressive_rendering_bind_group_layout,
             });
+    }
 
-        Some(viewport3d)
+    pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+        if let Some(render_resources) = wgpu_render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            self.reset_render();
+
+            let device = &wgpu_render_state.device;
+
+            // Create the updated pipeline
+            render_resources.render_pipeline = Self::create_render_pipeline(
+                device,
+                wgpu_render_state.target_format,
+                &render_resources.uniform_bind_group_layout,
+                &render_resources.storage_bind_group_layout,
+                &render_resources.progressive_rendering_bind_group_layout,
+            );
+        }
     }
 
     pub fn disable(&mut self) {
@@ -169,29 +202,29 @@ impl Viewport3d {
     }
 
     fn create_uniform_buffers(
+        &self,
         device: &Arc<wgpu::Device>,
-        viewport3d: &Self,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render parameter buffer"),
-                contents: bytemuck::cast_slice(&[viewport3d.renderer.render_parameters()]),
+                contents: bytemuck::cast_slice(&[self.renderer.render_parameters()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let scene_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
-                contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.scene_parameters()]),
+                contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render progress buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.render_state.as_std_430()]),
+            contents: bytemuck::cast_slice(&[self.render_state.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.render_camera.as_std_430()]),
+            contents: bytemuck::cast_slice(&[self.renderer.scene.render_camera.as_std_430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
@@ -283,31 +316,28 @@ impl Viewport3d {
     }
 
     fn create_storage_buffers(
+        &self,
         device: &Arc<wgpu::Device>,
-        viewport3d: &Self,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_primitives()]),
+            contents: bytemuck::cast_slice(&[self.renderer.scene.create_gpu_primitives()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d lights buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.create_gpu_lights()]),
+            contents: bytemuck::cast_slice(&[self.renderer.scene.create_gpu_lights()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let atmosphere_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[viewport3d.renderer.scene.atmosphere()]),
+            contents: bytemuck::cast_slice(&[self.renderer.scene.atmosphere()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let emissive_primitive_indices_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d emissive primitive ids"),
-                contents: bytemuck::cast_slice(&[viewport3d
-                    .renderer
-                    .scene
-                    .emissive_primitive_indices()]),
+                contents: bytemuck::cast_slice(&[self.renderer.scene.emissive_primitive_indices()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             });
 
@@ -497,6 +527,10 @@ impl Viewport3d {
         })
     }
 
+    pub fn reset_render(&mut self) {
+        self.render_state.paths_rendered_per_pixel = 0;
+    }
+
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         self.renderer.scene.render_camera.aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
@@ -554,7 +588,7 @@ impl Viewport3d {
         // Check if the nodegraph has changed and reset the render if it has
         if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.renderer_hash {
-                self.render_state.paths_rendered_per_pixel = 0;
+                self.reset_render();
                 self.renderer_hash = new_hash;
             }
         } else {
@@ -652,16 +686,19 @@ impl egui_wgpu::CallbackTrait for Viewport3dCallback {
 struct RenderResources {
     render_pipeline: wgpu::RenderPipeline,
     uniform_bind_group: wgpu::BindGroup,
+    uniform_bind_group_layout: wgpu::BindGroupLayout,
     render_parameters_buffer: wgpu::Buffer,
     scene_parameters_buffer: wgpu::Buffer,
     render_state_buffer: wgpu::Buffer,
     render_camera_buffer: wgpu::Buffer,
     storage_bind_group: wgpu::BindGroup,
+    storage_bind_group_layout: wgpu::BindGroupLayout,
     primitives_buffer: wgpu::Buffer,
     lights_buffer: wgpu::Buffer,
     atmosphere_buffer: wgpu::Buffer,
     emissive_primitive_indices_buffer: wgpu::Buffer,
     progressive_rendering_bind_group: wgpu::BindGroup,
+    progressive_rendering_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RenderResources {

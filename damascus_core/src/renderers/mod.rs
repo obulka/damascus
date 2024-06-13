@@ -58,7 +58,7 @@ impl Default for RenderState {
         Self {
             frame_counter: 0,
             previous_frame_time: SystemTime::now(),
-            fps: 60.,
+            fps: 0.,
             paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
             paused: true,

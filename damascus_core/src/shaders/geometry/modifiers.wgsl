@@ -11,6 +11,11 @@ const MIRROR_X: u32 = 8u;
 const MIRROR_Y: u32 = 16u;
 const MIRROR_Z: u32 = 32u;
 const HOLLOW: u32 = 64u;
+const SUBTRACTION: u32 = 128u;
+const INTERSECTION: u32 = 256u;
+const SMOOTH_UNION: u32 = 512u;
+const SMOOTH_SUBTRACTION: u32 = 1024u;
+const SMOOTH_INTERSECTION: u32 = 2048u;
 const BOUNDING_VOLUME: u32 = 4096u;
 
 
@@ -810,8 +815,7 @@ fn blend_primitives(
     child: ptr<function, Primitive>,
 ) -> f32 {
     switch (*parent).modifiers & 3968u {
-        case 128u {
-            // Subtraction
+        case SUBTRACTION {
             var negative_child_distance: f32 = -distance_to_child;
             var parent_closer_than_negative_child: bool = (
                 negative_child_distance > distance_to_parent
@@ -823,14 +827,12 @@ fn blend_primitives(
                 parent_closer_than_negative_child,
             );
         }
-        case 256u {
-            // Intersection
+        case INTERSECTION {
             var parent_closest: bool = distance_to_parent < distance_to_child;
             select_primitive(parent, child, parent_closest);
             return select(distance_to_parent, distance_to_child, parent_closest);
         }
-        case 512u {
-            // Smooth Union
+        case SMOOTH_UNION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 + 0.5
@@ -844,8 +846,7 @@ fn blend_primitives(
                 smoothing,
             ) - (*parent).blend_strength * smoothing * (1. - smoothing);
         }
-        case 1024u {
-            // Smooth Subtraction
+        case SMOOTH_SUBTRACTION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 - 0.5
@@ -859,8 +860,7 @@ fn blend_primitives(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
-        case 2048u {
-            // Smooth Intersection
+        case SMOOTH_INTERSECTION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 - 0.5
@@ -890,16 +890,13 @@ fn blend_distances(
     parent: ptr<function, Primitive>,
 ) -> f32 {
     switch (*parent).modifiers & 3968u {
-        case 128u {
-            // Subtraction
+        case SUBTRACTION {
             return max(distance_to_parent, -distance_to_child);
         }
-        case 256u {
-            // Intersection
+        case INTERSECTION {
             return max(distance_to_parent, distance_to_child);
         }
-        case 512u {
-            // Smooth Union
+        case SMOOTH_UNION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 + 0.5
@@ -912,8 +909,7 @@ fn blend_distances(
                 smoothing,
             ) - (*parent).blend_strength * smoothing * (1. - smoothing);
         }
-        case 1024u {
-            // Smooth Subtraction
+        case SMOOTH_SUBTRACTION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 - 0.5
@@ -926,8 +922,7 @@ fn blend_distances(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
-        case 2048u {
-            // Smooth Intersection
+        case SMOOTH_INTERSECTION {
             var smoothing: f32 = saturate_f32(
                 0.5
                 - 0.5

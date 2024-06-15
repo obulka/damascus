@@ -46,14 +46,10 @@ impl UIInput<materials::Material> for Material {
     }
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
-        let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            if self.connected {
-                return;
-            }
         });
-        has_changed
+        false
     }
 }
 

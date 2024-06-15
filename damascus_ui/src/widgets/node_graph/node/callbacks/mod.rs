@@ -3,7 +3,7 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-use egui_node_graph::NodeId;
+use egui_node_graph::{InputId, NodeId, OutputId};
 
 use super::{Graph, NodeDataType, NodeGraphState, NodeValueType, UIInput};
 
@@ -95,5 +95,9 @@ pub trait NodeCallbacks {
         }
     }
 
-    fn input_value_changed(&self, graph: &mut Graph, node_id: NodeId, input_name: &String);
+    fn input_value_changed(&self, _graph: &mut Graph, _node_id: NodeId, _input_name: &String) {}
+
+    fn input_disconnected(&self, _graph: &mut Graph, _input_id: InputId, _output_id: OutputId) {}
+
+    fn input_connected(&self, _graph: &mut Graph, _input_id: InputId, _output_id: OutputId) {}
 }

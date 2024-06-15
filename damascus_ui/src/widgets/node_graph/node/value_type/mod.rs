@@ -24,7 +24,7 @@ pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, combo_box::ComboBox, float::Float, integer::Integer,
     mat3::Mat3, mat4::Mat4, material::Material, unsigned_integer::UnsignedInteger,
     unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3, vec4::Vec4, Collapsible, Colour,
-    RangedInput, UIInput,
+    Connection, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -289,7 +289,10 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Vec3 { value } => value.create_ui(ui, param_name),
             NodeValueType::Vec4 { value } => value.create_ui(ui, param_name),
             NodeValueType::Mat3 { value } => value.create_ui(ui, param_name),
-            NodeValueType::Mat4 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Mat4 { value } => {
+                value.disconnect();
+                value.create_ui(ui, param_name)
+            }
             NodeValueType::Material { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
@@ -317,18 +320,33 @@ impl WidgetValueTrait for NodeValueType {
     fn value_widget_connected(
         &mut self,
         param_name: &str,
-        _node_id: NodeId,
+        node_id: NodeId,
         ui: &mut egui::Ui,
         _user_state: &mut Self::UserState,
-        _node_data: &Self::NodeData,
+        node_data: &Self::NodeData,
     ) -> Vec<Self::Response> {
-        match self {
-            NodeValueType::Mat4 { value } => value.create_parameter_label(ui, param_name),
+        let value_changed = match self {
+            NodeValueType::Mat4 { value } => {
+                value.connect();
+                value.create_ui(ui, param_name)
+            }
+            NodeValueType::Material { value } => {
+                value.connect();
+                value.create_ui(ui, param_name)
+            }
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
+                false
             }
-        }
+        };
 
-        Default::default()
+        if value_changed {
+            return vec![NodeGraphResponse::InputValueChanged(
+                node_id,
+                node_data.template,
+                param_name.to_string(),
+            )];
+        }
+        Vec::new()
     }
 }

@@ -154,6 +154,18 @@ impl eframe::App for Damascus {
                         );
                     }
                 }
+            } else if let NodeResponse::DisconnectEvent { output, input } = node_response {
+                let node_template = self.node_graph.editor_state().graph
+                    [self.node_graph.editor_state().graph.get_input(input).node]
+                    .user_data
+                    .template;
+                node_template.input_disconnected(
+                    &mut self.node_graph.editor_state_mut().graph,
+                    input,
+                    output,
+                );
+            } else if let NodeResponse::ConnectEventEnded { output, input } = node_response {
+                println!("Connected {:?} from {:?}", input, output);
             }
         }
 

@@ -53,15 +53,38 @@ impl NodeCallbacks for NodeTemplate {
     ) {
         match self {
             NodeTemplate::Light => LightCallbacks.input_value_changed(graph, node_id, input_name),
-            NodeTemplate::Material => {
-                MaterialCallbacks.input_value_changed(graph, node_id, input_name)
-            }
             NodeTemplate::Primitive => {
                 PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
             }
             NodeTemplate::ProceduralTexture => {
                 ProceduralTextureCallbacks.input_value_changed(graph, node_id, input_name)
             }
+            _ => {}
+        }
+    }
+
+    fn input_disconnected(
+        &self,
+        graph: &mut Graph,
+        input_id: egui_node_graph::InputId,
+        output_id: egui_node_graph::OutputId,
+    ) {
+        match self {
+            NodeTemplate::Material => {
+                MaterialCallbacks.input_disconnected(graph, input_id, output_id)
+            }
+            _ => {}
+        }
+    }
+
+    fn input_connected(
+        &self,
+        graph: &mut Graph,
+        input_id: egui_node_graph::InputId,
+        output_id: egui_node_graph::OutputId,
+    ) {
+        match self {
+            NodeTemplate::Material => MaterialCallbacks.input_connected(graph, input_id, output_id),
             _ => {}
         }
     }

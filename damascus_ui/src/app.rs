@@ -192,9 +192,9 @@ impl eframe::App for Damascus {
                     NodeValueType::Light { value } => {
                         self.viewport.default_renderer_with_lights(value)
                     }
-                    NodeValueType::Material { value } => {
-                        self.viewport.default_renderer_with_atmosphere(value)
-                    }
+                    NodeValueType::Material { value } => self
+                        .viewport
+                        .default_renderer_with_atmosphere(*value.value()),
                     NodeValueType::ProceduralTexture { value } => {
                         self.viewport.default_renderer_with_texture(value)
                     }

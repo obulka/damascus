@@ -14,7 +14,7 @@ use strum::IntoEnumIterator;
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use super::node::{
-    value_type::{Mat4, NodeValueType, UIInput},
+    value_type::{Mat4, Material, NodeValueType, UIInput},
     NodeData, NodeDataType, NodeTemplate,
 };
 use super::NodeGraphState;
@@ -187,7 +187,12 @@ pub fn evaluate_node(
             name: &str,
             value: materials::Material,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::Material { value })
+            self.populate_output(
+                name,
+                NodeValueType::Material {
+                    value: Material::new(value),
+                },
+            )
         }
 
         fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<geometry::Primitive>> {

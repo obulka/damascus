@@ -6,12 +6,13 @@
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, UIData, UIInput};
+use super::{create_drag_value_ui, Connection, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Mat4 {
     value: glam::Mat4,
     ui_data: UIData,
+    connected: bool,
 }
 
 impl UIInput<glam::Mat4> for Mat4 {
@@ -26,6 +27,9 @@ impl UIInput<glam::Mat4> for Mat4 {
         let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
+            if self.connected {
+                return;
+            }
             ui.vertical(|ui| {
                 has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.x).changed();
                 has_changed |= create_drag_value_ui(ui, &mut self.value.x_axis.y).changed();
@@ -64,5 +68,19 @@ impl UIInput<glam::Mat4> for Mat4 {
 
     fn ui_data_mut(&mut self) -> &mut UIData {
         &mut self.ui_data
+    }
+}
+
+impl Connection<glam::Mat4> for Mat4 {
+    fn connect(&mut self) {
+        self.connected = true;
+    }
+
+    fn disconnect(&mut self) {
+        self.connected = false;
+    }
+
+    fn connected(&self) -> bool {
+        self.connected
     }
 }

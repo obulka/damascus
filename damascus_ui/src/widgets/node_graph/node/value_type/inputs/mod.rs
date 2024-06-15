@@ -17,6 +17,7 @@ pub mod float;
 pub mod integer;
 pub mod mat3;
 pub mod mat4;
+pub mod material;
 pub mod unsigned_integer;
 pub mod unsigned_integer_vec3;
 pub mod vec2;
@@ -35,7 +36,6 @@ pub trait UIInput<T> {
         ui.add(egui::Label::new(label).selectable(false));
     }
 
-    #[inline]
     fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         if *self.ui_data().hidden() {
             return false;
@@ -43,7 +43,6 @@ pub trait UIInput<T> {
         self.show_ui(ui, label)
     }
 
-    #[inline]
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         self.create_parameter_label(ui, label);
         false
@@ -51,7 +50,6 @@ pub trait UIInput<T> {
 
     fn value(&self) -> &T;
 
-    #[inline]
     fn with_ui_data(mut self, ui_data: UIData) -> Self
     where
         Self: Sized,
@@ -66,7 +64,6 @@ pub trait UIInput<T> {
 }
 
 pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
-    #[inline]
     fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         if *self.ui_data().hidden() {
             return false;
@@ -83,7 +80,6 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
         has_changed
     }
 
-    #[inline]
     fn create_slider(&mut self) -> egui::Slider<'_> {
         let range: RangeInclusive<T> = self.range().clone();
         egui::Slider::new(self.value_mut(), range).clamp_to_range(false)
@@ -91,7 +87,6 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 
     fn value_mut(&mut self) -> &mut T;
 
-    #[inline]
     fn with_range(mut self, range: RangeInclusive<T>) -> Self
     where
         Self: Sized,
@@ -106,7 +101,6 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 }
 
 pub trait Colour<T>: UIInput<T> {
-    #[inline]
     fn as_colour(mut self) -> Self
     where
         Self: Sized,
@@ -157,6 +151,22 @@ pub trait Collapsible<T>: UIInput<T> {
             self.expand();
         } else {
             self.collapse();
+        }
+    }
+}
+
+pub trait Connection<T>: UIInput<T> {
+    fn connect(&mut self);
+
+    fn disconnect(&mut self);
+
+    fn connected(&self) -> bool;
+
+    fn toggle_connected(&mut self) {
+        if self.connected() {
+            self.disconnect();
+        } else {
+            self.connect();
         }
     }
 }

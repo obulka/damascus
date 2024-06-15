@@ -19,12 +19,14 @@ mod node_data;
 pub mod value_type;
 
 use callbacks::NodeCallbacks;
-use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
+use callbacks::{
+    LightCallbacks, MaterialCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks,
+};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
-    BVec3, Bool, Collapsible, Colour, ComboBox, Float, Mat4, NodeValueType, RangedInput, UIData,
-    UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
+    BVec3, Bool, Collapsible, Colour, ComboBox, Float, Mat4, Material, NodeValueType, RangedInput,
+    UIData, UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -51,6 +53,9 @@ impl NodeCallbacks for NodeTemplate {
     ) {
         match self {
             NodeTemplate::Light => LightCallbacks.input_value_changed(graph, node_id, input_name),
+            NodeTemplate::Material => {
+                MaterialCallbacks.input_value_changed(graph, node_id, input_name)
+            }
             NodeTemplate::Primitive => {
                 PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
             }
@@ -255,7 +260,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        let input_material = |graph: &mut Graph, name: &str, default: materials::Material| {
+        let input_material = |graph: &mut Graph, name: &str, default: Material| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -727,7 +732,12 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 let default_primitive = geometry::Primitive::default();
                 input_primitive(graph, "siblings", vec![]);
                 input_primitive(graph, "children", vec![]);
-                input_material(graph, "material", default_primitive.material);
+                input_material(
+                    graph,
+                    "material",
+                    Material::new(default_primitive.material)
+                        .with_ui_data(UIData::default().with_tooltip("The primitive's material.")),
+                );
                 input_combo_box(
                     graph,
                     "shape",
@@ -1589,7 +1599,14 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_camera(graph, "render_camera", default_scene.render_camera);
                 input_primitive(graph, "primitives", default_scene.primitives);
                 input_light(graph, "lights", default_scene.lights);
-                input_material(graph, "atmosphere", default_scene.atmosphere);
+                input_material(
+                    graph,
+                    "atmosphere",
+                    Material::new(default_scene.atmosphere)
+                        .with_ui_data(UIData::default().with_tooltip(
+                        "The material to apply to the atmosphere (smoke, extinction, hdri, etc.).",
+                    )),
+                );
                 output_scene(graph, "out");
             }
         }

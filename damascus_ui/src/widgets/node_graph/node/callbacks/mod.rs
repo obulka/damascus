@@ -8,9 +8,11 @@ use egui_node_graph::NodeId;
 use super::{Graph, NodeDataType, NodeGraphState, NodeValueType, UIInput};
 
 mod light;
+mod material;
 mod primitive;
 mod procedural_texture;
 pub use light::LightCallbacks;
+pub use material::MaterialCallbacks;
 pub use primitive::PrimitiveCallbacks;
 pub use procedural_texture::ProceduralTextureCallbacks;
 

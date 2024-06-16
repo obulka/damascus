@@ -3,7 +3,7 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use strum::EnumString;
 
@@ -24,6 +24,12 @@ enum Includes {
     RenderParameters,
     SceneSDFs,
     VertexShader,
+}
+
+#[derive(Debug, EnumString)]
+pub enum CompileTimeOptions {
+    EnableDiffuseTexture,
+    EnableSpecularTexture,
 }
 
 impl Includes {
@@ -48,7 +54,8 @@ impl Includes {
     }
 }
 
-pub fn ray_march_shader() -> String {
+pub fn ray_march_shader(compile_time_options: HashSet<CompileTimeOptions>) -> String {
+    println!("Compiling with options: {:?}", compile_time_options);
     let mut shader_source: String = "".to_string();
     for line in include_str!("./renderer/ray_march.wgsl").split("\n") {
         if line.trim().starts_with("#include") {

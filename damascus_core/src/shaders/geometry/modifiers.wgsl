@@ -207,12 +207,13 @@ fn texture_primitive(
         position,
         length((*primitive).dimensional_data),
     );
-
+// #ifdef EnableDiffuseTexture
     (*primitive).material.diffuse_colour = procedurally_texture_vec3f(
         procedural_texture_seed,
         (*primitive).material.diffuse_colour,
         (*primitive).material.diffuse_colour_texture,
     );
+// #endif
     // (*primitive).material.specular_probability = procedurally_texture_f32(
     //     procedural_texture_seed,
     //     (*primitive).material.specular_probability,
@@ -223,11 +224,13 @@ fn texture_primitive(
     //     (*primitive).material.specular_roughness,
     //     (*primitive).material.specular_roughness_texture,
     // );
+// #ifdef EnableSpecularTexture
     (*primitive).material.specular_colour = procedurally_texture_vec3f(
         procedural_texture_seed,
         (*primitive).material.specular_colour,
         (*primitive).material.specular_colour_texture,
     );
+// #endif
     // (*primitive).material.transmissive_probability = procedurally_texture_f32(
     //     procedural_texture_seed,
     //     (*primitive).material.transmissive_probability,

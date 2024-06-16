@@ -4,6 +4,7 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::ops::BitOr;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -499,9 +500,14 @@ impl Viewport3d {
             push_constant_ranges: &[],
         });
 
+        let compile_time_options = HashSet::<shaders::CompileTimeOptions>::new();
+
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader())).into(),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader(
+                compile_time_options,
+            )))
+            .into(),
         });
 
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {

@@ -19,14 +19,13 @@ mod node_data;
 pub mod value_type;
 
 use callbacks::NodeCallbacks;
-use callbacks::{
-    LightCallbacks, MaterialCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks,
-};
+use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
-    BVec3, Bool, Collapsible, Colour, ComboBox, Float, Mat4, Material, NodeValueType, RangedInput,
-    UIData, UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
+    BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Float, Lights, Mat4, Material,
+    NodeValueType, Primitives, ProceduralTexture, RangedInput, Scene, UIData, UIInput, UVec3,
+    UnsignedInteger, Vec3, Vec4,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -259,7 +258,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
         //         true,
         //     );
         // };
-        let input_camera = |graph: &mut Graph, name: &str, default: geometry::camera::Camera| {
+        let input_camera = |graph: &mut Graph, name: &str, default: Camera| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -269,7 +268,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        let input_light = |graph: &mut Graph, name: &str, default: Vec<lights::Light>| {
+        let input_light = |graph: &mut Graph, name: &str, default: Lights| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -290,7 +289,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             );
         };
 
-        let input_primitive = |graph: &mut Graph, name: &str, default: Vec<geometry::Primitive>| {
+        let input_primitive = |graph: &mut Graph, name: &str, default: Primitives| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -302,7 +301,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
         };
 
         let input_procedural_texture =
-            |graph: &mut Graph, name: &str, default: materials::ProceduralTexture| {
+            |graph: &mut Graph, name: &str, default: ProceduralTexture| {
                 graph.add_input_param(
                     node_id,
                     name.to_string(),
@@ -323,7 +322,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
         //             true,
         //         );
         //     };
-        let input_scene = |graph: &mut Graph, name: &str, default: scene::Scene| {
+        let input_scene = |graph: &mut Graph, name: &str, default: Scene| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -473,7 +472,14 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             }
             NodeTemplate::Light => {
                 let default_light = lights::Light::default();
-                input_light(graph, "lights", vec![]);
+                input_light(
+                    graph,
+                    "lights",
+                    Lights::new(vec![]).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("Chain other non-physical lights in the scene."),
+                    ),
+                );
                 input_matrix4(
                     graph,
                     "world_matrix",
@@ -587,7 +593,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "diffuse_colour_texture",
-                    default_material.diffuse_colour_texture,
+                    ProceduralTexture::new(default_material.diffuse_colour_texture).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the diffuse colour of this material."
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
@@ -602,7 +612,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "specular_probability_texture",
-                    default_material.specular_probability_texture,
+                    ProceduralTexture::new(default_material.specular_probability_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the specular probability of this material."
+                        })),
                 );
                 input_float(
                     graph,
@@ -616,7 +629,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "specular_roughness_texture",
-                    default_material.specular_roughness_texture,
+                    ProceduralTexture::new(default_material.specular_roughness_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the specular roughness of this material."
+                        })),
                 );
                 input_vector3(
                     graph,
@@ -630,7 +646,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "specular_colour_texture",
-                    default_material.specular_colour_texture,
+                    ProceduralTexture::new(default_material.specular_colour_texture).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the specular colour of this material."
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
@@ -646,7 +666,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "transmissive_probability_texture",
-                    default_material.transmissive_probability_texture,
+                    ProceduralTexture::new(default_material.transmissive_probability_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the transmissive probability of this material."
+                        })),
                 );
                 input_float(
                     graph,
@@ -659,7 +682,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "transmissive_roughness_texture",
-                    default_material.transmissive_roughness_texture,
+                    ProceduralTexture::new(default_material.transmissive_roughness_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the transmissive roughness of this material."
+                        })),
                 );
                 input_float(
                     graph,
@@ -682,7 +708,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "transmissive_colour_texture",
-                    default_material.transmissive_colour_texture,
+                    ProceduralTexture::new(default_material.transmissive_colour_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the transmissive colour of this material."
+                        })),
                 );
                 input_float(
                     graph,
@@ -705,7 +734,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "emissive_colour_texture",
-                    default_material.emissive_colour_texture,
+                    ProceduralTexture::new(default_material.emissive_colour_texture).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the emissive colour of this material."
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
@@ -720,7 +753,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "refractive_index_texture",
-                    default_material.refractive_index_texture,
+                    ProceduralTexture::new(default_material.refractive_index_texture).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the refractive index of this material."
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
@@ -743,14 +780,37 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_procedural_texture(
                     graph,
                     "scattering_colour_texture",
-                    default_material.scattering_colour_texture,
+                    ProceduralTexture::new(default_material.scattering_colour_texture)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "Texture that affects the scattering colour of this material."
+                        })),
                 );
                 output_material(graph, "out");
             }
             NodeTemplate::Primitive => {
                 let default_primitive = geometry::Primitive::default();
-                input_primitive(graph, "siblings", vec![]);
-                input_primitive(graph, "children", vec![]);
+                input_primitive(
+                    graph,
+                    "siblings",
+                    Primitives::new(vec![]).with_ui_data(UIData::default().with_tooltip(indoc! {
+                        "The siblings of this primitive.\n
+                        These will be unaffected by this primitive's
+                        blend_type and transform."
+                    })),
+                );
+                input_primitive(
+                    graph,
+                    "children",
+                    Primitives::new(vec![]).with_ui_data(UIData::default().with_tooltip(indoc! {
+                        "The children of this primitive.\n
+                        These will be transformed using this primitive's
+                        blend_type and transform.\n
+                        If this primitive is a bounding volume, children
+                        outside of its bounds will not be rendered, and
+                        increased performance can be achieved when
+                        rendering the children."
+                    })),
+                );
                 input_material(
                     graph,
                     "material",
@@ -819,9 +879,9 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             UIData::default()
                                 .with_tooltip(indoc! {
                                     "The height (y-axis) of the center of the sphere
-                            that is cut from the solid, above solidRadius +
-                            hollowRadius, the result will be a standard
-                            sphere of radius solidRadius."
+                                    that is cut from the solid, above solidRadius +
+                                    hollowRadius, the result will be a standard
+                                    sphere of radius solidRadius."
                                 })
                                 .with_hidden(),
                         )
@@ -837,8 +897,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             UIData::default()
                                 .with_tooltip(indoc! {
                                     "The angle between the edge of the solid angle and the
-                            y-axis on [0-180] measured between the y-axis and wall
-                            of the solid angle."
+                                    y-axis on [0-180] measured between the y-axis and wall
+                                    of the solid angle."
                                 })
                                 .with_hidden(),
                         )
@@ -1026,8 +1086,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             UIData::default()
                                 .with_tooltip(indoc! {
                                     "The maximum distance along the x, y, and z axes.
-                            ie. The vertices are at +/-radial_extent on the x, y,
-                            and z axes."
+                                    ie. The vertices are at +/-radial_extent on the x, y,
+                                    and z axes."
                                 })
                                 .with_hidden(),
                         )
@@ -1056,8 +1116,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             UIData::default()
                                 .with_tooltip(indoc! {
                                     "The number of iterations to compute, the higher this
-                            is, the slower it will be to compute, but the more
-                            detail the fractal will have."
+                                    is, the slower it will be to compute, but the more
+                                    detail the fractal will have."
                                 })
                                 .with_hidden(),
                         )
@@ -1447,7 +1507,12 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             }
             NodeTemplate::RayMarcher => {
                 let default_ray_marcher = renderers::RayMarcher::default();
-                input_scene(graph, "scene", default_ray_marcher.scene);
+                input_scene(
+                    graph,
+                    "scene",
+                    Scene::new(default_ray_marcher.scene)
+                        .with_ui_data(UIData::default().with_tooltip("The scene to render.")),
+                );
                 input_float(
                     graph,
                     "max_distance",
@@ -1615,9 +1680,26 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             }
             NodeTemplate::Scene => {
                 let default_scene = scene::Scene::default();
-                input_camera(graph, "render_camera", default_scene.render_camera);
-                input_primitive(graph, "primitives", default_scene.primitives);
-                input_light(graph, "lights", default_scene.lights);
+                input_camera(
+                    graph,
+                    "render_camera",
+                    Camera::new(default_scene.render_camera).with_ui_data(
+                        UIData::default().with_tooltip("The camera to render the scene through."),
+                    ),
+                );
+                input_primitive(
+                    graph,
+                    "primitives",
+                    Primitives::new(default_scene.primitives).with_ui_data(
+                        UIData::default().with_tooltip("The primitives in the scene."),
+                    ),
+                );
+                input_light(
+                    graph,
+                    "lights",
+                    Lights::new(default_scene.lights)
+                        .with_ui_data(UIData::default().with_tooltip("The lights in the scene.")),
+                );
                 input_material(
                     graph,
                     "atmosphere",

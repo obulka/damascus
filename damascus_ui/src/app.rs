@@ -212,25 +212,26 @@ impl eframe::App for Damascus {
                 };
                 match value_type {
                     NodeValueType::Camera { value } => {
-                        self.viewport.default_renderer_with_camera(value);
+                        self.viewport.default_renderer_with_camera(*value.value());
                     }
-                    NodeValueType::Light { value } => {
-                        self.viewport.default_renderer_with_lights(value)
-                    }
+                    NodeValueType::Light { value } => self
+                        .viewport
+                        .default_renderer_with_lights(value.value().clone()),
                     NodeValueType::Material { value } => self
                         .viewport
                         .default_renderer_with_atmosphere(*value.value()),
                     NodeValueType::ProceduralTexture { value } => {
-                        self.viewport.default_renderer_with_texture(value)
+                        self.viewport.default_renderer_with_texture(*value.value())
                     }
-                    NodeValueType::Primitive { value } => {
-                        self.viewport.default_renderer_with_primitives(value)
-                    }
+                    NodeValueType::Primitive { value } => self
+                        .viewport
+                        .default_renderer_with_primitives(value.value().clone()),
                     NodeValueType::RayMarcher { value } => {
                         self.viewport.set_3d_renderer(value);
                     }
                     NodeValueType::Scene { value } => {
-                        self.viewport.default_renderer_with_scene(value);
+                        self.viewport
+                            .default_renderer_with_scene(value.value().clone());
                     }
                     _ => {}
                 }

@@ -12,12 +12,17 @@ use crate::icons::Icons;
 
 pub mod boolean;
 pub mod boolean_vec3;
+pub mod camera;
 pub mod combo_box;
 pub mod float;
 pub mod integer;
+pub mod lights;
 pub mod mat3;
 pub mod mat4;
 pub mod material;
+pub mod primitives;
+pub mod procedural_texture;
+pub mod scene;
 pub mod unsigned_integer;
 pub mod unsigned_integer_vec3;
 pub mod vec2;

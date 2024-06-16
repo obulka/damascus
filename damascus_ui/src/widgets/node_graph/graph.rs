@@ -14,7 +14,10 @@ use strum::IntoEnumIterator;
 use damascus_core::{geometry, lights, materials, renderers, scene};
 
 use super::node::{
-    value_type::{Mat4, Material, NodeValueType, UIInput},
+    value_type::{
+        Camera, Lights, Mat4, Material, NodeValueType, Primitives, ProceduralTexture, Scene,
+        UIInput,
+    },
     NodeData, NodeDataType, NodeTemplate,
 };
 use super::NodeGraphState;
@@ -163,7 +166,12 @@ pub fn evaluate_node(
             name: &str,
             value: geometry::camera::Camera,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::Camera { value })
+            self.populate_output(
+                name,
+                NodeValueType::Camera {
+                    value: Camera::new(value),
+                },
+            )
         }
 
         fn input_light(&mut self, name: &str) -> anyhow::Result<Vec<lights::Light>> {
@@ -175,7 +183,12 @@ pub fn evaluate_node(
             name: &str,
             value: Vec<lights::Light>,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::Light { value })
+            self.populate_output(
+                name,
+                NodeValueType::Light {
+                    value: Lights::new(value),
+                },
+            )
         }
 
         fn input_material(&mut self, name: &str) -> anyhow::Result<materials::Material> {
@@ -204,7 +217,12 @@ pub fn evaluate_node(
             name: &str,
             value: Vec<geometry::Primitive>,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::Primitive { value })
+            self.populate_output(
+                name,
+                NodeValueType::Primitive {
+                    value: Primitives::new(value),
+                },
+            )
         }
 
         fn input_procedural_texture(
@@ -219,7 +237,12 @@ pub fn evaluate_node(
             name: &str,
             value: materials::ProceduralTexture,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::ProceduralTexture { value })
+            self.populate_output(
+                name,
+                NodeValueType::ProceduralTexture {
+                    value: ProceduralTexture::new(value),
+                },
+            )
         }
 
         // fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
@@ -243,7 +266,12 @@ pub fn evaluate_node(
             name: &str,
             value: scene::Scene,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::Scene { value })
+            self.populate_output(
+                name,
+                NodeValueType::Scene {
+                    value: Scene::new(value),
+                },
+            )
         }
     }
 

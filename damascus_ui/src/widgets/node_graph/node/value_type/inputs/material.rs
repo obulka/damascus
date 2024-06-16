@@ -2,8 +2,6 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
-use eframe::egui;
-
 use damascus_core::materials;
 
 use super::{UIData, UIInput};

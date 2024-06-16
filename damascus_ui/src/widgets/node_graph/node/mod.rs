@@ -19,7 +19,9 @@ mod node_data;
 pub mod value_type;
 
 use callbacks::NodeCallbacks;
-use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
+use callbacks::{
+    LightCallbacks, MaterialCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks,
+};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
@@ -67,6 +69,12 @@ impl NodeCallbacks for NodeTemplate {
         _input_id: egui_node_graph::InputId,
         _output_id: egui_node_graph::OutputId,
     ) {
+        // match self {
+        //     NodeTemplate::Material => {
+        //         MaterialCallbacks.input_disconnected(graph, input_id, output_id)
+        //     }
+        //     _ => {}
+        // }
     }
 
     fn input_connected(

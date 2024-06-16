@@ -105,7 +105,7 @@ impl Viewport3d {
             Self::create_progressive_rendering_binding(device, &texture_view);
 
         // Create the pipeline
-        let render_pipeline = Self::create_render_pipeline(
+        let render_pipeline = self.create_render_pipeline(
             device,
             wgpu_render_state.target_format,
             &uniform_bind_group_layout,
@@ -151,7 +151,7 @@ impl Viewport3d {
             let device = &wgpu_render_state.device;
 
             // Create the updated pipeline
-            render_resources.render_pipeline = Self::create_render_pipeline(
+            render_resources.render_pipeline = self.create_render_pipeline(
                 device,
                 wgpu_render_state.target_format,
                 &render_resources.uniform_bind_group_layout,
@@ -483,7 +483,16 @@ impl Viewport3d {
         )
     }
 
+    fn get_preprocessor_directives(&self) -> HashSet<shaders::PreprocessorDirectives> {
+        let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
+        preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableDiffuseTexture);
+        preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
+
+        preprocessor_directives
+    }
+
     fn create_render_pipeline(
+        &self,
         device: &Arc<wgpu::Device>,
         texture_format: wgpu::TextureFormat,
         uniform_bind_group_layout: &wgpu::BindGroupLayout,
@@ -500,12 +509,10 @@ impl Viewport3d {
             push_constant_ranges: &[],
         });
 
-        let compile_time_options = HashSet::<shaders::CompileTimeOptions>::new();
-
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader(
-                compile_time_options,
+                self.get_preprocessor_directives(),
             )))
             .into(),
         });

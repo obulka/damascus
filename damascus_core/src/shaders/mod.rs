@@ -26,8 +26,8 @@ enum Includes {
     VertexShader,
 }
 
-#[derive(Debug, EnumString)]
-pub enum CompileTimeOptions {
+#[derive(Debug, EnumString, Eq, Hash, PartialEq)]
+pub enum PreprocessorDirectives {
     EnableDiffuseTexture,
     EnableSpecularTexture,
 }
@@ -54,17 +54,49 @@ impl Includes {
     }
 }
 
-pub fn ray_march_shader(compile_time_options: HashSet<CompileTimeOptions>) -> String {
-    println!("Compiling with options: {:?}", compile_time_options);
-    let mut shader_source: String = "".to_string();
+pub fn ray_march_shader(preprocessor_directives: HashSet<PreprocessorDirectives>) -> String {
+    println!("Compiling with directives: {:?}", preprocessor_directives);
+    let mut shader_source = Vec::<String>::new();
+
+    // Read shader source and replace includes with shader source files.
     for line in include_str!("./renderer/ray_march.wgsl").split("\n") {
         if line.trim().starts_with("#include") {
-            shader_source += Includes::from_str(line.trim().trim_start_matches("#include").trim())
+            for line in Includes::from_str(line.trim().trim_start_matches("#include").trim())
                 .unwrap()
-                .source();
+                .source()
+                .split("\n")
+            {
+                shader_source.push(line.to_string());
+            }
         } else {
-            shader_source += &(line.to_owned() + "\n");
+            shader_source.push(line.to_string());
         }
     }
-    return shader_source;
+
+    // Handle ifdef preprocessor macro
+    let mut skipping_to_endif: bool = false;
+    shader_source
+        .into_iter()
+        .filter(|line| {
+            let hit_endif: bool = line.trim().starts_with("#endif");
+            if skipping_to_endif {
+                skipping_to_endif = !hit_endif;
+                false
+            } else if line.trim().starts_with("#ifdef") {
+                let ifdef_directive = PreprocessorDirectives::from_str(
+                    line.trim().trim_start_matches("#ifdef").trim(),
+                )
+                .unwrap();
+                if !preprocessor_directives.contains(&ifdef_directive) {
+                    skipping_to_endif = true;
+                }
+                false
+            } else if hit_endif {
+                false
+            } else {
+                true
+            }
+        })
+        .collect::<Vec<String>>()
+        .join("\n")
 }

@@ -11,11 +11,12 @@ use super::node::NodeTemplate;
 /// node in the graph. Most side-effects (creating new nodes, deleting existing
 /// nodes, handling connections...) are already handled by the library, but this
 /// mechanism allows creating additional side effects from user code.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum NodeGraphResponse {
     SetActiveNode(NodeId),
     ClearActiveNode,
     InputValueChanged(NodeId, NodeTemplate, String),
+    CheckPreprocessorDirectives,
 }
 
 impl UserResponseTrait for NodeGraphResponse {}

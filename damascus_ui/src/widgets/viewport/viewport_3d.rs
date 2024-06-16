@@ -483,26 +483,23 @@ impl Viewport3d {
         )
     }
 
-    fn get_preprocessor_directives(&self) -> HashSet<shaders::PreprocessorDirectives> {
+    pub fn update_preprocessor_directives(&mut self) -> bool {
         let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
-        preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableDiffuseTexture);
-        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
-        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableDiffuseTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableSpecularProbabilityTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableSpecularRoughnessTexture);
-        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableEmissiveColourTexture);
-        // preprocessor_directives
-        //     .insert(shaders::PreprocessorDirectives::EnableRefractiveIndexTexture);
 
-        preprocessor_directives
+        // Enable expensive material properties
+        preprocessor_directives.extend(shaders::directives_for_material(
+            &self.renderer.scene.atmosphere,
+        ));
+        for primitive in &self.renderer.scene.primitives {
+            preprocessor_directives.extend(shaders::directives_for_material(&primitive.material));
+        }
+
+        // Check if the directives have changed and store them if they have
+        if preprocessor_directives == self.render_state.preprocessor_directives {
+            return false;
+        }
+        self.render_state.preprocessor_directives = preprocessor_directives;
+        true
     }
 
     fn create_render_pipeline(
@@ -526,7 +523,7 @@ impl Viewport3d {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader(
-                &self.get_preprocessor_directives(),
+                &self.render_state.preprocessor_directives,
             )))
             .into(),
         });

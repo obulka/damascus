@@ -3,11 +3,14 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
+use std::collections::HashSet;
 use std::time::SystemTime;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use strum::{Display, EnumIter, EnumString};
+
+use super::shaders::PreprocessorDirectives;
 
 #[derive(
     Debug,
@@ -51,6 +54,7 @@ pub struct RenderState {
     pub paths_rendered_per_pixel: u32,
     pub resolution: UVec2,
     pub paused: bool,
+    pub preprocessor_directives: HashSet<PreprocessorDirectives>,
 }
 
 impl Default for RenderState {
@@ -62,6 +66,7 @@ impl Default for RenderState {
             paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
             paused: true,
+            preprocessor_directives: HashSet::<PreprocessorDirectives>::new(),
         }
     }
 }

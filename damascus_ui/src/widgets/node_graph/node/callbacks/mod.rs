@@ -5,12 +5,16 @@
 
 use egui_node_graph::{InputId, NodeId, OutputId};
 
-use super::{Graph, NodeDataType, NodeGraphState, NodeValueType, UIInput};
+use super::{
+    super::NodeGraphResponse, Graph, NodeDataType, NodeGraphState, NodeValueType, UIInput,
+};
 
 mod light;
+mod material;
 mod primitive;
 mod procedural_texture;
 pub use light::LightCallbacks;
+pub use material::MaterialCallbacks;
 pub use primitive::PrimitiveCallbacks;
 pub use procedural_texture::ProceduralTextureCallbacks;
 
@@ -93,9 +97,30 @@ pub trait NodeCallbacks {
         }
     }
 
-    fn input_value_changed(&self, _graph: &mut Graph, _node_id: NodeId, _input_name: &String) {}
+    fn input_value_changed(
+        &self,
+        _graph: &mut Graph,
+        _node_id: NodeId,
+        _input_name: &String,
+    ) -> Vec<NodeGraphResponse> {
+        Vec::new()
+    }
 
-    fn input_disconnected(&self, _graph: &mut Graph, _input_id: InputId, _output_id: OutputId) {}
+    fn input_disconnected(
+        &self,
+        _graph: &mut Graph,
+        _input_id: InputId,
+        _output_id: OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        Vec::new()
+    }
 
-    fn input_connected(&self, _graph: &mut Graph, _input_id: InputId, _output_id: OutputId) {}
+    fn input_connected(
+        &self,
+        _graph: &mut Graph,
+        _input_id: InputId,
+        _output_id: OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        Vec::new()
+    }
 }

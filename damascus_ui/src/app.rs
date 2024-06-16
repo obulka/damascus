@@ -3,7 +3,7 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime};
 
 use eframe::egui;
@@ -134,7 +134,7 @@ impl eframe::App for Damascus {
         show_toolbar(ctx, &mut self.context, &mut self.node_graph);
 
         let graph_response = self.node_graph.show(ctx);
-
+        let mut callback_responses = Vec::<NodeGraphResponse>::new();
         for node_response in graph_response.node_responses {
             match node_response {
                 NodeResponse::User(user_event) => {
@@ -142,6 +142,7 @@ impl eframe::App for Damascus {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
                             self.viewport.enable_and_play();
+                            callback_responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                         }
                         NodeGraphResponse::ClearActiveNode => {
                             self.node_graph.user_state_mut().active_node = None;
@@ -152,31 +153,38 @@ impl eframe::App for Damascus {
                             input_name,
                         ) => {
                             // Perform callbacks when inputs have changed
-                            node_template.input_value_changed(
+                            callback_responses.append(&mut node_template.input_value_changed(
                                 &mut self.node_graph.editor_state_mut().graph,
                                 node_id,
                                 &input_name,
-                            );
+                            ));
+                        }
+                        NodeGraphResponse::CheckPreprocessorDirectives => {
+                            if self.viewport.update_preprocessor_directives() {
+                                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                    self.viewport.recompile_shader(wgpu_render_state);
+                                }
+                            }
                         }
                     }
                 }
                 NodeResponse::DisconnectEvent { output, input } => {
                     let graph = &self.node_graph.editor_state().graph;
                     let node_template = graph[graph.get_input(input).node].user_data.template;
-                    node_template.input_disconnected(
+                    callback_responses.append(&mut node_template.input_disconnected(
                         &mut self.node_graph.editor_state_mut().graph,
                         input,
                         output,
-                    );
+                    ));
                 }
                 NodeResponse::ConnectEventEnded { output, input } => {
                     let graph = &self.node_graph.editor_state().graph;
                     let node_template = graph[graph.get_input(input).node].user_data.template;
-                    node_template.input_connected(
+                    callback_responses.append(&mut node_template.input_connected(
                         &mut self.node_graph.editor_state_mut().graph,
                         input,
                         output,
-                    );
+                    ));
                 }
                 _ => {}
             }
@@ -239,13 +247,26 @@ impl eframe::App for Damascus {
                 self.node_graph.user_state_mut().active_node = None;
             }
         }
+
+        for callback_response in callback_responses
+            .into_iter()
+            .collect::<HashSet<NodeGraphResponse>>()
+        {
+            match callback_response {
+                NodeGraphResponse::CheckPreprocessorDirectives => {
+                    if self.viewport.update_preprocessor_directives() {
+                        if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                            self.viewport.recompile_shader(wgpu_render_state);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
         if self.node_graph.user_state().active_node.is_none() {
             self.viewport.disable();
         }
-
-        // if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-        //     self.viewport.recompile_shader(wgpu_render_state);
-        // }
 
         self.viewport.show(ctx);
     }

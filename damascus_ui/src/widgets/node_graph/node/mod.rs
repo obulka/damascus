@@ -18,8 +18,10 @@ mod data_type;
 mod node_data;
 pub mod value_type;
 
-use callbacks::NodeCallbacks;
-use callbacks::{LightCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
+use callbacks::{
+    LightCallbacks, MaterialCallbacks, NodeCallbacks, PrimitiveCallbacks,
+    ProceduralTextureCallbacks,
+};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
@@ -31,7 +33,9 @@ use value_type::{
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
 /// will display in the "new node" popup. The user code needs to tell the
 /// library how to convert a NodeTemplate into a Node.
-#[derive(Clone, Copy, EnumIter, Eq, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Copy, EnumIter, Eq, Debug, Hash, PartialEq, serde::Serialize, serde::Deserialize,
+)]
 pub enum NodeTemplate {
     Axis,
     Camera,
@@ -49,7 +53,7 @@ impl NodeCallbacks for NodeTemplate {
         graph: &mut Graph,
         node_id: egui_node_graph::NodeId,
         input_name: &String,
-    ) {
+    ) -> Vec<NodeGraphResponse> {
         match self {
             NodeTemplate::Light => LightCallbacks.input_value_changed(graph, node_id, input_name),
             NodeTemplate::Primitive => {
@@ -58,30 +62,34 @@ impl NodeCallbacks for NodeTemplate {
             NodeTemplate::ProceduralTexture => {
                 ProceduralTextureCallbacks.input_value_changed(graph, node_id, input_name)
             }
-            _ => {}
+            _ => Vec::new(),
         }
     }
 
     fn input_disconnected(
         &self,
-        _graph: &mut Graph,
-        _input_id: egui_node_graph::InputId,
-        _output_id: egui_node_graph::OutputId,
-    ) {
-        // match self {
-        //     NodeTemplate::Material => {
-        //         MaterialCallbacks.input_disconnected(graph, input_id, output_id)
-        //     }
-        //     _ => {}
-        // }
+        graph: &mut Graph,
+        input_id: egui_node_graph::InputId,
+        output_id: egui_node_graph::OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        match self {
+            NodeTemplate::Material => {
+                MaterialCallbacks.input_disconnected(graph, input_id, output_id)
+            }
+            _ => Vec::new(),
+        }
     }
 
     fn input_connected(
         &self,
-        _graph: &mut Graph,
-        _input_id: egui_node_graph::InputId,
-        _output_id: egui_node_graph::OutputId,
-    ) {
+        graph: &mut Graph,
+        input_id: egui_node_graph::InputId,
+        output_id: egui_node_graph::OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        match self {
+            NodeTemplate::Material => MaterialCallbacks.input_connected(graph, input_id, output_id),
+            _ => Vec::new(),
+        }
     }
 }
 

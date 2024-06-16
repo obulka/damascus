@@ -7,13 +7,21 @@ use egui_node_graph::{InputParam, NodeId};
 
 use damascus_core::geometry;
 
-use super::{Graph, NodeCallbacks, NodeDataType, NodeGraphState, NodeValueType, UIInput};
+use super::{
+    super::NodeGraphResponse, Graph, NodeCallbacks, NodeDataType, NodeGraphState, NodeValueType,
+    UIInput,
+};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct PrimitiveCallbacks;
 
 impl NodeCallbacks for PrimitiveCallbacks {
-    fn input_value_changed(&self, graph: &mut Graph, node_id: NodeId, input_name: &String) {
+    fn input_value_changed(
+        &self,
+        graph: &mut Graph,
+        node_id: NodeId,
+        input_name: &String,
+    ) -> Vec<NodeGraphResponse> {
         if ![
             "bounding_volume",
             "shape",
@@ -24,7 +32,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
         ]
         .contains(&input_name.as_str())
         {
-            return;
+            return Vec::new();
         }
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
@@ -273,5 +281,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
                 }
             }
         }
+        Vec::new()
     }
 }

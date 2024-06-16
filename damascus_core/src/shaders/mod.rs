@@ -7,6 +7,8 @@ use std::{collections::HashSet, str::FromStr};
 
 use strum::EnumString;
 
+use super::materials::{Material, ProceduralTextureType};
+
 #[derive(Debug, EnumString)]
 enum Includes {
     AOVs,
@@ -28,14 +30,17 @@ enum Includes {
 
 #[derive(Debug, EnumString, Eq, Hash, PartialEq)]
 pub enum PreprocessorDirectives {
-    EnableDiffuseTexture,
+    EnableDiffuseColourTexture,
+    EnableScatteringColourTexture,
     EnableSpecularProbabilityTexture,
     EnableSpecularRoughnessTexture,
-    EnableSpecularTexture,
+    EnableSpecularColourTexture,
     EnableTransmissiveProbabilityTexture,
     EnableTransmissiveRoughnessTexture,
     EnableEmissiveColourTexture,
+    EnableExtinctionColourTexture,
     EnableRefractiveIndexTexture,
+    EnableNoise,
 }
 
 impl Includes {
@@ -147,7 +152,6 @@ fn preprocess_directives(
 }
 
 pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives>) -> String {
-    println!("Compiling with directives: {:?}", preprocessor_directives);
     let mut shader_source = Vec::<String>::new();
 
     // Read shader source and replace includes with shader source files.
@@ -168,6 +172,73 @@ pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives
     preprocess_directives(shader_source, preprocessor_directives).join("\n")
 }
 
+pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+    if material.diffuse_colour_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+        if material.diffuse_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.specular_probability_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
+        if material.specular_probability_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.specular_roughness_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularRoughnessTexture);
+        if material.specular_roughness_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.specular_colour_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
+        if material.specular_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.transmissive_probability_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives
+            .insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
+        if material.transmissive_probability_texture.texture_type >= ProceduralTextureType::FBMNoise
+        {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.transmissive_roughness_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
+        if material.transmissive_roughness_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.transmissive_colour_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
+        if material.transmissive_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.emissive_colour_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
+        if material.emissive_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.refractive_index_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
+        if material.refractive_index_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    if material.scattering_colour_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableScatteringColourTexture);
+        if material.scattering_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+        }
+    }
+    preprocessor_directives
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -175,16 +246,16 @@ mod tests {
     #[test]
     fn test_ifdef_preprocessor_directives() {
         let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "keep;",
             "keep;",
             "#endif",
             "keep;",
-            "#ifdef EnableSpecularTexture",
+            "#ifdef EnableSpecularColourTexture",
             "remove;",
             "#endif",
             "keep;",
@@ -203,18 +274,18 @@ mod tests {
     #[test]
     fn test_else_preprocessor_directives() {
         let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "keep;",
             "keep;",
             "#else",
             "remove;",
             "#endif",
             "keep;",
-            "#ifdef EnableSpecularTexture",
+            "#ifdef EnableSpecularColourTexture",
             "remove;",
             "#else",
             "keep;",
@@ -235,14 +306,14 @@ mod tests {
     #[test]
     fn test_elifdef_preprocessor_directives() {
         let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseTexture);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "keep;",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "remove;",
             "#elifdef EnableRefractiveIndexTexture",
             "remove;",
@@ -264,9 +335,9 @@ mod tests {
 
         source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "remove;",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "keep;",
             "#elifdef EnableRefractiveIndexTexture",
             "remove;",
@@ -275,7 +346,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseTexture);
+        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -288,9 +359,9 @@ mod tests {
 
         source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "remove;",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "remove;",
             "#elifdef EnableRefractiveIndexTexture",
             "remove;",
@@ -299,7 +370,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableSpecularTexture);
+        preprocessor_directives.remove(&PreprocessorDirectives::EnableSpecularColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -314,21 +385,21 @@ mod tests {
     #[test]
     fn test_nested_preprocessor_directives() {
         let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseTexture);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "keep;",
             "#ifdef EnableRefractiveIndexTexture",
             "remove;",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "keep;",
             "#else",
             "remove;",
             "#endif",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "remove;",
             "#elifdef EnableRefractiveIndexTexture",
             "remove;",
@@ -350,16 +421,16 @@ mod tests {
 
         source = vec![
             "keep;",
-            "#ifdef EnableDiffuseTexture",
+            "#ifdef EnableDiffuseColourTexture",
             "remove;",
             "#ifdef EnableRefractiveIndexTexture",
             "remove;",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "remove;",
             "#else",
             "remove;",
             "#endif",
-            "#elifdef EnableSpecularTexture",
+            "#elifdef EnableSpecularColourTexture",
             "keep;",
             "#elifdef EnableRefractiveIndexTexture",
             "remove;",
@@ -368,7 +439,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseTexture);
+        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,

@@ -10,8 +10,11 @@ const CHECKER_BOARD: u32 = 2u;
 const FBM_NOISE: u32 = 3u;
 const TURBULENCE_NOISE: u32 = 4u;
 
-const G4: f32 = 0.138196601;
 const INVERT: u32 = 1u;
+
+
+#ifdef EnableNoise
+const G4: f32 = 0.138196601;
 
 
 var<private> PERM: array<u32, 512> = array<u32, 512>(
@@ -110,25 +113,6 @@ var<private> SIMPLEX: array<vec4u, 64> = array<vec4u, 64>(
     vec4(3u, 1u, 0u, 2u), vec4(0u, 0u, 0u, 0u),
     vec4(3u, 2u, 0u, 1u), vec4(3u, 2u, 1u, 0u),
 );
-
-
-struct ProceduralTexture {
-    texture_type: u32,
-    scale: vec4f,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
-    gain: f32,
-    octaves: u32,
-    lacunarity: f32,
-    amplitude_gain: f32,
-    gamma: f32,
-    low_frequency_scale: vec4f,
-    high_frequency_scale: vec4f,
-    low_frequency_translation: vec4f,
-    high_frequency_translation: vec4f,
-    flags: u32,
-}
 
 
 /**
@@ -261,6 +245,26 @@ fn octave_noise(
 
     return abs(output / max_amplitude);
 }
+#endif
+
+
+struct ProceduralTexture {
+    texture_type: u32,
+    scale: vec4f,
+    black_point: f32,
+    white_point: f32,
+    lift: f32,
+    gain: f32,
+    octaves: u32,
+    lacunarity: f32,
+    amplitude_gain: f32,
+    gamma: f32,
+    low_frequency_scale: vec4f,
+    high_frequency_scale: vec4f,
+    low_frequency_translation: vec4f,
+    high_frequency_translation: vec4f,
+    flags: u32,
+}
 
 
 fn checkerboard(seed: vec4f) -> f32 {
@@ -336,6 +340,8 @@ fn procedurally_texture_f32(
             // Checkerboard
             return colour * grade_f32(checkerboard(seed / texture.scale), texture);
         }
+// Simply having this case slows things down, so allow it to be compiled out
+#ifdef EnableNoise
         case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
             return colour * grade_f32(
@@ -343,6 +349,7 @@ fn procedurally_texture_f32(
                 texture,
             );
         }
+#endif
     }
 }
 
@@ -365,6 +372,8 @@ fn procedurally_texture_vec3f(
             // Checkerboard
             return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture));
         }
+// Simply having this case slows things down, so allow it to be compiled out
+#ifdef EnableNoise
         case FBM_NOISE, TURBULENCE_NOISE {
             // FBM Noise
             return colour * vec3(grade_f32(
@@ -372,6 +381,7 @@ fn procedurally_texture_vec3f(
                 texture,
             ));
         }
+#endif
     }
 }
 

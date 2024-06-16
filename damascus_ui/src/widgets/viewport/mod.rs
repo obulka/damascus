@@ -42,6 +42,13 @@ impl Viewport {
         }
     }
 
+    pub fn update_preprocessor_directives(&mut self) -> bool {
+        if let Some(viewport) = &mut self.viewport_3d {
+            return viewport.update_preprocessor_directives();
+        }
+        false
+    }
+
     pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
         if let Some(viewport) = &mut self.viewport_3d {
             viewport.recompile_shader(wgpu_render_state);

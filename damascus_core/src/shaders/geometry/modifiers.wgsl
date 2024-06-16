@@ -207,7 +207,7 @@ fn texture_primitive(
         position,
         length((*primitive).dimensional_data),
     );
-#ifdef EnableDiffuseTexture
+#ifdef EnableDiffuseColourTexture
     (*primitive).material.diffuse_colour = procedurally_texture_vec3f(
         procedural_texture_seed,
         (*primitive).material.diffuse_colour,
@@ -228,7 +228,7 @@ fn texture_primitive(
         (*primitive).material.specular_roughness_texture,
     );
 #endif
-#ifdef EnableSpecularTexture
+#ifdef EnableSpecularColourTexture
     (*primitive).material.specular_colour = procedurally_texture_vec3f(
         procedural_texture_seed,
         (*primitive).material.specular_colour,

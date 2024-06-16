@@ -43,7 +43,19 @@ pub trait UIInput<T> {
         self.show_ui(ui, label)
     }
 
+    fn create_ui_connected(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        if *self.ui_data().hidden() {
+            return false;
+        }
+        self.show_ui_connected(ui, label)
+    }
+
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        self.create_parameter_label(ui, label);
+        false
+    }
+
+    fn show_ui_connected(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         self.create_parameter_label(ui, label);
         false
     }
@@ -151,22 +163,6 @@ pub trait Collapsible<T>: UIInput<T> {
             self.expand();
         } else {
             self.collapse();
-        }
-    }
-}
-
-pub trait Connection<T>: UIInput<T> {
-    fn connect(&mut self);
-
-    fn disconnect(&mut self);
-
-    fn connected(&self) -> bool;
-
-    fn toggle_connected(&mut self) {
-        if self.connected() {
-            self.disconnect();
-        } else {
-            self.connect();
         }
     }
 }

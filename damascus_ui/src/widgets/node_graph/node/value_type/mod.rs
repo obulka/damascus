@@ -24,7 +24,7 @@ pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, combo_box::ComboBox, float::Float, integer::Integer,
     mat3::Mat3, mat4::Mat4, material::Material, unsigned_integer::UnsignedInteger,
     unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3, vec4::Vec4, Collapsible, Colour,
-    Connection, RangedInput, UIInput,
+    RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -289,10 +289,7 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Vec3 { value } => value.create_ui(ui, param_name),
             NodeValueType::Vec4 { value } => value.create_ui(ui, param_name),
             NodeValueType::Mat3 { value } => value.create_ui(ui, param_name),
-            NodeValueType::Mat4 { value } => {
-                value.disconnect();
-                value.create_ui(ui, param_name)
-            }
+            NodeValueType::Mat4 { value } => value.create_ui(ui, param_name),
             NodeValueType::Material { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
@@ -326,14 +323,8 @@ impl WidgetValueTrait for NodeValueType {
         node_data: &Self::NodeData,
     ) -> Vec<Self::Response> {
         let value_changed = match self {
-            NodeValueType::Mat4 { value } => {
-                value.connect();
-                value.create_ui(ui, param_name)
-            }
-            NodeValueType::Material { value } => {
-                value.connect();
-                value.create_ui(ui, param_name)
-            }
+            NodeValueType::Mat4 { value } => value.create_ui_connected(ui, param_name),
+            NodeValueType::Material { value } => value.create_ui_connected(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
                 false

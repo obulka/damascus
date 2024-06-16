@@ -136,36 +136,49 @@ impl eframe::App for Damascus {
         let graph_response = self.node_graph.show(ctx);
 
         for node_response in graph_response.node_responses {
-            if let NodeResponse::User(user_event) = node_response {
-                match user_event {
-                    NodeGraphResponse::SetActiveNode(node) => {
-                        self.node_graph.user_state_mut().active_node = Some(node);
-                        self.viewport.enable_and_play();
-                    }
-                    NodeGraphResponse::ClearActiveNode => {
-                        self.node_graph.user_state_mut().active_node = None;
-                    }
-                    NodeGraphResponse::InputValueChanged(node_id, node_template, input_name) => {
-                        // Perform callbacks when inputs have changed
-                        node_template.input_value_changed(
-                            &mut self.node_graph.editor_state_mut().graph,
+            match node_response {
+                NodeResponse::User(user_event) => {
+                    match user_event {
+                        NodeGraphResponse::SetActiveNode(node) => {
+                            self.node_graph.user_state_mut().active_node = Some(node);
+                            self.viewport.enable_and_play();
+                        }
+                        NodeGraphResponse::ClearActiveNode => {
+                            self.node_graph.user_state_mut().active_node = None;
+                        }
+                        NodeGraphResponse::InputValueChanged(
                             node_id,
-                            &input_name,
-                        );
+                            node_template,
+                            input_name,
+                        ) => {
+                            // Perform callbacks when inputs have changed
+                            node_template.input_value_changed(
+                                &mut self.node_graph.editor_state_mut().graph,
+                                node_id,
+                                &input_name,
+                            );
+                        }
                     }
                 }
-            } else if let NodeResponse::DisconnectEvent { output, input } = node_response {
-                let node_template = self.node_graph.editor_state().graph
-                    [self.node_graph.editor_state().graph.get_input(input).node]
-                    .user_data
-                    .template;
-                node_template.input_disconnected(
-                    &mut self.node_graph.editor_state_mut().graph,
-                    input,
-                    output,
-                );
-            } else if let NodeResponse::ConnectEventEnded { output, input } = node_response {
-                println!("Connected {:?} from {:?}", input, output);
+                NodeResponse::DisconnectEvent { output, input } => {
+                    let graph = &self.node_graph.editor_state().graph;
+                    let node_template = graph[graph.get_input(input).node].user_data.template;
+                    node_template.input_disconnected(
+                        &mut self.node_graph.editor_state_mut().graph,
+                        input,
+                        output,
+                    );
+                }
+                NodeResponse::ConnectEventEnded { output, input } => {
+                    let graph = &self.node_graph.editor_state().graph;
+                    let node_template = graph[graph.get_input(input).node].user_data.template;
+                    node_template.input_connected(
+                        &mut self.node_graph.editor_state_mut().graph,
+                        input,
+                        output,
+                    );
+                }
+                _ => {}
             }
         }
 

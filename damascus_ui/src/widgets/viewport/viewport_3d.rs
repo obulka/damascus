@@ -486,7 +486,21 @@ impl Viewport3d {
     fn get_preprocessor_directives(&self) -> HashSet<shaders::PreprocessorDirectives> {
         let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
         preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableDiffuseTexture);
-        preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
+        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
+        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableDiffuseTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableSpecularProbabilityTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableSpecularRoughnessTexture);
+        // preprocessor_directives.insert(shaders::PreprocessorDirectives::EnableSpecularTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableEmissiveColourTexture);
+        // preprocessor_directives
+        //     .insert(shaders::PreprocessorDirectives::EnableRefractiveIndexTexture);
 
         preprocessor_directives
     }
@@ -512,7 +526,7 @@ impl Viewport3d {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader(
-                self.get_preprocessor_directives(),
+                &self.get_preprocessor_directives(),
             )))
             .into(),
         });

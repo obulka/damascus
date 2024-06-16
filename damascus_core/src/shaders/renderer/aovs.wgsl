@@ -78,11 +78,15 @@ fn ray_miss_aovs(
                 ray,
                 nested_dielectrics,
             );
+#ifdef EnableDiffuseTexture
             (*ray).colour += (*ray).throughput * procedurally_texture_vec3f(
                 vec4((*ray).direction, 8.27447),
                 _atmosphere.diffuse_colour,
                 _atmosphere.diffuse_colour_texture,
             );
+#else
+            (*ray).colour += (*ray).throughput * _atmosphere.diffuse_colour;
+#endif
         }
         case 1u, 2u {
             (*ray).colour = world_position;

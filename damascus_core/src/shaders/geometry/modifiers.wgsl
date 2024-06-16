@@ -214,16 +214,20 @@ fn texture_primitive(
         (*primitive).material.diffuse_colour_texture,
     );
 #endif
-    // (*primitive).material.specular_probability = procedurally_texture_f32(
-    //     procedural_texture_seed,
-    //     (*primitive).material.specular_probability,
-    //     (*primitive).material.specular_probability_texture,
-    // );
-    // (*primitive).material.specular_roughness = procedurally_texture_f32(
-    //     procedural_texture_seed,
-    //     (*primitive).material.specular_roughness,
-    //     (*primitive).material.specular_roughness_texture,
-    // );
+#ifdef EnableSpecularProbabilityTexture
+    (*primitive).material.specular_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.specular_probability,
+        (*primitive).material.specular_probability_texture,
+    );
+#endif
+#ifdef EnableSpecularRoughnessTexture
+    (*primitive).material.specular_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.specular_roughness,
+        (*primitive).material.specular_roughness_texture,
+    );
+#endif
 #ifdef EnableSpecularTexture
     (*primitive).material.specular_colour = procedurally_texture_vec3f(
         procedural_texture_seed,
@@ -231,26 +235,34 @@ fn texture_primitive(
         (*primitive).material.specular_colour_texture,
     );
 #endif
-    // (*primitive).material.transmissive_probability = procedurally_texture_f32(
-    //     procedural_texture_seed,
-    //     (*primitive).material.transmissive_probability,
-    //     (*primitive).material.transmissive_probability_texture,
-    // );
-    // (*primitive).material.transmissive_roughness = procedurally_texture_f32(
-    //     procedural_texture_seed,
-    //     (*primitive).material.transmissive_roughness,
-    //     (*primitive).material.transmissive_roughness_texture,
-    // );
-    // (*primitive).material.emissive_colour = procedurally_texture_vec3f(
-    //     procedural_texture_seed,
-    //     (*primitive).material.emissive_colour,
-    //     (*primitive).material.emissive_colour_texture,
-    // );
-    // (*primitive).material.refractive_index = procedurally_texture_f32(
-    //     procedural_texture_seed,
-    //     (*primitive).material.refractive_index,
-    //     (*primitive).material.refractive_index_texture,
-    // );
+#ifdef EnableTransmissiveProbabilityTexture
+    (*primitive).material.transmissive_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.transmissive_probability,
+        (*primitive).material.transmissive_probability_texture,
+    );
+#endif
+#ifdef EnableTransmissiveRoughnessTexture
+    (*primitive).material.transmissive_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.transmissive_roughness,
+        (*primitive).material.transmissive_roughness_texture,
+    );
+#endif
+#ifdef EnableEmissiveColourTexture
+    (*primitive).material.emissive_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        (*primitive).material.emissive_colour,
+        (*primitive).material.emissive_colour_texture,
+    );
+#endif
+#ifdef EnableRefractiveIndexTexture
+    (*primitive).material.refractive_index = procedurally_texture_f32(
+        procedural_texture_seed,
+        (*primitive).material.refractive_index,
+        (*primitive).material.refractive_index_texture,
+    );
+#endif
 }
 
 

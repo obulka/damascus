@@ -20,7 +20,18 @@ pub struct Transform {
 }
 
 #[derive(
-    Debug, Display, Default, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum Shapes {
     #[default]
@@ -60,6 +71,7 @@ pub enum Shapes {
     EnumCount,
     EnumIter,
     EnumString,
+    Eq,
     PartialEq,
     PartialOrd,
     serde::Serialize,
@@ -76,7 +88,18 @@ pub enum BlendType {
 }
 
 #[derive(
-    Debug, Display, Default, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum Repetition {
     #[default]

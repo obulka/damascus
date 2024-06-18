@@ -492,6 +492,7 @@ impl Viewport3d {
         ));
         for primitive in &self.renderer.scene.primitives {
             preprocessor_directives.extend(shaders::directives_for_material(&primitive.material));
+            preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
         }
 
         // Check if the directives have changed and store them if they have

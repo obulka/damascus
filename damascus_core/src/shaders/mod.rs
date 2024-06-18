@@ -7,7 +7,10 @@ use std::{collections::HashSet, str::FromStr};
 
 use strum::EnumString;
 
-use super::materials::{Material, ProceduralTextureType};
+use super::{
+    geometry::{Primitive, Shapes},
+    materials::{Material, ProceduralTextureType},
+};
 
 #[derive(Debug, EnumString)]
 enum Includes {
@@ -41,6 +44,30 @@ pub enum PreprocessorDirectives {
     EnableExtinctionColourTexture,
     EnableRefractiveIndexTexture,
     EnableNoise,
+    EnableCappedCone,
+    EnableCappedTorus,
+    EnableCapsule,
+    EnableCone,
+    EnableCutSphere,
+    EnableCylinder,
+    EnableDeathStar,
+    EnableEllipsoid,
+    EnableHexagonalPrism,
+    EnableHollowSphere,
+    EnableInfiniteCone,
+    EnableInfiniteCylinder,
+    EnableLink,
+    EnableMandelbox,
+    EnableMandelbulb,
+    EnableOctahedron,
+    EnablePlane,
+    EnableRectangularPrism,
+    EnableRectangularPrismFrame,
+    EnableRhombus,
+    EnableRoundedCone,
+    EnableSolidAngle,
+    EnableTorus,
+    EnableTriangularPrism,
 }
 
 impl Includes {
@@ -164,12 +191,29 @@ pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives
             {
                 shader_source.push(line.to_string());
             }
+        } else if line.trim().starts_with("//") || line.trim() == "" {
+            continue;
         } else {
             shader_source.push(line.to_string());
         }
     }
 
     preprocess_directives(shader_source, preprocessor_directives).join("\n")
+}
+
+pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+    if primitive.shape == Shapes::Sphere {
+        return preprocessor_directives;
+    }
+
+    preprocessor_directives.insert(
+        PreprocessorDirectives::from_str(&("Enable".to_owned() + &primitive.shape.to_string()))
+            .unwrap(),
+    );
+
+    preprocessor_directives
 }
 
 pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirectives> {

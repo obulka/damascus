@@ -4,7 +4,7 @@ use std::io::{BufReader, Read, Write};
 use eframe::egui;
 use egui_modal;
 
-use super::{dialog, node_graph::NodeGraph};
+use super::{dialog, node_graph::NodeGraph, viewport::Viewport};
 use crate::app::Context;
 
 fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal, success_dialog: bool) {
@@ -72,6 +72,7 @@ pub fn show_toolbar(
     egui_context: &egui::Context,
     context: &mut Context,
     node_graph: &mut NodeGraph,
+    viewport: &mut Viewport,
 ) {
     let mut modal =
         egui_modal::Modal::new(egui_context, "dialog_modal").with_style(&egui_modal::ModalStyle {
@@ -81,6 +82,7 @@ pub fn show_toolbar(
 
     egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {
         egui::menu::bar(ui, |ui| {
+            // File menu
             let mut load_requested: bool = egui_context.input(|input| {
                 input.key_pressed(egui::Key::L)
                     && input.modifiers.matches_logically(egui::Modifiers::CTRL)
@@ -146,6 +148,26 @@ pub fn show_toolbar(
                     context.update(file_path, node_graph);
                 }
             }
+
+            // Settings menu
+            ui.menu_button("Settings", |ui| {
+                ui.add(egui::Checkbox::new(
+                    &mut viewport.settings.enable_dynamic_recompilation_for_materials,
+                    "dynamic recompilation for materials",
+                ));
+                ui.add(egui::Checkbox::new(
+                    &mut viewport
+                        .settings
+                        .enable_dynamic_recompilation_for_primitives,
+                    "dynamic recompilation for primitives",
+                ));
+                ui.add(egui::Checkbox::new(
+                    &mut viewport
+                        .settings
+                        .enable_dynamic_recompilation_for_procedural_textures,
+                    "dynamic recompilation for procedural textures",
+                ));
+            });
         });
     });
 }

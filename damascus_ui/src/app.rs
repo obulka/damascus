@@ -131,7 +131,12 @@ impl eframe::App for Damascus {
             self.node_graph.clear();
         }
 
-        show_toolbar(ctx, &mut self.context, &mut self.node_graph);
+        show_toolbar(
+            ctx,
+            &mut self.context,
+            &mut self.node_graph,
+            &mut self.viewport,
+        );
 
         let graph_response = self.node_graph.show(ctx);
         let mut callback_responses = Vec::<NodeGraphResponse>::new();

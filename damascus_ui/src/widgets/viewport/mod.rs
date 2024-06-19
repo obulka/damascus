@@ -12,13 +12,16 @@ use damascus_core::{
     scene::Scene,
 };
 
+mod settings;
 mod viewport_3d;
 
+pub use settings::ViewportSettings;
 pub use viewport_3d::Viewport3d;
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
 
 pub struct Viewport {
+    pub settings: ViewportSettings,
     viewport_3d: Option<Viewport3d>,
 }
 
@@ -27,6 +30,7 @@ impl Viewport {
 
     pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Self {
         Self {
+            settings: ViewportSettings::default(), // TODO persist these
             viewport_3d: Viewport3d::new(creation_context),
         }
     }
@@ -43,10 +47,19 @@ impl Viewport {
     }
 
     pub fn update_preprocessor_directives(&mut self) -> bool {
+        let bool has_changed = false;
         if let Some(viewport) = &mut self.viewport_3d {
-            return viewport.update_preprocessor_directives();
+            if settings.enable_dynamic_recompilation_for_materials {
+                has_changed |= viewport.update_preprocessor_directives_for_materials();
+            }
+            if settings.enable_dynamic_recompilation_for_primitives {
+                has_changed |= viewport.update_preprocessor_directives_for_primitives();
+            }
+            if settings.enable_dynamic_recompilation_for_procedural_textures {
+                has_changed |= viewport.update_preprocessor_directives_for_procedural_textures();
+            }
         }
-        false
+        has_changed
     }
 
     pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {

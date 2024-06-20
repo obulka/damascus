@@ -10,7 +10,7 @@ use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use strum::{Display, EnumIter, EnumString};
 
-use super::shaders::PreprocessorDirectives;
+use super::shaders::{self, PreprocessorDirectives};
 
 #[derive(
     Debug,
@@ -66,7 +66,7 @@ impl Default for RenderState {
             paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
             paused: true,
-            preprocessor_directives: HashSet::<PreprocessorDirectives>::new(),
+            preprocessor_directives: shaders::all_directives_for_primitive(),
         }
     }
 }

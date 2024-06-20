@@ -43,7 +43,7 @@ pub struct Light {
 
 impl Default for Light {
     fn default() -> Self {
-        Light {
+        Self {
             light_type: Lights::Directional,
             dimensional_data: Vec3::new(0., -1., 0.),
             intensity: 1.,

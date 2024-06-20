@@ -26,6 +26,8 @@ use damascus_core::{
     shaders,
 };
 
+use super::ViewportSettings;
+
 use crate::MAX_TEXTURE_DIMENSION;
 
 pub struct Viewport3d {
@@ -483,16 +485,33 @@ impl Viewport3d {
         )
     }
 
-    pub fn update_preprocessor_directives(&mut self) -> bool {
+    pub fn update_preprocessor_directives(&mut self, settings: &ViewportSettings) -> bool {
         let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
 
-        // Enable expensive material properties
-        preprocessor_directives.extend(shaders::directives_for_material(
-            &self.renderer.scene.atmosphere,
-        ));
-        for primitive in &self.renderer.scene.primitives {
-            preprocessor_directives.extend(shaders::directives_for_material(&primitive.material));
-            preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
+        if !settings.enable_dynamic_recompilation_for_primitives {
+            preprocessor_directives.extend(shaders::all_directives_for_primitive());
+        }
+        if !settings.enable_dynamic_recompilation_for_materials {
+            preprocessor_directives.extend(shaders::all_directives_for_material());
+        } else {
+            // Enable expensive material properties
+            preprocessor_directives.extend(shaders::directives_for_material(
+                &self.renderer.scene.atmosphere,
+            ));
+        }
+
+        if settings.enable_dynamic_recompilation_for_primitives
+            || settings.enable_dynamic_recompilation_for_materials
+        {
+            for primitive in &self.renderer.scene.primitives {
+                if settings.enable_dynamic_recompilation_for_materials {
+                    preprocessor_directives
+                        .extend(shaders::directives_for_material(&primitive.material));
+                }
+                if settings.enable_dynamic_recompilation_for_primitives {
+                    preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
+                }
+            }
         }
 
         // Check if the directives have changed and store them if they have
@@ -583,14 +602,20 @@ impl Viewport3d {
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
     }
 
-    pub fn custom_painting(&mut self, ui: &mut egui::Ui, available_size: egui::Vec2) {
+    pub fn custom_painting(
+        &mut self,
+        ui: &mut egui::Ui,
+        frame: &mut eframe::Frame,
+        available_size: egui::Vec2,
+        settings: &ViewportSettings,
+    ) {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
         self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
             .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
 
         self.stats_text = format!(
-            "{:} paths @ {:.2} fps @ {:.0}x{:.0}",
+            "{:} paths per pixel @ {:.2} fps @ {:.0}x{:.0}",
             self.render_state.paths_rendered_per_pixel,
             self.render_state.fps,
             rect.max.x - rect.min.x,
@@ -615,6 +640,13 @@ impl Viewport3d {
             if new_hash != self.renderer_hash {
                 self.reset_render();
                 self.renderer_hash = new_hash;
+                if settings.dynamic_recompilation_enabled()
+                    && self.update_preprocessor_directives(settings)
+                {
+                    if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                        self.recompile_shader(wgpu_render_state);
+                    }
+                }
             }
         } else {
             panic!("Cannot hash node graph!")

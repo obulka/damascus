@@ -18,10 +18,7 @@ mod data_type;
 mod node_data;
 pub mod value_type;
 
-use callbacks::{
-    LightCallbacks, MaterialCallbacks, NodeCallbacks, PrimitiveCallbacks,
-    ProceduralTextureCallbacks,
-};
+use callbacks::{LightCallbacks, NodeCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
@@ -66,31 +63,27 @@ impl NodeCallbacks for NodeTemplate {
         }
     }
 
-    fn input_disconnected(
-        &self,
-        graph: &mut Graph,
-        input_id: egui_node_graph::InputId,
-        output_id: egui_node_graph::OutputId,
-    ) -> Vec<NodeGraphResponse> {
-        match self {
-            NodeTemplate::Material => {
-                MaterialCallbacks.input_disconnected(graph, input_id, output_id)
-            }
-            _ => Vec::new(),
-        }
-    }
+    // fn input_disconnected(
+    //     &self,
+    //     _graph: &mut Graph,
+    //     _input_id: egui_node_graph::InputId,
+    //     _output_id: egui_node_graph::OutputId,
+    // ) -> Vec<NodeGraphResponse> {
+    //     match self {
+    //         _ => Vec::new(),
+    //     }
+    // }
 
-    fn input_connected(
-        &self,
-        graph: &mut Graph,
-        input_id: egui_node_graph::InputId,
-        output_id: egui_node_graph::OutputId,
-    ) -> Vec<NodeGraphResponse> {
-        match self {
-            NodeTemplate::Material => MaterialCallbacks.input_connected(graph, input_id, output_id),
-            _ => Vec::new(),
-        }
-    }
+    // fn input_connected(
+    //     &self,
+    //     _graph: &mut Graph,
+    //     _input_id: egui_node_graph::InputId,
+    //     _output_id: egui_node_graph::OutputId,
+    // ) -> Vec<NodeGraphResponse> {
+    //     match self {
+    //         _ => Vec::new(),
+    //     }
+    // }
 }
 
 // A trait for the node kinds, which tells the library how to build new nodes

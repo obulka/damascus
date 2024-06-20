@@ -46,26 +46,17 @@ impl Viewport {
         }
     }
 
-    pub fn update_preprocessor_directives(&mut self) -> bool {
-        let bool has_changed = false;
-        if let Some(viewport) = &mut self.viewport_3d {
-            if settings.enable_dynamic_recompilation_for_materials {
-                has_changed |= viewport.update_preprocessor_directives_for_materials();
-            }
-            if settings.enable_dynamic_recompilation_for_primitives {
-                has_changed |= viewport.update_preprocessor_directives_for_primitives();
-            }
-            if settings.enable_dynamic_recompilation_for_procedural_textures {
-                has_changed |= viewport.update_preprocessor_directives_for_procedural_textures();
-            }
-        }
-        has_changed
-    }
-
     pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
         if let Some(viewport) = &mut self.viewport_3d {
             viewport.recompile_shader(wgpu_render_state);
         }
+    }
+
+    pub fn update_preprocessor_directives(&mut self) -> bool {
+        if let Some(viewport) = &mut self.viewport_3d {
+            return viewport.update_preprocessor_directives(&self.settings);
+        }
+        false
     }
 
     pub fn enable_and_play(&mut self) {
@@ -153,7 +144,7 @@ impl Viewport {
         }
     }
 
-    pub fn show(&mut self, ctx: &egui::Context) {
+    pub fn show(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         egui::Window::new("viewer")
             .default_width(720.)
@@ -186,7 +177,7 @@ impl Viewport {
                     if let Some(viewport_3d) = &mut self.viewport_3d {
                         let mut available_size: egui::Vec2 = ui.available_size().round();
                         available_size.y -= controls_height;
-                        viewport_3d.custom_painting(ui, available_size);
+                        viewport_3d.custom_painting(ui, frame, available_size, &self.settings);
                     }
                 });
                 if let Some(viewport_3d) = &mut self.viewport_3d {

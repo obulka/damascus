@@ -22,7 +22,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
         node_id: NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
-        let mut response = Vec::<NodeGraphResponse>::new();
         if ![
             "bounding_volume",
             "shape",
@@ -33,7 +32,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
         ]
         .contains(&input_name.as_str())
         {
-            return response;
+            return Vec::new();
         }
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
@@ -202,7 +201,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
                                 }
                                 _ => {}
                             }
-                            response.push(NodeGraphResponse::CheckPreprocessorDirectives);
                         }
                         "repetition" => match input_param.value() {
                             NodeValueType::ComboBox { ref value } => {
@@ -283,6 +281,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
                 }
             }
         }
-        response
+        Vec::new()
     }
 }

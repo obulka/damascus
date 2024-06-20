@@ -131,7 +131,7 @@ impl eframe::App for Damascus {
             self.node_graph.clear();
         }
 
-        show_toolbar(
+        let mut responses = show_toolbar(
             ctx,
             &mut self.context,
             &mut self.node_graph,
@@ -139,7 +139,6 @@ impl eframe::App for Damascus {
         );
 
         let graph_response = self.node_graph.show(ctx);
-        let mut callback_responses = Vec::<NodeGraphResponse>::new();
         for node_response in graph_response.node_responses {
             match node_response {
                 NodeResponse::User(user_event) => {
@@ -147,7 +146,7 @@ impl eframe::App for Damascus {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
                             self.viewport.enable_and_play();
-                            callback_responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
+                            responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                         }
                         NodeGraphResponse::ClearActiveNode => {
                             self.node_graph.user_state_mut().active_node = None;
@@ -158,7 +157,7 @@ impl eframe::App for Damascus {
                             input_name,
                         ) => {
                             // Perform callbacks when inputs have changed
-                            callback_responses.append(&mut node_template.input_value_changed(
+                            responses.append(&mut node_template.input_value_changed(
                                 &mut self.node_graph.editor_state_mut().graph,
                                 node_id,
                                 &input_name,
@@ -173,24 +172,24 @@ impl eframe::App for Damascus {
                         }
                     }
                 }
-                NodeResponse::DisconnectEvent { output, input } => {
-                    let graph = &self.node_graph.editor_state().graph;
-                    let node_template = graph[graph.get_input(input).node].user_data.template;
-                    callback_responses.append(&mut node_template.input_disconnected(
-                        &mut self.node_graph.editor_state_mut().graph,
-                        input,
-                        output,
-                    ));
-                }
-                NodeResponse::ConnectEventEnded { output, input } => {
-                    let graph = &self.node_graph.editor_state().graph;
-                    let node_template = graph[graph.get_input(input).node].user_data.template;
-                    callback_responses.append(&mut node_template.input_connected(
-                        &mut self.node_graph.editor_state_mut().graph,
-                        input,
-                        output,
-                    ));
-                }
+                // NodeResponse::DisconnectEvent { output, input } => {
+                //     let graph = &self.node_graph.editor_state().graph;
+                //     let node_template = graph[graph.get_input(input).node].user_data.template;
+                //     responses.append(&mut node_template.input_disconnected(
+                //         &mut self.node_graph.editor_state_mut().graph,
+                //         input,
+                //         output,
+                //     ));
+                // }
+                // NodeResponse::ConnectEventEnded { output, input } => {
+                //     let graph = &self.node_graph.editor_state().graph;
+                //     let node_template = graph[graph.get_input(input).node].user_data.template;
+                //     responses.append(&mut node_template.input_connected(
+                //         &mut self.node_graph.editor_state_mut().graph,
+                //         input,
+                //         output,
+                //     ));
+                // }
                 _ => {}
             }
         }
@@ -248,24 +247,24 @@ impl eframe::App for Damascus {
                     }
                     _ => {}
                 }
-            } else {
-                self.node_graph.user_state_mut().active_node = None;
-            }
-        }
 
-        for callback_response in callback_responses
-            .into_iter()
-            .collect::<HashSet<NodeGraphResponse>>()
-        {
-            match callback_response {
-                NodeGraphResponse::CheckPreprocessorDirectives => {
-                    if self.viewport.update_preprocessor_directives() {
-                        if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                            self.viewport.recompile_shader(wgpu_render_state);
+                for response in responses
+                    .into_iter()
+                    .collect::<HashSet<NodeGraphResponse>>()
+                {
+                    match response {
+                        NodeGraphResponse::CheckPreprocessorDirectives => {
+                            if self.viewport.update_preprocessor_directives() {
+                                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                    self.viewport.recompile_shader(wgpu_render_state);
+                                }
+                            }
                         }
+                        _ => {}
                     }
                 }
-                _ => {}
+            } else {
+                self.node_graph.user_state_mut().active_node = None;
             }
         }
 
@@ -273,6 +272,6 @@ impl eframe::App for Damascus {
             self.viewport.disable();
         }
 
-        self.viewport.show(ctx);
+        self.viewport.show(ctx, frame);
     }
 }

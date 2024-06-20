@@ -4,7 +4,11 @@ use std::io::{BufReader, Read, Write};
 use eframe::egui;
 use egui_modal;
 
-use super::{dialog, node_graph::NodeGraph, viewport::Viewport};
+use super::{
+    dialog,
+    node_graph::{NodeGraph, NodeGraphResponse},
+    viewport::Viewport,
+};
 use crate::app::Context;
 
 fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal, success_dialog: bool) {
@@ -73,7 +77,9 @@ pub fn show_toolbar(
     context: &mut Context,
     node_graph: &mut NodeGraph,
     viewport: &mut Viewport,
-) {
+) -> Vec<NodeGraphResponse> {
+    let mut response = Vec::<NodeGraphResponse>::new();
+
     let mut modal =
         egui_modal::Modal::new(egui_context, "dialog_modal").with_style(&egui_modal::ModalStyle {
             ..Default::default()
@@ -149,25 +155,30 @@ pub fn show_toolbar(
                 }
             }
 
+            let mut dynamic_compilation_settings_changed: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
-                ui.add(egui::Checkbox::new(
-                    &mut viewport.settings.enable_dynamic_recompilation_for_materials,
-                    "dynamic recompilation for materials",
-                ));
-                ui.add(egui::Checkbox::new(
-                    &mut viewport
-                        .settings
-                        .enable_dynamic_recompilation_for_primitives,
-                    "dynamic recompilation for primitives",
-                ));
-                ui.add(egui::Checkbox::new(
-                    &mut viewport
-                        .settings
-                        .enable_dynamic_recompilation_for_procedural_textures,
-                    "dynamic recompilation for procedural textures",
-                ));
+                dynamic_compilation_settings_changed |= ui
+                    .checkbox(
+                        &mut viewport.settings.enable_dynamic_recompilation_for_materials,
+                        "dynamic recompilation for materials",
+                    )
+                    .clicked();
+                dynamic_compilation_settings_changed |= ui
+                    .checkbox(
+                        &mut viewport
+                            .settings
+                            .enable_dynamic_recompilation_for_primitives,
+                        "dynamic recompilation for primitives",
+                    )
+                    .clicked();
             });
+
+            if dynamic_compilation_settings_changed {
+                response.push(NodeGraphResponse::CheckPreprocessorDirectives);
+            }
         });
     });
+
+    response
 }

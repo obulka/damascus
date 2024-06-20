@@ -216,6 +216,53 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
     preprocessor_directives
 }
 
+pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+    preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableScatteringColourTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularRoughnessTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+
+    preprocessor_directives
+}
+
+pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCappedCone);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCappedTorus);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCapsule);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCone);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCutSphere);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCylinder);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableDeathStar);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableEllipsoid);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableHexagonalPrism);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableHollowSphere);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteCone);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteCylinder);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableLink);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableMandelbox);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableMandelbulb);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableOctahedron);
+    preprocessor_directives.insert(PreprocessorDirectives::EnablePlane);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableRectangularPrism);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableRectangularPrismFrame);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableRhombus);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableRoundedCone);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableSolidAngle);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTorus);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTriangularPrism);
+
+    preprocessor_directives
+}
+
 pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
     if material.diffuse_colour_texture.texture_type > ProceduralTextureType::None {

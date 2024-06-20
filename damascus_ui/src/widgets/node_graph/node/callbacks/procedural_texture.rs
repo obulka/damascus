@@ -119,6 +119,7 @@ impl NodeCallbacks for ProceduralTextureCallbacks {
                 }
             }
         }
-        vec![NodeGraphResponse::CheckPreprocessorDirectives]
+
+        Vec::new()
     }
 }

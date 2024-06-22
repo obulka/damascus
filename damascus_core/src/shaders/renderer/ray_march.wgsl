@@ -113,10 +113,12 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
 
+#ifdef EnableAOVs
     var exit_early_with_aov: bool = (
         _render_parameters.output_aov > BEAUTY_AOV
         && _render_parameters.output_aov < STATS_AOV
     );
+#endif
 
     var path_seed: vec3f = seed;
     var dynamic_level_of_detail = bool(_render_parameters.flags & DYNAMIC_LEVEL_OF_DETAIL);
@@ -177,6 +179,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
                 &nearest_primitive,
             );
 
+#ifdef EnableAOVs
             // Early exit for the various AOVs that are not 'beauty'
             if exit_early_with_aov {
                 early_exit_aovs(
@@ -189,7 +192,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
                 );
                 return;
             }
-
+#endif
             previous_material_pdf = material_interaction(
                 path_seed,
                 2. * pixel_footprint * _render_parameters.shadow_bias,
@@ -206,6 +209,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
             var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f((*ray).throughput);
             if (bounces >= _render_parameters.max_bounces || exit_probability <= rng) {
+#ifdef EnableAOVs
                 final_aovs(
                     _render_parameters.output_aov,
                     bounces,
@@ -213,6 +217,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
                     distance_travelled,
                     ray,
                 );
+#endif
                 return;
             }
 

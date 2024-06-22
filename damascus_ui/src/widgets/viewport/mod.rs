@@ -28,9 +28,12 @@ pub struct Viewport {
 impl Viewport {
     pub const ICON_SIZE: f32 = 20.;
 
-    pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Self {
+    pub fn new<'a>(
+        creation_context: &'a eframe::CreationContext<'a>,
+        settings: ViewportSettings,
+    ) -> Self {
         Self {
-            settings: ViewportSettings::default(), // TODO persist these
+            settings: settings,
             viewport_3d: Viewport3d::new(creation_context),
         }
     }

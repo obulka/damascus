@@ -19,12 +19,18 @@ use super::{
                 callbacks::NodeCallbacks,
                 value_type::{Bool, NodeValueType, UIInput},
             },
-            NodeGraph, NodeGraphResponse,
+            NodeGraph, NodeGraphEditorState, NodeGraphResponse,
         },
         toolbar::show_toolbar,
-        viewport::Viewport,
+        viewport::{Viewport, ViewportSettings},
     },
 };
+
+#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct PersistentData {
+    pub editor_state: NodeGraphEditorState,
+    pub viewport_settings: ViewportSettings,
+}
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Context {
@@ -68,12 +74,16 @@ impl Damascus {
     /// Called once before the first frame.
     /// Load previous app state (if any).
     pub fn new(creation_context: &eframe::CreationContext<'_>) -> Self {
+        let persistent_data: PersistentData = creation_context
+            .storage
+            .and_then(|storage| eframe::get_value(storage, PERSISTENCE_KEY))
+            .unwrap_or_default();
         Self {
             last_lazy_update: SystemTime::now()
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
             context: Context::default(),
-            node_graph: NodeGraph::new(creation_context, PERSISTENCE_KEY),
-            viewport: Viewport::new(creation_context),
+            node_graph: NodeGraph::new(persistent_data.editor_state),
+            viewport: Viewport::new(creation_context, persistent_data.viewport_settings),
         }
     }
 
@@ -105,7 +115,14 @@ impl Damascus {
 impl eframe::App for Damascus {
     /// Called by the framework to save state before shutdown.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, PERSISTENCE_KEY, self.node_graph.editor_state());
+        eframe::set_value(
+            storage,
+            PERSISTENCE_KEY,
+            &PersistentData {
+                editor_state: self.node_graph.editor_state().clone(),
+                viewport_settings: self.viewport.settings,
+            },
+        );
     }
 
     fn auto_save_interval(&self) -> Duration {

@@ -7,6 +7,7 @@
 pub struct ViewportSettings {
     pub enable_dynamic_recompilation_for_materials: bool,
     pub enable_dynamic_recompilation_for_primitives: bool,
+    pub enable_dynamic_recompilation_for_ray_marcher: bool,
 }
 
 impl Default for ViewportSettings {
@@ -14,6 +15,7 @@ impl Default for ViewportSettings {
         Self {
             enable_dynamic_recompilation_for_materials: true,
             enable_dynamic_recompilation_for_primitives: false,
+            enable_dynamic_recompilation_for_ray_marcher: true,
         }
     }
 }
@@ -22,5 +24,6 @@ impl ViewportSettings {
     pub fn dynamic_recompilation_enabled(&self) -> bool {
         self.enable_dynamic_recompilation_for_primitives
             || self.enable_dynamic_recompilation_for_materials
+            || self.enable_dynamic_recompilation_for_ray_marcher
     }
 }

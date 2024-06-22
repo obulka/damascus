@@ -488,9 +488,16 @@ impl Viewport3d {
     pub fn update_preprocessor_directives(&mut self, settings: &ViewportSettings) -> bool {
         let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
 
+        if !settings.enable_dynamic_recompilation_for_ray_marcher {
+            preprocessor_directives.extend(shaders::all_directives_for_ray_marcher());
+        } else {
+            preprocessor_directives.extend(shaders::directives_for_ray_marcher(&self.renderer));
+        }
+
         if !settings.enable_dynamic_recompilation_for_primitives {
             preprocessor_directives.extend(shaders::all_directives_for_primitive());
         }
+
         if !settings.enable_dynamic_recompilation_for_materials {
             preprocessor_directives.extend(shaders::all_directives_for_material());
         } else {

@@ -10,6 +10,7 @@ use strum::{EnumCount, EnumString};
 use super::{
     geometry::{BlendType, Primitive, Shapes},
     materials::{Material, ProceduralTextureType},
+    renderers::{AOVs, RayMarcher},
 };
 
 #[derive(Debug, EnumString)]
@@ -73,6 +74,7 @@ pub enum PreprocessorDirectives {
     EnablePrimitiveBlendIntersection,
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
+    EnableAOVs,
 }
 
 impl Includes {
@@ -206,6 +208,13 @@ pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives
     preprocess_directives(shader_source, preprocessor_directives).join("\n")
 }
 
+pub fn all_directives_for_ray_marcher() -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+    preprocessor_directives.insert(PreprocessorDirectives::EnableAOVs);
+
+    preprocessor_directives
+}
+
 pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
     preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
@@ -254,6 +263,16 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
     preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
     preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
+
+    preprocessor_directives
+}
+
+pub fn directives_for_ray_marcher(ray_marcher: &RayMarcher) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+    if ray_marcher.output_aov > AOVs::Beauty {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableAOVs);
+    }
 
     preprocessor_directives
 }
@@ -378,6 +397,7 @@ mod tests {
         let mut preprocessor_directives: HashSet<PreprocessorDirectives> =
             all_directives_for_material();
         preprocessor_directives.extend(all_directives_for_primitive());
+        preprocessor_directives.extend(all_directives_for_ray_marcher());
         assert_eq!(preprocessor_directives.len(), PreprocessorDirectives::COUNT);
     }
 

@@ -21,11 +21,7 @@ pub struct NodeGraph {
 }
 
 impl NodeGraph {
-    pub fn new(creation_context: &eframe::CreationContext<'_>, persistence_key: &str) -> Self {
-        let editor_state: NodeGraphEditorState = creation_context
-            .storage
-            .and_then(|storage| eframe::get_value(storage, persistence_key))
-            .unwrap_or_default();
+    pub fn new(editor_state: NodeGraphEditorState) -> Self {
         Self {
             editor_state,
             user_state: NodeGraphState::default(),

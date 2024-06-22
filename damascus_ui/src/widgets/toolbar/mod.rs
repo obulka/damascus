@@ -172,6 +172,14 @@ pub fn show_toolbar(
                         "dynamic recompilation for primitives",
                     )
                     .clicked();
+                dynamic_compilation_settings_changed |= ui
+                    .checkbox(
+                        &mut viewport
+                            .settings
+                            .enable_dynamic_recompilation_for_ray_marcher,
+                        "dynamic recompilation for ray marcher",
+                    )
+                    .clicked();
             });
 
             if dynamic_compilation_settings_changed {

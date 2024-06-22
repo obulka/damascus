@@ -8,7 +8,7 @@ use std::{collections::HashSet, str::FromStr};
 use strum::EnumString;
 
 use super::{
-    geometry::{Primitive, Shapes},
+    geometry::{BlendType, Primitive, Shapes},
     materials::{Material, ProceduralTextureType},
 };
 
@@ -68,6 +68,7 @@ pub enum PreprocessorDirectives {
     EnableSolidAngle,
     EnableTorus,
     EnableTriangularPrism,
+    EnableChildInteractions,
 }
 
 impl Includes {
@@ -201,21 +202,6 @@ pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives
     preprocess_directives(shader_source, preprocessor_directives).join("\n")
 }
 
-pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    if primitive.shape == Shapes::Sphere {
-        return preprocessor_directives;
-    }
-
-    preprocessor_directives.insert(
-        PreprocessorDirectives::from_str(&("Enable".to_owned() + &primitive.shape.to_string()))
-            .unwrap(),
-    );
-
-    preprocessor_directives
-}
-
 pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
     preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
@@ -259,6 +245,28 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableSolidAngle);
     preprocessor_directives.insert(PreprocessorDirectives::EnableTorus);
     preprocessor_directives.insert(PreprocessorDirectives::EnableTriangularPrism);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
+
+    preprocessor_directives
+}
+
+pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+    if primitive.num_descendants > 0
+        && (primitive.blend_type > BlendType::Union || primitive.blend_strength > 0.)
+    {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
+    }
+
+    if primitive.shape == Shapes::Sphere {
+        return preprocessor_directives;
+    }
+
+    preprocessor_directives.insert(
+        PreprocessorDirectives::from_str(&("Enable".to_owned() + &primitive.shape.to_string()))
+            .unwrap(),
+    );
 
     preprocessor_directives
 }

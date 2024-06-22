@@ -13,8 +13,8 @@ const MIRROR_Z: u32 = 32u;
 const HOLLOW: u32 = 64u;
 const SUBTRACTION: u32 = 128u;
 const INTERSECTION: u32 = 256u;
-const BLEND_TYPE_MASK: u32 = 3968u;
-const BOUNDING_VOLUME: u32 = 4096u;
+const BLEND_TYPE_MASK: u32 = 384u;
+const BOUNDING_VOLUME: u32 = 512u;
 
 
 /**

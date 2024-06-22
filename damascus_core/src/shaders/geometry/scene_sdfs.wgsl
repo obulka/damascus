@@ -13,6 +13,7 @@ fn find_nearest_descendant(
     // Get the distance to the topmost primitive
     var distance_to_family: f32 = distance_to_textured_primitive(position, family);
 
+#ifdef EnableChildInteractions
     // Check if the topmost primmitive is a bounding volume
     var family_is_bounded: bool = bool((*family).modifiers & BOUNDING_VOLUME);
     // And if we are outside that bounding volume if so
@@ -151,6 +152,7 @@ fn find_nearest_descendant(
             child_index++;
         }
     }
+#endif
 
     return distance_to_family;
 }
@@ -190,9 +192,13 @@ fn find_nearest_primitive(
             primitive_is_new_closest,
         );
 
+#ifdef EnableChildInteractions
         // Skip all descendants, they were processed in the
-        // `find_nearest_descendant` function
+        // `distance_to_descendants` function
         primitives_processed += num_descendants + 1u;
+#else
+        primitives_processed++;
+#endif
     }
     // Ensure the number of descendants is that of the closest primitive
     var unmodified_closest_primitive: Primitive = (
@@ -213,6 +219,7 @@ fn distance_to_descendants(
     // Get the distance to the topmost primitive
     var distance_to_family: f32 = distance_to_primitive(position, family);
 
+#ifdef EnableChildInteractions
     // Check if the topmost primmitive is a bounding volume
     var family_is_bounded: bool = bool((*family).modifiers & BOUNDING_VOLUME);
     // And if we are outside that bounding volume if so
@@ -341,6 +348,7 @@ fn distance_to_descendants(
             child_index++;
         }
     }
+#endif
 
     return distance_to_family;
 }
@@ -374,9 +382,13 @@ fn signed_distance_to_scene(
             primitive_is_new_closest,
         );
 
+#ifdef EnableChildInteractions
         // Skip all descendants, they were processed in the
         // `distance_to_descendants` function
         primitives_processed += num_descendants + 1u;
+#else
+        primitives_processed++;
+#endif
     }
 
     return distance_to_scene;

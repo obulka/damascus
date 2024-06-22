@@ -182,6 +182,7 @@ fn sample_material(
         surface_normal,
     );
 
+#ifdef EnableSpecularMaterials
     var specular_probability: f32 = (*primitive).material.specular_probability;
     var transmissive_probability: f32 = (*primitive).material.transmissive_probability;
     var diffuse_probability: f32 =  1. - specular_probability - transmissive_probability;
@@ -226,7 +227,8 @@ fn sample_material(
 
     // Interact with material according to the adjusted probabilities
     var rng: f32 = vec3f_to_random_f32(seed);
-    var material_pdf: f32;
+#endif
+#ifdef EnableTransmissiveMaterials
     if (
         (*primitive).material.transmissive_probability > 0.
         && transmissive_probability > 0.
@@ -277,6 +279,8 @@ fn sample_material(
         // Reflect instead
         specular_probability = transmissive_probability;
     }
+#endif
+#ifdef EnableSpecularMaterials
     if (
         diffuse_probability <= 0.
         || (specular_probability > 0. && rng <= specular_probability + transmissive_probability)
@@ -304,17 +308,23 @@ fn sample_material(
             * dot(ideal_specular_direction, (*ray).direction)
             / PI
         );
-    } else {
-        // Diffuse bounce
-        (*ray).direction = diffuse_direction;
-
-        // Offset the point so that it doesn't get trapped on the surface.
-        (*ray).origin += offset * surface_normal;
-
-        *material_brdf = (*primitive).material.diffuse_colour;
-
-        var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
-        *light_sampling_pdf = probability_over_pi;
-        return probability_over_pi * dot(diffuse_direction, surface_normal);
     }
+#endif
+
+    // Diffuse bounce
+    (*ray).direction = diffuse_direction;
+
+    // Offset the point so that it doesn't get trapped on the surface.
+    (*ray).origin += offset * surface_normal;
+
+    *material_brdf = (*primitive).material.diffuse_colour;
+
+#ifdef EnableSpecularMaterials
+    var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
+#else
+    var probability_over_pi = 1.;
+#endif
+
+    *light_sampling_pdf = probability_over_pi;
+    return probability_over_pi * dot(diffuse_direction, surface_normal);
 }

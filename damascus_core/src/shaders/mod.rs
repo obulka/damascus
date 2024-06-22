@@ -5,7 +5,7 @@
 
 use std::{collections::HashSet, str::FromStr};
 
-use strum::EnumString;
+use strum::{EnumCount, EnumString};
 
 use super::{
     geometry::{BlendType, Primitive, Shapes},
@@ -31,7 +31,7 @@ enum Includes {
     VertexShader,
 }
 
-#[derive(Debug, EnumString, Eq, Hash, PartialEq)]
+#[derive(Debug, EnumString, EnumCount, Eq, Hash, PartialEq)]
 pub enum PreprocessorDirectives {
     EnableDiffuseColourTexture,
     EnableScatteringColourTexture,
@@ -69,6 +69,10 @@ pub enum PreprocessorDirectives {
     EnableTorus,
     EnableTriangularPrism,
     EnableChildInteractions,
+    EnablePrimitiveBlendSubtraction,
+    EnablePrimitiveBlendIntersection,
+    EnableSpecularMaterials,
+    EnableTransmissiveMaterials,
 }
 
 impl Includes {
@@ -215,6 +219,8 @@ pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
 
     preprocessor_directives
 }
@@ -246,6 +252,8 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableTorus);
     preprocessor_directives.insert(PreprocessorDirectives::EnableTriangularPrism);
     preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
+    preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
+    preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
 
     preprocessor_directives
 }
@@ -257,6 +265,18 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
         && (primitive.blend_type > BlendType::Union || primitive.blend_strength > 0.)
     {
         preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
+
+        match primitive.blend_type {
+            BlendType::Subtraction => {
+                preprocessor_directives
+                    .insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
+            }
+            BlendType::Intersection => {
+                preprocessor_directives
+                    .insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
+            }
+            _ => {}
+        }
     }
 
     if primitive.shape == Shapes::Sphere {
@@ -280,6 +300,7 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
         }
     }
     if material.specular_probability_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
         preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
         if material.specular_probability_texture.texture_type >= ProceduralTextureType::FBMNoise {
             preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
@@ -298,6 +319,8 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
         }
     }
     if material.transmissive_probability_texture.texture_type > ProceduralTextureType::None {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
         preprocessor_directives
             .insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
         if material.transmissive_probability_texture.texture_type >= ProceduralTextureType::FBMNoise
@@ -335,12 +358,28 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
             preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
         }
     }
+
+    if material.transmissive_probability > 0. {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
+        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
+    } else if material.specular_probability > 0. {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
+    }
+
     preprocessor_directives
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_all_directives_covered() {
+        let mut preprocessor_directives: HashSet<PreprocessorDirectives> =
+            all_directives_for_material();
+        preprocessor_directives.extend(all_directives_for_primitive());
+        assert_eq!(preprocessor_directives.len(), PreprocessorDirectives::COUNT);
+    }
 
     #[test]
     fn test_ifdef_preprocessor_directives() {

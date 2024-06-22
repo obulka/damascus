@@ -714,6 +714,7 @@ fn blend_primitives(
     child: ptr<function, Primitive>,
 ) -> f32 {
     switch (*parent).modifiers & BLEND_TYPE_MASK {
+#ifdef EnablePrimitiveBlendSubtraction
         case SUBTRACTION {
             var smoothing: f32 = saturate_f32(
                 0.5
@@ -728,6 +729,8 @@ fn blend_primitives(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
+#endif
+#ifdef EnablePrimitiveBlendIntersection
         case INTERSECTION {
             var smoothing: f32 = saturate_f32(
                 0.5
@@ -742,6 +745,7 @@ fn blend_primitives(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
+#endif
         default {
             // Union
             var smoothing: f32 = saturate_f32(
@@ -767,6 +771,7 @@ fn blend_distances(
     parent: ptr<function, Primitive>,
 ) -> f32 {
     switch (*parent).modifiers & BLEND_TYPE_MASK {
+#ifdef EnablePrimitiveBlendSubtraction
         case SUBTRACTION {
             var smoothing: f32 = saturate_f32(
                 0.5
@@ -780,6 +785,8 @@ fn blend_distances(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
+#endif
+#ifdef EnablePrimitiveBlendIntersection
         case INTERSECTION {
             var smoothing: f32 = saturate_f32(
                 0.5
@@ -793,6 +800,7 @@ fn blend_distances(
                 smoothing,
             ) + (*parent).blend_strength * smoothing * (1. - smoothing);
         }
+#endif
         default {
             // Union
             var smoothing: f32 = saturate_f32(

@@ -28,6 +28,7 @@ use super::{
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PersistentData {
+    pub context: Context,
     pub editor_state: NodeGraphEditorState,
     pub viewport_settings: ViewportSettings,
 }
@@ -81,7 +82,7 @@ impl Damascus {
         Self {
             last_lazy_update: SystemTime::now()
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
-            context: Context::default(),
+            context: persistent_data.context,
             node_graph: NodeGraph::new(persistent_data.editor_state),
             viewport: Viewport::new(creation_context, persistent_data.viewport_settings),
         }
@@ -119,6 +120,7 @@ impl eframe::App for Damascus {
             storage,
             PERSISTENCE_KEY,
             &PersistentData {
+                context: self.context.clone(),
                 editor_state: self.node_graph.editor_state().clone(),
                 viewport_settings: self.viewport.settings,
             },

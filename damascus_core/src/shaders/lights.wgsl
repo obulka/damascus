@@ -464,7 +464,7 @@ fn light_sampling(
 ) -> vec3f {
     var light_id = u32(
         f32(_scene_parameters.num_lights)
-        * vec3f_to_random_f32(seed * 843927.63)
+        * vec3f_to_random_f32(seed * vec3(3213.28, 1245.84, 2134.12))
     );
     var distance_to_light: f32 = 0.;
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);

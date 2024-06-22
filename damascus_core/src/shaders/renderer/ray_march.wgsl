@@ -230,7 +230,10 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
             pixel_footprint = _render_parameters.hit_tolerance;
 
             // Update the random seed for the next iteration
-            path_seed = random_vec3f(path_seed.zxy + f32(bounces));
+            path_seed = (
+                vec3(8922.54, 7223.18, 4267.21)
+                * random_vec3f(path_seed.zxy + f32(bounces))
+            );
         }
         pixel_footprint += select(
             0.,

@@ -82,9 +82,6 @@ pub enum BlendType {
     Union,
     Subtraction,
     Intersection,
-    SmoothUnion,
-    SmoothSubtraction,
-    SmoothIntersection,
 }
 
 #[derive(

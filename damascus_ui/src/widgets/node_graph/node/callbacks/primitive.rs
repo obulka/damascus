@@ -3,14 +3,11 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-use egui_node_graph::{InputParam, NodeId};
+use egui_node_graph::NodeId;
 
 use damascus_core::geometry;
 
-use super::{
-    super::NodeGraphResponse, Graph, NodeCallbacks, NodeDataType, NodeGraphState, NodeValueType,
-    UIInput,
-};
+use super::{super::NodeGraphResponse, Graph, NodeCallbacks, NodeValueType, UIInput};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct PrimitiveCallbacks;
@@ -26,7 +23,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
             "bounding_volume",
             "shape",
             "repetition",
-            "blend_type",
             "hollow",
             "elongate",
         ]
@@ -39,24 +35,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
             let mut to_show = vec![];
             if let Ok(input_id) = node.get_input(input_name) {
                 if let Some(input_param) = graph.inputs.get(input_id) {
-                    let mut blend_type_changed = |blend_type_input: &InputParam<
-                        NodeDataType,
-                        NodeValueType,
-                        NodeGraphState,
-                    >| {
-                        match blend_type_input.value() {
-                            NodeValueType::ComboBox { ref value } => {
-                                if let Ok(blend_type) = value.as_enum::<geometry::BlendType>() {
-                                    if blend_type >= geometry::BlendType::SmoothUnion {
-                                        to_show.push("blend_strength");
-                                    } else {
-                                        to_hide.push("blend_strength");
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    };
                     match input_name.as_str() {
                         "shape" => {
                             to_hide.extend([
@@ -224,7 +202,6 @@ impl NodeCallbacks for PrimitiveCallbacks {
                             }
                             _ => {}
                         },
-                        "blend_type" => blend_type_changed(input_param),
                         "hollow" => match input_param.value() {
                             NodeValueType::Bool { ref value } => {
                                 if *value.value() {
@@ -248,15 +225,11 @@ impl NodeCallbacks for PrimitiveCallbacks {
                         "bounding_volume" => match input_param.value() {
                             NodeValueType::Bool { ref value } => {
                                 if *value.value() {
-                                    to_hide.push("blend_strength");
                                     to_hide.push("blend_type");
+                                    to_hide.push("blend_strength");
                                 } else {
-                                    if let Ok(input_id) = node.get_input("blend_type") {
-                                        if let Some(blend_type_param) = graph.inputs.get(input_id) {
-                                            blend_type_changed(blend_type_param);
-                                        }
-                                    }
                                     to_show.push("blend_type");
+                                    to_show.push("blend_strength");
                                 }
                             }
                             _ => {}

@@ -65,12 +65,8 @@ fn multiple_importance_sample(
  *
  * @returns: The probability distribution function.
  */
-fn sample_lights_pdf(num_lights: f32, visible_surface_area: f32) -> f32 {
-    if visible_surface_area == 0. {
-        return 1. / num_lights;
-    } else {
-        return 1. / num_lights / visible_surface_area;
-    }
+fn sample_lights_pdf(num_lights: f32) -> f32 {
+    return 1. / num_lights;
 }
 
 
@@ -466,7 +462,10 @@ fn light_sampling(
     material_brdf: vec3f,
     material_pdf: f32,
 ) -> vec3f {
-    var light_id = u32(f32(_scene_parameters.num_lights) * vec3f_to_random_f32(seed));
+    var light_id = u32(
+        f32(_scene_parameters.num_lights)
+        * vec3f_to_random_f32(seed * 843927.63)
+    );
     var distance_to_light: f32 = 0.;
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);
     var light_colour = vec3(0.);

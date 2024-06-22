@@ -88,16 +88,11 @@ fn material_interaction(
         material_geometry_factor = saturate_f32(dot((*ray).direction, surface_normal));
     }
 
-    var radius: f32 = length(
-        (*primitive).transform.uniform_scale * (*primitive).dimensional_data,
-    );
-    var visible_surface_area: f32 = TWO_PI * radius * radius; // Not correct for most shapes
-
     (*ray).colour += multiple_importance_sample(
         (*primitive).material.emissive_colour,
         (*ray).throughput,
         previous_material_pdf,
-        sample_lights_pdf(f32(_scene_parameters.num_lights), visible_surface_area),
+        sample_lights_pdf(f32(_scene_parameters.num_lights)),
     );
 
     (*ray).throughput *= material_brdf * material_geometry_factor / material_pdf;

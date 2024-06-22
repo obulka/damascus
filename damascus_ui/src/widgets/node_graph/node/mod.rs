@@ -1283,8 +1283,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     "blend_strength",
                     Float::new(default_primitive.blend_strength).with_ui_data(
                         UIData::default()
-                            .with_tooltip("The amount to blend with this primitive's children.")
-                            .with_hidden(),
+                            .with_tooltip("The amount to blend with this primitive's children."),
                     ),
                 );
                 input_bool_vector3(

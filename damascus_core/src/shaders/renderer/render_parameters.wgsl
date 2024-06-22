@@ -33,6 +33,7 @@ struct RenderParameters {
 
 struct SceneParameters {
     num_primitives: u32,
+    // Number of emissive prims + num_non_physical_lights
     num_lights: u32,
     num_non_physical_lights: u32,
 }

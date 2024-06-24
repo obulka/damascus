@@ -34,7 +34,6 @@ pub struct Scene {
 impl Default for Scene {
     fn default() -> Self {
         let mut atmosphere = Material::default();
-        atmosphere.diffuse_colour = Vec3::ZERO;
         atmosphere.refractive_index = 1.;
         Self {
             render_camera: Camera::default(),

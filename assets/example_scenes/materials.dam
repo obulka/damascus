@@ -8308,15 +8308,15 @@
             "Vec3": {
               "value": {
                 "value": [
-                  0.25,
-                  0.25,
-                  0.25
+                  1.0,
+                  1.0,
+                  1.0
                 ],
                 "ui_data": {
                   "tooltip": "The diffuse colour of the material.",
                   "hidden": false
                 },
-                "collapsed": true,
+                "collapsed": false,
                 "is_colour": true
               }
             }
@@ -9052,7 +9052,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.0,
+                "value": 0.25,
                 "ui_data": {
                   "tooltip": "The intensity of light that will be emitted from the material.",
                   "hidden": false
@@ -15161,75 +15161,75 @@
         "version": 0
       },
       {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
         "value": {
           "idx": 11,
           "version": 1
         },
         "version": 1
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
-      },
-      {
-        "value": null,
-        "version": 0
       },
       {
         "value": null,
@@ -16234,110 +16234,92 @@
     },
     {
       "value": {
-        "x": -3657.2275,
-        "y": 87.211365
+        "x": -3632.1616,
+        "y": -263.6471
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3605.6948,
-        "y": 52.36847
+        "x": -3562.2578,
+        "y": -310.91333
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3799.9155,
-        "y": -190.4607
+        "x": -3825.7217,
+        "y": -640.32574
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3959.4272,
-        "y": -95.9173
+        "x": -4042.1118,
+        "y": -512.0704
       },
       "version": 5
     },
     {
       "value": {
-        "x": -3900.6992,
-        "y": -164.76733
+        "x": -3962.4395,
+        "y": -605.4714
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3949.3787,
-        "y": 235.71625
+        "x": -4028.483,
+        "y": -62.191772
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3823.7905,
-        "y": 197.96765
+        "x": -3858.1157,
+        "y": -113.39917
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3984.7026,
-        "y": 56.24945
+        "x": -4076.3955,
+        "y": -305.64862
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4141.124,
-        "y": 148.17554
+        "x": -4288.6006,
+        "y": -180.94556
       },
       "version": 3
     },
     {
       "value": {
-        "x": -3827.778,
-        "y": 308.2094
+        "x": -3863.5186,
+        "y": 36.15027
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3940.4297,
-        "y": 403.6535
+        "x": -4016.3423,
+        "y": 165.62567
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4001.3167,
-        "y": -186.32556
+        "x": -4098.9346,
+        "y": -634.71533
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4140.3994,
-        "y": 286.77057
-      },
-      "version": 3
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -4131.462,
-        "y": -124.902954
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -3948.213,
-        "y": 316.05072
+        "x": -4287.6143,
+        "y": 7.0668945
       },
       "version": 3
     },
@@ -16346,20 +16328,38 @@
       "version": 0
     },
     {
-      "value": null,
-      "version": 0
-    },
-    {
       "value": {
-        "x": -4107.4927,
-        "y": 58.935913
+        "x": -4275.488,
+        "y": -551.393
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3816.302,
-        "y": 56.18921
+        "x": -4026.8945,
+        "y": 46.787598
+      },
+      "version": 3
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -4242.9707,
+        "y": -302.00485
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -3847.9553,
+        "y": -305.73026
       },
       "version": 3
     }
@@ -16367,10 +16367,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 4923.198,
-      "y": 242.32849
+      "x": 5248.1616,
+      "y": 668.4158
     },
-    "zoom": 0.32811573,
+    "zoom": 0.4451085,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

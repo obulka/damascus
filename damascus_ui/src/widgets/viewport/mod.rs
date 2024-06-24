@@ -184,15 +184,33 @@ impl Viewport {
                     }
                 });
                 if let Some(viewport_3d) = &mut self.viewport_3d {
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                    ui.horizontal(|ui| {
+                        if ui
+                            .add_enabled(
+                                viewport_3d.enabled(),
+                                egui::ImageButton::new(
+                                    egui::Image::new(Icons::Refresh.source())
+                                        .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE)),
+                                ),
+                            )
+                            .on_hover_text("restart the render")
+                            .clicked()
+                        {
+                            viewport_3d.reset_render();
+                        }
+
+                        let tooltip: &str;
                         let pause_icon = egui::Image::new(if viewport_3d.paused() {
+                            tooltip = "start the render";
                             Icons::Play.source()
                         } else {
+                            tooltip = "pause the render";
                             Icons::Pause.source()
                         })
                         .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
                         if ui
                             .add_enabled(viewport_3d.enabled(), egui::ImageButton::new(pause_icon))
+                            .on_hover_text(tooltip)
                             .clicked()
                         {
                             viewport_3d.toggle_play_pause();

@@ -12,6 +12,7 @@ pub enum Icons {
     Play,
     ArrowRight,
     ArrowLeft,
+    Refresh,
 }
 
 impl Icons {
@@ -21,6 +22,7 @@ impl Icons {
             Self::Play => include_image!("../assets/icons/play.svg"),
             Self::ArrowRight => include_image!("../assets/icons/arrow_right.svg"),
             Self::ArrowLeft => include_image!("../assets/icons/arrow_left.svg"),
+            Self::Refresh => include_image!("../assets/icons/refresh.svg"),
         }
     }
 

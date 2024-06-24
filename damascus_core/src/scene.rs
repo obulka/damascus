@@ -4,7 +4,6 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use crevice::std430::AsStd430;
-use glam::Vec3;
 
 use super::{
     geometry::{

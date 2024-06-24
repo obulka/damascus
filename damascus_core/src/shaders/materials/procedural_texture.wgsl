@@ -332,14 +332,18 @@ fn procedurally_texture_f32(
             // None
             return colour;
         }
+#ifdef EnableGrade
         case GRADE {
             // Grade
             return grade_f32(colour, texture);
         }
+#endif
+#ifdef EnableCheckerboard
         case CHECKER_BOARD {
             // Checkerboard
             return colour * grade_f32(checkerboard(seed / texture.scale), texture);
         }
+#endif
 // Simply having this case slows things down, so allow it to be compiled out
 #ifdef EnableNoise
         case FBM_NOISE, TURBULENCE_NOISE {
@@ -364,14 +368,18 @@ fn procedurally_texture_vec3f(
             // None
             return colour;
         }
+#ifdef EnableGrade
         case GRADE {
             // Grade
             return grade_vec3(colour, texture);
         }
+#endif
+#ifdef EnableCheckerboard
         case CHECKER_BOARD {
             // Checkerboard
             return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture));
         }
+#endif
 // Simply having this case slows things down, so allow it to be compiled out
 #ifdef EnableNoise
         case FBM_NOISE, TURBULENCE_NOISE {

@@ -9,7 +9,7 @@ use strum::{EnumCount, EnumString};
 
 use super::{
     geometry::{BlendType, Primitive, Shapes},
-    materials::{Material, ProceduralTextureType},
+    materials::{Material, ProceduralTexture, ProceduralTextureType},
     renderers::{AOVs, RayMarcher},
 };
 
@@ -44,6 +44,8 @@ pub enum PreprocessorDirectives {
     EnableEmissiveColourTexture,
     EnableExtinctionColourTexture,
     EnableRefractiveIndexTexture,
+    EnableGrade,
+    EnableCheckerboard,
     EnableNoise,
     EnableCappedCone,
     EnableCappedTorus,
@@ -227,6 +229,8 @@ pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableGrade);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableCheckerboard);
     preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
     preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
     preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
@@ -310,72 +314,87 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
     preprocessor_directives
 }
 
+pub fn directives_for_procedural_texture(
+    procedural_texture: &ProceduralTexture,
+) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+    if procedural_texture.texture_type == ProceduralTextureType::Grade {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableGrade);
+    } else if procedural_texture.texture_type == ProceduralTextureType::Checkerboard {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableCheckerboard);
+    } else if procedural_texture.texture_type == ProceduralTextureType::FBMNoise
+        || procedural_texture.texture_type == ProceduralTextureType::TurbulenceNoise
+    {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
+    }
+
+    preprocessor_directives
+}
+
 pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
     if material.diffuse_colour_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
-        if material.diffuse_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.diffuse_colour_texture,
+        ));
     }
     if material.specular_probability_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
         preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
-        if material.specular_probability_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.specular_probability_texture,
+        ));
     }
     if material.specular_roughness_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularRoughnessTexture);
-        if material.specular_roughness_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.specular_roughness_texture,
+        ));
     }
     if material.specular_colour_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
-        if material.specular_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.specular_colour_texture,
+        ));
     }
     if material.transmissive_probability_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
         preprocessor_directives
             .insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
-        if material.transmissive_probability_texture.texture_type >= ProceduralTextureType::FBMNoise
-        {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.transmissive_probability_texture,
+        ));
     }
     if material.transmissive_roughness_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
-        if material.transmissive_roughness_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.transmissive_roughness_texture,
+        ));
     }
     if material.transmissive_colour_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
-        if material.transmissive_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.transmissive_colour_texture,
+        ));
     }
     if material.emissive_colour_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
-        if material.emissive_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.emissive_colour_texture,
+        ));
     }
     if material.refractive_index_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
-        if material.refractive_index_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.refractive_index_texture,
+        ));
     }
     if material.scattering_colour_texture.texture_type > ProceduralTextureType::None {
         preprocessor_directives.insert(PreprocessorDirectives::EnableScatteringColourTexture);
-        if material.scattering_colour_texture.texture_type >= ProceduralTextureType::FBMNoise {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-        }
+        preprocessor_directives.extend(directives_for_procedural_texture(
+            &material.scattering_colour_texture,
+        ));
     }
 
     if material.transmissive_probability > 0. {

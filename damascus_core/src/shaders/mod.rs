@@ -8,7 +8,7 @@ use std::{collections::HashSet, str::FromStr};
 use strum::{EnumCount, EnumString};
 
 use super::{
-    geometry::{BlendType, Primitive, Shapes},
+    geometry::{BlendType, Primitive, Repetition, Shapes},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
     renderers::{AOVs, RayMarcher},
 };
@@ -74,6 +74,8 @@ pub enum PreprocessorDirectives {
     EnableChildInteractions,
     EnablePrimitiveBlendSubtraction,
     EnablePrimitiveBlendIntersection,
+    EnableInfiniteRepetition,
+    EnableFiniteRepetition,
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
     EnableAOVs,
@@ -267,6 +269,8 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
     preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
     preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
 
     preprocessor_directives
 }
@@ -300,6 +304,16 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
             }
             _ => {}
         }
+    }
+
+    match primitive.repetition {
+        Repetition::Finite => {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+        }
+        Repetition::Infinite => {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
+        }
+        _ => {}
     }
 
     if primitive.shape == Shapes::Sphere {
@@ -503,7 +517,6 @@ mod tests {
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
         );
-        println!("{:?}", result);
         assert_eq!(result.len(), 3);
 
         let result_string: String = result.join("\n");
@@ -589,7 +602,6 @@ mod tests {
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
         );
-        println!("{:?}", result);
         assert_eq!(result.len(), 4);
 
         let result_string: String = result.join("\n");
@@ -626,5 +638,270 @@ mod tests {
         let result_string: String = result.join("\n");
         assert!(!result_string.contains("remove"));
         assert!(!result_string.contains("#"));
+    }
+
+    #[test]
+    fn test_transform_directives() {
+        let source = vec![
+            "fn transform_position(",
+            "    position: vec3f,",
+            "    primitive: ptr<function, Primitive>,",
+            ") -> vec3f {",
+            "    // Perform finite or infinite repetition if enabled",
+            "#ifdef EnableFiniteRepetition",
+            "    var transformed_position: vec3f = select(",
+            "#else",
+            "    var transformed_position: vec3f =",
+            "#endif",
+            "#ifdef EnableInfiniteRepetition",
+            "        select(",
+            "            position,",
+            "            mirrored_infinite_repetition(",
+            "                position,",
+            "                primitive,",
+            "            ),",
+            "            bool((*primitive).modifiers & INFINITE_REPETITION),",
+            "#ifdef EnableFiniteRepetition",
+            "        ),",
+            "#else",
+            "        );",
+            "#endif",
+            "#else",
+            "#ifdef EnableFiniteRepetition",
+            "        position,",
+            "#else",
+            "        position;",
+            "#endif",
+            "#endif",
+            "#ifdef EnableFiniteRepetition",
+            "        mirrored_finite_repetition(",
+            "            position,",
+            "            primitive,",
+            "        ),",
+            "        bool((*primitive).modifiers & FINITE_REPETITION),",
+            "    );",
+            "#endif",
+            "    // Perform elongation if enabled",
+            "    transformed_position -= select(",
+            "        vec3(0.),",
+            "        clamp(",
+            "            transformed_position,",
+            "            -(*primitive).elongation,",
+            "            (*primitive).elongation,",
+            "        ),",
+            "        bool((*primitive).modifiers & ELONGATE),",
+            "    );",
+            "    // Perform mirroring if enabled",
+            "    return select(",
+            "        transformed_position,",
+            "        abs(transformed_position),",
+            "        vec3<bool>(",
+            "            bool((*primitive).modifiers & MIRROR_X),",
+            "            bool((*primitive).modifiers & MIRROR_Y),",
+            "            bool((*primitive).modifiers & MIRROR_Z),",
+            "        ),",
+            "    );",
+            "}",
+        ];
+
+        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+        let mut expected_result = vec![
+            "fn transform_position(",
+            "    position: vec3f,",
+            "    primitive: ptr<function, Primitive>,",
+            ") -> vec3f {",
+            "    // Perform finite or infinite repetition if enabled",
+            "    var transformed_position: vec3f =",
+            "        position;",
+            "    // Perform elongation if enabled",
+            "    transformed_position -= select(",
+            "        vec3(0.),",
+            "        clamp(",
+            "            transformed_position,",
+            "            -(*primitive).elongation,",
+            "            (*primitive).elongation,",
+            "        ),",
+            "        bool((*primitive).modifiers & ELONGATE),",
+            "    );",
+            "    // Perform mirroring if enabled",
+            "    return select(",
+            "        transformed_position,",
+            "        abs(transformed_position),",
+            "        vec3<bool>(",
+            "            bool((*primitive).modifiers & MIRROR_X),",
+            "            bool((*primitive).modifiers & MIRROR_Y),",
+            "            bool((*primitive).modifiers & MIRROR_Z),",
+            "        ),",
+            "    );",
+            "}",
+        ];
+
+        let result = preprocess_directives(
+            source.iter().map(|line| line.to_string()).collect(),
+            &preprocessor_directives,
+        );
+
+        let result_string: String = result.join("\n");
+        let expected_result_string: String = expected_result.join("\n");
+
+        assert_eq!(result_string, expected_result_string);
+
+        preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+
+        expected_result = vec![
+            "fn transform_position(",
+            "    position: vec3f,",
+            "    primitive: ptr<function, Primitive>,",
+            ") -> vec3f {",
+            "    // Perform finite or infinite repetition if enabled",
+            "    var transformed_position: vec3f = select(",
+            "        position,",
+            "        mirrored_finite_repetition(",
+            "            position,",
+            "            primitive,",
+            "        ),",
+            "        bool((*primitive).modifiers & FINITE_REPETITION),",
+            "    );",
+            "    // Perform elongation if enabled",
+            "    transformed_position -= select(",
+            "        vec3(0.),",
+            "        clamp(",
+            "            transformed_position,",
+            "            -(*primitive).elongation,",
+            "            (*primitive).elongation,",
+            "        ),",
+            "        bool((*primitive).modifiers & ELONGATE),",
+            "    );",
+            "    // Perform mirroring if enabled",
+            "    return select(",
+            "        transformed_position,",
+            "        abs(transformed_position),",
+            "        vec3<bool>(",
+            "            bool((*primitive).modifiers & MIRROR_X),",
+            "            bool((*primitive).modifiers & MIRROR_Y),",
+            "            bool((*primitive).modifiers & MIRROR_Z),",
+            "        ),",
+            "    );",
+            "}",
+        ];
+
+        let result = preprocess_directives(
+            source.iter().map(|line| line.to_string()).collect(),
+            &preprocessor_directives,
+        );
+
+        let result_string: String = result.join("\n");
+        let expected_result_string: String = expected_result.join("\n");
+
+        assert_eq!(result_string, expected_result_string);
+
+        preprocessor_directives.clear();
+
+        preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
+
+        expected_result = vec![
+            "fn transform_position(",
+            "    position: vec3f,",
+            "    primitive: ptr<function, Primitive>,",
+            ") -> vec3f {",
+            "    // Perform finite or infinite repetition if enabled",
+            "    var transformed_position: vec3f =",
+            "        select(",
+            "            position,",
+            "            mirrored_infinite_repetition(",
+            "                position,",
+            "                primitive,",
+            "            ),",
+            "            bool((*primitive).modifiers & INFINITE_REPETITION),",
+            "        );",
+            "    // Perform elongation if enabled",
+            "    transformed_position -= select(",
+            "        vec3(0.),",
+            "        clamp(",
+            "            transformed_position,",
+            "            -(*primitive).elongation,",
+            "            (*primitive).elongation,",
+            "        ),",
+            "        bool((*primitive).modifiers & ELONGATE),",
+            "    );",
+            "    // Perform mirroring if enabled",
+            "    return select(",
+            "        transformed_position,",
+            "        abs(transformed_position),",
+            "        vec3<bool>(",
+            "            bool((*primitive).modifiers & MIRROR_X),",
+            "            bool((*primitive).modifiers & MIRROR_Y),",
+            "            bool((*primitive).modifiers & MIRROR_Z),",
+            "        ),",
+            "    );",
+            "}",
+        ];
+
+        let result = preprocess_directives(
+            source.iter().map(|line| line.to_string()).collect(),
+            &preprocessor_directives,
+        );
+
+        let result_string: String = result.join("\n");
+        let expected_result_string: String = expected_result.join("\n");
+
+        assert_eq!(result_string, expected_result_string);
+
+        preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+
+        expected_result = vec![
+            "fn transform_position(",
+            "    position: vec3f,",
+            "    primitive: ptr<function, Primitive>,",
+            ") -> vec3f {",
+            "    // Perform finite or infinite repetition if enabled",
+            "    var transformed_position: vec3f = select(",
+            "        select(",
+            "            position,",
+            "            mirrored_infinite_repetition(",
+            "                position,",
+            "                primitive,",
+            "            ),",
+            "            bool((*primitive).modifiers & INFINITE_REPETITION),",
+            "        ),",
+            "        mirrored_finite_repetition(",
+            "            position,",
+            "            primitive,",
+            "        ),",
+            "        bool((*primitive).modifiers & FINITE_REPETITION),",
+            "    );",
+            "    // Perform elongation if enabled",
+            "    transformed_position -= select(",
+            "        vec3(0.),",
+            "        clamp(",
+            "            transformed_position,",
+            "            -(*primitive).elongation,",
+            "            (*primitive).elongation,",
+            "        ),",
+            "        bool((*primitive).modifiers & ELONGATE),",
+            "    );",
+            "    // Perform mirroring if enabled",
+            "    return select(",
+            "        transformed_position,",
+            "        abs(transformed_position),",
+            "        vec3<bool>(",
+            "            bool((*primitive).modifiers & MIRROR_X),",
+            "            bool((*primitive).modifiers & MIRROR_Y),",
+            "            bool((*primitive).modifiers & MIRROR_Z),",
+            "        ),",
+            "    );",
+            "}",
+        ];
+
+        let result = preprocess_directives(
+            source.iter().map(|line| line.to_string()).collect(),
+            &preprocessor_directives,
+        );
+
+        let result_string: String = result.join("\n");
+        let expected_result_string: String = expected_result.join("\n");
+
+        assert_eq!(result_string, expected_result_string);
     }
 }

@@ -151,7 +151,12 @@ fn transform_position(
     primitive: ptr<function, Primitive>,
 ) -> vec3f {
     // Perform finite or infinite repetition if enabled
+#ifdef EnableFiniteRepetition
     var transformed_position: vec3f = select(
+#else
+    var transformed_position: vec3f =
+#endif
+#ifdef EnableInfiniteRepetition
         select(
             position,
             mirrored_infinite_repetition(
@@ -159,13 +164,26 @@ fn transform_position(
                 primitive,
             ),
             bool((*primitive).modifiers & INFINITE_REPETITION),
+#ifdef EnableFiniteRepetition
         ),
+#else
+        );
+#endif
+#else
+#ifdef EnableFiniteRepetition
+        position,
+#else
+        position;
+#endif
+#endif
+#ifdef EnableFiniteRepetition
         mirrored_finite_repetition(
             position,
             primitive,
         ),
         bool((*primitive).modifiers & FINITE_REPETITION),
     );
+#endif
 
     // Perform elongation if enabled
     transformed_position -= select(

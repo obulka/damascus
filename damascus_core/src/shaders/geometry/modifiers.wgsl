@@ -169,12 +169,10 @@ fn transform_position(
 #else
         );
 #endif
-#else
-#ifdef EnableFiniteRepetition
+#elifdef EnableFiniteRepetition
         position,
 #else
         position;
-#endif
 #endif
 #ifdef EnableFiniteRepetition
         mirrored_finite_repetition(

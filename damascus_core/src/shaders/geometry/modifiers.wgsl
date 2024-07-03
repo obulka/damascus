@@ -41,6 +41,7 @@ const BOUNDING_VOLUME: u32 = 512u;
 // }
 
 
+#ifdef EnableFiniteRepetition
 /**
  * Finitely repeat an object in the positive quadrant.
  *
@@ -70,8 +71,10 @@ fn mirrored_finite_repetition(
         ),
     );
 }
+#endif
 
 
+#ifdef EnableInfiniteRepetition
 /**
  * Infinitely repeat an object, mirroring with every repetition. By
  * mirroring we remove the constraint that the object must be symmetric
@@ -99,6 +102,7 @@ fn mirrored_infinite_repetition(
         ),
     );
 }
+#endif
 
 
 /**
@@ -111,11 +115,15 @@ fn mirrored_infinite_repetition(
  * @returns: The modified distance to the primitive.
  */
 fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
+#ifdef EnableHollowing
     return select(
         distance,
         abs(distance) - (*primitive).wall_thickness,
         bool((*primitive).modifiers & HOLLOW),
     ) - (*primitive).edge_radius;
+#else
+    return distance - (*primitive).edge_radius;
+#endif
 }
 
 

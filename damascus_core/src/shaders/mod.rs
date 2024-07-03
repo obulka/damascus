@@ -78,6 +78,7 @@ pub enum PreprocessorDirectives {
     EnableFiniteRepetition,
     EnableElongation,
     EnableMirroring,
+    EnableHollowing,
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
     EnableAOVs,
@@ -276,6 +277,7 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
     preprocessor_directives.insert(PreprocessorDirectives::EnableElongation);
     preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableHollowing);
 
     preprocessor_directives
 }
@@ -327,6 +329,10 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
 
     if primitive.mirror.any() {
         preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
+    }
+
+    if primitive.hollow {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableHollowing);
     }
 
     if primitive.shape == Shapes::Sphere {

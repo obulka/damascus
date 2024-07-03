@@ -183,6 +183,7 @@ fn transform_position(
     );
 #endif
 
+#ifdef EnableElongation
     // Perform elongation if enabled
     transformed_position -= select(
         vec3(0.),
@@ -193,6 +194,9 @@ fn transform_position(
         ),
         bool((*primitive).modifiers & ELONGATE),
     );
+#endif
+
+#ifdef EnableMirroring
     // Perform mirroring if enabled
     return select(
         transformed_position,
@@ -203,6 +207,9 @@ fn transform_position(
             bool((*primitive).modifiers & MIRROR_Z),
         ),
     );
+#else
+    return transformed_position;
+#endif
 }
 
 

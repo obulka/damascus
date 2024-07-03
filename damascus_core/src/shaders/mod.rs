@@ -76,6 +76,8 @@ pub enum PreprocessorDirectives {
     EnablePrimitiveBlendIntersection,
     EnableInfiniteRepetition,
     EnableFiniteRepetition,
+    EnableElongation,
+    EnableMirroring,
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
     EnableAOVs,
@@ -242,6 +244,7 @@ pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
 
 pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
     preprocessor_directives.insert(PreprocessorDirectives::EnableCappedCone);
     preprocessor_directives.insert(PreprocessorDirectives::EnableCappedTorus);
     preprocessor_directives.insert(PreprocessorDirectives::EnableCapsule);
@@ -271,6 +274,8 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
     preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
     preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableElongation);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
 
     preprocessor_directives
 }
@@ -314,6 +319,14 @@ pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDi
             preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
         }
         _ => {}
+    }
+
+    if primitive.elongate {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableElongation);
+    }
+
+    if primitive.mirror.any() {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
     }
 
     if primitive.shape == Shapes::Sphere {

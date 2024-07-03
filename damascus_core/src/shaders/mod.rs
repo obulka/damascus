@@ -5,7 +5,7 @@
 
 use std::{collections::HashSet, str::FromStr};
 
-use strum::{EnumCount, EnumString};
+use strum::{EnumCount, EnumIter, EnumString};
 
 use super::{
     geometry::{BlendType, Primitive, Repetition, Shapes},
@@ -32,7 +32,7 @@ enum Includes {
     VertexShader,
 }
 
-#[derive(Debug, EnumString, EnumCount, Eq, Hash, PartialEq)]
+#[derive(Debug, EnumString, EnumCount, EnumIter, Eq, Hash, PartialEq)]
 pub enum PreprocessorDirectives {
     EnableDiffuseColourTexture,
     EnableScatteringColourTexture,

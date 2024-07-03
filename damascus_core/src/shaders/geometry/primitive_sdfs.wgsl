@@ -831,7 +831,7 @@ fn distance_to_octahedron(position: vec3f, radial_extent: f32) -> f32 {
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_textured_mandelbulb(
+fn distance_to_mandelbulb(
     position: vec3f,
     power: f32,
     iterations: u32,
@@ -876,59 +876,6 @@ fn distance_to_textured_mandelbulb(
 }
 
 
-/**
- * Compute the min distance from a point to a mandelbulb.
- *
- * @arg position: The point to get the distance to, from the object.
- * @arg power: One greater than the axes of symmetry in the xy-plane.
- * @arg iterations: The number of iterations to compute, the higher this
- *     is the slower it will be to compute, but the deeper the fractal
- *     will have detail.
- * @arg max_square_radius: When the square radius has reached this length,
- *     stop iterating.
- *
- * @returns: The minimum distance from the point to the shape.
- */
-fn distance_to_mandelbulb(
-    position: vec3f,
-    power: f32,
-    iterations: u32,
-    max_square_radius: f32,
-) -> f32 {
-    var current_position: vec3f = position;
-    var radius_squared: f32 = dot2_vec3f(current_position);
-
-    var abs_position: vec3f = abs(current_position);
-
-    var dradius: f32 = 1.;
-    var iteration: u32 = 0u;
-    loop {
-        dradius = power * pow(radius_squared, (power - 1.) / 2.) * dradius + 1.;
-
-        var current_radius: f32 = length(current_position);
-        var theta: f32 = power * acos(current_position.z / current_radius);
-        var phi: f32 = power * atan2(current_position.y, current_position.x);
-
-        current_position = position + pow(current_radius, power) * vec3(
-            sin(theta) * cos(phi),
-            sin(theta) * sin(phi),
-            cos(theta),
-        );
-
-        abs_position = abs(current_position);
-
-        radius_squared = dot2_vec3f(current_position);
-
-        iteration++;
-        if iteration >= iterations || radius_squared > max_square_radius {
-            break;
-        }
-    }
-
-    return 0.25 * log(radius_squared) * sqrt(radius_squared) / dradius;
-}
-
-
 fn box_fold(position: vec3f, folding_limit: vec3f) -> vec3f {
     return clamp(position, -folding_limit, folding_limit) * 2. - position;
 }
@@ -956,7 +903,7 @@ fn sphere_fold(
  *
  * @returns: The minimum distance from the point to the shape.
  */
-fn distance_to_textured_mandelbox(
+fn distance_to_mandelbox(
     position: vec3f,
     scale: f32,
     iterations: i32,
@@ -986,51 +933,6 @@ fn distance_to_textured_mandelbox(
     }
 
     *trap_colour = saturate_vec3f(*trap_colour);
-
-    return (
-        length(current_position.xyz - abs(scale - 1.)) / current_position.w
-        - pow(abs(scale), f32(1 - iterations))
-    );
-}
-
-
-/**
- * Compute the min distance from a point to a mandelbox.
- *
- * @arg position: The point to get the distance to, from the object.
- * @arg scale:
- * @arg iterations: The number of iterations to compute, the higher this
- *     is the slower it will be to compute, but the deeper the fractal
- *     will have detail.
- *
- * @returns: The minimum distance from the point to the shape.
- */
-fn distance_to_mandelbox(
-    position: vec3f,
-    scale: f32,
-    iterations: i32,
-    min_square_radius: f32,
-    folding_limit: f32,
-) -> f32 {
-    var scale_vector = vec4(scale, scale, scale, abs(scale)) / min_square_radius;
-    var initial_position = vec4(position, 1.);
-    var current_position: vec4f = initial_position;
-
-    var folding_limit_vec3f = vec3(folding_limit);
-
-    for (var iteration=0; iteration < iterations; iteration++)
-    {
-        var folded_position = box_fold(current_position.xyz, folding_limit_vec3f);
-
-        var radius_squared: f32 = dot2_vec3f(folded_position);
-        current_position = sphere_fold(
-            vec4(folded_position, current_position.w),
-            radius_squared,
-            min_square_radius
-        );
-
-        current_position = scale_vector * current_position + initial_position;
-    }
 
     return (
         length(current_position.xyz - abs(scale - 1.)) / current_position.w

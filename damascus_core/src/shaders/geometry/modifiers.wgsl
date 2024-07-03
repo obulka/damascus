@@ -431,7 +431,7 @@ fn distance_to_transformed_primitive(
 #ifdef EnableMandelbox
         case MANDELBOX {
             var colour = vec3(1.);
-            distance = distance_to_textured_mandelbox(
+            distance = distance_to_mandelbox(
                 position,
                 (*primitive).dimensional_data.x,
                 i32((*primitive).dimensional_data.y),
@@ -445,7 +445,7 @@ fn distance_to_transformed_primitive(
 #ifdef EnableMandelbulb
         case MANDELBULB {
             var colour = vec3(1.);
-            distance = distance_to_textured_mandelbulb(
+            distance = distance_to_mandelbulb(
                 position,
                 (*primitive).dimensional_data.x,
                 u32((*primitive).dimensional_data.y),

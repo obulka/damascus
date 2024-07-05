@@ -616,6 +616,8 @@ pub fn evaluate_node(
             let high_frequency_translation =
                 evaluator.input_vector4("high_frequency_translation")?;
             let invert = evaluator.input_bool("invert")?;
+            let hue_rotation_angles = evaluator.input_vector3("hue_rotation_angles")?;
+            let use_trap_colour = evaluator.input_bool("use_trap_colour")?;
 
             evaluator.output_procedural_texture(
                 "out",
@@ -635,6 +637,8 @@ pub fn evaluate_node(
                     low_frequency_translation: low_frequency_translation,
                     high_frequency_translation: high_frequency_translation,
                     invert: invert,
+                    hue_rotation_angles: hue_rotation_angles,
+                    use_trap_colour: use_trap_colour,
                 },
             )
         }

@@ -1502,6 +1502,24 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             .with_hidden(),
                     ),
                 );
+                input_bool(
+                    graph,
+                    "use_trap_colour",
+                    Bool::new(default_procedural_texture.use_trap_colour).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("Multiply by the trap colour when rendering fractals.")
+                            .with_hidden(),
+                    ),
+                );
+                input_vector3(
+                    graph,
+                    "hue_rotation_angles",
+                    Vec3::from_vec3(default_procedural_texture.hue_rotation_angles).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("Rotation of the colour.")
+                            .with_hidden(),
+                    ),
+                );
 
                 output_procedural_texture(graph, "out");
             }

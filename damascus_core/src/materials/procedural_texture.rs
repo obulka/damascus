@@ -4,7 +4,7 @@
 // Please see the LICENSE file that is included as part of this package.
 
 use crevice::std430::AsStd430;
-use glam::Vec4;
+use glam::{EulerRot, Mat3, Vec3, Vec4};
 use strum::{Display, EnumIter, EnumString};
 
 #[derive(
@@ -47,10 +47,12 @@ pub struct GPUProceduralTexture {
     high_frequency_scale: Vec4,
     low_frequency_translation: Vec4,
     high_frequency_translation: Vec4,
+    hue_rotation: Mat3,
     flags: u32,
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct ProceduralTexture {
     pub texture_type: ProceduralTextureType,
     pub scale: Vec4,
@@ -67,6 +69,8 @@ pub struct ProceduralTexture {
     pub low_frequency_translation: Vec4,
     pub high_frequency_translation: Vec4,
     pub invert: bool,
+    pub hue_rotation_angles: Vec3,
+    pub use_trap_colour: bool,
 }
 
 impl Default for ProceduralTexture {
@@ -87,12 +91,15 @@ impl Default for ProceduralTexture {
             low_frequency_translation: Vec4::ZERO,
             high_frequency_translation: Vec4::ZERO,
             invert: false,
+            hue_rotation_angles: Vec3::ZERO,
+            use_trap_colour: false,
         }
     }
 }
 
 impl ProceduralTexture {
     pub fn to_gpu(&self) -> GPUProceduralTexture {
+        let radian_hue_rotation: Vec3 = self.hue_rotation_angles * std::f32::consts::PI / 180.;
         GPUProceduralTexture {
             texture_type: self.texture_type as u32,
             scale: self.scale,
@@ -108,7 +115,13 @@ impl ProceduralTexture {
             high_frequency_scale: self.high_frequency_scale,
             low_frequency_translation: self.low_frequency_translation,
             high_frequency_translation: self.high_frequency_translation,
-            flags: self.invert as u32,
+            hue_rotation: Mat3::from_euler(
+                EulerRot::XYZ,
+                radian_hue_rotation.x,
+                radian_hue_rotation.y,
+                radian_hue_rotation.z,
+            ),
+            flags: self.invert as u32 | (self.use_trap_colour as u32) << 1,
         }
     }
 }

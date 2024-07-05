@@ -294,6 +294,28 @@ fn texture_primitive(
 }
 
 
+fn apply_trap_colour(
+    trap_colour: vec3f,
+    primitive: ptr<function, Primitive>,
+) {
+    (*primitive).material.diffuse_colour = trap_texture(
+        trap_colour,
+        (*primitive).material.diffuse_colour,
+        (*primitive).material.diffuse_colour_texture,
+    );
+    (*primitive).material.specular_colour = trap_texture(
+        trap_colour,
+        (*primitive).material.specular_colour,
+        (*primitive).material.specular_colour_texture,
+    );
+    (*primitive).material.emissive_colour = trap_texture(
+        trap_colour,
+        (*primitive).material.emissive_colour,
+        (*primitive).material.emissive_colour_texture,
+    );
+}
+
+
 /**
  * Compute the min distance from a point to a geometric object.
  *
@@ -430,29 +452,29 @@ fn distance_to_transformed_primitive(
 #endif
 #ifdef EnableMandelbox
         case MANDELBOX {
-            var colour = vec3(1.);
+            var trap_colour = vec3(1.);
             distance = distance_to_mandelbox(
                 position,
                 (*primitive).dimensional_data.x,
                 i32((*primitive).dimensional_data.y),
                 (*primitive).dimensional_data.z,
                 (*primitive).dimensional_data.w,
-                &colour,
+                &trap_colour,
             );
-            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
+            apply_trap_colour(trap_colour, primitive);
         }
 #endif
 #ifdef EnableMandelbulb
         case MANDELBULB {
-            var colour = vec3(1.);
+            var trap_colour = vec3(1.);
             distance = distance_to_mandelbulb(
                 position,
                 (*primitive).dimensional_data.x,
                 u32((*primitive).dimensional_data.y),
                 (*primitive).dimensional_data.z,
-                &colour,
+                &trap_colour,
             );
-            (*primitive).material.diffuse_colour *= colour; // TODO use modifiers
+            apply_trap_colour(trap_colour, primitive);
         }
 #endif
 #ifdef EnableOctahedron

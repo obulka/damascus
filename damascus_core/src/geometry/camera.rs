@@ -18,6 +18,7 @@ pub struct GPUCamera {
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Camera {
     pub aspect_ratio: f32,
     pub focal_length: f32,

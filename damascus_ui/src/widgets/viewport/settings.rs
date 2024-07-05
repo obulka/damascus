@@ -4,6 +4,7 @@
 // Please see the LICENSE file that is included as part of this package.
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct ViewportSettings {
     pub enable_dynamic_recompilation_for_materials: bool,
     pub enable_dynamic_recompilation_for_primitives: bool,

@@ -14,6 +14,7 @@ pub use primitive::{Primitive, Std430GPUPrimitive};
 
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd430, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Transform {
     translation: Vec3,
     inverse_rotation: Mat3,

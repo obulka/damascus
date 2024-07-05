@@ -28,6 +28,7 @@ pub struct GPUPrimitive {
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Primitive {
     pub shape: Shapes,
     pub world_matrix: Mat4,

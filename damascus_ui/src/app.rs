@@ -27,6 +27,7 @@ use super::{
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct PersistentData {
     pub context: Context,
     pub editor_state: NodeGraphEditorState,
@@ -34,6 +35,7 @@ pub struct PersistentData {
 }
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Context {
     pub working_file: Option<String>,
     pub working_file_hash: Option<Key<OrderedFloatPolicy>>,

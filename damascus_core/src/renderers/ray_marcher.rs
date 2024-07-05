@@ -27,6 +27,7 @@ pub struct GPURayMarcher {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct RayMarcher {
     pub scene: Scene,
     pub max_distance: f32,

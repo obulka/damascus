@@ -31,6 +31,7 @@ pub struct GPULight {
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Light {
     pub light_type: Lights,
     pub dimensional_data: Vec3,

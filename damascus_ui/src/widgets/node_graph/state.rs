@@ -10,6 +10,7 @@ use super::node::{value_type::NodeValueType, NodeData, NodeDataType, NodeTemplat
 /// parameter drawing callbacks. The contents of this struct are entirely up to
 /// the user. For this example, we use it to keep track of the 'active' node.
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct NodeGraphState {
     pub active_node: Option<NodeId>,
 }

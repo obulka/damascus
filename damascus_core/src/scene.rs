@@ -23,6 +23,7 @@ pub struct GPUSceneParameters {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Scene {
     pub render_camera: Camera,
     pub primitives: Vec<Primitive>,

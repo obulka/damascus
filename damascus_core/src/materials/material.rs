@@ -34,6 +34,7 @@ pub struct GPUMaterial {
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Material {
     pub diffuse_colour: Vec3,
     pub diffuse_colour_texture: ProceduralTexture,

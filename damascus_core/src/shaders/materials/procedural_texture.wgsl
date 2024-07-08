@@ -280,7 +280,6 @@ struct ProceduralTexture {
 }
 
 
-
 fn trap_texture(
     trap_colour: vec3f,
     current_colour: vec3f,

@@ -298,6 +298,7 @@ fn apply_trap_colour(
     trap_colour: vec3f,
     primitive: ptr<function, Primitive>,
 ) {
+#ifdef EnableTrapColour
     (*primitive).material.diffuse_colour = trap_texture(
         trap_colour,
         (*primitive).material.diffuse_colour,
@@ -313,6 +314,7 @@ fn apply_trap_colour(
         (*primitive).material.emissive_colour,
         (*primitive).material.emissive_colour_texture,
     );
+#endif
 }
 
 

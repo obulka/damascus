@@ -294,12 +294,6 @@ fn trap_texture(
             RGB_TO_YIQ * (trap_colour * current_colour)
         )
     ));
-
-    // return select(
-    //     current_colour,
-    //     trap_colour * current_colour,
-    //     bool(texture.flags & USE_TRAP_COLOUR),
-    // );
 }
 
 

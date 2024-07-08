@@ -44,6 +44,7 @@ pub enum PreprocessorDirectives {
     EnableEmissiveColourTexture,
     EnableExtinctionColourTexture,
     EnableRefractiveIndexTexture,
+    EnableTrapColour,
     EnableGrade,
     EnableCheckerboard,
     EnableNoise,
@@ -234,6 +235,7 @@ pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
     preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
     preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
+    preprocessor_directives.insert(PreprocessorDirectives::EnableTrapColour);
     preprocessor_directives.insert(PreprocessorDirectives::EnableGrade);
     preprocessor_directives.insert(PreprocessorDirectives::EnableCheckerboard);
     preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
@@ -435,6 +437,13 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
         preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
     } else if material.specular_probability > 0. {
         preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
+    }
+
+    if material.diffuse_colour_texture.use_trap_colour
+        || material.specular_colour_texture.use_trap_colour
+        || material.emissive_colour_texture.use_trap_colour
+    {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableTrapColour);
     }
 
     preprocessor_directives

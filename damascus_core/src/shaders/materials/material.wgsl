@@ -322,7 +322,7 @@ fn sample_material(
 #ifdef EnableSpecularMaterials
     var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;
 #else
-    var probability_over_pi = 1.;
+    var probability_over_pi = 1. / PI;
 #endif
 
     *light_sampling_pdf = probability_over_pi;

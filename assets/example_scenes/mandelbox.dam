@@ -1069,7 +1069,7 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": {
@@ -1216,7 +1216,7 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": {
@@ -3271,7 +3271,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 5.0,
+                "value": 38.0,
                 "ui_data": {
                   "tooltip": "The focal length of the camera.",
                   "hidden": false
@@ -3303,7 +3303,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.59,
+                "value": 2.2,
                 "ui_data": {
                   "tooltip": "The focal distance of the camera.",
                   "hidden": false
@@ -3335,7 +3335,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 17.5,
+                "value": 18.0,
                 "ui_data": {
                   "tooltip": "The f-stop of the camera.",
                   "hidden": false
@@ -3764,7 +3764,7 @@
                 "value": [
                   0.0,
                   0.0,
-                  1.0
+                  2.0
                 ],
                 "ui_data": {
                   "tooltip": "The translation of this axis.",
@@ -4213,7 +4213,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 4.5,
+                "value": 2.5,
                 "ui_data": {
                   "tooltip": "The intensity of the light.",
                   "hidden": false
@@ -7838,75 +7838,19 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
-      },
-      {
-        "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
@@ -7926,27 +7870,83 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 6
+      },
+      {
+        "value": null,
+        "version": 6
+      },
+      {
+        "value": null,
+        "version": 6
+      },
+      {
+        "value": null,
+        "version": 6
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
+      },
+      {
+        "value": null,
+        "version": 4
       },
       {
         "value": {
@@ -8012,11 +8012,11 @@
       },
       {
         "value": null,
-        "version": 4
+        "version": 6
       },
       {
         "value": null,
-        "version": 4
+        "version": 6
       },
       {
         "value": {
@@ -8576,19 +8576,19 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": {
@@ -9088,7 +9088,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.45,
+                "value": 0.49,
                 "ui_data": {
                   "tooltip": "The minimum square radius to use when spherically folding.",
                   "hidden": false
@@ -9120,7 +9120,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": -2.5,
+                "value": -2.3,
                 "ui_data": {
                   "tooltip": "The amount to scale the position between folds.\nCan be negative or positive.",
                   "hidden": false
@@ -9184,7 +9184,7 @@
           "value": {
             "UnsignedInteger": {
               "value": {
-                "value": 15,
+                "value": 16,
                 "ui_data": {
                   "tooltip": "The number of iterations to compute, the higher this\nis, the slower it will be to compute, but the more\ndetail the fractal will have.",
                   "hidden": false
@@ -10749,7 +10749,7 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": {
@@ -10768,7 +10768,7 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
         "value": {
@@ -12348,10 +12348,6 @@
       "version": 3
     },
     {
-      "idx": 2,
-      "version": 1
-    },
-    {
       "idx": 8,
       "version": 1
     },
@@ -12364,10 +12360,6 @@
       "version": 1
     },
     {
-      "idx": 18,
-      "version": 3
-    },
-    {
       "idx": 10,
       "version": 1
     },
@@ -12378,6 +12370,14 @@
     {
       "idx": 5,
       "version": 1
+    },
+    {
+      "idx": 2,
+      "version": 1
+    },
+    {
+      "idx": 18,
+      "version": 3
     }
   ],
   "connection_in_progress": null,
@@ -12390,54 +12390,22 @@
     },
     {
       "value": {
-        "x": -8631.291,
-        "y": -511.12036
+        "x": -9730.227,
+        "y": -512.00696
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8572.931,
-        "y": -550.57715
+        "x": -9658.938,
+        "y": -560.2005
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8791.018,
-        "y": -665.8274
-      },
-      "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -8905.157,
-        "y": -636.73206
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -8925.477,
-        "y": -336.79504
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -8783.269,
-        "y": -379.54443
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -8965.483,
-        "y": -540.0338
+        "x": -9925.3125,
+        "y": -700.9678
       },
       "version": 1
     },
@@ -12447,8 +12415,29 @@
     },
     {
       "value": {
-        "x": -8801.657,
-        "y": -245.50244
+        "x": -10064.728,
+        "y": -665.4299
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -10089.546,
+        "y": -299.0863
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -9915.854,
+        "y": -351.29993
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -10138.409,
+        "y": -547.32306
       },
       "version": 1
     },
@@ -12458,15 +12447,26 @@
     },
     {
       "value": {
-        "x": -9019.101,
-        "y": -661.14655
+        "x": -9938.309,
+        "y": -187.58124
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -10203.893,
+        "y": -695.2493
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8917.526,
-        "y": -146.79443
+        "x": -10079.836,
+        "y": -67.01892
       },
       "version": 5
     },
@@ -12488,8 +12488,8 @@
     },
     {
       "value": {
-        "x": -9105.79,
-        "y": -539.3246
+        "x": -10309.778,
+        "y": -546.45654
       },
       "version": 3
     },
@@ -12499,8 +12499,8 @@
     },
     {
       "value": {
-        "x": -8783.13,
-        "y": -547.63617
+        "x": -9915.681,
+        "y": -556.6084
       },
       "version": 3
     }
@@ -12508,10 +12508,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 10311.175,
-      "y": 873.42725
+      "x": 11384.484,
+      "y": 847.2892
     },
-    "zoom": 0.37157387,
+    "zoom": 0.45384136,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

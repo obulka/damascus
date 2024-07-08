@@ -217,71 +217,65 @@ pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives
 }
 
 pub fn all_directives_for_ray_marcher() -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-    preprocessor_directives.insert(PreprocessorDirectives::EnableAOVs);
-
-    preprocessor_directives
+    HashSet::<PreprocessorDirectives>::from([PreprocessorDirectives::EnableAOVs])
 }
 
 pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-    preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableScatteringColourTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularRoughnessTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTrapColour);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableGrade);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCheckerboard);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
-
-    preprocessor_directives
+    HashSet::<PreprocessorDirectives>::from([
+        PreprocessorDirectives::EnableDiffuseColourTexture,
+        PreprocessorDirectives::EnableScatteringColourTexture,
+        PreprocessorDirectives::EnableSpecularProbabilityTexture,
+        PreprocessorDirectives::EnableSpecularRoughnessTexture,
+        PreprocessorDirectives::EnableSpecularColourTexture,
+        PreprocessorDirectives::EnableTransmissiveProbabilityTexture,
+        PreprocessorDirectives::EnableTransmissiveRoughnessTexture,
+        PreprocessorDirectives::EnableEmissiveColourTexture,
+        PreprocessorDirectives::EnableExtinctionColourTexture,
+        PreprocessorDirectives::EnableRefractiveIndexTexture,
+        PreprocessorDirectives::EnableTrapColour,
+        PreprocessorDirectives::EnableGrade,
+        PreprocessorDirectives::EnableCheckerboard,
+        PreprocessorDirectives::EnableNoise,
+        PreprocessorDirectives::EnableSpecularMaterials,
+        PreprocessorDirectives::EnableTransmissiveMaterials,
+    ])
 }
 
 pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCappedCone);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCappedTorus);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCapsule);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCone);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCutSphere);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableCylinder);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableDeathStar);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableEllipsoid);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableHexagonalPrism);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableHollowSphere);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteCone);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteCylinder);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableLink);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableMandelbox);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableMandelbulb);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableOctahedron);
-    preprocessor_directives.insert(PreprocessorDirectives::EnablePlane);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableRectangularPrism);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableRectangularPrismFrame);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableRhombus);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableRoundedCone);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableSolidAngle);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTorus);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableTriangularPrism);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
-    preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
-    preprocessor_directives.insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableElongation);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
-    preprocessor_directives.insert(PreprocessorDirectives::EnableHollowing);
-
-    preprocessor_directives
+    HashSet::<PreprocessorDirectives>::from([
+        PreprocessorDirectives::EnableCappedCone,
+        PreprocessorDirectives::EnableCappedTorus,
+        PreprocessorDirectives::EnableCapsule,
+        PreprocessorDirectives::EnableCone,
+        PreprocessorDirectives::EnableCutSphere,
+        PreprocessorDirectives::EnableCylinder,
+        PreprocessorDirectives::EnableDeathStar,
+        PreprocessorDirectives::EnableEllipsoid,
+        PreprocessorDirectives::EnableHexagonalPrism,
+        PreprocessorDirectives::EnableHollowSphere,
+        PreprocessorDirectives::EnableInfiniteCone,
+        PreprocessorDirectives::EnableInfiniteCylinder,
+        PreprocessorDirectives::EnableLink,
+        PreprocessorDirectives::EnableMandelbox,
+        PreprocessorDirectives::EnableMandelbulb,
+        PreprocessorDirectives::EnableOctahedron,
+        PreprocessorDirectives::EnablePlane,
+        PreprocessorDirectives::EnableRectangularPrism,
+        PreprocessorDirectives::EnableRectangularPrismFrame,
+        PreprocessorDirectives::EnableRhombus,
+        PreprocessorDirectives::EnableRoundedCone,
+        PreprocessorDirectives::EnableSolidAngle,
+        PreprocessorDirectives::EnableTorus,
+        PreprocessorDirectives::EnableTriangularPrism,
+        PreprocessorDirectives::EnableChildInteractions,
+        PreprocessorDirectives::EnablePrimitiveBlendSubtraction,
+        PreprocessorDirectives::EnablePrimitiveBlendIntersection,
+        PreprocessorDirectives::EnableInfiniteRepetition,
+        PreprocessorDirectives::EnableFiniteRepetition,
+        PreprocessorDirectives::EnableElongation,
+        PreprocessorDirectives::EnableMirroring,
+        PreprocessorDirectives::EnableHollowing,
+    ])
 }
 
 pub fn directives_for_ray_marcher(ray_marcher: &RayMarcher) -> HashSet<PreprocessorDirectives> {

@@ -10,7 +10,7 @@ This is very much still a work in progress, and future breaking changes are all 
 
 ![damascus](https://github.com/obulka/damascus/assets/21975584/9b8b2996-f842-4704-906e-4dba9c68208e)
 
-![mandelbox_damascus](https://github.com/obulka/damascus/assets/21975584/195ab33a-6bea-44cf-9d1b-b495b043eca0)
+![mandelbox](https://github.com/obulka/damascus/assets/21975584/1f05b7de-a216-4d26-a75a-00ca68ce12d4)
 
 ![damascus_testing](https://github.com/obulka/damascus/assets/21975584/d3bd9ea1-a73e-4d58-aff8-3c606db46753)
 

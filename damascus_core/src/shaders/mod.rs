@@ -9,6 +9,7 @@ use strum::{EnumCount, EnumIter, EnumString};
 
 use super::{
     geometry::{BlendType, Primitive, Repetition, Shapes},
+    lights::{Light, Lights},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
     renderers::{AOVs, RayMarcher},
 };
@@ -83,6 +84,9 @@ pub enum PreprocessorDirectives {
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
     EnableAOVs,
+    EnableDirectionalLights,
+    EnablePointLights,
+    EnableAmbientOcclusion,
 }
 
 impl Includes {
@@ -196,6 +200,11 @@ fn preprocess_directives(
 pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives>) -> String {
     let mut shader_source = Vec::<String>::new();
 
+    // println!(
+    //     "compiling with the following directives: {:?}",
+    //     preprocessor_directives
+    // );
+
     // Read shader source and replace includes with shader source files.
     for line in include_str!("./renderer/ray_march.wgsl").split("\n") {
         if line.trim().starts_with("#include") {
@@ -275,6 +284,14 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
         PreprocessorDirectives::EnableElongation,
         PreprocessorDirectives::EnableMirroring,
         PreprocessorDirectives::EnableHollowing,
+    ])
+}
+
+pub fn all_directives_for_light() -> HashSet<PreprocessorDirectives> {
+    HashSet::<PreprocessorDirectives>::from([
+        PreprocessorDirectives::EnableDirectionalLights,
+        PreprocessorDirectives::EnablePointLights,
+        PreprocessorDirectives::EnableAmbientOcclusion,
     ])
 }
 
@@ -443,6 +460,25 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
     preprocessor_directives
 }
 
+pub fn directives_for_light(light: &Light) -> HashSet<PreprocessorDirectives> {
+    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+
+    match light.light_type {
+        Lights::Directional => {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableDirectionalLights);
+        }
+        Lights::Point => {
+            preprocessor_directives.insert(PreprocessorDirectives::EnablePointLights);
+        }
+        Lights::AmbientOcclusion => {
+            preprocessor_directives.insert(PreprocessorDirectives::EnableAmbientOcclusion);
+        }
+        _ => {}
+    }
+
+    preprocessor_directives
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -453,6 +489,7 @@ mod tests {
             all_directives_for_material();
         preprocessor_directives.extend(all_directives_for_primitive());
         preprocessor_directives.extend(all_directives_for_ray_marcher());
+        preprocessor_directives.extend(all_directives_for_lights());
         assert_eq!(preprocessor_directives.len(), PreprocessorDirectives::COUNT);
     }
 

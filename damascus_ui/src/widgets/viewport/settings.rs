@@ -9,14 +9,16 @@ pub struct ViewportSettings {
     pub enable_dynamic_recompilation_for_materials: bool,
     pub enable_dynamic_recompilation_for_primitives: bool,
     pub enable_dynamic_recompilation_for_ray_marcher: bool,
+    pub enable_dynamic_recompilation_for_lights: bool,
 }
 
 impl Default for ViewportSettings {
     fn default() -> Self {
         Self {
             enable_dynamic_recompilation_for_materials: true,
-            enable_dynamic_recompilation_for_primitives: false,
+            enable_dynamic_recompilation_for_primitives: true,
             enable_dynamic_recompilation_for_ray_marcher: true,
+            enable_dynamic_recompilation_for_lights: true,
         }
     }
 }
@@ -26,5 +28,6 @@ impl ViewportSettings {
         self.enable_dynamic_recompilation_for_primitives
             || self.enable_dynamic_recompilation_for_materials
             || self.enable_dynamic_recompilation_for_ray_marcher
+            || self.enable_dynamic_recompilation_for_lights
     }
 }

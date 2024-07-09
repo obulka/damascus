@@ -297,6 +297,7 @@ fn sample_non_physical_light(
     var light: Light = _lights.lights[light_index];
 
     switch light.light_type {
+#ifdef EnableDirectionalLights
         case DIRECTIONAL {
             // Directional light
             var light_direction: vec3f = normalize(-light.dimensional_data);
@@ -320,6 +321,8 @@ fn sample_non_physical_light(
 
             return light.colour * light.intensity * shadow_intensity_at_position;
         }
+#endif
+#ifdef EnablePointLights
         case POINT {
             // Point light
             var light_direction: vec3f = light.dimensional_data - surface_position;
@@ -349,10 +352,12 @@ fn sample_non_physical_light(
                 * shadow_intensity_at_position
             );
         }
+#endif
         case AMBIENT, default {
             // Ambient light, simply return the colour intensity.
             return light.intensity * light.colour;
         }
+#ifdef EnableAmbientOcclusion
         case AMBIENT_OCCLUSION {
             // Ambient Occlusion
             return light.colour * sample_ambient_occlusion(
@@ -362,6 +367,7 @@ fn sample_non_physical_light(
                 u32(light.dimensional_data.x)
             );
         }
+#endif
     }
 }
 

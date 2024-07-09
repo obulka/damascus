@@ -501,10 +501,17 @@ impl Viewport3d {
         if !settings.enable_dynamic_recompilation_for_materials {
             preprocessor_directives.extend(shaders::all_directives_for_material());
         } else {
-            // Enable expensive material properties
             preprocessor_directives.extend(shaders::directives_for_material(
                 &self.renderer.scene.atmosphere,
             ));
+        }
+
+        if !settings.enable_dynamic_recompilation_for_lights {
+            preprocessor_directives.extend(shaders::all_directives_for_light());
+        } else {
+            for light in &self.renderer.scene.lights {
+                preprocessor_directives.extend(shaders::directives_for_light(&light));
+            }
         }
 
         if settings.enable_dynamic_recompilation_for_primitives

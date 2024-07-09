@@ -123,4 +123,8 @@ impl Material {
     pub fn scaled_emissive_colour(&self) -> Vec3 {
         self.emissive_colour * self.emissive_intensity
     }
+
+    pub fn is_emissive(&self) -> bool {
+        self.scaled_emissive_colour().length_squared() > 0.
+    }
 }

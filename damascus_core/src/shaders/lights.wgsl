@@ -299,11 +299,11 @@ fn sample_non_physical_light(
     switch light.light_type {
 #ifdef EnableDirectionalLights
         case DIRECTIONAL {
-            // Directional light
             var light_direction: vec3f = normalize(-light.dimensional_data);
             *light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
 
             var shadow_intensity_at_position: f32;
+#ifdef EnableSoftShadows
             if bool(light.soften_shadows) {
                 shadow_intensity_at_position = sample_soft_shadow(
                     surface_position,
@@ -312,25 +312,28 @@ fn sample_non_physical_light(
                     light.shadow_hardness,
                 );
             } else {
+#endif
                 shadow_intensity_at_position = sample_shadow(
                     surface_position,
                     light_direction,
                     _render_parameters.max_distance,
                 );
+#ifdef EnableSoftShadows
             }
+#endif
 
             return light.colour * light.intensity * shadow_intensity_at_position;
         }
 #endif
 #ifdef EnablePointLights
         case POINT {
-            // Point light
             var light_direction: vec3f = light.dimensional_data - surface_position;
             var distance_to_light: f32 = length(light_direction);
             light_direction = normalize(light_direction);
             *light_geometry_factor = saturate_f32(dot(light_direction, surface_normal));
 
             var shadow_intensity_at_position: f32;
+#ifdef EnableSoftShadows
             if bool(light.soften_shadows) {
                 shadow_intensity_at_position = sample_soft_shadow(
                     surface_position,
@@ -339,12 +342,15 @@ fn sample_non_physical_light(
                     light.shadow_hardness,
                 );
             } else {
+#endif
                 shadow_intensity_at_position = sample_shadow(
                     surface_position,
                     light_direction,
                     distance_to_light,
                 );
+#ifdef EnableSoftShadows
             }
+#endif
 
             return (
                 light.colour
@@ -354,12 +360,11 @@ fn sample_non_physical_light(
         }
 #endif
         case AMBIENT, default {
-            // Ambient light, simply return the colour intensity.
+            // Simply return the colour intensity.
             return light.intensity * light.colour;
         }
 #ifdef EnableAmbientOcclusion
         case AMBIENT_OCCLUSION {
-            // Ambient Occlusion
             return light.colour * sample_ambient_occlusion(
                 surface_position,
                 surface_normal,
@@ -469,21 +474,27 @@ fn light_sampling(
     material_pdf: f32,
 ) -> vec3f {
     var light_id = u32(
+#ifdef EnablePhysicalLights
         f32(_scene_parameters.num_lights)
+#else
+        f32(_scene_parameters.num_non_physical_lights)
+#endif
         * vec3f_to_random_f32(seed * vec3(3213.28, 1245.84, 2134.12))
     );
-    var distance_to_light: f32 = 0.;
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 1.;
 
+#ifdef EnablePhysicalLights
     if (light_id < _scene_parameters.num_non_physical_lights) {
+#endif
         light_colour = sample_non_physical_light(
             light_id,
             (*ray).origin,
             surface_normal,
             &light_geometry_factor,
         );
+#ifdef EnablePhysicalLights
     } else {
         light_colour = sample_physical_light(
             seed,
@@ -497,6 +508,7 @@ fn light_sampling(
             &light_sampling_pdf,
         );
     }
+#endif
 
     return multiple_importance_sample(
         light_colour,

@@ -196,7 +196,9 @@ impl Viewport {
                             .on_hover_text("restart the render")
                             .clicked()
                         {
-                            viewport_3d.reset_render();
+                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                viewport_3d.recompile_shader(wgpu_render_state);
+                            }
                         }
 
                         let tooltip: &str;

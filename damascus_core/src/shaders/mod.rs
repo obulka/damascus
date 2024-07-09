@@ -83,10 +83,12 @@ pub enum PreprocessorDirectives {
     EnableHollowing,
     EnableSpecularMaterials,
     EnableTransmissiveMaterials,
+    EnablePhysicalLights,
     EnableAOVs,
     EnableDirectionalLights,
     EnablePointLights,
     EnableAmbientOcclusion,
+    EnableSoftShadows,
 }
 
 impl Includes {
@@ -284,6 +286,7 @@ pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
         PreprocessorDirectives::EnableElongation,
         PreprocessorDirectives::EnableMirroring,
         PreprocessorDirectives::EnableHollowing,
+        PreprocessorDirectives::EnablePhysicalLights,
     ])
 }
 
@@ -292,6 +295,7 @@ pub fn all_directives_for_light() -> HashSet<PreprocessorDirectives> {
         PreprocessorDirectives::EnableDirectionalLights,
         PreprocessorDirectives::EnablePointLights,
         PreprocessorDirectives::EnableAmbientOcclusion,
+        PreprocessorDirectives::EnableSoftShadows,
     ])
 }
 
@@ -457,6 +461,10 @@ pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirec
         preprocessor_directives.insert(PreprocessorDirectives::EnableTrapColour);
     }
 
+    if material.is_emissive() {
+        preprocessor_directives.insert(PreprocessorDirectives::EnablePhysicalLights);
+    }
+
     preprocessor_directives
 }
 
@@ -476,6 +484,10 @@ pub fn directives_for_light(light: &Light) -> HashSet<PreprocessorDirectives> {
         _ => {}
     }
 
+    if light.soften_shadows {
+        preprocessor_directives.insert(PreprocessorDirectives::EnableSoftShadows);
+    }
+
     preprocessor_directives
 }
 
@@ -489,7 +501,7 @@ mod tests {
             all_directives_for_material();
         preprocessor_directives.extend(all_directives_for_primitive());
         preprocessor_directives.extend(all_directives_for_ray_marcher());
-        preprocessor_directives.extend(all_directives_for_lights());
+        preprocessor_directives.extend(all_directives_for_light());
         assert_eq!(preprocessor_directives.len(), PreprocessorDirectives::COUNT);
     }
 

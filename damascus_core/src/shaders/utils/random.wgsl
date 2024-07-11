@@ -12,7 +12,9 @@
  * @returns: A random value on the interval [0, 1].
  */
 fn random_f32(seed: f32) -> f32 {
-    return fract(sin(73.1 * seed + 91.3458) * 47453.5453);
+    return fract(
+        sin(74.97544189533764 * seed + 95.32355126900637) * 47351.28749271963,
+    );
 }
 
 
@@ -25,8 +27,14 @@ fn random_f32(seed: f32) -> f32 {
  */
 fn random_vec2f(seed: vec2f) -> vec2f {
     return vec2(
-        fract(sin(13.157 * seed.x + 71.743) * 7513.471),
-        fract(sin(97.519 * seed.y + 113.591) * 47453.5453),
+        fract(
+            sin(13.411893392589565 * seed.x + 52.204144534388156)
+            * 29413.091862160447,
+        ),
+        fract(
+            sin(92.277856455416342 * seed.y + 403.6482859667538)
+            * 48117.120463081184,
+        ),
     );
 }
 
@@ -40,20 +48,35 @@ fn random_vec2f(seed: vec2f) -> vec2f {
  */
 fn random_vec3f(seed: vec3f) -> vec3f {
     return vec3(
-        fract(sin(75.19 * seed.x + 71.743) * 7513.471),
-        fract(sin(15.73 * seed.y + 113.591) * 47453.553),
-        fract(sin(7.37 * seed.z + 147.781) * 8769.132),
+        fract(
+            sin(74.449478093044163 * seed.x + 64.30389019737667)
+            * 25014.958078049007,
+        ),
+        fract(
+            sin(27.169012684474097 * seed.y + 97.24850458213037)
+            * 68847.24754957597,
+        ),
+        fract(
+            sin(10.889121360413057 * seed.z + 196.68616147949768)
+            * 88220.55635443411,
+        ),
     );
 }
 
 
 fn vec2f_to_random_f32(seed: vec2f) -> f32 {
-    return fract(sin(dot(seed, vec2(12.9898, 78.233))) * 43758.5453123);
+    return fract(
+        sin(dot(seed, vec2(18.424315764454885, 65.7214571881855)))
+        * 23636.321902210882,
+    );
 }
 
 
 fn vec3f_to_random_f32(seed: vec3f) -> f32 {
-    return fract(sin(dot(seed, vec3(12.9898, 78.233, 34.532))) * 43758.5453123);
+    return fract(
+        sin(dot(seed, vec3(16.09228960839342, 78.80880762453727, 43.035762206218706)))
+        * 36057.29583469442,
+    );
 }
 
 

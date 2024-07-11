@@ -231,7 +231,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
 
             // Update the random seed for the next iteration
             path_seed = (
-                vec3(8922.54, 7223.18, 4267.21)
+                vec3(5771.878299824461, 8245.463474397617, 3274.701002467521)
                 * random_vec3f(path_seed.zxy + f32(bounces))
             );
         }
@@ -290,11 +290,13 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
 
     // Create a random seed which will be different for each pixel
     var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = vec3(8377.72, 2111.74, 1723.33) * random_vec3f(
-        _render_parameters.seeds
-        + frag_coord_seed
-        + _render_state.paths_rendered_per_pixel
-    ) + vec3(7131.93, 1173.97, 9712.43) * vec2f_to_random_f32(current_pixel_indices);
+    var seed = vec3(2214.2410943055584, 5844.16158969744, 6821.991985188833)
+        * random_vec3f(
+            _render_parameters.seeds
+            + frag_coord_seed
+            + _render_state.paths_rendered_per_pixel
+        ) + vec3(3553.392716193805, 7251.898513581492, 1848.9387464811002)
+        * vec2f_to_random_f32(current_pixel_indices);
 
     // Get modified UV coordinates with a random offset from the original
     // without straying outside the bounds of the current pixel. This

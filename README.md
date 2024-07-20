@@ -27,7 +27,7 @@ sudo apt install curl
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-The following are required packages:
+Install the following required packages:
 
 ```
 sudo apt install build-essential

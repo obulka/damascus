@@ -174,7 +174,8 @@ impl Viewport {
                 let controls_height: f32 = (Self::ICON_SIZE
                     + style.spacing.button_padding.y
                     + style.spacing.item_spacing.y)
-                    * 2.;
+                    * 2.
+                    + 1.;
 
                 egui::Frame::canvas(style).show(ui, |ui| {
                     if let Some(viewport_3d) = &mut self.viewport_3d {

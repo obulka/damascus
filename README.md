@@ -18,6 +18,20 @@ This is very much still a work in progress, and future breaking changes are all 
 
 Simply clone the repo and run `cargo run --release` to build and launch the application.
 
+#### Ubuntu
+
+If you haven't already, install rust
+
+The following are required packages:
+
+```
+sudo apt install build-essential
+sudo apt install cmake
+sudo apt install libglib2.0-dev
+sudo apt install libghc-gi-atk-dev
+sudo apt install libgtk-3-dev
+```
+
 ### Usage
 
 If this is your first time using the application, you can go to `file->load` in the toolbar and load the scene at `assets/basic_scene.dam`. Click `Set active` on the `ray marcher` node to view the scene. You can middle click and drag to pan over the node graph, and scroll to zoom in and out. Click and drag on the background to box-select nodes, and you can hold down `shift` to expand the current selection. You can then drag the selected nodes around. The `delete` key will remove all selected nodes. `ctrl+c` to copy the selected nodes, and `ctrl+v` to paste. `ctrl+n` will clear the scene. If any node prior to the `scene` node is selected you can pan the camera by left/middle clicking and dragging, and rotate the camera with right click and drag. You can scroll the mouse wheel over the viewer to move the camera in and out. 

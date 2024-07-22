@@ -30,11 +30,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 Install the following required packages:
 
 ```
-sudo apt install build-essential
-sudo apt install cmake
-sudo apt install libglib2.0-dev
-sudo apt install libghc-gi-atk-dev
-sudo apt install libgtk-3-dev
+sudo apt install -y build-essential cmake libglib2.0-dev libghc-gi-atk-dev libgtk-3-dev
 ```
 
 ### Usage

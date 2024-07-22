@@ -48,12 +48,23 @@ impl Scene {
     pub const MAX_PRIMITIVES: usize = 512;
     pub const MAX_LIGHTS: usize = 512;
 
+    pub fn num_primitives(&self) -> u32 {
+        Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32
+    }
+
+    pub fn num_lights(&self) -> u32 {
+        Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_primitives()) as u32
+    }
+
+    pub fn num_non_physical_lights(&self) -> u32 {
+        Self::MAX_LIGHTS.min(self.lights.len()) as u32
+    }
+
     fn to_gpu(&self) -> GPUSceneParameters {
         GPUSceneParameters {
-            num_primitives: Self::MAX_PRIMITIVES.min(self.primitives.len()) as u32,
-            num_lights: Self::MAX_LIGHTS.min(self.lights.len() + self.num_emissive_primitives())
-                as u32,
-            num_non_physical_lights: Self::MAX_LIGHTS.min(self.lights.len()) as u32,
+            num_primitives: self.num_primitives(),
+            num_lights: self.num_lights(),
+            num_non_physical_lights: self.num_non_physical_lights(),
         }
     }
 

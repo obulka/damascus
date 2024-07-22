@@ -474,12 +474,8 @@ fn light_sampling(
     material_pdf: f32,
 ) -> vec3f {
     var light_id = u32(
-#ifdef EnablePhysicalLights
         f32(_scene_parameters.num_lights)
-#else
-        f32(_scene_parameters.num_non_physical_lights)
-#endif
-        * vec3f_to_random_f32(seed * vec3(3213.28, 1245.84, 2134.12))
+        * vec3f_to_random_f32(seed * vec3(4.82314437644, 1.9647352337074, 5.084007537183))
     );
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);
     var light_colour = vec3(0.);

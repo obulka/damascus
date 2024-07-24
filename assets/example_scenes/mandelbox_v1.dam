@@ -3212,7 +3212,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 2.2,
+                "value": 1.19,
                 "ui_data": {
                   "tooltip": "The focal distance of the camera.",
                   "hidden": false
@@ -3244,7 +3244,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 18.0,
+                "value": 21.0,
                 "ui_data": {
                   "tooltip": "The f-stop of the camera.",
                   "hidden": false
@@ -3417,7 +3417,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": false,
+                "value": true,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -11943,22 +11943,22 @@
     },
     {
       "value": {
-        "x": -11011.02,
-        "y": -1563.7288
+        "x": -11698.832,
+        "y": -1658.9888
       },
       "version": 1
     },
     {
       "value": {
-        "x": -10869.872,
-        "y": -1659.1611
+        "x": -11571.123,
+        "y": -1745.3416
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11370.369,
-        "y": -1940.3738
+        "x": -12023.986,
+        "y": -1999.7915
       },
       "version": 1
     },
@@ -11968,29 +11968,29 @@
     },
     {
       "value": {
-        "x": -11963.896,
-        "y": -1928.0945
+        "x": -12561.035,
+        "y": -1988.6812
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11738.577,
-        "y": -947.96045
+        "x": -12357.153,
+        "y": -1101.8192
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11373.664,
-        "y": -1626.5164
+        "x": -12026.969,
+        "y": -1715.8015
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11814.582,
-        "y": -1481.6014
+        "x": -12425.928,
+        "y": -1584.6766
       },
       "version": 1
     },
@@ -12000,8 +12000,8 @@
     },
     {
       "value": {
-        "x": -11423.047,
-        "y": -921.3291
+        "x": -12071.652,
+        "y": -1077.7222
       },
       "version": 1
     },
@@ -12011,18 +12011,10 @@
     },
     {
       "value": {
-        "x": -12239.459,
-        "y": -1987.1392
+        "x": -12810.374,
+        "y": -2042.1067
       },
       "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
     },
     {
       "value": null,
@@ -12037,23 +12029,31 @@
       "version": 0
     },
     {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
       "value": {
-        "x": -12150.433,
-        "y": -1445.2007
+        "x": -12729.817,
+        "y": -1551.7404
       },
       "version": 3
     },
     {
       "value": {
-        "x": -11668.518,
-        "y": -1666.3125
+        "x": -12293.76,
+        "y": -1751.81
       },
       "version": 5
     },
     {
       "value": {
-        "x": -11380.984,
-        "y": -1354.3846
+        "x": -12033.593,
+        "y": -1469.5665
       },
       "version": 3
     }
@@ -12061,10 +12061,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 13982.262,
-      "y": 2305.8706
+      "x": 14192.277,
+      "y": 2386.7485
     },
-    "zoom": 0.89865834,
+    "zoom": 0.8131393,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

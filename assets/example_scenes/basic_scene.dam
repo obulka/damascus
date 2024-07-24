@@ -860,113 +860,127 @@
         "value": {
           "id": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "label": "procedural texture",
           "inputs": [
             [
               "texture_type",
               {
-                "idx": 154,
-                "version": 1
+                "idx": 168,
+                "version": 3
               }
             ],
             [
               "scale",
               {
-                "idx": 155,
-                "version": 1
+                "idx": 167,
+                "version": 3
               }
             ],
             [
               "black_point",
               {
-                "idx": 156,
-                "version": 1
+                "idx": 166,
+                "version": 3
               }
             ],
             [
               "white_point",
               {
-                "idx": 157,
-                "version": 1
+                "idx": 165,
+                "version": 3
               }
             ],
             [
               "lift",
               {
-                "idx": 158,
-                "version": 1
+                "idx": 164,
+                "version": 3
               }
             ],
             [
               "gain",
               {
-                "idx": 159,
-                "version": 1
+                "idx": 163,
+                "version": 3
               }
             ],
             [
               "octaves",
               {
-                "idx": 160,
-                "version": 1
+                "idx": 162,
+                "version": 3
               }
             ],
             [
               "lacunarity",
               {
                 "idx": 161,
-                "version": 1
+                "version": 3
               }
             ],
             [
               "amplitude_gain",
               {
-                "idx": 162,
-                "version": 1
+                "idx": 160,
+                "version": 3
               }
             ],
             [
               "gamma",
               {
-                "idx": 163,
-                "version": 1
+                "idx": 159,
+                "version": 3
               }
             ],
             [
               "low_frequency_scale",
               {
-                "idx": 164,
-                "version": 1
+                "idx": 158,
+                "version": 3
               }
             ],
             [
               "high_frequency_scale",
               {
-                "idx": 165,
-                "version": 1
+                "idx": 157,
+                "version": 3
               }
             ],
             [
               "low_frequency_translation",
               {
-                "idx": 166,
-                "version": 1
+                "idx": 156,
+                "version": 3
               }
             ],
             [
               "high_frequency_translation",
               {
-                "idx": 167,
-                "version": 1
+                "idx": 155,
+                "version": 3
               }
             ],
             [
               "invert",
               {
-                "idx": 168,
-                "version": 1
+                "idx": 154,
+                "version": 3
+              }
+            ],
+            [
+              "use_trap_colour",
+              {
+                "idx": 331,
+                "version": 3
+              }
+            ],
+            [
+              "hue_rotation_angles",
+              {
+                "idx": 330,
+                "version": 3
               }
             ]
           ],
@@ -975,7 +989,7 @@
               "out",
               {
                 "idx": 11,
-                "version": 1
+                "version": 3
               }
             ]
           ],
@@ -983,7 +997,7 @@
             "template": "ProceduralTexture"
           }
         },
-        "version": 1
+        "version": 3
       },
       {
         "value": {
@@ -1577,7 +1591,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_probability": 0.0,
                   "specular_probability_texture": {
@@ -1620,7 +1640,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_roughness": 0.0,
                   "specular_roughness_texture": {
@@ -1663,7 +1689,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_colour": [
                     1.0,
@@ -1710,7 +1742,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "transmissive_probability": 0.0,
                   "transmissive_probability_texture": {
@@ -1753,7 +1791,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "transmissive_roughness": 0.0,
                   "transmissive_roughness_texture": {
@@ -1796,7 +1840,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "extinction_coefficient": 0.0,
                   "transmissive_colour": [
@@ -1844,7 +1894,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "emissive_intensity": 0.0,
                   "emissive_colour": [
@@ -1892,7 +1948,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "refractive_index": 1.0,
                   "refractive_index_texture": {
@@ -1935,7 +1997,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "scattering_coefficient": 0.0,
                   "scattering_colour": [
@@ -1983,7 +2051,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   }
                 },
                 "ui_data": {
@@ -2561,7 +2635,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "specular_probability": 0.0,
                     "specular_probability_texture": {
@@ -2604,7 +2684,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "specular_roughness": 0.0,
                     "specular_roughness_texture": {
@@ -2647,7 +2733,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "specular_colour": [
                       1.0,
@@ -2694,7 +2786,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "transmissive_probability": 0.0,
                     "transmissive_probability_texture": {
@@ -2737,7 +2835,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "transmissive_roughness": 0.0,
                     "transmissive_roughness_texture": {
@@ -2780,7 +2884,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "extinction_coefficient": 0.0,
                     "transmissive_colour": [
@@ -2828,7 +2938,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "emissive_intensity": 0.0,
                     "emissive_colour": [
@@ -2876,7 +2992,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "refractive_index": 1.0,
                     "refractive_index_texture": {
@@ -2919,7 +3041,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     },
                     "scattering_coefficient": 0.0,
                     "scattering_colour": [
@@ -2967,7 +3095,13 @@
                         0.0,
                         0.0
                       ],
-                      "invert": false
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
                     }
                   }
                 },
@@ -4138,7 +4272,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the scattering colour of this material.",
@@ -4273,7 +4413,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the refractive index of this material.",
@@ -4374,7 +4520,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the emissive colour of this material.",
@@ -4509,7 +4661,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive colour of this material.",
@@ -4644,7 +4802,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive roughness of this material.",
@@ -4745,7 +4909,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive probability of this material.",
@@ -4846,7 +5016,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular colour of this material.",
@@ -4949,7 +5125,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular roughness of this material.",
@@ -5050,7 +5232,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular probability of this material.",
@@ -5151,7 +5339,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the diffuse colour of this material.",
@@ -5348,7 +5542,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the diffuse colour of this material.",
@@ -5449,7 +5649,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular probability of this material.",
@@ -5550,7 +5756,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular roughness of this material.",
@@ -5653,7 +5865,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the specular colour of this material.",
@@ -5754,7 +5972,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive probability of this material.",
@@ -5855,7 +6079,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive roughness of this material.",
@@ -5990,7 +6220,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the transmissive colour of this material.",
@@ -6125,7 +6361,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the emissive colour of this material.",
@@ -6226,7 +6468,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the refractive index of this material.",
@@ -6361,7 +6609,13 @@
                     0.0,
                     0.0
                   ],
-                  "invert": false
+                  "invert": false,
+                  "hue_rotation_angles": [
+                    0.0,
+                    0.0,
+                    0.0
+                  ],
+                  "use_trap_colour": false
                 },
                 "ui_data": {
                   "tooltip": "Texture that affects the scattering colour of this material.",
@@ -6384,22 +6638,15 @@
         "value": {
           "id": {
             "idx": 154,
-            "version": 1
+            "version": 3
           },
-          "typ": "ComboBox",
+          "typ": "Bool",
           "value": {
-            "ComboBox": {
+            "Bool": {
               "value": {
-                "selected": "Checkerboard",
-                "options": [
-                  "None",
-                  "Grade",
-                  "Checkerboard",
-                  "FBMNoise",
-                  "TurbulenceNoise"
-                ],
+                "value": false,
                 "ui_data": {
-                  "tooltip": "The type of texture to use.",
+                  "tooltip": "Invert the colour.",
                   "hidden": false
                 }
               }
@@ -6408,414 +6655,18 @@
           "kind": "ConstantOnly",
           "node": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "shown_inline": true,
           "_phantom": null
         },
-        "version": 1
+        "version": 3
       },
       {
         "value": {
           "id": {
             "idx": 155,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The scale factor of the texture.",
-                  "hidden": false
-                },
-                "collapsed": true,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 156,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The black point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 157,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The white point of the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 158,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "The lift to apply to the texture.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 159,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture colour.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0001,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 160,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 10,
-                "ui_data": {
-                  "tooltip": "The number of different frequencies to superimpose.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 1,
-                  "end": 12
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 161,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 2.0,
-                "ui_data": {
-                  "tooltip": "The lacunarity is the initial frequency of the noise,\nand the amount to scale the frequency for each octave.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 1.0,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 162,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.75,
-                "ui_data": {
-                  "tooltip": "The gain to apply to the texture. This scales the\nnoise amplitude between octaves.",
-                  "hidden": true
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 163,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.01,
-                  "end": 2.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 164,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale lower frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 165,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  1.0,
-                  1.0,
-                  1.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to scale higher frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 166,
-            "version": 1
-          },
-          "typ": "Vec4",
-          "value": {
-            "Vec4": {
-              "value": {
-                "value": [
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0
-                ],
-                "ui_data": {
-                  "tooltip": "The amount to translate lower frequencies between octaves.",
-                  "hidden": true
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 11,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
-      },
-      {
-        "value": {
-          "id": {
-            "idx": 167,
-            "version": 1
+            "version": 3
           },
           "typ": "Vec4",
           "value": {
@@ -6839,26 +6690,429 @@
           "kind": "ConstantOnly",
           "node": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "shown_inline": true,
           "_phantom": null
         },
-        "version": 1
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 156,
+            "version": 3
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to translate lower frequencies between octaves.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 157,
+            "version": 3
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to scale higher frequencies between octaves.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 158,
+            "version": 3
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The amount to scale lower frequencies between octaves.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 159,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.0,
+                "ui_data": {
+                  "tooltip": "The gamma to apply to the texture. This is computed\nby raising the colour to the power of 1/gamma.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.01,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 160,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The gain to apply to the texture. This scales the\nnoise amplitude between octaves.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 161,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 2.0,
+                "ui_data": {
+                  "tooltip": "The lacunarity is the initial frequency of the noise,\nand the amount to scale the frequency for each octave.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 162,
+            "version": 3
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 10,
+                "ui_data": {
+                  "tooltip": "The number of different frequencies to superimpose.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1,
+                  "end": 12
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 163,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.0,
+                "ui_data": {
+                  "tooltip": "The gain to apply to the texture colour.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0001,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 164,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The lift to apply to the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 165,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.0,
+                "ui_data": {
+                  "tooltip": "The white point of the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 166,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The black point of the texture.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 167,
+            "version": 3
+          },
+          "typ": "Vec4",
+          "value": {
+            "Vec4": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The scale factor of the texture.",
+                  "hidden": false
+                },
+                "collapsed": true,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
         "value": {
           "id": {
             "idx": 168,
-            "version": 1
+            "version": 3
           },
-          "typ": "Bool",
+          "typ": "ComboBox",
           "value": {
-            "Bool": {
+            "ComboBox": {
               "value": {
-                "value": false,
+                "selected": "Checkerboard",
+                "options": [
+                  "None",
+                  "Grade",
+                  "Checkerboard",
+                  "FBMNoise",
+                  "TurbulenceNoise"
+                ],
                 "ui_data": {
-                  "tooltip": "Invert the colour.",
+                  "tooltip": "The type of texture to use.",
                   "hidden": false
                 }
               }
@@ -6867,12 +7121,12 @@
           "kind": "ConstantOnly",
           "node": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "shown_inline": true,
           "_phantom": null
         },
-        "version": 1
+        "version": 3
       },
       {
         "value": {
@@ -7648,12 +7902,66 @@
         "version": 2
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 330,
+            "version": 3
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "Rotation of the colour.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 331,
+            "version": 3
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Multiply by the trap colour when rendering fractals.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 11,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
         "value": {
@@ -9090,7 +9398,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_probability": 0.0,
                   "specular_probability_texture": {
@@ -9133,7 +9447,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_roughness": 0.0,
                   "specular_roughness_texture": {
@@ -9176,7 +9496,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "specular_colour": [
                     1.0,
@@ -9223,7 +9549,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "transmissive_probability": 0.0,
                   "transmissive_probability_texture": {
@@ -9266,7 +9598,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "transmissive_roughness": 0.0,
                   "transmissive_roughness_texture": {
@@ -9309,7 +9647,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "extinction_coefficient": 0.0,
                   "transmissive_colour": [
@@ -9357,7 +9701,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "emissive_intensity": 0.0,
                   "emissive_colour": [
@@ -9405,7 +9755,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "refractive_index": 1.3,
                   "refractive_index_texture": {
@@ -9448,7 +9804,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   },
                   "scattering_coefficient": 0.0,
                   "scattering_colour": [
@@ -9496,7 +9858,13 @@
                       0.0,
                       0.0
                     ],
-                    "invert": false
+                    "invert": false,
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
                   }
                 },
                 "ui_data": {
@@ -9710,16 +10078,16 @@
         "value": {
           "id": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "node": {
             "idx": 11,
-            "version": 1
+            "version": 3
           },
           "typ": "ProceduralTexture",
           "_phantom": null
         },
-        "version": 1
+        "version": 3
       },
       {
         "value": {
@@ -10397,7 +10765,7 @@
       {
         "value": {
           "idx": 11,
-          "version": 1
+          "version": 3
         },
         "version": 1
       },
@@ -11343,10 +11711,6 @@
       "version": 1
     },
     {
-      "idx": 11,
-      "version": 1
-    },
-    {
       "idx": 8,
       "version": 3
     },
@@ -11359,11 +11723,15 @@
       "version": 3
     },
     {
+      "idx": 3,
+      "version": 3
+    },
+    {
       "idx": 2,
       "version": 3
     },
     {
-      "idx": 3,
+      "idx": 11,
       "version": 3
     }
   ],
@@ -11377,54 +11745,22 @@
     },
     {
       "value": {
-        "x": -3193.384,
-        "y": -1032.5444
+        "x": -3362.7021,
+        "y": -1263.4585
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3080.9658,
-        "y": -1081.5842
+        "x": -3250.2847,
+        "y": -1312.4977
       },
       "version": 3
     },
     {
       "value": {
-        "x": -3453.5127,
-        "y": -1241.4158
-      },
-      "version": 3
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -3621.7922,
-        "y": -1215.8589
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -3675.0586,
-        "y": -787.69995
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -3468.002,
-        "y": -849.9378
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -3720.9648,
-        "y": -1103.5936
+        "x": -3622.8315,
+        "y": -1472.3301
       },
       "version": 3
     },
@@ -11434,48 +11770,31 @@
     },
     {
       "value": {
-        "x": -3491.3958,
-        "y": -651.4375
+        "x": -3791.1123,
+        "y": -1446.7734
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3660.3076,
-        "y": -510.82013
+        "x": -3844.3774,
+        "y": -1018.6142
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3787.686,
-        "y": -1251.3992
+        "x": -3637.3213,
+        "y": -1080.8519
       },
       "version": 1
     },
     {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
+      "value": {
+        "x": -3890.2852,
+        "y": -1334.5089
+      },
+      "version": 3
     },
     {
       "value": null,
@@ -11483,8 +11802,57 @@
     },
     {
       "value": {
-        "x": -3455.6548,
-        "y": -1083.6919
+        "x": -3660.7158,
+        "y": -882.3519
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -3837.3303,
+        "y": -733.87506
+      },
+      "version": 3
+    },
+    {
+      "value": {
+        "x": -3957.0054,
+        "y": -1482.3142
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -3624.976,
+        "y": -1314.6061
       },
       "version": 3
     }
@@ -11492,10 +11860,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 4697.959,
-      "y": 1294.0461
+      "x": 4837.4644,
+      "y": 1551.7435
     },
-    "zoom": 0.5409718,
+    "zoom": 0.5409715,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

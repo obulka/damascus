@@ -28,7 +28,7 @@ use damascus_core::{
 
 use super::ViewportSettings;
 
-use crate::MAX_TEXTURE_DIMENSION;
+use crate::{MAX_BUFFER_SIZE, MAX_TEXTURE_DIMENSION};
 
 pub struct Viewport3d {
     pub renderer: RayMarcher,
@@ -39,6 +39,8 @@ pub struct Viewport3d {
     camera_controls_enabled: bool,
     render_state: RenderState,
     renderer_hash: Key<OrderedFloatPolicy>,
+    max_primitives: usize,
+    max_lights: usize,
 }
 
 impl Viewport3d {
@@ -54,6 +56,8 @@ impl Viewport3d {
             camera_controls_enabled: true,
             render_state: RenderState::default(),
             renderer_hash: renderer_hash,
+            max_primitives: Scene::max_primitives(MAX_BUFFER_SIZE).min(1024),
+            max_lights: Scene::max_lights(MAX_BUFFER_SIZE).min(1024),
         };
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -217,7 +221,10 @@ impl Viewport3d {
         let scene_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
-                contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters()]),
+                contents: bytemuck::cast_slice(&[self
+                    .renderer
+                    .scene
+                    .scene_parameters(self.max_primitives, self.max_lights)]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -324,12 +331,22 @@ impl Viewport3d {
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer.scene.create_gpu_primitives()]),
+            contents: bytemuck::cast_slice(
+                self.renderer
+                    .scene
+                    .create_gpu_primitives(self.max_primitives)
+                    .as_slice(),
+            ),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d lights buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer.scene.create_gpu_lights()]),
+            contents: bytemuck::cast_slice(
+                self.renderer
+                    .scene
+                    .create_gpu_lights(self.max_lights)
+                    .as_slice(),
+            ),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let atmosphere_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -340,7 +357,12 @@ impl Viewport3d {
         let emissive_primitive_indices_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d emissive primitive ids"),
-                contents: bytemuck::cast_slice(&[self.renderer.scene.emissive_primitive_indices()]),
+                contents: bytemuck::cast_slice(
+                    self.renderer
+                        .scene
+                        .emissive_primitive_indices(self.max_primitives)
+                        .as_slice(),
+                ),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             });
 
@@ -670,12 +692,21 @@ impl Viewport3d {
             rect,
             Viewport3dCallback {
                 render_parameters: self.renderer.render_parameters(),
-                scene_parameters: self.renderer.scene.scene_parameters(),
+                scene_parameters: self
+                    .renderer
+                    .scene
+                    .scene_parameters(self.max_primitives, self.max_lights),
                 render_camera: self.renderer.scene.render_camera.as_std_430(),
-                primitives: self.renderer.scene.create_gpu_primitives(),
-                lights: self.renderer.scene.create_gpu_lights(),
+                primitives: self
+                    .renderer
+                    .scene
+                    .create_gpu_primitives(self.max_primitives),
+                lights: self.renderer.scene.create_gpu_lights(self.max_lights),
                 atmosphere: self.renderer.scene.atmosphere(),
-                emissive_primitive_indices: self.renderer.scene.emissive_primitive_indices(),
+                emissive_primitive_indices: self
+                    .renderer
+                    .scene
+                    .emissive_primitive_indices(self.max_primitives),
                 render_state: self.render_state.as_std_430(),
             },
         ));
@@ -711,10 +742,10 @@ struct Viewport3dCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
     render_camera: Std430GPUCamera,
-    primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
-    lights: [Std430GPULight; Scene::MAX_LIGHTS],
+    primitives: Vec<Std430GPUPrimitive>,
+    lights: Vec<Std430GPULight>,
     atmosphere: Std430GPUMaterial,
-    emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
+    emissive_primitive_indices: Vec<u32>,
     render_state: Std430GPURenderState,
 }
 
@@ -734,10 +765,10 @@ impl egui_wgpu::CallbackTrait for Viewport3dCallback {
             self.render_parameters,
             self.scene_parameters,
             self.render_camera,
-            self.primitives,
-            self.lights,
+            &self.primitives,
+            &self.lights,
             self.atmosphere,
-            self.emissive_primitive_indices,
+            &self.emissive_primitive_indices,
             self.render_state,
         );
         Vec::new()
@@ -780,10 +811,10 @@ impl RenderResources {
         render_parameters: Std430GPURayMarcher,
         scene_parameters: Std430GPUSceneParameters,
         render_camera: Std430GPUCamera,
-        primitives: [Std430GPUPrimitive; Scene::MAX_PRIMITIVES],
-        lights: [Std430GPULight; Scene::MAX_LIGHTS],
+        primitives: &Vec<Std430GPUPrimitive>,
+        lights: &Vec<Std430GPULight>,
         atmosphere: Std430GPUMaterial,
-        emissive_primitive_indices: [u32; Scene::MAX_PRIMITIVES],
+        emissive_primitive_indices: &Vec<u32>,
         render_state: Std430GPURenderState,
     ) {
         // Update our uniform buffer with the angle from the UI
@@ -810,9 +841,13 @@ impl RenderResources {
         queue.write_buffer(
             &self.primitives_buffer,
             0,
-            bytemuck::cast_slice(&[primitives]),
+            bytemuck::cast_slice(primitives.as_slice()),
         );
-        queue.write_buffer(&self.lights_buffer, 0, bytemuck::cast_slice(&[lights]));
+        queue.write_buffer(
+            &self.lights_buffer,
+            0,
+            bytemuck::cast_slice(lights.as_slice()),
+        );
         queue.write_buffer(
             &self.atmosphere_buffer,
             0,
@@ -821,7 +856,7 @@ impl RenderResources {
         queue.write_buffer(
             &self.emissive_primitive_indices_buffer,
             0,
-            bytemuck::cast_slice(&[emissive_primitive_indices]),
+            bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
         );
     }
 

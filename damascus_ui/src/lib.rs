@@ -14,3 +14,4 @@ pub mod widgets;
 pub use app::Damascus;
 
 pub const MAX_TEXTURE_DIMENSION: u32 = 8192;
+pub const MAX_BUFFER_SIZE: usize = 256 << 20; // (256 MiB)

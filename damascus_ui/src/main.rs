@@ -9,7 +9,7 @@
 
 use std::sync::Arc;
 
-use damascus_ui::MAX_TEXTURE_DIMENSION;
+use damascus_ui::{MAX_BUFFER_SIZE, MAX_TEXTURE_DIMENSION};
 
 fn main() {
     use eframe::{egui::Visuals, egui_wgpu, wgpu};
@@ -31,6 +31,8 @@ fn main() {
                         // When using a depth buffer, we have to be able to create a texture
                         // large enough for the entire surface, and we want to support 4k+ displays.
                         max_texture_dimension_2d: MAX_TEXTURE_DIMENSION,
+                        max_buffer_size: MAX_BUFFER_SIZE as u64,
+                        max_storage_buffer_binding_size: MAX_BUFFER_SIZE as u32,
                         ..base_limits
                     },
                 }

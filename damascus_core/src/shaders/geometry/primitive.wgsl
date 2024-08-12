@@ -3,10 +3,6 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-
-const MAX_PRIMITIVES: u32 = 512u;
-
-
 struct Transform {
     translation: vec3f,
     inverse_rotation: mat3x3f,
@@ -33,7 +29,7 @@ struct Primitive {
 
 
 struct Primitives {
-    primitives: array<Primitive, MAX_PRIMITIVES>,
+    primitives: array<Primitive>,
 }
 
 
@@ -42,7 +38,7 @@ var<storage, read> _primitives: Primitives;
 
 
 @group(1) @binding(3)
-var<storage, read> _emissive_indices: array<u32, MAX_PRIMITIVES>;
+var<storage, read> _emissive_indices: array<u32>;
 
 
 fn is_parent_of(parent: ptr<function, Primitive>, prospective_child_id: u32) -> bool {

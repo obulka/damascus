@@ -3,11 +3,6 @@
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
 
-
-const MAX_LIGHTS: u32 = 512u;
-
-
-
 const DIRECTIONAL: u32 = 0u;
 const POINT: u32 = 1u;
 const AMBIENT: u32 = 2u;
@@ -26,7 +21,7 @@ struct Light {
 
 
 struct Lights {
-    lights: array<Light, MAX_LIGHTS>,
+    lights: array<Light>,
 }
 
 

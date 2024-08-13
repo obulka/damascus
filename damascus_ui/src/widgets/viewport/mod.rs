@@ -34,7 +34,7 @@ impl Viewport {
     ) -> Self {
         Self {
             settings: settings,
-            viewport_3d: Viewport3d::new(creation_context),
+            viewport_3d: Viewport3d::new(creation_context, &settings),
         }
     }
 
@@ -45,7 +45,11 @@ impl Viewport {
                 .write()
                 .callback_resources
                 .clear();
-            viewport.construct_render_pipeline(wgpu_render_state);
+            viewport.construct_render_pipeline(
+                wgpu_render_state,
+                self.settings.max_primitives,
+                self.settings.max_lights,
+            );
         }
     }
 

@@ -3244,7 +3244,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 21.0,
+                "value": 2.0,
                 "ui_data": {
                   "tooltip": "The f-stop of the camera.",
                   "hidden": false
@@ -3417,7 +3417,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": true,
+                "value": false,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -3673,7 +3673,7 @@
                 "value": [
                   0.0,
                   0.0,
-                  5.0
+                  7.0
                 ],
                 "ui_data": {
                   "tooltip": "The translation of this axis.",
@@ -3850,8 +3850,8 @@
             "Vec3": {
               "value": {
                 "value": [
-                  365.5,
-                  235.0,
+                  515.0,
+                  428.0,
                   0.0
                 ],
                 "ui_data": {
@@ -4122,7 +4122,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 18.0,
+                "value": 60.0,
                 "ui_data": {
                   "tooltip": "The intensity of the light.",
                   "hidden": false
@@ -4220,7 +4220,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 300.0,
+                "value": 100.0,
                 "ui_data": {
                   "tooltip": "The hardness of softened shadows.",
                   "hidden": false
@@ -11893,10 +11893,6 @@
       "version": 1
     },
     {
-      "idx": 3,
-      "version": 1
-    },
-    {
       "idx": 10,
       "version": 1
     },
@@ -11921,15 +11917,19 @@
       "version": 1
     },
     {
-      "idx": 2,
-      "version": 1
-    },
-    {
       "idx": 8,
       "version": 1
     },
     {
       "idx": 7,
+      "version": 1
+    },
+    {
+      "idx": 3,
+      "version": 1
+    },
+    {
+      "idx": 2,
       "version": 1
     }
   ],
@@ -11943,22 +11943,22 @@
     },
     {
       "value": {
-        "x": -11698.832,
-        "y": -1658.9888
+        "x": -12074.602,
+        "y": -1671.4603
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11571.123,
-        "y": -1745.3416
+        "x": -11932.808,
+        "y": -1679.0428
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12023.986,
-        "y": -1999.7915
+        "x": -12433.953,
+        "y": -2048.1042
       },
       "version": 1
     },
@@ -11968,29 +11968,29 @@
     },
     {
       "value": {
-        "x": -12561.035,
-        "y": -1988.6812
+        "x": -13027.491,
+        "y": -2035.8252
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12357.153,
-        "y": -1101.8192
+        "x": -12802.164,
+        "y": -1055.6915
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12026.969,
-        "y": -1715.8015
+        "x": -12437.24,
+        "y": -1734.2463
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12425.928,
-        "y": -1584.6766
+        "x": -12878.172,
+        "y": -1589.3308
       },
       "version": 1
     },
@@ -12000,8 +12000,8 @@
     },
     {
       "value": {
-        "x": -12071.652,
-        "y": -1077.7222
+        "x": -12486.624,
+        "y": -1029.0607
       },
       "version": 1
     },
@@ -12011,18 +12011,10 @@
     },
     {
       "value": {
-        "x": -12810.374,
-        "y": -2042.1067
+        "x": -13303.048,
+        "y": -2094.8691
       },
       "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
     },
     {
       "value": null,
@@ -12037,23 +12029,31 @@
       "version": 0
     },
     {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
       "value": {
-        "x": -12729.817,
-        "y": -1551.7404
+        "x": -13214.0205,
+        "y": -1552.9312
       },
       "version": 3
     },
     {
       "value": {
-        "x": -12293.76,
-        "y": -1751.81
+        "x": -12732.097,
+        "y": -1774.0424
       },
       "version": 5
     },
     {
       "value": {
-        "x": -12033.593,
-        "y": -1469.5665
+        "x": -12444.566,
+        "y": -1462.1143
       },
       "version": 3
     }
@@ -12061,10 +12061,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 14192.277,
-      "y": 2386.7485
+      "x": 13743.512,
+      "y": 2581.9043
     },
-    "zoom": 0.8131393,
+    "zoom": 0.8986579,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

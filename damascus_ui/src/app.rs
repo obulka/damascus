@@ -191,6 +191,11 @@ impl eframe::App for Damascus {
                                 }
                             }
                         }
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                self.viewport.recompile_shader(wgpu_render_state);
+                            }
+                        }
                     }
                 }
                 // NodeResponse::DisconnectEvent { output, input } => {
@@ -279,6 +284,11 @@ impl eframe::App for Damascus {
                                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                                     self.viewport.recompile_shader(wgpu_render_state);
                                 }
+                            }
+                        }
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                self.viewport.recompile_shader(wgpu_render_state);
                             }
                         }
                         _ => {}

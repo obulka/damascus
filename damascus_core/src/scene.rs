@@ -45,11 +45,11 @@ impl Default for Scene {
 }
 
 impl Scene {
-    pub fn max_primitives(max_buffer_size: usize) -> usize {
+    pub fn max_primitives_in_buffer(max_buffer_size: usize) -> usize {
         max_buffer_size / size_of::<Std430GPUPrimitive>()
     }
 
-    pub fn max_lights(max_buffer_size: usize) -> usize {
+    pub fn max_lights_in_buffer(max_buffer_size: usize) -> usize {
         max_buffer_size / size_of::<Std430GPULight>()
     }
 
@@ -84,25 +84,28 @@ impl Scene {
     }
 
     pub fn create_gpu_primitives(&self, max_primitives: usize) -> Vec<Std430GPUPrimitive> {
-        let mut primitives = vec![Primitive::default().to_gpu().as_std430(); max_primitives];
-        for index in 0..self.primitives.len().min(max_primitives) {
-            let mut primitive = self.primitives[index].to_gpu();
-            primitive.id = (index + 1) as u32;
-            primitives[index] = primitive.as_std430();
-        }
-        primitives
+        self.primitives
+            .iter()
+            .take(max_primitives)
+            .enumerate()
+            .map(|(index, primitive)| {
+                let mut gpu_primitive = primitive.to_gpu();
+                gpu_primitive.id = (index + 1) as u32;
+                gpu_primitive.as_std430()
+            })
+            .collect::<Vec<Std430GPUPrimitive>>()
     }
 
     pub fn create_gpu_lights(&self, max_lights: usize) -> Vec<Std430GPULight> {
-        let mut lights = vec![Light::default().to_gpu().as_std430(); max_lights];
-        for index in 0..self.lights.len().min(max_lights) {
-            lights[index] = self.lights[index].to_gpu().as_std430();
-        }
-        lights
+        self.lights
+            .iter()
+            .take(max_lights)
+            .map(|light| light.to_gpu().as_std430())
+            .collect::<Vec<Std430GPULight>>()
     }
 
     pub fn emissive_primitive_indices(&self, max_primitives: usize) -> Vec<u32> {
-        let mut emissive_indices = vec![0; max_primitives];
+        let mut emissive_indices = vec![];
         let mut emissive_count = 0;
         for (index, primitive) in self.primitives.iter().enumerate() {
             if emissive_count >= max_primitives {
@@ -111,7 +114,7 @@ impl Scene {
             if primitive.material.scaled_emissive_colour().length() == 0. {
                 continue;
             }
-            emissive_indices[emissive_count] = index as u32;
+            emissive_indices.push(index as u32);
             emissive_count += 1;
         }
         emissive_indices

@@ -78,7 +78,7 @@ impl Scene {
     fn to_gpu(&self, max_primitives: usize, max_lights: usize) -> GPUSceneParameters {
         GPUSceneParameters {
             num_primitives: self.num_primitives(max_primitives),
-            num_lights: self.num_lights(max_lights),
+            num_lights: self.num_lights(max_primitives + max_lights),
             num_non_physical_lights: self.num_non_physical_lights(max_lights),
         }
     }

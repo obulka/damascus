@@ -125,8 +125,6 @@ impl Viewport3d {
             &progressive_rendering_bind_group_layout,
         );
 
-        println!("max {:?} {:?}", max_primitives, max_lights);
-
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
         // instead of storing the pipeline in our `Custom3D` struct, we insert it into the
         // `paint_callback_resources` type map, which is stored alongside the render pass.
@@ -150,8 +148,6 @@ impl Viewport3d {
                 emissive_primitive_indices_buffer,
                 progressive_rendering_bind_group,
                 progressive_rendering_bind_group_layout,
-                max_primitives,
-                max_lights,
             });
     }
 
@@ -374,17 +370,13 @@ impl Viewport3d {
             contents: bytemuck::cast_slice(&[self.renderer.scene.atmosphere()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
-        let copy_buffer_alignment = wgpu::COPY_BUFFER_ALIGNMENT as usize;
-        let mut emissive_primitive_buffer_padding: usize =
-            max_primitives - emissive_primitive_indices.len();
-        emissive_primitive_buffer_padding +=
-            copy_buffer_alignment - (emissive_primitive_buffer_padding % copy_buffer_alignment);
         let emissive_primitive_indices_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d emissive primitive ids"),
                 contents: &[
                     bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
-                    vec![0; emissive_primitive_buffer_padding].as_slice(),
+                    vec![0; (max_primitives - emissive_primitive_indices.len()) * size_of::<u32>()]
+                        .as_slice(),
                 ]
                 .concat(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
@@ -825,8 +817,6 @@ struct RenderResources {
     emissive_primitive_indices_buffer: wgpu::Buffer,
     progressive_rendering_bind_group: wgpu::BindGroup,
     progressive_rendering_bind_group_layout: wgpu::BindGroupLayout,
-    max_primitives: usize,
-    max_lights: usize,
 }
 
 impl RenderResources {
@@ -867,40 +857,22 @@ impl RenderResources {
         queue.write_buffer(
             &self.primitives_buffer,
             0,
-            &[
-                bytemuck::cast_slice(primitives.as_slice()),
-                vec![0; (self.max_primitives - primitives.len()) * size_of::<Std430GPUPrimitive>()]
-                    .as_slice(),
-            ]
-            .concat(),
+            bytemuck::cast_slice(primitives.as_slice()),
         );
         queue.write_buffer(
             &self.lights_buffer,
             0,
-            &[
-                bytemuck::cast_slice(lights.as_slice()),
-                vec![0; (self.max_lights - lights.len()) * size_of::<Std430GPULight>()].as_slice(),
-            ]
-            .concat(),
+            bytemuck::cast_slice(lights.as_slice()),
         );
         queue.write_buffer(
             &self.atmosphere_buffer,
             0,
             bytemuck::cast_slice(&[atmosphere]),
         );
-        let copy_buffer_alignment = wgpu::COPY_BUFFER_ALIGNMENT as usize;
-        let mut emissive_primitive_buffer_padding: usize =
-            self.max_primitives - emissive_primitive_indices.len();
-        emissive_primitive_buffer_padding +=
-            copy_buffer_alignment - (emissive_primitive_buffer_padding % copy_buffer_alignment);
         queue.write_buffer(
             &self.emissive_primitive_indices_buffer,
             0,
-            &[
-                bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
-                vec![0; emissive_primitive_buffer_padding].as_slice(),
-            ]
-            .concat(),
+            bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
         );
     }
 

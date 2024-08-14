@@ -161,56 +161,65 @@ pub fn show_toolbar(
             let mut pipeline_reconstruction_required: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
-                dynamic_compilation_settings_changed |= ui
-                    .checkbox(
-                        &mut viewport.settings.enable_dynamic_recompilation_for_materials,
-                        "dynamic recompilation for materials",
-                    )
-                    .clicked();
-                dynamic_compilation_settings_changed |= ui
-                    .checkbox(
-                        &mut viewport
-                            .settings
-                            .enable_dynamic_recompilation_for_primitives,
-                        "dynamic recompilation for primitives",
-                    )
-                    .clicked();
-                dynamic_compilation_settings_changed |= ui
-                    .checkbox(
-                        &mut viewport
-                            .settings
-                            .enable_dynamic_recompilation_for_ray_marcher,
-                        "dynamic recompilation for ray marcher",
-                    )
-                    .clicked();
-                dynamic_compilation_settings_changed |= ui
-                    .checkbox(
-                        &mut viewport.settings.enable_dynamic_recompilation_for_lights,
-                        "dynamic recompilation for lights",
-                    )
-                    .clicked();
-                pipeline_reconstruction_required |= ui
-                    .horizontal(|ui| {
-                        ui.label("max primitives");
-                        ui.add(egui::DragValue::new(&mut viewport.settings.max_primitives))
-                    })
-                    .response
-                    .changed();
-                pipeline_reconstruction_required |= ui
-                    .horizontal(|ui| {
-                        ui.label("max lights");
-                        ui.add(egui::DragValue::new(&mut viewport.settings.max_lights))
-                    })
-                    .response
-                    .changed();
+                ui.horizontal(|ui| {
+                    ui.label("dynamic recompilation for materials");
+                    dynamic_compilation_settings_changed |= ui
+                        .add(egui::Checkbox::without_text(
+                            &mut viewport.settings.enable_dynamic_recompilation_for_materials,
+                        ))
+                        .clicked();
+                });
+                ui.horizontal(|ui| {
+                    ui.label("dynamic recompilation for primitives");
+                    dynamic_compilation_settings_changed |= ui
+                        .add(egui::Checkbox::without_text(
+                            &mut viewport
+                                .settings
+                                .enable_dynamic_recompilation_for_primitives,
+                        ))
+                        .clicked();
+                });
+                ui.horizontal(|ui| {
+                    ui.label("dynamic recompilation for ray marcher");
+                    dynamic_compilation_settings_changed |= ui
+                        .add(egui::Checkbox::without_text(
+                            &mut viewport
+                                .settings
+                                .enable_dynamic_recompilation_for_ray_marcher,
+                        ))
+                        .clicked();
+                });
+                ui.horizontal(|ui| {
+                    ui.label("dynamic recompilation for lights");
+                    dynamic_compilation_settings_changed |= ui
+                        .add(egui::Checkbox::without_text(
+                            &mut viewport.settings.enable_dynamic_recompilation_for_lights,
+                        ))
+                        .clicked();
+                });
+                ui.horizontal(|ui| {
+                    ui.label("max primitives");
+                    pipeline_reconstruction_required |= ui
+                        .add(egui::DragValue::new(&mut viewport.settings.max_primitives))
+                        .changed();
+                })
+                .response
+                .changed();
+                ui.horizontal(|ui| {
+                    ui.label("max lights");
+                    pipeline_reconstruction_required |= ui
+                        .add(egui::DragValue::new(&mut viewport.settings.max_lights))
+                        .changed();
+                });
             });
             viewport.settings.max_primitives = Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)
-                .min(viewport.settings.max_primitives);
-            viewport.settings.max_lights =
-                Scene::max_lights_in_buffer(MAX_BUFFER_SIZE).min(viewport.settings.max_lights);
+                .min(viewport.settings.max_primitives)
+                .max(1);
+            viewport.settings.max_lights = Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)
+                .min(viewport.settings.max_lights)
+                .max(1);
 
             if pipeline_reconstruction_required {
-                println!("pipeline_reconstruction_required");
                 response.push(NodeGraphResponse::ReconstructRenderPipeline);
             } else if dynamic_compilation_settings_changed {
                 response.push(NodeGraphResponse::CheckPreprocessorDirectives);

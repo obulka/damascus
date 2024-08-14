@@ -167,7 +167,7 @@ impl eframe::App for Damascus {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
                             self.viewport.enable_and_play();
-                            responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
+                            responses.push(NodeGraphResponse::ReconstructRenderPipeline)
                         }
                         NodeGraphResponse::ClearActiveNode => {
                             self.node_graph.user_state_mut().active_node = None;
@@ -189,6 +189,11 @@ impl eframe::App for Damascus {
                                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                                     self.viewport.recompile_shader(wgpu_render_state);
                                 }
+                            }
+                        }
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                self.viewport.reconstruct_render_pipeline(wgpu_render_state);
                             }
                         }
                     }
@@ -279,6 +284,11 @@ impl eframe::App for Damascus {
                                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                                     self.viewport.recompile_shader(wgpu_render_state);
                                 }
+                            }
+                        }
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                                self.viewport.reconstruct_render_pipeline(wgpu_render_state);
                             }
                         }
                         _ => {}

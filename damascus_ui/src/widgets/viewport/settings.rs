@@ -10,6 +10,8 @@ pub struct ViewportSettings {
     pub enable_dynamic_recompilation_for_primitives: bool,
     pub enable_dynamic_recompilation_for_ray_marcher: bool,
     pub enable_dynamic_recompilation_for_lights: bool,
+    pub max_primitives: usize,
+    pub max_lights: usize,
 }
 
 impl Default for ViewportSettings {
@@ -19,6 +21,8 @@ impl Default for ViewportSettings {
             enable_dynamic_recompilation_for_primitives: true,
             enable_dynamic_recompilation_for_ray_marcher: true,
             enable_dynamic_recompilation_for_lights: true,
+            max_primitives: 1024,
+            max_lights: 1024,
         }
     }
 }

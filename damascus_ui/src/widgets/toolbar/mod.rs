@@ -205,9 +205,7 @@ pub fn show_toolbar(
                                 .clamp_range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
                         )
                         .changed();
-                })
-                .response
-                .changed();
+                });
                 ui.horizontal(|ui| {
                     ui.label("max lights");
                     pipeline_reconstruction_required |= ui

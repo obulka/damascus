@@ -200,7 +200,10 @@ pub fn show_toolbar(
                 ui.horizontal(|ui| {
                     ui.label("max primitives");
                     pipeline_reconstruction_required |= ui
-                        .add(egui::DragValue::new(&mut viewport.settings.max_primitives))
+                        .add(
+                            egui::DragValue::new(&mut viewport.settings.max_primitives)
+                                .clamp_range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
+                        )
                         .changed();
                 })
                 .response
@@ -208,16 +211,13 @@ pub fn show_toolbar(
                 ui.horizontal(|ui| {
                     ui.label("max lights");
                     pipeline_reconstruction_required |= ui
-                        .add(egui::DragValue::new(&mut viewport.settings.max_lights))
+                        .add(
+                            egui::DragValue::new(&mut viewport.settings.max_lights)
+                                .clamp_range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
+                        )
                         .changed();
                 });
             });
-            viewport.settings.max_primitives = Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)
-                .min(viewport.settings.max_primitives)
-                .max(1);
-            viewport.settings.max_lights = Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)
-                .min(viewport.settings.max_lights)
-                .max(1);
 
             if pipeline_reconstruction_required {
                 response.push(NodeGraphResponse::ReconstructRenderPipeline);

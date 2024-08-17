@@ -15,7 +15,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
-use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
+use serde_hashkey::{to_key, to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
@@ -38,7 +38,14 @@ pub struct Viewport3d {
     disabled: bool,
     camera_controls_enabled: bool,
     render_state: RenderState,
-    renderer_hash: Key<OrderedFloatPolicy>,
+    recompile_hash: Key<OrderedFloatPolicy>,
+    reconstruct_hash: Key,
+}
+
+#[derive(serde::Serialize, serde::Deserialize)]
+struct ReconstructOnChange {
+    max_primitives: usize,
+    max_lights: usize,
 }
 
 impl Viewport3d {
@@ -47,7 +54,12 @@ impl Viewport3d {
         settings: &ViewportSettings,
     ) -> Option<Self> {
         let renderer = RayMarcher::default();
-        let renderer_hash = to_key_with_ordered_float(&renderer).ok()?;
+        let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
+        let reconstruct = ReconstructOnChange {
+            max_primitives: settings.max_primitives,
+            max_lights: settings.max_lights,
+        };
+        let reconstruct_hash = to_key(&reconstruct).ok()?;
         let mut viewport3d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
@@ -56,7 +68,8 @@ impl Viewport3d {
             disabled: true,
             camera_controls_enabled: true,
             render_state: RenderState::default(),
-            renderer_hash: renderer_hash,
+            recompile_hash: recompile_hash,
+            reconstruct_hash: reconstruct_hash,
         };
 
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
@@ -687,11 +700,31 @@ impl Viewport3d {
 
         self.update_camera(ui, &rect, &response);
 
+        let reconstruct = ReconstructOnChange {
+            max_primitives: settings.max_primitives,
+            max_lights: settings.max_lights,
+        };
+
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
-            if new_hash != self.renderer_hash {
-                self.reset_render();
-                self.renderer_hash = new_hash;
+        if let Ok(new_hash) = to_key(&reconstruct) {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                if new_hash != self.reconstruct_hash {
+                    self.reconstruct_hash = new_hash;
+                    wgpu_render_state
+                        .renderer
+                        .write()
+                        .callback_resources
+                        .clear();
+                    self.construct_render_pipeline(
+                        wgpu_render_state,
+                        settings.max_primitives,
+                        settings.max_lights,
+                    );
+                }
+            }
+        } else if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
+            if new_hash != self.recompile_hash {
+                self.recompile_hash = new_hash;
                 if settings.dynamic_recompilation_enabled()
                     && self.update_preprocessor_directives(settings)
                 {

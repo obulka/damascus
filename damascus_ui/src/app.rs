@@ -167,7 +167,7 @@ impl eframe::App for Damascus {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
                             self.viewport.enable_and_play();
-                            responses.push(NodeGraphResponse::ReconstructRenderPipeline)
+                            responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                         }
                         NodeGraphResponse::ClearActiveNode => {
                             self.node_graph.user_state_mut().active_node = None;

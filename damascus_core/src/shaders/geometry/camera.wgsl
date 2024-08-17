@@ -2,15 +2,17 @@
 // All rights reserved.
 // This file is released under the "MIT License Agreement".
 // Please see the LICENSE file that is included as part of this package.
+const ENABLE_DEPTH_OF_FIELD: u32 = 1u;
+const LATLONG: u32 = 2u;
 
 
 struct Camera {
-    enable_depth_of_field: u32, // bool isn't host-shareable?
     aperture: f32,
     focal_distance: f32,
     world_matrix: mat4x4f,
     inverse_world_matrix: mat4x4f,
     inverse_projection_matrix: mat4x4f,
+    flags: u32,
 }
 
 
@@ -94,7 +96,7 @@ fn render_camera_rotation() -> mat3x3f {
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
 fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
-    if (bool(_render_parameters.flags & LATLONG)) {
+    if (bool(_render_camera.flags & LATLONG)) {
         return Ray(
             render_camera_position(),
             render_camera_rotation() * spherical_unit_vector_to_cartesion(
@@ -117,7 +119,7 @@ fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
         vec3(1.),
     );
 
-    if (!bool(_render_camera.enable_depth_of_field)) {
+    if (!bool(_render_camera.flags & ENABLE_DEPTH_OF_FIELD)) {
         return ray;
     }
 

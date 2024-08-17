@@ -9,12 +9,12 @@ use glam::{Mat4, Vec4};
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
-    enable_depth_of_field: u32,
     aperture: f32,
     focal_distance: f32,
     world_matrix: Mat4,
     inverse_world_matrix: Mat4,
     inverse_projection_matrix: Mat4,
+    flags: u32,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
@@ -29,11 +29,23 @@ pub struct Camera {
     pub f_stop: f32,
     pub world_matrix: Mat4,
     pub enable_depth_of_field: bool,
+    pub latlong: bool,
 }
 
 impl Default for Camera {
     fn default() -> Self {
-        Self::new(1., 50., 24.576, 0.1, 10000., 2., 16., Mat4::IDENTITY, false)
+        Self::new(
+            1.,
+            50.,
+            24.576,
+            0.1,
+            10000.,
+            2.,
+            16.,
+            Mat4::IDENTITY,
+            false,
+            false,
+        )
     }
 }
 
@@ -48,6 +60,7 @@ impl Camera {
         f_stop: f32,
         world_matrix: Mat4,
         enable_depth_of_field: bool,
+        latlong: bool,
     ) -> Self {
         Self {
             aspect_ratio: aspect_ratio,
@@ -59,6 +72,7 @@ impl Camera {
             f_stop: f_stop,
             world_matrix: world_matrix,
             enable_depth_of_field: enable_depth_of_field,
+            latlong: latlong,
         }
     }
 
@@ -98,12 +112,12 @@ impl Camera {
 
     fn to_gpu(&self) -> GPUCamera {
         GPUCamera {
-            enable_depth_of_field: self.enable_depth_of_field as u32,
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
             world_matrix: self.world_matrix,
             inverse_world_matrix: self.world_matrix.inverse(),
             inverse_projection_matrix: self.projection_matrix().inverse(),
+            flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
     }
 

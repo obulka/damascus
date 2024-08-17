@@ -46,7 +46,6 @@ pub struct RayMarcher {
     // TODO variance & adaptive sampling
     pub output_aov: AOVs,
     // TODO resolution
-    pub latlong: bool,
 }
 
 impl Default for RayMarcher {
@@ -67,7 +66,6 @@ impl Default for RayMarcher {
             light_sampling_bias: 0.,
             secondary_sampling: false,
             output_aov: AOVs::default(),
-            latlong: false,
         }
     }
 }
@@ -88,8 +86,7 @@ impl RayMarcher {
             output_aov: self.output_aov as u32,
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1
-                | (self.secondary_sampling as u32) << 2
-                | (self.latlong as u32) << 3,
+                | (self.secondary_sampling as u32) << 2,
         }
     }
 

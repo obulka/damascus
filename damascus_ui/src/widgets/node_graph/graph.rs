@@ -306,6 +306,7 @@ pub fn evaluate_node(
             let f_stop = evaluator.input_float("f_stop")?;
             let world_matrix = evaluator.input_matrix4("world_matrix")?;
             let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
+            let latlong = evaluator.input_bool("latlong")?;
             evaluator.output_camera(
                 "out",
                 geometry::camera::Camera::new(
@@ -318,6 +319,7 @@ pub fn evaluate_node(
                     f_stop,
                     world_matrix,
                     enable_depth_of_field,
+                    latlong,
                 ),
             )
         }
@@ -657,7 +659,6 @@ pub fn evaluate_node(
             let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
-            let latlong = evaluator.input_bool("latlong")?;
             let output_aov = evaluator.input_combo_box::<renderers::AOVs>("output_aov")?;
 
             evaluator.output_ray_marcher(
@@ -678,7 +679,6 @@ pub fn evaluate_node(
                     light_sampling_bias: light_sampling_bias,
                     secondary_sampling: secondary_sampling,
                     output_aov: output_aov,
-                    latlong: latlong,
                 },
             )
         }

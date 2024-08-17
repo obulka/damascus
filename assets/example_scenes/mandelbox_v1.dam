@@ -58,220 +58,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "label": "ray marcher",
-          "inputs": [
-            [
-              "scene",
-              {
-                "idx": 5,
-                "version": 1
-              }
-            ],
-            [
-              "max_distance",
-              {
-                "idx": 6,
-                "version": 1
-              }
-            ],
-            [
-              "max_ray_steps",
-              {
-                "idx": 7,
-                "version": 1
-              }
-            ],
-            [
-              "max_bounces",
-              {
-                "idx": 8,
-                "version": 1
-              }
-            ],
-            [
-              "hit_tolerance",
-              {
-                "idx": 9,
-                "version": 1
-              }
-            ],
-            [
-              "shadow_bias",
-              {
-                "idx": 10,
-                "version": 1
-              }
-            ],
-            [
-              "max_brightness",
-              {
-                "idx": 11,
-                "version": 1
-              }
-            ],
-            [
-              "seeds",
-              {
-                "idx": 12,
-                "version": 1
-              }
-            ],
-            [
-              "dynamic_level_of_detail",
-              {
-                "idx": 13,
-                "version": 1
-              }
-            ],
-            [
-              "equiangular_samples",
-              {
-                "idx": 14,
-                "version": 1
-              }
-            ],
-            [
-              "max_light_sampling_bounces",
-              {
-                "idx": 15,
-                "version": 1
-              }
-            ],
-            [
-              "sample_atmosphere",
-              {
-                "idx": 16,
-                "version": 1
-              }
-            ],
-            [
-              "light_sampling_bias",
-              {
-                "idx": 17,
-                "version": 1
-              }
-            ],
-            [
-              "secondary_sampling",
-              {
-                "idx": 18,
-                "version": 1
-              }
-            ],
-            [
-              "output_aov",
-              {
-                "idx": 19,
-                "version": 1
-              }
-            ],
-            [
-              "latlong",
-              {
-                "idx": 20,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 2,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "RayMarcher"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 3,
-            "version": 1
-          },
-          "label": "camera",
-          "inputs": [
-            [
-              "focal_length",
-              {
-                "idx": 21,
-                "version": 1
-              }
-            ],
-            [
-              "focal_distance",
-              {
-                "idx": 22,
-                "version": 1
-              }
-            ],
-            [
-              "f_stop",
-              {
-                "idx": 23,
-                "version": 1
-              }
-            ],
-            [
-              "horizontal_aperture",
-              {
-                "idx": 24,
-                "version": 1
-              }
-            ],
-            [
-              "near_plane",
-              {
-                "idx": 25,
-                "version": 1
-              }
-            ],
-            [
-              "far_plane",
-              {
-                "idx": 26,
-                "version": 1
-              }
-            ],
-            [
-              "world_matrix",
-              {
-                "idx": 27,
-                "version": 1
-              }
-            ],
-            [
-              "enable_depth_of_field",
-              {
-                "idx": 28,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 3,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Camera"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": null,
@@ -925,12 +717,220 @@
         "version": 2
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 16,
+            "version": 9
+          },
+          "label": "camera",
+          "inputs": [
+            [
+              "focal_length",
+              {
+                "idx": 292,
+                "version": 9
+              }
+            ],
+            [
+              "focal_distance",
+              {
+                "idx": 293,
+                "version": 9
+              }
+            ],
+            [
+              "f_stop",
+              {
+                "idx": 294,
+                "version": 9
+              }
+            ],
+            [
+              "horizontal_aperture",
+              {
+                "idx": 295,
+                "version": 9
+              }
+            ],
+            [
+              "near_plane",
+              {
+                "idx": 291,
+                "version": 7
+              }
+            ],
+            [
+              "far_plane",
+              {
+                "idx": 290,
+                "version": 7
+              }
+            ],
+            [
+              "world_matrix",
+              {
+                "idx": 289,
+                "version": 7
+              }
+            ],
+            [
+              "enable_depth_of_field",
+              {
+                "idx": 288,
+                "version": 7
+              }
+            ],
+            [
+              "latlong",
+              {
+                "idx": 287,
+                "version": 7
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 16,
+                "version": 9
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Camera"
+          }
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 17,
+            "version": 7
+          },
+          "label": "ray marcher",
+          "inputs": [
+            [
+              "scene",
+              {
+                "idx": 310,
+                "version": 9
+              }
+            ],
+            [
+              "max_distance",
+              {
+                "idx": 309,
+                "version": 9
+              }
+            ],
+            [
+              "max_ray_steps",
+              {
+                "idx": 308,
+                "version": 7
+              }
+            ],
+            [
+              "max_bounces",
+              {
+                "idx": 307,
+                "version": 7
+              }
+            ],
+            [
+              "hit_tolerance",
+              {
+                "idx": 306,
+                "version": 7
+              }
+            ],
+            [
+              "shadow_bias",
+              {
+                "idx": 305,
+                "version": 7
+              }
+            ],
+            [
+              "max_brightness",
+              {
+                "idx": 304,
+                "version": 7
+              }
+            ],
+            [
+              "seeds",
+              {
+                "idx": 303,
+                "version": 7
+              }
+            ],
+            [
+              "dynamic_level_of_detail",
+              {
+                "idx": 302,
+                "version": 7
+              }
+            ],
+            [
+              "equiangular_samples",
+              {
+                "idx": 301,
+                "version": 7
+              }
+            ],
+            [
+              "max_light_sampling_bounces",
+              {
+                "idx": 300,
+                "version": 9
+              }
+            ],
+            [
+              "sample_atmosphere",
+              {
+                "idx": 299,
+                "version": 9
+              }
+            ],
+            [
+              "light_sampling_bias",
+              {
+                "idx": 298,
+                "version": 9
+              }
+            ],
+            [
+              "secondary_sampling",
+              {
+                "idx": 297,
+                "version": 9
+              }
+            ],
+            [
+              "output_aov",
+              {
+                "idx": 296,
+                "version": 7
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 17,
+                "version": 7
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "RayMarcher"
+          }
+        },
+        "version": 7
       },
       {
         "value": {
@@ -1508,7 +1508,8 @@
                     0.0,
                     1.0
                   ],
-                  "enable_depth_of_field": false
+                  "enable_depth_of_field": false,
+                  "latlong": false
                 },
                 "ui_data": {
                   "tooltip": "The camera to render the scene through.",
@@ -2126,1314 +2127,100 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 5,
-            "version": 1
-          },
-          "typ": "Scene",
-          "value": {
-            "Scene": {
-              "value": {
-                "value": {
-                  "render_camera": {
-                    "aspect_ratio": 1.0,
-                    "focal_length": 50.0,
-                    "horizontal_aperture": 24.576,
-                    "near_plane": 0.1,
-                    "far_plane": 10000.0,
-                    "focal_distance": 2.0,
-                    "f_stop": 16.0,
-                    "world_matrix": [
-                      1.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      1.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      1.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      0.0,
-                      1.0
-                    ],
-                    "enable_depth_of_field": false
-                  },
-                  "primitives": [],
-                  "lights": [],
-                  "atmosphere": {
-                    "diffuse_colour": [
-                      0.0,
-                      0.0,
-                      0.0
-                    ],
-                    "diffuse_colour_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "specular_probability": 0.0,
-                    "specular_probability_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "specular_roughness": 0.0,
-                    "specular_roughness_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "specular_colour": [
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "specular_colour_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "transmissive_probability": 0.0,
-                    "transmissive_probability_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "transmissive_roughness": 0.0,
-                    "transmissive_roughness_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "extinction_coefficient": 0.0,
-                    "transmissive_colour": [
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "transmissive_colour_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "emissive_intensity": 0.0,
-                    "emissive_colour": [
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "emissive_colour_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "refractive_index": 1.0,
-                    "refractive_index_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    },
-                    "scattering_coefficient": 0.0,
-                    "scattering_colour": [
-                      1.0,
-                      1.0,
-                      1.0
-                    ],
-                    "scattering_colour_texture": {
-                      "texture_type": "None",
-                      "scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "black_point": 0.0,
-                      "white_point": 1.0,
-                      "lift": 0.0,
-                      "gain": 1.0,
-                      "octaves": 10,
-                      "lacunarity": 2.0,
-                      "amplitude_gain": 0.75,
-                      "gamma": 1.0,
-                      "low_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "high_frequency_scale": [
-                        1.0,
-                        1.0,
-                        1.0,
-                        1.0
-                      ],
-                      "low_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "high_frequency_translation": [
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "invert": false,
-                      "hue_rotation_angles": [
-                        0.0,
-                        0.0,
-                        0.0
-                      ],
-                      "use_trap_colour": false
-                    }
-                  }
-                },
-                "ui_data": {
-                  "tooltip": "The scene to render.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConnectionOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 6,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 100.0,
-                "ui_data": {
-                  "tooltip": "Each ray, once spawned is only allowed to travel\nthis distance before it is culled.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 10.0,
-                  "end": 10000.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 7,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 1000,
-                "ui_data": {
-                  "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 100,
-                  "end": 100000
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 8,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 2,
-                "ui_data": {
-                  "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 1,
-                  "end": 100
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 9,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.000001,
-                "ui_data": {
-                  "tooltip": "The ray will be considered to have hit an object\nwhen it is within this distance of its surface.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.00001,
-                  "end": 0.1
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 10,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.0,
-                "ui_data": {
-                  "tooltip": "After intersecting an object the ray is offset from\nthe surface before continuing. Multiply that offset\ndistance by this factor.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 1.0,
-                  "end": 5.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 11,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1000000000.0,
-                "ui_data": {
-                  "tooltip": "The maximum brightness of a pixel. This protects\nagainst overflowing to infinity.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 1.0,
-                  "end": 1000000.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 12,
-            "version": 1
-          },
-          "typ": "Vec3",
-          "value": {
-            "Vec3": {
-              "value": {
-                "value": [
-                  1111.0,
-                  2222.0,
-                  3333.0
-                ],
-                "ui_data": {
-                  "tooltip": "The seeds used to generate per-pixel, random seeds.\nBe sure these are different on each render used for\nadaptive sampling.",
-                  "hidden": false
-                },
-                "collapsed": false,
-                "is_colour": false
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 13,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": true,
-                "ui_data": {
-                  "tooltip": "Increase the hit tolerance the farther the ray\ntravels without hitting a surface. This has performance\nand antialiasing benefits.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 14,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 0,
-                "ui_data": {
-                  "tooltip": "The number of equi-angular samples to perform if\nthe extinction/scattering coefficients are greater\nthan 0. This enables participating media such as\nfog/smoke/clouds to be traced.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0,
-                  "end": 10
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 15,
-            "version": 1
-          },
-          "typ": "UnsignedInteger",
-          "value": {
-            "UnsignedInteger": {
-              "value": {
-                "value": 1,
-                "ui_data": {
-                  "tooltip": "The maximum number of bounces during light sampling.\nLight sampling will be disabled if this is 0. Light\nsampling means that each time a surface is hit, the\ndirect illumination from lights in the scene will be\ncomputed, which helps to reduce noise very quickly.\nTODO",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0,
-                  "end": 50
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 16,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "Include the skybox in the list of lights that can be\nsampled during light sampling.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 17,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.0,
-                "ui_data": {
-                  "tooltip": "A fully biased (1) light sampling means that on each\nlight sample the ray will be initialised pointing\ndirectly at the light. Reducing this bias means that\nsome rays will be pointed away from the light. This,\nwhen combined with multiple 'max light sampling\nbounces' allows the renderer to find difficult paths,\nsuch as volumetric caustics.\nTODO",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.0,
-                  "end": 1.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 18,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "Sample the artificial lights (those in the 'lights'\ninput) while casting shadow rays for light sampling.\nTODO",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 19,
-            "version": 1
-          },
-          "typ": "ComboBox",
-          "value": {
-            "ComboBox": {
-              "value": {
-                "selected": "Beauty",
-                "options": [
-                  "Beauty",
-                  "WorldPosition",
-                  "LocalPosition",
-                  "Normals",
-                  "Depth",
-                  "Cryptomatte",
-                  "Stats"
-                ],
-                "ui_data": {
-                  "tooltip": "The AOV type to output.\nThe stats AOV has the\naverage number of bounces in the red channel,\naverage number of steps in the green channel,\nand the distance travelled in the blue channel.\nEach is displayed as a fraction of the maximums.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 20,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "Output a LatLong, 360 degree field of view image.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 21,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 100.0,
-                "ui_data": {
-                  "tooltip": "The focal length of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 5.0,
-                  "end": 100.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 22,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 1.19,
-                "ui_data": {
-                  "tooltip": "The focal distance of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 23,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 2.0,
-                "ui_data": {
-                  "tooltip": "The f-stop of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 30.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 24,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 24.576,
-                "ui_data": {
-                  "tooltip": "The horizontal aperture of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 50.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 25,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.1,
-                "ui_data": {
-                  "tooltip": "The distance to the near plane of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 26,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 10000.0,
-                "ui_data": {
-                  "tooltip": "The distance to the far plane of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 11.0,
-                  "end": 10000.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 27,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "value": {
-            "Mat4": {
-              "value": {
-                "value": [
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The world matrix/axis of the camera.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConnectionOrConstant",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 28,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "If enabled, this camera will render with depth of field.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": null,
@@ -7344,100 +6131,1315 @@
         "version": 6
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 287,
+            "version": 7
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Output a LatLong, 360 degree field of view image.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 288,
+            "version": 7
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, this camera will render with depth of field.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 289,
+            "version": 7
+          },
+          "typ": "Mat4",
+          "value": {
+            "Mat4": {
+              "value": {
+                "value": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The world matrix/axis of the camera.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOrConstant",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 290,
+            "version": 7
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 10000.0,
+                "ui_data": {
+                  "tooltip": "The distance to the far plane of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 11.0,
+                  "end": 10000.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 291,
+            "version": 7
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.1,
+                "ui_data": {
+                  "tooltip": "The distance to the near plane of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 292,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 100.0,
+                "ui_data": {
+                  "tooltip": "The focal length of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 5.0,
+                  "end": 100.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 293,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.19,
+                "ui_data": {
+                  "tooltip": "The focal distance of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 294,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 2.0,
+                "ui_data": {
+                  "tooltip": "The f-stop of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 30.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 295,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 24.576,
+                "ui_data": {
+                  "tooltip": "The horizontal aperture of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 50.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 296,
+            "version": 7
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "Beauty",
+                "options": [
+                  "Beauty",
+                  "WorldPosition",
+                  "LocalPosition",
+                  "Normals",
+                  "Depth",
+                  "Cryptomatte",
+                  "Stats"
+                ],
+                "ui_data": {
+                  "tooltip": "The AOV type to output.\nThe stats AOV has the\naverage number of bounces in the red channel,\naverage number of steps in the green channel,\nand the distance travelled in the blue channel.\nEach is displayed as a fraction of the maximums.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 297,
+            "version": 9
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Sample the artificial lights (those in the 'lights'\ninput) while casting shadow rays for light sampling.\nTODO",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 298,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "A fully biased (1) light sampling means that on each\nlight sample the ray will be initialised pointing\ndirectly at the light. Reducing this bias means that\nsome rays will be pointed away from the light. This,\nwhen combined with multiple 'max light sampling\nbounces' allows the renderer to find difficult paths,\nsuch as volumetric caustics.\nTODO",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 299,
+            "version": 9
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Include the skybox in the list of lights that can be\nsampled during light sampling.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 300,
+            "version": 9
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 1,
+                "ui_data": {
+                  "tooltip": "The maximum number of bounces during light sampling.\nLight sampling will be disabled if this is 0. Light\nsampling means that each time a surface is hit, the\ndirect illumination from lights in the scene will be\ncomputed, which helps to reduce noise very quickly.\nTODO",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0,
+                  "end": 50
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 301,
+            "version": 7
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 0,
+                "ui_data": {
+                  "tooltip": "The number of equi-angular samples to perform if\nthe extinction/scattering coefficients are greater\nthan 0. This enables participating media such as\nfog/smoke/clouds to be traced.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0,
+                  "end": 10
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 302,
+            "version": 7
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": true,
+                "ui_data": {
+                  "tooltip": "Increase the hit tolerance the farther the ray\ntravels without hitting a surface. This has performance\nand antialiasing benefits.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 303,
+            "version": 7
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  1111.0,
+                  2222.0,
+                  3333.0
+                ],
+                "ui_data": {
+                  "tooltip": "The seeds used to generate per-pixel, random seeds.\nBe sure these are different on each render used for\nadaptive sampling.",
+                  "hidden": false
+                },
+                "collapsed": false,
+                "is_colour": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 304,
+            "version": 7
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1000000000.0,
+                "ui_data": {
+                  "tooltip": "The maximum brightness of a pixel. This protects\nagainst overflowing to infinity.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 1000000.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 305,
+            "version": 7
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 1.0,
+                "ui_data": {
+                  "tooltip": "After intersecting an object the ray is offset from\nthe surface before continuing. Multiply that offset\ndistance by this factor.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 5.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 306,
+            "version": 7
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.000001,
+                "ui_data": {
+                  "tooltip": "The ray will be considered to have hit an object\nwhen it is within this distance of its surface.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.00001,
+                  "end": 0.1
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 307,
+            "version": 7
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 2,
+                "ui_data": {
+                  "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 1,
+                  "end": 100
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 308,
+            "version": 7
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 1000,
+                "ui_data": {
+                  "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 100,
+                  "end": 100000
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 309,
+            "version": 9
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 100.0,
+                "ui_data": {
+                  "tooltip": "Each ray, once spawned is only allowed to travel\nthis distance before it is culled.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 10.0,
+                  "end": 10000.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 8
+        "value": {
+          "id": {
+            "idx": 310,
+            "version": 9
+          },
+          "typ": "Scene",
+          "value": {
+            "Scene": {
+              "value": {
+                "value": {
+                  "render_camera": {
+                    "aspect_ratio": 1.0,
+                    "focal_length": 50.0,
+                    "horizontal_aperture": 24.576,
+                    "near_plane": 0.1,
+                    "far_plane": 10000.0,
+                    "focal_distance": 2.0,
+                    "f_stop": 16.0,
+                    "world_matrix": [
+                      1.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      1.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0,
+                      1.0
+                    ],
+                    "enable_depth_of_field": false,
+                    "latlong": false
+                  },
+                  "primitives": [],
+                  "lights": [],
+                  "atmosphere": {
+                    "diffuse_colour": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "diffuse_colour_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "specular_probability": 0.0,
+                    "specular_probability_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "specular_roughness": 0.0,
+                    "specular_roughness_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "specular_colour": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "specular_colour_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "transmissive_probability": 0.0,
+                    "transmissive_probability_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "transmissive_roughness": 0.0,
+                    "transmissive_roughness_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "extinction_coefficient": 0.0,
+                    "transmissive_colour": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "transmissive_colour_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "emissive_intensity": 0.0,
+                    "emissive_colour": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "emissive_colour_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "refractive_index": 1.0,
+                    "refractive_index_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    },
+                    "scattering_coefficient": 0.0,
+                    "scattering_colour": [
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "scattering_colour_texture": {
+                      "texture_type": "None",
+                      "scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "octaves": 10,
+                      "lacunarity": 2.0,
+                      "amplitude_gain": 0.75,
+                      "gamma": 1.0,
+                      "low_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "high_frequency_scale": [
+                        1.0,
+                        1.0,
+                        1.0,
+                        1.0
+                      ],
+                      "low_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "high_frequency_translation": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "invert": false,
+                      "hue_rotation_angles": [
+                        0.0,
+                        0.0,
+                        0.0
+                      ],
+                      "use_trap_colour": false
+                    }
+                  }
+                },
+                "ui_data": {
+                  "tooltip": "The scene to render.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 9
       },
       {
         "value": {
@@ -10139,34 +10141,12 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "typ": "RayMarcher",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 3,
-            "version": 1
-          },
-          "node": {
-            "idx": 3,
-            "version": 1
-          },
-          "typ": "Camera",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": null,
@@ -10283,12 +10263,34 @@
         "version": 2
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 16,
+            "version": 9
+          },
+          "node": {
+            "idx": 16,
+            "version": 9
+          },
+          "typ": "Camera",
+          "_phantom": null
+        },
+        "version": 9
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 17,
+            "version": 7
+          },
+          "node": {
+            "idx": 17,
+            "version": 7
+          },
+          "typ": "RayMarcher",
+          "_phantom": null
+        },
+        "version": 7
       },
       {
         "value": {
@@ -10343,8 +10345,8 @@
       },
       {
         "value": {
-          "idx": 3,
-          "version": 1
+          "idx": 16,
+          "version": 9
         },
         "version": 1
       },
@@ -10370,13 +10372,6 @@
         "version": 1
       },
       {
-        "value": {
-          "idx": 1,
-          "version": 1
-        },
-        "version": 1
-      },
-      {
         "value": null,
         "version": 0
       },
@@ -10461,11 +10456,12 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 5,
-          "version": 1
-        },
-        "version": 1
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
       },
       {
         "value": null,
@@ -11521,8 +11517,11 @@
         "version": 0
       },
       {
-        "value": null,
-        "version": 0
+        "value": {
+          "idx": 5,
+          "version": 1
+        },
+        "version": 7
       },
       {
         "value": null,
@@ -11605,8 +11604,11 @@
         "version": 0
       },
       {
-        "value": null,
-        "version": 0
+        "value": {
+          "idx": 1,
+          "version": 1
+        },
+        "version": 9
       },
       {
         "value": null,
@@ -11925,12 +11927,12 @@
       "version": 1
     },
     {
-      "idx": 3,
-      "version": 1
+      "idx": 16,
+      "version": 9
     },
     {
-      "idx": 2,
-      "version": 1
+      "idx": 17,
+      "version": 7
     }
   ],
   "connection_in_progress": null,
@@ -11943,76 +11945,8 @@
     },
     {
       "value": {
-        "x": -12074.602,
-        "y": -1671.4603
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -11932.808,
-        "y": -1679.0428
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -12433.953,
-        "y": -2048.1042
-      },
-      "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -13027.491,
-        "y": -2035.8252
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -12802.164,
-        "y": -1055.6915
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -12437.24,
-        "y": -1734.2463
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "x": -12878.172,
-        "y": -1589.3308
-      },
-      "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -12486.624,
-        "y": -1029.0607
-      },
-      "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -13303.048,
-        "y": -2094.8691
+        "x": -12775.808,
+        "y": -1948.8422
       },
       "version": 1
     },
@@ -12029,6 +11963,60 @@
       "version": 0
     },
     {
+      "value": {
+        "x": -13298.766,
+        "y": -2148.808
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -13175.105,
+        "y": -1610.9004
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -12974.824,
+        "y": -1983.2991
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -13216.818,
+        "y": -1903.7661
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -13001.932,
+        "y": -1596.2837
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": {
+        "x": -13449.995,
+        "y": -2181.2124
+      },
+      "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
       "value": null,
       "version": 0
     },
@@ -12038,22 +12026,36 @@
     },
     {
       "value": {
-        "x": -13214.0205,
-        "y": -1552.9312
+        "x": -12981.083,
+        "y": -2130.6064
+      },
+      "version": 9
+    },
+    {
+      "value": {
+        "x": -12684.12,
+        "y": -1948.3396
+      },
+      "version": 7
+    },
+    {
+      "value": {
+        "x": -13401.135,
+        "y": -1883.7905
       },
       "version": 3
     },
     {
       "value": {
-        "x": -12732.097,
-        "y": -1774.0424
+        "x": -13136.649,
+        "y": -2005.1384
       },
       "version": 5
     },
     {
       "value": {
-        "x": -12444.566,
-        "y": -1462.1143
+        "x": -12978.847,
+        "y": -1833.9478
       },
       "version": 3
     }
@@ -12061,10 +12063,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 13743.512,
-      "y": 2581.9043
+      "x": 14286.814,
+      "y": 2267.1677
     },
-    "zoom": 0.8986579,
+    "zoom": 0.49319422,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

@@ -469,6 +469,14 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                         ),
                     ),
                 );
+                input_bool(
+                    graph,
+                    "latlong",
+                    Bool::new(default_camera.latlong).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("Output a LatLong, 360 degree field of view image."),
+                    ),
+                );
                 output_camera(graph, "out");
             }
             NodeTemplate::Light => {
@@ -1685,14 +1693,6 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             and the distance travelled in the blue channel.
                             Each is displayed as a fraction of the maximums."
                         })),
-                );
-                input_bool(
-                    graph,
-                    "latlong",
-                    Bool::new(default_ray_marcher.latlong).with_ui_data(
-                        UIData::default()
-                            .with_tooltip("Output a LatLong, 360 degree field of view image."),
-                    ),
                 );
                 output_ray_marcher(graph, "out");
             }

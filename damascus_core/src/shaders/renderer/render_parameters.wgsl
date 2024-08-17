@@ -9,7 +9,6 @@
 const DYNAMIC_LEVEL_OF_DETAIL: u32 = 1u;
 const SAMPLE_ATMOSPHERE: u32 = 2u;
 const SECONDARY_SAMPLING: u32 = 4u;
-const LATLONG: u32 = 8u;
 
 // RenderState
 const PAUSED: u32 = 1u;

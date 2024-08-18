@@ -1,7 +1,7 @@
 # damascus
 
 ![workflow](https://github.com/obulka/damascus/actions/workflows/rust.yml/badge.svg?event=push)
-![MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![BSD 3-Clause](https://img.shields.io/github/license/obulka/damascus?color=blue)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 
 Damascus is a ray marcher/path tracer with a node-based gui, written entirely in Rust and WGSL.

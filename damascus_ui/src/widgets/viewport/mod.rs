@@ -16,7 +16,7 @@ use damascus_core::{
 mod settings;
 mod viewport_3d;
 
-pub use settings::ViewportSettings;
+pub use settings::{CompilerSettings, PipelineSettings, ViewportSettings};
 pub use viewport_3d::Viewport3d;
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
@@ -46,11 +46,7 @@ impl Viewport {
                 .write()
                 .callback_resources
                 .clear();
-            viewport.construct_render_pipeline(
-                wgpu_render_state,
-                self.settings.max_primitives,
-                self.settings.max_lights,
-            );
+            viewport.construct_render_pipeline(wgpu_render_state, &self.settings.pipeline_settings);
         }
     }
 
@@ -62,7 +58,7 @@ impl Viewport {
 
     pub fn update_preprocessor_directives(&mut self) -> bool {
         if let Some(viewport) = &mut self.viewport_3d {
-            return viewport.update_preprocessor_directives(&self.settings);
+            return viewport.update_preprocessor_directives(&self.settings.compiler_settings);
         }
         false
     }

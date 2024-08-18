@@ -26,7 +26,7 @@ use damascus_core::{
     shaders,
 };
 
-use super::ViewportSettings;
+use super::{CompilerSettings, PipelineSettings, ViewportSettings};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -42,12 +42,6 @@ pub struct Viewport3d {
     reconstruct_hash: Key,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-struct ReconstructOnChange {
-    max_primitives: usize,
-    max_lights: usize,
-}
-
 impl Viewport3d {
     pub fn new<'a>(
         creation_context: &'a eframe::CreationContext<'a>,
@@ -55,11 +49,7 @@ impl Viewport3d {
     ) -> Option<Self> {
         let renderer = RayMarcher::default();
         let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
-        let reconstruct = ReconstructOnChange {
-            max_primitives: settings.max_primitives,
-            max_lights: settings.max_lights,
-        };
-        let reconstruct_hash = to_key(&reconstruct).ok()?;
+        let reconstruct_hash = to_key(&settings.pipeline_settings).ok()?;
         let mut viewport3d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
@@ -77,8 +67,7 @@ impl Viewport3d {
         Self::construct_render_pipeline(
             &mut viewport3d,
             creation_context.wgpu_render_state.as_ref()?,
-            settings.max_primitives,
-            settings.max_lights,
+            &settings.pipeline_settings,
         );
 
         Some(viewport3d)
@@ -87,8 +76,7 @@ impl Viewport3d {
     pub fn construct_render_pipeline(
         &mut self,
         wgpu_render_state: &egui_wgpu::RenderState,
-        max_primitives: usize,
-        max_lights: usize,
+        pipeline_settings: &PipelineSettings,
     ) {
         self.reset_render();
 
@@ -100,7 +88,7 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = self.create_uniform_buffers(device, max_primitives, max_lights);
+        ) = self.create_uniform_buffers(device, pipeline_settings);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -115,7 +103,7 @@ impl Viewport3d {
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, max_primitives, max_lights);
+        ) = self.create_storage_buffers(device, pipeline_settings);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -230,8 +218,7 @@ impl Viewport3d {
     fn create_uniform_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        max_primitives: usize,
-        max_lights: usize,
+        pipeline_settings: &PipelineSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -242,10 +229,10 @@ impl Viewport3d {
         let scene_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
-                contents: bytemuck::cast_slice(&[self
-                    .renderer
-                    .scene
-                    .scene_parameters(max_primitives, max_lights)]),
+                contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters(
+                    pipeline_settings.max_primitives,
+                    pipeline_settings.max_lights,
+                )]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -349,22 +336,30 @@ impl Viewport3d {
     fn create_storage_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        max_primitives: usize,
-        max_lights: usize,
+        pipeline_settings: &PipelineSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
-        let primitives: Vec<Std430GPUPrimitive> =
-            self.renderer.scene.create_gpu_primitives(max_primitives);
-        let lights: Vec<Std430GPULight> = self.renderer.scene.create_gpu_lights(max_lights);
+        let primitives: Vec<Std430GPUPrimitive> = self
+            .renderer
+            .scene
+            .create_gpu_primitives(pipeline_settings.max_primitives);
+        let lights: Vec<Std430GPULight> = self
+            .renderer
+            .scene
+            .create_gpu_lights(pipeline_settings.max_lights);
         let emissive_primitive_indices: Vec<u32> = self
             .renderer
             .scene
-            .emissive_primitive_indices(max_primitives);
+            .emissive_primitive_indices(pipeline_settings.max_primitives);
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: &[
                 bytemuck::cast_slice(primitives.as_slice()),
-                vec![0; (max_primitives - primitives.len()) * size_of::<Std430GPUPrimitive>()]
-                    .as_slice(),
+                vec![
+                    0;
+                    (pipeline_settings.max_primitives - primitives.len())
+                        * size_of::<Std430GPUPrimitive>()
+                ]
+                .as_slice(),
             ]
             .concat(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
@@ -373,7 +368,11 @@ impl Viewport3d {
             label: Some("viewport 3d lights buffer"),
             contents: &[
                 bytemuck::cast_slice(lights.as_slice()),
-                vec![0; (max_lights - lights.len()) * size_of::<Std430GPULight>()].as_slice(),
+                vec![
+                    0;
+                    (pipeline_settings.max_lights - lights.len()) * size_of::<Std430GPULight>()
+                ]
+                .as_slice(),
             ]
             .concat(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
@@ -388,8 +387,12 @@ impl Viewport3d {
                 label: Some("viewport 3d emissive primitive ids"),
                 contents: &[
                     bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
-                    vec![0; (max_primitives - emissive_primitive_indices.len()) * size_of::<u32>()]
-                        .as_slice(),
+                    vec![
+                        0;
+                        (pipeline_settings.max_primitives - emissive_primitive_indices.len())
+                            * size_of::<u32>()
+                    ]
+                    .as_slice(),
                 ]
                 .concat(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
@@ -536,7 +539,7 @@ impl Viewport3d {
         )
     }
 
-    pub fn update_preprocessor_directives(&mut self, settings: &ViewportSettings) -> bool {
+    pub fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
         let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
 
         if !settings.enable_dynamic_recompilation_for_ray_marcher {
@@ -700,13 +703,8 @@ impl Viewport3d {
 
         self.update_camera(ui, &rect, &response);
 
-        let reconstruct = ReconstructOnChange {
-            max_primitives: settings.max_primitives,
-            max_lights: settings.max_lights,
-        };
-
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key(&reconstruct) {
+        if let Ok(new_hash) = to_key(&settings.pipeline_settings) {
             if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                 if new_hash != self.reconstruct_hash {
                     self.reconstruct_hash = new_hash;
@@ -715,18 +713,14 @@ impl Viewport3d {
                         .write()
                         .callback_resources
                         .clear();
-                    self.construct_render_pipeline(
-                        wgpu_render_state,
-                        settings.max_primitives,
-                        settings.max_lights,
-                    );
+                    self.construct_render_pipeline(wgpu_render_state, &settings.pipeline_settings);
                 }
             }
         } else if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.recompile_hash {
                 self.recompile_hash = new_hash;
-                if settings.dynamic_recompilation_enabled()
-                    && self.update_preprocessor_directives(settings)
+                if settings.compiler_settings.dynamic_recompilation_enabled()
+                    && self.update_preprocessor_directives(&settings.compiler_settings)
                 {
                     if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                         self.recompile_shader(wgpu_render_state);
@@ -741,21 +735,24 @@ impl Viewport3d {
             rect,
             Viewport3dCallback {
                 render_parameters: self.renderer.render_parameters(),
-                scene_parameters: self
-                    .renderer
-                    .scene
-                    .scene_parameters(settings.max_primitives, settings.max_lights),
+                scene_parameters: self.renderer.scene.scene_parameters(
+                    settings.pipeline_settings.max_primitives,
+                    settings.pipeline_settings.max_lights,
+                ),
                 render_camera: self.renderer.scene.render_camera.as_std_430(),
                 primitives: self
                     .renderer
                     .scene
-                    .create_gpu_primitives(settings.max_primitives),
-                lights: self.renderer.scene.create_gpu_lights(settings.max_lights),
+                    .create_gpu_primitives(settings.pipeline_settings.max_primitives),
+                lights: self
+                    .renderer
+                    .scene
+                    .create_gpu_lights(settings.pipeline_settings.max_lights),
                 atmosphere: self.renderer.scene.atmosphere(),
                 emissive_primitive_indices: self
                     .renderer
                     .scene
-                    .emissive_primitive_indices(settings.max_primitives),
+                    .emissive_primitive_indices(settings.pipeline_settings.max_primitives),
                 render_state: self.render_state.as_std_430(),
             },
         ));

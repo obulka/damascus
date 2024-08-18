@@ -166,59 +166,75 @@ pub fn show_toolbar(
             let mut pipeline_reconstruction_required: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("dynamic recompilation for materials");
-                    dynamic_compilation_settings_changed |= ui
-                        .add(egui::Checkbox::without_text(
-                            &mut viewport.settings.enable_dynamic_recompilation_for_materials,
-                        ))
-                        .clicked();
+                ui.menu_button("Compiler Settings", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("dynamic recompilation for materials");
+                        dynamic_compilation_settings_changed |= ui
+                            .add(egui::Checkbox::without_text(
+                                &mut viewport
+                                    .settings
+                                    .compiler_settings
+                                    .enable_dynamic_recompilation_for_materials,
+                            ))
+                            .clicked();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("dynamic recompilation for primitives");
+                        dynamic_compilation_settings_changed |= ui
+                            .add(egui::Checkbox::without_text(
+                                &mut viewport
+                                    .settings
+                                    .compiler_settings
+                                    .enable_dynamic_recompilation_for_primitives,
+                            ))
+                            .clicked();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("dynamic recompilation for ray marcher");
+                        dynamic_compilation_settings_changed |= ui
+                            .add(egui::Checkbox::without_text(
+                                &mut viewport
+                                    .settings
+                                    .compiler_settings
+                                    .enable_dynamic_recompilation_for_ray_marcher,
+                            ))
+                            .clicked();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("dynamic recompilation for lights");
+                        dynamic_compilation_settings_changed |= ui
+                            .add(egui::Checkbox::without_text(
+                                &mut viewport
+                                    .settings
+                                    .compiler_settings
+                                    .enable_dynamic_recompilation_for_lights,
+                            ))
+                            .clicked();
+                    });
                 });
-                ui.horizontal(|ui| {
-                    ui.label("dynamic recompilation for primitives");
-                    dynamic_compilation_settings_changed |= ui
-                        .add(egui::Checkbox::without_text(
-                            &mut viewport
-                                .settings
-                                .enable_dynamic_recompilation_for_primitives,
-                        ))
-                        .clicked();
-                });
-                ui.horizontal(|ui| {
-                    ui.label("dynamic recompilation for ray marcher");
-                    dynamic_compilation_settings_changed |= ui
-                        .add(egui::Checkbox::without_text(
-                            &mut viewport
-                                .settings
-                                .enable_dynamic_recompilation_for_ray_marcher,
-                        ))
-                        .clicked();
-                });
-                ui.horizontal(|ui| {
-                    ui.label("dynamic recompilation for lights");
-                    dynamic_compilation_settings_changed |= ui
-                        .add(egui::Checkbox::without_text(
-                            &mut viewport.settings.enable_dynamic_recompilation_for_lights,
-                        ))
-                        .clicked();
-                });
-                ui.horizontal(|ui| {
-                    ui.label("max primitives");
-                    pipeline_reconstruction_required |= ui
-                        .add(
-                            egui::DragValue::new(&mut viewport.settings.max_primitives)
+                ui.menu_button("Render Pipeline Settings", |ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("max primitives");
+                        pipeline_reconstruction_required |= ui
+                            .add(
+                                egui::DragValue::new(
+                                    &mut viewport.settings.pipeline_settings.max_primitives,
+                                )
                                 .clamp_range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
-                        )
-                        .changed();
-                });
-                ui.horizontal(|ui| {
-                    ui.label("max lights");
-                    pipeline_reconstruction_required |= ui
-                        .add(
-                            egui::DragValue::new(&mut viewport.settings.max_lights)
+                            )
+                            .changed();
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("max lights");
+                        pipeline_reconstruction_required |= ui
+                            .add(
+                                egui::DragValue::new(
+                                    &mut viewport.settings.pipeline_settings.max_lights,
+                                )
                                 .clamp_range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
-                        )
-                        .changed();
+                            )
+                            .changed();
+                    });
                 });
             });
 

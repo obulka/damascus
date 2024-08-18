@@ -1,7 +1,8 @@
-// Copyright 2024 by Owen Bulka.
+// Copyright (c) 2024, Owen Bulka
 // All rights reserved.
-// This file is released under the "MIT License Agreement".
-// Please see the LICENSE file that is included as part of this package.
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree.
+
 use eframe::{egui, egui_wgpu};
 
 use damascus_core::{

@@ -15,7 +15,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
-use serde_hashkey::{to_key, to_key_with_ordered_float, Key, OrderedFloatPolicy};
+use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
@@ -39,7 +39,7 @@ pub struct Viewport3d {
     camera_controls_enabled: bool,
     render_state: RenderState,
     recompile_hash: Key<OrderedFloatPolicy>,
-    reconstruct_hash: Key,
+    reconstruct_hash: Key<OrderedFloatPolicy>,
 }
 
 impl Viewport3d {
@@ -49,7 +49,7 @@ impl Viewport3d {
     ) -> Option<Self> {
         let renderer = RayMarcher::default();
         let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
-        let reconstruct_hash = to_key(&settings.pipeline_settings).ok()?;
+        let reconstruct_hash = to_key_with_ordered_float(&settings.pipeline_settings).ok()?;
         let mut viewport3d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
@@ -704,7 +704,7 @@ impl Viewport3d {
         self.update_camera(ui, &rect, &response);
 
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key(&settings.pipeline_settings) {
+        if let Ok(new_hash) = to_key_with_ordered_float(&settings.pipeline_settings) {
             if new_hash != self.reconstruct_hash {
                 self.reconstruct_hash = new_hash;
                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
@@ -722,6 +722,7 @@ impl Viewport3d {
 
         if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.recompile_hash {
+                self.reset_render();
                 self.recompile_hash = new_hash;
                 if settings.compiler_settings.dynamic_recompilation_enabled()
                     && self.update_preprocessor_directives(&settings.compiler_settings)

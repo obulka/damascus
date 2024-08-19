@@ -705,9 +705,9 @@ impl Viewport3d {
 
         // Check if the nodegraph has changed and reset the render if it has
         if let Ok(new_hash) = to_key(&settings.pipeline_settings) {
-            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                if new_hash != self.reconstruct_hash {
-                    self.reconstruct_hash = new_hash;
+            if new_hash != self.reconstruct_hash {
+                self.reconstruct_hash = new_hash;
+                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                     wgpu_render_state
                         .renderer
                         .write()
@@ -716,7 +716,11 @@ impl Viewport3d {
                     self.construct_render_pipeline(wgpu_render_state, &settings.pipeline_settings);
                 }
             }
-        } else if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
+        } else {
+            panic!("Cannot hash settings!")
+        }
+
+        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
             if new_hash != self.recompile_hash {
                 self.recompile_hash = new_hash;
                 if settings.compiler_settings.dynamic_recompilation_enabled()
@@ -728,7 +732,7 @@ impl Viewport3d {
                 }
             }
         } else {
-            panic!("Cannot hash node graph!")
+            panic!("Cannot hash renderer!")
         }
 
         ui.painter().add(egui_wgpu::Callback::new_paint_callback(

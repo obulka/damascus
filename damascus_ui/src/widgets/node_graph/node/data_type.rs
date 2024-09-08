@@ -38,6 +38,7 @@ pub enum NodeDataType {
     ProceduralTexture,
     RayMarcher,
     Scene,
+    Texture,
 }
 
 // A trait for the data types, to tell the library how to display them
@@ -53,6 +54,7 @@ impl DataTypeTrait<NodeGraphState> for NodeDataType {
             NodeDataType::ProceduralTexture => egui::Color32::from_rgb(14, 73, 9),
             NodeDataType::RayMarcher => egui::Color32::from_rgb(19, 216, 157),
             NodeDataType::Scene => egui::Color32::from_rgb(153, 0, 77),
+            NodeDataType::Texture => egui::Color32::from_rgb(70, 0, 128),
             _ => egui::Color32::WHITE,
         }
     }
@@ -79,6 +81,7 @@ impl DataTypeTrait<NodeGraphState> for NodeDataType {
             NodeDataType::ProceduralTexture => "procedural texture",
             NodeDataType::RayMarcher => "ray marcher",
             NodeDataType::Scene => "scene",
+            NodeDataType::Texture => "texture",
         })
     }
 }

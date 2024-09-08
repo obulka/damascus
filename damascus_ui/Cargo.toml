@@ -14,13 +14,13 @@ egui_extras = { version = "0.27", features = ["svg"] }
 egui-modal = "0.3"
 egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", features = ["persistence"] }
 #egui_node_graph = { path = "../../egui_node_graph/egui_node_graph", features = ["persistence"] }
-glam = { version = "0.24", features = ["serde"] }
+glam = { version = "0.27", features = ["serde"] }
 indoc = "2"
 serde = "1.0"
 serde-hashkey = { version = "0.4.5", features = ["ordered-float"] }
 serde_json = "1.0"
 bytemuck = "1.7.1"
-ndarray = { version = "0.15.6", features = ["serde"] }
+ndarray = { version = "0.16.0", features = ["serde"] }
 rfd = "0.12"
 strum = { version = "0.26", features = ["derive"] }
 #undo_2 = "0.1" # one day...

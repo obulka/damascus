@@ -9,10 +9,9 @@ use std::str::FromStr;
 use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
-use ndarray;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers, scene};
+use damascus_core::{geometry, lights, materials, renderers, scene, textures};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},
@@ -23,7 +22,7 @@ mod inputs;
 pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, camera::Camera, combo_box::ComboBox, float::Float,
     integer::Integer, lights::Lights, mat3::Mat3, mat4::Mat4, material::Material,
-    primitives::Primitives, procedural_texture::ProceduralTexture, scene::Scene,
+    primitives::Primitives, procedural_texture::ProceduralTexture, scene::Scene, texture::Texture,
     unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3,
     vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
 };
@@ -52,7 +51,6 @@ pub enum NodeValueType {
     Vec4 { value: Vec4 },
     Mat3 { value: Mat3 },
     Mat4 { value: Mat4 },
-    Image { value: ndarray::Array4<f32> },
 
     // Composite types
     Camera { value: Camera },
@@ -62,6 +60,7 @@ pub enum NodeValueType {
     ProceduralTexture { value: ProceduralTexture },
     RayMarcher { value: renderers::RayMarcher },
     Scene { value: Scene },
+    Texture { value: Texture },
 }
 
 impl Default for NodeValueType {
@@ -183,15 +182,6 @@ impl NodeValueType {
         }
     }
 
-    /// Tries to downcast this value type to an image
-    pub fn try_to_image(self) -> anyhow::Result<ndarray::Array4<f32>> {
-        if let NodeValueType::Image { value } = self {
-            Ok(value)
-        } else {
-            anyhow::bail!("Invalid cast from {:?} to Image", self)
-        }
-    }
-
     /// Tries to downcast this value type to a camera
     pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
         if let NodeValueType::Camera { value } = self {
@@ -254,6 +244,15 @@ impl NodeValueType {
             anyhow::bail!("Invalid cast from {:?} to Scene", self)
         }
     }
+
+    /// Tries to downcast this value type to a texture
+    pub fn try_to_texture(self) -> anyhow::Result<textures::Texture> {
+        if let NodeValueType::Texture { value } = self {
+            Ok(value.value().clone())
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Texture", self)
+        }
+    }
 }
 
 impl WidgetValueTrait for NodeValueType {
@@ -297,6 +296,7 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::ProceduralTexture { value } => value.create_ui(ui, param_name),
             NodeValueType::Light { value } => value.create_ui(ui, param_name),
             NodeValueType::Scene { value } => value.create_ui(ui, param_name),
+            NodeValueType::Texture { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
                 false
@@ -336,6 +336,7 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::ProceduralTexture { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Light { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Scene { value } => value.create_ui_connected(ui, param_name),
+            NodeValueType::Texture { value } => value.create_ui_connected(ui, param_name),
             _ => {
                 ui.add(egui::Label::new(param_name).selectable(false));
                 false

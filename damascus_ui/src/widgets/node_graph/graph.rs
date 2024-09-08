@@ -11,12 +11,12 @@ use egui_node_graph;
 use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers, scene};
+use damascus_core::{geometry, lights, materials, renderers, scene, textures};
 
 use super::node::{
     value_type::{
         Camera, Lights, Mat4, Material, NodeValueType, Primitives, ProceduralTexture, Scene,
-        UIInput,
+        Texture, UIInput,
     },
     NodeData, NodeDataType, NodeTemplate,
 };
@@ -145,18 +145,6 @@ pub fn evaluate_node(
             )
         }
 
-        // fn input_image(&mut self, name: &str) -> anyhow::Result<ndarray::Array4<f32>> {
-        //     self.evaluate_input(name)?.try_to_image()
-        // }
-
-        // fn output_image(
-        //     &mut self,
-        //     name: &str,
-        //     value: ndarray::Array4<f32>,
-        // ) -> anyhow::Result<NodeValueType> {
-        //     self.populate_output(name, NodeValueType::Image { value })
-        // }
-
         fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
             self.evaluate_input(name)?.try_to_camera()
         }
@@ -270,6 +258,23 @@ pub fn evaluate_node(
                 name,
                 NodeValueType::Scene {
                     value: Scene::new(value),
+                },
+            )
+        }
+
+        fn input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
+            self.evaluate_input(name)?.try_to_texture()
+        }
+
+        fn output_texture(
+            &mut self,
+            name: &str,
+            value: textures::Texture,
+        ) -> anyhow::Result<NodeValueType> {
+            self.populate_output(
+                name,
+                NodeValueType::Texture {
+                    value: Texture::new(value),
                 },
             )
         }
@@ -696,6 +701,9 @@ pub fn evaluate_node(
                     atmosphere: atmosphere,
                 },
             )
+        }
+        NodeTemplate::Texture => {
+            evaluator.output_texture("out", textures::Texture { dimensions: 4 })
         }
     }
 }

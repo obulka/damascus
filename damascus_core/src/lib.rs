@@ -11,3 +11,4 @@ pub mod materials;
 pub mod renderers;
 pub mod scene;
 pub mod shaders;
+pub mod textures;

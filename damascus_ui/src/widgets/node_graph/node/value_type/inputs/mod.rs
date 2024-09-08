@@ -23,6 +23,7 @@ pub mod material;
 pub mod primitives;
 pub mod procedural_texture;
 pub mod scene;
+pub mod texture;
 pub mod unsigned_integer;
 pub mod unsigned_integer_vec3;
 pub mod vec2;

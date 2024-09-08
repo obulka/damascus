@@ -9,7 +9,7 @@ use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
-use damascus_core::{geometry, lights, materials, renderers, scene};
+use damascus_core::{geometry, lights, materials, renderers, scene, textures};
 
 use super::{Graph, NodeGraphResponse, NodeGraphState};
 
@@ -23,8 +23,8 @@ pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
     BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Float, Lights, Mat4, Material,
-    NodeValueType, Primitives, ProceduralTexture, RangedInput, Scene, UIData, UIInput, UVec3,
-    UnsignedInteger, Vec3, Vec4,
+    NodeValueType, Primitives, ProceduralTexture, RangedInput, Scene, Texture, UIData, UIInput,
+    UVec3, UnsignedInteger, Vec3, Vec4,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -42,6 +42,7 @@ pub enum NodeTemplate {
     ProceduralTexture,
     RayMarcher,
     Scene,
+    Texture,
 }
 
 impl NodeCallbacks for NodeTemplate {
@@ -105,6 +106,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             NodeTemplate::ProceduralTexture => "procedural texture",
             NodeTemplate::RayMarcher => "ray marcher",
             NodeTemplate::Scene => "scene",
+            NodeTemplate::Texture => "texture",
         })
     }
 
@@ -249,16 +251,6 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        // let input_image = |graph: &mut Graph, name: &str, default: ndarray::Array4<f32>| {
-        //     graph.add_input_param(
-        //         node_id,
-        //         name.to_string(),
-        //         NodeDataType::Image,
-        //         NodeValueType::Image { value: default },
-        //         egui_node_graph::InputParamKind::ConnectionOnly,
-        //         true,
-        //     );
-        // };
         let input_camera = |graph: &mut Graph, name: &str, default: Camera| {
             graph.add_input_param(
                 node_id,
@@ -312,17 +304,16 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     true,
                 );
             };
-        // let input_ray_marcher =
-        //     |graph: &mut Graph, name: &str, default: renderers::RayMarcher| {
-        //         graph.add_input_param(
-        //             node_id,
-        //             name.to_string(),
-        //             NodeDataType::RayMarcher,
-        //             NodeValueType::RayMarcher { value: default },
-        //             egui_node_graph::InputParamKind::ConnectionOnly,
-        //             true,
-        //         );
-        //     };
+        let input_ray_marcher = |graph: &mut Graph, name: &str, default: renderers::RayMarcher| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::RayMarcher,
+                NodeValueType::RayMarcher { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
         let input_scene = |graph: &mut Graph, name: &str, default: Scene| {
             graph.add_input_param(
                 node_id,
@@ -333,13 +324,20 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
+        let input_texture = |graph: &mut Graph, name: &str, default: Texture| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::Texture,
+                NodeValueType::Texture { value: default },
+                egui_node_graph::InputParamKind::ConnectionOnly,
+                true,
+            );
+        };
 
         let output_matrix4 = |graph: &mut Graph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), NodeDataType::Mat4);
         };
-        // let output_image = |graph: &mut Graph, name: &str| {
-        //     graph.add_output_param(node_id, name.to_string(), NodeDataType::Image);
-        // };
         let output_camera = |graph: &mut Graph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), NodeDataType::Camera);
         };
@@ -360,6 +358,9 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
         };
         let output_scene = |graph: &mut Graph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), NodeDataType::Scene);
+        };
+        let output_texture = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::Texture);
         };
 
         match self {
@@ -1727,6 +1728,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     )),
                 );
                 output_scene(graph, "out");
+            }
+            NodeTemplate::Texture => {
+                let default_texture = textures::Texture::default();
+
+                output_texture(graph, "out");
             }
         }
     }

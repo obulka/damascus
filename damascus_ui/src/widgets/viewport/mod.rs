@@ -27,7 +27,7 @@ pub struct Viewport {
 }
 
 impl Viewport {
-    pub const ICON_SIZE: f32 = 20.;
+    pub const ICON_SIZE: f32 = 25.;
 
     pub fn new<'a>(
         creation_context: &'a eframe::CreationContext<'a>,

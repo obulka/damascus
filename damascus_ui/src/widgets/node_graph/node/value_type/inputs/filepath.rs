@@ -6,6 +6,7 @@
 use eframe::egui;
 
 use super::{UIData, UIInput};
+use crate::icons::Icons;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -25,6 +26,20 @@ impl Default for Filepath {
     }
 }
 
+impl Filepath {
+    fn file_button(&mut self, ui: &mut egui::Ui) -> bool {
+        let file_icon = egui::Image::new(Icons::File.source())
+            .maintain_aspect_ratio(true)
+            .fit_to_exact_size(egui::Vec2::splat(ui.available_size().y / 2.));
+
+        if ui.add(egui::ImageButton::new(file_icon)).clicked() {
+            println!("pick file");
+            return true;
+        }
+        false
+    }
+}
+
 impl UIInput<Box<std::path::Path>> for Filepath {
     fn new(value: Box<std::path::Path>) -> Self {
         if let Some(path_string) = (*value).to_str() {
@@ -41,12 +56,17 @@ impl UIInput<Box<std::path::Path>> for Filepath {
         let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
+            ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_gray(27);
             let response = ui.add(
-                egui::TextEdit::singleline(&mut self.path_string).desired_width(f32::INFINITY),
+                egui::TextEdit::singleline(&mut self.path_string)
+                    .desired_width(f32::INFINITY)
+                    .hint_text("/path/to/file"),
             );
             self.value = std::path::Path::new(&self.path_string).into();
             has_changed =
                 response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
+
+            self.file_button(ui);
         });
 
         has_changed

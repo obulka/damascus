@@ -112,6 +112,7 @@ impl Damascus {
         // will be blurry, so we manually forget them occasionally
         Icons::ArrowRight.forget(ctx);
         Icons::ArrowLeft.forget(ctx);
+        Icons::File.forget(ctx);
     }
 }
 
@@ -145,10 +146,12 @@ impl eframe::App for Damascus {
             }
         }
 
-        if ctx.input(|input| {
-            input.key_pressed(egui::Key::N)
-                && input.modifiers.matches_logically(egui::Modifiers::CTRL)
-        }) {
+        if ctx.memory(|memory| memory.focused().is_none())
+            && ctx.input(|input| {
+                input.key_pressed(egui::Key::N)
+                    && input.modifiers.matches_logically(egui::Modifiers::CTRL)
+            })
+        {
             self.node_graph.clear();
         }
 

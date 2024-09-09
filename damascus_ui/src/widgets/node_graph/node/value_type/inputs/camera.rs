@@ -8,6 +8,7 @@ use damascus_core::geometry::camera;
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Camera {
     value: camera::Camera,
     ui_data: UIData,

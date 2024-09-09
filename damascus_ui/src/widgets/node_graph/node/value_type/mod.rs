@@ -20,8 +20,8 @@ use super::{
 
 mod inputs;
 pub use inputs::{
-    boolean::Bool, boolean_vec3::BVec3, camera::Camera, combo_box::ComboBox, float::Float,
-    integer::Integer, lights::Lights, mat3::Mat3, mat4::Mat4, material::Material,
+    boolean::Bool, boolean_vec3::BVec3, camera::Camera, combo_box::ComboBox, filepath::Filepath,
+    float::Float, integer::Integer, lights::Lights, mat3::Mat3, mat4::Mat4, material::Material,
     primitives::Primitives, procedural_texture::ProceduralTexture, scene::Scene, texture::Texture,
     unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3,
     vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
@@ -42,6 +42,7 @@ pub enum NodeValueType {
     Bool { value: Bool },
     BVec3 { value: BVec3 },
     ComboBox { value: ComboBox },
+    Filepath { value: Filepath },
     Integer { value: Integer },
     UnsignedInteger { value: UnsignedInteger },
     UVec3 { value: UVec3 },
@@ -125,6 +126,15 @@ impl NodeValueType {
             value.as_enum::<E>()
         } else {
             anyhow::bail!("Invalid cast from {:?} to combo_box", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a float
+    pub fn try_to_filepath(self) -> anyhow::Result<Box<std::path::Path>> {
+        if let NodeValueType::Filepath { value } = self {
+            Ok(value.value().clone())
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to Path", self)
         }
     }
 
@@ -284,6 +294,7 @@ impl WidgetValueTrait for NodeValueType {
                 RangedInput::create_ui(value, ui, param_name)
             }
             NodeValueType::UVec3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Filepath { value } => value.create_ui(ui, param_name),
             NodeValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
             NodeValueType::Vec2 { value } => value.create_ui(ui, param_name),
             NodeValueType::Vec3 { value } => value.create_ui(ui, param_name),

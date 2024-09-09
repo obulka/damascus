@@ -22,7 +22,7 @@ use callbacks::{LightCallbacks, NodeCallbacks, PrimitiveCallbacks, ProceduralTex
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
-    BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Float, Lights, Mat4, Material,
+    BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Filepath, Float, Lights, Mat4, Material,
     NodeValueType, Primitives, ProceduralTexture, RangedInput, Scene, Texture, UIData, UIInput,
     UVec3, UnsignedInteger, Vec3, Vec4,
 };
@@ -187,6 +187,16 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 name.to_string(),
                 NodeDataType::UVec3,
                 NodeValueType::UVec3 { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_filepath = |graph: &mut Graph, name: &str, default: Filepath| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::Filepath,
+                NodeValueType::Filepath { value: default },
                 egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
@@ -1731,7 +1741,12 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             }
             NodeTemplate::Texture => {
                 let default_texture = textures::Texture::default();
-
+                input_filepath(
+                    graph,
+                    "filepath",
+                    Filepath::new(default_texture.filepath)
+                        .with_ui_data(UIData::default().with_tooltip("The path to the texture.")),
+                );
                 output_texture(graph, "out");
             }
         }

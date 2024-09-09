@@ -96,20 +96,24 @@ pub fn show_toolbar(
     egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {
         egui::menu::bar(ui, |ui| {
             // File menu
-            let mut load_requested: bool = egui_context.input(|input| {
-                input.key_pressed(egui::Key::L)
-                    && input.modifiers.matches_logically(egui::Modifiers::CTRL)
-            });
-            let mut save_requested: bool = egui_context.input(|input| {
-                input.key_pressed(egui::Key::S)
-                    && input.modifiers.matches_exact(egui::Modifiers::CTRL)
-            });
-            let mut save_as_requested: bool = egui_context.input(|input| {
-                input.key_pressed(egui::Key::S)
-                    && input
-                        .modifiers
-                        .matches_exact(egui::Modifiers::CTRL | egui::Modifiers::SHIFT)
-            });
+            let mut load_requested: bool = egui_context.memory(|memory| memory.focused().is_none())
+                && egui_context.input(|input| {
+                    input.key_pressed(egui::Key::L)
+                        && input.modifiers.matches_logically(egui::Modifiers::CTRL)
+                });
+            let mut save_requested: bool = egui_context.memory(|memory| memory.focused().is_none())
+                && egui_context.input(|input| {
+                    input.key_pressed(egui::Key::S)
+                        && input.modifiers.matches_exact(egui::Modifiers::CTRL)
+                });
+            let mut save_as_requested: bool = egui_context
+                .memory(|memory| memory.focused().is_none())
+                && egui_context.input(|input| {
+                    input.key_pressed(egui::Key::S)
+                        && input
+                            .modifiers
+                            .matches_exact(egui::Modifiers::CTRL | egui::Modifiers::SHIFT)
+                });
 
             let success_dialog: bool = !save_requested;
 

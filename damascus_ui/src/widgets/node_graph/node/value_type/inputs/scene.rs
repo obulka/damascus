@@ -8,6 +8,7 @@ use damascus_core::scene;
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Scene {
     value: scene::Scene,
     ui_data: UIData,

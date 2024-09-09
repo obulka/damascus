@@ -9,6 +9,7 @@ use glam;
 use super::{create_drag_value_ui, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct UVec3 {
     value: glam::UVec3,
     ui_data: UIData,

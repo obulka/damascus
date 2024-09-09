@@ -14,6 +14,7 @@ pub mod boolean;
 pub mod boolean_vec3;
 pub mod camera;
 pub mod combo_box;
+pub mod filepath;
 pub mod float;
 pub mod integer;
 pub mod lights;

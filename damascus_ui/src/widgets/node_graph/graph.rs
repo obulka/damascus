@@ -108,6 +108,10 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_uvec3()
         }
 
+        fn input_filepath(&mut self, name: &str) -> anyhow::Result<Box<std::path::Path>> {
+            self.evaluate_input(name)?.try_to_filepath()
+        }
+
         fn input_float(&mut self, name: &str) -> anyhow::Result<f32> {
             self.evaluate_input(name)?.try_to_float()
         }
@@ -703,7 +707,14 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Texture => {
-            evaluator.output_texture("out", textures::Texture { dimensions: 4 })
+            let filepath = evaluator.input_filepath("texture_path")?;
+            evaluator.output_texture(
+                "out",
+                textures::Texture {
+                    dimensions: 4,
+                    filepath: filepath,
+                },
+            )
         }
     }
 }

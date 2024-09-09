@@ -130,7 +130,7 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a float
-    pub fn try_to_filepath(self) -> anyhow::Result<Box<std::path::Path>> {
+    pub fn try_to_filepath(self) -> anyhow::Result<String> {
         if let NodeValueType::Filepath { value } = self {
             Ok(value.value().clone())
         } else {

@@ -6,7 +6,6 @@
 use eframe::egui;
 
 use super::{UIData, UIInput};
-use crate::icons::Icons;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -28,11 +27,7 @@ impl Default for Filepath {
 
 impl Filepath {
     fn file_button(&mut self, ui: &mut egui::Ui) -> bool {
-        let file_icon = egui::Image::new(Icons::File.source())
-            .maintain_aspect_ratio(true)
-            .fit_to_exact_size(egui::Vec2::splat(ui.available_size().y / 2.));
-
-        if ui.add(egui::ImageButton::new(file_icon)).clicked() {
+        if ui.add(egui::Button::new("🗁")).clicked() {
             println!("pick file");
             return true;
         }

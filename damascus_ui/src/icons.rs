@@ -10,8 +10,6 @@ use strum::EnumString;
 pub enum Icons {
     Pause,
     Play,
-    ArrowRight,
-    ArrowLeft,
     Refresh,
 }
 
@@ -20,8 +18,6 @@ impl Icons {
         match *self {
             Self::Pause => include_image!("../assets/icons/pause.svg"),
             Self::Play => include_image!("../assets/icons/play.svg"),
-            Self::ArrowRight => include_image!("../assets/icons/arrow_right.svg"),
-            Self::ArrowLeft => include_image!("../assets/icons/arrow_left.svg"),
             Self::Refresh => include_image!("../assets/icons/refresh.svg"),
         }
     }

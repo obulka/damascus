@@ -108,7 +108,7 @@ pub fn evaluate_node(
             self.evaluate_input(name)?.try_to_uvec3()
         }
 
-        fn input_filepath(&mut self, name: &str) -> anyhow::Result<Box<std::path::Path>> {
+        fn input_filepath(&mut self, name: &str) -> anyhow::Result<String> {
             self.evaluate_input(name)?.try_to_filepath()
         }
 

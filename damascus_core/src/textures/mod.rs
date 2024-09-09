@@ -7,14 +7,14 @@
 #[serde(default)]
 pub struct Texture {
     pub dimensions: u32,
-    pub filepath: Box<std::path::Path>,
+    pub filepath: String,
 }
 
 impl Default for Texture {
     fn default() -> Self {
         Self {
             dimensions: 4,
-            filepath: std::path::Path::new("").into(),
+            filepath: String::new(),
         }
     }
 }

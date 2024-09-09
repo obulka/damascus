@@ -135,8 +135,13 @@ pub fn show_toolbar(
 
             let mut saved: bool = false;
             if load_requested {
-                let mut file_dialog = rfd::FileDialog::new().set_title("load from file");
+                let mut file_dialog = rfd::FileDialog::new()
+                    .set_title("load from file")
+                    .add_filter("damascus", &["dam"]);
                 if let Some(file_path) = &context.working_file {
+                    if let Some(directory) = std::path::Path::new(file_path).parent() {
+                        file_dialog = file_dialog.set_directory(directory);
+                    }
                     file_dialog = file_dialog.set_file_name(file_path);
                 }
                 if let Some(path) = file_dialog.pick_file() {
@@ -152,7 +157,9 @@ pub fn show_toolbar(
                 }
             }
             if (save_requested && !saved) || save_as_requested {
-                let mut file_dialog = rfd::FileDialog::new().set_title("save to file");
+                let mut file_dialog = rfd::FileDialog::new()
+                    .set_title("save to file")
+                    .add_filter("damascus", &["dam"]);
                 if let Some(file_path) = &context.working_file {
                     if let Some(directory) = std::path::Path::new(file_path).parent() {
                         file_dialog = file_dialog.set_directory(directory);

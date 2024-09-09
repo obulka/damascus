@@ -10,20 +10,17 @@ use eframe::egui;
 use egui_node_graph::NodeResponse;
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
-use super::{
-    icons::Icons,
-    widgets::{
-        node_graph::{
-            evaluate_node,
-            node::{
-                callbacks::NodeCallbacks,
-                value_type::{Bool, NodeValueType, UIInput},
-            },
-            NodeGraph, NodeGraphEditorState, NodeGraphResponse,
+use super::widgets::{
+    node_graph::{
+        evaluate_node,
+        node::{
+            callbacks::NodeCallbacks,
+            value_type::{Bool, NodeValueType, UIInput},
         },
-        toolbar::show_toolbar,
-        viewport::{Viewport, ViewportSettings},
+        NodeGraph, NodeGraphEditorState, NodeGraphResponse,
     },
+    toolbar::show_toolbar,
+    viewport::{Viewport, ViewportSettings},
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -106,13 +103,6 @@ impl Damascus {
                 "damascus".to_owned()
             },
         ));
-
-        // Egui does not automatically evict images from cache
-        // so if it loads in a small icon then the ui rescales the icons
-        // will be blurry, so we manually forget them occasionally
-        Icons::ArrowRight.forget(ctx);
-        Icons::ArrowLeft.forget(ctx);
-        Icons::File.forget(ctx);
     }
 }
 

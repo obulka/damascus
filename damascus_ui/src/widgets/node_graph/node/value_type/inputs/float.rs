@@ -8,6 +8,7 @@ use core::ops::RangeInclusive;
 use super::{RangedInput, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Float {
     value: f32,
     ui_data: UIData,

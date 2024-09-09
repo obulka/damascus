@@ -8,6 +8,7 @@ use damascus_core::geometry;
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Primitives {
     value: Vec<geometry::Primitive>,
     ui_data: UIData,

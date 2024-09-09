@@ -8,6 +8,7 @@ use damascus_core::textures;
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Texture {
     value: textures::Texture,
     ui_data: UIData,

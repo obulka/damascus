@@ -697,7 +697,9 @@ impl Viewport3d {
 
         ui.ctx().request_repaint();
 
-        if ui.input(|input| input.key_pressed(egui::Key::Space)) {
+        if ui.ctx().memory(|memory| memory.focused().is_none())
+            && ui.input(|input| input.key_pressed(egui::Key::Space))
+        {
             self.toggle_play_pause();
         }
 

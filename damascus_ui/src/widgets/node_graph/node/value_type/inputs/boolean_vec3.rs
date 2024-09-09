@@ -9,6 +9,7 @@ use glam;
 use super::{Collapsible, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct BVec3 {
     value: glam::BVec3,
     ui_data: UIData,

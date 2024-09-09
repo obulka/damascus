@@ -8,6 +8,7 @@ use damascus_core::materials;
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Material {
     value: materials::Material,
     ui_data: UIData,

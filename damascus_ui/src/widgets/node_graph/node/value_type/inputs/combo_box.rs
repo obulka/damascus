@@ -12,6 +12,7 @@ use strum::IntoEnumIterator;
 use super::{UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct ComboBox {
     selected: String,
     options: Vec<String>,

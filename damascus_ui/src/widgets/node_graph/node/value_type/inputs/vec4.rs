@@ -9,6 +9,7 @@ use glam;
 use super::{create_drag_value_ui, Collapsible, Colour, UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Vec4 {
     value: [f32; 4],
     ui_data: UIData,

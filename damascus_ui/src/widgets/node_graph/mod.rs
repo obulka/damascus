@@ -67,7 +67,9 @@ impl NodeGraph {
                 rect.min.y -= 8.;
                 ui.set_clip_rect(rect);
 
-                if ui.ctx().input(|input| input.key_pressed(egui::Key::F)) {
+                if ctx.memory(|memory| memory.focused().is_none())
+                    && ui.ctx().input(|input| input.key_pressed(egui::Key::F))
+                {
                     self.editor_state.reset_zoom(ui);
                 }
 

@@ -707,7 +707,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Texture => {
-            let filepath = evaluator.input_filepath("texture_path")?;
+            let filepath = evaluator.input_filepath("filepath")?;
             evaluator.output_texture(
                 "out",
                 textures::Texture {

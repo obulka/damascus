@@ -54,43 +54,43 @@ impl UIInput<String> for Filepath {
 
     fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
         let mut has_changed = false;
-        ui.vertical(|ui| {
-            ui.horizontal(|ui| {
-                self.create_parameter_label(ui, label);
-                ui.style_mut().visuals.extreme_bg_color =
-                    if self.value.is_empty() || std::path::Path::new(&self.value).is_file() {
-                        egui::Color32::from_gray(45)
-                    } else {
-                        egui::Color32::from_rgb(45, 0, 0)
-                    };
-                let response = ui
-                    .add(
-                        egui::TextEdit::singleline(&mut self.value)
-                            .desired_width(f32::INFINITY)
-                            .hint_text("/path/to/file"),
-                    )
-                    .on_hover_text(self.value.clone());
-                has_changed =
-                    response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
+        ui.horizontal(|ui| {
+            self.create_parameter_label(ui, label);
+            ui.style_mut().visuals.extreme_bg_color =
+                if self.value.is_empty() || std::path::Path::new(&self.value).is_file() {
+                    egui::Color32::from_gray(45)
+                } else {
+                    egui::Color32::from_rgb(45, 0, 0)
+                };
+            let response = ui
+                .add(
+                    egui::TextEdit::singleline(&mut self.value)
+                        .desired_width(f32::INFINITY)
+                        .hint_text("/path/to/file"),
+                )
+                .on_hover_text(self.value.clone());
+            has_changed =
+                response.lost_focus() && ui.input(|input| input.key_pressed(egui::Key::Enter));
 
-                self.file_button(ui);
-            });
-            ui.horizontal(|ui| {
-                ui.label("🖼");
-                ui.add(egui::Checkbox::without_text(&mut self.show_image));
-            });
-            if self.show_image {
-                ui.vertical_centered(|ui| {
-                    if !self.value.is_empty() && std::path::Path::new(&self.value).is_file() {
-                        ui.add(
-                            egui::Image::new(format!("file://{}", self.value))
-                                .shrink_to_fit()
-                                .maintain_aspect_ratio(true),
-                        );
-                    }
-                });
-            }
+            self.file_button(ui);
         });
+        ui.horizontal(|ui| {
+            ui.label("🖼");
+            ui.add(egui::Checkbox::without_text(&mut self.show_image));
+        });
+        if self.show_image {
+            ui.vertical_centered(|ui| {
+                if !self.value.is_empty() && std::path::Path::new(&self.value).is_file() {
+                    ui.add(
+                        egui::Image::new(format!("file://{}", self.value))
+                            .shrink_to_fit()
+                            .maintain_aspect_ratio(true)
+                            .rounding(10.)
+                            .show_loading_spinner(true),
+                    );
+                }
+            });
+        }
 
         has_changed
     }

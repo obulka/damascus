@@ -264,6 +264,7 @@ impl eframe::App for Damascus {
                         self.viewport
                             .default_renderer_with_scene(value.value().clone());
                     }
+                    NodeValueType::Texture { value } => {}
                     _ => {}
                 }
 

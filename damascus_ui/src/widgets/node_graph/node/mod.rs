@@ -98,8 +98,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
 
     fn node_finder_label(&self, _user_state: &mut Self::UserState) -> Cow<'_, str> {
         Cow::Borrowed(match self {
-            NodeTemplate::Axis => "axis",
-            NodeTemplate::Camera => "camera",
+            NodeTemplate::Axis => "axis ∟",
+            NodeTemplate::Camera => "camera 📷",
             NodeTemplate::Light => "light",
             NodeTemplate::Material => "material",
             NodeTemplate::Primitive => "primitive",

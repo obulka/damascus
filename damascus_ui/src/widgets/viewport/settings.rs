@@ -5,12 +5,28 @@
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct PipelineSettings {
+pub struct PipelineSettings2D {
+    pub max_primitives: usize, // TODO Remove these
+    pub max_lights: usize,
+}
+
+impl Default for PipelineSettings2D {
+    fn default() -> Self {
+        Self {
+            max_primitives: 1024,
+            max_lights: 1024,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct PipelineSettings3D {
     pub max_primitives: usize,
     pub max_lights: usize,
 }
 
-impl Default for PipelineSettings {
+impl Default for PipelineSettings3D {
     fn default() -> Self {
         Self {
             max_primitives: 1024,
@@ -48,18 +64,30 @@ impl CompilerSettings {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub enum ViewportActiveState {
+    Viewport2D,
+    #[default]
+    Viewport3D,
+    SeparateWindows,
+}
+
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct ViewportSettings {
     pub compiler_settings: CompilerSettings,
-    pub pipeline_settings: PipelineSettings,
+    pub pipeline_settings_2d: PipelineSettings2D,
+    pub pipeline_settings_3d: PipelineSettings3D,
+    pub active_state: ViewportActiveState,
 }
 
 impl Default for ViewportSettings {
     fn default() -> Self {
         Self {
             compiler_settings: CompilerSettings::default(),
-            pipeline_settings: PipelineSettings::default(),
+            pipeline_settings_2d: PipelineSettings2D::default(),
+            pipeline_settings_3d: PipelineSettings3D::default(),
+            active_state: ViewportActiveState::default(),
         }
     }
 }

@@ -26,11 +26,11 @@ use damascus_core::{
     shaders,
 };
 
-use super::{CompilerSettings, PipelineSettings3D, ViewportSettings};
+use super::{CompilerSettings, PipelineSettings2D, ViewportSettings};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-pub struct Viewport3d {
+pub struct Viewport2d {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
@@ -42,14 +42,14 @@ pub struct Viewport3d {
     reconstruct_hash: Key<OrderedFloatPolicy>,
 }
 
-impl Viewport3d {
+impl Viewport2d {
     pub fn new<'a>(
         creation_context: &'a eframe::CreationContext<'a>,
         settings: &ViewportSettings,
     ) -> Option<Self> {
         let renderer = RayMarcher::default();
         let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
-        let reconstruct_hash = to_key_with_ordered_float(&settings.pipeline_settings_3d).ok()?;
+        let reconstruct_hash = to_key_with_ordered_float(&settings.pipeline_settings_2d).ok()?;
         let mut viewport3d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
@@ -67,7 +67,7 @@ impl Viewport3d {
         Self::construct_render_pipeline(
             &mut viewport3d,
             creation_context.wgpu_render_state.as_ref()?,
-            &settings.pipeline_settings_3d,
+            &settings.pipeline_settings_2d,
         );
 
         Some(viewport3d)
@@ -76,7 +76,7 @@ impl Viewport3d {
     pub fn construct_render_pipeline(
         &mut self,
         wgpu_render_state: &egui_wgpu::RenderState,
-        pipeline_settings_3d: &PipelineSettings3D,
+        pipeline_settings_2d: &PipelineSettings2D,
     ) {
         self.reset_render();
 
@@ -88,7 +88,7 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = self.create_uniform_buffers(device, pipeline_settings_3d);
+        ) = self.create_uniform_buffers(device, pipeline_settings_2d);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -103,7 +103,7 @@ impl Viewport3d {
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, pipeline_settings_3d);
+        ) = self.create_storage_buffers(device, pipeline_settings_2d);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -218,7 +218,7 @@ impl Viewport3d {
     fn create_uniform_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        pipeline_settings_3d: &PipelineSettings3D,
+        pipeline_settings_2d: &PipelineSettings2D,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -230,8 +230,8 @@ impl Viewport3d {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
                 contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters(
-                    pipeline_settings_3d.max_primitives,
-                    pipeline_settings_3d.max_lights,
+                    pipeline_settings_2d.max_primitives,
+                    pipeline_settings_2d.max_lights,
                 )]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
@@ -336,27 +336,27 @@ impl Viewport3d {
     fn create_storage_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        pipeline_settings_3d: &PipelineSettings3D,
+        pipeline_settings_2d: &PipelineSettings2D,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives: Vec<Std430GPUPrimitive> = self
             .renderer
             .scene
-            .create_gpu_primitives(pipeline_settings_3d.max_primitives);
+            .create_gpu_primitives(pipeline_settings_2d.max_primitives);
         let lights: Vec<Std430GPULight> = self
             .renderer
             .scene
-            .create_gpu_lights(pipeline_settings_3d.max_lights);
+            .create_gpu_lights(pipeline_settings_2d.max_lights);
         let emissive_primitive_indices: Vec<u32> = self
             .renderer
             .scene
-            .emissive_primitive_indices(pipeline_settings_3d.max_primitives);
+            .emissive_primitive_indices(pipeline_settings_2d.max_primitives);
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: &[
                 bytemuck::cast_slice(primitives.as_slice()),
                 vec![
                     0;
-                    (pipeline_settings_3d.max_primitives - primitives.len())
+                    (pipeline_settings_2d.max_primitives - primitives.len())
                         * size_of::<Std430GPUPrimitive>()
                 ]
                 .as_slice(),
@@ -370,7 +370,7 @@ impl Viewport3d {
                 bytemuck::cast_slice(lights.as_slice()),
                 vec![
                     0;
-                    (pipeline_settings_3d.max_lights - lights.len()) * size_of::<Std430GPULight>()
+                    (pipeline_settings_2d.max_lights - lights.len()) * size_of::<Std430GPULight>()
                 ]
                 .as_slice(),
             ]
@@ -389,7 +389,7 @@ impl Viewport3d {
                     bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
                     vec![
                         0;
-                        (pipeline_settings_3d.max_primitives - emissive_primitive_indices.len())
+                        (pipeline_settings_2d.max_primitives - emissive_primitive_indices.len())
                             * size_of::<u32>()
                     ]
                     .as_slice(),
@@ -706,7 +706,7 @@ impl Viewport3d {
         self.update_camera(ui, &rect, &response);
 
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&settings.pipeline_settings_3d) {
+        if let Ok(new_hash) = to_key_with_ordered_float(&settings.pipeline_settings_2d) {
             if new_hash != self.reconstruct_hash {
                 self.reconstruct_hash = new_hash;
                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
@@ -717,7 +717,7 @@ impl Viewport3d {
                         .clear();
                     self.construct_render_pipeline(
                         wgpu_render_state,
-                        &settings.pipeline_settings_3d,
+                        &settings.pipeline_settings_2d,
                     );
                 }
             }
@@ -743,26 +743,26 @@ impl Viewport3d {
 
         ui.painter().add(egui_wgpu::Callback::new_paint_callback(
             rect,
-            Viewport3dCallback {
+            Viewport2dCallback {
                 render_parameters: self.renderer.render_parameters(),
                 scene_parameters: self.renderer.scene.scene_parameters(
-                    settings.pipeline_settings_3d.max_primitives,
-                    settings.pipeline_settings_3d.max_lights,
+                    settings.pipeline_settings_2d.max_primitives,
+                    settings.pipeline_settings_2d.max_lights,
                 ),
                 render_camera: self.renderer.scene.render_camera.as_std_430(),
                 primitives: self
                     .renderer
                     .scene
-                    .create_gpu_primitives(settings.pipeline_settings_3d.max_primitives),
+                    .create_gpu_primitives(settings.pipeline_settings_2d.max_primitives),
                 lights: self
                     .renderer
                     .scene
-                    .create_gpu_lights(settings.pipeline_settings_3d.max_lights),
+                    .create_gpu_lights(settings.pipeline_settings_2d.max_lights),
                 atmosphere: self.renderer.scene.atmosphere(),
                 emissive_primitive_indices: self
                     .renderer
                     .scene
-                    .emissive_primitive_indices(settings.pipeline_settings_3d.max_primitives),
+                    .emissive_primitive_indices(settings.pipeline_settings_2d.max_primitives),
                 render_state: self.render_state.as_std_430(),
             },
         ));
@@ -794,7 +794,7 @@ impl Viewport3d {
     }
 }
 
-struct Viewport3dCallback {
+struct Viewport2dCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
     render_camera: Std430GPUCamera,
@@ -805,7 +805,7 @@ struct Viewport3dCallback {
     render_state: Std430GPURenderState,
 }
 
-impl egui_wgpu::CallbackTrait for Viewport3dCallback {
+impl egui_wgpu::CallbackTrait for Viewport2dCallback {
     fn prepare(
         &self,
         device: &wgpu::Device,

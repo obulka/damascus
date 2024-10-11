@@ -29,7 +29,6 @@ pub enum NodeDataType {
     Vec4,
     Mat3,
     Mat4,
-    Image,
 
     // Composite types
     Camera,
@@ -47,7 +46,6 @@ impl DataTypeTrait<NodeGraphState> for NodeDataType {
     fn data_type_color(&self, _user_state: &mut NodeGraphState) -> egui::Color32 {
         match self {
             NodeDataType::Mat4 => egui::Color32::from_rgb(18, 184, 196),
-            NodeDataType::Image => egui::Color32::from_rgb(243, 230, 255),
             NodeDataType::Camera => egui::Color32::from_rgb(123, 10, 10),
             NodeDataType::Light => egui::Color32::from_rgb(255, 204, 128),
             NodeDataType::Material => egui::Color32::from_rgb(255, 102, 0),
@@ -75,7 +73,6 @@ impl DataTypeTrait<NodeGraphState> for NodeDataType {
             NodeDataType::Vec4 => "4d vector",
             NodeDataType::Mat3 => "3x3 matrix",
             NodeDataType::Mat4 => "4x4 matrix",
-            NodeDataType::Image => "image",
             NodeDataType::Camera => "camera",
             NodeDataType::Light => "light",
             NodeDataType::Material => "material",

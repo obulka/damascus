@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use eframe::{egui, egui_wgpu};
+use eframe::egui;
 
 use damascus_core::{
     geometry::{camera::Camera, Primitive},
@@ -14,15 +14,21 @@ use damascus_core::{
 };
 
 mod settings;
+mod viewport_2d;
 mod viewport_3d;
 
-pub use settings::{CompilerSettings, PipelineSettings, ViewportSettings};
+pub use settings::{
+    CompilerSettings, PipelineSettings2D, PipelineSettings3D, ViewportActiveState, ViewportSettings,
+};
+
+pub use viewport_2d::Viewport2d;
 pub use viewport_3d::Viewport3d;
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
 
 pub struct Viewport {
     pub settings: ViewportSettings,
+    viewport_2d: Option<Viewport2d>,
     viewport_3d: Option<Viewport3d>,
 }
 
@@ -35,50 +41,230 @@ impl Viewport {
     ) -> Self {
         Self {
             settings: settings,
+            viewport_2d: Viewport2d::new(creation_context, &settings),
             viewport_3d: Viewport3d::new(creation_context, &settings),
         }
     }
 
-    pub fn reconstruct_render_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
-        if let Some(viewport) = &mut self.viewport_3d {
-            wgpu_render_state
-                .renderer
-                .write()
-                .callback_resources
-                .clear();
-            viewport.construct_render_pipeline(wgpu_render_state, &self.settings.pipeline_settings);
+    pub fn reconstruct_2d_render_pipeline(&mut self, frame: &eframe::Frame) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                wgpu_render_state
+                    .renderer
+                    .write()
+                    .callback_resources
+                    .clear();
+                viewport.construct_render_pipeline(
+                    wgpu_render_state,
+                    &self.settings.pipeline_settings_2d,
+                );
+            }
         }
     }
 
-    pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+    pub fn reconstruct_3d_render_pipeline(&mut self, frame: &eframe::Frame) {
         if let Some(viewport) = &mut self.viewport_3d {
-            viewport.recompile_shader(wgpu_render_state);
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                wgpu_render_state
+                    .renderer
+                    .write()
+                    .callback_resources
+                    .clear();
+                viewport.construct_render_pipeline(
+                    wgpu_render_state,
+                    &self.settings.pipeline_settings_3d,
+                );
+            }
         }
     }
 
-    pub fn update_preprocessor_directives(&mut self) -> bool {
+    pub fn reconstruct_active_render_pipelines(&mut self, frame: &eframe::Frame) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.reconstruct_2d_render_pipeline(frame);
+            }
+            ViewportActiveState::Viewport3D => {
+                self.reconstruct_3d_render_pipeline(frame);
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.reconstruct_2d_render_pipeline(frame);
+                self.reconstruct_3d_render_pipeline(frame);
+            }
+        }
+    }
+
+    pub fn recompile_2d_shader(&mut self, frame: &eframe::Frame) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                viewport.recompile_shader(wgpu_render_state);
+            }
+        }
+    }
+
+    pub fn recompile_3d_shader(&mut self, frame: &eframe::Frame) {
+        if let Some(viewport) = &mut self.viewport_3d {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                viewport.recompile_shader(wgpu_render_state);
+            }
+        }
+    }
+
+    pub fn recompile_active_shaders(&mut self, frame: &eframe::Frame) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.recompile_2d_shader(frame);
+            }
+            ViewportActiveState::Viewport3D => {
+                self.recompile_3d_shader(frame);
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.recompile_2d_shader(frame);
+                self.recompile_3d_shader(frame);
+            }
+        }
+    }
+
+    pub fn update_2d_preprocessor_directives(&mut self) -> bool {
+        if let Some(viewport) = &mut self.viewport_2d {
+            return viewport.update_preprocessor_directives(&self.settings.compiler_settings);
+        }
+        false
+    }
+
+    pub fn update_3d_preprocessor_directives(&mut self) -> bool {
         if let Some(viewport) = &mut self.viewport_3d {
             return viewport.update_preprocessor_directives(&self.settings.compiler_settings);
         }
         false
     }
 
-    pub fn enable_and_play(&mut self) {
+    pub fn update_active_preprocessor_directives(&mut self) -> bool {
+        let mut has_changed = false;
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                has_changed |= self.update_2d_preprocessor_directives();
+            }
+            ViewportActiveState::Viewport3D => {
+                has_changed |= self.update_3d_preprocessor_directives();
+            }
+            ViewportActiveState::SeparateWindows => {
+                has_changed |= self.update_2d_preprocessor_directives();
+                has_changed |= self.update_3d_preprocessor_directives();
+            }
+        }
+        has_changed
+    }
+
+    pub fn recompile_if_2d_preprocessor_directives_changed(&mut self, frame: &mut eframe::Frame) {
+        if self.update_2d_preprocessor_directives() {
+            self.recompile_2d_shader(frame);
+        }
+    }
+
+    pub fn recompile_if_3d_preprocessor_directives_changed(&mut self, frame: &mut eframe::Frame) {
+        if self.update_2d_preprocessor_directives() {
+            self.recompile_3d_shader(frame);
+        }
+    }
+
+    pub fn recompile_if_active_preprocessor_directives_changed(
+        &mut self,
+        frame: &mut eframe::Frame,
+    ) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.recompile_if_2d_preprocessor_directives_changed(frame);
+            }
+            ViewportActiveState::Viewport3D => {
+                self.recompile_if_3d_preprocessor_directives_changed(frame);
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.recompile_if_2d_preprocessor_directives_changed(frame);
+                self.recompile_if_3d_preprocessor_directives_changed(frame);
+            }
+        }
+    }
+
+    pub fn enable_and_play_2d(&mut self) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            viewport.enable();
+            viewport.play();
+        }
+    }
+
+    pub fn enable_and_play_3d(&mut self) {
         if let Some(viewport) = &mut self.viewport_3d {
             viewport.enable();
             viewport.play();
         }
     }
 
-    pub fn enable(&mut self) {
+    pub fn enable_and_play_active(&mut self) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.enable_and_play_2d();
+            }
+            ViewportActiveState::Viewport3D => {
+                self.enable_and_play_3d();
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.enable_and_play_2d();
+                self.enable_and_play_3d();
+            }
+        }
+    }
+
+    pub fn enable_2d(&mut self) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            viewport.enable();
+        }
+    }
+
+    pub fn enable_3d(&mut self) {
         if let Some(viewport) = &mut self.viewport_3d {
             viewport.enable();
         }
     }
 
-    pub fn disable(&mut self) {
+    pub fn enable_active(&mut self) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.enable_2d();
+            }
+            ViewportActiveState::Viewport3D => {
+                self.enable_3d();
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.enable_2d();
+                self.enable_3d();
+            }
+        }
+    }
+
+    pub fn disable_2d(&mut self) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            viewport.disable();
+        }
+    }
+
+    pub fn disable_3d(&mut self) {
         if let Some(viewport) = &mut self.viewport_3d {
             viewport.disable();
+        }
+    }
+
+    pub fn disable_active(&mut self) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.disable_2d();
+            }
+            ViewportActiveState::Viewport3D => {
+                self.disable_3d();
+            }
+            ViewportActiveState::SeparateWindows => {
+                self.disable_2d();
+                self.disable_3d();
+            }
         }
     }
 
@@ -148,6 +334,109 @@ impl Viewport {
         }
     }
 
+    fn controls_height(style: &egui::Style) -> f32 {
+        (Self::ICON_SIZE + style.spacing.button_padding.y + style.spacing.item_spacing.y) * 2. + 1.
+    }
+
+    fn show_2d_frame(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+        egui::Frame::canvas(ui.style()).show(ui, |ui| {
+            if let Some(viewport) = &mut self.viewport_2d {
+                let mut available_size: egui::Vec2 = ui.available_size().round();
+                available_size.y -= Viewport::controls_height(ui.style());
+                viewport.custom_painting(ui, frame, available_size, &self.settings);
+            }
+        });
+    }
+
+    fn show_3d_frame(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+        egui::Frame::canvas(ui.style()).show(ui, |ui| {
+            if let Some(viewport) = &mut self.viewport_3d {
+                let mut available_size: egui::Vec2 = ui.available_size().round();
+                available_size.y -= Viewport::controls_height(ui.style());
+                viewport.custom_painting(ui, frame, available_size, &self.settings);
+            }
+        });
+    }
+
+    fn show_2d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            ui.horizontal(|ui| {
+                let tooltip: &str;
+                let pause_icon = egui::Image::new(if viewport.paused() {
+                    tooltip = "start the render";
+                    Icons::Play.source()
+                } else {
+                    tooltip = "pause the render";
+                    Icons::Pause.source()
+                })
+                .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
+                if ui
+                    .add_enabled(viewport.enabled(), egui::ImageButton::new(pause_icon))
+                    .on_hover_text(tooltip)
+                    .clicked()
+                {
+                    viewport.toggle_play_pause();
+                }
+                if ui.button("3D").clicked() {
+                    self.settings.active_state = ViewportActiveState::Viewport3D;
+                }
+            });
+
+            ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
+        }
+    }
+
+    fn show_3d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+        if let Some(viewport) = &mut self.viewport_3d {
+            ui.horizontal(|ui| {
+                if ui
+                    .add_enabled(
+                        viewport.enabled(),
+                        egui::ImageButton::new(
+                            egui::Image::new(Icons::Refresh.source())
+                                .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE)),
+                        ),
+                    )
+                    .on_hover_text("restart the render")
+                    .clicked()
+                {
+                    if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                        viewport.recompile_shader(wgpu_render_state);
+                    }
+                }
+
+                let tooltip: &str;
+                let pause_icon = egui::Image::new(if viewport.paused() {
+                    tooltip = "start the render";
+                    Icons::Play.source()
+                } else {
+                    tooltip = "pause the render";
+                    Icons::Pause.source()
+                })
+                .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
+                if ui
+                    .add_enabled(viewport.enabled(), egui::ImageButton::new(pause_icon))
+                    .on_hover_text(tooltip)
+                    .clicked()
+                {
+                    viewport.toggle_play_pause();
+                }
+                if ui.button("2D").clicked() {
+                    self.settings.active_state = ViewportActiveState::Viewport2D;
+                }
+            });
+
+            ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
+        }
+    }
+
+    fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {
+        let style: &mut egui::Style = ui.style_mut();
+        style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
+        style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
+        style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
+    }
+
     pub fn show(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         egui::Window::new("viewer")
@@ -167,61 +456,18 @@ impl Viewport {
             .movable(true)
             .constrain(true)
             .show(ctx, |ui| {
-                let style = ui.style_mut();
-                style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
-                style.visuals.widgets.hovered.weak_bg_fill = egui::Color32::TRANSPARENT;
-                style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
+                Viewport::set_button_backgrounds_transparent(ui);
 
-                let controls_height: f32 = (Self::ICON_SIZE
-                    + style.spacing.button_padding.y
-                    + style.spacing.item_spacing.y)
-                    * 2.
-                    + 1.;
-
-                egui::Frame::canvas(style).show(ui, |ui| {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        let mut available_size: egui::Vec2 = ui.available_size().round();
-                        available_size.y -= controls_height;
-                        viewport_3d.custom_painting(ui, frame, available_size, &self.settings);
+                match self.settings.active_state {
+                    ViewportActiveState::Viewport2D => {
+                        self.show_2d_frame(frame, ui);
+                        self.show_2d_controls(frame, ui);
                     }
-                });
-                if let Some(viewport_3d) = &mut self.viewport_3d {
-                    ui.horizontal(|ui| {
-                        if ui
-                            .add_enabled(
-                                viewport_3d.enabled(),
-                                egui::ImageButton::new(
-                                    egui::Image::new(Icons::Refresh.source())
-                                        .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE)),
-                                ),
-                            )
-                            .on_hover_text("restart the render")
-                            .clicked()
-                        {
-                            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                                viewport_3d.recompile_shader(wgpu_render_state);
-                            }
-                        }
-
-                        let tooltip: &str;
-                        let pause_icon = egui::Image::new(if viewport_3d.paused() {
-                            tooltip = "start the render";
-                            Icons::Play.source()
-                        } else {
-                            tooltip = "pause the render";
-                            Icons::Pause.source()
-                        })
-                        .fit_to_exact_size(egui::Vec2::splat(Self::ICON_SIZE));
-                        if ui
-                            .add_enabled(viewport_3d.enabled(), egui::ImageButton::new(pause_icon))
-                            .on_hover_text(tooltip)
-                            .clicked()
-                        {
-                            viewport_3d.toggle_play_pause();
-                        }
-                    });
-
-                    ui.add(egui::Label::new(&viewport_3d.stats_text).truncate(true));
+                    ViewportActiveState::Viewport3D => {
+                        self.show_3d_frame(frame, ui);
+                        self.show_3d_controls(frame, ui);
+                    }
+                    _ => {}
                 }
             });
     }

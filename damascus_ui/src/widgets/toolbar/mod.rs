@@ -174,7 +174,8 @@ pub fn show_toolbar(
             }
 
             let mut dynamic_compilation_settings_changed: bool = false;
-            let mut pipeline_reconstruction_required: bool = false;
+            let mut pipeline_reconstruction_required_2d: bool = false;
+            let mut pipeline_reconstruction_required_3d: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
                 ui.menu_button("Compiler Settings", |ui| {
@@ -226,10 +227,10 @@ pub fn show_toolbar(
                 ui.menu_button("Render Pipeline Settings", |ui| {
                     ui.horizontal(|ui| {
                         ui.label("max primitives");
-                        pipeline_reconstruction_required |= ui
+                        pipeline_reconstruction_required_3d |= ui
                             .add(
                                 egui::DragValue::new(
-                                    &mut viewport.settings.pipeline_settings.max_primitives,
+                                    &mut viewport.settings.pipeline_settings_3d.max_primitives,
                                 )
                                 .clamp_range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
                             )
@@ -237,10 +238,10 @@ pub fn show_toolbar(
                     });
                     ui.horizontal(|ui| {
                         ui.label("max lights");
-                        pipeline_reconstruction_required |= ui
+                        pipeline_reconstruction_required_3d |= ui
                             .add(
                                 egui::DragValue::new(
-                                    &mut viewport.settings.pipeline_settings.max_lights,
+                                    &mut viewport.settings.pipeline_settings_3d.max_lights,
                                 )
                                 .clamp_range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
                             )
@@ -249,8 +250,10 @@ pub fn show_toolbar(
                 });
             });
 
-            if pipeline_reconstruction_required {
-                response.push(NodeGraphResponse::ReconstructRenderPipeline);
+            if pipeline_reconstruction_required_3d {
+                response.push(NodeGraphResponse::Reconstruct3DRenderPipeline);
+            } else if pipeline_reconstruction_required_2d {
+                response.push(NodeGraphResponse::Reconstruct2DRenderPipeline);
             } else if dynamic_compilation_settings_changed {
                 response.push(NodeGraphResponse::CheckPreprocessorDirectives);
             }

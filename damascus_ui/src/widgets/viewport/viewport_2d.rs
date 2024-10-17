@@ -50,7 +50,7 @@ impl Viewport2d {
         let renderer = RayMarcher::default();
         let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
         let reconstruct_hash = to_key_with_ordered_float(&settings.pipeline_settings_2d).ok()?;
-        let mut viewport3d = Self {
+        let mut viewport2d = Self {
             renderer: renderer,
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
@@ -65,12 +65,12 @@ impl Viewport2d {
         // Get the WGPU render state from the eframe creation context. This can also be retrieved
         // from `eframe::Frame` when you don't have a `CreationContext` available.
         Self::construct_render_pipeline(
-            &mut viewport3d,
+            &mut viewport2d,
             creation_context.wgpu_render_state.as_ref()?,
             &settings.pipeline_settings_2d,
         );
 
-        Some(viewport3d)
+        Some(viewport2d)
     }
 
     pub fn construct_render_pipeline(

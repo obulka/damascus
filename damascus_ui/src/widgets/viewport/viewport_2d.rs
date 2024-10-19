@@ -12,6 +12,7 @@ use std::time::SystemTime;
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
+    epaint,
     wgpu::util::DeviceExt,
 };
 use glam;
@@ -676,7 +677,7 @@ impl Viewport2d {
         frame: &mut eframe::Frame,
         available_size: egui::Vec2,
         settings: &ViewportSettings,
-    ) {
+    ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
         self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
@@ -692,7 +693,7 @@ impl Viewport2d {
 
         if self.disabled {
             self.stats_text += " - viewer disabled, activate a node to enable it";
-            return;
+            return None;
         }
 
         ui.ctx().request_repaint();
@@ -741,7 +742,32 @@ impl Viewport2d {
             panic!("Cannot hash renderer!")
         }
 
-        ui.painter().add(egui_wgpu::Callback::new_paint_callback(
+        if self.render_state.paused {
+            self.render_state.previous_frame_time = SystemTime::now();
+            self.render_state.frame_counter = 1;
+            return None;
+        }
+
+        if self.enable_frame_rate_overlay {
+            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
+                    Ok(frame_time) => {
+                        self.render_state.fps =
+                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                    }
+                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+                }
+
+                self.render_state.previous_frame_time = SystemTime::now();
+                self.render_state.frame_counter = 1;
+            } else {
+                self.render_state.frame_counter += 1;
+            }
+        }
+
+        self.render_state.paths_rendered_per_pixel += 1;
+
+        Some(egui_wgpu::Callback::new_paint_callback(
             rect,
             Viewport2dCallback {
                 render_parameters: self.renderer.render_parameters(),
@@ -765,32 +791,7 @@ impl Viewport2d {
                     .emissive_primitive_indices(settings.pipeline_settings_2d.max_primitives),
                 render_state: self.render_state.as_std_430(),
             },
-        ));
-
-        if self.render_state.paused {
-            self.render_state.previous_frame_time = SystemTime::now();
-            self.render_state.frame_counter = 1;
-            return;
-        }
-
-        if self.enable_frame_rate_overlay {
-            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                    Ok(frame_time) => {
-                        self.render_state.fps =
-                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
-                    }
-                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-                }
-
-                self.render_state.previous_frame_time = SystemTime::now();
-                self.render_state.frame_counter = 1;
-            } else {
-                self.render_state.frame_counter += 1;
-            }
-        }
-
-        self.render_state.paths_rendered_per_pixel += 1;
+        ))
     }
 }
 

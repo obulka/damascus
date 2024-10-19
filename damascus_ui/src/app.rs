@@ -256,7 +256,7 @@ impl eframe::App for Damascus {
                         .viewport
                         .default_renderer_with_primitives(value.value().clone()),
                     NodeValueType::RayMarcher { value } => {
-                        self.viewport.set_3d_renderer(value);
+                        self.viewport.set_active_renderer(value);
                     }
                     NodeValueType::Scene { value } => {
                         self.viewport

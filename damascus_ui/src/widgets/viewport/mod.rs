@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use eframe::egui;
+use eframe::{egui, epaint};
 
 use damascus_core::{
     geometry::{camera::Camera, Primitive},
@@ -334,31 +334,69 @@ impl Viewport {
         }
     }
 
+    pub fn set_2d_renderer(&mut self, renderer: RayMarcher) {
+        if let Some(viewport) = &mut self.viewport_2d {
+            viewport.renderer = renderer;
+            viewport.disable_camera_controls();
+        }
+    }
+
+    pub fn set_active_renderer(&mut self, renderer: RayMarcher) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => {
+                self.set_2d_renderer(renderer);
+            }
+            ViewportActiveState::Viewport3D => {
+                self.set_3d_renderer(renderer);
+            }
+            ViewportActiveState::SeparateWindows => {
+                let cloned_renderer = renderer.clone();
+                self.set_2d_renderer(renderer);
+                self.set_3d_renderer(cloned_renderer);
+            }
+        }
+    }
+
     fn controls_height(style: &egui::Style) -> f32 {
         (Self::ICON_SIZE + style.spacing.button_padding.y + style.spacing.item_spacing.y) * 2. + 1.
     }
 
-    fn show_2d_frame(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+    fn show_2d_frame(
+        &mut self,
+        frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) -> Option<epaint::PaintCallback> {
+        let mut paint_callback = None;
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             if let Some(viewport) = &mut self.viewport_2d {
                 let mut available_size: egui::Vec2 = ui.available_size().round();
                 available_size.y -= Viewport::controls_height(ui.style());
-                viewport.custom_painting(ui, frame, available_size, &self.settings);
+                paint_callback =
+                    viewport.custom_painting(ui, frame, available_size, &self.settings);
             }
         });
+        paint_callback
     }
 
-    fn show_3d_frame(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+    fn show_3d_frame(
+        &mut self,
+        frame: &mut eframe::Frame,
+        ui: &mut egui::Ui,
+    ) -> Option<epaint::PaintCallback> {
+        let mut paint_callback = None;
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             if let Some(viewport) = &mut self.viewport_3d {
                 let mut available_size: egui::Vec2 = ui.available_size().round();
                 available_size.y -= Viewport::controls_height(ui.style());
-                viewport.custom_painting(ui, frame, available_size, &self.settings);
+                paint_callback =
+                    viewport.custom_painting(ui, frame, available_size, &self.settings);
             }
         });
+        paint_callback
     }
 
-    fn show_2d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+    fn show_2d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
+        let mut reconstruct_active = false;
         if let Some(viewport) = &mut self.viewport_2d {
             ui.horizontal(|ui| {
                 let tooltip: &str;
@@ -379,14 +417,17 @@ impl Viewport {
                 }
                 if ui.button("3D").clicked() {
                     self.settings.active_state = ViewportActiveState::Viewport3D;
+                    reconstruct_active = true;
                 }
             });
 
             ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
         }
+        reconstruct_active
     }
 
-    fn show_3d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+    fn show_3d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
+        let mut reconstruct_active = false;
         if let Some(viewport) = &mut self.viewport_3d {
             ui.horizontal(|ui| {
                 if ui
@@ -423,11 +464,13 @@ impl Viewport {
                 }
                 if ui.button("2D").clicked() {
                     self.settings.active_state = ViewportActiveState::Viewport2D;
+                    reconstruct_active = true;
                 }
             });
 
             ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
         }
+        reconstruct_active
     }
 
     fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {
@@ -439,6 +482,7 @@ impl Viewport {
 
     pub fn show(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
+        let mut reconstruct_active_pipeline = false;
         egui::Window::new("viewer")
             .default_width(720.)
             .default_height(405.)
@@ -458,17 +502,27 @@ impl Viewport {
             .show(ctx, |ui| {
                 Viewport::set_button_backgrounds_transparent(ui);
 
+                let mut paint_callback = None;
                 match self.settings.active_state {
                     ViewportActiveState::Viewport2D => {
-                        self.show_2d_frame(frame, ui);
-                        self.show_2d_controls(frame, ui);
+                        paint_callback = self.show_2d_frame(frame, ui);
+                        reconstruct_active_pipeline |= self.show_2d_controls(frame, ui);
                     }
                     ViewportActiveState::Viewport3D => {
-                        self.show_3d_frame(frame, ui);
-                        self.show_3d_controls(frame, ui);
+                        paint_callback = self.show_3d_frame(frame, ui);
+                        reconstruct_active_pipeline |= self.show_3d_controls(frame, ui);
                     }
                     _ => {}
                 }
+                if !reconstruct_active_pipeline {
+                    if let Some(callback) = paint_callback {
+                        ui.painter().add(callback);
+                    }
+                }
             });
+
+        if reconstruct_active_pipeline {
+            self.reconstruct_active_render_pipelines(frame);
+        }
     }
 }

@@ -46,6 +46,48 @@ impl Viewport {
         }
     }
 
+    pub fn set_active_state(&mut self, new_state: ViewportActiveState) {
+        match self.settings.active_state {
+            ViewportActiveState::Viewport2D => match new_state {
+                ViewportActiveState::Viewport3D => {
+                    if let Some(viewport_3d) = &mut self.viewport_3d {
+                        if let Some(viewport_2d) = &mut self.viewport_2d {
+                            if viewport_3d.enabled() {
+                                viewport_2d.enable();
+                            } else {
+                                viewport_2d.disable();
+                            }
+                        }
+                    }
+                }
+                ViewportActiveState::SeparateWindows => {}
+                _ => {}
+            },
+            ViewportActiveState::Viewport3D => match new_state {
+                ViewportActiveState::Viewport2D => {
+                    if let Some(viewport_3d) = &mut self.viewport_3d {
+                        if let Some(viewport_2d) = &mut self.viewport_2d {
+                            if viewport_2d.enabled() {
+                                viewport_3d.enable();
+                            } else {
+                                viewport_3d.disable();
+                            }
+                        }
+                    }
+                }
+                ViewportActiveState::SeparateWindows => {}
+                _ => {}
+            },
+            ViewportActiveState::SeparateWindows => match new_state {
+                ViewportActiveState::Viewport2D => {}
+                ViewportActiveState::Viewport3D => {}
+                _ => {}
+            },
+        }
+
+        self.settings.active_state = new_state;
+    }
+
     pub fn reconstruct_2d_render_pipeline(&mut self, frame: &eframe::Frame) {
         if let Some(viewport) = &mut self.viewport_2d {
             if let Some(wgpu_render_state) = frame.wgpu_render_state() {
@@ -396,7 +438,7 @@ impl Viewport {
     }
 
     fn show_2d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
-        let mut reconstruct_active = false;
+        let mut switch_to_3d = false;
         if let Some(viewport) = &mut self.viewport_2d {
             ui.horizontal(|ui| {
                 let tooltip: &str;
@@ -416,18 +458,20 @@ impl Viewport {
                     viewport.toggle_play_pause();
                 }
                 if ui.button("3D").clicked() {
-                    self.settings.active_state = ViewportActiveState::Viewport3D;
-                    reconstruct_active = true;
+                    switch_to_3d = true;
                 }
             });
 
             ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
         }
-        reconstruct_active
+        if switch_to_3d {
+            self.set_active_state(ViewportActiveState::Viewport3D);
+        }
+        switch_to_3d
     }
 
     fn show_3d_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
-        let mut reconstruct_active = false;
+        let mut switch_to_2d = false;
         if let Some(viewport) = &mut self.viewport_3d {
             ui.horizontal(|ui| {
                 if ui
@@ -463,14 +507,16 @@ impl Viewport {
                     viewport.toggle_play_pause();
                 }
                 if ui.button("2D").clicked() {
-                    self.settings.active_state = ViewportActiveState::Viewport2D;
-                    reconstruct_active = true;
+                    switch_to_2d = true;
                 }
             });
 
             ui.add(egui::Label::new(&viewport.stats_text).truncate(true));
         }
-        reconstruct_active
+        if switch_to_2d {
+            self.set_active_state(ViewportActiveState::Viewport2D);
+        }
+        switch_to_2d
     }
 
     fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {

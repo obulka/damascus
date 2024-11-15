@@ -11,6 +11,7 @@ use damascus_core::{
     materials::{Material, ProceduralTexture},
     renderers::RayMarcher,
     scene::Scene,
+    textures::Texture,
 };
 
 mod settings;
@@ -50,30 +51,14 @@ impl Viewport {
         match self.settings.active_state {
             ViewportActiveState::Viewport2D => match new_state {
                 ViewportActiveState::Viewport3D => {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        if let Some(viewport_2d) = &mut self.viewport_2d {
-                            if viewport_3d.enabled() {
-                                viewport_2d.enable();
-                            } else {
-                                viewport_2d.disable();
-                            }
-                        }
-                    }
+                    viewport_2d.disable();
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}
             },
             ViewportActiveState::Viewport3D => match new_state {
                 ViewportActiveState::Viewport2D => {
-                    if let Some(viewport_3d) = &mut self.viewport_3d {
-                        if let Some(viewport_2d) = &mut self.viewport_2d {
-                            if viewport_2d.enabled() {
-                                viewport_3d.enable();
-                            } else {
-                                viewport_3d.disable();
-                            }
-                        }
-                    }
+                    viewport_3d.disable();
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}
@@ -392,10 +377,16 @@ impl Viewport {
                 self.set_3d_renderer(renderer);
             }
             ViewportActiveState::SeparateWindows => {
-                let cloned_renderer = renderer.clone();
-                self.set_2d_renderer(renderer);
-                self.set_3d_renderer(cloned_renderer);
+                self.set_2d_renderer(renderer.clone());
+                self.set_3d_renderer(renderer);
             }
+        }
+    }
+
+    pub fn view_texture(&mut self, texture: Texture) {
+        self.set_active_state(ViewportActiveState::Viewport2D);
+        if let Some(viewport) = &mut self.viewport_2d {
+            viewport.texture = texture;
         }
     }
 

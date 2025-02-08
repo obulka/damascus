@@ -22,7 +22,7 @@ use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
-    renderers::{RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState},
+    renderers::ray_marcher::{RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState},
     scene::Std430GPUSceneParameters,
     shaders,
 };

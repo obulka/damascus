@@ -11,7 +11,7 @@ use super::{
     geometry::{BlendType, Primitive, Repetition, Shapes},
     lights::{Light, Lights},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
-    renderers::{AOVs, RayMarcher},
+    renderers::ray_marcher::{AOVs, RayMarcher},
 };
 
 #[derive(Debug, EnumString)]

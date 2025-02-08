@@ -51,14 +51,14 @@ impl Viewport {
         match self.settings.active_state {
             ViewportActiveState::Viewport2D => match new_state {
                 ViewportActiveState::Viewport3D => {
-                    viewport_2d.disable();
+                    self.viewport_2d.disable();
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}
             },
             ViewportActiveState::Viewport3D => match new_state {
                 ViewportActiveState::Viewport2D => {
-                    viewport_3d.disable();
+                    self.viewport_3d.disable();
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}

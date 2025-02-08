@@ -11,7 +11,7 @@ use egui_node_graph;
 use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers, scene, textures};
+use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
 
 use super::node::{
     value_type::{
@@ -237,14 +237,14 @@ pub fn evaluate_node(
             )
         }
 
-        // fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<renderers::RayMarcher> {
+        // fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<ray_marcher::RayMarcher> {
         //     self.evaluate_input(name)?.try_to_ray_marcher()
         // }
 
         fn output_ray_marcher(
             &mut self,
             name: &str,
-            value: renderers::RayMarcher,
+            value: ray_marcher::RayMarcher,
         ) -> anyhow::Result<NodeValueType> {
             self.populate_output(name, NodeValueType::RayMarcher { value })
         }
@@ -668,11 +668,11 @@ pub fn evaluate_node(
             let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
-            let output_aov = evaluator.input_combo_box::<renderers::AOVs>("output_aov")?;
+            let output_aov = evaluator.input_combo_box::<ray_marcher::AOVs>("output_aov")?;
 
             evaluator.output_ray_marcher(
                 "out",
-                renderers::RayMarcher {
+                ray_marcher::RayMarcher {
                     scene: scene,
                     max_distance: max_distance,
                     max_ray_steps: max_ray_steps,

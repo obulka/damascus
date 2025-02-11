@@ -9,7 +9,7 @@ use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
-use damascus_core::{geometry, lights, materials, renderers, scene, textures};
+use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
 
 use super::{Graph, NodeGraphResponse, NodeGraphState};
 
@@ -314,16 +314,17 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     true,
                 );
             };
-        let input_ray_marcher = |graph: &mut Graph, name: &str, default: renderers::RayMarcher| {
-            graph.add_input_param(
-                node_id,
-                name.to_string(),
-                NodeDataType::RayMarcher,
-                NodeValueType::RayMarcher { value: default },
-                egui_node_graph::InputParamKind::ConnectionOnly,
-                true,
-            );
-        };
+        let input_ray_marcher =
+            |graph: &mut Graph, name: &str, default: ray_marcher::RayMarcher| {
+                graph.add_input_param(
+                    node_id,
+                    name.to_string(),
+                    NodeDataType::RayMarcher,
+                    NodeValueType::RayMarcher { value: default },
+                    egui_node_graph::InputParamKind::ConnectionOnly,
+                    true,
+                );
+            };
         let input_scene = |graph: &mut Graph, name: &str, default: Scene| {
             graph.add_input_param(
                 node_id,
@@ -1543,7 +1544,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 output_procedural_texture(graph, "out");
             }
             NodeTemplate::RayMarcher => {
-                let default_ray_marcher = renderers::RayMarcher::default();
+                let default_ray_marcher = ray_marcher::RayMarcher::default();
                 input_scene(
                     graph,
                     "scene",
@@ -1696,7 +1697,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::from_enum::<renderers::AOVs>(default_ray_marcher.output_aov)
+                    ComboBox::from_enum::<ray_marcher::AOVs>(default_ray_marcher.output_aov)
                         .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The AOV type to output.\nThe stats AOV has the
                             average number of bounces in the red channel,

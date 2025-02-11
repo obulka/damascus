@@ -51,14 +51,18 @@ impl Viewport {
         match self.settings.active_state {
             ViewportActiveState::Viewport2D => match new_state {
                 ViewportActiveState::Viewport3D => {
-                    self.viewport_2d.disable();
+                    if let Some(viewport) = &mut self.viewport_2d {
+                        viewport.disable();
+                    }
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}
             },
             ViewportActiveState::Viewport3D => match new_state {
                 ViewportActiveState::Viewport2D => {
-                    self.viewport_3d.disable();
+                    if let Some(viewport) = &mut self.viewport_3d {
+                        viewport.disable();
+                    }
                 }
                 ViewportActiveState::SeparateWindows => {}
                 _ => {}

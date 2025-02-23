@@ -11,7 +11,7 @@ use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers, scene, textures};
+use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},
@@ -59,7 +59,7 @@ pub enum NodeValueType {
     Material { value: Material },
     Primitive { value: Primitives },
     ProceduralTexture { value: ProceduralTexture },
-    RayMarcher { value: renderers::RayMarcher },
+    RayMarcher { value: ray_marcher::RayMarcher },
     Scene { value: Scene },
     Texture { value: Texture },
 }
@@ -238,7 +238,7 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a ray_marcher
-    pub fn try_to_ray_marcher(self) -> anyhow::Result<renderers::RayMarcher> {
+    pub fn try_to_ray_marcher(self) -> anyhow::Result<ray_marcher::RayMarcher> {
         if let NodeValueType::RayMarcher { value } = self {
             Ok(value)
         } else {

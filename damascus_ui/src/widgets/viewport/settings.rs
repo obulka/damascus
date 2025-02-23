@@ -5,28 +5,24 @@
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct PipelineSettings2D {
-    pub max_primitives: usize, // TODO Remove these
-    pub max_lights: usize,
+pub struct TexturePipelineSettings {
+    pub zoom: f32,
 }
 
-impl Default for PipelineSettings2D {
+impl Default for TexturePipelineSettings {
     fn default() -> Self {
-        Self {
-            max_primitives: 1024,
-            max_lights: 1024,
-        }
+        Self { zoom: 1. }
     }
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct PipelineSettings3D {
+pub struct RayMarcherPipelineSettings {
     pub max_primitives: usize,
     pub max_lights: usize,
 }
 
-impl Default for PipelineSettings3D {
+impl Default for RayMarcherPipelineSettings {
     fn default() -> Self {
         Self {
             max_primitives: 1024,
@@ -64,30 +60,20 @@ impl CompilerSettings {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub enum ViewportActiveState {
-    Viewport2D,
-    #[default]
-    Viewport3D,
-    SeparateWindows,
-}
-
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct ViewportSettings {
     pub compiler_settings: CompilerSettings,
-    pub pipeline_settings_2d: PipelineSettings2D,
-    pub pipeline_settings_3d: PipelineSettings3D,
-    pub active_state: ViewportActiveState,
+    pub texture_pipeline: TexturePipelineSettings,
+    pub ray_marcher_pipeline: RayMarcherPipelineSettings,
 }
 
 impl Default for ViewportSettings {
     fn default() -> Self {
         Self {
             compiler_settings: CompilerSettings::default(),
-            pipeline_settings_2d: PipelineSettings2D::default(),
-            pipeline_settings_3d: PipelineSettings3D::default(),
-            active_state: ViewportActiveState::default(),
+            texture_pipeline: TexturePipelineSettings::default(),
+            ray_marcher_pipeline: RayMarcherPipelineSettings::default(),
         }
     }
 }

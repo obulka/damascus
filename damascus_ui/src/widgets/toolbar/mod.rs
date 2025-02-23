@@ -174,8 +174,7 @@ pub fn show_toolbar(
             }
 
             let mut dynamic_compilation_settings_changed: bool = false;
-            let mut pipeline_reconstruction_required_2d: bool = false;
-            let mut pipeline_reconstruction_required_3d: bool = false;
+            let mut ray_marcher_pipeline_reconstruction_required: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
                 ui.menu_button("Compiler Settings", |ui| {
@@ -227,7 +226,7 @@ pub fn show_toolbar(
                 ui.menu_button("Render Pipeline Settings", |ui| {
                     ui.horizontal(|ui| {
                         ui.label("max primitives");
-                        pipeline_reconstruction_required_3d |= ui
+                        ray_marcher_pipeline_reconstruction_required |= ui
                             .add(
                                 egui::DragValue::new(
                                     &mut viewport.settings.pipeline_settings_3d.max_primitives,
@@ -238,7 +237,7 @@ pub fn show_toolbar(
                     });
                     ui.horizontal(|ui| {
                         ui.label("max lights");
-                        pipeline_reconstruction_required_3d |= ui
+                        ray_marcher_pipeline_reconstruction_required |= ui
                             .add(
                                 egui::DragValue::new(
                                     &mut viewport.settings.pipeline_settings_3d.max_lights,
@@ -250,10 +249,8 @@ pub fn show_toolbar(
                 });
             });
 
-            if pipeline_reconstruction_required_3d {
-                response.push(NodeGraphResponse::Reconstruct3DRenderPipeline);
-            } else if pipeline_reconstruction_required_2d {
-                response.push(NodeGraphResponse::Reconstruct2DRenderPipeline);
+            if ray_marcher_pipeline_reconstruction_required {
+                response.push(NodeGraphResponse::ReconstructRenderPipeline);
             } else if dynamic_compilation_settings_changed {
                 response.push(NodeGraphResponse::CheckPreprocessorDirectives);
             }

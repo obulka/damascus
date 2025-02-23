@@ -7,6 +7,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+crevice = { version = "0.16.0", features = ["glam"] }
 damascus_core = { path = "../damascus_core" }
 anyhow = "1.0"
 eframe = { version = "0.27", features = ["persistence", "wgpu"]}

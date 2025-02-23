@@ -10,6 +10,8 @@ use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2, Vec3};
 use strum::{Display, EnumIter, EnumString};
 
+use super::Renderer;
+
 use crate::{
     scene::Scene,
     shaders::{self, PreprocessorDirectives},
@@ -98,7 +100,6 @@ pub struct GPURayMarcher {
     equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
-    // TODO variance & adaptive sampling
     output_aov: u32,
     flags: u32,
 }
@@ -120,9 +121,7 @@ pub struct RayMarcher {
     pub sample_atmosphere: bool,
     pub light_sampling_bias: f32,
     pub secondary_sampling: bool,
-    // TODO variance & adaptive sampling
     pub output_aov: AOVs,
-    // TODO resolution
 }
 
 impl Default for RayMarcher {
@@ -148,6 +147,26 @@ impl Default for RayMarcher {
 }
 
 impl RayMarcher {
+    pub fn reset_render_parameters(&mut self) {
+        let default_ray_marcher = Self::default();
+
+        self.max_distance = default_ray_marcher.max_distance;
+        self.max_ray_steps = default_ray_marcher.max_ray_steps;
+        self.max_bounces = default_ray_marcher.max_bounces;
+        self.hit_tolerance = default_ray_marcher.hit_tolerance;
+        self.shadow_bias = default_ray_marcher.shadow_bias;
+        self.max_brightness = default_ray_marcher.max_brightness;
+        self.seeds = default_ray_marcher.seeds;
+        self.dynamic_level_of_detail = default_ray_marcher.dynamic_level_of_detail;
+        self.equiangular_samples = default_ray_marcher.equiangular_samples;
+        self.max_light_sampling_bounces = default_ray_marcher.max_light_sampling_bounces;
+        self.sample_atmosphere = default_ray_marcher.sample_atmosphere;
+        self.light_sampling_bias = default_ray_marcher.light_sampling_bias;
+        self.secondary_sampling = default_ray_marcher.secondary_sampling;
+    }
+}
+
+impl Renderer<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
             max_distance: self.max_distance.max(1e-8),
@@ -165,27 +184,5 @@ impl RayMarcher {
                 | (self.sample_atmosphere as u32) << 1
                 | (self.secondary_sampling as u32) << 2,
         }
-    }
-
-    pub fn render_parameters(&self) -> Std430GPURayMarcher {
-        self.to_gpu().as_std430()
-    }
-
-    pub fn reset_render_parameters(&mut self) {
-        let default_ray_marcher = Self::default();
-
-        self.max_distance = default_ray_marcher.max_distance;
-        self.max_ray_steps = default_ray_marcher.max_ray_steps;
-        self.max_bounces = default_ray_marcher.max_bounces;
-        self.hit_tolerance = default_ray_marcher.hit_tolerance;
-        self.shadow_bias = default_ray_marcher.shadow_bias;
-        self.max_brightness = default_ray_marcher.max_brightness;
-        self.seeds = default_ray_marcher.seeds;
-        self.dynamic_level_of_detail = default_ray_marcher.dynamic_level_of_detail;
-        self.equiangular_samples = default_ray_marcher.equiangular_samples;
-        self.max_light_sampling_bounces = default_ray_marcher.max_light_sampling_bounces;
-        self.sample_atmosphere = default_ray_marcher.sample_atmosphere;
-        self.light_sampling_bias = default_ray_marcher.light_sampling_bias;
-        self.secondary_sampling = default_ray_marcher.secondary_sampling;
     }
 }

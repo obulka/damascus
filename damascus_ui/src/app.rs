@@ -159,7 +159,7 @@ impl eframe::App for Damascus {
                     match user_event {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
-                            self.viewport.enable_and_play_active();
+                            self.viewport.enable_and_play();
                             responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                         }
                         NodeGraphResponse::ClearActiveNode => {
@@ -179,13 +179,10 @@ impl eframe::App for Damascus {
                         }
                         NodeGraphResponse::CheckPreprocessorDirectives => {
                             self.viewport
-                                .recompile_if_active_preprocessor_directives_changed(frame);
+                                .recompile_if_preprocessor_directives_changed(frame);
                         }
-                        NodeGraphResponse::Reconstruct2DRenderPipeline => {
-                            self.viewport.reconstruct_2d_render_pipeline(frame);
-                        }
-                        NodeGraphResponse::Reconstruct3DRenderPipeline => {
-                            self.viewport.reconstruct_3d_render_pipeline(frame);
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            self.viewport.reconstruct_render_pipeline(frame);
                         }
                     }
                 }
@@ -256,7 +253,7 @@ impl eframe::App for Damascus {
                         .viewport
                         .default_renderer_with_primitives(value.value().clone()),
                     NodeValueType::RayMarcher { value } => {
-                        self.viewport.set_active_renderer(value);
+                        self.viewport.set_renderer(value);
                     }
                     NodeValueType::Scene { value } => {
                         self.viewport
@@ -275,13 +272,10 @@ impl eframe::App for Damascus {
                     match response {
                         NodeGraphResponse::CheckPreprocessorDirectives => {
                             self.viewport
-                                .recompile_if_active_preprocessor_directives_changed(frame);
+                                .recompile_if_preprocessor_directives_changed(frame);
                         }
-                        NodeGraphResponse::Reconstruct2DRenderPipeline => {
-                            self.viewport.reconstruct_2d_render_pipeline(frame);
-                        }
-                        NodeGraphResponse::Reconstruct3DRenderPipeline => {
-                            self.viewport.reconstruct_3d_render_pipeline(frame);
+                        NodeGraphResponse::ReconstructRenderPipeline => {
+                            self.viewport.reconstruct_render_pipeline(frame);
                         }
                         _ => {}
                     }
@@ -292,7 +286,7 @@ impl eframe::App for Damascus {
         }
 
         if self.node_graph.user_state().active_node.is_none() {
-            self.viewport.disable_active();
+            self.viewport.disable();
         }
 
         self.viewport.show(ctx, frame);

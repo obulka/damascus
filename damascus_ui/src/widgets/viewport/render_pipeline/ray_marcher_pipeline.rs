@@ -22,16 +22,18 @@ use damascus_core::{
     geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
     lights::Std430GPULight,
     materials::Std430GPUMaterial,
-    renderers::ray_marcher::{RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState},
+    renderers::ray_marcher::{
+        GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
+    },
     scene::Std430GPUSceneParameters,
     shaders,
 };
 
-use super::{CompilerSettings, PipelineSettings3D, ViewportSettings};
+use super::{CompilerSettings, RayMarcherPipelineSettings, RenderPipeline, ViewportSettings};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-pub struct Viewport3d {
+pub struct RayMarcherPipeline {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
@@ -43,44 +45,41 @@ pub struct Viewport3d {
     reconstruct_hash: Key<OrderedFloatPolicy>,
 }
 
-impl Viewport3d {
-    pub fn new<'a>(
-        creation_context: &'a eframe::CreationContext<'a>,
-        settings: &ViewportSettings,
-    ) -> Option<Self> {
-        let renderer = RayMarcher::default();
-        let recompile_hash = to_key_with_ordered_float(&renderer).ok()?;
-        let reconstruct_hash = to_key_with_ordered_float(&settings.pipeline_settings_3d).ok()?;
-        let mut viewport3d = Self {
-            renderer: renderer,
+impl Default for RayMarcherPipeline {
+    fn default() -> Self {
+        Self {
+            renderer: RayMarcher::default(),
             enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
             stats_text: String::new(),
             disabled: true,
             camera_controls_enabled: true,
             render_state: RenderState::default(),
-            recompile_hash: recompile_hash,
-            reconstruct_hash: reconstruct_hash,
-        };
+            recompile_hash: Key::<OrderedFloatPolicy>::default(),
+            reconstruct_hash: Key::<OrderedFloatPolicy>::default(),
+        }
+    }
+}
 
-        // Get the WGPU render state from the eframe creation context. This can also be retrieved
-        // from `eframe::Frame` when you don't have a `CreationContext` available.
-        Self::construct_render_pipeline(
-            &mut viewport3d,
-            creation_context.wgpu_render_state.as_ref()?,
-            &settings.pipeline_settings_3d,
-        );
-
-        Some(viewport3d)
+impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherPipeline {
+    fn set_recompile_hash(&mut self) {
+        if let Ok(recompile_hash) = to_key_with_ordered_float(&self.renderer) {
+            self.recompile_hash = recompile_hash;
+        }
     }
 
-    pub fn construct_render_pipeline(
+    fn set_reconstruct_hash(&mut self, settings: &ViewportSettings) {
+        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings.ray_marcher_pipeline) {
+            self.reconstruct_hash = reconstruct_hash;
+        }
+    }
+
+    /// Construict all uniform/storage/texture buffers and RenderResources
+    fn construct(
         &mut self,
         wgpu_render_state: &egui_wgpu::RenderState,
-        pipeline_settings_3d: &PipelineSettings3D,
+        settings: &ViewportSettings,
     ) {
-        self.reset_render();
-
         let device = &wgpu_render_state.device;
 
         // Uniforms
@@ -89,7 +88,7 @@ impl Viewport3d {
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = self.create_uniform_buffers(device, pipeline_settings_3d);
+        ) = self.create_uniform_buffers(device, settings.ray_marcher_pipeline);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -104,7 +103,7 @@ impl Viewport3d {
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, pipeline_settings_3d);
+        ) = self.create_storage_buffers(device, settings.ray_marcher_pipeline);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -153,7 +152,7 @@ impl Viewport3d {
             });
     }
 
-    pub fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
         if let Some(render_resources) = wgpu_render_state
             .renderer
             .write()
@@ -175,39 +174,211 @@ impl Viewport3d {
         }
     }
 
-    pub fn disable(&mut self) {
+    fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
+        let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
+
+        if !settings.enable_dynamic_recompilation_for_ray_marcher {
+            preprocessor_directives.extend(shaders::all_directives_for_ray_marcher());
+        } else {
+            preprocessor_directives.extend(shaders::directives_for_ray_marcher(&self.renderer));
+        }
+
+        if !settings.enable_dynamic_recompilation_for_primitives {
+            preprocessor_directives.extend(shaders::all_directives_for_primitive());
+        }
+
+        if !settings.enable_dynamic_recompilation_for_materials {
+            preprocessor_directives.extend(shaders::all_directives_for_material());
+        } else {
+            preprocessor_directives.extend(shaders::directives_for_material(
+                &self.renderer.scene.atmosphere,
+            ));
+        }
+
+        if !settings.enable_dynamic_recompilation_for_lights {
+            preprocessor_directives.extend(shaders::all_directives_for_light());
+        } else {
+            for light in &self.renderer.scene.lights {
+                preprocessor_directives.extend(shaders::directives_for_light(&light));
+            }
+        }
+
+        if settings.enable_dynamic_recompilation_for_primitives
+            || settings.enable_dynamic_recompilation_for_materials
+        {
+            for primitive in &self.renderer.scene.primitives {
+                if settings.enable_dynamic_recompilation_for_materials {
+                    preprocessor_directives
+                        .extend(shaders::directives_for_material(&primitive.material));
+                }
+                if settings.enable_dynamic_recompilation_for_primitives {
+                    preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
+                }
+            }
+        }
+
+        // Check if the directives have changed and store them if they have
+        if preprocessor_directives == self.render_state.preprocessor_directives {
+            return false;
+        }
+        self.render_state.preprocessor_directives = preprocessor_directives;
+        true
+    }
+
+    fn disable(&mut self) {
         self.pause();
         self.disabled = true;
     }
 
-    pub fn enable(&mut self) {
+    fn enable(&mut self) {
         self.disabled = false;
     }
 
-    pub fn enabled(&mut self) -> bool {
+    fn enabled(&mut self) -> bool {
         !self.disabled
     }
 
-    pub fn pause(&mut self) {
+    fn pause(&mut self) {
         self.render_state.paused = true;
     }
 
-    pub fn play(&mut self) {
+    fn play(&mut self) {
         if !self.disabled {
             self.render_state.paused = false;
         }
     }
 
-    pub fn toggle_play_pause(&mut self) {
+    fn toggle_play_pause(&mut self) {
         if !self.disabled {
             self.render_state.paused = !self.render_state.paused;
         }
     }
 
-    pub fn paused(&self) -> bool {
+    fn paused(&self) -> bool {
         self.render_state.paused
     }
 
+    fn reset_render(&mut self) {
+        self.render_state.paths_rendered_per_pixel = 0;
+    }
+
+    fn custom_painting(
+        &mut self,
+        ui: &mut egui::Ui,
+        frame: &mut eframe::Frame,
+        available_size: egui::Vec2,
+        settings: &ViewportSettings,
+    ) -> Option<epaint::PaintCallback> {
+        let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
+
+        self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
+            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
+
+        self.stats_text = format!(
+            "{:} paths per pixel @ {:.2} fps @ {:.0}x{:.0}",
+            self.render_state.paths_rendered_per_pixel,
+            self.render_state.fps,
+            rect.max.x - rect.min.x,
+            rect.max.y - rect.min.y
+        );
+
+        if self.disabled {
+            self.stats_text += " - viewer disabled, activate a node to enable it";
+            return None;
+        }
+
+        ui.ctx().request_repaint();
+
+        if ui.ctx().memory(|memory| memory.focused().is_none())
+            && ui.input(|input| input.key_pressed(egui::Key::Space))
+        {
+            self.toggle_play_pause();
+        }
+
+        self.update_camera(ui, &rect, &response);
+
+        // Check if the nodegraph has changed and reset the render if it has
+        if let Ok(new_hash) = to_key_with_ordered_float(&settings.ray_marcher_pipeline) {
+            if new_hash != self.reconstruct_hash {
+                self.reconstruct_hash = new_hash;
+                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                    self.reconstruct(wgpu_render_state, &settings.ray_marcher_pipeline);
+                }
+            }
+        } else {
+            panic!("Cannot hash settings!")
+        }
+
+        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
+            if new_hash != self.recompile_hash {
+                self.reset_render();
+                self.recompile_hash = new_hash;
+                if settings.compiler_settings.dynamic_recompilation_enabled()
+                    && self.update_preprocessor_directives(&settings.compiler_settings)
+                {
+                    if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                        self.recompile_shader(wgpu_render_state);
+                    }
+                }
+            }
+        } else {
+            panic!("Cannot hash renderer!")
+        }
+
+        if self.render_state.paused {
+            self.render_state.previous_frame_time = SystemTime::now();
+            self.render_state.frame_counter = 1;
+            return None;
+        }
+
+        if self.enable_frame_rate_overlay {
+            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
+                    Ok(frame_time) => {
+                        self.render_state.fps =
+                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                    }
+                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+                }
+
+                self.render_state.previous_frame_time = SystemTime::now();
+                self.render_state.frame_counter = 1;
+            } else {
+                self.render_state.frame_counter += 1;
+            }
+        }
+
+        self.render_state.paths_rendered_per_pixel += 1;
+
+        Some(egui_wgpu::Callback::new_paint_callback(
+            rect,
+            RayMarcherPipelineCallback {
+                render_parameters: self.renderer.render_parameters(),
+                scene_parameters: self.renderer.scene.scene_parameters(
+                    settings.ray_marcher_pipeline.max_primitives,
+                    settings.ray_marcher_pipeline.max_lights,
+                ),
+                render_camera: self.renderer.scene.render_camera.as_std_430(),
+                primitives: self
+                    .renderer
+                    .scene
+                    .create_gpu_primitives(settings.ray_marcher_pipeline.max_primitives),
+                lights: self
+                    .renderer
+                    .scene
+                    .create_gpu_lights(settings.ray_marcher_pipeline.max_lights),
+                atmosphere: self.renderer.scene.atmosphere(),
+                emissive_primitive_indices: self
+                    .renderer
+                    .scene
+                    .emissive_primitive_indices(settings.ray_marcher_pipeline.max_primitives),
+                render_state: self.render_state.as_std_430(),
+            },
+        ))
+    }
+}
+
+impl RayMarcherPipeline {
     pub fn disable_camera_controls(&mut self) {
         self.camera_controls_enabled = false;
     }
@@ -219,7 +390,7 @@ impl Viewport3d {
     fn create_uniform_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        pipeline_settings_3d: &PipelineSettings3D,
+        ray_marcher_pipeline: &RayMarcherPipelineSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -231,8 +402,8 @@ impl Viewport3d {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
                 contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters(
-                    pipeline_settings_3d.max_primitives,
-                    pipeline_settings_3d.max_lights,
+                    ray_marcher_pipeline.max_primitives,
+                    ray_marcher_pipeline.max_lights,
                 )]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
@@ -337,27 +508,27 @@ impl Viewport3d {
     fn create_storage_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        pipeline_settings_3d: &PipelineSettings3D,
+        ray_marcher_pipeline: &RayMarcherPipelineSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives: Vec<Std430GPUPrimitive> = self
             .renderer
             .scene
-            .create_gpu_primitives(pipeline_settings_3d.max_primitives);
+            .create_gpu_primitives(ray_marcher_pipeline.max_primitives);
         let lights: Vec<Std430GPULight> = self
             .renderer
             .scene
-            .create_gpu_lights(pipeline_settings_3d.max_lights);
+            .create_gpu_lights(ray_marcher_pipeline.max_lights);
         let emissive_primitive_indices: Vec<u32> = self
             .renderer
             .scene
-            .emissive_primitive_indices(pipeline_settings_3d.max_primitives);
+            .emissive_primitive_indices(ray_marcher_pipeline.max_primitives);
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: &[
                 bytemuck::cast_slice(primitives.as_slice()),
                 vec![
                     0;
-                    (pipeline_settings_3d.max_primitives - primitives.len())
+                    (ray_marcher_pipeline.max_primitives - primitives.len())
                         * size_of::<Std430GPUPrimitive>()
                 ]
                 .as_slice(),
@@ -371,7 +542,7 @@ impl Viewport3d {
                 bytemuck::cast_slice(lights.as_slice()),
                 vec![
                     0;
-                    (pipeline_settings_3d.max_lights - lights.len()) * size_of::<Std430GPULight>()
+                    (ray_marcher_pipeline.max_lights - lights.len()) * size_of::<Std430GPULight>()
                 ]
                 .as_slice(),
             ]
@@ -390,7 +561,7 @@ impl Viewport3d {
                     bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
                     vec![
                         0;
-                        (pipeline_settings_3d.max_primitives - emissive_primitive_indices.len())
+                        (ray_marcher_pipeline.max_primitives - emissive_primitive_indices.len())
                             * size_of::<u32>()
                     ]
                     .as_slice(),
@@ -540,57 +711,6 @@ impl Viewport3d {
         )
     }
 
-    pub fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
-        let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
-
-        if !settings.enable_dynamic_recompilation_for_ray_marcher {
-            preprocessor_directives.extend(shaders::all_directives_for_ray_marcher());
-        } else {
-            preprocessor_directives.extend(shaders::directives_for_ray_marcher(&self.renderer));
-        }
-
-        if !settings.enable_dynamic_recompilation_for_primitives {
-            preprocessor_directives.extend(shaders::all_directives_for_primitive());
-        }
-
-        if !settings.enable_dynamic_recompilation_for_materials {
-            preprocessor_directives.extend(shaders::all_directives_for_material());
-        } else {
-            preprocessor_directives.extend(shaders::directives_for_material(
-                &self.renderer.scene.atmosphere,
-            ));
-        }
-
-        if !settings.enable_dynamic_recompilation_for_lights {
-            preprocessor_directives.extend(shaders::all_directives_for_light());
-        } else {
-            for light in &self.renderer.scene.lights {
-                preprocessor_directives.extend(shaders::directives_for_light(&light));
-            }
-        }
-
-        if settings.enable_dynamic_recompilation_for_primitives
-            || settings.enable_dynamic_recompilation_for_materials
-        {
-            for primitive in &self.renderer.scene.primitives {
-                if settings.enable_dynamic_recompilation_for_materials {
-                    preprocessor_directives
-                        .extend(shaders::directives_for_material(&primitive.material));
-                }
-                if settings.enable_dynamic_recompilation_for_primitives {
-                    preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
-                }
-            }
-        }
-
-        // Check if the directives have changed and store them if they have
-        if preprocessor_directives == self.render_state.preprocessor_directives {
-            return false;
-        }
-        self.render_state.preprocessor_directives = preprocessor_directives;
-        true
-    }
-
     fn create_render_pipeline(
         &self,
         device: &Arc<wgpu::Device>,
@@ -640,10 +760,6 @@ impl Viewport3d {
         })
     }
 
-    pub fn reset_render(&mut self) {
-        self.render_state.paths_rendered_per_pixel = 0;
-    }
-
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         self.renderer.scene.render_camera.aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
@@ -670,132 +786,9 @@ impl Viewport3d {
         };
         self.renderer.scene.render_camera.world_matrix *= camera_transform;
     }
-
-    pub fn custom_painting(
-        &mut self,
-        ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
-        available_size: egui::Vec2,
-        settings: &ViewportSettings,
-    ) -> Option<epaint::PaintCallback> {
-        let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
-
-        self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
-            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
-
-        self.stats_text = format!(
-            "{:} paths per pixel @ {:.2} fps @ {:.0}x{:.0}",
-            self.render_state.paths_rendered_per_pixel,
-            self.render_state.fps,
-            rect.max.x - rect.min.x,
-            rect.max.y - rect.min.y
-        );
-
-        if self.disabled {
-            self.stats_text += " - viewer disabled, activate a node to enable it";
-            return None;
-        }
-
-        ui.ctx().request_repaint();
-
-        if ui.ctx().memory(|memory| memory.focused().is_none())
-            && ui.input(|input| input.key_pressed(egui::Key::Space))
-        {
-            self.toggle_play_pause();
-        }
-
-        self.update_camera(ui, &rect, &response);
-
-        // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&settings.pipeline_settings_3d) {
-            if new_hash != self.reconstruct_hash {
-                self.reconstruct_hash = new_hash;
-                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    wgpu_render_state
-                        .renderer
-                        .write()
-                        .callback_resources
-                        .clear();
-                    self.construct_render_pipeline(
-                        wgpu_render_state,
-                        &settings.pipeline_settings_3d,
-                    );
-                }
-            }
-        } else {
-            panic!("Cannot hash settings!")
-        }
-
-        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
-            if new_hash != self.recompile_hash {
-                self.reset_render();
-                self.recompile_hash = new_hash;
-                if settings.compiler_settings.dynamic_recompilation_enabled()
-                    && self.update_preprocessor_directives(&settings.compiler_settings)
-                {
-                    if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                        self.recompile_shader(wgpu_render_state);
-                    }
-                }
-            }
-        } else {
-            panic!("Cannot hash renderer!")
-        }
-
-        if self.render_state.paused {
-            self.render_state.previous_frame_time = SystemTime::now();
-            self.render_state.frame_counter = 1;
-            return None;
-        }
-
-        if self.enable_frame_rate_overlay {
-            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                    Ok(frame_time) => {
-                        self.render_state.fps =
-                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
-                    }
-                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-                }
-
-                self.render_state.previous_frame_time = SystemTime::now();
-                self.render_state.frame_counter = 1;
-            } else {
-                self.render_state.frame_counter += 1;
-            }
-        }
-
-        self.render_state.paths_rendered_per_pixel += 1;
-
-        Some(egui_wgpu::Callback::new_paint_callback(
-            rect,
-            Viewport3dCallback {
-                render_parameters: self.renderer.render_parameters(),
-                scene_parameters: self.renderer.scene.scene_parameters(
-                    settings.pipeline_settings_3d.max_primitives,
-                    settings.pipeline_settings_3d.max_lights,
-                ),
-                render_camera: self.renderer.scene.render_camera.as_std_430(),
-                primitives: self
-                    .renderer
-                    .scene
-                    .create_gpu_primitives(settings.pipeline_settings_3d.max_primitives),
-                lights: self
-                    .renderer
-                    .scene
-                    .create_gpu_lights(settings.pipeline_settings_3d.max_lights),
-                atmosphere: self.renderer.scene.atmosphere(),
-                emissive_primitive_indices: self
-                    .renderer
-                    .scene
-                    .emissive_primitive_indices(settings.pipeline_settings_3d.max_primitives),
-                render_state: self.render_state.as_std_430(),
-            },
-        ))
-    }
 }
 
-struct Viewport3dCallback {
+struct RayMarcherPipelineCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
     render_camera: Std430GPUCamera,
@@ -806,7 +799,7 @@ struct Viewport3dCallback {
     render_state: Std430GPURenderState,
 }
 
-impl egui_wgpu::CallbackTrait for Viewport3dCallback {
+impl egui_wgpu::CallbackTrait for RayMarcherPipelineCallback {
     fn prepare(
         &self,
         device: &wgpu::Device,

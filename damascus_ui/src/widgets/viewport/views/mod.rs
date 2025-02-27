@@ -184,10 +184,8 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
         ui: &mut egui::Ui,
         settings: &ViewportSettings,
     ) -> bool {
-        let mut reconstruct_pipeline = false;
-
         let paint_callback = self.show_frame(frame, ui, settings);
-        reconstruct_pipeline |= self.show_controls(frame, ui);
+        let reconstruct_pipeline = self.show_controls(frame, ui);
 
         if !reconstruct_pipeline {
             if let Some(callback) = paint_callback {

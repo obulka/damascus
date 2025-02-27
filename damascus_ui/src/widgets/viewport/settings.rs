@@ -5,11 +5,11 @@
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct TexturePipelineSettings {
+pub struct TextureViewSettings {
     pub zoom: f32,
 }
 
-impl Default for TexturePipelineSettings {
+impl Default for TextureViewSettings {
     fn default() -> Self {
         Self { zoom: 1. }
     }
@@ -17,12 +17,12 @@ impl Default for TexturePipelineSettings {
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RayMarcherPipelineSettings {
+pub struct RayMarcherViewSettings {
     pub max_primitives: usize,
     pub max_lights: usize,
 }
 
-impl Default for RayMarcherPipelineSettings {
+impl Default for RayMarcherViewSettings {
     fn default() -> Self {
         Self {
             max_primitives: 1024,
@@ -64,16 +64,16 @@ impl CompilerSettings {
 #[serde(default)]
 pub struct ViewportSettings {
     pub compiler_settings: CompilerSettings,
-    pub texture_pipeline: TexturePipelineSettings,
-    pub ray_marcher_pipeline: RayMarcherPipelineSettings,
+    pub texture_view: TextureViewSettings,
+    pub ray_marcher_view: RayMarcherViewSettings,
 }
 
 impl Default for ViewportSettings {
     fn default() -> Self {
         Self {
             compiler_settings: CompilerSettings::default(),
-            texture_pipeline: TexturePipelineSettings::default(),
-            ray_marcher_pipeline: RayMarcherPipelineSettings::default(),
+            texture_view: TextureViewSettings::default(),
+            ray_marcher_view: RayMarcherViewSettings::default(),
         }
     }
 }

@@ -19,21 +19,24 @@ use glam;
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
-    geometry::{camera::Std430GPUCamera, Std430GPUPrimitive},
-    lights::Std430GPULight,
-    materials::Std430GPUMaterial,
+    geometry::{
+        camera::{Camera, Std430GPUCamera},
+        primitive::{Primitive, Std430GPUPrimitive},
+    },
+    lights::{Light, Lights, Std430GPULight},
+    materials::{Material, ProceduralTexture, Std430GPUMaterial},
     renderers::ray_marcher::{
         GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
     },
-    scene::Std430GPUSceneParameters,
-    shaders,
+    scene::{Scene, Std430GPUSceneParameters},
+    shaders, DualDevice,
 };
 
-use super::{CompilerSettings, RayMarcherPipelineSettings, RenderPipeline, ViewportSettings};
+use super::{CompilerSettings, RayMarcherViewSettings, View, ViewportSettings};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-pub struct RayMarcherPipeline {
+pub struct RayMarcherView {
     pub renderer: RayMarcher,
     pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
@@ -45,7 +48,7 @@ pub struct RayMarcherPipeline {
     reconstruct_hash: Key<OrderedFloatPolicy>,
 }
 
-impl Default for RayMarcherPipeline {
+impl Default for RayMarcherView {
     fn default() -> Self {
         Self {
             renderer: RayMarcher::default(),
@@ -55,27 +58,35 @@ impl Default for RayMarcherPipeline {
             disabled: true,
             camera_controls_enabled: true,
             render_state: RenderState::default(),
-            recompile_hash: Key::<OrderedFloatPolicy>::default(),
-            reconstruct_hash: Key::<OrderedFloatPolicy>::default(),
+            recompile_hash: Key::<OrderedFloatPolicy>::Unit,
+            reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
         }
     }
 }
 
-impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherPipeline {
+impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
+    fn renderer(&self) -> &RayMarcher {
+        &self.renderer
+    }
+
+    fn renderer_mut(&mut self) -> &mut RayMarcher {
+        &mut self.renderer
+    }
+
     fn set_recompile_hash(&mut self) {
-        if let Ok(recompile_hash) = to_key_with_ordered_float(&self.renderer) {
+        if let Ok(recompile_hash) = to_key_with_ordered_float(self.renderer()) {
             self.recompile_hash = recompile_hash;
         }
     }
 
     fn set_reconstruct_hash(&mut self, settings: &ViewportSettings) {
-        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings.ray_marcher_pipeline) {
+        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings.ray_marcher_view) {
             self.reconstruct_hash = reconstruct_hash;
         }
     }
 
     /// Construict all uniform/storage/texture buffers and RenderResources
-    fn construct(
+    fn construct_pipeline(
         &mut self,
         wgpu_render_state: &egui_wgpu::RenderState,
         settings: &ViewportSettings,
@@ -88,7 +99,7 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = self.create_uniform_buffers(device, settings.ray_marcher_pipeline);
+        ) = self.create_uniform_buffers(device, &settings.ray_marcher_view);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -103,7 +114,7 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, settings.ray_marcher_pipeline);
+        ) = self.create_storage_buffers(device, &settings.ray_marcher_view);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -159,7 +170,7 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
             .callback_resources
             .get_mut::<RenderResources>()
         {
-            self.reset_render();
+            self.reset();
 
             let device = &wgpu_render_state.device;
 
@@ -180,7 +191,7 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
         if !settings.enable_dynamic_recompilation_for_ray_marcher {
             preprocessor_directives.extend(shaders::all_directives_for_ray_marcher());
         } else {
-            preprocessor_directives.extend(shaders::directives_for_ray_marcher(&self.renderer));
+            preprocessor_directives.extend(shaders::directives_for_ray_marcher(self.renderer()));
         }
 
         if !settings.enable_dynamic_recompilation_for_primitives {
@@ -191,14 +202,14 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
             preprocessor_directives.extend(shaders::all_directives_for_material());
         } else {
             preprocessor_directives.extend(shaders::directives_for_material(
-                &self.renderer.scene.atmosphere,
+                &self.renderer().scene.atmosphere,
             ));
         }
 
         if !settings.enable_dynamic_recompilation_for_lights {
             preprocessor_directives.extend(shaders::all_directives_for_light());
         } else {
-            for light in &self.renderer.scene.lights {
+            for light in &self.renderer().scene.lights {
                 preprocessor_directives.extend(shaders::directives_for_light(&light));
             }
         }
@@ -206,7 +217,7 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
         if settings.enable_dynamic_recompilation_for_primitives
             || settings.enable_dynamic_recompilation_for_materials
         {
-            for primitive in &self.renderer.scene.primitives {
+            for primitive in &self.renderer().scene.primitives {
                 if settings.enable_dynamic_recompilation_for_materials {
                     preprocessor_directives
                         .extend(shaders::directives_for_material(&primitive.material));
@@ -234,8 +245,8 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
         self.disabled = false;
     }
 
-    fn enabled(&mut self) -> bool {
-        !self.disabled
+    fn disabled(&mut self) -> bool {
+        self.disabled
     }
 
     fn pause(&mut self) {
@@ -248,18 +259,18 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
         }
     }
 
-    fn toggle_play_pause(&mut self) {
-        if !self.disabled {
-            self.render_state.paused = !self.render_state.paused;
-        }
-    }
-
     fn paused(&self) -> bool {
         self.render_state.paused
     }
 
-    fn reset_render(&mut self) {
+    fn reset(&mut self) {
         self.render_state.paths_rendered_per_pixel = 0;
+    }
+
+    fn show_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
+        self.show_restart_pause_play_buttons(frame, ui);
+        ui.add(egui::Label::new(&self.stats_text).truncate(true));
+        false
     }
 
     fn custom_painting(
@@ -298,20 +309,20 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
         self.update_camera(ui, &rect, &response);
 
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&settings.ray_marcher_pipeline) {
+        if let Ok(new_hash) = to_key_with_ordered_float(&settings.ray_marcher_view) {
             if new_hash != self.reconstruct_hash {
                 self.reconstruct_hash = new_hash;
                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    self.reconstruct(wgpu_render_state, &settings.ray_marcher_pipeline);
+                    self.reconstruct_pipeline(wgpu_render_state, settings);
                 }
             }
         } else {
             panic!("Cannot hash settings!")
         }
 
-        if let Ok(new_hash) = to_key_with_ordered_float(&self.renderer) {
+        if let Ok(new_hash) = to_key_with_ordered_float(self.renderer()) {
             if new_hash != self.recompile_hash {
-                self.reset_render();
+                self.reset();
                 self.recompile_hash = new_hash;
                 if settings.compiler_settings.dynamic_recompilation_enabled()
                     && self.update_preprocessor_directives(&settings.compiler_settings)
@@ -325,60 +336,59 @@ impl RenderPipeline<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarch
             panic!("Cannot hash renderer!")
         }
 
-        if self.render_state.paused {
+        if self.paused() {
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
-            return None;
-        }
-
-        if self.enable_frame_rate_overlay {
-            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                    Ok(frame_time) => {
-                        self.render_state.fps =
-                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+        } else {
+            if self.enable_frame_rate_overlay {
+                if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
+                    match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
+                        Ok(frame_time) => {
+                            self.render_state.fps =
+                                self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                        }
+                        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
                     }
-                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+
+                    self.render_state.previous_frame_time = SystemTime::now();
+                    self.render_state.frame_counter = 1;
+                } else {
+                    self.render_state.frame_counter += 1;
                 }
-
-                self.render_state.previous_frame_time = SystemTime::now();
-                self.render_state.frame_counter = 1;
-            } else {
-                self.render_state.frame_counter += 1;
             }
-        }
 
-        self.render_state.paths_rendered_per_pixel += 1;
+            self.render_state.paths_rendered_per_pixel += 1;
+        }
 
         Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            RayMarcherPipelineCallback {
-                render_parameters: self.renderer.render_parameters(),
-                scene_parameters: self.renderer.scene.scene_parameters(
-                    settings.ray_marcher_pipeline.max_primitives,
-                    settings.ray_marcher_pipeline.max_lights,
+            RayMarcherViewCallback {
+                render_parameters: self.renderer().as_std430(),
+                scene_parameters: self.renderer().scene.scene_parameters(
+                    settings.ray_marcher_view.max_primitives,
+                    settings.ray_marcher_view.max_lights,
                 ),
-                render_camera: self.renderer.scene.render_camera.as_std_430(),
+                render_camera: self.renderer().scene.render_camera.as_std430(),
                 primitives: self
                     .renderer
                     .scene
-                    .create_gpu_primitives(settings.ray_marcher_pipeline.max_primitives),
+                    .create_gpu_primitives(settings.ray_marcher_view.max_primitives),
                 lights: self
                     .renderer
                     .scene
-                    .create_gpu_lights(settings.ray_marcher_pipeline.max_lights),
-                atmosphere: self.renderer.scene.atmosphere(),
+                    .create_gpu_lights(settings.ray_marcher_view.max_lights),
+                atmosphere: self.renderer().scene.atmosphere(),
                 emissive_primitive_indices: self
                     .renderer
                     .scene
-                    .emissive_primitive_indices(settings.ray_marcher_pipeline.max_primitives),
-                render_state: self.render_state.as_std_430(),
+                    .emissive_primitive_indices(settings.ray_marcher_view.max_primitives),
+                render_state: self.render_state.as_std430(),
             },
         ))
     }
 }
 
-impl RayMarcherPipeline {
+impl RayMarcherView {
     pub fn disable_camera_controls(&mut self) {
         self.camera_controls_enabled = false;
     }
@@ -387,34 +397,86 @@ impl RayMarcherPipeline {
         self.camera_controls_enabled = true;
     }
 
+    pub fn set_renderer_to_default_with_camera(&mut self, camera: Camera) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene.render_camera = camera;
+        self.renderer_mut().scene.primitives = vec![Primitive::default()];
+        self.enable_camera_controls();
+    }
+
+    pub fn set_renderer_to_default_with_lights(&mut self, lights: Vec<Light>) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene.lights = lights;
+        self.renderer_mut().scene.primitives = vec![Primitive::default()];
+        self.enable_camera_controls();
+    }
+
+    pub fn set_renderer_to_default_with_atmosphere(&mut self, atmosphere: Material) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene.clear_primitives();
+        self.renderer_mut().scene.clear_lights();
+        self.renderer_mut().scene.atmosphere = atmosphere;
+        self.enable_camera_controls();
+    }
+
+    pub fn set_renderer_to_default_with_texture(&mut self, texture: ProceduralTexture) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene.clear_primitives();
+        self.renderer_mut().scene.clear_lights();
+        self.renderer_mut().scene.atmosphere = Material::default();
+        self.renderer_mut().scene.atmosphere.diffuse_colour_texture = texture;
+        self.enable_camera_controls();
+    }
+
+    pub fn set_renderer_to_default_with_primitives(&mut self, primitives: Vec<Primitive>) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene.primitives = primitives;
+        self.renderer_mut().scene.lights = vec![Light {
+            light_type: Lights::AmbientOcclusion,
+            ..Default::default()
+        }];
+        self.enable_camera_controls();
+    }
+
+    pub fn set_renderer_to_default_with_scene(&mut self, scene: Scene) {
+        self.renderer_mut().reset_render_parameters();
+        self.renderer_mut().scene = scene;
+        self.disable_camera_controls();
+    }
+
+    pub fn set_renderer(&mut self, renderer: RayMarcher) {
+        *self.renderer_mut() = renderer;
+        self.disable_camera_controls();
+    }
+
     fn create_uniform_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        ray_marcher_pipeline: &RayMarcherPipelineSettings,
+        settings: &RayMarcherViewSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let render_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d render parameter buffer"),
-                contents: bytemuck::cast_slice(&[self.renderer.render_parameters()]),
+                contents: bytemuck::cast_slice(&[self.renderer().as_std430()]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let scene_parameters_buffer =
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("viewport 3d scene parameter buffer"),
-                contents: bytemuck::cast_slice(&[self.renderer.scene.scene_parameters(
-                    ray_marcher_pipeline.max_primitives,
-                    ray_marcher_pipeline.max_lights,
-                )]),
+                contents: bytemuck::cast_slice(&[self
+                    .renderer()
+                    .scene
+                    .scene_parameters(settings.max_primitives, settings.max_lights)]),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
             });
         let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render progress buffer"),
-            contents: bytemuck::cast_slice(&[self.render_state.as_std_430()]),
+            contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
         let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer.scene.render_camera.as_std_430()]),
+            contents: bytemuck::cast_slice(&[self.renderer().scene.render_camera.as_std430()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
         });
 
@@ -508,28 +570,25 @@ impl RayMarcherPipeline {
     fn create_storage_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        ray_marcher_pipeline: &RayMarcherPipelineSettings,
+        settings: &RayMarcherViewSettings,
     ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
         let primitives: Vec<Std430GPUPrimitive> = self
             .renderer
             .scene
-            .create_gpu_primitives(ray_marcher_pipeline.max_primitives);
-        let lights: Vec<Std430GPULight> = self
-            .renderer
-            .scene
-            .create_gpu_lights(ray_marcher_pipeline.max_lights);
+            .create_gpu_primitives(settings.max_primitives);
+        let lights: Vec<Std430GPULight> =
+            self.renderer.scene.create_gpu_lights(settings.max_lights);
         let emissive_primitive_indices: Vec<u32> = self
             .renderer
             .scene
-            .emissive_primitive_indices(ray_marcher_pipeline.max_primitives);
+            .emissive_primitive_indices(settings.max_primitives);
         let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d primitives buffer"),
             contents: &[
                 bytemuck::cast_slice(primitives.as_slice()),
                 vec![
                     0;
-                    (ray_marcher_pipeline.max_primitives - primitives.len())
-                        * size_of::<Std430GPUPrimitive>()
+                    (settings.max_primitives - primitives.len()) * size_of::<Std430GPUPrimitive>()
                 ]
                 .as_slice(),
             ]
@@ -540,18 +599,15 @@ impl RayMarcherPipeline {
             label: Some("viewport 3d lights buffer"),
             contents: &[
                 bytemuck::cast_slice(lights.as_slice()),
-                vec![
-                    0;
-                    (ray_marcher_pipeline.max_lights - lights.len()) * size_of::<Std430GPULight>()
-                ]
-                .as_slice(),
+                vec![0; (settings.max_lights - lights.len()) * size_of::<Std430GPULight>()]
+                    .as_slice(),
             ]
             .concat(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let atmosphere_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer.scene.atmosphere()]),
+            contents: bytemuck::cast_slice(&[self.renderer().scene.atmosphere()]),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
         });
         let emissive_primitive_indices_buffer =
@@ -561,7 +617,7 @@ impl RayMarcherPipeline {
                     bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
                     vec![
                         0;
-                        (ray_marcher_pipeline.max_primitives - emissive_primitive_indices.len())
+                        (settings.max_primitives - emissive_primitive_indices.len())
                             * size_of::<u32>()
                     ]
                     .as_slice(),
@@ -761,7 +817,7 @@ impl RayMarcherPipeline {
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        self.renderer.scene.render_camera.aspect_ratio = rect.width() / rect.height();
+        self.renderer_mut().scene.render_camera.aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
             return;
         }
@@ -784,11 +840,11 @@ impl RayMarcherPipeline {
                 },
             ))
         };
-        self.renderer.scene.render_camera.world_matrix *= camera_transform;
+        self.renderer_mut().scene.render_camera.world_matrix *= camera_transform;
     }
 }
 
-struct RayMarcherPipelineCallback {
+struct RayMarcherViewCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
     render_camera: Std430GPUCamera,
@@ -799,7 +855,7 @@ struct RayMarcherPipelineCallback {
     render_state: Std430GPURenderState,
 }
 
-impl egui_wgpu::CallbackTrait for RayMarcherPipelineCallback {
+impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
     fn prepare(
         &self,
         device: &wgpu::Device,

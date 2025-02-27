@@ -6,6 +6,8 @@
 use crevice::std430::AsStd430;
 use glam::{Mat4, Vec4};
 
+use crate::DualDevice;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
@@ -109,7 +111,9 @@ impl Camera {
             ),
         )
     }
+}
 
+impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
     fn to_gpu(&self) -> GPUCamera {
         GPUCamera {
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
@@ -119,9 +123,5 @@ impl Camera {
             inverse_projection_matrix: self.projection_matrix().inverse(),
             flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
-    }
-
-    pub fn as_std_430(&self) -> Std430GPUCamera {
-        self.to_gpu().as_std430()
     }
 }

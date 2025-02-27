@@ -5,9 +5,56 @@
 
 use crevice::std430::AsStd430;
 use glam::{BVec3, Mat4, UVec3, Vec3, Vec4};
+use strum::{Display, EnumIter, EnumString};
 
-use super::{BlendType, Repetition, Shapes, Transform};
-use crate::materials::{GPUMaterial, Material};
+use super::{BlendType, Repetition, Transform};
+use crate::{
+    materials::{GPUMaterial, Material},
+    DualDevice,
+};
+
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum Shapes {
+    #[default]
+    CappedCone,
+    CappedTorus,
+    Capsule,
+    Cone,
+    CutSphere,
+    Cylinder,
+    DeathStar,
+    Ellipsoid,
+    HexagonalPrism,
+    HollowSphere,
+    InfiniteCone,
+    InfiniteCylinder,
+    Link,
+    Mandelbox,
+    Mandelbulb,
+    Octahedron,
+    Plane,
+    RectangularPrism,
+    RectangularPrismFrame,
+    Rhombus,
+    RoundedCone,
+    SolidAngle,
+    Sphere,
+    Torus,
+    TriangularPrism,
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -76,8 +123,10 @@ impl Default for Primitive {
     }
 }
 
-impl Primitive {
-    pub fn to_gpu(&self) -> GPUPrimitive {
+impl Primitive {}
+
+impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
+    fn to_gpu(&self) -> GPUPrimitive {
         let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
         GPUPrimitive {
             id: 0,

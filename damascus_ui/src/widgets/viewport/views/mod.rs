@@ -73,9 +73,7 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
 
     fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool;
 
-    fn disable(&mut self) {
-        self.pause();
-    }
+    fn disable(&mut self) {}
 
     fn enable(&mut self) {}
 
@@ -87,13 +85,11 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
         !self.disabled()
     }
 
-    fn pause(&mut self) {}
+    fn pause(&mut self);
 
-    fn play(&mut self) {}
+    fn play(&mut self);
 
-    fn paused(&self) -> bool {
-        false
-    }
+    fn paused(&self) -> bool;
 
     fn toggle_play_pause(&mut self) {
         if self.disabled() {
@@ -106,12 +102,12 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
         }
     }
 
-    fn reset(&mut self) {}
-
     fn enable_and_play(&mut self) {
         self.enable();
         self.play();
     }
+
+    fn reset(&mut self) {}
 
     fn custom_painting(
         &mut self,
@@ -272,14 +268,14 @@ impl Views {
     pub fn enabled(&mut self) -> bool {
         match self {
             Self::RayMarcher { view } => view.enabled(),
-            _ => true,
+            _ => !self.disabled(),
         }
     }
 
     pub fn disabled(&mut self) -> bool {
         match self {
             Self::RayMarcher { view } => view.disabled(),
-            _ => true,
+            _ => false,
         }
     }
 

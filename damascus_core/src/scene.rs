@@ -8,11 +8,12 @@ use crevice::std430::AsStd430;
 use super::{
     geometry::{
         camera::Camera,
-        {Primitive, Std430GPUPrimitive},
+        primitive::{Primitive, Std430GPUPrimitive},
     },
     lights::{Light, Std430GPULight},
     materials::{Material, Std430GPUMaterial},
 };
+use crate::DualDevice;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -100,7 +101,7 @@ impl Scene {
         self.lights
             .iter()
             .take(max_lights)
-            .map(|light| light.to_gpu().as_std430())
+            .map(|light| light.as_std430())
             .collect::<Vec<Std430GPULight>>()
     }
 
@@ -129,7 +130,7 @@ impl Scene {
     }
 
     pub fn atmosphere(&self) -> Std430GPUMaterial {
-        self.atmosphere.to_gpu().as_std430()
+        self.atmosphere.as_std430()
     }
 
     pub fn clear_primitives(&mut self) {

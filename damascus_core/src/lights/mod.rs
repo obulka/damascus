@@ -7,6 +7,8 @@ use crevice::std430::AsStd430;
 use glam::Vec3;
 use strum::{Display, EnumIter, EnumString};
 
+use crate::DualDevice;
+
 #[derive(
     Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
 )]
@@ -56,8 +58,10 @@ impl Default for Light {
     }
 }
 
-impl Light {
-    pub fn to_gpu(&self) -> GPULight {
+impl Light {}
+
+impl DualDevice<GPULight, Std430GPULight> for Light {
+    fn to_gpu(&self) -> GPULight {
         GPULight {
             light_type: self.light_type as u32,
             dimensional_data: self.dimensional_data,

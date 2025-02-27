@@ -15,6 +15,7 @@ use super::Renderer;
 use crate::{
     scene::Scene,
     shaders::{self, PreprocessorDirectives},
+    DualDevice,
 };
 
 #[derive(
@@ -49,6 +50,8 @@ pub struct GPURenderState {
     flags: u32,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct RenderState {
     pub frame_counter: u32,
     pub previous_frame_time: SystemTime,
@@ -73,17 +76,15 @@ impl Default for RenderState {
     }
 }
 
-impl RenderState {
+impl RenderState {}
+
+impl DualDevice<GPURenderState, Std430GPURenderState> for RenderState {
     fn to_gpu(&self) -> GPURenderState {
         GPURenderState {
             paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
             resolution: self.resolution.as_vec2(),
             flags: self.paused as u32,
         }
-    }
-
-    pub fn as_std_430(&self) -> Std430GPURenderState {
-        self.to_gpu().as_std430()
     }
 }
 
@@ -166,7 +167,7 @@ impl RayMarcher {
     }
 }
 
-impl Renderer<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
+impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
             max_distance: self.max_distance.max(1e-8),
@@ -186,3 +187,5 @@ impl Renderer<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
         }
     }
 }
+
+impl Renderer<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {}

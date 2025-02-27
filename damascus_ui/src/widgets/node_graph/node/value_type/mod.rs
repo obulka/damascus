@@ -11,7 +11,12 @@ use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
+use damascus_core::{
+    geometry::{camera, primitive},
+    lights, materials,
+    renderers::ray_marcher,
+    scene, textures,
+};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},
@@ -193,7 +198,7 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a camera
-    pub fn try_to_camera(self) -> anyhow::Result<geometry::camera::Camera> {
+    pub fn try_to_camera(self) -> anyhow::Result<camera::Camera> {
         if let NodeValueType::Camera { value } = self {
             Ok(*value.value())
         } else {
@@ -220,7 +225,7 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a primitive
-    pub fn try_to_primitive(self) -> anyhow::Result<Vec<geometry::Primitive>> {
+    pub fn try_to_primitive(self) -> anyhow::Result<Vec<primitive::Primitive>> {
         if let NodeValueType::Primitive { value } = self {
             Ok(value.value().clone())
         } else {

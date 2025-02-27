@@ -229,7 +229,7 @@ pub fn show_toolbar(
                         ray_marcher_pipeline_reconstruction_required |= ui
                             .add(
                                 egui::DragValue::new(
-                                    &mut viewport.settings.pipeline_settings_3d.max_primitives,
+                                    &mut viewport.settings.ray_marcher_view.max_primitives,
                                 )
                                 .clamp_range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
                             )
@@ -240,7 +240,7 @@ pub fn show_toolbar(
                         ray_marcher_pipeline_reconstruction_required |= ui
                             .add(
                                 egui::DragValue::new(
-                                    &mut viewport.settings.pipeline_settings_3d.max_lights,
+                                    &mut viewport.settings.ray_marcher_view.max_lights,
                                 )
                                 .clamp_range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
                             )

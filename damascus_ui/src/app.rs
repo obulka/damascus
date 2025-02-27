@@ -20,7 +20,7 @@ use super::widgets::{
         NodeGraph, NodeGraphEditorState, NodeGraphResponse,
     },
     toolbar::show_toolbar,
-    viewport::{Viewport, ViewportSettings},
+    viewport::{Viewport, ViewportSettings, Views},
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -159,7 +159,7 @@ impl eframe::App for Damascus {
                     match user_event {
                         NodeGraphResponse::SetActiveNode(node) => {
                             self.node_graph.user_state_mut().active_node = Some(node);
-                            self.viewport.enable_and_play();
+                            self.viewport.view.enable_and_play();
                             responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                         }
                         NodeGraphResponse::ClearActiveNode => {
@@ -182,7 +182,7 @@ impl eframe::App for Damascus {
                                 .recompile_if_preprocessor_directives_changed(frame);
                         }
                         NodeGraphResponse::ReconstructRenderPipeline => {
-                            self.viewport.reconstruct_render_pipeline(frame);
+                            self.viewport.reconstruct_pipeline(frame);
                         }
                     }
                 }
@@ -237,31 +237,52 @@ impl eframe::App for Damascus {
                     }
                 };
                 match value_type {
-                    NodeValueType::Camera { value } => {
-                        self.viewport.default_renderer_with_camera(*value.value());
-                    }
-                    NodeValueType::Light { value } => self
-                        .viewport
-                        .default_renderer_with_lights(value.value().clone()),
-                    NodeValueType::Material { value } => self
-                        .viewport
-                        .default_renderer_with_atmosphere(*value.value()),
-                    NodeValueType::ProceduralTexture { value } => {
-                        self.viewport.default_renderer_with_texture(*value.value())
-                    }
-                    NodeValueType::Primitive { value } => self
-                        .viewport
-                        .default_renderer_with_primitives(value.value().clone()),
-                    NodeValueType::RayMarcher { value } => {
-                        self.viewport.set_renderer(value);
-                    }
-                    NodeValueType::Scene { value } => {
-                        self.viewport
-                            .default_renderer_with_scene(value.value().clone());
-                    }
-                    NodeValueType::Texture { value } => {
-                        self.viewport.view_texture(value.value().clone());
-                    }
+                    NodeValueType::Camera { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_camera(*value.value())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::Light { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_lights(value.value().clone())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::Material { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_atmosphere(*value.value())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::ProceduralTexture { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_texture(*value.value())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::Primitive { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_primitives(value.value().clone())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::RayMarcher { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => view.set_renderer(value),
+                        _ => {}
+                    },
+                    NodeValueType::Scene { value } => match &mut self.viewport.view {
+                        Views::RayMarcher { view } => {
+                            view.set_renderer_to_default_with_scene(value.value().clone())
+                        }
+                        _ => {}
+                    },
+                    NodeValueType::Texture { value: _ } => match &mut self.viewport.view {
+                        Views::Texture => {
+                            // TODO
+                        }
+                        _ => {}
+                    },
                     _ => {}
                 }
 
@@ -275,7 +296,7 @@ impl eframe::App for Damascus {
                                 .recompile_if_preprocessor_directives_changed(frame);
                         }
                         NodeGraphResponse::ReconstructRenderPipeline => {
-                            self.viewport.reconstruct_render_pipeline(frame);
+                            self.viewport.reconstruct_pipeline(frame);
                         }
                         _ => {}
                     }
@@ -286,7 +307,7 @@ impl eframe::App for Damascus {
         }
 
         if self.node_graph.user_state().active_node.is_none() {
-            self.viewport.disable();
+            self.viewport.view.disable();
         }
 
         self.viewport.show(ctx, frame);

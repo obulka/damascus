@@ -8,7 +8,10 @@ use std::{collections::HashSet, str::FromStr};
 use strum::{EnumCount, EnumIter, EnumString};
 
 use super::{
-    geometry::{BlendType, Primitive, Repetition, Shapes},
+    geometry::{
+        primitive::{Primitive, Shapes},
+        BlendType, Repetition,
+    },
     lights::{Light, Lights},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
     renderers::ray_marcher::{AOVs, RayMarcher},
@@ -33,7 +36,18 @@ enum Includes {
     VertexShader,
 }
 
-#[derive(Debug, EnumString, EnumCount, EnumIter, Eq, Hash, PartialEq)]
+#[derive(
+    Debug,
+    Clone,
+    Eq,
+    PartialEq,
+    Hash,
+    EnumString,
+    EnumCount,
+    EnumIter,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum PreprocessorDirectives {
     EnableDiffuseColourTexture,
     EnableScatteringColourTexture,

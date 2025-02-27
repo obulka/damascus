@@ -7,6 +7,8 @@ use crevice::std430::AsStd430;
 use glam::{EulerRot, Mat3, Vec3, Vec4};
 use strum::{Display, EnumIter, EnumString};
 
+use crate::DualDevice;
+
 #[derive(
     Debug,
     Default,
@@ -97,8 +99,10 @@ impl Default for ProceduralTexture {
     }
 }
 
-impl ProceduralTexture {
-    pub fn to_gpu(&self) -> GPUProceduralTexture {
+impl ProceduralTexture {}
+
+impl DualDevice<GPUProceduralTexture, Std430GPUProceduralTexture> for ProceduralTexture {
+    fn to_gpu(&self) -> GPUProceduralTexture {
         let radian_hue_rotation: Vec3 = self.hue_rotation_angles * std::f32::consts::PI / 180.;
         GPUProceduralTexture {
             texture_type: self.texture_type as u32,

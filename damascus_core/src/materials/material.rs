@@ -8,6 +8,8 @@ use glam::Vec3;
 
 use super::{GPUProceduralTexture, ProceduralTexture};
 
+use crate::DualDevice;
+
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUMaterial {
@@ -92,7 +94,17 @@ impl Default for Material {
 }
 
 impl Material {
-    pub fn to_gpu(&self) -> GPUMaterial {
+    pub fn scaled_emissive_colour(&self) -> Vec3 {
+        self.emissive_colour * self.emissive_intensity
+    }
+
+    pub fn is_emissive(&self) -> bool {
+        self.scaled_emissive_colour().length_squared() > 0.
+    }
+}
+
+impl DualDevice<GPUMaterial, Std430GPUMaterial> for Material {
+    fn to_gpu(&self) -> GPUMaterial {
         GPUMaterial {
             diffuse_colour: self.diffuse_colour,
             diffuse_colour_texture: self.diffuse_colour_texture.to_gpu(),
@@ -118,13 +130,5 @@ impl Material {
             scattering_colour: self.scattering_colour * self.scattering_coefficient,
             scattering_colour_texture: self.scattering_colour_texture.to_gpu(),
         }
-    }
-
-    pub fn scaled_emissive_colour(&self) -> Vec3 {
-        self.emissive_colour * self.emissive_intensity
-    }
-
-    pub fn is_emissive(&self) -> bool {
-        self.scaled_emissive_colour().length_squared() > 0.
     }
 }

@@ -3,26 +3,26 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use damascus_core::geometry;
+use damascus_core::geometry::primitive::Primitive;
 
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Primitives {
-    value: Vec<geometry::Primitive>,
+    value: Vec<Primitive>,
     ui_data: UIData,
 }
 
-impl UIInput<Vec<geometry::Primitive>> for Primitives {
-    fn new(value: Vec<geometry::Primitive>) -> Self {
+impl UIInput<Vec<Primitive>> for Primitives {
+    fn new(value: Vec<Primitive>) -> Self {
         Self {
             value: value,
             ..Default::default()
         }
     }
 
-    fn value(&self) -> &Vec<geometry::Primitive> {
+    fn value(&self) -> &Vec<Primitive> {
         &self.value
     }
 

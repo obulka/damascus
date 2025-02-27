@@ -809,7 +809,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 output_material(graph, "out");
             }
             NodeTemplate::Primitive => {
-                let default_primitive = geometry::Primitive::default();
+                let default_primitive = geometry::primitive::Primitive::default();
                 input_primitive(
                     graph,
                     "siblings",
@@ -841,9 +841,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::from_enum::<geometry::Shapes>(default_primitive.shape).with_ui_data(
-                        UIData::default().with_tooltip("The shape of the primitive."),
-                    ),
+                    ComboBox::from_enum::<geometry::primitive::Shapes>(default_primitive.shape)
+                        .with_ui_data(
+                            UIData::default().with_tooltip("The shape of the primitive."),
+                        ),
                 );
                 // Sphere dimensions
                 input_float(

@@ -11,7 +11,12 @@ use egui_node_graph;
 use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
-use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
+use damascus_core::{
+    geometry::{self, camera, primitive},
+    lights, materials,
+    renderers::ray_marcher,
+    scene, textures,
+};
 
 use super::node::{
     value_type::{
@@ -149,14 +154,14 @@ pub fn evaluate_node(
             )
         }
 
-        fn input_camera(&mut self, name: &str) -> anyhow::Result<geometry::camera::Camera> {
+        fn input_camera(&mut self, name: &str) -> anyhow::Result<camera::Camera> {
             self.evaluate_input(name)?.try_to_camera()
         }
 
         fn output_camera(
             &mut self,
             name: &str,
-            value: geometry::camera::Camera,
+            value: camera::Camera,
         ) -> anyhow::Result<NodeValueType> {
             self.populate_output(
                 name,
@@ -200,14 +205,14 @@ pub fn evaluate_node(
             )
         }
 
-        fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<geometry::Primitive>> {
+        fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<primitive::Primitive>> {
             self.evaluate_input(name)?.try_to_primitive()
         }
 
         fn output_primitive(
             &mut self,
             name: &str,
-            value: Vec<geometry::Primitive>,
+            value: Vec<primitive::Primitive>,
         ) -> anyhow::Result<NodeValueType> {
             self.populate_output(
                 name,
@@ -318,7 +323,7 @@ pub fn evaluate_node(
             let latlong = evaluator.input_bool("latlong")?;
             evaluator.output_camera(
                 "out",
-                geometry::camera::Camera::new(
+                camera::Camera::new(
                     1., // TODO use the root resolution or add a resolution knob
                     focal_length,
                     horizontal_aperture,
@@ -436,130 +441,130 @@ pub fn evaluate_node(
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut descendants = evaluator.input_primitive("children")?;
             let material = evaluator.input_material("material")?;
-            let shape = evaluator.input_combo_box::<geometry::Shapes>("shape")?;
+            let shape = evaluator.input_combo_box::<primitive::Shapes>("shape")?;
 
             let dimensional_data = match shape {
-                geometry::Shapes::CappedCone | geometry::Shapes::RoundedCone => glam::Vec4::new(
+                primitive::Shapes::CappedCone | primitive::Shapes::RoundedCone => glam::Vec4::new(
                     evaluator.input_float("height")?,
                     evaluator.input_float("lower_radius")?,
                     evaluator.input_float("upper_radius")?,
                     0.,
                 ),
-                geometry::Shapes::CappedTorus => glam::Vec4::new(
+                primitive::Shapes::CappedTorus => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     evaluator.input_float("cap_angle")?,
                     0.,
                 ),
-                geometry::Shapes::Capsule => glam::Vec4::new(
+                primitive::Shapes::Capsule => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("negative_height")?,
                     evaluator.input_float("positive_height")?,
                     0.,
                 ),
-                geometry::Shapes::Cone => glam::Vec4::new(
+                primitive::Shapes::Cone => glam::Vec4::new(
                     evaluator.input_float("angle")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::CutSphere => glam::Vec4::new(
+                primitive::Shapes::CutSphere => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::Cylinder => glam::Vec4::new(
+                primitive::Shapes::Cylinder => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::DeathStar => glam::Vec4::new(
+                primitive::Shapes::DeathStar => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("hollow_radius")?,
                     evaluator.input_float("hollow_height")?,
                     0.,
                 ),
-                geometry::Shapes::Ellipsoid => {
+                primitive::Shapes::Ellipsoid => {
                     glam::Vec4::from((evaluator.input_vector3("radii")?, 0.))
                 }
-                geometry::Shapes::HexagonalPrism => glam::Vec4::new(
+                primitive::Shapes::HexagonalPrism => glam::Vec4::new(
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::HollowSphere => glam::Vec4::new(
+                primitive::Shapes::HollowSphere => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("thickness")?,
                     0.,
                 ),
-                geometry::Shapes::InfiniteCone => {
+                primitive::Shapes::InfiniteCone => {
                     glam::Vec4::new(evaluator.input_float("angle")?, 0., 0., 0.)
                 }
-                geometry::Shapes::InfiniteCylinder => {
+                primitive::Shapes::InfiniteCylinder => {
                     glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
                 }
-                geometry::Shapes::Link => glam::Vec4::new(
+                primitive::Shapes::Link => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     evaluator.input_float("height")?,
                     0.,
                 ),
-                geometry::Shapes::Mandelbox => glam::Vec4::new(
+                primitive::Shapes::Mandelbox => glam::Vec4::new(
                     evaluator.input_float("scale")?,
                     evaluator.input_uint("iterations")? as f32,
                     evaluator.input_float("min_square_radius")?,
                     evaluator.input_float("folding_limit")?,
                 ),
-                geometry::Shapes::Mandelbulb => glam::Vec4::new(
+                primitive::Shapes::Mandelbulb => glam::Vec4::new(
                     evaluator.input_float("power")?,
                     evaluator.input_uint("iterations")? as f32,
                     evaluator.input_float("max_square_radius")?,
                     0.,
                 ),
-                geometry::Shapes::Octahedron => {
+                primitive::Shapes::Octahedron => {
                     glam::Vec4::new(evaluator.input_float("radial_extent")?, 0., 0., 0.)
                 }
-                geometry::Shapes::Plane => {
+                primitive::Shapes::Plane => {
                     glam::Vec4::from((evaluator.input_vector3("normal")?, 0.))
                 }
-                geometry::Shapes::RectangularPrism => glam::Vec4::new(
+                primitive::Shapes::RectangularPrism => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     0.,
                 ),
-                geometry::Shapes::RectangularPrismFrame => glam::Vec4::new(
+                primitive::Shapes::RectangularPrismFrame => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     evaluator.input_float("thickness")?,
                 ),
-                geometry::Shapes::Rhombus => glam::Vec4::new(
+                primitive::Shapes::Rhombus => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     evaluator.input_float("corner_radius")?,
                 ),
-                geometry::Shapes::SolidAngle => glam::Vec4::new(
+                primitive::Shapes::SolidAngle => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("solid_angle")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::Sphere => {
+                primitive::Shapes::Sphere => {
                     glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
                 }
-                geometry::Shapes::Torus => glam::Vec4::new(
+                primitive::Shapes::Torus => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     0.,
                     0.,
                 ),
-                geometry::Shapes::TriangularPrism => glam::Vec4::new(
+                primitive::Shapes::TriangularPrism => glam::Vec4::new(
                     evaluator.input_float("base")?,
                     evaluator.input_float("depth")?,
                     0.,
@@ -584,7 +589,7 @@ pub fn evaluate_node(
                 child.world_matrix = world_matrix * child.world_matrix;
             }
 
-            let primitive = geometry::Primitive {
+            let primitive = primitive::Primitive {
                 shape: shape,
                 world_matrix: world_matrix,
                 material: material,

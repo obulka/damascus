@@ -24,3 +24,5 @@ pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
         self.to_gpu().as_std430()
     }
 }
+
+pub trait Settings: Copy + Clone + serde::Serialize + for<'a> serde::Deserialize<'a> {}

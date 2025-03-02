@@ -14,7 +14,7 @@ use super::Renderer;
 
 use crate::{
     scene::Scene,
-    shaders::{self, PreprocessorDirectives},
+    shaders::ray_marcher::{all_directives_for_primitive, RayMarcherPreprocessorDirectives},
     DualDevice,
 };
 
@@ -59,7 +59,7 @@ pub struct RenderState {
     pub paths_rendered_per_pixel: u32,
     pub resolution: UVec2,
     pub paused: bool,
-    pub preprocessor_directives: HashSet<PreprocessorDirectives>,
+    pub preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
 impl Default for RenderState {
@@ -71,7 +71,7 @@ impl Default for RenderState {
             paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
             paused: true,
-            preprocessor_directives: shaders::all_directives_for_primitive(),
+            preprocessor_directives: all_directives_for_primitive(),
         }
     }
 }

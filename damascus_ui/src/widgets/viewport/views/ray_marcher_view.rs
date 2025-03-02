@@ -186,31 +186,34 @@ impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
     }
 
     fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
-        let mut preprocessor_directives = HashSet::<shaders::PreprocessorDirectives>::new();
+        let mut preprocessor_directives =
+            HashSet::<shaders::ray_marcher::RayMarcherPreprocessorDirectives>::new();
 
         if !settings.enable_dynamic_recompilation_for_ray_marcher {
-            preprocessor_directives.extend(shaders::all_directives_for_ray_marcher());
+            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_ray_marcher());
         } else {
-            preprocessor_directives.extend(shaders::directives_for_ray_marcher(self.renderer()));
+            preprocessor_directives.extend(shaders::ray_marcher::directives_for_ray_marcher(
+                self.renderer(),
+            ));
         }
 
         if !settings.enable_dynamic_recompilation_for_primitives {
-            preprocessor_directives.extend(shaders::all_directives_for_primitive());
+            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_primitive());
         }
 
         if !settings.enable_dynamic_recompilation_for_materials {
-            preprocessor_directives.extend(shaders::all_directives_for_material());
+            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_material());
         } else {
-            preprocessor_directives.extend(shaders::directives_for_material(
+            preprocessor_directives.extend(shaders::ray_marcher::directives_for_material(
                 &self.renderer().scene.atmosphere,
             ));
         }
 
         if !settings.enable_dynamic_recompilation_for_lights {
-            preprocessor_directives.extend(shaders::all_directives_for_light());
+            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_light());
         } else {
             for light in &self.renderer().scene.lights {
-                preprocessor_directives.extend(shaders::directives_for_light(&light));
+                preprocessor_directives.extend(shaders::ray_marcher::directives_for_light(&light));
             }
         }
 
@@ -219,11 +222,13 @@ impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
         {
             for primitive in &self.renderer().scene.primitives {
                 if settings.enable_dynamic_recompilation_for_materials {
-                    preprocessor_directives
-                        .extend(shaders::directives_for_material(&primitive.material));
+                    preprocessor_directives.extend(shaders::ray_marcher::directives_for_material(
+                        &primitive.material,
+                    ));
                 }
                 if settings.enable_dynamic_recompilation_for_primitives {
-                    preprocessor_directives.extend(shaders::directives_for_primitive(&primitive));
+                    preprocessor_directives
+                        .extend(shaders::ray_marcher::directives_for_primitive(&primitive));
                 }
             }
         }
@@ -787,9 +792,9 @@ impl RayMarcherView {
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("viewport 3d source shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&shaders::ray_march_shader(
-                &self.render_state.preprocessor_directives,
-            )))
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
+                &shaders::ray_marcher::ray_march_shader(&self.render_state.preprocessor_directives),
+            ))
             .into(),
         });
 

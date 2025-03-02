@@ -3,22 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
-use strum::{EnumCount, EnumIter, EnumString};
+use strum::{EnumCount, EnumString, IntoEnumIterator};
 
-use super::{
-    geometry::{
-        primitive::{Primitive, Shapes},
-        BlendType, Repetition,
-    },
-    lights::{Light, Lights},
-    materials::{Material, ProceduralTexture, ProceduralTextureType},
-    renderers::ray_marcher::{AOVs, RayMarcher},
-};
+pub mod ray_marcher;
 
 #[derive(Debug, EnumString)]
-enum Includes {
+pub enum Includes {
     AOVs,
     Camera,
     Material,
@@ -34,75 +26,6 @@ enum Includes {
     RenderParameters,
     SceneSDFs,
     VertexShader,
-}
-
-#[derive(
-    Debug,
-    Clone,
-    Eq,
-    PartialEq,
-    Hash,
-    EnumString,
-    EnumCount,
-    EnumIter,
-    serde::Serialize,
-    serde::Deserialize,
-)]
-pub enum PreprocessorDirectives {
-    EnableDiffuseColourTexture,
-    EnableScatteringColourTexture,
-    EnableSpecularProbabilityTexture,
-    EnableSpecularRoughnessTexture,
-    EnableSpecularColourTexture,
-    EnableTransmissiveProbabilityTexture,
-    EnableTransmissiveRoughnessTexture,
-    EnableEmissiveColourTexture,
-    EnableExtinctionColourTexture,
-    EnableRefractiveIndexTexture,
-    EnableTrapColour,
-    EnableGrade,
-    EnableCheckerboard,
-    EnableNoise,
-    EnableCappedCone,
-    EnableCappedTorus,
-    EnableCapsule,
-    EnableCone,
-    EnableCutSphere,
-    EnableCylinder,
-    EnableDeathStar,
-    EnableEllipsoid,
-    EnableHexagonalPrism,
-    EnableHollowSphere,
-    EnableInfiniteCone,
-    EnableInfiniteCylinder,
-    EnableLink,
-    EnableMandelbox,
-    EnableMandelbulb,
-    EnableOctahedron,
-    EnablePlane,
-    EnableRectangularPrism,
-    EnableRectangularPrismFrame,
-    EnableRhombus,
-    EnableRoundedCone,
-    EnableSolidAngle,
-    EnableTorus,
-    EnableTriangularPrism,
-    EnableChildInteractions,
-    EnablePrimitiveBlendSubtraction,
-    EnablePrimitiveBlendIntersection,
-    EnableInfiniteRepetition,
-    EnableFiniteRepetition,
-    EnableElongation,
-    EnableMirroring,
-    EnableHollowing,
-    EnableSpecularMaterials,
-    EnableTransmissiveMaterials,
-    EnablePhysicalLights,
-    EnableAOVs,
-    EnableDirectionalLights,
-    EnablePointLights,
-    EnableAmbientOcclusion,
-    EnableSoftShadows,
 }
 
 impl Includes {
@@ -127,10 +50,27 @@ impl Includes {
     }
 }
 
-fn preprocess_directives(
+pub trait PreprocessorDirectives:
+    Clone
+    + Debug
+    + Eq
+    + PartialEq
+    + Hash
+    + FromStr
+    + EnumCount
+    + IntoEnumIterator
+    + serde::Serialize
+    + for<'a> serde::Deserialize<'a>
+{
+}
+
+pub fn preprocess_directives<D: PreprocessorDirectives>(
     shader_source: Vec<String>,
-    preprocessor_directives: &HashSet<PreprocessorDirectives>,
-) -> Vec<String> {
+    preprocessor_directives: &HashSet<D>,
+) -> Vec<String>
+where
+    <D as FromStr>::Err: Debug,
+{
     // Handle ifdef preprocessor macro
     let mut branch_stack = Vec::<(bool, bool)>::new();
     shader_source
@@ -152,10 +92,8 @@ fn preprocess_directives(
                         // If we are currently in a branch and have taken it
                         // and we hit another branch decide whether or not to
                         // take it, push it to the stack and carry on
-                        let ifdef_directive = PreprocessorDirectives::from_str(
-                            line.trim().trim_start_matches("#ifdef").trim(),
-                        )
-                        .unwrap();
+                        let ifdef_directive =
+                            D::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
                         let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
                         branch_stack.push((take_branch, take_branch));
                     } else {
@@ -169,10 +107,8 @@ fn preprocess_directives(
                         // If we are in a branch and hit an else ifdef, and
                         // we have not yet taken a branch of the current
                         // conditional, check if we want to take this branch
-                        let else_ifdef_directive = PreprocessorDirectives::from_str(
-                            line.trim().trim_start_matches("#elifdef").trim(),
-                        )
-                        .unwrap();
+                        let else_ifdef_directive =
+                            D::from_str(line.trim().trim_start_matches("#elifdef").trim()).unwrap();
                         *current_branch_taken =
                             preprocessor_directives.contains(&else_ifdef_directive);
                         *branch_taken |= *current_branch_taken;
@@ -196,10 +132,8 @@ fn preprocess_directives(
                 // If we are not currently in a branch and we hit a branch
                 // decide whether or not to take the branch, push it to the
                 // stack and carry on
-                let ifdef_directive = PreprocessorDirectives::from_str(
-                    line.trim().trim_start_matches("#ifdef").trim(),
-                )
-                .unwrap();
+                let ifdef_directive =
+                    D::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
                 let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
                 branch_stack.push((take_branch, take_branch));
 
@@ -213,316 +147,58 @@ fn preprocess_directives(
         .collect::<Vec<String>>()
 }
 
-pub fn ray_march_shader(preprocessor_directives: &HashSet<PreprocessorDirectives>) -> String {
-    let mut shader_source = Vec::<String>::new();
-
-    // println!(
-    //     "compiling with the following directives: {:?}",
-    //     preprocessor_directives
-    // );
+pub fn process_shader_source<D: PreprocessorDirectives>(
+    shader_source: &str,
+    preprocessor_directives: &HashSet<D>,
+) -> String
+where
+    <D as FromStr>::Err: Debug,
+{
+    let mut processed_source = Vec::<String>::new();
 
     // Read shader source and replace includes with shader source files.
-    for line in include_str!("./renderer/ray_march.wgsl").split("\n") {
+    for line in shader_source.split("\n") {
         if line.trim().starts_with("#include") {
             for line in Includes::from_str(line.trim().trim_start_matches("#include").trim())
                 .unwrap()
                 .source()
                 .split("\n")
             {
-                shader_source.push(line.to_string());
+                processed_source.push(line.to_string());
             }
         } else if line.trim().starts_with("//") || line.trim() == "" {
             continue;
         } else {
-            shader_source.push(line.to_string());
+            processed_source.push(line.to_string());
         }
     }
 
-    preprocess_directives(shader_source, preprocessor_directives).join("\n")
-}
-
-pub fn all_directives_for_ray_marcher() -> HashSet<PreprocessorDirectives> {
-    HashSet::<PreprocessorDirectives>::from([PreprocessorDirectives::EnableAOVs])
-}
-
-pub fn all_directives_for_material() -> HashSet<PreprocessorDirectives> {
-    HashSet::<PreprocessorDirectives>::from([
-        PreprocessorDirectives::EnableDiffuseColourTexture,
-        PreprocessorDirectives::EnableScatteringColourTexture,
-        PreprocessorDirectives::EnableSpecularProbabilityTexture,
-        PreprocessorDirectives::EnableSpecularRoughnessTexture,
-        PreprocessorDirectives::EnableSpecularColourTexture,
-        PreprocessorDirectives::EnableTransmissiveProbabilityTexture,
-        PreprocessorDirectives::EnableTransmissiveRoughnessTexture,
-        PreprocessorDirectives::EnableEmissiveColourTexture,
-        PreprocessorDirectives::EnableExtinctionColourTexture,
-        PreprocessorDirectives::EnableRefractiveIndexTexture,
-        PreprocessorDirectives::EnableTrapColour,
-        PreprocessorDirectives::EnableGrade,
-        PreprocessorDirectives::EnableCheckerboard,
-        PreprocessorDirectives::EnableNoise,
-        PreprocessorDirectives::EnableSpecularMaterials,
-        PreprocessorDirectives::EnableTransmissiveMaterials,
-    ])
-}
-
-pub fn all_directives_for_primitive() -> HashSet<PreprocessorDirectives> {
-    HashSet::<PreprocessorDirectives>::from([
-        PreprocessorDirectives::EnableCappedCone,
-        PreprocessorDirectives::EnableCappedTorus,
-        PreprocessorDirectives::EnableCapsule,
-        PreprocessorDirectives::EnableCone,
-        PreprocessorDirectives::EnableCutSphere,
-        PreprocessorDirectives::EnableCylinder,
-        PreprocessorDirectives::EnableDeathStar,
-        PreprocessorDirectives::EnableEllipsoid,
-        PreprocessorDirectives::EnableHexagonalPrism,
-        PreprocessorDirectives::EnableHollowSphere,
-        PreprocessorDirectives::EnableInfiniteCone,
-        PreprocessorDirectives::EnableInfiniteCylinder,
-        PreprocessorDirectives::EnableLink,
-        PreprocessorDirectives::EnableMandelbox,
-        PreprocessorDirectives::EnableMandelbulb,
-        PreprocessorDirectives::EnableOctahedron,
-        PreprocessorDirectives::EnablePlane,
-        PreprocessorDirectives::EnableRectangularPrism,
-        PreprocessorDirectives::EnableRectangularPrismFrame,
-        PreprocessorDirectives::EnableRhombus,
-        PreprocessorDirectives::EnableRoundedCone,
-        PreprocessorDirectives::EnableSolidAngle,
-        PreprocessorDirectives::EnableTorus,
-        PreprocessorDirectives::EnableTriangularPrism,
-        PreprocessorDirectives::EnableChildInteractions,
-        PreprocessorDirectives::EnablePrimitiveBlendSubtraction,
-        PreprocessorDirectives::EnablePrimitiveBlendIntersection,
-        PreprocessorDirectives::EnableInfiniteRepetition,
-        PreprocessorDirectives::EnableFiniteRepetition,
-        PreprocessorDirectives::EnableElongation,
-        PreprocessorDirectives::EnableMirroring,
-        PreprocessorDirectives::EnableHollowing,
-        PreprocessorDirectives::EnablePhysicalLights,
-    ])
-}
-
-pub fn all_directives_for_light() -> HashSet<PreprocessorDirectives> {
-    HashSet::<PreprocessorDirectives>::from([
-        PreprocessorDirectives::EnableDirectionalLights,
-        PreprocessorDirectives::EnablePointLights,
-        PreprocessorDirectives::EnableAmbientOcclusion,
-        PreprocessorDirectives::EnableSoftShadows,
-    ])
-}
-
-pub fn directives_for_ray_marcher(ray_marcher: &RayMarcher) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    if ray_marcher.output_aov > AOVs::Beauty {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableAOVs);
-    }
-
-    preprocessor_directives
-}
-
-pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    if primitive.num_descendants > 0
-        && (primitive.blend_type > BlendType::Union || primitive.blend_strength > 0.)
-    {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableChildInteractions);
-
-        match primitive.blend_type {
-            BlendType::Subtraction => {
-                preprocessor_directives
-                    .insert(PreprocessorDirectives::EnablePrimitiveBlendSubtraction);
-            }
-            BlendType::Intersection => {
-                preprocessor_directives
-                    .insert(PreprocessorDirectives::EnablePrimitiveBlendIntersection);
-            }
-            _ => {}
-        }
-    }
-
-    match primitive.repetition {
-        Repetition::Finite => {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
-        }
-        Repetition::Infinite => {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
-        }
-        _ => {}
-    }
-
-    if primitive.elongate {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableElongation);
-    }
-
-    if primitive.mirror.any() {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableMirroring);
-    }
-
-    if primitive.hollow {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableHollowing);
-    }
-
-    if primitive.shape == Shapes::Sphere {
-        return preprocessor_directives;
-    }
-
-    preprocessor_directives.insert(
-        PreprocessorDirectives::from_str(&("Enable".to_owned() + &primitive.shape.to_string()))
-            .unwrap(),
-    );
-
-    preprocessor_directives
-}
-
-pub fn directives_for_procedural_texture(
-    procedural_texture: &ProceduralTexture,
-) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    if procedural_texture.texture_type == ProceduralTextureType::Grade {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableGrade);
-    } else if procedural_texture.texture_type == ProceduralTextureType::Checkerboard {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableCheckerboard);
-    } else if procedural_texture.texture_type == ProceduralTextureType::FBMNoise
-        || procedural_texture.texture_type == ProceduralTextureType::TurbulenceNoise
-    {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableNoise);
-    }
-
-    preprocessor_directives
-}
-
-pub fn directives_for_material(material: &Material) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    if material.diffuse_colour_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.diffuse_colour_texture,
-        ));
-    }
-    if material.specular_probability_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularProbabilityTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.specular_probability_texture,
-        ));
-    }
-    if material.specular_roughness_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularRoughnessTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.specular_roughness_texture,
-        ));
-    }
-    if material.specular_colour_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.specular_colour_texture,
-        ));
-    }
-    if material.transmissive_probability_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives
-            .insert(PreprocessorDirectives::EnableTransmissiveProbabilityTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.transmissive_probability_texture,
-        ));
-    }
-    if material.transmissive_roughness_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveRoughnessTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.transmissive_roughness_texture,
-        ));
-    }
-    if material.transmissive_colour_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableExtinctionColourTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.transmissive_colour_texture,
-        ));
-    }
-    if material.emissive_colour_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableEmissiveColourTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.emissive_colour_texture,
-        ));
-    }
-    if material.refractive_index_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableRefractiveIndexTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.refractive_index_texture,
-        ));
-    }
-    if material.scattering_colour_texture.texture_type > ProceduralTextureType::None {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableScatteringColourTexture);
-        preprocessor_directives.extend(directives_for_procedural_texture(
-            &material.scattering_colour_texture,
-        ));
-    }
-
-    if material.transmissive_probability > 0. {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableTransmissiveMaterials);
-    } else if material.specular_probability > 0. {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularMaterials);
-    }
-
-    if material.diffuse_colour_texture.use_trap_colour
-        || material.specular_colour_texture.use_trap_colour
-        || material.emissive_colour_texture.use_trap_colour
-    {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableTrapColour);
-    }
-
-    if material.is_emissive() {
-        preprocessor_directives.insert(PreprocessorDirectives::EnablePhysicalLights);
-    }
-
-    preprocessor_directives
-}
-
-pub fn directives_for_light(light: &Light) -> HashSet<PreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-
-    match light.light_type {
-        Lights::Directional => {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableDirectionalLights);
-        }
-        Lights::Point => {
-            preprocessor_directives.insert(PreprocessorDirectives::EnablePointLights);
-        }
-        Lights::AmbientOcclusion => {
-            preprocessor_directives.insert(PreprocessorDirectives::EnableAmbientOcclusion);
-        }
-        _ => {}
-    }
-
-    if light.soften_shadows {
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSoftShadows);
-    }
-
-    preprocessor_directives
+    preprocess_directives(processed_source, preprocessor_directives).join("\n")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ray_marcher::*;
 
     #[test]
     fn test_all_directives_covered() {
-        let mut preprocessor_directives: HashSet<PreprocessorDirectives> =
+        let mut preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives> =
             all_directives_for_material();
         preprocessor_directives.extend(all_directives_for_primitive());
         preprocessor_directives.extend(all_directives_for_ray_marcher());
         preprocessor_directives.extend(all_directives_for_light());
-        assert_eq!(preprocessor_directives.len(), PreprocessorDirectives::COUNT);
+        assert_eq!(
+            preprocessor_directives.len(),
+            RayMarcherPreprocessorDirectives::COUNT
+        );
     }
 
     #[test]
     fn test_ifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
@@ -549,8 +225,9 @@ mod tests {
 
     #[test]
     fn test_else_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
@@ -581,9 +258,11 @@ mod tests {
 
     #[test]
     fn test_elifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
@@ -621,7 +300,8 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives
+            .remove(&RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -645,7 +325,8 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableSpecularColourTexture);
+        preprocessor_directives
+            .remove(&RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -659,9 +340,11 @@ mod tests {
 
     #[test]
     fn test_nested_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
-        preprocessor_directives.insert(PreprocessorDirectives::EnableDiffuseColourTexture);
-        preprocessor_directives.insert(PreprocessorDirectives::EnableSpecularColourTexture);
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives
+            .insert(RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
@@ -713,7 +396,8 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives.remove(&PreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives
+            .remove(&RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -787,7 +471,7 @@ mod tests {
             "}",
         ];
 
-        let mut preprocessor_directives = HashSet::<PreprocessorDirectives>::new();
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
 
         let mut expected_result = vec![
             "fn transform_position(",
@@ -830,7 +514,7 @@ mod tests {
 
         assert_eq!(result_string, expected_result_string);
 
-        preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableFiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",
@@ -881,7 +565,7 @@ mod tests {
 
         preprocessor_directives.clear();
 
-        preprocessor_directives.insert(PreprocessorDirectives::EnableInfiniteRepetition);
+        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableInfiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",
@@ -931,7 +615,7 @@ mod tests {
 
         assert_eq!(result_string, expected_result_string);
 
-        preprocessor_directives.insert(PreprocessorDirectives::EnableFiniteRepetition);
+        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableFiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",

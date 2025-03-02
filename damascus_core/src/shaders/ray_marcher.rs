@@ -7,7 +7,7 @@ use std::{collections::HashSet, str::FromStr};
 
 use strum::{EnumCount, EnumIter, EnumString};
 
-use super::{process_shader_source, PreprocessorDirectives};
+use super::{process_shader_source, CompilerSettings, PreprocessorDirectives};
 
 use crate::{
     geometry::{
@@ -16,7 +16,8 @@ use crate::{
     },
     lights::{Light, Lights},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
-    renderers::ray_marcher::{AOVs, RayMarcher},
+    renderers::ray_marcher::{AOVs, GPURayMarcher, RayMarcher, Std430GPURayMarcher},
+    Settings,
 };
 
 #[derive(
@@ -383,4 +384,87 @@ pub fn directives_for_light(light: &Light) -> HashSet<RayMarcherPreprocessorDire
     }
 
     preprocessor_directives
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct RayMarcherCompilerSettings {
+    pub enable_dynamic_recompilation_for_materials: bool,
+    pub enable_dynamic_recompilation_for_primitives: bool,
+    pub enable_dynamic_recompilation_for_ray_marcher: bool,
+    pub enable_dynamic_recompilation_for_lights: bool,
+}
+
+impl Default for RayMarcherCompilerSettings {
+    fn default() -> Self {
+        Self {
+            enable_dynamic_recompilation_for_materials: true,
+            enable_dynamic_recompilation_for_primitives: true,
+            enable_dynamic_recompilation_for_ray_marcher: true,
+            enable_dynamic_recompilation_for_lights: true,
+        }
+    }
+}
+
+impl RayMarcherCompilerSettings {
+    pub fn dynamic_recompilation_enabled(&self) -> bool {
+        self.enable_dynamic_recompilation_for_primitives
+            || self.enable_dynamic_recompilation_for_materials
+            || self.enable_dynamic_recompilation_for_ray_marcher
+            || self.enable_dynamic_recompilation_for_lights
+    }
+}
+
+impl Settings for RayMarcherCompilerSettings {}
+
+impl
+    CompilerSettings<
+        RayMarcherPreprocessorDirectives,
+        RayMarcher,
+        GPURayMarcher,
+        Std430GPURayMarcher,
+    > for RayMarcherCompilerSettings
+{
+    fn directives(&self, renderer: &RayMarcher) -> HashSet<RayMarcherPreprocessorDirectives> {
+        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+
+        if !self.enable_dynamic_recompilation_for_ray_marcher {
+            preprocessor_directives.extend(all_directives_for_ray_marcher());
+        } else {
+            preprocessor_directives.extend(directives_for_ray_marcher(renderer));
+        }
+
+        if !self.enable_dynamic_recompilation_for_primitives {
+            preprocessor_directives.extend(all_directives_for_primitive());
+        }
+
+        if !self.enable_dynamic_recompilation_for_materials {
+            preprocessor_directives.extend(all_directives_for_material());
+        } else {
+            preprocessor_directives.extend(directives_for_material(&renderer.scene.atmosphere));
+        }
+
+        if !self.enable_dynamic_recompilation_for_lights {
+            preprocessor_directives.extend(all_directives_for_light());
+        } else {
+            for light in &renderer.scene.lights {
+                preprocessor_directives.extend(directives_for_light(&light));
+            }
+        }
+
+        if self.enable_dynamic_recompilation_for_primitives
+            || self.enable_dynamic_recompilation_for_materials
+        {
+            for primitive in &renderer.scene.primitives {
+                if self.enable_dynamic_recompilation_for_materials {
+                    preprocessor_directives.extend(directives_for_material(&primitive.material));
+                }
+                if self.enable_dynamic_recompilation_for_primitives {
+                    preprocessor_directives.extend(directives_for_primitive(&primitive));
+                }
+            }
+        }
+
+        preprocessor_directives
+    }
 }

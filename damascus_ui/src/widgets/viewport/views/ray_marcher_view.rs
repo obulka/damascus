@@ -4,7 +4,6 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::borrow::Cow;
-use std::collections::HashSet;
 use std::ops::BitOr;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -29,10 +28,11 @@ use damascus_core::{
         GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
     },
     scene::{Scene, Std430GPUSceneParameters},
-    shaders, DualDevice,
+    shaders::{self, CompilerSettings},
+    DualDevice,
 };
 
-use super::{CompilerSettings, RayMarcherViewSettings, View, ViewportSettings};
+use super::{RayMarcherCompilerSettings, RayMarcherViewSettings, View, ViewportSettings};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -185,53 +185,8 @@ impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
         }
     }
 
-    fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
-        let mut preprocessor_directives =
-            HashSet::<shaders::ray_marcher::RayMarcherPreprocessorDirectives>::new();
-
-        if !settings.enable_dynamic_recompilation_for_ray_marcher {
-            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_ray_marcher());
-        } else {
-            preprocessor_directives.extend(shaders::ray_marcher::directives_for_ray_marcher(
-                self.renderer(),
-            ));
-        }
-
-        if !settings.enable_dynamic_recompilation_for_primitives {
-            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_primitive());
-        }
-
-        if !settings.enable_dynamic_recompilation_for_materials {
-            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_material());
-        } else {
-            preprocessor_directives.extend(shaders::ray_marcher::directives_for_material(
-                &self.renderer().scene.atmosphere,
-            ));
-        }
-
-        if !settings.enable_dynamic_recompilation_for_lights {
-            preprocessor_directives.extend(shaders::ray_marcher::all_directives_for_light());
-        } else {
-            for light in &self.renderer().scene.lights {
-                preprocessor_directives.extend(shaders::ray_marcher::directives_for_light(&light));
-            }
-        }
-
-        if settings.enable_dynamic_recompilation_for_primitives
-            || settings.enable_dynamic_recompilation_for_materials
-        {
-            for primitive in &self.renderer().scene.primitives {
-                if settings.enable_dynamic_recompilation_for_materials {
-                    preprocessor_directives.extend(shaders::ray_marcher::directives_for_material(
-                        &primitive.material,
-                    ));
-                }
-                if settings.enable_dynamic_recompilation_for_primitives {
-                    preprocessor_directives
-                        .extend(shaders::ray_marcher::directives_for_primitive(&primitive));
-                }
-            }
-        }
+    fn update_preprocessor_directives(&mut self, settings: &RayMarcherCompilerSettings) -> bool {
+        let preprocessor_directives = settings.directives(self.renderer());
 
         // Check if the directives have changed and store them if they have
         if preprocessor_directives == self.render_state.preprocessor_directives {

@@ -6,9 +6,9 @@
 use crevice::std430::AsStd430;
 use eframe::{egui, egui_wgpu, epaint};
 
-use damascus_core::renderers::Renderer;
+use damascus_core::{renderers::Renderer, shaders::ray_marcher::RayMarcherCompilerSettings};
 
-use super::settings::{CompilerSettings, RayMarcherViewSettings, ViewportSettings};
+use super::settings::{RayMarcherViewSettings, ViewportSettings};
 
 use crate::icons::Icons;
 
@@ -71,7 +71,7 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
 
     fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
 
-    fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool;
+    fn update_preprocessor_directives(&mut self, settings: &RayMarcherCompilerSettings) -> bool;
 
     fn disable(&mut self) {}
 
@@ -232,7 +232,10 @@ impl Views {
         }
     }
 
-    pub fn update_preprocessor_directives(&mut self, settings: &CompilerSettings) -> bool {
+    pub fn update_preprocessor_directives(
+        &mut self,
+        settings: &RayMarcherCompilerSettings,
+    ) -> bool {
         match self {
             Self::RayMarcher { view } => view.update_preprocessor_directives(settings),
             _ => false,
@@ -242,7 +245,7 @@ impl Views {
     pub fn recompile_if_preprocessor_directives_changed(
         &mut self,
         frame: &mut eframe::Frame,
-        settings: &CompilerSettings,
+        settings: &RayMarcherCompilerSettings,
     ) {
         if self.update_preprocessor_directives(settings) {
             self.recompile_shader(frame);

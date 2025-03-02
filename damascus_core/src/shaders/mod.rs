@@ -5,7 +5,10 @@
 
 use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
+use crevice::std430::AsStd430;
 use strum::{EnumCount, EnumString, IntoEnumIterator};
+
+use super::{renderers::Renderer, Settings};
 
 pub mod ray_marcher;
 
@@ -62,6 +65,16 @@ pub trait PreprocessorDirectives:
     + serde::Serialize
     + for<'a> serde::Deserialize<'a>
 {
+}
+
+pub trait CompilerSettings<
+    D: PreprocessorDirectives,
+    R: Renderer<G, S>,
+    G: Copy + Clone + AsStd430<Output = S>,
+    S,
+>: Settings
+{
+    fn directives(&self, renderer: &R) -> HashSet<D>;
 }
 
 pub fn preprocess_directives<D: PreprocessorDirectives>(

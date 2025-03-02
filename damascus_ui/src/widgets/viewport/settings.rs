@@ -3,6 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use damascus_core::shaders::ray_marcher::RayMarcherCompilerSettings;
+
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewSettings {
@@ -33,37 +35,8 @@ impl Default for RayMarcherViewSettings {
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct CompilerSettings {
-    pub enable_dynamic_recompilation_for_materials: bool,
-    pub enable_dynamic_recompilation_for_primitives: bool,
-    pub enable_dynamic_recompilation_for_ray_marcher: bool,
-    pub enable_dynamic_recompilation_for_lights: bool,
-}
-
-impl Default for CompilerSettings {
-    fn default() -> Self {
-        Self {
-            enable_dynamic_recompilation_for_materials: true,
-            enable_dynamic_recompilation_for_primitives: true,
-            enable_dynamic_recompilation_for_ray_marcher: true,
-            enable_dynamic_recompilation_for_lights: true,
-        }
-    }
-}
-
-impl CompilerSettings {
-    pub fn dynamic_recompilation_enabled(&self) -> bool {
-        self.enable_dynamic_recompilation_for_primitives
-            || self.enable_dynamic_recompilation_for_materials
-            || self.enable_dynamic_recompilation_for_ray_marcher
-            || self.enable_dynamic_recompilation_for_lights
-    }
-}
-
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-#[serde(default)]
 pub struct ViewportSettings {
-    pub compiler_settings: CompilerSettings,
+    pub compiler_settings: RayMarcherCompilerSettings,
     pub texture_view: TextureViewSettings,
     pub ray_marcher_view: RayMarcherViewSettings,
 }
@@ -71,7 +44,7 @@ pub struct ViewportSettings {
 impl Default for ViewportSettings {
     fn default() -> Self {
         Self {
-            compiler_settings: CompilerSettings::default(),
+            compiler_settings: RayMarcherCompilerSettings::default(),
             texture_view: TextureViewSettings::default(),
             ray_marcher_view: RayMarcherViewSettings::default(),
         }

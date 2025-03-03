@@ -3,10 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashSet;
+
 use crevice::std430::AsStd430;
 use eframe::{egui, egui_wgpu, epaint};
 
-use damascus_core::{renderers::Renderer, shaders::ray_marcher::RayMarcherCompilerSettings};
+use damascus_core::{
+    renderers::Renderer,
+    shaders::{ray_marcher::RayMarcherCompilerSettings, CompilerSettings, PreprocessorDirectives},
+};
 
 use super::settings::{RayMarcherViewSettings, ViewportSettings};
 
@@ -16,7 +21,14 @@ mod ray_marcher_view;
 
 pub use ray_marcher_view::RayMarcherView;
 
-pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: Default {
+pub trait View<
+    R: Renderer<G, S>,
+    G: Copy + Clone + AsStd430<Output = S>,
+    S,
+    C: CompilerSettings<D, R, G, S>,
+    D: PreprocessorDirectives,
+>: Default
+{
     const ICON_SIZE: f32 = 25.;
 
     fn renderer(&self) -> &R;
@@ -71,7 +83,19 @@ pub trait View<R: Renderer<G, S>, G: Copy + Clone + AsStd430<Output = S>, S>: De
 
     fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
 
-    fn update_preprocessor_directives(&mut self, settings: &RayMarcherCompilerSettings) -> bool;
+    fn current_preprocessor_directives(&mut self) -> &mut HashSet<D>;
+
+    fn update_preprocessor_directives(&mut self, settings: &C) -> bool {
+        let new_directives = settings.directives(self.renderer());
+        let current_directives = self.current_preprocessor_directives();
+
+        // Check if the directives have changed and store them if they have
+        if new_directives == *current_directives {
+            return false;
+        }
+        *current_directives = new_directives;
+        true
+    }
 
     fn disable(&mut self) {}
 

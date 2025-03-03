@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::borrow::Cow;
+use std::collections::HashSet;
 use std::ops::BitOr;
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -28,7 +29,7 @@ use damascus_core::{
         GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
     },
     scene::{Scene, Std430GPUSceneParameters},
-    shaders::{self, CompilerSettings},
+    shaders::{self, ray_marcher::RayMarcherPreprocessorDirectives},
     DualDevice,
 };
 
@@ -64,7 +65,15 @@ impl Default for RayMarcherView {
     }
 }
 
-impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
+impl
+    View<
+        RayMarcher,
+        GPURayMarcher,
+        Std430GPURayMarcher,
+        RayMarcherCompilerSettings,
+        RayMarcherPreprocessorDirectives,
+    > for RayMarcherView
+{
     fn renderer(&self) -> &RayMarcher {
         &self.renderer
     }
@@ -185,15 +194,10 @@ impl View<RayMarcher, GPURayMarcher, Std430GPURayMarcher> for RayMarcherView {
         }
     }
 
-    fn update_preprocessor_directives(&mut self, settings: &RayMarcherCompilerSettings) -> bool {
-        let preprocessor_directives = settings.directives(self.renderer());
-
-        // Check if the directives have changed and store them if they have
-        if preprocessor_directives == self.render_state.preprocessor_directives {
-            return false;
-        }
-        self.render_state.preprocessor_directives = preprocessor_directives;
-        true
+    fn current_preprocessor_directives(
+        &mut self,
+    ) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
+        &mut self.render_state.preprocessor_directives
     }
 
     fn disable(&mut self) {

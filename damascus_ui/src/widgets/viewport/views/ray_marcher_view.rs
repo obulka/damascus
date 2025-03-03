@@ -302,6 +302,8 @@ impl
             panic!("Cannot hash renderer!")
         }
 
+        let mut paths_rendered: u32 = 0;
+
         if self.paused() {
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
@@ -323,10 +325,10 @@ impl
                 }
             }
 
-            self.render_state.paths_rendered_per_pixel += 1;
+            paths_rendered = 1;
         }
 
-        Some(egui_wgpu::Callback::new_paint_callback(
+        let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
             RayMarcherViewCallback {
                 render_parameters: self.renderer().as_std430(),
@@ -347,7 +349,11 @@ impl
                     .emissive_primitive_indices(settings.max_primitives),
                 render_state: self.render_state.as_std430(),
             },
-        ))
+        ));
+
+        self.render_state.paths_rendered_per_pixel += paths_rendered;
+
+        callback
     }
 }
 

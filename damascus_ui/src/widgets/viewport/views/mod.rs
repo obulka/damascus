@@ -58,10 +58,10 @@ pub trait View<
         Some(pipeline)
     }
 
-    /// Construict all uniform/storage/texture buffers and RenderResources
+    /// Construct all uniform/storage/texture buffers and RenderResources
     fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
 
-    /// Construict all uniform/storage/texture buffers and RenderResources
+    /// Construct all uniform/storage/texture buffers and RenderResources
     fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
         wgpu_render_state
             .renderer

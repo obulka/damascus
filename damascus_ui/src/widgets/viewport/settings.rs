@@ -3,7 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use damascus_core::shaders::ray_marcher::RayMarcherCompilerSettings;
+use damascus_core::{shaders::ray_marcher::RayMarcherCompilerSettings, Settings};
+
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct ViewportCompilerSettings {
+    pub ray_marcher: RayMarcherCompilerSettings,
+}
+
+impl Settings for ViewportCompilerSettings {}
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -16,6 +24,8 @@ impl Default for TextureViewSettings {
         Self { zoom: 1. }
     }
 }
+
+impl Settings for TextureViewSettings {}
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -33,20 +43,14 @@ impl Default for RayMarcherViewSettings {
     }
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+impl Settings for RayMarcherViewSettings {}
+
+#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct ViewportSettings {
-    pub compiler_settings: RayMarcherCompilerSettings,
+    pub compiler_settings: ViewportCompilerSettings,
     pub texture_view: TextureViewSettings,
     pub ray_marcher_view: RayMarcherViewSettings,
 }
 
-impl Default for ViewportSettings {
-    fn default() -> Self {
-        Self {
-            compiler_settings: RayMarcherCompilerSettings::default(),
-            texture_view: TextureViewSettings::default(),
-            ray_marcher_view: RayMarcherViewSettings::default(),
-        }
-    }
-}
+impl Settings for ViewportSettings {}

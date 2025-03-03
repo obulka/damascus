@@ -185,6 +185,7 @@ pub fn show_toolbar(
                                 &mut viewport
                                     .settings
                                     .compiler_settings
+                                    .ray_marcher
                                     .enable_dynamic_recompilation_for_materials,
                             ))
                             .clicked();
@@ -196,6 +197,7 @@ pub fn show_toolbar(
                                 &mut viewport
                                     .settings
                                     .compiler_settings
+                                    .ray_marcher
                                     .enable_dynamic_recompilation_for_primitives,
                             ))
                             .clicked();
@@ -207,6 +209,7 @@ pub fn show_toolbar(
                                 &mut viewport
                                     .settings
                                     .compiler_settings
+                                    .ray_marcher
                                     .enable_dynamic_recompilation_for_ray_marcher,
                             ))
                             .clicked();
@@ -218,6 +221,7 @@ pub fn show_toolbar(
                                 &mut viewport
                                     .settings
                                     .compiler_settings
+                                    .ray_marcher
                                     .enable_dynamic_recompilation_for_lights,
                             ))
                             .clicked();

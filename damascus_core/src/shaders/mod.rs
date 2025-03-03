@@ -75,6 +75,8 @@ pub trait CompilerSettings<
 >: Settings
 {
     fn directives(&self, renderer: &R) -> HashSet<D>;
+
+    fn dynamic_recompilation_enabled(&self) -> bool;
 }
 
 pub fn preprocess_directives<D: PreprocessorDirectives>(

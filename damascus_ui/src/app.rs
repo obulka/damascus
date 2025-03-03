@@ -104,6 +104,16 @@ impl Damascus {
             },
         ));
     }
+
+    fn display_error(ctx: &egui::Context, error: &anyhow::Error) {
+        ctx.debug_painter().text(
+            egui::pos2(10.0, 35.0),
+            egui::Align2::LEFT_TOP,
+            format!("Error: {}", error),
+            egui::TextStyle::Button.resolve(&ctx.style()),
+            egui::Color32::RED,
+        );
+    }
 }
 
 impl eframe::App for Damascus {
@@ -223,13 +233,7 @@ impl eframe::App for Damascus {
                 ) {
                     Ok(value) => value,
                     Err(error) => {
-                        ctx.debug_painter().text(
-                            egui::pos2(10.0, 35.0),
-                            egui::Align2::LEFT_TOP,
-                            format!("Error: {}", error),
-                            egui::TextStyle::Button.resolve(&ctx.style()),
-                            egui::Color32::RED,
-                        );
+                        Self::display_error(ctx, &error);
 
                         NodeValueType::Bool {
                             value: Bool::new(false),
@@ -241,46 +245,54 @@ impl eframe::App for Damascus {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_camera(*value.value())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::Light { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_lights(value.value().clone())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::Material { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_atmosphere(*value.value())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::ProceduralTexture { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_texture(*value.value())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::Primitive { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_primitives(value.value().clone())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::RayMarcher { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => view.set_renderer(value),
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::Scene { value } => match &mut self.viewport.view {
                         Views::RayMarcher { view } => {
                             view.set_renderer_to_default_with_scene(value.value().clone())
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     NodeValueType::Texture { value: _ } => match &mut self.viewport.view {
                         Views::Texture => {
                             // TODO
                         }
+                        Views::Error { error } => Self::display_error(ctx, error),
                         _ => {}
                     },
                     _ => {}

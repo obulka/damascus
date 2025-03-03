@@ -39,7 +39,6 @@ use crate::MAX_TEXTURE_DIMENSION;
 
 pub struct RayMarcherView {
     pub renderer: RayMarcher,
-    pub enable_frame_rate_overlay: bool,
     pub frames_to_update_fps: u32,
     pub stats_text: String,
     disabled: bool,
@@ -53,7 +52,6 @@ impl Default for RayMarcherView {
     fn default() -> Self {
         Self {
             renderer: RayMarcher::default(),
-            enable_frame_rate_overlay: true,
             frames_to_update_fps: 10,
             stats_text: String::new(),
             disabled: true,
@@ -308,21 +306,19 @@ impl
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
         } else {
-            if self.enable_frame_rate_overlay {
-                if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                    match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                        Ok(frame_time) => {
-                            self.render_state.fps =
-                                self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
-                        }
-                        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
+                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
+                    Ok(frame_time) => {
+                        self.render_state.fps =
+                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
                     }
-
-                    self.render_state.previous_frame_time = SystemTime::now();
-                    self.render_state.frame_counter = 1;
-                } else {
-                    self.render_state.frame_counter += 1;
+                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
                 }
+
+                self.render_state.previous_frame_time = SystemTime::now();
+                self.render_state.frame_counter = 1;
+            } else {
+                self.render_state.frame_counter += 1;
             }
 
             paths_rendered = 1;

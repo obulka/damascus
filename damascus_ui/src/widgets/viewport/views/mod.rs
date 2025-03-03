@@ -10,10 +10,11 @@ use eframe::{egui, egui_wgpu, epaint};
 
 use damascus_core::{
     renderers::Renderer,
-    shaders::{ray_marcher::RayMarcherCompilerSettings, CompilerSettings, PreprocessorDirectives},
+    shaders::{CompilerSettings, PreprocessorDirectives},
+    Settings,
 };
 
-use super::settings::{RayMarcherViewSettings, ViewportSettings};
+use super::settings::{RayMarcherViewSettings, ViewportCompilerSettings, ViewportSettings};
 
 use crate::icons::Icons;
 
@@ -27,6 +28,7 @@ pub trait View<
     S,
     C: CompilerSettings<D, R, G, S>,
     D: PreprocessorDirectives,
+    V: Settings,
 >: Default
 {
     const ICON_SIZE: f32 = 25.;
@@ -37,13 +39,10 @@ pub trait View<
 
     fn set_recompile_hash(&mut self);
 
-    fn set_reconstruct_hash(&mut self, settings: &ViewportSettings);
+    fn set_reconstruct_hash(&mut self, settings: &V);
 
     /// Create an instance of this render pipeline
-    fn new<'a>(
-        creation_context: &'a eframe::CreationContext<'a>,
-        settings: &ViewportSettings,
-    ) -> Option<Self> {
+    fn new<'a>(creation_context: &'a eframe::CreationContext<'a>, settings: &V) -> Option<Self> {
         let mut pipeline = Self::default();
         pipeline.set_recompile_hash();
         pipeline.set_reconstruct_hash(settings);
@@ -60,18 +59,10 @@ pub trait View<
     }
 
     /// Construict all uniform/storage/texture buffers and RenderResources
-    fn construct_pipeline(
-        &mut self,
-        _wgpu_render_state: &egui_wgpu::RenderState,
-        _settings: &ViewportSettings,
-    );
+    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
 
     /// Construict all uniform/storage/texture buffers and RenderResources
-    fn reconstruct_pipeline(
-        &mut self,
-        wgpu_render_state: &egui_wgpu::RenderState,
-        settings: &ViewportSettings,
-    ) {
+    fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
         wgpu_render_state
             .renderer
             .write()
@@ -138,20 +129,23 @@ pub trait View<
         ui: &mut egui::Ui,
         frame: &mut eframe::Frame,
         available_size: egui::Vec2,
-        settings: &ViewportSettings,
+        settings: &V,
+        compiler_settings: &C,
     ) -> Option<epaint::PaintCallback>;
 
     fn show_frame(
         &mut self,
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
-        settings: &ViewportSettings,
+        settings: &V,
+        compiler_settings: &C,
     ) -> Option<epaint::PaintCallback> {
         let mut paint_callback = None;
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             let mut available_size: egui::Vec2 = ui.available_size().round();
             available_size.y -= Self::controls_height(ui.style());
-            paint_callback = self.custom_painting(ui, frame, available_size, settings);
+            paint_callback =
+                self.custom_painting(ui, frame, available_size, settings, compiler_settings);
         });
         paint_callback
     }
@@ -206,9 +200,10 @@ pub trait View<
         &mut self,
         frame: &mut eframe::Frame,
         ui: &mut egui::Ui,
-        settings: &ViewportSettings,
+        settings: &V,
+        compiler_settings: &C,
     ) -> bool {
-        let paint_callback = self.show_frame(frame, ui, settings);
+        let paint_callback = self.show_frame(frame, ui, settings, compiler_settings);
         let reconstruct_pipeline = self.show_controls(frame, ui);
 
         if !reconstruct_pipeline {
@@ -224,7 +219,7 @@ pub trait View<
 pub enum Views {
     RayMarcher { view: RayMarcherView },
     Texture,
-    Error,
+    Error { error: anyhow::Error },
 }
 
 impl Views {
@@ -232,16 +227,20 @@ impl Views {
         creation_context: &'a eframe::CreationContext<'a>,
         settings: &ViewportSettings,
     ) -> Self {
-        if let Some(view) = RayMarcherView::new(creation_context, settings) {
+        if let Some(view) = RayMarcherView::new(creation_context, &settings.ray_marcher_view) {
             return Self::RayMarcher { view: view };
         }
-        Self::Error
+        Self::Error {
+            error: anyhow::Error::msg("Failed to create ray marcher view"),
+        }
     }
 
     pub fn reconstruct_pipeline(&mut self, frame: &eframe::Frame, settings: &ViewportSettings) {
         if let Some(wgpu_render_state) = frame.wgpu_render_state() {
             match self {
-                Self::RayMarcher { view } => view.reconstruct_pipeline(wgpu_render_state, settings),
+                Self::RayMarcher { view } => {
+                    view.reconstruct_pipeline(wgpu_render_state, &settings.ray_marcher_view)
+                }
                 _ => {}
             }
         }
@@ -258,10 +257,12 @@ impl Views {
 
     pub fn update_preprocessor_directives(
         &mut self,
-        settings: &RayMarcherCompilerSettings,
+        compiler_settings: &ViewportCompilerSettings,
     ) -> bool {
         match self {
-            Self::RayMarcher { view } => view.update_preprocessor_directives(settings),
+            Self::RayMarcher { view } => {
+                view.update_preprocessor_directives(&compiler_settings.ray_marcher)
+            }
             _ => false,
         }
     }
@@ -269,9 +270,9 @@ impl Views {
     pub fn recompile_if_preprocessor_directives_changed(
         &mut self,
         frame: &mut eframe::Frame,
-        settings: &RayMarcherCompilerSettings,
+        compiler_settings: &ViewportCompilerSettings,
     ) {
-        if self.update_preprocessor_directives(settings) {
+        if self.update_preprocessor_directives(compiler_settings) {
             self.recompile_shader(frame);
         }
     }
@@ -353,7 +354,12 @@ impl Views {
         settings: &ViewportSettings,
     ) -> bool {
         match self {
-            Self::RayMarcher { view } => view.show(frame, ui, settings),
+            Self::RayMarcher { view } => view.show(
+                frame,
+                ui,
+                &settings.ray_marcher_view,
+                &settings.compiler_settings.ray_marcher,
+            ),
             _ => false,
         }
     }

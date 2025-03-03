@@ -406,14 +406,7 @@ impl Default for RayMarcherCompilerSettings {
     }
 }
 
-impl RayMarcherCompilerSettings {
-    pub fn dynamic_recompilation_enabled(&self) -> bool {
-        self.enable_dynamic_recompilation_for_primitives
-            || self.enable_dynamic_recompilation_for_materials
-            || self.enable_dynamic_recompilation_for_ray_marcher
-            || self.enable_dynamic_recompilation_for_lights
-    }
-}
+impl RayMarcherCompilerSettings {}
 
 impl Settings for RayMarcherCompilerSettings {}
 
@@ -466,5 +459,12 @@ impl
         }
 
         preprocessor_directives
+    }
+
+    fn dynamic_recompilation_enabled(&self) -> bool {
+        self.enable_dynamic_recompilation_for_primitives
+            || self.enable_dynamic_recompilation_for_materials
+            || self.enable_dynamic_recompilation_for_ray_marcher
+            || self.enable_dynamic_recompilation_for_lights
     }
 }

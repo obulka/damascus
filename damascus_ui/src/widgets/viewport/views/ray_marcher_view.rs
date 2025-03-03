@@ -3,11 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::borrow::Cow;
-use std::collections::HashSet;
-use std::ops::BitOr;
-use std::sync::Arc;
-use std::time::SystemTime;
+use std::{borrow::Cow, collections::HashSet, ops::BitOr, sync::Arc, time::SystemTime};
 
 use eframe::{
     egui,
@@ -29,11 +25,15 @@ use damascus_core::{
         GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
     },
     scene::{Scene, Std430GPUSceneParameters},
-    shaders::{self, ray_marcher::RayMarcherPreprocessorDirectives},
+    shaders::{
+        self,
+        ray_marcher::{RayMarcherCompilerSettings, RayMarcherPreprocessorDirectives},
+        CompilerSettings,
+    },
     DualDevice,
 };
 
-use super::{RayMarcherCompilerSettings, RayMarcherViewSettings, View, ViewportSettings};
+use super::{RayMarcherViewSettings, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -72,6 +72,7 @@ impl
         Std430GPURayMarcher,
         RayMarcherCompilerSettings,
         RayMarcherPreprocessorDirectives,
+        RayMarcherViewSettings,
     > for RayMarcherView
 {
     fn renderer(&self) -> &RayMarcher {
@@ -88,8 +89,8 @@ impl
         }
     }
 
-    fn set_reconstruct_hash(&mut self, settings: &ViewportSettings) {
-        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings.ray_marcher_view) {
+    fn set_reconstruct_hash(&mut self, settings: &RayMarcherViewSettings) {
+        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings) {
             self.reconstruct_hash = reconstruct_hash;
         }
     }
@@ -98,7 +99,7 @@ impl
     fn construct_pipeline(
         &mut self,
         wgpu_render_state: &egui_wgpu::RenderState,
-        settings: &ViewportSettings,
+        settings: &RayMarcherViewSettings,
     ) {
         let device = &wgpu_render_state.device;
 
@@ -108,7 +109,7 @@ impl
             scene_parameters_buffer,
             render_state_buffer,
             render_camera_buffer,
-        ) = self.create_uniform_buffers(device, &settings.ray_marcher_view);
+        ) = self.create_uniform_buffers(device, &settings);
         let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
             device,
             &render_parameters_buffer,
@@ -123,7 +124,7 @@ impl
             lights_buffer,
             atmosphere_buffer,
             emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, &settings.ray_marcher_view);
+        ) = self.create_storage_buffers(device, &settings);
         let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
             device,
             &primitives_buffer,
@@ -242,7 +243,8 @@ impl
         ui: &mut egui::Ui,
         frame: &mut eframe::Frame,
         available_size: egui::Vec2,
-        settings: &ViewportSettings,
+        settings: &RayMarcherViewSettings,
+        compiler_settings: &RayMarcherCompilerSettings,
     ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
@@ -273,7 +275,7 @@ impl
         self.update_camera(ui, &rect, &response);
 
         // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&settings.ray_marcher_view) {
+        if let Ok(new_hash) = to_key_with_ordered_float(&settings) {
             if new_hash != self.reconstruct_hash {
                 self.reconstruct_hash = new_hash;
                 if let Some(wgpu_render_state) = frame.wgpu_render_state() {
@@ -288,8 +290,8 @@ impl
             if new_hash != self.recompile_hash {
                 self.reset();
                 self.recompile_hash = new_hash;
-                if settings.compiler_settings.dynamic_recompilation_enabled()
-                    && self.update_preprocessor_directives(&settings.compiler_settings)
+                if compiler_settings.dynamic_recompilation_enabled()
+                    && self.update_preprocessor_directives(&compiler_settings)
                 {
                     if let Some(wgpu_render_state) = frame.wgpu_render_state() {
                         self.recompile_shader(wgpu_render_state);
@@ -328,24 +330,21 @@ impl
             rect,
             RayMarcherViewCallback {
                 render_parameters: self.renderer().as_std430(),
-                scene_parameters: self.renderer().scene.scene_parameters(
-                    settings.ray_marcher_view.max_primitives,
-                    settings.ray_marcher_view.max_lights,
-                ),
+                scene_parameters: self
+                    .renderer()
+                    .scene
+                    .scene_parameters(settings.max_primitives, settings.max_lights),
                 render_camera: self.renderer().scene.render_camera.as_std430(),
                 primitives: self
                     .renderer
                     .scene
-                    .create_gpu_primitives(settings.ray_marcher_view.max_primitives),
-                lights: self
-                    .renderer
-                    .scene
-                    .create_gpu_lights(settings.ray_marcher_view.max_lights),
+                    .create_gpu_primitives(settings.max_primitives),
+                lights: self.renderer.scene.create_gpu_lights(settings.max_lights),
                 atmosphere: self.renderer().scene.atmosphere(),
                 emissive_primitive_indices: self
                     .renderer
                     .scene
-                    .emissive_primitive_indices(settings.ray_marcher_view.max_primitives),
+                    .emissive_primitive_indices(settings.max_primitives),
                 render_state: self.render_state.as_std430(),
             },
         ))

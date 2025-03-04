@@ -36,7 +36,7 @@ impl Includes {
         match *self {
             Self::AOVs => include_str!("./renderer/aovs.wgsl"),
             Self::Camera => include_str!("./geometry/camera.wgsl"),
-            Self::Lights => include_str!("./lights.wgsl"),
+            Self::Lights => include_str!("./lights/lights.wgsl"),
             Self::Material => include_str!("./materials/material.wgsl"),
             Self::Math => include_str!("./utils/math.wgsl"),
             Self::Normals => include_str!("./geometry/normals.wgsl"),

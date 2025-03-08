@@ -34,21 +34,21 @@ pub enum Includes {
 impl Includes {
     fn source(&self) -> &str {
         match *self {
-            Self::AOVs => include_str!("./renderer/aovs.wgsl"),
-            Self::Camera => include_str!("./geometry/camera.wgsl"),
-            Self::Lights => include_str!("./lights/lights.wgsl"),
-            Self::Material => include_str!("./materials/material.wgsl"),
-            Self::Math => include_str!("./utils/math.wgsl"),
-            Self::Normals => include_str!("./geometry/normals.wgsl"),
-            Self::Primitive => include_str!("./geometry/primitive.wgsl"),
-            Self::PrimitiveModifiers => include_str!("./geometry/modifiers.wgsl"),
-            Self::PrimitiveSDFs => include_str!("./geometry/primitive_sdfs.wgsl"),
-            Self::ProceduralTexture => include_str!("./materials/procedural_texture.wgsl"),
-            Self::Random => include_str!("./utils/random.wgsl"),
-            Self::Ray => include_str!("./geometry/ray.wgsl"),
-            Self::RenderParameters => include_str!("./renderer/render_parameters.wgsl"),
-            Self::SceneSDFs => include_str!("./geometry/scene_sdfs.wgsl"),
-            Self::VertexShader => include_str!("./renderer/vertex_shader.wgsl"),
+            Self::AOVs => include_str!("./wgsl/renderer/aovs.wgsl"),
+            Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
+            Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
+            Self::Material => include_str!("./wgsl/materials/material.wgsl"),
+            Self::Math => include_str!("./wgsl/utils/math.wgsl"),
+            Self::Normals => include_str!("./wgsl/geometry/normals.wgsl"),
+            Self::Primitive => include_str!("./wgsl/geometry/primitive.wgsl"),
+            Self::PrimitiveModifiers => include_str!("./wgsl/geometry/modifiers.wgsl"),
+            Self::PrimitiveSDFs => include_str!("./wgsl/geometry/primitive_sdfs.wgsl"),
+            Self::ProceduralTexture => include_str!("./wgsl/materials/procedural_texture.wgsl"),
+            Self::Random => include_str!("./wgsl/utils/random.wgsl"),
+            Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
+            Self::RenderParameters => include_str!("./wgsl/renderer/render_parameters.wgsl"),
+            Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
+            Self::VertexShader => include_str!("./wgsl/renderer/vertex_shader.wgsl"),
         }
     }
 }

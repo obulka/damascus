@@ -28,12 +28,11 @@ use damascus_core::{
     shaders::{
         self,
         ray_marcher::{RayMarcherCompilerSettings, RayMarcherPreprocessorDirectives},
-        CompilerSettings,
     },
     DualDevice,
 };
 
-use super::{RayMarcherViewSettings, View};
+use super::{buffers::Buffer, RayMarcherViewSettings, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -81,16 +80,24 @@ impl
         &mut self.renderer
     }
 
-    fn set_recompile_hash(&mut self) {
+    fn set_recompile_hash(&mut self) -> bool {
         if let Ok(recompile_hash) = to_key_with_ordered_float(self.renderer()) {
-            self.recompile_hash = recompile_hash;
+            if recompile_hash != self.recompile_hash {
+                self.recompile_hash = recompile_hash;
+                return true;
+            }
         }
+        false
     }
 
-    fn set_reconstruct_hash(&mut self, settings: &RayMarcherViewSettings) {
+    fn set_reconstruct_hash(&mut self, settings: &RayMarcherViewSettings) -> bool {
         if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings) {
-            self.reconstruct_hash = reconstruct_hash;
+            if reconstruct_hash != self.reconstruct_hash {
+                self.reconstruct_hash = reconstruct_hash;
+                return true;
+            }
         }
+        false
     }
 
     /// Construict all uniform/storage/texture buffers and RenderResources
@@ -102,34 +109,14 @@ impl
         let device = &wgpu_render_state.device;
 
         // Uniforms
-        let (
-            render_parameters_buffer,
-            scene_parameters_buffer,
-            render_state_buffer,
-            render_camera_buffer,
-        ) = self.create_uniform_buffers(device, &settings);
-        let (uniform_bind_group_layout, uniform_bind_group) = Self::create_uniform_binding(
-            device,
-            &render_parameters_buffer,
-            &scene_parameters_buffer,
-            &render_state_buffer,
-            &render_camera_buffer,
-        );
+        let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
+        let (uniform_bind_group_layout, uniform_bind_group) =
+            Self::create_uniform_binding(device, &uniform_buffers);
 
         // Storage
-        let (
-            primitives_buffer,
-            lights_buffer,
-            atmosphere_buffer,
-            emissive_primitive_indices_buffer,
-        ) = self.create_storage_buffers(device, &settings);
-        let (storage_bind_group_layout, storage_bind_group) = Self::create_storage_binding(
-            device,
-            &primitives_buffer,
-            &lights_buffer,
-            &atmosphere_buffer,
-            &emissive_primitive_indices_buffer,
-        );
+        let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
+        let (storage_bind_group_layout, storage_bind_group) =
+            Self::create_storage_binding(device, &storage_buffers);
 
         // Create the texture to render to and initialize from
         let texture_view = Self::create_progressive_rendering_texture(device);
@@ -156,16 +143,10 @@ impl
                 render_pipeline,
                 uniform_bind_group,
                 uniform_bind_group_layout,
-                render_parameters_buffer,
-                scene_parameters_buffer,
-                render_state_buffer,
-                render_camera_buffer,
+                uniform_buffers,
                 storage_bind_group,
                 storage_bind_group_layout,
-                primitives_buffer,
-                lights_buffer,
-                atmosphere_buffer,
-                emissive_primitive_indices_buffer,
+                storage_buffers,
                 progressive_rendering_bind_group,
                 progressive_rendering_bind_group_layout,
             });
@@ -197,6 +178,128 @@ impl
         &mut self,
     ) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
         &mut self.render_state.preprocessor_directives
+    }
+
+    fn create_uniform_buffers(
+        &self,
+        device: &Arc<wgpu::Device>,
+        settings: &RayMarcherViewSettings,
+    ) -> Vec<Buffer> {
+        vec![
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher render parameter buffer"),
+                    contents: bytemuck::cast_slice(&[self.renderer().as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher scene parameter buffer"),
+                    contents: bytemuck::cast_slice(&[self
+                        .renderer()
+                        .scene
+                        .scene_parameters(settings.max_primitives, settings.max_lights)]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher render progress buffer"),
+                    contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher camera buffer"),
+                    contents: bytemuck::cast_slice(&[self
+                        .renderer()
+                        .scene
+                        .render_camera
+                        .as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
+            },
+        ]
+    }
+
+    fn create_storage_buffers(
+        &self,
+        device: &Arc<wgpu::Device>,
+        settings: &RayMarcherViewSettings,
+    ) -> Vec<Buffer> {
+        let primitives: Vec<Std430GPUPrimitive> = self
+            .renderer
+            .scene
+            .create_gpu_primitives(settings.max_primitives);
+        let lights: Vec<Std430GPULight> =
+            self.renderer.scene.create_gpu_lights(settings.max_lights);
+        let emissive_primitive_indices: Vec<u32> = self
+            .renderer
+            .scene
+            .emissive_primitive_indices(settings.max_primitives);
+        vec![
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher primitives buffer"),
+                    contents: &[
+                        bytemuck::cast_slice(primitives.as_slice()),
+                        vec![
+                            0;
+                            (settings.max_primitives - primitives.len())
+                                * size_of::<Std430GPUPrimitive>()
+                        ]
+                        .as_slice(),
+                    ]
+                    .concat(),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher lights buffer"),
+                    contents: &[
+                        bytemuck::cast_slice(lights.as_slice()),
+                        vec![0; (settings.max_lights - lights.len()) * size_of::<Std430GPULight>()]
+                            .as_slice(),
+                    ]
+                    .concat(),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher render globals buffer"),
+                    contents: bytemuck::cast_slice(&[self.renderer().scene.atmosphere()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher emissive primitive ids"),
+                    contents: &[
+                        bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
+                        vec![
+                            0;
+                            (settings.max_primitives - emissive_primitive_indices.len())
+                                * size_of::<u32>()
+                        ]
+                        .as_slice(),
+                    ]
+                    .concat(),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+        ]
     }
 
     fn disable(&mut self) {
@@ -272,33 +375,8 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        // Check if the nodegraph has changed and reset the render if it has
-        if let Ok(new_hash) = to_key_with_ordered_float(&settings) {
-            if new_hash != self.reconstruct_hash {
-                self.reconstruct_hash = new_hash;
-                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    self.reconstruct_pipeline(wgpu_render_state, settings);
-                }
-            }
-        } else {
-            panic!("Cannot hash settings!")
-        }
-
-        if let Ok(new_hash) = to_key_with_ordered_float(self.renderer()) {
-            if new_hash != self.recompile_hash {
-                self.reset();
-                self.recompile_hash = new_hash;
-                if compiler_settings.dynamic_recompilation_enabled()
-                    && self.update_preprocessor_directives(&compiler_settings)
-                {
-                    if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                        self.recompile_shader(wgpu_render_state);
-                    }
-                }
-            }
-        } else {
-            panic!("Cannot hash renderer!")
-        }
+        self.reconstruct_if_hash_changed(frame, settings);
+        self.recompile_if_hash_changed(frame, compiler_settings);
 
         let mut paths_rendered: u32 = 0;
 
@@ -414,270 +492,6 @@ impl RayMarcherView {
         self.disable_camera_controls();
     }
 
-    fn create_uniform_buffers(
-        &self,
-        device: &Arc<wgpu::Device>,
-        settings: &RayMarcherViewSettings,
-    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
-        let render_parameters_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d render parameter buffer"),
-                contents: bytemuck::cast_slice(&[self.renderer().as_std430()]),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-            });
-        let scene_parameters_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d scene parameter buffer"),
-                contents: bytemuck::cast_slice(&[self
-                    .renderer()
-                    .scene
-                    .scene_parameters(settings.max_primitives, settings.max_lights)]),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-            });
-        let render_state_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d render progress buffer"),
-            contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-        });
-        let render_camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d camera buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer().scene.render_camera.as_std430()]),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-        });
-
-        (
-            render_parameters_buffer,
-            scene_parameters_buffer,
-            render_state_buffer,
-            render_camera_buffer,
-        )
-    }
-
-    fn create_uniform_binding(
-        device: &Arc<wgpu::Device>,
-        render_parameters_buffer: &wgpu::Buffer,
-        scene_parameters_buffer: &wgpu::Buffer,
-        render_state_buffer: &wgpu::Buffer,
-        render_camera_buffer: &wgpu::Buffer,
-    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
-        let uniform_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d uniform bind group layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                ],
-            });
-        let uniform_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d uniform bind group"),
-            layout: &uniform_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: render_parameters_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: scene_parameters_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: render_state_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: render_camera_buffer.as_entire_binding(),
-                },
-            ],
-        });
-
-        (uniform_bind_group_layout, uniform_bind_group)
-    }
-
-    fn create_storage_buffers(
-        &self,
-        device: &Arc<wgpu::Device>,
-        settings: &RayMarcherViewSettings,
-    ) -> (wgpu::Buffer, wgpu::Buffer, wgpu::Buffer, wgpu::Buffer) {
-        let primitives: Vec<Std430GPUPrimitive> = self
-            .renderer
-            .scene
-            .create_gpu_primitives(settings.max_primitives);
-        let lights: Vec<Std430GPULight> =
-            self.renderer.scene.create_gpu_lights(settings.max_lights);
-        let emissive_primitive_indices: Vec<u32> = self
-            .renderer
-            .scene
-            .emissive_primitive_indices(settings.max_primitives);
-        let primitives_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d primitives buffer"),
-            contents: &[
-                bytemuck::cast_slice(primitives.as_slice()),
-                vec![
-                    0;
-                    (settings.max_primitives - primitives.len()) * size_of::<Std430GPUPrimitive>()
-                ]
-                .as_slice(),
-            ]
-            .concat(),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-        });
-        let lights_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d lights buffer"),
-            contents: &[
-                bytemuck::cast_slice(lights.as_slice()),
-                vec![0; (settings.max_lights - lights.len()) * size_of::<Std430GPULight>()]
-                    .as_slice(),
-            ]
-            .concat(),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-        });
-        let atmosphere_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("viewport 3d render globals buffer"),
-            contents: bytemuck::cast_slice(&[self.renderer().scene.atmosphere()]),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-        });
-        let emissive_primitive_indices_buffer =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("viewport 3d emissive primitive ids"),
-                contents: &[
-                    bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
-                    vec![
-                        0;
-                        (settings.max_primitives - emissive_primitive_indices.len())
-                            * size_of::<u32>()
-                    ]
-                    .as_slice(),
-                ]
-                .concat(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-            });
-
-        (
-            primitives_buffer,
-            lights_buffer,
-            atmosphere_buffer,
-            emissive_primitive_indices_buffer,
-        )
-    }
-
-    fn create_storage_binding(
-        device: &Arc<wgpu::Device>,
-        primitives_buffer: &wgpu::Buffer,
-        lights_buffer: &wgpu::Buffer,
-        atmosphere_buffer: &wgpu::Buffer,
-        emissive_primitive_indices_buffer: &wgpu::Buffer,
-    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
-        let storage_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d scene storage bind group layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
-                            has_dynamic_offset: false,
-                            min_binding_size: None,
-                        },
-                        count: None,
-                    },
-                ],
-            });
-        let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("viewport 3d scene storage bind group"),
-            layout: &storage_bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: primitives_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: lights_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: atmosphere_buffer.as_entire_binding(),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 3,
-                    resource: emissive_primitive_indices_buffer.as_entire_binding(),
-                },
-            ],
-        });
-
-        (storage_bind_group_layout, storage_bind_group)
-    }
-
     fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
@@ -690,7 +504,7 @@ impl RayMarcherView {
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba32Float,
             usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::STORAGE_BINDING,
-            label: Some("viewport 3d progressive rendering texture"),
+            label: Some("ray marcher progressive rendering texture"),
             view_formats: &[],
         };
         let texture = device.create_texture(&texture_descriptor);
@@ -703,7 +517,7 @@ impl RayMarcherView {
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let progressive_rendering_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("viewport 3d progressive rendering bind group layout"),
+                label: Some("ray marcher progressive rendering bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
@@ -718,7 +532,7 @@ impl RayMarcherView {
 
         let progressive_rendering_bind_group =
             device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("viewport 3d progressive rendering bind group"),
+                label: Some("ray marcher progressive rendering bind group"),
                 layout: &progressive_rendering_bind_group_layout,
                 entries: &[wgpu::BindGroupEntry {
                     binding: 0,
@@ -741,7 +555,7 @@ impl RayMarcherView {
         progressive_rendering_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("viewport 3d pipeline layout"),
+            label: Some("ray marcher pipeline layout"),
             bind_group_layouts: &[
                 uniform_bind_group_layout,
                 storage_bind_group_layout,
@@ -751,7 +565,7 @@ impl RayMarcherView {
         });
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("viewport 3d source shader"),
+            label: Some("ray marcher source shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
                 &shaders::ray_marcher::ray_march_shader(&self.render_state.preprocessor_directives),
             ))
@@ -759,7 +573,7 @@ impl RayMarcherView {
         });
 
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("viewport 3d render pipeline"),
+            label: Some("ray marcher render pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -812,12 +626,12 @@ impl RayMarcherView {
 struct RayMarcherViewCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
+    render_state: Std430GPURenderState,
     render_camera: Std430GPUCamera,
     primitives: Vec<Std430GPUPrimitive>,
     lights: Vec<Std430GPULight>,
     atmosphere: Std430GPUMaterial,
     emissive_primitive_indices: Vec<u32>,
-    render_state: Std430GPURenderState,
 }
 
 impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
@@ -833,14 +647,18 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         resources.prepare(
             device,
             queue,
-            self.render_parameters,
-            self.scene_parameters,
-            self.render_camera,
-            &self.primitives,
-            &self.lights,
-            self.atmosphere,
-            &self.emissive_primitive_indices,
-            self.render_state,
+            vec![
+                bytemuck::cast_slice(&[self.render_parameters]),
+                bytemuck::cast_slice(&[self.scene_parameters]),
+                bytemuck::cast_slice(&[self.render_state]),
+                bytemuck::cast_slice(&[self.render_camera]),
+            ],
+            vec![
+                bytemuck::cast_slice(self.primitives.as_slice()),
+                bytemuck::cast_slice(self.lights.as_slice()),
+                bytemuck::cast_slice(&[self.atmosphere]),
+                bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
+            ],
         );
         Vec::new()
     }
@@ -860,16 +678,10 @@ struct RenderResources {
     render_pipeline: wgpu::RenderPipeline,
     uniform_bind_group: wgpu::BindGroup,
     uniform_bind_group_layout: wgpu::BindGroupLayout,
-    render_parameters_buffer: wgpu::Buffer,
-    scene_parameters_buffer: wgpu::Buffer,
-    render_state_buffer: wgpu::Buffer,
-    render_camera_buffer: wgpu::Buffer,
+    uniform_buffers: Vec<Buffer>,
     storage_bind_group: wgpu::BindGroup,
     storage_bind_group_layout: wgpu::BindGroupLayout,
-    primitives_buffer: wgpu::Buffer,
-    lights_buffer: wgpu::Buffer,
-    atmosphere_buffer: wgpu::Buffer,
-    emissive_primitive_indices_buffer: wgpu::Buffer,
+    storage_buffers: Vec<Buffer>,
     progressive_rendering_bind_group: wgpu::BindGroup,
     progressive_rendering_bind_group_layout: wgpu::BindGroupLayout,
 }
@@ -879,56 +691,17 @@ impl RenderResources {
         &self,
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
-        render_parameters: Std430GPURayMarcher,
-        scene_parameters: Std430GPUSceneParameters,
-        render_camera: Std430GPUCamera,
-        primitives: &Vec<Std430GPUPrimitive>,
-        lights: &Vec<Std430GPULight>,
-        atmosphere: Std430GPUMaterial,
-        emissive_primitive_indices: &Vec<u32>,
-        render_state: Std430GPURenderState,
+        uniform_buffer_data: Vec<&[u8]>,
+        storage_buffer_data: Vec<&[u8]>,
     ) {
         // Update our uniform buffer with the angle from the UI
-        queue.write_buffer(
-            &self.render_parameters_buffer,
-            0,
-            bytemuck::cast_slice(&[render_parameters]),
-        );
-        queue.write_buffer(
-            &self.scene_parameters_buffer,
-            0,
-            bytemuck::cast_slice(&[scene_parameters]),
-        );
-        queue.write_buffer(
-            &self.render_state_buffer,
-            0,
-            bytemuck::cast_slice(&[render_state]),
-        );
-        queue.write_buffer(
-            &self.render_camera_buffer,
-            0,
-            bytemuck::cast_slice(&[render_camera]),
-        );
-        queue.write_buffer(
-            &self.primitives_buffer,
-            0,
-            bytemuck::cast_slice(primitives.as_slice()),
-        );
-        queue.write_buffer(
-            &self.lights_buffer,
-            0,
-            bytemuck::cast_slice(lights.as_slice()),
-        );
-        queue.write_buffer(
-            &self.atmosphere_buffer,
-            0,
-            bytemuck::cast_slice(&[atmosphere]),
-        );
-        queue.write_buffer(
-            &self.emissive_primitive_indices_buffer,
-            0,
-            bytemuck::cast_slice(emissive_primitive_indices.as_slice()),
-        );
+        for (buffer, data) in self.uniform_buffers.iter().zip(uniform_buffer_data) {
+            queue.write_buffer(&buffer.buffer, 0, data);
+        }
+
+        for (buffer, data) in self.storage_buffers.iter().zip(storage_buffer_data) {
+            queue.write_buffer(&buffer.buffer, 0, data);
+        }
     }
 
     fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {

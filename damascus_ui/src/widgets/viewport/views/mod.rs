@@ -3,10 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Arc};
 
 use crevice::std430::AsStd430;
-use eframe::{egui, egui_wgpu, epaint};
+use eframe::{
+    egui,
+    egui_wgpu::{self, wgpu},
+    epaint,
+};
 
 use damascus_core::{
     renderers::Renderer,
@@ -18,6 +22,7 @@ use super::settings::{RayMarcherViewSettings, ViewportCompilerSettings, Viewport
 
 use crate::icons::Icons;
 
+mod buffers;
 mod ray_marcher_view;
 
 pub use ray_marcher_view::RayMarcherView;
@@ -37,9 +42,9 @@ pub trait View<
 
     fn renderer_mut(&mut self) -> &mut R;
 
-    fn set_recompile_hash(&mut self);
+    fn set_recompile_hash(&mut self) -> bool;
 
-    fn set_reconstruct_hash(&mut self, settings: &V);
+    fn set_reconstruct_hash(&mut self, settings: &V) -> bool;
 
     /// Create an instance of this render pipeline
     fn new<'a>(creation_context: &'a eframe::CreationContext<'a>, settings: &V) -> Option<Self> {
@@ -61,7 +66,7 @@ pub trait View<
     /// Construct all uniform/storage/texture buffers and RenderResources
     fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
 
-    /// Construct all uniform/storage/texture buffers and RenderResources
+    /// Reconstruct all uniform/storage/texture buffers and RenderResources
     fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
         wgpu_render_state
             .renderer
@@ -72,7 +77,28 @@ pub trait View<
         self.construct_pipeline(wgpu_render_state, settings);
     }
 
+    fn reconstruct_if_hash_changed(&mut self, frame: &mut eframe::Frame, settings: &V) {
+        if self.set_reconstruct_hash(settings) {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                self.reconstruct_pipeline(wgpu_render_state, settings);
+            }
+        }
+    }
+
     fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
+
+    fn recompile_if_hash_changed(&mut self, frame: &mut eframe::Frame, compiler_settings: &C) {
+        if self.set_recompile_hash() {
+            self.reset();
+            if compiler_settings.dynamic_recompilation_enabled()
+                && self.update_preprocessor_directives(&compiler_settings)
+            {
+                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                    self.recompile_shader(wgpu_render_state);
+                }
+            }
+        }
+    }
 
     fn current_preprocessor_directives(&mut self) -> &mut HashSet<D>;
 
@@ -86,6 +112,109 @@ pub trait View<
         }
         *current_directives = new_directives;
         true
+    }
+
+    fn create_uniform_buffers(
+        &self,
+        _device: &Arc<wgpu::Device>,
+        _settings: &V,
+    ) -> Vec<buffers::Buffer> {
+        vec![]
+    }
+
+    fn create_storage_buffers(
+        &self,
+        _device: &Arc<wgpu::Device>,
+        _settings: &V,
+    ) -> Vec<buffers::Buffer> {
+        vec![]
+    }
+
+    fn create_uniform_binding(
+        device: &Arc<wgpu::Device>,
+        buffers: &Vec<buffers::Buffer>,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| wgpu::BindGroupLayoutEntry {
+                binding: binding as u32,
+                visibility: buffer.visibility,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            })
+            .collect();
+
+        let uniform_bind_group_layout: wgpu::BindGroupLayout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("uniform bind group layout"),
+                entries: &bind_group_layout_entries,
+            });
+
+        let bind_group_entries: Vec<wgpu::BindGroupEntry<'_>> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| wgpu::BindGroupEntry {
+                binding: binding as u32,
+                resource: buffer.buffer.as_entire_binding(),
+            })
+            .collect();
+
+        let uniform_bind_group: wgpu::BindGroup =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: Some("uniform bind group"),
+                layout: &uniform_bind_group_layout,
+                entries: &bind_group_entries,
+            });
+
+        (uniform_bind_group_layout, uniform_bind_group)
+    }
+
+    fn create_storage_binding(
+        device: &Arc<wgpu::Device>,
+        buffers: &Vec<buffers::Buffer>,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| wgpu::BindGroupLayoutEntry {
+                binding: binding as u32,
+                visibility: buffer.visibility,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            })
+            .collect();
+
+        let storage_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("storage bind group layout"),
+                entries: &bind_group_layout_entries,
+            });
+
+        let bind_group_entries: Vec<wgpu::BindGroupEntry<'_>> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| wgpu::BindGroupEntry {
+                binding: binding as u32,
+                resource: buffer.buffer.as_entire_binding(),
+            })
+            .collect();
+
+        let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("ray marcher scene storage bind group"),
+            layout: &storage_bind_group_layout,
+            entries: &bind_group_entries,
+        });
+
+        (storage_bind_group_layout, storage_bind_group)
     }
 
     fn disable(&mut self) {}

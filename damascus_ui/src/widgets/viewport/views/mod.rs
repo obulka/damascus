@@ -46,14 +46,11 @@ pub trait View<
 
     fn set_reconstruct_hash(&mut self, settings: &V) -> bool;
 
-    /// Create an instance of this render pipeline
     fn new<'a>(creation_context: &'a eframe::CreationContext<'a>, settings: &V) -> Option<Self> {
         let mut pipeline = Self::default();
         pipeline.set_recompile_hash();
         pipeline.set_reconstruct_hash(settings);
 
-        // Get the WGPU render state from the eframe creation context. This can also be retrieved
-        // from `eframe::Frame` when you don't have a `CreationContext` available.
         Self::construct_pipeline(
             &mut pipeline,
             creation_context.wgpu_render_state.as_ref()?,
@@ -61,43 +58,6 @@ pub trait View<
         );
 
         Some(pipeline)
-    }
-
-    /// Construct all uniform/storage/texture buffers and RenderResources
-    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
-
-    /// Reconstruct all uniform/storage/texture buffers and RenderResources
-    fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
-        wgpu_render_state
-            .renderer
-            .write()
-            .callback_resources
-            .clear();
-        self.reset();
-        self.construct_pipeline(wgpu_render_state, settings);
-    }
-
-    fn reconstruct_if_hash_changed(&mut self, frame: &mut eframe::Frame, settings: &V) {
-        if self.set_reconstruct_hash(settings) {
-            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                self.reconstruct_pipeline(wgpu_render_state, settings);
-            }
-        }
-    }
-
-    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
-
-    fn recompile_if_hash_changed(&mut self, frame: &mut eframe::Frame, compiler_settings: &C) {
-        if self.set_recompile_hash() {
-            self.reset();
-            if compiler_settings.dynamic_recompilation_enabled()
-                && self.update_preprocessor_directives(&compiler_settings)
-            {
-                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    self.recompile_shader(wgpu_render_state);
-                }
-            }
-        }
     }
 
     fn current_preprocessor_directives(&mut self) -> &mut HashSet<D>;
@@ -112,6 +72,49 @@ pub trait View<
         }
         *current_directives = new_directives;
         true
+    }
+
+    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
+
+    fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
+        wgpu_render_state
+            .renderer
+            .write()
+            .callback_resources
+            .clear();
+        self.reset();
+        self.construct_pipeline(wgpu_render_state, settings);
+    }
+
+    fn reconstruct_if_hash_changed(&mut self, frame: &mut eframe::Frame, settings: &V) -> bool {
+        if self.set_reconstruct_hash(settings) {
+            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                self.reconstruct_pipeline(wgpu_render_state, settings);
+            }
+            return true;
+        }
+        false
+    }
+
+    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
+
+    fn recompile_if_hash_changed(
+        &mut self,
+        frame: &mut eframe::Frame,
+        compiler_settings: &C,
+    ) -> bool {
+        if self.set_recompile_hash() {
+            self.reset();
+            if compiler_settings.dynamic_recompilation_enabled()
+                && self.update_preprocessor_directives(&compiler_settings)
+            {
+                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
+                    self.recompile_shader(wgpu_render_state);
+                }
+            }
+            return true;
+        }
+        false
     }
 
     fn create_uniform_buffers(
@@ -130,6 +133,22 @@ pub trait View<
         vec![]
     }
 
+    fn uniform_bind_group_layout_entry(
+        binding: u32,
+        visibility: wgpu::ShaderStages,
+    ) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: visibility,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Uniform,
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        }
+    }
+
     fn create_uniform_binding(
         device: &Arc<wgpu::Device>,
         buffers: &Vec<buffers::Buffer>,
@@ -137,15 +156,8 @@ pub trait View<
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
-            .map(|(binding, buffer)| wgpu::BindGroupLayoutEntry {
-                binding: binding as u32,
-                visibility: buffer.visibility,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
+            .map(|(binding, buffer)| {
+                Self::uniform_bind_group_layout_entry(binding as u32, buffer.visibility)
             })
             .collect();
 
@@ -174,6 +186,22 @@ pub trait View<
         (uniform_bind_group_layout, uniform_bind_group)
     }
 
+    fn storage_bind_group_layout_entry(
+        binding: u32,
+        visibility: wgpu::ShaderStages,
+    ) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: visibility,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        }
+    }
+
     fn create_storage_binding(
         device: &Arc<wgpu::Device>,
         buffers: &Vec<buffers::Buffer>,
@@ -181,15 +209,8 @@ pub trait View<
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
-            .map(|(binding, buffer)| wgpu::BindGroupLayoutEntry {
-                binding: binding as u32,
-                visibility: buffer.visibility,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
+            .map(|(binding, buffer)| {
+                Self::storage_bind_group_layout_entry(binding as u32, buffer.visibility)
             })
             .collect();
 

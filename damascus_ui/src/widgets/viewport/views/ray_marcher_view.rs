@@ -120,7 +120,7 @@ impl
 
         // Create the texture to render to and initialize from
         let texture_view = Self::create_progressive_rendering_texture(device);
-        let (progressive_rendering_bind_group_layout, progressive_rendering_bind_group) =
+        let (texture_bind_group_layout, texture_bind_group) =
             Self::create_progressive_rendering_binding(device, &texture_view);
 
         // Create the pipeline
@@ -129,7 +129,7 @@ impl
             wgpu_render_state.target_format,
             &uniform_bind_group_layout,
             &storage_bind_group_layout,
-            &progressive_rendering_bind_group_layout,
+            &texture_bind_group_layout,
         );
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -147,8 +147,8 @@ impl
                 storage_bind_group,
                 storage_bind_group_layout,
                 storage_buffers,
-                progressive_rendering_bind_group,
-                progressive_rendering_bind_group_layout,
+                texture_bind_group,
+                texture_bind_group_layout,
             });
     }
 
@@ -169,7 +169,7 @@ impl
                 wgpu_render_state.target_format,
                 &render_resources.uniform_bind_group_layout,
                 &render_resources.storage_bind_group_layout,
-                &render_resources.progressive_rendering_bind_group_layout,
+                &render_resources.texture_bind_group_layout,
             );
         }
     }
@@ -375,8 +375,8 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        self.reconstruct_if_hash_changed(frame, settings);
-        self.recompile_if_hash_changed(frame, compiler_settings);
+        let _data_changed: bool = self.reconstruct_if_hash_changed(frame, settings)
+            || self.recompile_if_hash_changed(frame, compiler_settings);
 
         let mut paths_rendered: u32 = 0;
 
@@ -515,7 +515,7 @@ impl RayMarcherView {
         device: &Arc<wgpu::Device>,
         texture_view: &wgpu::TextureView,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
-        let progressive_rendering_bind_group_layout =
+        let texture_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("ray marcher progressive rendering bind group layout"),
                 entries: &[wgpu::BindGroupLayoutEntry {
@@ -530,20 +530,16 @@ impl RayMarcherView {
                 }],
             });
 
-        let progressive_rendering_bind_group =
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                label: Some("ray marcher progressive rendering bind group"),
-                layout: &progressive_rendering_bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(texture_view),
-                }],
-            });
+        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("ray marcher progressive rendering bind group"),
+            layout: &texture_bind_group_layout,
+            entries: &[wgpu::BindGroupEntry {
+                binding: 0,
+                resource: wgpu::BindingResource::TextureView(texture_view),
+            }],
+        });
 
-        (
-            progressive_rendering_bind_group_layout,
-            progressive_rendering_bind_group,
-        )
+        (texture_bind_group_layout, texture_bind_group)
     }
 
     fn create_render_pipeline(
@@ -552,14 +548,14 @@ impl RayMarcherView {
         texture_format: wgpu::TextureFormat,
         uniform_bind_group_layout: &wgpu::BindGroupLayout,
         storage_bind_group_layout: &wgpu::BindGroupLayout,
-        progressive_rendering_bind_group_layout: &wgpu::BindGroupLayout,
+        texture_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("ray marcher pipeline layout"),
             bind_group_layouts: &[
                 uniform_bind_group_layout,
                 storage_bind_group_layout,
-                progressive_rendering_bind_group_layout,
+                texture_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });
@@ -682,8 +678,8 @@ struct RenderResources {
     storage_bind_group: wgpu::BindGroup,
     storage_bind_group_layout: wgpu::BindGroupLayout,
     storage_buffers: Vec<Buffer>,
-    progressive_rendering_bind_group: wgpu::BindGroup,
-    progressive_rendering_bind_group_layout: wgpu::BindGroupLayout,
+    texture_bind_group: wgpu::BindGroup,
+    texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RenderResources {
@@ -709,7 +705,7 @@ impl RenderResources {
 
         render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
         render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.progressive_rendering_bind_group, &[]);
+        render_pass.set_bind_group(2, &self.texture_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

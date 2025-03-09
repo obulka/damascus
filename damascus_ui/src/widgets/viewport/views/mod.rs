@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, sync::Arc};
+use std::{borrow::Cow, collections::HashSet, sync::Arc};
 
 use crevice::std430::AsStd430;
 use eframe::{
@@ -27,6 +27,47 @@ mod ray_marcher_view;
 
 use binding_resources::{BindingResource, Buffer, StorageTextureView};
 pub use ray_marcher_view::RayMarcherView;
+
+struct RenderResources {
+    render_pipeline: wgpu::RenderPipeline,
+    uniform_bind_group: wgpu::BindGroup,
+    uniform_bind_group_layout: wgpu::BindGroupLayout,
+    uniform_buffers: Vec<Buffer>,
+    storage_bind_group: wgpu::BindGroup,
+    storage_bind_group_layout: wgpu::BindGroupLayout,
+    storage_buffers: Vec<Buffer>,
+    storage_texture_bind_group: wgpu::BindGroup,
+    storage_texture_bind_group_layout: wgpu::BindGroupLayout,
+}
+
+impl RenderResources {
+    fn prepare(
+        &self,
+        _device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        uniform_buffer_data: Vec<&[u8]>,
+        storage_buffer_data: Vec<&[u8]>,
+    ) {
+        // Update our uniform buffer with the angle from the UI
+        for (buffer, data) in self.uniform_buffers.iter().zip(uniform_buffer_data) {
+            queue.write_buffer(&buffer.buffer, 0, data);
+        }
+
+        for (buffer, data) in self.storage_buffers.iter().zip(storage_buffer_data) {
+            queue.write_buffer(&buffer.buffer, 0, data);
+        }
+    }
+
+    fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
+        render_pass.set_pipeline(&self.render_pipeline);
+
+        render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
+        render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
+        render_pass.set_bind_group(2, &self.storage_texture_bind_group, &[]);
+
+        render_pass.draw(0..4, 0..1);
+    }
+}
 
 pub trait View<
     R: Renderer<G, S>,
@@ -61,11 +102,13 @@ pub trait View<
         Some(pipeline)
     }
 
-    fn current_preprocessor_directives(&mut self) -> &mut HashSet<D>;
+    fn current_preprocessor_directives(&self) -> &HashSet<D>;
+
+    fn current_preprocessor_directives_mut(&mut self) -> &mut HashSet<D>;
 
     fn update_preprocessor_directives(&mut self, settings: &C) -> bool {
         let new_directives = settings.directives(self.renderer());
-        let current_directives = self.current_preprocessor_directives();
+        let current_directives = self.current_preprocessor_directives_mut();
 
         // Check if the directives have changed and store them if they have
         if new_directives == *current_directives {
@@ -75,7 +118,94 @@ pub trait View<
         true
     }
 
-    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V);
+    fn get_shader(&self) -> String;
+
+    fn create_render_pipeline(
+        &self,
+        device: &Arc<wgpu::Device>,
+        texture_format: wgpu::TextureFormat,
+        uniform_bind_group_layout: &wgpu::BindGroupLayout,
+        storage_bind_group_layout: &wgpu::BindGroupLayout,
+        storage_texture_bind_group_layout: &wgpu::BindGroupLayout,
+    ) -> wgpu::RenderPipeline {
+        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("ray marcher pipeline layout"),
+            bind_group_layouts: &[
+                uniform_bind_group_layout,
+                storage_bind_group_layout,
+                storage_texture_bind_group_layout,
+            ],
+            push_constant_ranges: &[],
+        });
+
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: Some("ray marcher source shader"),
+            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.get_shader())).into(),
+        });
+
+        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            label: Some("ray marcher render pipeline"),
+            layout: Some(&pipeline_layout),
+            vertex: wgpu::VertexState {
+                module: &shader,
+                entry_point: "vs_main",
+                buffers: &[],
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &shader,
+                entry_point: "fs_main",
+                targets: &[Some(texture_format.into())],
+            }),
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleStrip,
+                ..wgpu::PrimitiveState::default()
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState::default(),
+            multiview: None,
+        })
+    }
+
+    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
+        let device = &wgpu_render_state.device;
+
+        let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
+        let (uniform_bind_group_layout, uniform_bind_group) =
+            Self::create_uniform_binding(device, &uniform_buffers);
+
+        let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
+        let (storage_bind_group_layout, storage_bind_group) =
+            Self::create_storage_binding(device, &storage_buffers);
+
+        let storage_texture_views: Vec<StorageTextureView> =
+            Self::create_storage_texture_views(device);
+        let (storage_texture_bind_group_layout, storage_texture_bind_group) =
+            Self::create_storage_texture_binding(device, &storage_texture_views);
+
+        let render_pipeline = self.create_render_pipeline(
+            device,
+            wgpu_render_state.target_format,
+            &uniform_bind_group_layout,
+            &storage_bind_group_layout,
+            &storage_texture_bind_group_layout,
+        );
+
+        wgpu_render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(RenderResources {
+                render_pipeline,
+                uniform_bind_group,
+                uniform_bind_group_layout,
+                uniform_buffers,
+                storage_bind_group,
+                storage_bind_group_layout,
+                storage_buffers,
+                storage_texture_bind_group,
+                storage_texture_bind_group_layout,
+            });
+    }
 
     fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
         wgpu_render_state
@@ -97,7 +227,27 @@ pub trait View<
         false
     }
 
-    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState);
+    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
+        if let Some(render_resources) = wgpu_render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            self.reset();
+
+            let device = &wgpu_render_state.device;
+
+            // Create the updated pipeline
+            render_resources.render_pipeline = self.create_render_pipeline(
+                device,
+                wgpu_render_state.target_format,
+                &render_resources.uniform_bind_group_layout,
+                &render_resources.storage_bind_group_layout,
+                &render_resources.storage_texture_bind_group_layout,
+            );
+        }
+    }
 
     fn recompile_if_hash_changed(
         &mut self,

@@ -22,9 +22,10 @@ use super::settings::{RayMarcherViewSettings, ViewportCompilerSettings, Viewport
 
 use crate::icons::Icons;
 
-mod buffers;
+mod binding_resources;
 mod ray_marcher_view;
 
+use binding_resources::{BindingResource, Buffer, StorageTextureView};
 pub use ray_marcher_view::RayMarcherView;
 
 pub trait View<
@@ -117,29 +118,25 @@ pub trait View<
         false
     }
 
-    fn create_uniform_buffers(
-        &self,
-        _device: &Arc<wgpu::Device>,
-        _settings: &V,
-    ) -> Vec<buffers::Buffer> {
+    fn create_uniform_buffers(&self, _device: &Arc<wgpu::Device>, _settings: &V) -> Vec<Buffer> {
         vec![]
     }
 
-    fn create_storage_buffers(
-        &self,
-        _device: &Arc<wgpu::Device>,
-        _settings: &V,
-    ) -> Vec<buffers::Buffer> {
+    fn create_storage_buffers(&self, _device: &Arc<wgpu::Device>, _settings: &V) -> Vec<Buffer> {
+        vec![]
+    }
+
+    fn create_storage_texture_views(_device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
         vec![]
     }
 
     fn uniform_bind_group_layout_entry(
         binding: u32,
-        visibility: wgpu::ShaderStages,
+        buffer: &Buffer,
     ) -> wgpu::BindGroupLayoutEntry {
         wgpu::BindGroupLayoutEntry {
             binding: binding,
-            visibility: visibility,
+            visibility: buffer.visibility,
             ty: wgpu::BindingType::Buffer {
                 ty: wgpu::BufferBindingType::Uniform,
                 has_dynamic_offset: false,
@@ -149,16 +146,46 @@ pub trait View<
         }
     }
 
+    fn storage_bind_group_layout_entry(
+        binding: u32,
+        buffer: &Buffer,
+    ) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: buffer.visibility,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        }
+    }
+
+    fn storage_texture_bind_group_layout_entry(
+        binding: u32,
+        storage_texture_view: &StorageTextureView,
+    ) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: storage_texture_view.visibility,
+            ty: wgpu::BindingType::StorageTexture {
+                access: storage_texture_view.access,
+                format: storage_texture_view.format,
+                view_dimension: storage_texture_view.view_dimension,
+            },
+            count: None,
+        }
+    }
+
     fn create_uniform_binding(
         device: &Arc<wgpu::Device>,
-        buffers: &Vec<buffers::Buffer>,
+        buffers: &Vec<Buffer>,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
-            .map(|(binding, buffer)| {
-                Self::uniform_bind_group_layout_entry(binding as u32, buffer.visibility)
-            })
+            .map(|(binding, buffer)| Self::uniform_bind_group_layout_entry(binding as u32, &buffer))
             .collect();
 
         let uniform_bind_group_layout: wgpu::BindGroupLayout =
@@ -172,7 +199,7 @@ pub trait View<
             .enumerate()
             .map(|(binding, buffer)| wgpu::BindGroupEntry {
                 binding: binding as u32,
-                resource: buffer.buffer.as_entire_binding(),
+                resource: buffer.as_resource(),
             })
             .collect();
 
@@ -186,32 +213,14 @@ pub trait View<
         (uniform_bind_group_layout, uniform_bind_group)
     }
 
-    fn storage_bind_group_layout_entry(
-        binding: u32,
-        visibility: wgpu::ShaderStages,
-    ) -> wgpu::BindGroupLayoutEntry {
-        wgpu::BindGroupLayoutEntry {
-            binding: binding,
-            visibility: visibility,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Storage { read_only: true },
-                has_dynamic_offset: false,
-                min_binding_size: None,
-            },
-            count: None,
-        }
-    }
-
     fn create_storage_binding(
         device: &Arc<wgpu::Device>,
-        buffers: &Vec<buffers::Buffer>,
+        buffers: &Vec<Buffer>,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
-            .map(|(binding, buffer)| {
-                Self::storage_bind_group_layout_entry(binding as u32, buffer.visibility)
-            })
+            .map(|(binding, buffer)| Self::storage_bind_group_layout_entry(binding as u32, &buffer))
             .collect();
 
         let storage_bind_group_layout =
@@ -225,17 +234,56 @@ pub trait View<
             .enumerate()
             .map(|(binding, buffer)| wgpu::BindGroupEntry {
                 binding: binding as u32,
-                resource: buffer.buffer.as_entire_binding(),
+                resource: buffer.as_resource(),
             })
             .collect();
 
         let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("ray marcher scene storage bind group"),
+            label: Some("storage bind group"),
             layout: &storage_bind_group_layout,
             entries: &bind_group_entries,
         });
 
         (storage_bind_group_layout, storage_bind_group)
+    }
+
+    fn create_storage_texture_binding(
+        device: &Arc<wgpu::Device>,
+        storage_texture_views: &Vec<StorageTextureView>,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = storage_texture_views
+            .iter()
+            .enumerate()
+            .map(|(binding, storage_texture_view)| {
+                Self::storage_texture_bind_group_layout_entry(binding as u32, &storage_texture_view)
+            })
+            .collect();
+
+        let storage_texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("storage texture bind group layout"),
+                entries: &bind_group_layout_entries,
+            });
+
+        let bind_group_entries: Vec<wgpu::BindGroupEntry<'_>> = storage_texture_views
+            .iter()
+            .enumerate()
+            .map(|(binding, storage_texture_view)| wgpu::BindGroupEntry {
+                binding: binding as u32,
+                resource: storage_texture_view.as_resource(),
+            })
+            .collect();
+
+        let storage_texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("storage texture bind group"),
+            layout: &storage_texture_bind_group_layout,
+            entries: &bind_group_entries,
+        });
+
+        (
+            storage_texture_bind_group_layout,
+            storage_texture_bind_group,
+        )
     }
 
     fn disable(&mut self) {}

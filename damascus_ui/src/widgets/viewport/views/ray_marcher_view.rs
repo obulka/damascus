@@ -32,7 +32,10 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::{buffers::Buffer, RayMarcherViewSettings, View};
+use super::{
+    binding_resources::{Buffer, StorageTextureView},
+    RayMarcherViewSettings, View,
+};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -119,9 +122,10 @@ impl
             Self::create_storage_binding(device, &storage_buffers);
 
         // Create the texture to render to and initialize from
-        let texture_view = Self::create_progressive_rendering_texture(device);
-        let (texture_bind_group_layout, texture_bind_group) =
-            Self::create_progressive_rendering_binding(device, &texture_view);
+        let storage_texture_views: Vec<StorageTextureView> =
+            Self::create_storage_texture_views(device);
+        let (storage_texture_bind_group_layout, storage_texture_bind_group) =
+            Self::create_storage_texture_binding(device, &storage_texture_views);
 
         // Create the pipeline
         let render_pipeline = self.create_render_pipeline(
@@ -129,7 +133,7 @@ impl
             wgpu_render_state.target_format,
             &uniform_bind_group_layout,
             &storage_bind_group_layout,
-            &texture_bind_group_layout,
+            &storage_texture_bind_group_layout,
         );
 
         // Because the graphics pipeline must have the same lifetime as the egui render pass,
@@ -147,8 +151,8 @@ impl
                 storage_bind_group,
                 storage_bind_group_layout,
                 storage_buffers,
-                texture_bind_group,
-                texture_bind_group_layout,
+                storage_texture_bind_group,
+                storage_texture_bind_group_layout,
             });
     }
 
@@ -169,7 +173,7 @@ impl
                 wgpu_render_state.target_format,
                 &render_resources.uniform_bind_group_layout,
                 &render_resources.storage_bind_group_layout,
-                &render_resources.texture_bind_group_layout,
+                &render_resources.storage_texture_bind_group_layout,
             );
         }
     }
@@ -300,6 +304,33 @@ impl
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
         ]
+    }
+
+    fn create_storage_texture_views(device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
+        let texture_descriptor = wgpu::TextureDescriptor {
+            size: wgpu::Extent3d {
+                width: MAX_TEXTURE_DIMENSION,
+                height: MAX_TEXTURE_DIMENSION,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba32Float,
+            usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::STORAGE_BINDING,
+            label: Some("ray marcher progressive rendering texture"),
+            view_formats: &[],
+        };
+
+        vec![StorageTextureView {
+            texture_view: device
+                .create_texture(&texture_descriptor)
+                .create_view(&Default::default()),
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            access: wgpu::StorageTextureAccess::ReadWrite,
+            format: texture_descriptor.format,
+            view_dimension: wgpu::TextureViewDimension::D2,
+        }]
     }
 
     fn disable(&mut self) {
@@ -492,70 +523,20 @@ impl RayMarcherView {
         self.disable_camera_controls();
     }
 
-    fn create_progressive_rendering_texture(device: &Arc<wgpu::Device>) -> wgpu::TextureView {
-        let texture_descriptor = wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width: MAX_TEXTURE_DIMENSION,
-                height: MAX_TEXTURE_DIMENSION,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::STORAGE_BINDING,
-            label: Some("ray marcher progressive rendering texture"),
-            view_formats: &[],
-        };
-        let texture = device.create_texture(&texture_descriptor);
-        texture.create_view(&Default::default())
-    }
-
-    fn create_progressive_rendering_binding(
-        device: &Arc<wgpu::Device>,
-        texture_view: &wgpu::TextureView,
-    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
-        let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("ray marcher progressive rendering bind group layout"),
-                entries: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::StorageTexture {
-                        access: wgpu::StorageTextureAccess::ReadWrite,
-                        format: wgpu::TextureFormat::Rgba32Float,
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                    },
-                    count: None,
-                }],
-            });
-
-        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("ray marcher progressive rendering bind group"),
-            layout: &texture_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(texture_view),
-            }],
-        });
-
-        (texture_bind_group_layout, texture_bind_group)
-    }
-
     fn create_render_pipeline(
         &self,
         device: &Arc<wgpu::Device>,
         texture_format: wgpu::TextureFormat,
         uniform_bind_group_layout: &wgpu::BindGroupLayout,
         storage_bind_group_layout: &wgpu::BindGroupLayout,
-        texture_bind_group_layout: &wgpu::BindGroupLayout,
+        storage_texture_bind_group_layout: &wgpu::BindGroupLayout,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("ray marcher pipeline layout"),
             bind_group_layouts: &[
                 uniform_bind_group_layout,
                 storage_bind_group_layout,
-                texture_bind_group_layout,
+                storage_texture_bind_group_layout,
             ],
             push_constant_ranges: &[],
         });
@@ -678,8 +659,8 @@ struct RenderResources {
     storage_bind_group: wgpu::BindGroup,
     storage_bind_group_layout: wgpu::BindGroupLayout,
     storage_buffers: Vec<Buffer>,
-    texture_bind_group: wgpu::BindGroup,
-    texture_bind_group_layout: wgpu::BindGroupLayout,
+    storage_texture_bind_group: wgpu::BindGroup,
+    storage_texture_bind_group_layout: wgpu::BindGroupLayout,
 }
 
 impl RenderResources {
@@ -705,7 +686,7 @@ impl RenderResources {
 
         render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
         render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.texture_bind_group, &[]);
+        render_pass.set_bind_group(2, &self.storage_texture_bind_group, &[]);
 
         render_pass.draw(0..4, 0..1);
     }

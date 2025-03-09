@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{borrow::Cow, collections::HashSet, ops::BitOr, sync::Arc, time::SystemTime};
+use std::{collections::HashSet, ops::BitOr, sync::Arc, time::SystemTime};
 
 use eframe::{
     egui,
@@ -34,10 +34,61 @@ use damascus_core::{
 
 use super::{
     binding_resources::{Buffer, StorageTextureView},
-    RayMarcherViewSettings, View,
+    RayMarcherViewSettings, RenderResources, View,
 };
 
 use crate::MAX_TEXTURE_DIMENSION;
+
+struct RayMarcherViewCallback {
+    render_parameters: Std430GPURayMarcher,
+    scene_parameters: Std430GPUSceneParameters,
+    render_state: Std430GPURenderState,
+    render_camera: Std430GPUCamera,
+    primitives: Vec<Std430GPUPrimitive>,
+    lights: Vec<Std430GPULight>,
+    atmosphere: Std430GPUMaterial,
+    emissive_primitive_indices: Vec<u32>,
+}
+
+impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
+    fn prepare(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
+        _egui_encoder: &mut wgpu::CommandEncoder,
+        resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        let resources: &RenderResources = resources.get().unwrap();
+        resources.prepare(
+            device,
+            queue,
+            vec![
+                bytemuck::cast_slice(&[self.render_parameters]),
+                bytemuck::cast_slice(&[self.scene_parameters]),
+                bytemuck::cast_slice(&[self.render_state]),
+                bytemuck::cast_slice(&[self.render_camera]),
+            ],
+            vec![
+                bytemuck::cast_slice(self.primitives.as_slice()),
+                bytemuck::cast_slice(self.lights.as_slice()),
+                bytemuck::cast_slice(&[self.atmosphere]),
+                bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
+            ],
+        );
+        Vec::new()
+    }
+
+    fn paint<'a>(
+        &self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'a>,
+        resources: &'a egui_wgpu::CallbackResources,
+    ) {
+        let resources: &RenderResources = resources.get().unwrap();
+        resources.paint(render_pass);
+    }
+}
 
 pub struct RayMarcherView {
     pub renderer: RayMarcher,
@@ -103,85 +154,18 @@ impl
         false
     }
 
-    /// Construict all uniform/storage/texture buffers and RenderResources
-    fn construct_pipeline(
-        &mut self,
-        wgpu_render_state: &egui_wgpu::RenderState,
-        settings: &RayMarcherViewSettings,
-    ) {
-        let device = &wgpu_render_state.device;
-
-        // Uniforms
-        let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
-        let (uniform_bind_group_layout, uniform_bind_group) =
-            Self::create_uniform_binding(device, &uniform_buffers);
-
-        // Storage
-        let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
-        let (storage_bind_group_layout, storage_bind_group) =
-            Self::create_storage_binding(device, &storage_buffers);
-
-        // Create the texture to render to and initialize from
-        let storage_texture_views: Vec<StorageTextureView> =
-            Self::create_storage_texture_views(device);
-        let (storage_texture_bind_group_layout, storage_texture_bind_group) =
-            Self::create_storage_texture_binding(device, &storage_texture_views);
-
-        // Create the pipeline
-        let render_pipeline = self.create_render_pipeline(
-            device,
-            wgpu_render_state.target_format,
-            &uniform_bind_group_layout,
-            &storage_bind_group_layout,
-            &storage_texture_bind_group_layout,
-        );
-
-        // Because the graphics pipeline must have the same lifetime as the egui render pass,
-        // instead of storing the pipeline in our `Viewport3D` struct, we insert it into the
-        // `paint_callback_resources` type map, which is stored alongside the render pass.
-        wgpu_render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(RenderResources {
-                render_pipeline,
-                uniform_bind_group,
-                uniform_bind_group_layout,
-                uniform_buffers,
-                storage_bind_group,
-                storage_bind_group_layout,
-                storage_buffers,
-                storage_texture_bind_group,
-                storage_texture_bind_group_layout,
-            });
+    fn current_preprocessor_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {
+        &self.render_state.preprocessor_directives
     }
 
-    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
-        if let Some(render_resources) = wgpu_render_state
-            .renderer
-            .write()
-            .callback_resources
-            .get_mut::<RenderResources>()
-        {
-            self.reset();
-
-            let device = &wgpu_render_state.device;
-
-            // Create the updated pipeline
-            render_resources.render_pipeline = self.create_render_pipeline(
-                device,
-                wgpu_render_state.target_format,
-                &render_resources.uniform_bind_group_layout,
-                &render_resources.storage_bind_group_layout,
-                &render_resources.storage_texture_bind_group_layout,
-            );
-        }
-    }
-
-    fn current_preprocessor_directives(
+    fn current_preprocessor_directives_mut(
         &mut self,
     ) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
         &mut self.render_state.preprocessor_directives
+    }
+
+    fn get_shader(&self) -> String {
+        shaders::ray_marcher::ray_march_shader(self.current_preprocessor_directives())
     }
 
     fn create_uniform_buffers(
@@ -523,55 +507,6 @@ impl RayMarcherView {
         self.disable_camera_controls();
     }
 
-    fn create_render_pipeline(
-        &self,
-        device: &Arc<wgpu::Device>,
-        texture_format: wgpu::TextureFormat,
-        uniform_bind_group_layout: &wgpu::BindGroupLayout,
-        storage_bind_group_layout: &wgpu::BindGroupLayout,
-        storage_texture_bind_group_layout: &wgpu::BindGroupLayout,
-    ) -> wgpu::RenderPipeline {
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("ray marcher pipeline layout"),
-            bind_group_layouts: &[
-                uniform_bind_group_layout,
-                storage_bind_group_layout,
-                storage_texture_bind_group_layout,
-            ],
-            push_constant_ranges: &[],
-        });
-
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("ray marcher source shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
-                &shaders::ray_marcher::ray_march_shader(&self.render_state.preprocessor_directives),
-            ))
-            .into(),
-        });
-
-        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("ray marcher render pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: "vs_main",
-                buffers: &[],
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: "fs_main",
-                targets: &[Some(texture_format.into())],
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleStrip,
-                ..wgpu::PrimitiveState::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            multiview: None,
-        })
-    }
-
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         self.renderer_mut().scene.render_camera.aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
@@ -597,97 +532,5 @@ impl RayMarcherView {
             ))
         };
         self.renderer_mut().scene.render_camera.world_matrix *= camera_transform;
-    }
-}
-
-struct RayMarcherViewCallback {
-    render_parameters: Std430GPURayMarcher,
-    scene_parameters: Std430GPUSceneParameters,
-    render_state: Std430GPURenderState,
-    render_camera: Std430GPUCamera,
-    primitives: Vec<Std430GPUPrimitive>,
-    lights: Vec<Std430GPULight>,
-    atmosphere: Std430GPUMaterial,
-    emissive_primitive_indices: Vec<u32>,
-}
-
-impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
-    fn prepare(
-        &self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _egui_encoder: &mut wgpu::CommandEncoder,
-        resources: &mut egui_wgpu::CallbackResources,
-    ) -> Vec<wgpu::CommandBuffer> {
-        let resources: &RenderResources = resources.get().unwrap();
-        resources.prepare(
-            device,
-            queue,
-            vec![
-                bytemuck::cast_slice(&[self.render_parameters]),
-                bytemuck::cast_slice(&[self.scene_parameters]),
-                bytemuck::cast_slice(&[self.render_state]),
-                bytemuck::cast_slice(&[self.render_camera]),
-            ],
-            vec![
-                bytemuck::cast_slice(self.primitives.as_slice()),
-                bytemuck::cast_slice(self.lights.as_slice()),
-                bytemuck::cast_slice(&[self.atmosphere]),
-                bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
-            ],
-        );
-        Vec::new()
-    }
-
-    fn paint<'a>(
-        &self,
-        _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
-        resources: &'a egui_wgpu::CallbackResources,
-    ) {
-        let resources: &RenderResources = resources.get().unwrap();
-        resources.paint(render_pass);
-    }
-}
-
-struct RenderResources {
-    render_pipeline: wgpu::RenderPipeline,
-    uniform_bind_group: wgpu::BindGroup,
-    uniform_bind_group_layout: wgpu::BindGroupLayout,
-    uniform_buffers: Vec<Buffer>,
-    storage_bind_group: wgpu::BindGroup,
-    storage_bind_group_layout: wgpu::BindGroupLayout,
-    storage_buffers: Vec<Buffer>,
-    storage_texture_bind_group: wgpu::BindGroup,
-    storage_texture_bind_group_layout: wgpu::BindGroupLayout,
-}
-
-impl RenderResources {
-    fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        uniform_buffer_data: Vec<&[u8]>,
-        storage_buffer_data: Vec<&[u8]>,
-    ) {
-        // Update our uniform buffer with the angle from the UI
-        for (buffer, data) in self.uniform_buffers.iter().zip(uniform_buffer_data) {
-            queue.write_buffer(&buffer.buffer, 0, data);
-        }
-
-        for (buffer, data) in self.storage_buffers.iter().zip(storage_buffer_data) {
-            queue.write_buffer(&buffer.buffer, 0, data);
-        }
-    }
-
-    fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
-        render_pass.set_pipeline(&self.render_pipeline);
-
-        render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.storage_texture_bind_group, &[]);
-
-        render_pass.draw(0..4, 0..1);
     }
 }

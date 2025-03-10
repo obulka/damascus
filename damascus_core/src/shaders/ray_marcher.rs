@@ -95,7 +95,7 @@ pub fn ray_march_shader(
     preprocessor_directives: &HashSet<RayMarcherPreprocessorDirectives>,
 ) -> String {
     process_shader_source(
-        include_str!("./wgsl/renderer/ray_march.wgsl"),
+        include_str!("./wgsl/renderers/ray_marcher/ray_marcher.wgsl"),
         preprocessor_directives,
     )
 }

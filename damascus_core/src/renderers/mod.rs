@@ -5,6 +5,7 @@
 
 use crevice::std430::AsStd430;
 
+pub mod compositor;
 pub mod ray_marcher;
 
 use super::DualDevice;

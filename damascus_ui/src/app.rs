@@ -289,7 +289,7 @@ impl eframe::App for Damascus {
                         _ => {}
                     },
                     NodeValueType::Texture { value: _ } => match &mut self.viewport.view {
-                        Views::Texture => {
+                        Views::Compositor { view } => {
                             // TODO
                         }
                         Views::Error { error } => Self::display_error(ctx, error),

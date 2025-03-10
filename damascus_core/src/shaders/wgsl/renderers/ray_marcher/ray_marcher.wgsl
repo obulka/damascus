@@ -10,6 +10,7 @@
 
 const UNIFORM_BIND_GROUP: u32 = 0u;
 const STORAGE_BIND_GROUP: u32 = 1u;
+// const TEXTURE_BIND_GROUP: u32 = 2u;
 const STORAGE_TEXTURE_BIND_GROUP: u32 = 2u;
 
 #include Ray
@@ -20,7 +21,7 @@ const STORAGE_TEXTURE_BIND_GROUP: u32 = 2u;
 #include Material
 #include Primitive
 #include PrimitiveModifiers
-#include RenderParameters
+#include RayMarcherRenderParameters
 #include SceneSDFs
 #include Normals
 #include Lights

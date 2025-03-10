@@ -352,8 +352,8 @@ impl
         self.render_state.paths_rendered_per_pixel = 0;
     }
 
-    fn show_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
-        self.show_restart_pause_play_buttons(frame, ui);
+    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+        self.show_restart_pause_play_buttons(render_state, ui);
         ui.add(egui::Label::new(&self.stats_text).truncate(true));
         false
     }
@@ -361,7 +361,7 @@ impl
     fn custom_painting(
         &mut self,
         ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
         settings: &RayMarcherViewSettings,
         compiler_settings: &RayMarcherCompilerSettings,
@@ -394,8 +394,8 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        let _data_changed: bool = self.reconstruct_if_hash_changed(frame, settings)
-            || self.recompile_if_hash_changed(frame, compiler_settings);
+        let _data_changed: bool = self.reconstruct_if_hash_changed(render_state, settings)
+            || self.recompile_if_hash_changed(render_state, compiler_settings);
 
         let mut paths_rendered: u32 = 0;
 

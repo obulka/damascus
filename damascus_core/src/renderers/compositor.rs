@@ -14,14 +14,14 @@ use crate::DualDevice;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPUCompositingRenderState {
+pub struct GPUCompositorRenderState {
     resolution: Vec2,
     flags: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct CompositingRenderState {
+pub struct CompositorRenderState {
     pub frame_counter: u32,
     pub previous_frame_time: SystemTime,
     pub fps: f32,
@@ -29,7 +29,7 @@ pub struct CompositingRenderState {
     pub paused: bool,
 }
 
-impl Default for CompositingRenderState {
+impl Default for CompositorRenderState {
     fn default() -> Self {
         Self {
             frame_counter: 0,
@@ -41,13 +41,13 @@ impl Default for CompositingRenderState {
     }
 }
 
-impl CompositingRenderState {}
+impl CompositorRenderState {}
 
-impl DualDevice<GPUCompositingRenderState, Std430GPUCompositingRenderState>
-    for CompositingRenderState
+impl DualDevice<GPUCompositorRenderState, Std430GPUCompositorRenderState>
+    for CompositorRenderState
 {
-    fn to_gpu(&self) -> GPUCompositingRenderState {
-        GPUCompositingRenderState {
+    fn to_gpu(&self) -> GPUCompositorRenderState {
+        GPUCompositorRenderState {
             resolution: self.resolution.as_vec2(),
             flags: 0,
         }

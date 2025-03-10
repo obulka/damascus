@@ -17,6 +17,7 @@ pub mod ray_marcher;
 pub enum Includes {
     AOVs,
     Camera,
+    CompositorRenderParameters,
     Material,
     Lights,
     Math,
@@ -29,6 +30,7 @@ pub enum Includes {
     Ray,
     RayMarcherRenderParameters,
     SceneSDFs,
+    Texture,
     VertexShader,
 }
 
@@ -37,6 +39,9 @@ impl Includes {
         match *self {
             Self::AOVs => include_str!("./wgsl/renderers/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
+            Self::CompositorRenderParameters => {
+                include_str!("./wgsl/renderers/compositor/compositor_render_parameters.wgsl")
+            }
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
             Self::Math => include_str!("./wgsl/utils/math.wgsl"),
@@ -51,6 +56,7 @@ impl Includes {
                 include_str!("./wgsl/renderers/ray_marcher/ray_marcher_render_parameters.wgsl")
             }
             Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
+            Self::Texture => include_str!("./wgsl/textures/texture.wgsl"),
             Self::VertexShader => include_str!("./wgsl/renderers/vertex_shader.wgsl"),
         }
     }

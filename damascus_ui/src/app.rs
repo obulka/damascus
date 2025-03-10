@@ -162,166 +162,199 @@ impl eframe::App for Damascus {
             &mut self.viewport,
         );
 
-        let graph_response = self.node_graph.show(ctx);
-        for node_response in graph_response.node_responses {
-            match node_response {
-                NodeResponse::User(user_event) => {
-                    match user_event {
-                        NodeGraphResponse::SetActiveNode(node) => {
-                            self.node_graph.user_state_mut().active_node = Some(node);
-                            self.viewport.view.enable_and_play();
-                            responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
-                        }
-                        NodeGraphResponse::ClearActiveNode => {
-                            self.node_graph.user_state_mut().active_node = None;
-                        }
-                        NodeGraphResponse::InputValueChanged(
-                            node_id,
-                            node_template,
-                            input_name,
-                        ) => {
-                            // Perform callbacks when inputs have changed
-                            responses.append(&mut node_template.input_value_changed(
-                                &mut self.node_graph.editor_state_mut().graph,
+        if let Some(render_state) = frame.wgpu_render_state() {
+            let graph_response = self.node_graph.show(ctx);
+            for node_response in graph_response.node_responses {
+                match node_response {
+                    NodeResponse::User(user_event) => {
+                        match user_event {
+                            NodeGraphResponse::SetActiveNode(node) => {
+                                self.node_graph.user_state_mut().active_node = Some(node);
+                                self.viewport.view.enable_and_play();
+                                responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
+                            }
+                            NodeGraphResponse::ClearActiveNode => {
+                                self.node_graph.user_state_mut().active_node = None;
+                            }
+                            NodeGraphResponse::InputValueChanged(
                                 node_id,
-                                &input_name,
-                            ));
-                        }
-                        NodeGraphResponse::CheckPreprocessorDirectives => {
-                            self.viewport
-                                .recompile_if_preprocessor_directives_changed(frame);
-                        }
-                        NodeGraphResponse::ReconstructRenderPipeline => {
-                            self.viewport.reconstruct_pipeline(frame);
-                        }
-                    }
-                }
-                // NodeResponse::DisconnectEvent { output, input } => {
-                //     let graph = &self.node_graph.editor_state().graph;
-                //     let node_template = graph[graph.get_input(input).node].user_data.template;
-                //     responses.append(&mut node_template.input_disconnected(
-                //         &mut self.node_graph.editor_state_mut().graph,
-                //         input,
-                //         output,
-                //     ));
-                // }
-                // NodeResponse::ConnectEventEnded { output, input } => {
-                //     let graph = &self.node_graph.editor_state().graph;
-                //     let node_template = graph[graph.get_input(input).node].user_data.template;
-                //     responses.append(&mut node_template.input_connected(
-                //         &mut self.node_graph.editor_state_mut().graph,
-                //         input,
-                //         output,
-                //     ));
-                // }
-                _ => {}
-            }
-        }
-
-        if let Some(node) = self.node_graph.user_state().active_node {
-            if self
-                .node_graph
-                .editor_state()
-                .graph
-                .nodes
-                .contains_key(node)
-            {
-                let value_type = match evaluate_node(
-                    &self.node_graph.editor_state().graph,
-                    node,
-                    &mut HashMap::new(),
-                ) {
-                    Ok(value) => value,
-                    Err(error) => {
-                        Self::display_error(ctx, &error);
-
-                        NodeValueType::Bool {
-                            value: Bool::new(false),
+                                node_template,
+                                input_name,
+                            ) => {
+                                // Perform callbacks when inputs have changed
+                                responses.append(&mut node_template.input_value_changed(
+                                    &mut self.node_graph.editor_state_mut().graph,
+                                    node_id,
+                                    &input_name,
+                                ));
+                            }
+                            NodeGraphResponse::CheckPreprocessorDirectives => {
+                                self.viewport
+                                    .recompile_if_preprocessor_directives_changed(render_state);
+                            }
+                            NodeGraphResponse::ReconstructRenderPipeline => {
+                                self.viewport.reconstruct_pipeline(render_state);
+                            }
                         }
                     }
-                };
-                match value_type {
-                    NodeValueType::Camera { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_camera(*value.value())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::Light { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_lights(value.value().clone())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::Material { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_atmosphere(*value.value())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::ProceduralTexture { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_texture(*value.value())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::Primitive { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_primitives(value.value().clone())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::RayMarcher { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => view.set_renderer(value),
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::Scene { value } => match &mut self.viewport.view {
-                        Views::RayMarcher { view } => {
-                            view.set_renderer_to_default_with_scene(value.value().clone())
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
-                    NodeValueType::Texture { value: _ } => match &mut self.viewport.view {
-                        Views::Compositor { view } => {
-                            // TODO
-                        }
-                        Views::Error { error } => Self::display_error(ctx, error),
-                        _ => {}
-                    },
+                    // NodeResponse::DisconnectEvent { output, input } => {
+                    //     let graph = &self.node_graph.editor_state().graph;
+                    //     let node_template = graph[graph.get_input(input).node].user_data.template;
+                    //     responses.append(&mut node_template.input_disconnected(
+                    //         &mut self.node_graph.editor_state_mut().graph,
+                    //         input,
+                    //         output,
+                    //     ));
+                    // }
+                    // NodeResponse::ConnectEventEnded { output, input } => {
+                    //     let graph = &self.node_graph.editor_state().graph;
+                    //     let node_template = graph[graph.get_input(input).node].user_data.template;
+                    //     responses.append(&mut node_template.input_connected(
+                    //         &mut self.node_graph.editor_state_mut().graph,
+                    //         input,
+                    //         output,
+                    //     ));
+                    // }
                     _ => {}
                 }
+            }
 
-                for response in responses
-                    .into_iter()
-                    .collect::<HashSet<NodeGraphResponse>>()
+            if let Some(node) = self.node_graph.user_state().active_node {
+                if self
+                    .node_graph
+                    .editor_state()
+                    .graph
+                    .nodes
+                    .contains_key(node)
                 {
-                    match response {
-                        NodeGraphResponse::CheckPreprocessorDirectives => {
-                            self.viewport
-                                .recompile_if_preprocessor_directives_changed(frame);
+                    let value_type = match evaluate_node(
+                        &self.node_graph.editor_state().graph,
+                        node,
+                        &mut HashMap::new(),
+                    ) {
+                        Ok(value) => value,
+                        Err(error) => {
+                            Self::display_error(ctx, &error);
+
+                            NodeValueType::Bool {
+                                value: Bool::new(false),
+                            }
                         }
-                        NodeGraphResponse::ReconstructRenderPipeline => {
-                            self.viewport.reconstruct_pipeline(frame);
+                    };
+                    match value_type {
+                        NodeValueType::Camera { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => {
+                                    view.set_renderer_to_default_with_camera(*value.value())
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::Light { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => {
+                                    view.set_renderer_to_default_with_lights(value.value().clone())
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::Material { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => {
+                                    view.set_renderer_to_default_with_atmosphere(*value.value())
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::ProceduralTexture { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => {
+                                    view.set_renderer_to_default_with_texture(*value.value())
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::Primitive { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => view
+                                    .set_renderer_to_default_with_primitives(value.value().clone()),
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::RayMarcher { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => view.set_renderer(value),
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::Scene { value } => {
+                            self.viewport.switch_to_ray_marcher_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::RayMarcher { view } => {
+                                    view.set_renderer_to_default_with_scene(value.value().clone())
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
+                        }
+                        NodeValueType::Texture { value } => {
+                            self.viewport.switch_to_compositor_view(render_state);
+
+                            match &mut self.viewport.view {
+                                Views::Compositor { view } => {
+                                    // TODO
+                                }
+                                Views::Error { error } => Self::display_error(ctx, error),
+                                _ => {}
+                            }
                         }
                         _ => {}
                     }
+
+                    for response in responses
+                        .into_iter()
+                        .collect::<HashSet<NodeGraphResponse>>()
+                    {
+                        match response {
+                            NodeGraphResponse::CheckPreprocessorDirectives => {
+                                self.viewport
+                                    .recompile_if_preprocessor_directives_changed(render_state);
+                            }
+                            NodeGraphResponse::ReconstructRenderPipeline => {
+                                self.viewport.reconstruct_pipeline(render_state);
+                            }
+                            _ => {}
+                        }
+                    }
+                } else {
+                    self.node_graph.user_state_mut().active_node = None;
                 }
-            } else {
-                self.node_graph.user_state_mut().active_node = None;
             }
-        }
 
-        if self.node_graph.user_state().active_node.is_none() {
-            self.viewport.view.disable();
-        }
+            if self.node_graph.user_state().active_node.is_none() {
+                self.viewport.view.disable();
+            }
 
-        self.viewport.show(ctx, frame);
+            self.viewport.show(ctx, render_state);
+        }
     }
 }

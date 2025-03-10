@@ -22,11 +22,11 @@ use super::settings::{self, ViewportCompilerSettings, ViewportSettings};
 
 use crate::icons::Icons;
 
-mod compositing_view;
+mod compositor_view;
 mod ray_marcher_view;
 mod resources;
 
-pub use compositing_view::CompositingView;
+pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
 use resources::{
     BindingResource, Buffer, BufferBindGroup, RenderResources, StorageTextureView,
@@ -52,18 +52,14 @@ pub trait View<
 
     fn set_reconstruct_hash(&mut self, settings: &V) -> bool;
 
-    fn new<'a>(creation_context: &'a eframe::CreationContext<'a>, settings: &V) -> Option<Self> {
+    fn new(render_state: &egui_wgpu::RenderState, settings: &V) -> Self {
         let mut pipeline = Self::default();
         pipeline.set_recompile_hash();
         pipeline.set_reconstruct_hash(settings);
 
-        Self::construct_pipeline(
-            &mut pipeline,
-            creation_context.wgpu_render_state.as_ref()?,
-            settings,
-        );
+        Self::construct_pipeline(&mut pipeline, render_state, settings);
 
-        Some(pipeline)
+        pipeline
     }
 
     fn current_preprocessor_directives(&self) -> &HashSet<D>;
@@ -124,8 +120,8 @@ pub trait View<
         })
     }
 
-    fn construct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
-        let device = &wgpu_render_state.device;
+    fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
+        let device = &render_state.device;
 
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
@@ -175,39 +171,37 @@ pub trait View<
 
         render_resources.render_pipeline = Some(self.create_render_pipeline(
             device,
-            wgpu_render_state.target_format,
+            render_state.target_format,
             render_resources.bind_group_layouts(),
         ));
 
-        wgpu_render_state
+        render_state
             .renderer
             .write()
             .callback_resources
             .insert(render_resources);
     }
 
-    fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
-        wgpu_render_state
-            .renderer
-            .write()
-            .callback_resources
-            .clear();
+    fn reconstruct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
+        render_state.renderer.write().callback_resources.clear();
         self.reset();
-        self.construct_pipeline(wgpu_render_state, settings);
+        self.construct_pipeline(render_state, settings);
     }
 
-    fn reconstruct_if_hash_changed(&mut self, frame: &mut eframe::Frame, settings: &V) -> bool {
+    fn reconstruct_if_hash_changed(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        settings: &V,
+    ) -> bool {
         if self.set_reconstruct_hash(settings) {
-            if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                self.reconstruct_pipeline(wgpu_render_state, settings);
-            }
+            self.reconstruct_pipeline(render_state, settings);
             return true;
         }
         false
     }
 
-    fn recompile_shader(&mut self, wgpu_render_state: &egui_wgpu::RenderState) {
-        if let Some(render_resources) = wgpu_render_state
+    fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
+        if let Some(render_resources) = render_state
             .renderer
             .write()
             .callback_resources
@@ -215,12 +209,12 @@ pub trait View<
         {
             self.reset();
 
-            let device = &wgpu_render_state.device;
+            let device = &render_state.device;
 
             // Create the updated pipeline
             render_resources.render_pipeline = Some(self.create_render_pipeline(
                 device,
-                wgpu_render_state.target_format,
+                render_state.target_format,
                 render_resources.bind_group_layouts(),
             ));
         }
@@ -228,7 +222,7 @@ pub trait View<
 
     fn recompile_if_hash_changed(
         &mut self,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         compiler_settings: &C,
     ) -> bool {
         if self.set_recompile_hash() {
@@ -236,9 +230,7 @@ pub trait View<
             if compiler_settings.dynamic_recompilation_enabled()
                 && self.update_preprocessor_directives(&compiler_settings)
             {
-                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    self.recompile_shader(wgpu_render_state);
-                }
+                self.recompile_shader(render_state);
             }
             return true;
         }
@@ -452,7 +444,7 @@ pub trait View<
     fn custom_painting(
         &mut self,
         ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
         settings: &V,
         compiler_settings: &C,
@@ -460,7 +452,7 @@ pub trait View<
 
     fn show_frame(
         &mut self,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
         settings: &V,
         compiler_settings: &C,
@@ -469,8 +461,13 @@ pub trait View<
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             let mut available_size: egui::Vec2 = ui.available_size().round();
             available_size.y -= Self::controls_height(ui.style());
-            paint_callback =
-                self.custom_painting(ui, frame, available_size, settings, compiler_settings);
+            paint_callback = self.custom_painting(
+                ui,
+                render_state,
+                available_size,
+                settings,
+                compiler_settings,
+            );
         });
         paint_callback
     }
@@ -479,7 +476,11 @@ pub trait View<
         (Self::ICON_SIZE + style.spacing.button_padding.y + style.spacing.item_spacing.y) * 2. + 1.
     }
 
-    fn show_restart_pause_play_buttons(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) {
+    fn show_restart_pause_play_buttons(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        ui: &mut egui::Ui,
+    ) {
         ui.horizontal(|ui| {
             if ui
                 .add_enabled(
@@ -492,9 +493,7 @@ pub trait View<
                 .on_hover_text("restart the render")
                 .clicked()
             {
-                if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-                    self.recompile_shader(wgpu_render_state);
-                }
+                self.recompile_shader(render_state);
             }
 
             let tooltip: &str;
@@ -516,20 +515,20 @@ pub trait View<
         });
     }
 
-    fn show_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
-        self.show_restart_pause_play_buttons(frame, ui);
+    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+        self.show_restart_pause_play_buttons(render_state, ui);
         false
     }
 
     fn show(
         &mut self,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
         settings: &V,
         compiler_settings: &C,
     ) -> bool {
-        let paint_callback = self.show_frame(frame, ui, settings, compiler_settings);
-        let reconstruct_pipeline = self.show_controls(frame, ui);
+        let paint_callback = self.show_frame(render_state, ui, settings, compiler_settings);
+        let reconstruct_pipeline = self.show_controls(render_state, ui);
 
         if !reconstruct_pipeline {
             if let Some(callback) = paint_callback {
@@ -543,44 +542,38 @@ pub trait View<
 
 pub enum Views {
     RayMarcher { view: RayMarcherView },
-    Compositor { view: CompositingView },
+    Compositor { view: CompositorView },
     Error { error: anyhow::Error },
 }
 
 impl Views {
-    pub fn new<'a>(
-        creation_context: &'a eframe::CreationContext<'a>,
+    pub fn new(render_state: &egui_wgpu::RenderState, settings: &ViewportSettings) -> Self {
+        Self::RayMarcher {
+            view: RayMarcherView::new(render_state, &settings.ray_marcher_view),
+        }
+    }
+
+    pub fn reconstruct_pipeline(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
         settings: &ViewportSettings,
-    ) -> Self {
-        if let Some(view) = RayMarcherView::new(creation_context, &settings.ray_marcher_view) {
-            return Self::RayMarcher { view: view };
-        }
-        Self::Error {
-            error: anyhow::Error::msg("Failed to create ray marcher view"),
+    ) {
+        match self {
+            Self::RayMarcher { view } => {
+                view.reconstruct_pipeline(render_state, &settings.ray_marcher_view)
+            }
+            Self::Compositor { view } => {
+                view.reconstruct_pipeline(render_state, &settings.compositor_view)
+            }
+            _ => {}
         }
     }
 
-    pub fn reconstruct_pipeline(&mut self, frame: &eframe::Frame, settings: &ViewportSettings) {
-        if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-            match self {
-                Self::RayMarcher { view } => {
-                    view.reconstruct_pipeline(wgpu_render_state, &settings.ray_marcher_view)
-                }
-                Self::Compositor { view } => {
-                    view.reconstruct_pipeline(wgpu_render_state, &settings.compositing_view)
-                }
-                _ => {}
-            }
-        }
-    }
-
-    pub fn recompile_shader(&mut self, frame: &eframe::Frame) {
-        if let Some(wgpu_render_state) = frame.wgpu_render_state() {
-            match self {
-                Self::RayMarcher { view } => view.recompile_shader(wgpu_render_state),
-                Self::Compositor { view } => view.recompile_shader(wgpu_render_state),
-                _ => {}
-            }
+    pub fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
+        match self {
+            Self::RayMarcher { view } => view.recompile_shader(render_state),
+            Self::Compositor { view } => view.recompile_shader(render_state),
+            _ => {}
         }
     }
 
@@ -593,7 +586,7 @@ impl Views {
                 view.update_preprocessor_directives(&compiler_settings.ray_marcher)
             }
             Self::Compositor { view } => {
-                view.update_preprocessor_directives(&compiler_settings.compositing)
+                view.update_preprocessor_directives(&compiler_settings.compositor)
             }
             _ => false,
         }
@@ -601,11 +594,11 @@ impl Views {
 
     pub fn recompile_if_preprocessor_directives_changed(
         &mut self,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         compiler_settings: &ViewportCompilerSettings,
     ) {
         if self.update_preprocessor_directives(compiler_settings) {
-            self.recompile_shader(frame);
+            self.recompile_shader(render_state);
         }
     }
 
@@ -691,22 +684,22 @@ impl Views {
 
     pub fn show(
         &mut self,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
         settings: &ViewportSettings,
     ) -> bool {
         match self {
             Self::RayMarcher { view } => view.show(
-                frame,
+                render_state,
                 ui,
                 &settings.ray_marcher_view,
                 &settings.compiler_settings.ray_marcher,
             ),
             Self::Compositor { view } => view.show(
-                frame,
+                render_state,
                 ui,
-                &settings.compositing_view,
-                &settings.compiler_settings.compositing,
+                &settings.compositor_view,
+                &settings.compiler_settings.compositor,
             ),
             _ => false,
         }

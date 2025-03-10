@@ -18,13 +18,15 @@ use damascus_core::{
     Settings,
 };
 
-use super::settings::{RayMarcherViewSettings, ViewportCompilerSettings, ViewportSettings};
+use super::settings::{self, ViewportCompilerSettings, ViewportSettings};
 
 use crate::icons::Icons;
 
+mod compositing_view;
 mod ray_marcher_view;
 mod resources;
 
+pub use compositing_view::CompositingView;
 pub use ray_marcher_view::RayMarcherView;
 use resources::{
     BindingResource, Buffer, BufferBindGroup, RenderResources, StorageTextureView,
@@ -126,50 +128,62 @@ pub trait View<
         let device = &wgpu_render_state.device;
 
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
-        let (uniform_bind_group_layout, uniform_bind_group) =
-            Self::create_uniform_binding(device, &uniform_buffers);
-
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
-        let (storage_bind_group_layout, storage_bind_group) =
-            Self::create_storage_binding(device, &storage_buffers);
-
         let storage_texture_views: Vec<StorageTextureView> =
-            Self::create_storage_texture_views(device);
-        let (storage_texture_bind_group_layout, storage_texture_bind_group) =
-            Self::create_storage_texture_binding(device, &storage_texture_views);
+            self.create_storage_texture_views(device);
 
-        let render_pipeline = self.create_render_pipeline(
+        let mut uniform_bind_group: Option<BufferBindGroup> = None;
+        if !uniform_buffers.is_empty() {
+            let (bind_group_layout, bind_group) =
+                Self::create_uniform_binding(device, &uniform_buffers);
+            uniform_bind_group = Some(BufferBindGroup {
+                bind_group: bind_group,
+                bind_group_layout: bind_group_layout,
+                buffers: uniform_buffers,
+            });
+        }
+
+        let mut storage_bind_group: Option<BufferBindGroup> = None;
+        if !storage_buffers.is_empty() {
+            let (bind_group_layout, bind_group) =
+                Self::create_storage_binding(device, &storage_buffers);
+            storage_bind_group = Some(BufferBindGroup {
+                bind_group: bind_group,
+                bind_group_layout: bind_group_layout,
+                buffers: storage_buffers,
+            });
+        }
+
+        let mut storage_texture_bind_group: Option<StorageTextureViewBindGroup> = None;
+        if !storage_texture_views.is_empty() {
+            let (bind_group_layout, bind_group) =
+                Self::create_storage_texture_binding(device, &storage_texture_views);
+
+            storage_texture_bind_group = Some(StorageTextureViewBindGroup {
+                bind_group: bind_group,
+                bind_group_layout: bind_group_layout,
+                storage_texture_views: storage_texture_views,
+            });
+        }
+
+        let mut render_resources = RenderResources {
+            render_pipeline: None,
+            uniform_bind_group: uniform_bind_group,
+            storage_bind_group: storage_bind_group,
+            storage_texture_bind_group: storage_texture_bind_group,
+        };
+
+        render_resources.render_pipeline = Some(self.create_render_pipeline(
             device,
             wgpu_render_state.target_format,
-            vec![
-                &uniform_bind_group_layout,
-                &storage_bind_group_layout,
-                &storage_texture_bind_group_layout,
-            ],
-        );
+            render_resources.bind_group_layouts(),
+        ));
 
         wgpu_render_state
             .renderer
             .write()
             .callback_resources
-            .insert(RenderResources {
-                render_pipeline: render_pipeline,
-                uniform_bind_group: Some(BufferBindGroup {
-                    bind_group: uniform_bind_group,
-                    bind_group_layout: uniform_bind_group_layout,
-                    buffers: uniform_buffers,
-                }),
-                storage_bind_group: Some(BufferBindGroup {
-                    bind_group: storage_bind_group,
-                    bind_group_layout: storage_bind_group_layout,
-                    buffers: storage_buffers,
-                }),
-                storage_texture_bind_group: Some(StorageTextureViewBindGroup {
-                    bind_group: storage_texture_bind_group,
-                    bind_group_layout: storage_texture_bind_group_layout,
-                    storage_texture_views: vec![],
-                }),
-            });
+            .insert(render_resources);
     }
 
     fn reconstruct_pipeline(&mut self, wgpu_render_state: &egui_wgpu::RenderState, settings: &V) {
@@ -204,11 +218,11 @@ pub trait View<
             let device = &wgpu_render_state.device;
 
             // Create the updated pipeline
-            render_resources.render_pipeline = self.create_render_pipeline(
+            render_resources.render_pipeline = Some(self.create_render_pipeline(
                 device,
                 wgpu_render_state.target_format,
                 render_resources.bind_group_layouts(),
-            );
+            ));
         }
     }
 
@@ -239,7 +253,7 @@ pub trait View<
         vec![]
     }
 
-    fn create_storage_texture_views(_device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
+    fn create_storage_texture_views(&self, _device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
         vec![]
     }
 
@@ -529,7 +543,7 @@ pub trait View<
 
 pub enum Views {
     RayMarcher { view: RayMarcherView },
-    Texture,
+    Compositor { view: CompositingView },
     Error { error: anyhow::Error },
 }
 
@@ -552,6 +566,9 @@ impl Views {
                 Self::RayMarcher { view } => {
                     view.reconstruct_pipeline(wgpu_render_state, &settings.ray_marcher_view)
                 }
+                Self::Compositor { view } => {
+                    view.reconstruct_pipeline(wgpu_render_state, &settings.compositing_view)
+                }
                 _ => {}
             }
         }
@@ -561,6 +578,7 @@ impl Views {
         if let Some(wgpu_render_state) = frame.wgpu_render_state() {
             match self {
                 Self::RayMarcher { view } => view.recompile_shader(wgpu_render_state),
+                Self::Compositor { view } => view.recompile_shader(wgpu_render_state),
                 _ => {}
             }
         }
@@ -573,6 +591,9 @@ impl Views {
         match self {
             Self::RayMarcher { view } => {
                 view.update_preprocessor_directives(&compiler_settings.ray_marcher)
+            }
+            Self::Compositor { view } => {
+                view.update_preprocessor_directives(&compiler_settings.compositing)
             }
             _ => false,
         }
@@ -591,6 +612,7 @@ impl Views {
     pub fn disable(&mut self) {
         match self {
             Self::RayMarcher { view } => view.disable(),
+            Self::Compositor { view } => view.disable(),
             _ => {}
         }
     }
@@ -598,6 +620,7 @@ impl Views {
     pub fn enable(&mut self) {
         match self {
             Self::RayMarcher { view } => view.enable(),
+            Self::Compositor { view } => view.enable(),
             _ => {}
         }
     }
@@ -605,6 +628,7 @@ impl Views {
     pub fn enabled(&mut self) -> bool {
         match self {
             Self::RayMarcher { view } => view.enabled(),
+            Self::Compositor { view } => view.enabled(),
             _ => !self.disabled(),
         }
     }
@@ -612,6 +636,7 @@ impl Views {
     pub fn disabled(&mut self) -> bool {
         match self {
             Self::RayMarcher { view } => view.disabled(),
+            Self::Compositor { view } => view.disabled(),
             _ => false,
         }
     }
@@ -619,6 +644,7 @@ impl Views {
     pub fn pause(&mut self) {
         match self {
             Self::RayMarcher { view } => view.pause(),
+            Self::Compositor { view } => view.pause(),
             _ => {}
         }
     }
@@ -626,6 +652,7 @@ impl Views {
     pub fn play(&mut self) {
         match self {
             Self::RayMarcher { view } => view.play(),
+            Self::Compositor { view } => view.play(),
             _ => {}
         }
     }
@@ -633,6 +660,7 @@ impl Views {
     pub fn toggle_play_pause(&mut self) {
         match self {
             Self::RayMarcher { view } => view.toggle_play_pause(),
+            Self::Compositor { view } => view.toggle_play_pause(),
             _ => {}
         }
     }
@@ -640,6 +668,7 @@ impl Views {
     pub fn paused(&self) -> bool {
         match self {
             Self::RayMarcher { view } => view.paused(),
+            Self::Compositor { view } => view.paused(),
             _ => false,
         }
     }
@@ -647,6 +676,7 @@ impl Views {
     pub fn reset(&mut self) {
         match self {
             Self::RayMarcher { view } => view.reset(),
+            Self::Compositor { view } => view.reset(),
             _ => {}
         }
     }
@@ -654,6 +684,7 @@ impl Views {
     pub fn enable_and_play(&mut self) {
         match self {
             Self::RayMarcher { view } => view.enable_and_play(),
+            Self::Compositor { view } => view.enable_and_play(),
             _ => {}
         }
     }
@@ -670,6 +701,12 @@ impl Views {
                 ui,
                 &settings.ray_marcher_view,
                 &settings.compiler_settings.ray_marcher,
+            ),
+            Self::Compositor { view } => view.show(
+                frame,
+                ui,
+                &settings.compositing_view,
+                &settings.compiler_settings.compositing,
             ),
             _ => false,
         }

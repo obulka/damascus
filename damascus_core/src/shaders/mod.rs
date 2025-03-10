@@ -10,6 +10,7 @@ use strum::{EnumCount, EnumString, IntoEnumIterator};
 
 use super::{renderers::Renderer, Settings};
 
+pub mod compositor;
 pub mod ray_marcher;
 
 #[derive(Debug, EnumString)]
@@ -26,7 +27,7 @@ pub enum Includes {
     ProceduralTexture,
     Random,
     Ray,
-    RenderParameters,
+    RayMarcherRenderParameters,
     SceneSDFs,
     VertexShader,
 }
@@ -34,7 +35,7 @@ pub enum Includes {
 impl Includes {
     fn source(&self) -> &str {
         match *self {
-            Self::AOVs => include_str!("./wgsl/renderer/aovs.wgsl"),
+            Self::AOVs => include_str!("./wgsl/renderers/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
@@ -46,9 +47,11 @@ impl Includes {
             Self::ProceduralTexture => include_str!("./wgsl/materials/procedural_texture.wgsl"),
             Self::Random => include_str!("./wgsl/utils/random.wgsl"),
             Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
-            Self::RenderParameters => include_str!("./wgsl/renderer/render_parameters.wgsl"),
+            Self::RayMarcherRenderParameters => {
+                include_str!("./wgsl/renderers/ray_marcher/ray_marcher_render_parameters.wgsl")
+            }
             Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
-            Self::VertexShader => include_str!("./wgsl/renderer/vertex_shader.wgsl"),
+            Self::VertexShader => include_str!("./wgsl/renderers/vertex_shader.wgsl"),
         }
     }
 }

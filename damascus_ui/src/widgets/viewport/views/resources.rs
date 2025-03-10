@@ -20,6 +20,19 @@ impl BindingResource for Buffer {
     }
 }
 
+pub struct TextureView {
+    pub texture_view: wgpu::TextureView,
+    pub visibility: wgpu::ShaderStages,
+    pub format: wgpu::TextureFormat,
+    pub view_dimension: wgpu::TextureViewDimension,
+}
+
+impl BindingResource for TextureView {
+    fn as_resource(&self) -> wgpu::BindingResource<'_> {
+        wgpu::BindingResource::TextureView(&self.texture_view)
+    }
+}
+
 pub struct StorageTextureView {
     pub texture_view: wgpu::TextureView,
     pub visibility: wgpu::ShaderStages,
@@ -55,7 +68,7 @@ pub struct StorageTextureViewBindGroup {
 }
 
 pub struct RenderResources {
-    pub render_pipeline: wgpu::RenderPipeline,
+    pub render_pipeline: Option<wgpu::RenderPipeline>,
     pub uniform_bind_group: Option<BufferBindGroup>,
     pub storage_bind_group: Option<BufferBindGroup>,
     pub storage_texture_bind_group: Option<StorageTextureViewBindGroup>,
@@ -82,16 +95,23 @@ impl RenderResources {
         &'render_pass self,
         render_pass: &mut wgpu::RenderPass<'render_pass>,
     ) {
-        render_pass.set_pipeline(&self.render_pipeline);
+        if let Some(render_pipeline) = &self.render_pipeline {
+            render_pass.set_pipeline(&render_pipeline);
+        } else {
+            return;
+        }
 
+        let mut bind_group: u32 = 0;
         if let Some(uniform_bind_group) = &self.uniform_bind_group {
-            render_pass.set_bind_group(0, &uniform_bind_group.bind_group, &[]);
+            render_pass.set_bind_group(bind_group, &uniform_bind_group.bind_group, &[]);
+            bind_group += 1
         }
         if let Some(storage_bind_group) = &self.storage_bind_group {
-            render_pass.set_bind_group(1, &storage_bind_group.bind_group, &[]);
+            render_pass.set_bind_group(bind_group, &storage_bind_group.bind_group, &[]);
+            bind_group += 1
         }
         if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
-            render_pass.set_bind_group(2, &storage_texture_bind_group.bind_group, &[]);
+            render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);
         }
 
         render_pass.draw(0..4, 0..1);

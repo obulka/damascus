@@ -22,7 +22,8 @@ use damascus_core::{
     lights::{Light, Lights, Std430GPULight},
     materials::{Material, ProceduralTexture, Std430GPUMaterial},
     renderers::ray_marcher::{
-        GPURayMarcher, RayMarcher, RenderState, Std430GPURayMarcher, Std430GPURenderState,
+        GPURayMarcher, RayMarcher, RayMarcherRenderState, Std430GPURayMarcher,
+        Std430GPURayMarcherRenderState,
     },
     scene::{Scene, Std430GPUSceneParameters},
     shaders::{
@@ -34,7 +35,8 @@ use damascus_core::{
 
 use super::{
     resources::{Buffer, StorageTextureView},
-    RayMarcherViewSettings, RenderResources, View,
+    settings::RayMarcherViewSettings,
+    RenderResources, View,
 };
 
 use crate::MAX_TEXTURE_DIMENSION;
@@ -42,7 +44,7 @@ use crate::MAX_TEXTURE_DIMENSION;
 struct RayMarcherViewCallback {
     render_parameters: Std430GPURayMarcher,
     scene_parameters: Std430GPUSceneParameters,
-    render_state: Std430GPURenderState,
+    render_state: Std430GPURayMarcherRenderState,
     render_camera: Std430GPUCamera,
     primitives: Vec<Std430GPUPrimitive>,
     lights: Vec<Std430GPULight>,
@@ -96,9 +98,10 @@ pub struct RayMarcherView {
     pub stats_text: String,
     disabled: bool,
     camera_controls_enabled: bool,
-    render_state: RenderState,
+    render_state: RayMarcherRenderState,
     recompile_hash: Key<OrderedFloatPolicy>,
     reconstruct_hash: Key<OrderedFloatPolicy>,
+    preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
 impl Default for RayMarcherView {
@@ -109,9 +112,10 @@ impl Default for RayMarcherView {
             stats_text: String::new(),
             disabled: true,
             camera_controls_enabled: true,
-            render_state: RenderState::default(),
+            render_state: RayMarcherRenderState::default(),
             recompile_hash: Key::<OrderedFloatPolicy>::Unit,
             reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
+            preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
     }
 }
@@ -155,13 +159,13 @@ impl
     }
 
     fn current_preprocessor_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {
-        &self.render_state.preprocessor_directives
+        &self.preprocessor_directives
     }
 
     fn current_preprocessor_directives_mut(
         &mut self,
     ) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
-        &mut self.render_state.preprocessor_directives
+        &mut self.preprocessor_directives
     }
 
     fn get_shader(&self) -> String {
@@ -290,7 +294,7 @@ impl
         ]
     }
 
-    fn create_storage_texture_views(device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
+    fn create_storage_texture_views(&self, device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width: MAX_TEXTURE_DIMENSION,
@@ -425,6 +429,7 @@ impl
                     .renderer()
                     .scene
                     .scene_parameters(settings.max_primitives, settings.max_lights),
+                render_state: self.render_state.as_std430(),
                 render_camera: self.renderer().scene.render_camera.as_std430(),
                 primitives: self
                     .renderer
@@ -436,7 +441,6 @@ impl
                     .renderer
                     .scene
                     .emissive_primitive_indices(settings.max_primitives),
-                render_state: self.render_state.as_std430(),
             },
         ));
 

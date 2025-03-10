@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
 use std::time::SystemTime;
 
 use crevice::std430::AsStd430;
@@ -12,11 +11,7 @@ use strum::{Display, EnumIter, EnumString};
 
 use super::Renderer;
 
-use crate::{
-    scene::Scene,
-    shaders::ray_marcher::{all_directives_for_primitive, RayMarcherPreprocessorDirectives},
-    DualDevice,
-};
+use crate::{scene::Scene, DualDevice};
 
 #[derive(
     Debug,
@@ -44,7 +39,7 @@ pub enum AOVs {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPURenderState {
+pub struct GPURayMarcherRenderState {
     paths_rendered_per_pixel: f32,
     resolution: Vec2,
     flags: u32,
@@ -52,17 +47,16 @@ pub struct GPURenderState {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RenderState {
+pub struct RayMarcherRenderState {
     pub frame_counter: u32,
     pub previous_frame_time: SystemTime,
     pub fps: f32,
     pub paths_rendered_per_pixel: u32,
     pub resolution: UVec2,
     pub paused: bool,
-    pub preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
-impl Default for RenderState {
+impl Default for RayMarcherRenderState {
     fn default() -> Self {
         Self {
             frame_counter: 0,
@@ -71,16 +65,17 @@ impl Default for RenderState {
             paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
             paused: true,
-            preprocessor_directives: all_directives_for_primitive(),
         }
     }
 }
 
-impl RenderState {}
+impl RayMarcherRenderState {}
 
-impl DualDevice<GPURenderState, Std430GPURenderState> for RenderState {
-    fn to_gpu(&self) -> GPURenderState {
-        GPURenderState {
+impl DualDevice<GPURayMarcherRenderState, Std430GPURayMarcherRenderState>
+    for RayMarcherRenderState
+{
+    fn to_gpu(&self) -> GPURayMarcherRenderState {
+        GPURayMarcherRenderState {
             paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
             resolution: self.resolution.as_vec2(),
             flags: self.paused as u32,

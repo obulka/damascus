@@ -46,13 +46,13 @@ struct RenderState {
 
 
 // Global render settings
-@group(0) @binding(0)
+@group(UNIFORM_BIND_GROUP) @binding(0)
 var<uniform> _render_parameters: RenderParameters;
 
 
-@group(0) @binding(1)
+@group(UNIFORM_BIND_GROUP) @binding(1)
 var<uniform> _scene_parameters: SceneParameters;
 
 
-@group(0) @binding(2)
+@group(UNIFORM_BIND_GROUP) @binding(2)
 var<uniform> _render_state: RenderState;

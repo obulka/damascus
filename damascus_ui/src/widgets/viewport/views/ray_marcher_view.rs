@@ -33,7 +33,7 @@ use damascus_core::{
 };
 
 use super::{
-    binding_resources::{Buffer, StorageTextureView},
+    resources::{Buffer, StorageTextureView},
     RayMarcherViewSettings, RenderResources, View,
 };
 

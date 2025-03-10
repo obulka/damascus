@@ -1,6 +1,8 @@
+const UNIFORM_BIND_GROUP: u32 = 0u;
+const STORAGE_BIND_GROUP: u32 = 1u;
+const STORAGE_TEXTURE_BIND_GROUP: u32 = 2u;
 
-
-@group(0) @binding(0)
+@group(UNIFORM_BIND_GROUP) @binding(0)
 var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 

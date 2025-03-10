@@ -8,6 +8,10 @@
 // Ray Marching shader
 //
 
+const UNIFORM_BIND_GROUP: u32 = 0u;
+const STORAGE_BIND_GROUP: u32 = 1u;
+const STORAGE_TEXTURE_BIND_GROUP: u32 = 2u;
+
 #include Ray
 #include Math
 #include Random
@@ -262,7 +266,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
 }
 
 
-@group(2) @binding(0)
+@group(STORAGE_TEXTURE_BIND_GROUP) @binding(0)
 var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 

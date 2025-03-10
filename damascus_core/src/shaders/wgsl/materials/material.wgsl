@@ -47,7 +47,7 @@ struct NestedDielectrics {
 
 
 // TODO this could be uniform but can't get the alignment right
-@group(1) @binding(2)
+@group(STORAGE_BIND_GROUP) @binding(2)
 var<storage, read> _atmosphere: Material;
 
 

@@ -25,7 +25,7 @@ struct Lights {
 }
 
 
-@group(1) @binding(1)
+@group(STORAGE_BIND_GROUP) @binding(1)
 var<storage, read> _lights: Lights;
 
 

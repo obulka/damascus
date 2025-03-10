@@ -34,11 +34,11 @@ struct Primitives {
 }
 
 
-@group(1) @binding(0)
+@group(STORAGE_BIND_GROUP) @binding(0)
 var<storage, read> _primitives: Primitives;
 
 
-@group(1) @binding(3)
+@group(STORAGE_BIND_GROUP) @binding(3)
 var<storage, read> _emissive_indices: array<u32>;
 
 

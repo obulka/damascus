@@ -22,52 +22,14 @@ use super::settings::{RayMarcherViewSettings, ViewportCompilerSettings, Viewport
 
 use crate::icons::Icons;
 
-mod binding_resources;
 mod ray_marcher_view;
+mod resources;
 
-use binding_resources::{BindingResource, Buffer, StorageTextureView};
 pub use ray_marcher_view::RayMarcherView;
-
-struct RenderResources {
-    render_pipeline: wgpu::RenderPipeline,
-    uniform_bind_group: wgpu::BindGroup,
-    uniform_bind_group_layout: wgpu::BindGroupLayout,
-    uniform_buffers: Vec<Buffer>,
-    storage_bind_group: wgpu::BindGroup,
-    storage_bind_group_layout: wgpu::BindGroupLayout,
-    storage_buffers: Vec<Buffer>,
-    storage_texture_bind_group: wgpu::BindGroup,
-    storage_texture_bind_group_layout: wgpu::BindGroupLayout,
-}
-
-impl RenderResources {
-    fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        uniform_buffer_data: Vec<&[u8]>,
-        storage_buffer_data: Vec<&[u8]>,
-    ) {
-        // Update our uniform buffer with the angle from the UI
-        for (buffer, data) in self.uniform_buffers.iter().zip(uniform_buffer_data) {
-            queue.write_buffer(&buffer.buffer, 0, data);
-        }
-
-        for (buffer, data) in self.storage_buffers.iter().zip(storage_buffer_data) {
-            queue.write_buffer(&buffer.buffer, 0, data);
-        }
-    }
-
-    fn paint<'render_pass>(&'render_pass self, render_pass: &mut wgpu::RenderPass<'render_pass>) {
-        render_pass.set_pipeline(&self.render_pipeline);
-
-        render_pass.set_bind_group(0, &self.uniform_bind_group, &[]);
-        render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
-        render_pass.set_bind_group(2, &self.storage_texture_bind_group, &[]);
-
-        render_pass.draw(0..4, 0..1);
-    }
-}
+use resources::{
+    BindingResource, Buffer, BufferBindGroup, RenderResources, StorageTextureView,
+    StorageTextureViewBindGroup,
+};
 
 pub trait View<
     R: Renderer<G, S>,
@@ -124,27 +86,21 @@ pub trait View<
         &self,
         device: &Arc<wgpu::Device>,
         texture_format: wgpu::TextureFormat,
-        uniform_bind_group_layout: &wgpu::BindGroupLayout,
-        storage_bind_group_layout: &wgpu::BindGroupLayout,
-        storage_texture_bind_group_layout: &wgpu::BindGroupLayout,
+        bind_group_layouts: Vec<&wgpu::BindGroupLayout>,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("ray marcher pipeline layout"),
-            bind_group_layouts: &[
-                uniform_bind_group_layout,
-                storage_bind_group_layout,
-                storage_texture_bind_group_layout,
-            ],
+            label: Some("pipeline layout"),
+            bind_group_layouts: &bind_group_layouts,
             push_constant_ranges: &[],
         });
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("ray marcher source shader"),
+            label: Some("source shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.get_shader())).into(),
         });
 
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("ray marcher render pipeline"),
+            label: Some("render pipeline"),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
@@ -185,9 +141,11 @@ pub trait View<
         let render_pipeline = self.create_render_pipeline(
             device,
             wgpu_render_state.target_format,
-            &uniform_bind_group_layout,
-            &storage_bind_group_layout,
-            &storage_texture_bind_group_layout,
+            vec![
+                &uniform_bind_group_layout,
+                &storage_bind_group_layout,
+                &storage_texture_bind_group_layout,
+            ],
         );
 
         wgpu_render_state
@@ -195,15 +153,22 @@ pub trait View<
             .write()
             .callback_resources
             .insert(RenderResources {
-                render_pipeline,
-                uniform_bind_group,
-                uniform_bind_group_layout,
-                uniform_buffers,
-                storage_bind_group,
-                storage_bind_group_layout,
-                storage_buffers,
-                storage_texture_bind_group,
-                storage_texture_bind_group_layout,
+                render_pipeline: render_pipeline,
+                uniform_bind_group: Some(BufferBindGroup {
+                    bind_group: uniform_bind_group,
+                    bind_group_layout: uniform_bind_group_layout,
+                    buffers: uniform_buffers,
+                }),
+                storage_bind_group: Some(BufferBindGroup {
+                    bind_group: storage_bind_group,
+                    bind_group_layout: storage_bind_group_layout,
+                    buffers: storage_buffers,
+                }),
+                storage_texture_bind_group: Some(StorageTextureViewBindGroup {
+                    bind_group: storage_texture_bind_group,
+                    bind_group_layout: storage_texture_bind_group_layout,
+                    storage_texture_views: vec![],
+                }),
             });
     }
 
@@ -242,9 +207,7 @@ pub trait View<
             render_resources.render_pipeline = self.create_render_pipeline(
                 device,
                 wgpu_render_state.target_format,
-                &render_resources.uniform_bind_group_layout,
-                &render_resources.storage_bind_group_layout,
-                &render_resources.storage_texture_bind_group_layout,
+                render_resources.bind_group_layouts(),
             );
         }
     }

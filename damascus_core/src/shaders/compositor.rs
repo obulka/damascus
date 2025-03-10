@@ -30,7 +30,7 @@ pub enum CompositorPreprocessorDirectives {}
 
 impl PreprocessorDirectives for CompositorPreprocessorDirectives {}
 
-pub fn compositing_shader(
+pub fn compositor_shader(
     preprocessor_directives: &HashSet<CompositorPreprocessorDirectives>,
 ) -> String {
     process_shader_source(

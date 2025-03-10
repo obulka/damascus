@@ -12,24 +12,24 @@ use damascus_core::{
 #[serde(default)]
 pub struct ViewportCompilerSettings {
     pub ray_marcher: RayMarcherCompilerSettings,
-    pub compositing: CompositorCompilerSettings,
+    pub compositor: CompositorCompilerSettings,
 }
 
 impl Settings for ViewportCompilerSettings {}
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct CompositingViewSettings {
+pub struct CompositorViewSettings {
     pub zoom: f32,
 }
 
-impl Default for CompositingViewSettings {
+impl Default for CompositorViewSettings {
     fn default() -> Self {
         Self { zoom: 1. }
     }
 }
 
-impl Settings for CompositingViewSettings {}
+impl Settings for CompositorViewSettings {}
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -53,7 +53,7 @@ impl Settings for RayMarcherViewSettings {}
 #[serde(default)]
 pub struct ViewportSettings {
     pub compiler_settings: ViewportCompilerSettings,
-    pub compositing_view: CompositingViewSettings,
+    pub compositor_view: CompositorViewSettings,
     pub ray_marcher_view: RayMarcherViewSettings,
 }
 

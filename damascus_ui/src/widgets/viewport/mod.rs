@@ -3,13 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use eframe::egui;
+use eframe::{egui, egui_wgpu};
 
 mod settings;
 pub mod views;
 
 pub use settings::ViewportSettings;
 pub use views::Views;
+
+use views::{CompositorView, RayMarcherView, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -25,19 +27,55 @@ impl Viewport {
         creation_context: &'a eframe::CreationContext<'a>,
         settings: ViewportSettings,
     ) -> Self {
+        if let Some(wgpu_render_state) = &creation_context.wgpu_render_state {
+            return Self {
+                settings: settings,
+                view: Views::new(&wgpu_render_state, &settings),
+            };
+        }
+
         Self {
             settings: settings,
-            view: Views::new(creation_context, &settings),
+            view: Views::Error {
+                error: anyhow::Error::msg("Failed to create new viewport"),
+            },
         }
     }
 
-    pub fn recompile_if_preprocessor_directives_changed(&mut self, frame: &mut eframe::Frame) {
-        self.view
-            .recompile_if_preprocessor_directives_changed(frame, &self.settings.compiler_settings)
+    pub fn switch_to_ray_marcher_view(&mut self, render_state: &egui_wgpu::RenderState) {
+        if matches!(self.view, Views::RayMarcher { .. }) {
+            return;
+        }
+
+        let mut view = RayMarcherView::new(render_state, &self.settings.ray_marcher_view);
+        view.enable_and_play();
+
+        self.view = Views::RayMarcher { view };
     }
 
-    pub fn reconstruct_pipeline(&mut self, frame: &eframe::Frame) {
-        self.view.reconstruct_pipeline(frame, &self.settings);
+    pub fn switch_to_compositor_view(&mut self, render_state: &egui_wgpu::RenderState) {
+        if matches!(self.view, Views::Compositor { .. }) {
+            return;
+        }
+
+        let mut view = CompositorView::new(render_state, &self.settings.compositor_view);
+        view.enable();
+
+        self.view = Views::Compositor { view };
+    }
+
+    pub fn recompile_if_preprocessor_directives_changed(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        self.view.recompile_if_preprocessor_directives_changed(
+            render_state,
+            &self.settings.compiler_settings,
+        )
+    }
+
+    pub fn reconstruct_pipeline(&mut self, render_state: &egui_wgpu::RenderState) {
+        self.view.reconstruct_pipeline(render_state, &self.settings);
     }
 
     fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {
@@ -47,7 +85,7 @@ impl Viewport {
         style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
     }
 
-    pub fn show(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         let mut reconstruct_pipeline = false;
         egui::Window::new("viewer")
@@ -68,11 +106,11 @@ impl Viewport {
             .constrain(true)
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
-                reconstruct_pipeline = self.view.show(frame, ui, &self.settings);
+                reconstruct_pipeline = self.view.show(render_state, ui, &self.settings);
             });
 
         if reconstruct_pipeline {
-            self.reconstruct_pipeline(frame);
+            self.reconstruct_pipeline(render_state);
         }
     }
 }

@@ -35,19 +35,6 @@ fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
 }
 
 
-/**
- * Convert location of a pixel in an image from uv.
- *
- * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
- * @arg resolution: The image width, and height.
- *
- * @returns: The pixel indices.
- */
-fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return (pixel_coordinates + 1.) * resolution / 2.;
-}
-
-
 fn world_to_camera_space(world_position: vec3f) -> vec3f {
     return (
         _render_camera.inverse_world_matrix

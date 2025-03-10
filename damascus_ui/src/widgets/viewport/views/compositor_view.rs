@@ -20,8 +20,8 @@ use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
     renderers::compositor::{
-        CompositingRenderState, Compositor, GPUCompositor, Std430GPUCompositingRenderState,
-        Std430GPUCompositor,
+        Compositor, CompositorRenderState, GPUCompositor, Std430GPUCompositor,
+        Std430GPUCompositorRenderState,
     },
     shaders::{
         self,
@@ -32,18 +32,18 @@ use damascus_core::{
 
 use super::{
     resources::{Buffer, TextureView},
-    settings::CompositingViewSettings,
+    settings::CompositorViewSettings,
     RenderResources, View,
 };
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-struct CompositingViewCallback {
+struct CompositorViewCallback {
     render_parameters: Std430GPUCompositor,
-    render_state: Std430GPUCompositingRenderState,
+    render_state: Std430GPUCompositorRenderState,
 }
 
-impl egui_wgpu::CallbackTrait for CompositingViewCallback {
+impl egui_wgpu::CallbackTrait for CompositorViewCallback {
     fn prepare(
         &self,
         device: &wgpu::Device,
@@ -76,19 +76,19 @@ impl egui_wgpu::CallbackTrait for CompositingViewCallback {
     }
 }
 
-pub struct CompositingView {
+pub struct CompositorView {
     pub renderer: Compositor,
     pub frames_to_update_fps: u32,
     pub stats_text: String,
     disabled: bool,
     camera_controls_enabled: bool,
-    render_state: CompositingRenderState,
+    render_state: CompositorRenderState,
     recompile_hash: Key<OrderedFloatPolicy>,
     reconstruct_hash: Key<OrderedFloatPolicy>,
     preprocessor_directives: HashSet<CompositorPreprocessorDirectives>,
 }
 
-impl Default for CompositingView {
+impl Default for CompositorView {
     fn default() -> Self {
         Self {
             renderer: Compositor::default(),
@@ -96,7 +96,7 @@ impl Default for CompositingView {
             stats_text: String::new(),
             disabled: true,
             camera_controls_enabled: true,
-            render_state: CompositingRenderState::default(),
+            render_state: CompositorRenderState::default(),
             recompile_hash: Key::<OrderedFloatPolicy>::Unit,
             reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
             preprocessor_directives: HashSet::<CompositorPreprocessorDirectives>::new(),
@@ -111,8 +111,8 @@ impl
         Std430GPUCompositor,
         CompositorCompilerSettings,
         CompositorPreprocessorDirectives,
-        CompositingViewSettings,
-    > for CompositingView
+        CompositorViewSettings,
+    > for CompositorView
 {
     fn renderer(&self) -> &Compositor {
         &self.renderer
@@ -132,7 +132,7 @@ impl
         false
     }
 
-    fn set_reconstruct_hash(&mut self, settings: &CompositingViewSettings) -> bool {
+    fn set_reconstruct_hash(&mut self, settings: &CompositorViewSettings) -> bool {
         if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings) {
             if reconstruct_hash != self.reconstruct_hash {
                 self.reconstruct_hash = reconstruct_hash;
@@ -153,13 +153,13 @@ impl
     }
 
     fn get_shader(&self) -> String {
-        shaders::compositor::compositing_shader(self.current_preprocessor_directives())
+        shaders::compositor::compositor_shader(self.current_preprocessor_directives())
     }
 
     fn create_uniform_buffers(
         &self,
         device: &Arc<wgpu::Device>,
-        settings: &CompositingViewSettings,
+        settings: &CompositorViewSettings,
     ) -> Vec<Buffer> {
         vec![
             Buffer {
@@ -210,8 +210,8 @@ impl
 
     fn reset(&mut self) {}
 
-    fn show_controls(&mut self, frame: &mut eframe::Frame, ui: &mut egui::Ui) -> bool {
-        self.show_restart_pause_play_buttons(frame, ui);
+    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+        self.show_restart_pause_play_buttons(render_state, ui);
         ui.add(egui::Label::new(&self.stats_text).truncate(true));
         false
     }
@@ -219,9 +219,9 @@ impl
     fn custom_painting(
         &mut self,
         ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
+        render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
-        settings: &CompositingViewSettings,
+        settings: &CompositorViewSettings,
         compiler_settings: &CompositorCompilerSettings,
     ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
@@ -251,8 +251,8 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        let _data_changed: bool = self.reconstruct_if_hash_changed(frame, settings)
-            || self.recompile_if_hash_changed(frame, compiler_settings);
+        let _data_changed: bool = self.reconstruct_if_hash_changed(render_state, settings)
+            || self.recompile_if_hash_changed(render_state, compiler_settings);
 
         if self.paused() {
             self.render_state.previous_frame_time = SystemTime::now();
@@ -276,7 +276,7 @@ impl
 
         let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            CompositingViewCallback {
+            CompositorViewCallback {
                 render_parameters: self.renderer().as_std430(),
                 render_state: self.render_state.as_std430(),
             },
@@ -286,7 +286,7 @@ impl
     }
 }
 
-impl CompositingView {
+impl CompositorView {
     pub fn disable_camera_controls(&mut self) {
         self.camera_controls_enabled = false;
     }
@@ -311,7 +311,7 @@ impl CompositingView {
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba32Float,
             usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("compositing texture"),
+            label: Some("compositor texture"),
             view_formats: &[],
         };
 

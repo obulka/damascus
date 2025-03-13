@@ -321,9 +321,11 @@ impl eframe::App for Damascus {
                             self.viewport.switch_to_compositor_view(render_state);
 
                             match &mut self.viewport.view {
-                                Views::Compositor { view } => {
-                                    view.set_texture(value.value().clone())
-                                }
+                                Views::Compositor { view } => view.set_texture(
+                                    value.value().clone(),
+                                    render_state,
+                                    &self.viewport.settings.compositor_view,
+                                ),
                                 Views::Error { error } => Self::display_error(ctx, error),
                                 _ => {}
                             }

@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use eframe::egui_wgpu::wgpu;
-use image::RgbaImage;
+use image::Rgba32FImage;
 
 pub trait BindingResource {
     fn as_resource(&self) -> wgpu::BindingResource<'_>;
@@ -24,7 +24,7 @@ impl BindingResource for Buffer {
 pub struct TextureView {
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
-    pub texture_data: RgbaImage,
+    pub texture_data: Rgba32FImage,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
     pub size: wgpu::Extent3d,
@@ -80,7 +80,7 @@ impl TextureViewBindGroup {
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
                 },
-                texture_view.texture_data.as_raw(),
+                bytemuck::cast_slice(texture_view.texture_data.as_raw().as_slice()),
                 wgpu::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(16 * texture_view.texture_data.width()),

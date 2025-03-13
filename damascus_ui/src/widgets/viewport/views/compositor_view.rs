@@ -16,7 +16,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
-use image::{ImageReader, RgbaImage};
+use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
@@ -186,7 +186,7 @@ impl
     fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
         if let Ok(image) = ImageReader::open(&self.renderer().texture.filepath) {
             if let Ok(decoded_image) = image.decode() {
-                let texture_data: RgbaImage = decoded_image.to_rgba8();
+                let texture_data: Rgba32FImage = decoded_image.to_rgba32f();
                 let (width, height): (u32, u32) = texture_data.dimensions();
                 let size = wgpu::Extent3d {
                     width: width,
@@ -333,8 +333,14 @@ impl CompositorView {
         self.camera_controls_enabled = true;
     }
 
-    pub fn set_texture(&mut self, texture: Texture) {
+    pub fn set_texture(
+        &mut self,
+        texture: Texture,
+        render_state: &egui_wgpu::RenderState,
+        settings: &CompositorViewSettings,
+    ) {
         self.renderer_mut().texture = texture;
+        self.reconstruct_pipeline(render_state, settings);
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {

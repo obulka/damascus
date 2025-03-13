@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{borrow::Cow, collections::HashSet, sync::Arc};
+use std::{borrow::Cow, collections::HashSet};
 
 use crevice::std430::AsStd430;
 use eframe::{
@@ -30,7 +30,7 @@ pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
 use resources::{
     BindingResource, Buffer, BufferBindGroup, RenderResources, StorageTextureView,
-    StorageTextureViewBindGroup,
+    StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
 };
 
 pub trait View<
@@ -51,6 +51,10 @@ pub trait View<
     fn set_recompile_hash(&mut self) -> bool;
 
     fn set_reconstruct_hash(&mut self, settings: &V) -> bool;
+
+    fn set_renderer(&mut self, renderer: R) {
+        *self.renderer_mut() = renderer;
+    }
 
     fn new(render_state: &egui_wgpu::RenderState, settings: &V) -> Self {
         let mut pipeline = Self::default();
@@ -82,7 +86,7 @@ pub trait View<
 
     fn create_render_pipeline(
         &self,
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         texture_format: wgpu::TextureFormat,
         bind_group_layouts: Vec<&wgpu::BindGroupLayout>,
     ) -> wgpu::RenderPipeline {
@@ -102,13 +106,15 @@ pub trait View<
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: "vs_main",
+                entry_point: Some("vs_main"),
                 buffers: &[],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
-                entry_point: "fs_main",
+                entry_point: Some("fs_main"),
                 targets: &[Some(texture_format.into())],
+                compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleStrip,
@@ -117,6 +123,7 @@ pub trait View<
             depth_stencil: None,
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
+            cache: None,
         })
     }
 
@@ -125,6 +132,7 @@ pub trait View<
 
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
+        let texture_views: Vec<TextureView> = self.create_texture_views(device);
         let storage_texture_views: Vec<StorageTextureView> =
             self.create_storage_texture_views(device);
 
@@ -150,6 +158,18 @@ pub trait View<
             });
         }
 
+        let mut texture_bind_group: Option<TextureViewBindGroup> = None;
+        if !texture_views.is_empty() {
+            let (bind_group_layout, bind_group) =
+                Self::create_texture_binding(device, &texture_views);
+
+            texture_bind_group = Some(TextureViewBindGroup {
+                bind_group: bind_group,
+                bind_group_layout: bind_group_layout,
+                texture_views: texture_views,
+            });
+        }
+
         let mut storage_texture_bind_group: Option<StorageTextureViewBindGroup> = None;
         if !storage_texture_views.is_empty() {
             let (bind_group_layout, bind_group) =
@@ -166,6 +186,7 @@ pub trait View<
             render_pipeline: None,
             uniform_bind_group: uniform_bind_group,
             storage_bind_group: storage_bind_group,
+            texture_bind_group: texture_bind_group,
             storage_texture_bind_group: storage_texture_bind_group,
         };
 
@@ -237,15 +258,19 @@ pub trait View<
         false
     }
 
-    fn create_uniform_buffers(&self, _device: &Arc<wgpu::Device>, _settings: &V) -> Vec<Buffer> {
+    fn create_uniform_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Buffer> {
         vec![]
     }
 
-    fn create_storage_buffers(&self, _device: &Arc<wgpu::Device>, _settings: &V) -> Vec<Buffer> {
+    fn create_storage_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Buffer> {
         vec![]
     }
 
-    fn create_storage_texture_views(&self, _device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        vec![]
+    }
+
+    fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<StorageTextureView> {
         vec![]
     }
 
@@ -281,6 +306,22 @@ pub trait View<
         }
     }
 
+    fn texture_bind_group_layout_entry(
+        binding: u32,
+        texture_view: &TextureView,
+    ) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: texture_view.visibility,
+            ty: wgpu::BindingType::Texture {
+                sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                view_dimension: texture_view.view_dimension,
+                multisampled: false,
+            },
+            count: None,
+        }
+    }
+
     fn storage_texture_bind_group_layout_entry(
         binding: u32,
         storage_texture_view: &StorageTextureView,
@@ -298,7 +339,7 @@ pub trait View<
     }
 
     fn create_uniform_binding(
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         buffers: &Vec<Buffer>,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
@@ -333,7 +374,7 @@ pub trait View<
     }
 
     fn create_storage_binding(
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         buffers: &Vec<Buffer>,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
@@ -366,8 +407,44 @@ pub trait View<
         (storage_bind_group_layout, storage_bind_group)
     }
 
+    fn create_texture_binding(
+        device: &wgpu::Device,
+        texture_views: &Vec<TextureView>,
+    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = texture_views
+            .iter()
+            .enumerate()
+            .map(|(binding, texture_view)| {
+                Self::texture_bind_group_layout_entry(binding as u32, &texture_view)
+            })
+            .collect();
+
+        let texture_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("texture bind group layout"),
+                entries: &bind_group_layout_entries,
+            });
+
+        let bind_group_entries: Vec<wgpu::BindGroupEntry<'_>> = texture_views
+            .iter()
+            .enumerate()
+            .map(|(binding, texture_view)| wgpu::BindGroupEntry {
+                binding: binding as u32,
+                resource: texture_view.as_resource(),
+            })
+            .collect();
+
+        let texture_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("texture bind group"),
+            layout: &texture_bind_group_layout,
+            entries: &bind_group_entries,
+        });
+
+        (texture_bind_group_layout, texture_bind_group)
+    }
+
     fn create_storage_texture_binding(
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         storage_texture_views: &Vec<StorageTextureView>,
     ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = storage_texture_views

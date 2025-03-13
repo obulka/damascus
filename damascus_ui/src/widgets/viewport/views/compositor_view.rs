@@ -7,7 +7,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, sync::Arc, time::SystemTime};
+use std::{collections::HashSet, time::SystemTime};
 
 use eframe::{
     egui,
@@ -16,6 +16,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
+use image::{ImageReader, RgbaImage};
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::{
@@ -27,6 +28,7 @@ use damascus_core::{
         self,
         compositor::{CompositorCompilerSettings, CompositorPreprocessorDirectives},
     },
+    textures::Texture,
     DualDevice,
 };
 
@@ -65,11 +67,11 @@ impl egui_wgpu::CallbackTrait for CompositorViewCallback {
         Vec::new()
     }
 
-    fn paint<'a>(
+    fn paint(
         &self,
         _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
-        resources: &'a egui_wgpu::CallbackResources,
+        render_pass: &mut wgpu::RenderPass<'static>,
+        resources: &egui_wgpu::CallbackResources,
     ) {
         let resources: &RenderResources = resources.get().unwrap();
         resources.paint(render_pass);
@@ -158,7 +160,7 @@ impl
 
     fn create_uniform_buffers(
         &self,
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         settings: &CompositorViewSettings,
     ) -> Vec<Buffer> {
         vec![
@@ -179,6 +181,42 @@ impl
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
         ]
+    }
+
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        if let Ok(image) = ImageReader::open(&self.renderer().texture.filepath) {
+            if let Ok(decoded_image) = image.decode() {
+                let texture_data: RgbaImage = decoded_image.to_rgba8();
+                let (width, height): (u32, u32) = texture_data.dimensions();
+                let size = wgpu::Extent3d {
+                    width: width,
+                    height: height,
+                    depth_or_array_layers: self.renderer().texture.layers,
+                };
+                let texture_descriptor = wgpu::TextureDescriptor {
+                    size: size,
+                    mip_level_count: 1,
+                    sample_count: 1,
+                    dimension: wgpu::TextureDimension::D2,
+                    format: wgpu::TextureFormat::Rgba32Float,
+                    usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+                    label: Some("compositor texture"),
+                    view_formats: &[],
+                };
+                let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
+                let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
+                return vec![TextureView {
+                    texture: texture,
+                    texture_view: texture_view,
+                    texture_data: texture_data,
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    size: size,
+                }];
+            }
+        }
+
+        vec![]
     }
 
     fn disable(&mut self) {
@@ -212,7 +250,7 @@ impl
 
     fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         self.show_restart_pause_play_buttons(render_state, ui);
-        ui.add(egui::Label::new(&self.stats_text).truncate(true));
+        ui.add(egui::Label::new(&self.stats_text).truncate());
         false
     }
 
@@ -241,7 +279,7 @@ impl
             return None;
         }
 
-        ui.ctx().request_repaint();
+        // ui.ctx().request_repaint();
 
         if ui.ctx().memory(|memory| memory.focused().is_none())
             && ui.input(|input| input.key_pressed(egui::Key::Space))
@@ -295,34 +333,8 @@ impl CompositorView {
         self.camera_controls_enabled = true;
     }
 
-    pub fn set_renderer(&mut self, renderer: Compositor) {
-        *self.renderer_mut() = renderer;
-    }
-
-    fn create_texture_views(device: &Arc<wgpu::Device>) -> Vec<TextureView> {
-        let texture_descriptor = wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width: MAX_TEXTURE_DIMENSION,
-                height: MAX_TEXTURE_DIMENSION,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("compositor texture"),
-            view_formats: &[],
-        };
-
-        vec![TextureView {
-            texture_view: device
-                .create_texture(&texture_descriptor)
-                .create_view(&Default::default()),
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            format: texture_descriptor.format,
-            view_dimension: wgpu::TextureViewDimension::D2,
-        }]
+    pub fn set_texture(&mut self, texture: Texture) {
+        self.renderer_mut().texture = texture;
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {

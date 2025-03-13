@@ -17,25 +17,30 @@ fn main() {
     let options = eframe::NativeOptions {
         renderer: eframe::Renderer::Wgpu,
         wgpu_options: egui_wgpu::WgpuConfiguration {
-            device_descriptor: Arc::new(|adapter| {
-                let base_limits = if adapter.get_info().backend == wgpu::Backend::Gl {
-                    wgpu::Limits::downlevel_webgl2_defaults()
-                } else {
-                    wgpu::Limits::default()
-                };
+            wgpu_setup: egui_wgpu::WgpuSetup::CreateNew(egui_wgpu::WgpuSetupCreateNew {
+                device_descriptor: Arc::new(|adapter| {
+                    let base_limits = if adapter.get_info().backend == wgpu::Backend::Gl {
+                        wgpu::Limits::downlevel_webgl2_defaults()
+                    } else {
+                        wgpu::Limits::default()
+                    };
 
-                wgpu::DeviceDescriptor {
-                    label: Some("egui wgpu device"),
-                    required_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
-                    required_limits: wgpu::Limits {
-                        // When using a depth buffer, we have to be able to create a texture
-                        // large enough for the entire surface, and we want to support 4k+ displays.
-                        max_texture_dimension_2d: MAX_TEXTURE_DIMENSION,
-                        max_buffer_size: MAX_BUFFER_SIZE as u64,
-                        max_storage_buffer_binding_size: MAX_BUFFER_SIZE as u32,
-                        ..base_limits
-                    },
-                }
+                    wgpu::DeviceDescriptor {
+                        label: Some("egui wgpu device"),
+                        required_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+                        required_limits: wgpu::Limits {
+                            // When using a depth buffer, we have to be able to create a texture
+                            // large enough for the entire surface, and we want to support 4k+ displays.
+                            max_texture_dimension_2d: MAX_TEXTURE_DIMENSION,
+                            max_buffer_size: MAX_BUFFER_SIZE as u64,
+                            max_storage_buffer_binding_size: MAX_BUFFER_SIZE as u32,
+                            ..base_limits
+                        },
+                        memory_hints: wgpu::MemoryHints::Performance,
+                    }
+                }),
+                power_preference: wgpu::PowerPreference::HighPerformance,
+                ..Default::default()
             }),
             ..Default::default()
         },
@@ -48,7 +53,7 @@ fn main() {
         Box::new(|cc| {
             cc.egui_ctx.set_visuals(Visuals::dark());
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            Box::new(damascus_ui::Damascus::new(cc))
+            Ok(Box::new(damascus_ui::Damascus::new(cc)))
         }),
     );
 }

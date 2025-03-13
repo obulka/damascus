@@ -10,7 +10,7 @@ use glam::{UVec2, Vec2};
 
 use super::Renderer;
 
-use crate::DualDevice;
+use crate::{textures::Texture, DualDevice};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -62,15 +62,23 @@ pub struct GPUCompositor {
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct Compositor {}
+pub struct Compositor {
+    pub texture: Texture,
+}
 
 impl Default for Compositor {
     fn default() -> Self {
-        Compositor {}
+        Compositor {
+            texture: Texture::default(),
+        }
     }
 }
 
-impl Compositor {}
+impl Compositor {
+    pub fn from_texture(texture: Texture) -> Self {
+        Compositor { texture: texture }
+    }
+}
 
 impl DualDevice<GPUCompositor, Std430GPUCompositor> for Compositor {
     fn to_gpu(&self) -> GPUCompositor {

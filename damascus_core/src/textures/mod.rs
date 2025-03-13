@@ -6,14 +6,14 @@
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Texture {
-    pub dimensions: u32,
+    pub layers: u32,
     pub filepath: String,
 }
 
 impl Default for Texture {
     fn default() -> Self {
         Self {
-            dimensions: 4,
+            layers: 1,
             filepath: String::new(),
         }
     }

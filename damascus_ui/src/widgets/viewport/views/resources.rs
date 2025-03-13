@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use eframe::egui_wgpu::wgpu;
+use image::RgbaImage;
 
 pub trait BindingResource {
     fn as_resource(&self) -> wgpu::BindingResource<'_>;
@@ -21,10 +22,12 @@ impl BindingResource for Buffer {
 }
 
 pub struct TextureView {
+    pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
+    pub texture_data: RgbaImage,
     pub visibility: wgpu::ShaderStages,
-    pub format: wgpu::TextureFormat,
     pub view_dimension: wgpu::TextureViewDimension,
+    pub size: wgpu::Extent3d,
 }
 
 impl BindingResource for TextureView {
@@ -61,6 +64,34 @@ impl BufferBindGroup {
     }
 }
 
+pub struct TextureViewBindGroup {
+    pub bind_group: wgpu::BindGroup,
+    pub bind_group_layout: wgpu::BindGroupLayout,
+    pub texture_views: Vec<TextureView>,
+}
+
+impl TextureViewBindGroup {
+    pub fn write(&self, queue: &wgpu::Queue) {
+        for texture_view in self.texture_views.iter() {
+            queue.write_texture(
+                wgpu::TexelCopyTextureInfo {
+                    texture: &texture_view.texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                    aspect: wgpu::TextureAspect::All,
+                },
+                texture_view.texture_data.as_raw(),
+                wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(16 * texture_view.texture_data.width()),
+                    rows_per_image: Some(texture_view.texture_data.height()),
+                },
+                texture_view.size,
+            );
+        }
+    }
+}
+
 pub struct StorageTextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -71,6 +102,7 @@ pub struct RenderResources {
     pub render_pipeline: Option<wgpu::RenderPipeline>,
     pub uniform_bind_group: Option<BufferBindGroup>,
     pub storage_bind_group: Option<BufferBindGroup>,
+    pub texture_bind_group: Option<TextureViewBindGroup>,
     pub storage_texture_bind_group: Option<StorageTextureViewBindGroup>,
 }
 
@@ -81,6 +113,7 @@ impl RenderResources {
         queue: &wgpu::Queue,
         uniform_buffer_data: Vec<&[u8]>,
         storage_buffer_data: Vec<&[u8]>,
+        // texture_buffer_data: Vec<&[u8]>,
     ) {
         if let Some(uniform_bind_group) = &self.uniform_bind_group {
             uniform_bind_group.write(queue, uniform_buffer_data);
@@ -88,13 +121,13 @@ impl RenderResources {
         if let Some(storage_bind_group) = &self.storage_bind_group {
             storage_bind_group.write(queue, storage_buffer_data);
         }
+        if let Some(texture_bind_group) = &self.texture_bind_group {
+            texture_bind_group.write(queue);
+        }
         // self.storage_texture_bind_group.write(queue, storage_texture_data);
     }
 
-    pub fn paint<'render_pass>(
-        &'render_pass self,
-        render_pass: &mut wgpu::RenderPass<'render_pass>,
-    ) {
+    pub fn paint(&self, render_pass: &mut wgpu::RenderPass<'_>) {
         if let Some(render_pipeline) = &self.render_pipeline {
             render_pass.set_pipeline(&render_pipeline);
         } else {
@@ -109,6 +142,9 @@ impl RenderResources {
         if let Some(storage_bind_group) = &self.storage_bind_group {
             render_pass.set_bind_group(bind_group, &storage_bind_group.bind_group, &[]);
             bind_group += 1
+        }
+        if let Some(texture_bind_group) = &self.texture_bind_group {
+            render_pass.set_bind_group(bind_group, &texture_bind_group.bind_group, &[]);
         }
         if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
             render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);

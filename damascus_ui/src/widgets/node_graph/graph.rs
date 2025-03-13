@@ -716,7 +716,7 @@ pub fn evaluate_node(
             evaluator.output_texture(
                 "out",
                 textures::Texture {
-                    dimensions: 4,
+                    layers: 1,
                     filepath: filepath,
                 },
             )

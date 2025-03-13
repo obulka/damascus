@@ -279,9 +279,10 @@ impl eframe::App for Damascus {
                             self.viewport.switch_to_ray_marcher_view(render_state);
 
                             match &mut self.viewport.view {
-                                Views::RayMarcher { view } => {
-                                    view.set_renderer_to_default_with_texture(*value.value())
-                                }
+                                Views::RayMarcher { view } => view
+                                    .set_renderer_to_default_with_procedural_texture(
+                                        *value.value(),
+                                    ),
                                 Views::Error { error } => Self::display_error(ctx, error),
                                 _ => {}
                             }
@@ -321,7 +322,7 @@ impl eframe::App for Damascus {
 
                             match &mut self.viewport.view {
                                 Views::Compositor { view } => {
-                                    // TODO
+                                    view.set_texture(value.value().clone())
                                 }
                                 Views::Error { error } => Self::display_error(ctx, error),
                                 _ => {}

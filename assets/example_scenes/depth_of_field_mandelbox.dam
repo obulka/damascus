@@ -839,11 +839,38 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 16,
+            "version": 7
+          },
+          "label": "texture",
+          "inputs": [
+            [
+              "filepath",
+              {
+                "idx": 294,
+                "version": 7
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 16,
+                "version": 7
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Texture"
+          }
+        },
+        "version": 7
       },
       {
         "value": {
@@ -6869,22 +6896,6 @@
       },
       {
         "value": null,
-        "version": 4
-      },
-      {
-        "value": null,
-        "version": 4
-      },
-      {
-        "value": null,
-        "version": 4
-      },
-      {
-        "value": null,
-        "version": 4
-      },
-      {
-        "value": null,
         "version": 6
       },
       {
@@ -6901,35 +6912,76 @@
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
       },
       {
         "value": null,
-        "version": 6
+        "version": 8
+      },
+      {
+        "value": null,
+        "version": 8
+      },
+      {
+        "value": null,
+        "version": 8
+      },
+      {
+        "value": null,
+        "version": 8
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 294,
+            "version": 7
+          },
+          "typ": "Filepath",
+          "value": {
+            "Filepath": {
+              "value": {
+                "value": "/home/ob1/Pictures/Screenshots/mandelbox_4k.png",
+                "show_image": true,
+                "ui_data": {
+                  "tooltip": "The path to the texture.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 16,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 7
       },
       {
         "value": {
@@ -10271,11 +10323,22 @@
       },
       {
         "value": null,
-        "version": 2
+        "version": 4
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 16,
+            "version": 7
+          },
+          "node": {
+            "idx": 16,
+            "version": 7
+          },
+          "typ": "Texture",
+          "_phantom": null
+        },
+        "version": 7
       },
       {
         "value": {
@@ -11927,12 +11990,16 @@
       "version": 7
     },
     {
-      "idx": 3,
-      "version": 3
-    },
-    {
       "idx": 8,
       "version": 1
+    },
+    {
+      "idx": 16,
+      "version": 7
+    },
+    {
+      "idx": 3,
+      "version": 3
     }
   ],
   "connection_in_progress": null,
@@ -11945,8 +12012,8 @@
     },
     {
       "value": {
-        "x": -11793.207,
-        "y": -1517.2772
+        "x": -12980.948,
+        "y": -1660.1453
       },
       "version": 1
     },
@@ -11956,8 +12023,8 @@
     },
     {
       "value": {
-        "x": -11695.213,
-        "y": -1543.1606
+        "x": -12843.465,
+        "y": -1665.0353
       },
       "version": 3
     },
@@ -11967,29 +12034,29 @@
     },
     {
       "value": {
-        "x": -12316.164,
-        "y": -1717.2473
+        "x": -13878.3545,
+        "y": -2003.3029
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12192.494,
-        "y": -1179.3373
+        "x": -13666.132,
+        "y": -1080.2424
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11992.237,
-        "y": -1551.7352
+        "x": -13322.514,
+        "y": -1719.2812
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12219.66,
-        "y": -1468.6711
+        "x": -13712.771,
+        "y": -1576.7405
       },
       "version": 1
     },
@@ -11999,8 +12066,8 @@
     },
     {
       "value": {
-        "x": -12019.335,
-        "y": -1164.721
+        "x": -13368.981,
+        "y": -1055.1559
       },
       "version": 1
     },
@@ -12010,18 +12077,10 @@
     },
     {
       "value": {
-        "x": -12467.395,
-        "y": -1749.6501
+        "x": -14137.879,
+        "y": -2058.9072
       },
       "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": null,
-      "version": 0
     },
     {
       "value": null,
@@ -12032,30 +12091,41 @@
       "version": 0
     },
     {
+      "value": null,
+      "version": 0
+    },
+    {
       "value": {
-        "x": -11998.139,
-        "y": -1723.4156
+        "x": -12736.276,
+        "y": -1205.115
       },
       "version": 7
     },
     {
       "value": {
-        "x": -12418.532,
-        "y": -1452.2277
+        "x": -13332.614,
+        "y": -2013.8866
+      },
+      "version": 7
+    },
+    {
+      "value": {
+        "x": -14054.057,
+        "y": -1548.522
       },
       "version": 3
     },
     {
       "value": {
-        "x": -12154.057,
-        "y": -1573.5765
+        "x": -13600.184,
+        "y": -1756.7622
       },
       "version": 5
     },
     {
       "value": {
-        "x": -11996.255,
-        "y": -1402.3862
+        "x": -13329.39,
+        "y": -1462.9958
       },
       "version": 3
     }
@@ -12063,10 +12133,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 13344.79,
-      "y": 1814.1421
+      "x": 15731.579,
+      "y": 2381.5815
     },
-    "zoom": 0.49319395,
+    "zoom": 0.84632486,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

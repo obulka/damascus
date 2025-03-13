@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, ops::BitOr, sync::Arc, time::SystemTime};
+use std::{collections::HashSet, ops::BitOr, time::SystemTime};
 
 use eframe::{
     egui,
@@ -58,7 +58,7 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _egui_encoder: &mut wgpu::CommandEncoder,
+        _encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
@@ -81,11 +81,11 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         Vec::new()
     }
 
-    fn paint<'a>(
+    fn paint(
         &self,
         _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'a>,
-        resources: &'a egui_wgpu::CallbackResources,
+        render_pass: &mut wgpu::RenderPass<'static>,
+        resources: &egui_wgpu::CallbackResources,
     ) {
         let resources: &RenderResources = resources.get().unwrap();
         resources.paint(render_pass);
@@ -174,7 +174,7 @@ impl
 
     fn create_uniform_buffers(
         &self,
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         settings: &RayMarcherViewSettings,
     ) -> Vec<Buffer> {
         vec![
@@ -222,7 +222,7 @@ impl
 
     fn create_storage_buffers(
         &self,
-        device: &Arc<wgpu::Device>,
+        device: &wgpu::Device,
         settings: &RayMarcherViewSettings,
     ) -> Vec<Buffer> {
         let primitives: Vec<Std430GPUPrimitive> = self
@@ -294,7 +294,7 @@ impl
         ]
     }
 
-    fn create_storage_texture_views(&self, device: &Arc<wgpu::Device>) -> Vec<StorageTextureView> {
+    fn create_storage_texture_views(&self, device: &wgpu::Device) -> Vec<StorageTextureView> {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width: MAX_TEXTURE_DIMENSION,
@@ -354,7 +354,7 @@ impl
 
     fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         self.show_restart_pause_play_buttons(render_state, ui);
-        ui.add(egui::Label::new(&self.stats_text).truncate(true));
+        ui.add(egui::Label::new(&self.stats_text).truncate());
         false
     }
 
@@ -481,7 +481,7 @@ impl RayMarcherView {
         self.enable_camera_controls();
     }
 
-    pub fn set_renderer_to_default_with_texture(&mut self, texture: ProceduralTexture) {
+    pub fn set_renderer_to_default_with_procedural_texture(&mut self, texture: ProceduralTexture) {
         self.renderer_mut().reset_render_parameters();
         self.renderer_mut().scene.clear_primitives();
         self.renderer_mut().scene.clear_lights();

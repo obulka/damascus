@@ -184,39 +184,41 @@ impl
     }
 
     fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        let mut width: u32 = 10;
+        let mut height: u32 = 10;
+        let mut texture_data = Rgba32FImage::new(width, height);
         if let Ok(image) = ImageReader::open(&self.renderer().texture.filepath) {
             if let Ok(decoded_image) = image.decode() {
-                let texture_data: Rgba32FImage = decoded_image.to_rgba32f();
-                let (width, height): (u32, u32) = texture_data.dimensions();
-                let size = wgpu::Extent3d {
-                    width: width,
-                    height: height,
-                    depth_or_array_layers: self.renderer().texture.layers,
-                };
-                let texture_descriptor = wgpu::TextureDescriptor {
-                    size: size,
-                    mip_level_count: 1,
-                    sample_count: 1,
-                    dimension: wgpu::TextureDimension::D2,
-                    format: wgpu::TextureFormat::Rgba32Float,
-                    usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
-                    label: Some("compositor texture"),
-                    view_formats: &[],
-                };
-                let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
-                let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
-                return vec![TextureView {
-                    texture: texture,
-                    texture_view: texture_view,
-                    texture_data: texture_data,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    view_dimension: wgpu::TextureViewDimension::D2,
-                    size: size,
-                }];
+                texture_data = decoded_image.to_rgba32f();
+                (width, height) = texture_data.dimensions();
             }
         }
 
-        vec![]
+        let size = wgpu::Extent3d {
+            width: width,
+            height: height,
+            depth_or_array_layers: self.renderer().texture.layers,
+        };
+        let texture_descriptor = wgpu::TextureDescriptor {
+            size: size,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba32Float,
+            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+            label: Some("compositor texture"),
+            view_formats: &[],
+        };
+        let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
+        let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
+        vec![TextureView {
+            texture: texture,
+            texture_view: texture_view,
+            texture_data: texture_data,
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            view_dimension: wgpu::TextureViewDimension::D2,
+            size: size,
+        }]
     }
 
     fn disable(&mut self) {

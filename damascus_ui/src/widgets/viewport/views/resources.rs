@@ -145,6 +145,7 @@ impl RenderResources {
         }
         if let Some(texture_bind_group) = &self.texture_bind_group {
             render_pass.set_bind_group(bind_group, &texture_bind_group.bind_group, &[]);
+            bind_group += 1
         }
         if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
             render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);
@@ -160,6 +161,9 @@ impl RenderResources {
         }
         if let Some(storage_bind_group) = &self.storage_bind_group {
             bind_group_layouts.push(&storage_bind_group.bind_group_layout);
+        }
+        if let Some(texture_bind_group) = &self.texture_bind_group {
+            bind_group_layouts.push(&texture_bind_group.bind_group_layout);
         }
         if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
             bind_group_layouts.push(&storage_texture_bind_group.bind_group_layout);

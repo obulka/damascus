@@ -100,7 +100,7 @@ pub trait RangedInput<T: eframe::emath::Numeric>: UIInput<T> {
 
     fn create_slider(&mut self) -> egui::Slider<'_> {
         let range: RangeInclusive<T> = self.range().clone();
-        egui::Slider::new(self.value_mut(), range).clamp_to_range(false)
+        egui::Slider::new(self.value_mut(), range).clamping(egui::SliderClamping::Never)
     }
 
     fn value_mut(&mut self) -> &mut T;

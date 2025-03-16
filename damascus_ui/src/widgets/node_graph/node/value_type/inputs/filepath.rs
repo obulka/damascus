@@ -85,7 +85,7 @@ impl UIInput<String> for Filepath {
                         egui::Image::new(format!("file://{}", self.value))
                             .shrink_to_fit()
                             .maintain_aspect_ratio(true)
-                            .rounding(10.)
+                            .corner_radius(10.)
                             .show_loading_spinner(true),
                     );
                 }

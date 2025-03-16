@@ -236,9 +236,7 @@ pub fn show_toolbar(
                                     egui::DragValue::new(
                                         &mut viewport.settings.ray_marcher_view.max_primitives,
                                     )
-                                    .clamp_range(
-                                        1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE),
-                                    ),
+                                    .range(1..=Scene::max_primitives_in_buffer(MAX_BUFFER_SIZE)),
                                 )
                                 .changed();
                         });
@@ -249,7 +247,7 @@ pub fn show_toolbar(
                                     egui::DragValue::new(
                                         &mut viewport.settings.ray_marcher_view.max_lights,
                                     )
-                                    .clamp_range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
+                                    .range(1..=Scene::max_lights_in_buffer(MAX_BUFFER_SIZE)),
                                 )
                                 .changed();
                         });

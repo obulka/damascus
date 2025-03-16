@@ -24,7 +24,7 @@ use crate::icons::Icons;
 
 mod compositor_view;
 mod ray_marcher_view;
-mod resources;
+pub mod resources;
 
 pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
@@ -266,7 +266,7 @@ pub trait View<
         vec![]
     }
 
-    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
         vec![]
     }
 

@@ -271,7 +271,7 @@ pub fn evaluate_node(
             )
         }
 
-        fn input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
+        fn _input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
             self.evaluate_input(name)?.try_to_texture()
         }
 

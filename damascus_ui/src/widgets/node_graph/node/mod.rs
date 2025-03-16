@@ -314,7 +314,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     true,
                 );
             };
-        let input_ray_marcher =
+        let _input_ray_marcher =
             |graph: &mut Graph, name: &str, default: ray_marcher::RayMarcher| {
                 graph.add_input_param(
                     node_id,
@@ -335,7 +335,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        let input_texture = |graph: &mut Graph, name: &str, default: Texture| {
+        let _input_texture = |graph: &mut Graph, name: &str, default: Texture| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),

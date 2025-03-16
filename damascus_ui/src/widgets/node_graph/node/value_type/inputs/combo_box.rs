@@ -59,7 +59,7 @@ impl UIInput<String> for ComboBox {
         let mut has_changed = false;
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
-            egui::ComboBox::from_id_source(label)
+            egui::ComboBox::from_id_salt(label)
                 .selected_text(&self.selected)
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {

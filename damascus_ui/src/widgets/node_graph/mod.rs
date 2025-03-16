@@ -99,7 +99,9 @@ impl NodeGraph {
                         serde_json::to_string_pretty(&self.editor_state.from_selected())
                     {
                         ui.output_mut(|output| {
-                            output.copied_text = serialized_state;
+                            output
+                                .commands
+                                .push(egui::OutputCommand::CopyText(serialized_state));
                         });
                     }
                 } else if !pasted.is_empty() {

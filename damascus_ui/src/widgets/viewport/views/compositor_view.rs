@@ -161,7 +161,7 @@ impl
     fn create_uniform_buffers(
         &self,
         device: &wgpu::Device,
-        settings: &CompositorViewSettings,
+        _settings: &CompositorViewSettings,
     ) -> Vec<Buffer> {
         vec![
             Buffer {
@@ -345,30 +345,11 @@ impl CompositorView {
         self.reconstruct_pipeline(render_state, settings);
     }
 
-    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
+    fn update_camera(&mut self, _ui: &egui::Ui, rect: &egui::Rect, _response: &egui::Response) {
         let _aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
             return;
         }
-        // // Allow some basic camera movement
-        // let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
-        //     glam::Mat4::from_quat(glam::Quat::from_euler(
-        //         glam::EulerRot::XYZ,
-        //         0.00015 * response.drag_delta().y,
-        //         0.00015 * response.drag_delta().x,
-        //         0.,
-        //     ))
-        // } else {
-        //     glam::Mat4::from_translation(glam::Vec3::new(
-        //         -0.0015 * response.drag_delta().x,
-        //         0.0015 * response.drag_delta().y,
-        //         if response.hovered() {
-        //             -0.015 * ui.input(|input| input.smooth_scroll_delta.y)
-        //         } else {
-        //             0.
-        //         },
-        //     ))
-        // };
-        // self.renderer_mut().scene.render_camera.world_matrix *= camera_transform;
+        // TODO
     }
 }

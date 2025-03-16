@@ -44,10 +44,10 @@ pub fn all_directives_for_compositor() -> HashSet<CompositorPreprocessorDirectiv
 }
 
 pub fn directives_for_compositor(
-    compositor: &Compositor,
+    _compositor: &Compositor,
 ) -> HashSet<CompositorPreprocessorDirectives> {
-    let mut preprocessor_directives = HashSet::<CompositorPreprocessorDirectives>::new();
-
+    let preprocessor_directives = HashSet::<CompositorPreprocessorDirectives>::new();
+    //TODO
     preprocessor_directives
 }
 
@@ -73,9 +73,9 @@ impl
         Std430GPUCompositor,
     > for CompositorCompilerSettings
 {
-    fn directives(&self, renderer: &Compositor) -> HashSet<CompositorPreprocessorDirectives> {
-        let mut preprocessor_directives = HashSet::<CompositorPreprocessorDirectives>::new();
-
+    fn directives(&self, _renderer: &Compositor) -> HashSet<CompositorPreprocessorDirectives> {
+        let preprocessor_directives = HashSet::<CompositorPreprocessorDirectives>::new();
+        //TODO
         preprocessor_directives
     }
 

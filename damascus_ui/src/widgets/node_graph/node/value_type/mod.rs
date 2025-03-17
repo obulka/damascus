@@ -314,7 +314,11 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Scene { value } => value.create_ui(ui, param_name),
             NodeValueType::Texture { value } => value.create_ui(ui, param_name),
             _ => {
-                ui.add(egui::Label::new(param_name).selectable(false));
+                ui.add(
+                    egui::Label::new(param_name)
+                        .halign(egui::Align::Center)
+                        .selectable(false),
+                );
                 false
             }
         };
@@ -354,7 +358,11 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Scene { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Texture { value } => value.create_ui_connected(ui, param_name),
             _ => {
-                ui.add(egui::Label::new(param_name).selectable(false));
+                ui.add(
+                    egui::Label::new(param_name)
+                        .halign(egui::Align::Center)
+                        .selectable(false),
+                );
                 false
             }
         };

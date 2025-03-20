@@ -7,8 +7,8 @@ edition = "2021"
 
 [dependencies]
 bytemuck = "1.13"
-crevice = { version = "0.16.0", features = ["glam"] }
-glam = { version = "0.27", features = ["serde"] }
-rand = "0.8.5"
+crevice = { version = "0.18.0", features = ["glam"] }
+glam = { version = "0.30", features = ["serde"] }
+rand = "0.9"
 serde = "1.0"
-strum = { version = "0.26", features = ["derive"] }
+strum = { version = "0.27", features = ["derive"] }

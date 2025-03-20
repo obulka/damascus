@@ -14,8 +14,8 @@ eframe = { version = "0.31", features = ["persistence", "wgpu"]}
 egui_extras = { version = "0.31", features = ["all_loaders"] }
 #egui-modal = "0.7"
 egui-modal = { git = "https://github.com/obulka/egui-modal.git" }
-egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", features = ["persistence"] }
-#egui_node_graph = { path = "../../egui_node_graph/egui_node_graph", features = ["persistence"] }
+#egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", features = ["persistence"] }
+egui_node_graph = { path = "../../egui_node_graph/egui_node_graph", features = ["persistence"] }
 glam = { version = "0.27", features = ["serde"] }
 indoc = "2"
 serde = "1.0"

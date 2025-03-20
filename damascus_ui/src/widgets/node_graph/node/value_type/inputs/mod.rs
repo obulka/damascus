@@ -35,19 +35,11 @@ pub trait UIInput<T> {
 
     fn create_parameter_label(&self, ui: &mut egui::Ui, label: &str) {
         if let Some(tooltip) = &self.ui_data().tooltip() {
-            ui.add(
-                egui::Label::new(label)
-                    .halign(egui::Align::Center)
-                    .selectable(false),
-            )
-            .on_hover_text(tooltip);
+            ui.add(egui::Button::new(label).stroke(egui::Stroke::NONE))
+                .on_hover_text(tooltip);
             return;
         }
-        ui.add(
-            egui::Label::new(label)
-                .halign(egui::Align::Center)
-                .selectable(false),
-        );
+        ui.add(egui::Button::new(label).stroke(egui::Stroke::NONE));
     }
 
     fn create_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {

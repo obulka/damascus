@@ -14,6 +14,8 @@ struct RenderParameters {
 
 struct RenderState {
     resolution: vec2f,
+    pan: vec2f,
+    zoom: f32,
     flags: u32,
 }
 

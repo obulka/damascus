@@ -16,6 +16,8 @@ use crate::{textures::Texture, DualDevice};
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCompositorRenderState {
     resolution: Vec2,
+    pan: Vec2,
+    zoom: f32,
     flags: u32,
 }
 
@@ -26,6 +28,8 @@ pub struct CompositorRenderState {
     pub previous_frame_time: SystemTime,
     pub fps: f32,
     pub resolution: UVec2,
+    pub pan: Vec2,
+    pub zoom: f32,
     pub paused: bool,
 }
 
@@ -36,6 +40,8 @@ impl Default for CompositorRenderState {
             previous_frame_time: SystemTime::now(),
             fps: 0.,
             resolution: UVec2::ZERO,
+            pan: Vec2::ZERO,
+            zoom: 1.0,
             paused: true,
         }
     }
@@ -49,6 +55,8 @@ impl DualDevice<GPUCompositorRenderState, Std430GPUCompositorRenderState>
     fn to_gpu(&self) -> GPUCompositorRenderState {
         GPUCompositorRenderState {
             resolution: self.resolution.as_vec2(),
+            pan: self.pan,
+            zoom: self.zoom,
             flags: 0,
         }
     }

@@ -345,11 +345,33 @@ impl CompositorView {
         self.reconstruct_pipeline(render_state, settings);
     }
 
-    fn update_camera(&mut self, _ui: &egui::Ui, rect: &egui::Rect, _response: &egui::Response) {
+    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
         let _aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
             return;
         }
-        // TODO
+        let drag_delta: egui::Vec2 = response.drag_delta();
+        self.render_state.pan +=
+            glam::Vec2::new(drag_delta.x, -drag_delta.y) * self.render_state.zoom;
+        if response.hovered() {
+            let scroll_delta = ui.input(|i| i.smooth_scroll_delta.y);
+            if scroll_delta != 0.0 {
+                let cursor_pos_egui: egui::Vec2 = ui.ctx().input(|i| {
+                    i.pointer.hover_pos().unwrap_or(rect.size().to_pos2() * 0.5) - rect.min
+                });
+                let cursor_pos =
+                    glam::Vec2::new(cursor_pos_egui.x, rect.height() - cursor_pos_egui.y);
+
+                let hovered_image_pixel_before: glam::Vec2 =
+                    cursor_pos * self.render_state.zoom - self.render_state.pan;
+
+                self.render_state.zoom /= (scroll_delta * 0.002).exp();
+
+                let hovered_image_pixel: glam::Vec2 =
+                    cursor_pos * self.render_state.zoom - self.render_state.pan;
+
+                self.render_state.pan += hovered_image_pixel - hovered_image_pixel_before;
+            }
+        }
     }
 }

@@ -21,12 +21,19 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
     var texture_dimensions: vec2u = textureDimensions(_texture);
     var current_pixel_indices: vec2f = uv_to_screen(
         in.uv_coordinate.xy,
-        vec2f(texture_dimensions),//_render_state.resolution,
-    );
+        _render_state.resolution,
+    ) * _render_state.zoom - _render_state.pan;
 
-    var texture_coordinates = vec2u(current_pixel_indices);
+    var pixel_colour = vec4f(0.);
 
-    var pixel_colour: vec4f = textureLoad(_texture, texture_coordinates, 0);
+    if (
+        current_pixel_indices.x >= 0.
+        && current_pixel_indices.y >= 0.
+        && current_pixel_indices.x < f32(texture_dimensions.x)
+        && current_pixel_indices.y < f32(texture_dimensions.y)
+    ) {
+        pixel_colour = textureLoad(_texture, vec2u(current_pixel_indices), 0);
+    }
 
     return pixel_colour;
 }

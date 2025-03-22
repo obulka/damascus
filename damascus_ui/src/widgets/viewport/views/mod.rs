@@ -538,13 +538,15 @@ pub trait View<
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             let mut available_size: egui::Vec2 = ui.available_size().round();
             available_size.y -= Self::controls_height(ui.style());
-            paint_callback = self.custom_painting(
-                ui,
-                render_state,
-                available_size,
-                settings,
-                compiler_settings,
-            );
+            if available_size.x > 0. && available_size.y > 0. {
+                paint_callback = self.custom_painting(
+                    ui,
+                    render_state,
+                    available_size,
+                    settings,
+                    compiler_settings,
+                );
+            }
         });
         paint_callback
     }

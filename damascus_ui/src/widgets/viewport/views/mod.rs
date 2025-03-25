@@ -29,7 +29,7 @@ pub mod resources;
 pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
 use resources::{
-    BindingResource, Buffer, BufferBindGroup, RenderResources, StorageTextureView,
+    BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources, StorageTextureView,
     StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
 };
 
@@ -183,18 +183,22 @@ pub trait View<
         }
 
         let mut render_resources = RenderResources {
-            render_pipeline: None,
-            uniform_bind_group: uniform_bind_group,
-            storage_bind_group: storage_bind_group,
-            texture_bind_group: texture_bind_group,
-            storage_texture_bind_group: storage_texture_bind_group,
+            resources: vec![RenderResource {
+                render_pipeline: None,
+                uniform_bind_group: uniform_bind_group,
+                storage_bind_group: storage_bind_group,
+                texture_bind_group: texture_bind_group,
+                storage_texture_bind_group: storage_texture_bind_group,
+            }],
         };
 
-        render_resources.render_pipeline = Some(self.create_render_pipeline(
-            device,
-            render_state.target_format,
-            render_resources.bind_group_layouts(),
-        ));
+        for resource in render_resources.resources.iter_mut() {
+            resource.render_pipeline = Some(self.create_render_pipeline(
+                device,
+                render_state.target_format,
+                resource.bind_group_layouts(),
+            ));
+        }
 
         render_state
             .renderer
@@ -233,11 +237,13 @@ pub trait View<
             let device = &render_state.device;
 
             // Create the updated pipeline
-            render_resources.render_pipeline = Some(self.create_render_pipeline(
-                device,
-                render_state.target_format,
-                render_resources.bind_group_layouts(),
-            ));
+            for resource in render_resources.resources.iter_mut() {
+                resource.render_pipeline = Some(self.create_render_pipeline(
+                    device,
+                    render_state.target_format,
+                    resource.bind_group_layouts(),
+                ));
+            }
         }
     }
 

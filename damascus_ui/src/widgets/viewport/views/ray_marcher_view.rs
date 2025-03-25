@@ -34,7 +34,7 @@ use damascus_core::{
 };
 
 use super::{
-    resources::{Buffer, StorageTextureView},
+    resources::{Buffer, BufferData, StorageTextureView},
     settings::RayMarcherViewSettings,
     RenderResources, View,
 };
@@ -65,18 +65,20 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         resources.prepare(
             device,
             queue,
-            vec![
-                bytemuck::cast_slice(&[self.render_parameters]),
-                bytemuck::cast_slice(&[self.scene_parameters]),
-                bytemuck::cast_slice(&[self.render_state]),
-                bytemuck::cast_slice(&[self.render_camera]),
-            ],
-            vec![
-                bytemuck::cast_slice(self.primitives.as_slice()),
-                bytemuck::cast_slice(self.lights.as_slice()),
-                bytemuck::cast_slice(&[self.atmosphere]),
-                bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
-            ],
+            vec![BufferData {
+                uniform: vec![
+                    bytemuck::cast_slice(&[self.render_parameters]),
+                    bytemuck::cast_slice(&[self.scene_parameters]),
+                    bytemuck::cast_slice(&[self.render_state]),
+                    bytemuck::cast_slice(&[self.render_camera]),
+                ],
+                storage: vec![
+                    bytemuck::cast_slice(self.primitives.as_slice()),
+                    bytemuck::cast_slice(self.lights.as_slice()),
+                    bytemuck::cast_slice(&[self.atmosphere]),
+                    bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
+                ],
+            }],
         );
         Vec::new()
     }

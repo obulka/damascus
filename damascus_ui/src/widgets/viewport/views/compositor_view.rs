@@ -33,7 +33,7 @@ use damascus_core::{
 };
 
 use super::{
-    resources::{Buffer, TextureView},
+    resources::{Buffer, BufferData, TextureView},
     settings::CompositorViewSettings,
     RenderResources, View,
 };
@@ -51,20 +51,23 @@ impl egui_wgpu::CallbackTrait for CompositorViewCallback {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _egui_encoder: &mut wgpu::CommandEncoder,
+        encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
         resources.prepare(
             device,
             queue,
-            vec![
-                bytemuck::cast_slice(&[self.render_parameters]),
-                bytemuck::cast_slice(&[self.render_state]),
-            ],
-            vec![],
+            vec![BufferData {
+                uniform: vec![
+                    bytemuck::cast_slice(&[self.render_parameters]),
+                    bytemuck::cast_slice(&[self.render_state]),
+                ],
+                storage: vec![],
+            }],
         );
-        Vec::new()
+
+        vec![]
     }
 
     fn paint(

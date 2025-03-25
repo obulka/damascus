@@ -173,6 +173,21 @@ fn saturate_vec3f(value: vec3f) -> vec3f {
 
 
 /**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * Note: This should be a builtin function but I guess the wgsl version
+ *     is old.
+ *
+ * @arg value: The value to saturate.
+ *
+ * @returns: The clamped value
+ */
+fn saturate_vec4f(value: vec4f) -> vec4f {
+    return clamp(value, vec4(0.), vec4(1.));
+}
+
+
+/**
  * Compute the signed distance along a vector
  *
  * @arg vector_: A vector from a point to the nearest surface of an

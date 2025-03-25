@@ -161,7 +161,7 @@ impl
     fn create_uniform_buffers(
         &self,
         device: &wgpu::Device,
-        _settings: &CompositorViewSettings,
+        settings: &CompositorViewSettings,
     ) -> Vec<Buffer> {
         vec![
             Buffer {
@@ -174,8 +174,16 @@ impl
             },
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("compositor render progress buffer"),
+                    label: Some("compositor render state buffer"),
                     contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("viewer grade buffer"),
+                    contents: bytemuck::cast_slice(&[settings.viewer_grade.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -250,7 +258,21 @@ impl
 
     fn reset(&mut self) {}
 
-    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+    fn show_top_bar(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        ui: &mut egui::Ui,
+        settings: &mut CompositorViewSettings,
+    ) -> bool {
+        ui.add(egui::DragValue::new(&mut settings.viewer_grade.gain));
+        false
+    }
+
+    fn show_bottom_bar(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        ui: &mut egui::Ui,
+    ) -> bool {
         self.show_restart_pause_play_buttons(render_state, ui);
         ui.add(egui::Label::new(&self.stats_text).truncate());
         false

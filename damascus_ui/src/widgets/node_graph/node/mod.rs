@@ -1380,7 +1380,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_float(
                     graph,
                     "black_point",
-                    Float::new(default_procedural_texture.black_point).with_ui_data(
+                    Float::new(default_procedural_texture.grade.black_point).with_ui_data(
                         UIData::default()
                             .with_tooltip("The black point of the texture.")
                             .with_hidden(),
@@ -1389,7 +1389,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_float(
                     graph,
                     "white_point",
-                    Float::new(default_procedural_texture.white_point).with_ui_data(
+                    Float::new(default_procedural_texture.grade.white_point).with_ui_data(
                         UIData::default()
                             .with_tooltip(indoc! {
                                 "The white point of the texture."
@@ -1400,7 +1400,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_float(
                     graph,
                     "lift",
-                    Float::new(default_procedural_texture.lift).with_ui_data(
+                    Float::new(default_procedural_texture.grade.lift).with_ui_data(
                         UIData::default()
                             .with_tooltip(indoc! {
                                 "The lift to apply to the texture."
@@ -1411,7 +1411,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_float(
                     graph,
                     "gain",
-                    Float::new(default_procedural_texture.gain)
+                    Float::new(default_procedural_texture.grade.gain)
                         .with_ui_data(
                             UIData::default()
                                 .with_tooltip("The gain to apply to the texture colour.")
@@ -1461,7 +1461,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_float(
                     graph,
                     "gamma",
-                    Float::new(default_procedural_texture.gamma)
+                    Float::new(default_procedural_texture.grade.gamma)
                         .with_ui_data(
                             UIData::default()
                                 .with_tooltip(indoc! {
@@ -1517,7 +1517,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_bool(
                     graph,
                     "invert",
-                    Bool::new(default_procedural_texture.invert).with_ui_data(
+                    Bool::new(default_procedural_texture.grade.invert).with_ui_data(
                         UIData::default()
                             .with_tooltip("Invert the colour.")
                             .with_hidden(),

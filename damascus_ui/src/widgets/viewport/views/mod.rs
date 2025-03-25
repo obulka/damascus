@@ -594,7 +594,20 @@ pub trait View<
         });
     }
 
-    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+    fn show_top_bar(
+        &mut self,
+        _render_state: &egui_wgpu::RenderState,
+        _ui: &mut egui::Ui,
+        _settings: &mut V,
+    ) -> bool {
+        false
+    }
+
+    fn show_bottom_bar(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        ui: &mut egui::Ui,
+    ) -> bool {
         self.show_restart_pause_play_buttons(render_state, ui);
         false
     }
@@ -603,11 +616,12 @@ pub trait View<
         &mut self,
         render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
-        settings: &V,
-        compiler_settings: &C,
+        settings: &mut V,
+        compiler_settings: &mut C,
     ) -> bool {
+        let mut reconstruct_pipeline: bool = self.show_top_bar(render_state, ui, settings);
         let paint_callback = self.show_frame(render_state, ui, settings, compiler_settings);
-        let reconstruct_pipeline = self.show_controls(render_state, ui);
+        reconstruct_pipeline |= self.show_bottom_bar(render_state, ui);
 
         if !reconstruct_pipeline {
             if let Some(callback) = paint_callback {
@@ -765,20 +779,20 @@ impl Views {
         &mut self,
         render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
-        settings: &ViewportSettings,
+        settings: &mut ViewportSettings,
     ) -> bool {
         match self {
             Self::RayMarcher { view } => view.show(
                 render_state,
                 ui,
-                &settings.ray_marcher_view,
-                &settings.compiler_settings.ray_marcher,
+                &mut settings.ray_marcher_view,
+                &mut settings.compiler_settings.ray_marcher,
             ),
             Self::Compositor { view } => view.show(
                 render_state,
                 ui,
-                &settings.compositor_view,
-                &settings.compiler_settings.compositor,
+                &mut settings.compositor_view,
+                &mut settings.compiler_settings.compositor,
             ),
             _ => false,
         }

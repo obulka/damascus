@@ -352,7 +352,11 @@ impl
         self.render_state.paths_rendered_per_pixel = 0;
     }
 
-    fn show_controls(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+    fn show_bottom_bar(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+        ui: &mut egui::Ui,
+    ) -> bool {
         self.show_restart_pause_play_buttons(render_state, ui);
         ui.add(egui::Label::new(&self.stats_text).truncate());
         false

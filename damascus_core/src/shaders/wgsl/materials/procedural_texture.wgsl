@@ -10,8 +10,7 @@ const CHECKER_BOARD: u32 = 2u;
 const FBM_NOISE: u32 = 3u;
 const TURBULENCE_NOISE: u32 = 4u;
 
-const INVERT: u32 = 1u;
-const USE_TRAP_COLOUR: u32 = 2u;
+const USE_TRAP_COLOUR: u32 = 1u;
 
 const RGB_TO_YIQ: mat3x3f = mat3x3f(
     vec3f(0.299, 0.596, 0.211),
@@ -263,14 +262,10 @@ fn octave_noise(
 struct ProceduralTexture {
     texture_type: u32,
     scale: vec4f,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
-    gain: f32,
+    grade: Grade,
     octaves: u32,
     lacunarity: f32,
     amplitude_gain: f32,
-    gamma: f32,
     low_frequency_scale: vec4f,
     high_frequency_scale: vec4f,
     low_frequency_translation: vec4f,
@@ -309,50 +304,6 @@ fn checkerboard(seed: vec4f) -> f32 {
 #endif
 
 
-fn grade_f32(colour: f32, texture: ProceduralTexture) -> f32 {
-    return select(
-        pow(
-            texture.gain * (
-                (1. - texture.lift)
-                * saturate_f32(
-                    select(
-                        colour,
-                        1. - colour,
-                        bool(texture.flags & INVERT),
-                    ) - texture.black_point,
-                ) / (texture.white_point - texture.black_point)
-                + texture.lift
-            ),
-            1. / texture.gamma,
-        ),
-        0.,
-        texture.white_point == texture.black_point,
-    );
-}
-
-
-fn grade_vec3(colour: vec3f, texture: ProceduralTexture) -> vec3f {
-    return select(
-        pow(
-            texture.gain * (
-                (1. - texture.lift)
-                * saturate_vec3f(
-                    select(
-                        colour,
-                        1. - colour,
-                        bool(texture.flags & INVERT),
-                    ) - texture.black_point,
-                ) / (texture.white_point - texture.black_point)
-                + texture.lift
-            ),
-            vec3(1. / texture.gamma),
-        ),
-        vec3f(),
-        texture.white_point == texture.black_point,
-    );
-}
-
-
 fn procedurally_texture_f32(
     seed: vec4f,
     colour: f32,
@@ -364,12 +315,12 @@ fn procedurally_texture_f32(
         }
 #ifdef EnableGrade
         case GRADE {
-            return grade_f32(colour, texture);
+            return grade_f32(colour, texture.grade);
         }
 #endif
 #ifdef EnableCheckerboard
         case CHECKER_BOARD {
-            return colour * grade_f32(checkerboard(seed / texture.scale), texture);
+            return colour * grade_f32(checkerboard(seed / texture.scale), texture.grade);
         }
 #endif
 // Simply having this case slows things down, so allow it to be compiled out
@@ -378,7 +329,7 @@ fn procedurally_texture_f32(
             // FBM Noise
             return colour * grade_f32(
                 octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
-                texture,
+                texture.grade,
             );
         }
 #endif
@@ -397,12 +348,12 @@ fn procedurally_texture_vec3f(
         }
 #ifdef EnableGrade
         case GRADE {
-            return grade_vec3(colour, texture);
+            return grade_vec3(colour, texture.grade);
         }
 #endif
 #ifdef EnableCheckerboard
         case CHECKER_BOARD {
-            return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture));
+            return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture.grade));
         }
 #endif
 // Simply having this case slows things down, so allow it to be compiled out
@@ -410,7 +361,7 @@ fn procedurally_texture_vec3f(
         case FBM_NOISE, TURBULENCE_NOISE {
             return colour * vec3(grade_f32(
                 octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
-                texture,
+                texture.grade,
             ));
         }
 #endif

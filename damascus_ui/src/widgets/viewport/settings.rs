@@ -5,6 +5,7 @@
 
 use damascus_core::{
     shaders::{compositor::CompositorCompilerSettings, ray_marcher::RayMarcherCompilerSettings},
+    textures::Grade,
     Settings,
 };
 
@@ -20,12 +21,16 @@ impl Settings for ViewportCompilerSettings {}
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct CompositorViewSettings {
+    pub viewer_grade: Grade,
     pub zoom: f32,
 }
 
 impl Default for CompositorViewSettings {
     fn default() -> Self {
-        Self { zoom: 1. }
+        Self {
+            zoom: 1.,
+            viewer_grade: Grade::default(),
+        }
     }
 }
 

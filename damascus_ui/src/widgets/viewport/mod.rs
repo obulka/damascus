@@ -106,7 +106,7 @@ impl Viewport {
             .constrain(true)
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
-                reconstruct_pipeline = self.view.show(render_state, ui, &self.settings);
+                reconstruct_pipeline = self.view.show(render_state, ui, &mut self.settings);
             });
 
         if reconstruct_pipeline {

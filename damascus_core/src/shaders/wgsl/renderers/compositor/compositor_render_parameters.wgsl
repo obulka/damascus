@@ -24,6 +24,8 @@ struct RenderState {
 @group(UNIFORM_BIND_GROUP) @binding(0)
 var<uniform> _render_parameters: RenderParameters;
 
-
 @group(UNIFORM_BIND_GROUP) @binding(1)
 var<uniform> _render_state: RenderState;
+
+@group(UNIFORM_BIND_GROUP) @binding(2)
+var<uniform> _viewer_grade: Grade;

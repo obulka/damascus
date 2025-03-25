@@ -6,6 +6,8 @@
 const UNIFORM_BIND_GROUP: u32 = 0u;
 const TEXTURE_BIND_GROUP: u32 = 1u;
 
+#include Math
+#include Random
 #include Texture
 #include CompositorRenderParameters
 #include VertexShader
@@ -35,5 +37,5 @@ fn fs_main(in: VertexOut) -> @location(0) vec4f {
         pixel_colour = textureLoad(_texture, vec2u(current_pixel_indices), 0);
     }
 
-    return pixel_colour;
+    return grade_vec4(pixel_colour, _viewer_grade);
 }

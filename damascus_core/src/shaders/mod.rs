@@ -31,16 +31,15 @@ pub enum Includes {
     RayMarcherRenderParameters,
     SceneSDFs,
     Texture,
-    VertexShader,
 }
 
 impl Includes {
     fn source(&self) -> &str {
         match *self {
-            Self::AOVs => include_str!("./wgsl/renderers/ray_marcher/aovs.wgsl"),
+            Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
             Self::CompositorRenderParameters => {
-                include_str!("./wgsl/renderers/compositor/compositor_render_parameters.wgsl")
+                include_str!("./wgsl/pipelines/compositor/compositor_render_parameters.wgsl")
             }
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
@@ -53,11 +52,10 @@ impl Includes {
             Self::Random => include_str!("./wgsl/utils/random.wgsl"),
             Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
             Self::RayMarcherRenderParameters => {
-                include_str!("./wgsl/renderers/ray_marcher/ray_marcher_render_parameters.wgsl")
+                include_str!("./wgsl/pipelines/ray_marcher/ray_marcher_render_parameters.wgsl")
             }
             Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
             Self::Texture => include_str!("./wgsl/textures/texture.wgsl"),
-            Self::VertexShader => include_str!("./wgsl/renderers/vertex_shader.wgsl"),
         }
     }
 }

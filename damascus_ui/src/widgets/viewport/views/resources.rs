@@ -10,6 +10,7 @@ pub trait BindingResource {
     fn as_resource(&self) -> wgpu::BindingResource<'_>;
 }
 
+#[derive(Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
     pub visibility: wgpu::ShaderStages,
@@ -21,6 +22,7 @@ impl BindingResource for Buffer {
     }
 }
 
+#[derive(Clone)]
 pub struct TextureView {
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
@@ -36,6 +38,7 @@ impl BindingResource for TextureView {
     }
 }
 
+#[derive(Clone)]
 pub struct StorageTextureView {
     pub texture_view: wgpu::TextureView,
     pub visibility: wgpu::ShaderStages,
@@ -50,6 +53,7 @@ impl BindingResource for StorageTextureView {
     }
 }
 
+#[derive(Clone)]
 pub struct BufferBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -64,6 +68,7 @@ impl BufferBindGroup {
     }
 }
 
+#[derive(Clone)]
 pub struct TextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -92,21 +97,22 @@ impl TextureViewBindGroup {
     }
 }
 
+#[derive(Clone)]
 pub struct StorageTextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub storage_texture_views: Vec<StorageTextureView>,
 }
 
-pub struct RenderResource {
-    pub render_pipeline: Option<wgpu::RenderPipeline>,
+#[derive(Clone)]
+pub struct BindGroups {
     pub uniform_bind_group: Option<BufferBindGroup>,
     pub storage_bind_group: Option<BufferBindGroup>,
     pub texture_bind_group: Option<TextureViewBindGroup>,
     pub storage_texture_bind_group: Option<StorageTextureViewBindGroup>,
 }
 
-impl RenderResource {
+impl BindGroups {
     pub fn bind_group_layouts(&self) -> Vec<&wgpu::BindGroupLayout> {
         let mut bind_group_layouts: Vec<&wgpu::BindGroupLayout> = vec![];
         if let Some(uniform_bind_group) = &self.uniform_bind_group {
@@ -123,6 +129,31 @@ impl RenderResource {
         }
         bind_group_layouts
     }
+
+    pub fn set_bind_groups(&self, render_pass: &mut wgpu::RenderPass<'_>) {
+        let mut bind_group: u32 = 0;
+        if let Some(uniform_bind_group) = &self.uniform_bind_group {
+            render_pass.set_bind_group(bind_group, &uniform_bind_group.bind_group, &[]);
+            bind_group += 1
+        }
+        if let Some(storage_bind_group) = &self.storage_bind_group {
+            render_pass.set_bind_group(bind_group, &storage_bind_group.bind_group, &[]);
+            bind_group += 1
+        }
+        if let Some(texture_bind_group) = &self.texture_bind_group {
+            render_pass.set_bind_group(bind_group, &texture_bind_group.bind_group, &[]);
+            bind_group += 1
+        }
+        if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
+            render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct RenderResource {
+    pub render_pipeline: wgpu::RenderPipeline,
+    pub bind_groups: BindGroups,
 }
 
 pub struct RenderResources {
@@ -135,6 +166,13 @@ pub struct BufferData<'a> {
 }
 
 impl RenderResources {
+    pub fn bind_groups(&self) -> Vec<BindGroups> {
+        self.resources
+            .iter()
+            .map(|resource| resource.bind_groups.clone())
+            .collect()
+    }
+
     pub fn prepare(
         &self,
         _device: &wgpu::Device,
@@ -142,13 +180,13 @@ impl RenderResources {
         buffer_data: Vec<BufferData<'_>>,
     ) {
         for (resource, data) in self.resources.iter().zip(buffer_data) {
-            if let Some(uniform_bind_group) = &resource.uniform_bind_group {
+            if let Some(uniform_bind_group) = &resource.bind_groups.uniform_bind_group {
                 uniform_bind_group.write(queue, data.uniform);
             }
-            if let Some(storage_bind_group) = &resource.storage_bind_group {
+            if let Some(storage_bind_group) = &resource.bind_groups.storage_bind_group {
                 storage_bind_group.write(queue, data.storage);
             }
-            if let Some(texture_bind_group) = &resource.texture_bind_group {
+            if let Some(texture_bind_group) = &resource.bind_groups.texture_bind_group {
                 texture_bind_group.write(queue);
             }
         }
@@ -157,26 +195,9 @@ impl RenderResources {
 
     pub fn paint(&self, render_pass: &mut wgpu::RenderPass<'_>) {
         for resource in self.resources.iter() {
-            if let Some(render_pipeline) = &resource.render_pipeline {
-                render_pass.set_pipeline(&render_pipeline);
-            }
+            render_pass.set_pipeline(&resource.render_pipeline);
 
-            let mut bind_group: u32 = 0;
-            if let Some(uniform_bind_group) = &resource.uniform_bind_group {
-                render_pass.set_bind_group(bind_group, &uniform_bind_group.bind_group, &[]);
-                bind_group += 1
-            }
-            if let Some(storage_bind_group) = &resource.storage_bind_group {
-                render_pass.set_bind_group(bind_group, &storage_bind_group.bind_group, &[]);
-                bind_group += 1
-            }
-            if let Some(texture_bind_group) = &resource.texture_bind_group {
-                render_pass.set_bind_group(bind_group, &texture_bind_group.bind_group, &[]);
-                bind_group += 1
-            }
-            if let Some(storage_texture_bind_group) = &resource.storage_texture_bind_group {
-                render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);
-            }
+            resource.bind_groups.set_bind_groups(render_pass);
 
             render_pass.draw(0..4, 0..1);
         }

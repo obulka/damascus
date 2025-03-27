@@ -10,15 +10,20 @@ const TEXTURE_BIND_GROUP: u32 = 1u;
 #include Random
 #include Texture
 #include CompositorRenderParameters
-#include VertexShader
 
 
 @group(TEXTURE_BIND_GROUP) @binding(0)
 var _texture: texture_2d<f32>;
 
 
+struct FragmentInput {
+    @location(0) uv_coordinate: vec4f,
+    @builtin(position) frag_coordinate: vec4f, // pixel centers
+}
+
+
 @fragment
-fn fs_main(in: VertexOut) -> @location(0) vec4f {
+fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     // Use the UV coordinates and resolution to get texture coordinates
     var texture_dimensions: vec2u = textureDimensions(_texture);
     var current_pixel_indices: vec2f = uv_to_screen(

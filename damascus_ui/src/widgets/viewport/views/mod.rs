@@ -3,6 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use itertools::izip;
 use std::{borrow::Cow, collections::HashSet};
 
 use crevice::std430::AsStd430;
@@ -29,8 +30,8 @@ pub mod resources;
 pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
 use resources::{
-    BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources, StorageTextureView,
-    StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
+    BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources,
+    StorageTextureView, StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
 };
 
 pub trait View<
@@ -82,123 +83,159 @@ pub trait View<
         true
     }
 
-    fn get_shader(&self) -> String;
+    fn fragment_shaders(&self) -> Vec<String> {
+        vec![]
+    }
 
-    fn create_render_pipeline(
+    fn vertex_shaders(&self) -> Vec<String> {
+        vec![]
+    }
+
+    fn create_render_pipelines(
         &self,
         device: &wgpu::Device,
         texture_format: wgpu::TextureFormat,
-        bind_group_layouts: Vec<&wgpu::BindGroupLayout>,
-    ) -> wgpu::RenderPipeline {
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("pipeline layout"),
-            bind_group_layouts: &bind_group_layouts,
-            push_constant_ranges: &[],
-        });
+        bind_groups: &Vec<BindGroups>,
+    ) -> Vec<wgpu::RenderPipeline> {
+        izip!(bind_groups, self.vertex_shaders(), self.fragment_shaders())
+            .map(
+                |(bind_group, vertex_shader_source, fragment_shader_source)| {
+                    let pipeline_layout: wgpu::PipelineLayout =
+                        device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                            label: Some("pipeline layout"),
+                            bind_group_layouts: &bind_group.bind_group_layouts(),
+                            push_constant_ranges: &[],
+                        });
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("source shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.get_shader())).into(),
-        });
+                    let vertex_shader: wgpu::ShaderModule =
+                        device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                            label: Some("vertex shader"),
+                            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&vertex_shader_source))
+                                .into(),
+                        });
 
-        device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("render pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &shader,
-                entry_point: Some("vs_main"),
-                buffers: &[],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &shader,
-                entry_point: Some("fs_main"),
-                targets: &[Some(texture_format.into())],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleStrip,
-                ..wgpu::PrimitiveState::default()
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
-            multiview: None,
-            cache: None,
-        })
+                    let fragment_shader: wgpu::ShaderModule =
+                        device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                            label: Some("fragment shader"),
+                            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
+                                &fragment_shader_source,
+                            ))
+                            .into(),
+                        });
+
+                    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                        label: Some("render pipeline"),
+                        layout: Some(&pipeline_layout),
+                        vertex: wgpu::VertexState {
+                            module: &vertex_shader,
+                            entry_point: Some("vs_main"),
+                            buffers: &[],
+                            compilation_options: wgpu::PipelineCompilationOptions::default(),
+                        },
+                        fragment: Some(wgpu::FragmentState {
+                            module: &fragment_shader,
+                            entry_point: Some("fs_main"),
+                            targets: &[Some(texture_format.into())],
+                            compilation_options: wgpu::PipelineCompilationOptions::default(),
+                        }),
+                        primitive: wgpu::PrimitiveState {
+                            topology: wgpu::PrimitiveTopology::TriangleStrip,
+                            ..wgpu::PrimitiveState::default()
+                        },
+                        depth_stencil: None,
+                        multisample: wgpu::MultisampleState::default(),
+                        multiview: None,
+                        cache: None,
+                    })
+                },
+            )
+            .collect()
     }
 
     fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
         let device = &render_state.device;
 
-        let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device, &settings);
-        let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device, &settings);
-        let texture_views: Vec<TextureView> = self.create_texture_views(device);
-        let storage_texture_views: Vec<StorageTextureView> =
+        let uniform_buffers: Vec<Vec<Buffer>> = self.create_uniform_buffers(device, &settings);
+        let storage_buffers: Vec<Vec<Buffer>> = self.create_storage_buffers(device, &settings);
+        let texture_views: Vec<Vec<TextureView>> = self.create_texture_views(device);
+        let storage_texture_views: Vec<Vec<StorageTextureView>> =
             self.create_storage_texture_views(device);
 
-        let mut uniform_bind_group: Option<BufferBindGroup> = None;
-        if !uniform_buffers.is_empty() {
-            let (bind_group_layout, bind_group) =
-                Self::create_uniform_binding(device, &uniform_buffers);
-            uniform_bind_group = Some(BufferBindGroup {
-                bind_group: bind_group,
-                bind_group_layout: bind_group_layout,
-                buffers: uniform_buffers,
-            });
-        }
+        let bind_groups: Vec<BindGroups> = izip!(
+            uniform_buffers,
+            storage_buffers,
+            texture_views,
+            storage_texture_views,
+        )
+        .map(
+            |(uniform_buffers, storage_buffers, texture_views, storage_texture_views)| {
+                let mut uniform_bind_group: Option<BufferBindGroup> = None;
+                if !uniform_buffers.is_empty() {
+                    let (bind_group_layout, bind_group) =
+                        Self::create_uniform_binding(device, &uniform_buffers);
+                    uniform_bind_group = Some(BufferBindGroup {
+                        bind_group: bind_group,
+                        bind_group_layout: bind_group_layout,
+                        buffers: uniform_buffers,
+                    });
+                }
 
-        let mut storage_bind_group: Option<BufferBindGroup> = None;
-        if !storage_buffers.is_empty() {
-            let (bind_group_layout, bind_group) =
-                Self::create_storage_binding(device, &storage_buffers);
-            storage_bind_group = Some(BufferBindGroup {
-                bind_group: bind_group,
-                bind_group_layout: bind_group_layout,
-                buffers: storage_buffers,
-            });
-        }
+                let mut storage_bind_group: Option<BufferBindGroup> = None;
+                if !storage_buffers.is_empty() {
+                    let (bind_group_layout, bind_group) =
+                        Self::create_storage_binding(device, &storage_buffers);
+                    storage_bind_group = Some(BufferBindGroup {
+                        bind_group: bind_group,
+                        bind_group_layout: bind_group_layout,
+                        buffers: storage_buffers,
+                    });
+                }
 
-        let mut texture_bind_group: Option<TextureViewBindGroup> = None;
-        if !texture_views.is_empty() {
-            let (bind_group_layout, bind_group) =
-                Self::create_texture_binding(device, &texture_views);
+                let mut texture_bind_group: Option<TextureViewBindGroup> = None;
+                if !texture_views.is_empty() {
+                    let (bind_group_layout, bind_group) =
+                        Self::create_texture_binding(device, &texture_views);
 
-            texture_bind_group = Some(TextureViewBindGroup {
-                bind_group: bind_group,
-                bind_group_layout: bind_group_layout,
-                texture_views: texture_views,
-            });
-        }
+                    texture_bind_group = Some(TextureViewBindGroup {
+                        bind_group: bind_group,
+                        bind_group_layout: bind_group_layout,
+                        texture_views: texture_views,
+                    });
+                }
 
-        let mut storage_texture_bind_group: Option<StorageTextureViewBindGroup> = None;
-        if !storage_texture_views.is_empty() {
-            let (bind_group_layout, bind_group) =
-                Self::create_storage_texture_binding(device, &storage_texture_views);
+                let mut storage_texture_bind_group: Option<StorageTextureViewBindGroup> = None;
+                if !storage_texture_views.is_empty() {
+                    let (bind_group_layout, bind_group) =
+                        Self::create_storage_texture_binding(device, &storage_texture_views);
 
-            storage_texture_bind_group = Some(StorageTextureViewBindGroup {
-                bind_group: bind_group,
-                bind_group_layout: bind_group_layout,
-                storage_texture_views: storage_texture_views,
-            });
-        }
+                    storage_texture_bind_group = Some(StorageTextureViewBindGroup {
+                        bind_group: bind_group,
+                        bind_group_layout: bind_group_layout,
+                        storage_texture_views: storage_texture_views,
+                    });
+                }
 
-        let mut render_resources = RenderResources {
-            resources: vec![RenderResource {
-                render_pipeline: None,
-                uniform_bind_group: uniform_bind_group,
-                storage_bind_group: storage_bind_group,
-                texture_bind_group: texture_bind_group,
-                storage_texture_bind_group: storage_texture_bind_group,
-            }],
+                BindGroups {
+                    uniform_bind_group,
+                    storage_bind_group,
+                    texture_bind_group,
+                    storage_texture_bind_group,
+                }
+            },
+        )
+        .collect();
+
+        let render_pipelines: Vec<wgpu::RenderPipeline> =
+            self.create_render_pipelines(device, render_state.target_format, &bind_groups);
+
+        let render_resources = RenderResources {
+            resources: izip!(bind_groups, render_pipelines)
+                .map(|(bind_groups, render_pipeline)| RenderResource {
+                    render_pipeline,
+                    bind_groups,
+                })
+                .collect(),
         };
-
-        for resource in render_resources.resources.iter_mut() {
-            resource.render_pipeline = Some(self.create_render_pipeline(
-                device,
-                render_state.target_format,
-                resource.bind_group_layouts(),
-            ));
-        }
 
         render_state
             .renderer
@@ -236,13 +273,17 @@ pub trait View<
 
             let device = &render_state.device;
 
+            let render_pipelines: Vec<wgpu::RenderPipeline> = self.create_render_pipelines(
+                device,
+                render_state.target_format,
+                &render_resources.bind_groups(),
+            );
+
             // Create the updated pipeline
-            for resource in render_resources.resources.iter_mut() {
-                resource.render_pipeline = Some(self.create_render_pipeline(
-                    device,
-                    render_state.target_format,
-                    resource.bind_group_layouts(),
-                ));
+            for (resource, render_pipeline) in
+                render_resources.resources.iter_mut().zip(render_pipelines)
+            {
+                resource.render_pipeline = render_pipeline;
             }
         }
     }
@@ -264,19 +305,19 @@ pub trait View<
         false
     }
 
-    fn create_uniform_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Buffer> {
+    fn create_uniform_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
         vec![]
     }
 
-    fn create_storage_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Buffer> {
+    fn create_storage_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
         vec![]
     }
 
-    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
+    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<Vec<TextureView>> {
         vec![]
     }
 
-    fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<StorageTextureView> {
+    fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<Vec<StorageTextureView>> {
         vec![]
     }
 

@@ -28,7 +28,6 @@ const STORAGE_TEXTURE_BIND_GROUP: u32 = 2u;
 #include Lights
 #include Camera
 #include AOVs
-#include VertexShader
 
 
 /**
@@ -272,8 +271,14 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
 var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
 
 
+struct FragmentInput {
+    @location(0) uv_coordinate: vec4f,
+    @builtin(position) frag_coordinate: vec4f, // pixel centers
+}
+
+
 @fragment
-fn fs_main(in: VertexOut) -> @location(0) vec4f {
+fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     // Use the UV coordinates and resolution to get texture coordinates
     var current_pixel_indices: vec2f = uv_to_screen(
         in.uv_coordinate.xy,

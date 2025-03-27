@@ -30,11 +30,20 @@ pub enum CompositorPreprocessorDirectives {}
 
 impl PreprocessorDirectives for CompositorPreprocessorDirectives {}
 
-pub fn compositor_shader(
+pub fn compositor_vertex_shader(
     preprocessor_directives: &HashSet<CompositorPreprocessorDirectives>,
 ) -> String {
     process_shader_source(
-        include_str!("./wgsl/renderers/compositor/compositor.wgsl"),
+        include_str!("./wgsl/pipelines/compositor/vertex_shader.wgsl"),
+        preprocessor_directives,
+    )
+}
+
+pub fn compositor_fragment_shader(
+    preprocessor_directives: &HashSet<CompositorPreprocessorDirectives>,
+) -> String {
+    process_shader_source(
+        include_str!("./wgsl/pipelines/compositor/fragment_shader.wgsl"),
         preprocessor_directives,
     )
 }

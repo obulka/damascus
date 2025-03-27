@@ -34,7 +34,7 @@ use damascus_core::{
 };
 
 use super::{
-    resources::{Buffer, BufferData, StorageTextureView},
+    resources::{Buffer, BufferData, StorageTextureView, TextureView},
     settings::RayMarcherViewSettings,
     RenderResources, View,
 };
@@ -170,16 +170,24 @@ impl
         &mut self.preprocessor_directives
     }
 
-    fn get_shader(&self) -> String {
-        shaders::ray_marcher::ray_march_shader(self.current_preprocessor_directives())
+    fn fragment_shaders(&self) -> Vec<String> {
+        vec![shaders::ray_marcher::ray_marcher_fragment_shader(
+            self.current_preprocessor_directives(),
+        )]
+    }
+
+    fn vertex_shaders(&self) -> Vec<String> {
+        vec![shaders::ray_marcher::ray_marcher_vertex_shader(
+            self.current_preprocessor_directives(),
+        )]
     }
 
     fn create_uniform_buffers(
         &self,
         device: &wgpu::Device,
         settings: &RayMarcherViewSettings,
-    ) -> Vec<Buffer> {
-        vec![
+    ) -> Vec<Vec<Buffer>> {
+        vec![vec![
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher render parameter buffer"),
@@ -219,14 +227,14 @@ impl
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
             },
-        ]
+        ]]
     }
 
     fn create_storage_buffers(
         &self,
         device: &wgpu::Device,
         settings: &RayMarcherViewSettings,
-    ) -> Vec<Buffer> {
+    ) -> Vec<Vec<Buffer>> {
         let primitives: Vec<Std430GPUPrimitive> = self
             .renderer
             .scene
@@ -237,7 +245,7 @@ impl
             .renderer
             .scene
             .emissive_primitive_indices(settings.max_primitives);
-        vec![
+        vec![vec![
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher primitives buffer"),
@@ -293,10 +301,10 @@ impl
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-        ]
+        ]]
     }
 
-    fn create_storage_texture_views(&self, device: &wgpu::Device) -> Vec<StorageTextureView> {
+    fn create_storage_texture_views(&self, device: &wgpu::Device) -> Vec<Vec<StorageTextureView>> {
         let texture_descriptor = wgpu::TextureDescriptor {
             size: wgpu::Extent3d {
                 width: MAX_TEXTURE_DIMENSION,
@@ -312,7 +320,7 @@ impl
             view_formats: &[],
         };
 
-        vec![StorageTextureView {
+        vec![vec![StorageTextureView {
             texture_view: device
                 .create_texture(&texture_descriptor)
                 .create_view(&Default::default()),
@@ -320,7 +328,11 @@ impl
             access: wgpu::StorageTextureAccess::ReadWrite,
             format: texture_descriptor.format,
             view_dimension: wgpu::TextureViewDimension::D2,
-        }]
+        }]]
+    }
+
+    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<Vec<TextureView>> {
+        vec![vec![]]
     }
 
     fn disable(&mut self) {

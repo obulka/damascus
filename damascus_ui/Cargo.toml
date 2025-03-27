@@ -18,6 +18,7 @@ egui_node_graph = { git = "https://github.com/obulka/egui_node_graph.git", featu
 #egui_node_graph = { path = "../../egui_node_graph/egui_node_graph", features = ["persistence"] }
 glam = { version = "0.30", features = ["serde"] }
 indoc = "2"
+itertools = "0.14"
 serde = "1.0"
 serde-hashkey = { version = "0.4.5", features = ["ordered-float"] }
 serde_json = "1.0"

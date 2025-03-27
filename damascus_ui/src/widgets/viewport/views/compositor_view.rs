@@ -33,7 +33,7 @@ use damascus_core::{
 };
 
 use super::{
-    resources::{Buffer, BufferData, TextureView},
+    resources::{Buffer, BufferData, StorageTextureView, TextureView},
     settings::CompositorViewSettings,
     RenderResources, View,
 };
@@ -51,7 +51,7 @@ impl egui_wgpu::CallbackTrait for CompositorViewCallback {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        encoder: &mut wgpu::CommandEncoder,
+        _encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
@@ -157,16 +157,24 @@ impl
         &mut self.preprocessor_directives
     }
 
-    fn get_shader(&self) -> String {
-        shaders::compositor::compositor_shader(self.current_preprocessor_directives())
+    fn fragment_shaders(&self) -> Vec<String> {
+        vec![shaders::compositor::compositor_fragment_shader(
+            self.current_preprocessor_directives(),
+        )]
+    }
+
+    fn vertex_shaders(&self) -> Vec<String> {
+        vec![shaders::compositor::compositor_vertex_shader(
+            self.current_preprocessor_directives(),
+        )]
     }
 
     fn create_uniform_buffers(
         &self,
         device: &wgpu::Device,
         settings: &CompositorViewSettings,
-    ) -> Vec<Buffer> {
-        vec![
+    ) -> Vec<Vec<Buffer>> {
+        vec![vec![
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("compositor render parameter buffer"),
@@ -191,10 +199,10 @@ impl
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-        ]
+        ]]
     }
 
-    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<Vec<TextureView>> {
         let mut width: u32 = 10;
         let mut height: u32 = 10;
         let mut texture_data = Rgba32FImage::new(width, height);
@@ -222,16 +230,27 @@ impl
         };
         let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
         let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
-        vec![TextureView {
+        vec![vec![TextureView {
             texture: texture,
             texture_view: texture_view,
             texture_data: texture_data,
             visibility: wgpu::ShaderStages::FRAGMENT,
             view_dimension: wgpu::TextureViewDimension::D2,
             size: size,
-        }]
+        }]]
     }
 
+    fn create_storage_buffers(
+        &self,
+        _device: &wgpu::Device,
+        _settings: &CompositorViewSettings,
+    ) -> Vec<Vec<Buffer>> {
+        vec![vec![]]
+    }
+
+    fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<Vec<StorageTextureView>> {
+        vec![vec![]]
+    }
     fn disable(&mut self) {
         self.pause();
         self.disabled = true;
@@ -263,7 +282,7 @@ impl
 
     fn show_top_bar(
         &mut self,
-        render_state: &egui_wgpu::RenderState,
+        _render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
         settings: &mut CompositorViewSettings,
     ) -> bool {

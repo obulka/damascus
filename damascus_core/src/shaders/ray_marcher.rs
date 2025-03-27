@@ -91,11 +91,20 @@ pub enum RayMarcherPreprocessorDirectives {
 
 impl PreprocessorDirectives for RayMarcherPreprocessorDirectives {}
 
-pub fn ray_march_shader(
+pub fn ray_marcher_vertex_shader(
     preprocessor_directives: &HashSet<RayMarcherPreprocessorDirectives>,
 ) -> String {
     process_shader_source(
-        include_str!("./wgsl/renderers/ray_marcher/ray_marcher.wgsl"),
+        include_str!("./wgsl/pipelines/compositor/vertex_shader.wgsl"),
+        preprocessor_directives,
+    )
+}
+
+pub fn ray_marcher_fragment_shader(
+    preprocessor_directives: &HashSet<RayMarcherPreprocessorDirectives>,
+) -> String {
+    process_shader_source(
+        include_str!("./wgsl/pipelines/ray_marcher/fragment_shader.wgsl"),
         preprocessor_directives,
     )
 }

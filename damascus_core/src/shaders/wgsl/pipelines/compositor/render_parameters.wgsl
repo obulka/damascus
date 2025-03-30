@@ -29,3 +29,6 @@ var<uniform> _render_state: RenderState;
 
 @group(UNIFORM_BIND_GROUP) @binding(2)
 var<uniform> _viewer_grade: Grade;
+
+@group(TEXTURE_BIND_GROUP) @binding(0)
+var _texture: texture_2d<f32>;

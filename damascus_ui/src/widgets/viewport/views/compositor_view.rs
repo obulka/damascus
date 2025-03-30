@@ -7,7 +7,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, time::SystemTime};
+use std::{collections::HashSet, ops::BitOr, time::SystemTime};
 
 use eframe::{
     egui,
@@ -189,7 +189,7 @@ impl
                     contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
-                visibility: wgpu::ShaderStages::FRAGMENT,
+                visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
             },
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -234,7 +234,7 @@ impl
             texture: texture,
             texture_view: texture_view,
             texture_data: texture_data,
-            visibility: wgpu::ShaderStages::FRAGMENT,
+            visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
             view_dimension: wgpu::TextureViewDimension::D2,
             size: size,
         }]]
@@ -403,8 +403,10 @@ impl CompositorView {
                 let cursor_pos_egui: egui::Vec2 = ui.ctx().input(|i| {
                     i.pointer.hover_pos().unwrap_or(rect.size().to_pos2() * 0.5) - rect.min
                 });
-                let cursor_pos =
-                    glam::Vec2::new(cursor_pos_egui.x, rect.height() - cursor_pos_egui.y);
+                let cursor_pos = glam::Vec2::new(
+                    cursor_pos_egui.x - rect.width() * 0.5,
+                    rect.height() * 0.5 - cursor_pos_egui.y,
+                );
 
                 let hovered_image_pixel_before: glam::Vec2 =
                     cursor_pos * self.render_state.zoom - self.render_state.pan;

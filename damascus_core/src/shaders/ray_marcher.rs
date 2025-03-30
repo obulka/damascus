@@ -95,7 +95,7 @@ pub fn ray_marcher_vertex_shader(
     preprocessor_directives: &HashSet<RayMarcherPreprocessorDirectives>,
 ) -> String {
     process_shader_source(
-        include_str!("./wgsl/pipelines/compositor/vertex_shader.wgsl"),
+        include_str!("./wgsl/pipelines/ray_marcher/vertex_shader.wgsl"),
         preprocessor_directives,
     )
 }

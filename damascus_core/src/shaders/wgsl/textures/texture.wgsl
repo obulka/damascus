@@ -5,6 +5,7 @@
 
 const INVERT: u32 = 1u;
 
+
 /**
  * Convert location of a pixel in screen/image space from uvs.
  *
@@ -14,8 +15,22 @@ const INVERT: u32 = 1u;
  * @returns: The pixel indices.
  */
 fn uv_to_screen(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return (pixel_coordinates + 1.) * resolution / 2.;
+    return (pixel_coordinates + 1.) * resolution * 0.5;
 }
+
+
+/**
+ * Convert location of a pixel in screen/image space from uvs.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+fn screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
+    return pixel_coordinates * 2. / resolution - 1.;
+}
+
 
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(

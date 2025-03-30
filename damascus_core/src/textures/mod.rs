@@ -5,7 +5,57 @@
 
 use crevice::std430::AsStd430;
 
+use glam;
+
 use crate::DualDevice;
+
+/**
+ * Convert location of a pixel in screen/image space from uvs.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+pub fn uv_to_screen(pixel_coordinates: glam::Vec2, resolution: glam::Vec2) -> glam::Vec2 {
+    return (pixel_coordinates + glam::Vec2::ONE) * resolution * 0.5;
+}
+
+/**
+ * Convert location of a pixel in screen/image space from uvs.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+pub fn screen_to_uv(pixel_coordinates: glam::Vec2, resolution: glam::Vec2) -> glam::Vec2 {
+    return scale_screen_to_uv(pixel_coordinates, resolution) - glam::Vec2::ONE;
+}
+
+/**
+ * Convert location of a pixel in screen/image space from uvs.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+pub fn scale_uv_to_screen(pixel_coordinates: glam::Vec2, resolution: glam::Vec2) -> glam::Vec2 {
+    return pixel_coordinates * resolution * 0.5;
+}
+
+/**
+ * Convert location of a pixel in screen/image space from uvs.
+ *
+ * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
+ * @arg resolution: The image width, and height.
+ *
+ * @returns: The pixel indices.
+ */
+pub fn scale_screen_to_uv(pixel_coordinates: glam::Vec2, resolution: glam::Vec2) -> glam::Vec2 {
+    return pixel_coordinates * 2. / resolution;
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

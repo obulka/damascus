@@ -32,6 +32,11 @@ fn screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
 }
 
 
+fn scale_screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
+    return pixel_coordinates * 2. / resolution;
+}
+
+
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(
         pow(

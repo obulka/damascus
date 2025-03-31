@@ -38,12 +38,11 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
         / (_render_state.resolution.y * texture_dimensions.x);
 
     out.ndc_coordinate = vec4(
-        screen_to_uv(
-            uv_to_screen(
-                texture_uv,
+        (
+            scale_screen_to_uv(
+                _render_state.pan,
                 _render_state.resolution,
-            ) + _render_state.pan,
-            _render_state.resolution,
+            ) + texture_uv
         ) / _render_state.zoom,
         0.,
         1.,

@@ -327,8 +327,6 @@ impl
             return None;
         }
 
-        // ui.ctx().request_repaint();
-
         if ui.ctx().memory(|memory| memory.focused().is_none())
             && ui.input(|input| input.key_pressed(egui::Key::Space))
         {
@@ -392,7 +390,6 @@ impl CompositorView {
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        let _aspect_ratio = rect.width() / rect.height();
         if !self.camera_controls_enabled {
             return;
         }

@@ -15,7 +15,7 @@ const INVERT: u32 = 1u;
  * @returns: The pixel indices.
  */
 fn uv_to_screen(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return (pixel_coordinates + 1.) * resolution * 0.5;
+    return (pixel_coordinates + 1.) * (resolution - 1.) * 0.5;
 }
 
 
@@ -28,7 +28,7 @@ fn uv_to_screen(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
  * @returns: The pixel indices.
  */
 fn screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return pixel_coordinates * 2. / resolution - 1.;
+    return pixel_coordinates * 2. / (resolution - 1.) - 1.;
 }
 
 

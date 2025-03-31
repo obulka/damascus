@@ -171,10 +171,10 @@ pub trait View<
     fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
         let device = &render_state.device;
 
-        let vertex_buffers: Vec<Vec<Buffer>> = self.create_vertex_buffers(device, &settings);
         let uniform_buffers: Vec<Vec<Buffer>> = self.create_uniform_buffers(device, &settings);
         let storage_buffers: Vec<Vec<Buffer>> = self.create_storage_buffers(device, &settings);
         let texture_views: Vec<Vec<TextureView>> = self.create_texture_views(device);
+        let vertex_buffers: Vec<Vec<Buffer>> = self.create_vertex_buffers(device, &settings);
         let storage_texture_views: Vec<Vec<StorageTextureView>> =
             self.create_storage_texture_views(device);
 
@@ -325,7 +325,7 @@ pub trait View<
         false
     }
 
-    fn create_vertex_buffers(&self, device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
+    fn create_vertex_buffers(&mut self, device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
         let mut vertices = Vec::<Vec<Buffer>>::new();
         for vertex in self.vertices().iter() {
             vertices.push(vec![Buffer {

@@ -86,6 +86,7 @@ pub struct CompositorView {
     pub frames_to_update_fps: u32,
     pub stats_text: String,
     disabled: bool,
+    vertices: Vec<Vec<Vertex>>,
     camera_controls_enabled: bool,
     render_state: CompositorRenderState,
     recompile_hash: Key<OrderedFloatPolicy>,
@@ -100,6 +101,12 @@ impl Default for CompositorView {
             frames_to_update_fps: 10,
             stats_text: String::new(),
             disabled: true,
+            vertices: vec![vec![
+                Vertex::new(1., 1.),
+                Vertex::new(-1., 1.),
+                Vertex::new(1., -1.),
+                Vertex::new(-1., -1.),
+            ]],
             camera_controls_enabled: true,
             render_state: CompositorRenderState::default(),
             recompile_hash: Key::<OrderedFloatPolicy>::Unit,
@@ -167,6 +174,13 @@ impl
         vec![shaders::compositor::compositor_vertex_shader(
             self.current_preprocessor_directives(),
         )]
+    }
+
+    fn vertices(&self) -> Vec<Vec<Std430GPUVertex>> {
+        self.vertices
+            .iter()
+            .map(|vertices| vertices.iter().map(|vertex| vertex.as_std430()).collect())
+            .collect()
     }
 
     fn create_uniform_buffers(

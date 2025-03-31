@@ -5,7 +5,7 @@
 
 
 struct VertexInput {
-    @location(0) vertex_coordinate: vec2f,
+    @location(0) uv_coordinate: vec2f,
 }
 
 
@@ -18,8 +18,8 @@ struct VertexOutput {
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {
     var out: VertexOutput;
-    out.ndc_coordinate = vec4(vertex_input.vertex_coordinate, 0., 1.);
-    out.uv_coordinate = vec4(vertex_input.vertex_coordinate, 0., 1.);
+    out.ndc_coordinate = vec4(vertex_input.uv_coordinate, 0., 1.);
+    out.uv_coordinate = vec4(vertex_input.uv_coordinate, 0., 1.);
 
     return out;
 }

@@ -61,3 +61,20 @@ pub enum Repetition {
     Finite,
     Infinite,
 }
+
+pub struct Quad {
+    pub corners: [glam::Vec3; 4],
+}
+
+impl Quad {
+    pub fn new(
+        corner_0: glam::Vec3,
+        corner_1: glam::Vec3,
+        corner_2: glam::Vec3,
+        corner_3: glam::Vec3,
+    ) -> Self {
+        Self {
+            corners: [corner_0, corner_1, corner_2, corner_3],
+        }
+    }
+}

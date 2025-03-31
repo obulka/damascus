@@ -9,14 +9,18 @@ use std::{borrow::Cow, collections::HashSet};
 use crevice::std430::AsStd430;
 use eframe::{
     egui,
-    egui_wgpu::{self, wgpu},
+    egui_wgpu::{
+        self,
+        wgpu::{self, util::DeviceExt},
+    },
     epaint,
 };
 
 use damascus_core::{
     renderers::Renderer,
     shaders::{CompilerSettings, PreprocessorDirectives},
-    Settings,
+    textures::{Std430GPUVertex, Vertex},
+    DualDevice, Settings,
 };
 
 use super::settings::{self, ViewportCompilerSettings, ViewportSettings};
@@ -91,70 +95,83 @@ pub trait View<
         vec![]
     }
 
+    fn vertices(&self) -> Vec<Vec<Std430GPUVertex>> {
+        vec![vec![
+            Vertex::new(1., 1.).as_std430(),
+            Vertex::new(-1., 1.).as_std430(),
+            Vertex::new(1., -1.).as_std430(),
+            Vertex::new(-1., -1.).as_std430(),
+        ]]
+    }
+
     fn create_render_pipelines(
         &self,
         device: &wgpu::Device,
         texture_format: wgpu::TextureFormat,
         bind_groups: &Vec<BindGroups>,
     ) -> Vec<wgpu::RenderPipeline> {
-        izip!(bind_groups, self.vertex_shaders(), self.fragment_shaders())
-            .map(
-                |(bind_group, vertex_shader_source, fragment_shader_source)| {
-                    let pipeline_layout: wgpu::PipelineLayout =
-                        device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                            label: Some("pipeline layout"),
-                            bind_group_layouts: &bind_group.bind_group_layouts(),
-                            push_constant_ranges: &[],
-                        });
+        izip!(
+            self.create_vertex_buffer_layouts(),
+            bind_groups,
+            self.vertex_shaders(),
+            self.fragment_shaders()
+        )
+        .map(
+            |(vertex_buffer_layouts, bind_group, vertex_shader_source, fragment_shader_source)| {
+                let pipeline_layout: wgpu::PipelineLayout =
+                    device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                        label: Some("pipeline layout"),
+                        bind_group_layouts: &bind_group.bind_group_layouts(),
+                        push_constant_ranges: &[],
+                    });
 
-                    let vertex_shader: wgpu::ShaderModule =
-                        device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                            label: Some("vertex shader"),
-                            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&vertex_shader_source))
-                                .into(),
-                        });
-
-                    let fragment_shader: wgpu::ShaderModule =
-                        device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                            label: Some("fragment shader"),
-                            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(
-                                &fragment_shader_source,
-                            ))
+                let vertex_shader: wgpu::ShaderModule =
+                    device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                        label: Some("vertex shader"),
+                        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&vertex_shader_source))
                             .into(),
-                        });
+                    });
 
-                    device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                        label: Some("render pipeline"),
-                        layout: Some(&pipeline_layout),
-                        vertex: wgpu::VertexState {
-                            module: &vertex_shader,
-                            entry_point: Some("vs_main"),
-                            buffers: &[],
-                            compilation_options: wgpu::PipelineCompilationOptions::default(),
-                        },
-                        fragment: Some(wgpu::FragmentState {
-                            module: &fragment_shader,
-                            entry_point: Some("fs_main"),
-                            targets: &[Some(texture_format.into())],
-                            compilation_options: wgpu::PipelineCompilationOptions::default(),
-                        }),
-                        primitive: wgpu::PrimitiveState {
-                            topology: wgpu::PrimitiveTopology::TriangleStrip,
-                            ..wgpu::PrimitiveState::default()
-                        },
-                        depth_stencil: None,
-                        multisample: wgpu::MultisampleState::default(),
-                        multiview: None,
-                        cache: None,
-                    })
-                },
-            )
-            .collect()
+                let fragment_shader: wgpu::ShaderModule =
+                    device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                        label: Some("fragment shader"),
+                        source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&fragment_shader_source))
+                            .into(),
+                    });
+
+                device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                    label: Some("render pipeline"),
+                    layout: Some(&pipeline_layout),
+                    vertex: wgpu::VertexState {
+                        module: &vertex_shader,
+                        entry_point: Some("vs_main"),
+                        buffers: &vertex_buffer_layouts,
+                        compilation_options: wgpu::PipelineCompilationOptions::default(),
+                    },
+                    fragment: Some(wgpu::FragmentState {
+                        module: &fragment_shader,
+                        entry_point: Some("fs_main"),
+                        targets: &[Some(texture_format.into())],
+                        compilation_options: wgpu::PipelineCompilationOptions::default(),
+                    }),
+                    primitive: wgpu::PrimitiveState {
+                        topology: wgpu::PrimitiveTopology::TriangleStrip,
+                        ..wgpu::PrimitiveState::default()
+                    },
+                    depth_stencil: None,
+                    multisample: wgpu::MultisampleState::default(),
+                    multiview: None,
+                    cache: None,
+                })
+            },
+        )
+        .collect()
     }
 
     fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
         let device = &render_state.device;
 
+        let vertex_buffers: Vec<Vec<Buffer>> = self.create_vertex_buffers(device, &settings);
         let uniform_buffers: Vec<Vec<Buffer>> = self.create_uniform_buffers(device, &settings);
         let storage_buffers: Vec<Vec<Buffer>> = self.create_storage_buffers(device, &settings);
         let texture_views: Vec<Vec<TextureView>> = self.create_texture_views(device);
@@ -229,11 +246,14 @@ pub trait View<
             self.create_render_pipelines(device, render_state.target_format, &bind_groups);
 
         let render_resources = RenderResources {
-            resources: izip!(bind_groups, render_pipelines)
-                .map(|(bind_groups, render_pipeline)| RenderResource {
-                    render_pipeline,
-                    bind_groups,
-                })
+            resources: izip!(vertex_buffers, bind_groups, render_pipelines)
+                .map(
+                    |(vertex_buffers, bind_groups, render_pipeline)| RenderResource {
+                        render_pipeline,
+                        vertex_buffers,
+                        bind_groups,
+                    },
+                )
                 .collect(),
         };
 
@@ -303,6 +323,29 @@ pub trait View<
             return true;
         }
         false
+    }
+
+    fn create_vertex_buffers(&self, device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
+        let mut vertices = Vec::<Vec<Buffer>>::new();
+        for vertex in self.vertices().iter() {
+            vertices.push(vec![Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("vertex buffer"),
+                    contents: bytemuck::cast_slice(vertex),
+                    usage: wgpu::BufferUsages::VERTEX,
+                }),
+                visibility: wgpu::ShaderStages::VERTEX,
+            }]);
+        }
+        vertices
+    }
+
+    fn create_vertex_buffer_layouts(&self) -> Vec<Vec<wgpu::VertexBufferLayout<'_>>> {
+        vec![vec![wgpu::VertexBufferLayout {
+            array_stride: std::mem::size_of::<Std430GPUVertex>() as wgpu::BufferAddress,
+            step_mode: wgpu::VertexStepMode::Vertex,
+            attributes: &wgpu::vertex_attr_array![0 => Float32x2],
+        }]]
     }
 
     fn create_uniform_buffers(&self, _device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, ops::BitOr, time::SystemTime};
+use std::{collections::HashSet, time::SystemTime};
 
 use eframe::{
     egui,
@@ -225,7 +225,7 @@ impl
                         .as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
-                visibility: wgpu::ShaderStages::FRAGMENT.bitor(wgpu::ShaderStages::VERTEX),
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
         ]]
     }

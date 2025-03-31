@@ -153,6 +153,7 @@ impl BindGroups {
 #[derive(Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
+    pub vertex_buffers: Vec<Buffer>,
     pub bind_groups: BindGroups,
 }
 
@@ -198,6 +199,10 @@ impl RenderResources {
             render_pass.set_pipeline(&resource.render_pipeline);
 
             resource.bind_groups.set_bind_groups(render_pass);
+
+            for (index, buffer) in resource.vertex_buffers.iter().enumerate() {
+                render_pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+            }
 
             render_pass.draw(0..4, 0..1);
         }

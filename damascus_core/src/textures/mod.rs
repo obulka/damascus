@@ -120,3 +120,39 @@ impl Default for Texture {
         }
     }
 }
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, AsStd430)]
+pub struct GPUVertex {
+    texture_coordinate: glam::Vec2,
+}
+
+#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct Vertex {
+    pub texture_coordinate: glam::Vec2,
+}
+
+impl Default for Vertex {
+    fn default() -> Self {
+        Self {
+            texture_coordinate: glam::Vec2::ZERO,
+        }
+    }
+}
+
+impl Vertex {
+    pub fn new(x: f32, y: f32) -> Self {
+        Self {
+            texture_coordinate: glam::Vec2::new(x, y),
+        }
+    }
+}
+
+impl DualDevice<GPUVertex, Std430GPUVertex> for Vertex {
+    fn to_gpu(&self) -> GPUVertex {
+        GPUVertex {
+            texture_coordinate: self.texture_coordinate,
+        }
+    }
+}

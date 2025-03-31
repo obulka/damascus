@@ -29,6 +29,7 @@ pub enum Includes {
     ProceduralTexture,
     Random,
     Ray,
+    RayMarcherConstants,
     RayMarcherRenderParameters,
     SceneSDFs,
     Texture,
@@ -55,6 +56,9 @@ impl Includes {
             Self::ProceduralTexture => include_str!("./wgsl/materials/procedural_texture.wgsl"),
             Self::Random => include_str!("./wgsl/utils/random.wgsl"),
             Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
+            Self::RayMarcherConstants => {
+                include_str!("./wgsl/pipelines/ray_marcher/constants.wgsl")
+            }
             Self::RayMarcherRenderParameters => {
                 include_str!("./wgsl/pipelines/ray_marcher/render_parameters.wgsl")
             }

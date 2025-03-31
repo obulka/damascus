@@ -10,10 +10,7 @@ use glam::{UVec2, Vec2};
 
 use super::Renderer;
 
-use crate::{
-    textures::{screen_to_uv, GPUGrade, Grade, Texture},
-    DualDevice,
-};
+use crate::{textures::Texture, DualDevice};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

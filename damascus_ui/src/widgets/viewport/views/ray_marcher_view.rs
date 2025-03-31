@@ -55,15 +55,14 @@ struct RayMarcherViewCallback {
 impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
     fn prepare(
         &self,
-        device: &wgpu::Device,
+        _device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
         _encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
-        resources.prepare(
-            device,
+        resources.write_bind_groups(
             queue,
             vec![BufferData {
                 uniform: vec![

@@ -28,7 +28,7 @@ use damascus_core::{
         self,
         compositor::{CompositorCompilerSettings, CompositorPreprocessorDirectives},
     },
-    textures::{Std430GPUVertex, Texture, Vertex},
+    textures::Texture,
     DualDevice,
 };
 
@@ -48,15 +48,14 @@ struct CompositorViewCallback {
 impl egui_wgpu::CallbackTrait for CompositorViewCallback {
     fn prepare(
         &self,
-        device: &wgpu::Device,
+        _device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
         _encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
-        resources.prepare(
-            device,
+        resources.write_bind_groups(
             queue,
             vec![BufferData {
                 uniform: vec![
@@ -86,7 +85,6 @@ pub struct CompositorView {
     pub frames_to_update_fps: u32,
     pub stats_text: String,
     disabled: bool,
-    vertices: Vec<Vec<Vertex>>,
     camera_controls_enabled: bool,
     render_state: CompositorRenderState,
     recompile_hash: Key<OrderedFloatPolicy>,
@@ -101,12 +99,6 @@ impl Default for CompositorView {
             frames_to_update_fps: 10,
             stats_text: String::new(),
             disabled: true,
-            vertices: vec![vec![
-                Vertex::new(1., 1.),
-                Vertex::new(-1., 1.),
-                Vertex::new(1., -1.),
-                Vertex::new(-1., -1.),
-            ]],
             camera_controls_enabled: true,
             render_state: CompositorRenderState::default(),
             recompile_hash: Key::<OrderedFloatPolicy>::Unit,
@@ -176,13 +168,6 @@ impl
         )]
     }
 
-    fn vertices(&self) -> Vec<Vec<Std430GPUVertex>> {
-        self.vertices
-            .iter()
-            .map(|vertices| vertices.iter().map(|vertex| vertex.as_std430()).collect())
-            .collect()
-    }
-
     fn create_uniform_buffers(
         &self,
         device: &wgpu::Device,
@@ -238,7 +223,10 @@ impl
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+            usage: wgpu::TextureUsages::COPY_DST
+                | wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::TEXTURE_BINDING,
             label: Some("compositor texture"),
             view_formats: &[],
         };

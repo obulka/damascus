@@ -36,6 +36,7 @@ pub use ray_marcher_view::RayMarcherView;
 use resources::{
     BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources,
     StorageTextureView, StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
+    VertexBuffer,
 };
 
 pub trait View<
@@ -171,10 +172,10 @@ pub trait View<
     fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState, settings: &V) {
         let device = &render_state.device;
 
+        let vertex_buffers: Vec<Vec<VertexBuffer>> = self.create_vertex_buffers(device, &settings);
         let uniform_buffers: Vec<Vec<Buffer>> = self.create_uniform_buffers(device, &settings);
         let storage_buffers: Vec<Vec<Buffer>> = self.create_storage_buffers(device, &settings);
         let texture_views: Vec<Vec<TextureView>> = self.create_texture_views(device);
-        let vertex_buffers: Vec<Vec<Buffer>> = self.create_vertex_buffers(device, &settings);
         let storage_texture_views: Vec<Vec<StorageTextureView>> =
             self.create_storage_texture_views(device);
 
@@ -325,16 +326,21 @@ pub trait View<
         false
     }
 
-    fn create_vertex_buffers(&mut self, device: &wgpu::Device, _settings: &V) -> Vec<Vec<Buffer>> {
-        let mut vertices = Vec::<Vec<Buffer>>::new();
+    fn create_vertex_buffers(
+        &mut self,
+        device: &wgpu::Device,
+        _settings: &V,
+    ) -> Vec<Vec<VertexBuffer>> {
+        let mut vertices = Vec::<Vec<VertexBuffer>>::new();
         for vertex in self.vertices().iter() {
-            vertices.push(vec![Buffer {
+            let vertex_count: u32 = vertex.len() as u32;
+            vertices.push(vec![VertexBuffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("vertex buffer"),
                     contents: bytemuck::cast_slice(vertex),
                     usage: wgpu::BufferUsages::VERTEX,
                 }),
-                visibility: wgpu::ShaderStages::VERTEX,
+                vertex_count: vertex_count,
             }]);
         }
         vertices

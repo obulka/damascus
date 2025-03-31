@@ -11,6 +11,12 @@ pub trait BindingResource {
 }
 
 #[derive(Clone)]
+pub struct VertexBuffer {
+    pub buffer: wgpu::Buffer,
+    pub vertex_count: u32,
+}
+
+#[derive(Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
     pub visibility: wgpu::ShaderStages,
@@ -153,7 +159,7 @@ impl BindGroups {
 #[derive(Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffers: Vec<Buffer>,
+    pub vertex_buffers: Vec<VertexBuffer>,
     pub bind_groups: BindGroups,
 }
 
@@ -174,12 +180,7 @@ impl RenderResources {
             .collect()
     }
 
-    pub fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        buffer_data: Vec<BufferData<'_>>,
-    ) {
+    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: Vec<BufferData<'_>>) {
         for (resource, data) in self.resources.iter().zip(buffer_data) {
             if let Some(uniform_bind_group) = &resource.bind_groups.uniform_bind_group {
                 uniform_bind_group.write(queue, data.uniform);
@@ -200,11 +201,13 @@ impl RenderResources {
 
             resource.bind_groups.set_bind_groups(render_pass);
 
+            let mut vertices: u32 = 0;
             for (index, buffer) in resource.vertex_buffers.iter().enumerate() {
                 render_pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
+                vertices += buffer.vertex_count;
             }
 
-            render_pass.draw(0..4, 0..1);
+            render_pass.draw(0..vertices, 0..1);
         }
     }
 }

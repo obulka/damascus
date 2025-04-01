@@ -28,7 +28,7 @@ use damascus_core::{
         self,
         compositor::{CompositorCompilerSettings, CompositorPreprocessorDirectives},
     },
-    textures::Texture,
+    textures::{Grade, Texture},
     DualDevice,
 };
 
@@ -193,7 +193,10 @@ impl
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("viewer grade buffer"),
-                    contents: bytemuck::cast_slice(&[settings.viewer_grade.as_std430()]),
+                    contents: bytemuck::cast_slice(&[Grade::default()
+                        .gain(settings.viewer_gain)
+                        .gamma(settings.viewer_gamma)
+                        .as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -288,7 +291,20 @@ impl
         ui: &mut egui::Ui,
         settings: &mut CompositorViewSettings,
     ) -> bool {
-        ui.add(egui::DragValue::new(&mut settings.viewer_grade.gain));
+        ui.horizontal(|ui| {
+            ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
+                .on_hover_text("The gain to apply upon display.");
+            ui.add(
+                egui::Slider::new(&mut settings.viewer_gain, 0.0..=64.)
+                    .clamping(egui::SliderClamping::Never),
+            );
+            ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
+                .on_hover_text("The gamma to apply upon display.");
+            ui.add(
+                egui::Slider::new(&mut settings.viewer_gamma, 0.0..=4.)
+                    .clamping(egui::SliderClamping::Never),
+            );
+        });
         false
     }
 

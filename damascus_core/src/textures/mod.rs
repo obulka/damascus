@@ -44,6 +44,33 @@ impl Default for Grade {
     }
 }
 
+impl Grade {
+    pub fn black_point(mut self, black_point: f32) -> Self {
+        self.black_point = black_point;
+        self
+    }
+
+    pub fn white_point(mut self, white_point: f32) -> Self {
+        self.white_point = white_point;
+        self
+    }
+
+    pub fn lift(mut self, lift: f32) -> Self {
+        self.lift = lift;
+        self
+    }
+
+    pub fn gain(mut self, gain: f32) -> Self {
+        self.gain = gain;
+        self
+    }
+
+    pub fn gamma(mut self, gamma: f32) -> Self {
+        self.gamma = gamma;
+        self
+    }
+}
+
 impl DualDevice<GPUGrade, Std430GPUGrade> for Grade {
     fn to_gpu(&self) -> GPUGrade {
         GPUGrade {

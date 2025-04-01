@@ -271,7 +271,7 @@ pub fn evaluate_node(
             )
         }
 
-        fn _input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
+        fn input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
             self.evaluate_input(name)?.try_to_texture()
         }
 
@@ -372,6 +372,17 @@ pub fn evaluate_node(
 
             scene_lights.push(light);
             evaluator.output_light("out", scene_lights)
+        }
+        NodeTemplate::Grade => {
+            let texture = evaluator.input_texture("texture")?;
+            let black_point = evaluator.input_float("black_point")?;
+            let white_point = evaluator.input_float("white_point")?;
+            let lift = evaluator.input_float("lift")?;
+            let gain = evaluator.input_float("gain")?;
+            let gamma = evaluator.input_float("gamma")?;
+            let invert = evaluator.input_bool("invert")?;
+
+            evaluator.output_texture("out", texture)
         }
         NodeTemplate::Material => {
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;

@@ -37,6 +37,7 @@ pub enum NodeTemplate {
     Axis,
     Camera,
     Light,
+    Grade,
     Material,
     Primitive,
     ProceduralTexture,
@@ -101,6 +102,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             NodeTemplate::Axis => "axis",
             NodeTemplate::Camera => "camera",
             NodeTemplate::Light => "light",
+            NodeTemplate::Grade => "grade",
             NodeTemplate::Material => "material",
             NodeTemplate::Primitive => "primitive",
             NodeTemplate::ProceduralTexture => "procedural texture",
@@ -335,7 +337,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        let _input_texture = |graph: &mut Graph, name: &str, default: Texture| {
+        let input_texture = |graph: &mut Graph, name: &str, default: Texture| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
@@ -401,7 +403,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     Float::new(1.)
                         .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The uniform scale of this axis.\n
-                            We use uniform scale because the signed distance 
+                            We use uniform scale because the signed distance
                             fields cannot have their individual axes scaled."
                         }))
                         .with_range(0.01..=10.0),
@@ -599,6 +601,67 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     ),
                 );
                 output_light(graph, "out");
+            }
+            NodeTemplate::Grade => {
+                let default_grade = textures::Grade::default();
+                input_texture(
+                    graph,
+                    "texture",
+                    Texture::new(textures::Texture::default())
+                        .with_ui_data(UIData::default().with_tooltip("The texture to grade.")),
+                );
+                input_float(
+                    graph,
+                    "black_point",
+                    Float::new(default_grade.black_point).with_ui_data(
+                        UIData::default().with_tooltip("The black point of the texture."),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "white_point",
+                    Float::new(default_grade.white_point).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "The white point of the texture."
+                        }),
+                    ),
+                );
+                input_float(
+                    graph,
+                    "lift",
+                    Float::new(default_grade.lift).with_ui_data(UIData::default().with_tooltip(
+                        indoc! {
+                            "The lift to apply to the texture."
+                        },
+                    )),
+                );
+                input_float(
+                    graph,
+                    "gain",
+                    Float::new(default_grade.gain)
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip("The gain to apply to the texture colour."),
+                        )
+                        .with_range(0.0001..=10.),
+                );
+                input_float(
+                    graph,
+                    "gamma",
+                    Float::new(default_grade.gamma)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The gamma to apply to the texture. This is computed
+                            by raising the colour to the power of 1/gamma."
+                        }))
+                        .with_range(0.01..=2.),
+                );
+                input_bool(
+                    graph,
+                    "invert",
+                    Bool::new(default_grade.invert)
+                        .with_ui_data(UIData::default().with_tooltip("Invert the colour.")),
+                );
+                output_texture(graph, "out");
             }
             NodeTemplate::Material => {
                 let default_material = materials::Material::default();

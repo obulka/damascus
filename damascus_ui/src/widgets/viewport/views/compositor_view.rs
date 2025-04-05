@@ -296,13 +296,17 @@ impl
                 .on_hover_text("The gain to apply upon display.");
             ui.add(
                 egui::Slider::new(&mut settings.viewer_gain, 0.0..=64.)
-                    .clamping(egui::SliderClamping::Never),
+                    .clamping(egui::SliderClamping::Never)
+                    .logarithmic(true)
+                    .smallest_positive(0.01),
             );
             ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
                 .on_hover_text("The gamma to apply upon display.");
             ui.add(
                 egui::Slider::new(&mut settings.viewer_gamma, 0.0..=4.)
-                    .clamping(egui::SliderClamping::Never),
+                    .clamping(egui::SliderClamping::Never)
+                    .logarithmic(true)
+                    .smallest_positive(0.001),
             );
         });
         false

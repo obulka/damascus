@@ -51,7 +51,7 @@ fn grade_f32(colour: f32, grade: Grade) -> f32 {
                 ) / (grade.white_point - grade.black_point)
                 + grade.lift
             ),
-            1. / grade.gamma,
+            grade.gamma,
         ),
         0.,
         grade.white_point == grade.black_point,
@@ -73,12 +73,13 @@ fn grade_vec3(colour: vec3f, grade: Grade) -> vec3f {
                 ) / (grade.white_point - grade.black_point)
                 + grade.lift
             ),
-            vec3(1. / grade.gamma),
+            vec3(grade.gamma),
         ),
         vec3f(),
         grade.white_point == grade.black_point,
     );
 }
+
 
 fn grade_vec4(colour: vec4f, grade: Grade) -> vec4f {
     return select(
@@ -94,12 +95,13 @@ fn grade_vec4(colour: vec4f, grade: Grade) -> vec4f {
                 ) / (grade.white_point - grade.black_point)
                 + grade.lift
             ),
-            vec4(1. / grade.gamma),
+            vec4(grade.gamma),
         ),
         vec4f(),
         grade.white_point == grade.black_point,
     );
 }
+
 
 struct Grade {
     black_point: f32,

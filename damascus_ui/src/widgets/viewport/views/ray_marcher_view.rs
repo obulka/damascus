@@ -12,7 +12,7 @@ use eframe::{
     wgpu::util::DeviceExt,
 };
 use glam;
-use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
+use serde_hashkey::{Key, OrderedFloatPolicy};
 
 use damascus_core::{
     geometry::{
@@ -139,24 +139,20 @@ impl
         &mut self.renderer
     }
 
-    fn set_recompile_hash(&mut self) -> bool {
-        if let Ok(recompile_hash) = to_key_with_ordered_float(self.renderer()) {
-            if recompile_hash != self.recompile_hash {
-                self.recompile_hash = recompile_hash;
-                return true;
-            }
-        }
-        false
+    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.recompile_hash
     }
 
-    fn set_reconstruct_hash(&mut self, settings: &RayMarcherViewSettings) -> bool {
-        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings) {
-            if reconstruct_hash != self.reconstruct_hash {
-                self.reconstruct_hash = reconstruct_hash;
-                return true;
-            }
-        }
-        false
+    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.recompile_hash
+    }
+
+    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.reconstruct_hash
+    }
+
+    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.reconstruct_hash
     }
 
     fn current_preprocessor_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {

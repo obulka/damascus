@@ -17,7 +17,7 @@ use eframe::{
 };
 use glam;
 use image::{ImageReader, Rgba32FImage};
-use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
     renderers::compositor::{
@@ -126,24 +126,27 @@ impl
         &mut self.renderer
     }
 
-    fn set_recompile_hash(&mut self) -> bool {
-        if let Ok(recompile_hash) = to_key_with_ordered_float(self.renderer()) {
-            if recompile_hash != self.recompile_hash {
-                self.recompile_hash = recompile_hash;
-                return true;
-            }
-        }
-        false
+    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.recompile_hash
     }
 
-    fn set_reconstruct_hash(&mut self, settings: &CompositorViewSettings) -> bool {
-        if let Ok(reconstruct_hash) = to_key_with_ordered_float(&settings) {
-            if reconstruct_hash != self.reconstruct_hash {
-                self.reconstruct_hash = reconstruct_hash;
-                return true;
-            }
-        }
-        false
+    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.recompile_hash
+    }
+
+    fn create_reconstruct_hash(
+        &self,
+        _settings: &CompositorViewSettings,
+    ) -> Result<Key<OrderedFloatPolicy>, Error> {
+        Ok(Key::<OrderedFloatPolicy>::Unit)
+    }
+
+    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.reconstruct_hash
+    }
+
+    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.reconstruct_hash
     }
 
     fn current_preprocessor_directives(&self) -> &HashSet<CompositorPreprocessorDirectives> {
@@ -283,8 +286,6 @@ impl
         self.render_state.paused
     }
 
-    fn reset(&mut self) {}
-
     fn show_top_bar(
         &mut self,
         _render_state: &egui_wgpu::RenderState,
@@ -303,10 +304,10 @@ impl
             ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
                 .on_hover_text("The gamma to apply upon display.");
             ui.add(
-                egui::Slider::new(&mut settings.viewer_gamma, 0.0..=4.)
+                egui::Slider::new(&mut settings.viewer_gamma, 0.0..=64.)
                     .clamping(egui::SliderClamping::Never)
                     .logarithmic(true)
-                    .smallest_positive(0.001),
+                    .smallest_positive(0.01),
             );
         });
         false
@@ -362,6 +363,8 @@ impl
             self.render_state.previous_frame_time = SystemTime::now();
             self.render_state.frame_counter = 1;
         } else {
+            ui.ctx().request_repaint();
+
             if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
                 match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
                     Ok(frame_time) => {

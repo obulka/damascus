@@ -47,7 +47,11 @@ impl Viewport {
             return;
         }
 
-        let mut view = RayMarcherView::new(render_state, &self.settings.ray_marcher_view);
+        let mut view = RayMarcherView::new(
+            render_state,
+            &self.settings.ray_marcher_view,
+            &self.settings.compiler_settings.ray_marcher,
+        );
         view.enable_and_play();
 
         self.view = Views::RayMarcher { view };
@@ -58,7 +62,11 @@ impl Viewport {
             return;
         }
 
-        let mut view = CompositorView::new(render_state, &self.settings.compositor_view);
+        let mut view = CompositorView::new(
+            render_state,
+            &self.settings.compositor_view,
+            &self.settings.compiler_settings.compositor,
+        );
         view.enable();
 
         self.view = Views::Compositor { view };

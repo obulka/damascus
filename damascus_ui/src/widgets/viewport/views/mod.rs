@@ -15,6 +15,7 @@ use eframe::{
     },
     epaint,
 };
+use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
     renderers::Renderer,
@@ -54,17 +55,55 @@ pub trait View<
 
     fn renderer_mut(&mut self) -> &mut R;
 
-    fn set_recompile_hash(&mut self) -> bool;
+    fn create_recompile_hash(
+        &self,
+        _compiler_settings: &C,
+    ) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(self.renderer())
+    }
 
-    fn set_reconstruct_hash(&mut self, settings: &V) -> bool;
+    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy>;
+
+    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
+
+    fn create_reconstruct_hash(&self, settings: &V) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&settings)
+    }
+
+    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy>;
+
+    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
+
+    fn set_recompile_hash(&mut self, settings: &C) -> bool {
+        let mut hash_changed = false;
+        if let Ok(recompile_hash) = self.create_recompile_hash(settings) {
+            if recompile_hash != *self.recompile_hash() {
+                *self.recompile_hash_mut() = recompile_hash;
+                hash_changed = true;
+            }
+        }
+
+        (settings.dynamic_recompilation_enabled() && self.update_preprocessor_directives(&settings))
+            || hash_changed
+    }
+
+    fn set_reconstruct_hash(&mut self, settings: &V) -> bool {
+        if let Ok(reconstruct_hash) = self.create_reconstruct_hash(&settings) {
+            if reconstruct_hash != *self.reconstruct_hash() {
+                *self.reconstruct_hash_mut() = reconstruct_hash;
+                return true;
+            }
+        }
+        false
+    }
 
     fn set_renderer(&mut self, renderer: R) {
         *self.renderer_mut() = renderer;
     }
 
-    fn new(render_state: &egui_wgpu::RenderState, settings: &V) -> Self {
+    fn new(render_state: &egui_wgpu::RenderState, settings: &V, compiler_settings: &C) -> Self {
         let mut pipeline = Self::default();
-        pipeline.set_recompile_hash();
+        pipeline.set_recompile_hash(compiler_settings);
         pipeline.set_reconstruct_hash(settings);
 
         Self::construct_pipeline(&mut pipeline, render_state, settings);
@@ -314,13 +353,8 @@ pub trait View<
         render_state: &egui_wgpu::RenderState,
         compiler_settings: &C,
     ) -> bool {
-        if self.set_recompile_hash() {
-            self.reset();
-            if compiler_settings.dynamic_recompilation_enabled()
-                && self.update_preprocessor_directives(&compiler_settings)
-            {
-                self.recompile_shader(render_state);
-            }
+        if self.set_recompile_hash(compiler_settings) {
+            self.recompile_shader(render_state);
             return true;
         }
         false
@@ -738,7 +772,11 @@ pub enum Views {
 impl Views {
     pub fn new(render_state: &egui_wgpu::RenderState, settings: &ViewportSettings) -> Self {
         Self::RayMarcher {
-            view: RayMarcherView::new(render_state, &settings.ray_marcher_view),
+            view: RayMarcherView::new(
+                render_state,
+                &settings.ray_marcher_view,
+                &settings.compiler_settings.ray_marcher,
+            ),
         }
     }
 

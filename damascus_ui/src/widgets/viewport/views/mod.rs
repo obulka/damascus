@@ -18,6 +18,11 @@ use eframe::{
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
+    render_passes::resources::{
+        BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources,
+        StorageTextureView, StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
+        VertexBuffer,
+    },
     renderers::Renderer,
     shaders::{CompilerSettings, PreprocessorDirectives},
     textures::{Std430GPUVertex, Vertex},
@@ -30,15 +35,9 @@ use crate::icons::Icons;
 
 mod compositor_view;
 mod ray_marcher_view;
-pub mod resources;
 
 pub use compositor_view::CompositorView;
 pub use ray_marcher_view::RayMarcherView;
-use resources::{
-    BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources,
-    StorageTextureView, StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
-    VertexBuffer,
-};
 
 pub trait View<
     R: Renderer<G, S>,

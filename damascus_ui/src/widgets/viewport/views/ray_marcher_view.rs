@@ -21,6 +21,7 @@ use damascus_core::{
     },
     lights::{Light, Lights, Std430GPULight},
     materials::{Material, ProceduralTexture, Std430GPUMaterial},
+    render_passes::resources::{Buffer, BufferData, StorageTextureView, TextureView},
     renderers::ray_marcher::{
         GPURayMarcher, RayMarcher, RayMarcherRenderState, Std430GPURayMarcher,
         Std430GPURayMarcherRenderState,
@@ -33,11 +34,7 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::{
-    resources::{Buffer, BufferData, StorageTextureView, TextureView},
-    settings::RayMarcherViewSettings,
-    RenderResources, View,
-};
+use super::{settings::RayMarcherViewSettings, RenderResources, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 

@@ -20,6 +20,7 @@ use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
+    render_passes::resources::{Buffer, BufferData, StorageTextureView, TextureView},
     renderers::compositor::{
         Compositor, CompositorRenderState, GPUCompositor, Std430GPUCompositor,
         Std430GPUCompositorRenderState,
@@ -32,11 +33,7 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::{
-    resources::{Buffer, BufferData, StorageTextureView, TextureView},
-    settings::CompositorViewSettings,
-    RenderResources, View,
-};
+use super::{settings::CompositorViewSettings, RenderResources, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 

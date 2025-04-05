@@ -10,6 +10,7 @@ use crevice::std430::AsStd430;
 pub mod geometry;
 pub mod lights;
 pub mod materials;
+pub mod render_passes;
 pub mod renderers;
 pub mod scene;
 pub mod shaders;

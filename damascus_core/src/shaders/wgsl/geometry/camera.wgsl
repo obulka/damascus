@@ -18,7 +18,7 @@ struct Camera {
 }
 
 
-@group(UNIFORM_BIND_GROUP) @binding(3)
+@group(UNIFORM_BIND_GROUP) @binding(2)
 var<uniform> _render_camera: Camera;
 
 

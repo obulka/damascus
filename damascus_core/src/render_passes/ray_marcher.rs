@@ -3,27 +3,31 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::time::SystemTime;
+use std::{collections::HashSet, time::SystemTime};
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2, Vec3};
-use strum::{Display, EnumIter, EnumString};
+use serde_hashkey::{Key, OrderedFloatPolicy};
 
-use super::{RenderPass, TextureProcessingPass};
+use super::{
+    resources::{Buffer, StorageTextureView},
+    RenderPass, TextureProcessingPass,
+};
 
 use crate::{
+    geometry::primitive::Std430GPUPrimitive,
+    lights::Std430GPULight,
     scene::Scene,
     shaders::{
-        self,
         ray_marcher::{
             all_directives_for_light, all_directives_for_material, all_directives_for_primitive,
             all_directives_for_ray_marcher, directives_for_light, directives_for_material,
-            directives_for_primitive, directives_for_ray_marcher, RAY_MARCHER_FRAGMENT_SHADER,
-            RAY_MARCHER_VERTEX_SHADER,
+            directives_for_primitive, directives_for_ray_marcher, RayMarcherPreprocessorDirectives,
+            RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
         },
         ShaderSource,
     },
-    textures::AOVs,
+    textures::{AOVs, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex},
     DualDevice, Hashable,
 };
 
@@ -33,14 +37,14 @@ pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
 // recompile
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RayMarcherCompilationOptions {
+pub struct RayMarcherCompilationData {
     pub enable_dynamic_recompilation_for_materials: bool,
     pub enable_dynamic_recompilation_for_primitives: bool,
     pub enable_dynamic_recompilation_for_ray_marcher: bool,
     pub enable_dynamic_recompilation_for_lights: bool,
 }
 
-impl Default for RayMarcherCompilationOptions {
+impl Default for RayMarcherCompilationData {
     fn default() -> Self {
         Self {
             enable_dynamic_recompilation_for_materials: true,
@@ -51,69 +55,23 @@ impl Default for RayMarcherCompilationOptions {
     }
 }
 
-impl RayMarcherCompilationOptions {}
+impl RayMarcherCompilationData {}
 
-impl Hashable for RayMarcherCompilationOptions {}
+impl Hashable for RayMarcherCompilationData {}
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-pub struct RayMarcherPipelineOptions {
+pub struct RayMarcherPipelineData {
     pub num_primitives: usize,
     pub num_lights: usize,
 }
 
-impl Hashable for RayMarcherPipelineOptions {}
+impl Hashable for RayMarcherPipelineData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPURayMarcherRenderState {
-    paths_rendered_per_pixel: f32,
-    resolution: Vec2,
-    flags: u32,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(default)]
-pub struct RayMarcherRenderState {
-    pub frame_counter: u32,
-    pub previous_frame_time: SystemTime,
-    pub fps: f32,
-    pub paths_rendered_per_pixel: u32,
-    pub resolution: UVec2,
-    pub paused: bool,
-}
-
-impl Default for RayMarcherRenderState {
-    fn default() -> Self {
-        Self {
-            frame_counter: 0,
-            previous_frame_time: SystemTime::now(),
-            fps: 0.,
-            paths_rendered_per_pixel: 0,
-            resolution: UVec2::ZERO,
-            paused: true,
-        }
-    }
-}
-
-impl RayMarcherRenderState {}
-
-impl DualDevice<GPURayMarcherRenderState, Std430GPURayMarcherRenderState>
-    for RayMarcherRenderState
-{
-    fn to_gpu(&self) -> GPURayMarcherRenderState {
-        GPURayMarcherRenderState {
-            paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
-            resolution: self.resolution.as_vec2(),
-            flags: self.paused as u32,
-        }
-    }
-}
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPURayMarcherRenderParameters {
+pub struct GPURayMarcherRenderData {
     max_distance: f32,
     max_ray_steps: u32,
     max_bounces: u32,
@@ -125,12 +83,14 @@ pub struct GPURayMarcherRenderParameters {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
+    paths_rendered_per_pixel: f32,
+    resolution: Vec2,
     flags: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RayMarcherRenderParameters {
+pub struct RayMarcherRenderData {
     pub scene: Scene,
     pub max_distance: f32,
     pub max_ray_steps: u32,
@@ -146,9 +106,15 @@ pub struct RayMarcherRenderParameters {
     pub light_sampling_bias: f32,
     pub secondary_sampling: bool,
     pub output_aov: AOVs,
+    pub frame_counter: u32,
+    pub previous_frame_time: SystemTime,
+    pub fps: f32,
+    pub paths_rendered_per_pixel: u32,
+    pub resolution: UVec2,
+    pub paused: bool,
 }
 
-impl Default for RayMarcherRenderParameters {
+impl Default for RayMarcherRenderData {
     fn default() -> Self {
         RayMarcher {
             scene: Scene::default(),
@@ -166,12 +132,18 @@ impl Default for RayMarcherRenderParameters {
             light_sampling_bias: 0.,
             secondary_sampling: false,
             output_aov: AOVs::default(),
+            frame_counter: 0,
+            previous_frame_time: SystemTime::now(),
+            fps: 0.,
+            paths_rendered_per_pixel: 0,
+            resolution: UVec2::ZERO,
+            paused: true,
         }
     }
 }
 
-impl RayMarcherRenderParameters {
-    pub fn reset_render_parameters(&mut self) {
+impl RayMarcherRenderData {
+    pub fn reset_render_data(&mut self) {
         let default_ray_marcher = Self::default();
 
         self.max_distance = default_ray_marcher.max_distance;
@@ -190,11 +162,9 @@ impl RayMarcherRenderParameters {
     }
 }
 
-impl DualDevice<GPURayMarcherRenderParameters, Std430GPURayMarcherRenderParameters>
-    for RayMarcherRenderParameters
-{
-    fn to_gpu(&self) -> GPURayMarcherRenderParameters {
-        GPURayMarcherRenderParameters {
+impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayMarcherRenderData {
+    fn to_gpu(&self) -> GPURayMarcherRenderData {
+        GPURayMarcherRenderData {
             max_distance: self.max_distance.max(1e-8),
             max_ray_steps: self.max_ray_steps.max(1),
             max_bounces: self.max_bounces.max(1),
@@ -206,30 +176,32 @@ impl DualDevice<GPURayMarcherRenderParameters, Std430GPURayMarcherRenderParamete
             max_light_sampling_bounces: self.max_light_sampling_bounces,
             light_sampling_bias: self.light_sampling_bias * self.light_sampling_bias,
             output_aov: self.output_aov as u32,
+            paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
+            resolution: self.resolution.as_vec2(),
+            flags: self.paused as u32,
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1
-                | (self.secondary_sampling as u32) << 2,
+                | (self.secondary_sampling as u32) << 2
+                | (self.paused as u32) << 3,
         }
     }
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RayMarcherPass {
-    pub render_parameters: RayMarcherRenderParameters,
-    pub compilation_options: RayMarcherCompilationOptions,
-    pub render_state: RayMarcherRenderState,
+pub struct RayMarcher {
+    pub render_data: RayMarcherRenderData,
+    pub compilation_data: RayMarcherCompilationData,
     recompile_hash: Key<OrderedFloatPolicy>,
     reconstruct_hash: Key<OrderedFloatPolicy>,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
-impl Default for RayMarcherPass {
+impl Default for RayMarcher {
     fn default() -> Self {
         Self {
-            render_parameters: RayMarcherRenderParameters::default(),
-            compilation_options: RayMarcherCompilationOptions::default(),
-            render_state: RayMarcherRenderState::default(),
+            render_data: RayMarcherRenderData::default(),
+            compilation_data: RayMarcherCompilationData::default(),
             recompile_hash: Key::<OrderedFloatPolicy>::Unit,
             reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
@@ -237,12 +209,12 @@ impl Default for RayMarcherPass {
     }
 }
 
-impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcherPass {
+impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn dynamic_directives(&self) -> HashSet<RayMarcherPreprocessorDirectives> {
         let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
 
         if !self
-            .compilation_options()
+            .compilation_data()
             .enable_dynamic_recompilation_for_ray_marcher
         {
             preprocessor_directives.extend(all_directives_for_ray_marcher());
@@ -251,14 +223,14 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcherPass {
         }
 
         if !self
-            .compilation_options()
+            .compilation_data()
             .enable_dynamic_recompilation_for_primitives
         {
             preprocessor_directives.extend(all_directives_for_primitive());
         }
 
         if !self
-            .compilation_options()
+            .compilation_data()
             .enable_dynamic_recompilation_for_materials
         {
             preprocessor_directives.extend(all_directives_for_material());
@@ -267,7 +239,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcherPass {
         }
 
         if !self
-            .compilation_options()
+            .compilation_data()
             .enable_dynamic_recompilation_for_lights
         {
             preprocessor_directives.extend(all_directives_for_light());
@@ -278,19 +250,19 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcherPass {
         }
 
         if self
-            .compilation_options()
+            .compilation_data()
             .enable_dynamic_recompilation_for_primitives
             || self.enable_dynamic_recompilation_for_materials
         {
             for primitive in &self.scene.primitives {
                 if self
-                    .compilation_options()
+                    .compilation_data()
                     .enable_dynamic_recompilation_for_materials
                 {
                     preprocessor_directives.extend(directives_for_material(&primitive.material));
                 }
                 if self
-                    .compilation_options()
+                    .compilation_data()
                     .enable_dynamic_recompilation_for_primitives
                 {
                     preprocessor_directives.extend(directives_for_primitive(&primitive));
@@ -309,36 +281,41 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcherPass {
         RAY_MARCHER_FRAGMENT_SHADER
     }
 
-    fn current_directives(&self) -> &HashSet<Directives> {}
+    fn current_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {
+        &self.preprocessor_directives
+    }
 
-    fn current_directives_mut(&mut self) -> &mut HashSet<Directives>;
+    fn current_directives_mut(&mut self) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
+        &mut self.preprocessor_directives
+    }
 
     fn dynamic_recompilation_enabled(&self) -> bool {
-        let options = self.compilation_options();
-        options.enable_dynamic_recompilation_for_primitives
-            || options.enable_dynamic_recompilation_for_materials
-            || options.enable_dynamic_recompilation_for_ray_marcher
-            || options.enable_dynamic_recompilation_for_lights
+        let data = self.compilation_data();
+        data.enable_dynamic_recompilation_for_primitives
+            || data.enable_dynamic_recompilation_for_materials
+            || data.enable_dynamic_recompilation_for_ray_marcher
+            || data.enable_dynamic_recompilation_for_lights
     }
 }
 
 impl
     RenderPass<
-        RayMarcherCompilationOptions,
-        RayMarcherPipelineOptions,
+        RayMarcherCompilationData,
+        RayMarcherPipelineData,
         TextureVertex,
         GPUTextureVertex,
         Std430GPUTextureVertex,
-    > for RayMarcherPass
+        RayMarcherPreprocessorDirectives,
+    > for RayMarcher
 {
-    fn compilation_options(&self) -> &RayMarcherCompilationOptions {
-        &self.compilation_options
+    fn compilation_data(&self) -> &RayMarcherCompilationData {
+        &self.compilation_data
     }
 
-    fn pipeline_options(&self) -> &RayMarcherPipelineOptions {
-        RayMarcherPipelineOptions {
-            num_primitives: self.render_parameters.scene.primitives.len(),
-            num_lights: self.render_parameters.scene.lights.len(),
+    fn pipeline_data(&self) -> &RayMarcherPipelineData {
+        &RayMarcherPipelineData {
+            num_primitives: self.render_data.scene.primitives.len(),
+            num_lights: self.render_data.scene.lights.len(),
         }
     }
 
@@ -367,7 +344,7 @@ impl
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher render parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_parameters.as_std430()]),
+                    contents: bytemuck::cast_slice(&[self.render_data.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -375,15 +352,7 @@ impl
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher scene parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_parameters.scene.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher render progress buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
+                    contents: bytemuck::cast_slice(&[self.render_data.scene.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -392,7 +361,7 @@ impl
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher camera buffer"),
                     contents: bytemuck::cast_slice(&[self
-                        .render_parameters
+                        .render_data
                         .scene
                         .render_camera
                         .as_std430()]),
@@ -404,11 +373,10 @@ impl
     }
 
     fn create_storage_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
-        let primitives: Vec<Std430GPUPrimitive> =
-            self.render_parameters.scene.create_gpu_primitives();
-        let lights: Vec<Std430GPULight> = self.render_parameters.scene.create_gpu_lights();
+        let primitives: Vec<Std430GPUPrimitive> = self.render_data.scene.create_gpu_primitives();
+        let lights: Vec<Std430GPULight> = self.render_data.scene.create_gpu_lights();
         let emissive_primitive_indices: Vec<u32> =
-            self.render_parameters.scene.emissive_primitive_indices();
+            self.render_data.scene.emissive_primitive_indices();
         vec![
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -429,7 +397,7 @@ impl
             Buffer {
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher render globals buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_parameters.scene.atmosphere()]),
+                    contents: bytemuck::cast_slice(&[self.render_data.scene.atmosphere()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -474,8 +442,8 @@ impl
     }
 
     fn reset(&mut self) {
-        self.render_state.paths_rendered_per_pixel = 0;
+        self.render_data.paths_rendered_per_pixel = 0;
     }
 }
 
-impl TextureProcessingPass for RayMarcherPass {}
+impl TextureProcessingPass for RayMarcher {}

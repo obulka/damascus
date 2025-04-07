@@ -3,50 +3,46 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use itertools::izip;
-use std::{borrow::Cow, collections::HashSet};
-
 use crevice::std430::AsStd430;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu;
 
 use crate::{
-    geometry,
-    renderers::Renderer,
-    shaders,
+    geometry, shaders,
     textures::{
         texture_corner_vertices_2d, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex,
     },
-    DualDevice, Hashable,
+    Hashable,
 };
 
 // mod grade;
 pub mod ray_marcher;
 pub mod resources;
-pub mod viewer;
+pub mod texture_viewer;
 
-use ray_marcher::RayMarcherPass;
+use ray_marcher::RayMarcher;
 use resources::{
     BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, StorageTextureView,
     StorageTextureViewBindGroup, TextureView, TextureViewBindGroup, VertexBuffer,
 };
-// use viewer::ViewerPass;
+use texture_viewer::TextureViewer;
 
 pub trait RenderPass<
-    CompilationOptions: Hashable,
-    PipelineOptions: Hashable,
+    CompilationData: Hashable,
+    PipelineData: Hashable,
     Vertex: geometry::Vertex<GPUVertex, Std430GPUVertex>,
     GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
     Std430GPUVertex,
->: Default + shaders::ShaderSource<Directives: shaders::PreprocessorDirectives>
+    Directives: shaders::PreprocessorDirectives,
+>: Default + shaders::ShaderSource<Directives>
 {
-    fn compilation_options(&self) -> &CompilationOptions;
+    fn compilation_data(&self) -> &CompilationData;
 
     fn recompile_hash(&self) -> &Key<OrderedFloatPolicy>;
 
     fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
 
-    fn pipeline_options(&self) -> &PipelineOptions;
+    fn pipeline_data(&self) -> &PipelineData;
 
     fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy>;
 
@@ -71,11 +67,11 @@ pub trait RenderPass<
     fn reset(&mut self) {}
 
     fn create_recompile_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.compilation_options())
+        to_key_with_ordered_float(self.compilation_data())
     }
 
     fn create_reconstruct_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.pipeline_options())
+        to_key_with_ordered_float(self.pipeline_data())
     }
 
     fn update_recompile_hash(&mut self) -> bool {
@@ -240,12 +236,8 @@ pub trait RenderPass<
         }
     }
 
-    fn recompile_if_hash_changed(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        compiler_settings: &C,
-    ) -> bool {
-        if self.update_recompile_hash(compiler_settings) {
+    fn recompile_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
+        if self.update_recompile_hash() {
             self.recompile_shader(render_state);
             return true;
         }
@@ -511,21 +503,21 @@ pub trait RenderPass<
 
 pub trait TextureProcessingPass:
     RenderPass<
-    CompilationOptions: Hashable,
-    PipelineOptions: Hashable,
     TextureVertex,
     GPUTextureVertex,
     Std430GPUTextureVertex,
+    CompilationData: Hashable,
+    PipelineData: Hashable,
 >
 {
-    fn vertices(&self) -> Vec<Std430GPUVertex> {
+    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
         texture_corner_vertices_2d()
     }
 }
 
 // pub enum RenderPasses {
-//     RayMarcher { pass: RayMarcherPass },
-//     Viewer { pass: Viewer },
+//     RayMarcher { pass: RayMarcher },
+//     TextureViewer { pass: TextureViewer },
 //     Error { error: anyhow::Error },
 // }
 

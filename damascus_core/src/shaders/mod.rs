@@ -3,22 +3,19 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
+use std::{borrow::Cow, collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
-use crevice::std430::AsStd430;
 use strum::{EnumCount, EnumString, IntoEnumIterator};
 
-use super::{renderers::Renderer, Hashable};
-
-pub mod compositor;
 pub mod ray_marcher;
+pub mod texture_viewer;
 
 #[derive(Debug, EnumString)]
 pub enum Includes {
     AOVs,
     Camera,
-    CompositorConstants,
-    CompositorRenderParameters,
+    TextureViewerConstants,
+    TextureViewerRenderParameters,
     Material,
     Lights,
     Math,
@@ -40,11 +37,11 @@ impl Includes {
         match *self {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
-            Self::CompositorConstants => {
-                include_str!("./wgsl/pipelines/compositor/constants.wgsl")
+            Self::TextureViewerConstants => {
+                include_str!("./wgsl/pipelines/texture_viewer/constants.wgsl")
             }
-            Self::CompositorRenderParameters => {
-                include_str!("./wgsl/pipelines/compositor/render_parameters.wgsl")
+            Self::TextureViewerRenderParameters => {
+                include_str!("./wgsl/pipelines/texture_viewer/render_parameters.wgsl")
             }
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
@@ -83,8 +80,6 @@ pub trait PreprocessorDirectives:
 }
 
 pub trait ShaderSource<Directives: PreprocessorDirectives> {
-    fn dynamic_directives(&self) -> HashSet<Directives>;
-
     fn vertex_shader_raw(&self) -> String;
 
     fn fragment_shader_raw(&self) -> String;
@@ -92,6 +87,10 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
     fn current_directives(&self) -> &HashSet<Directives>;
 
     fn current_directives_mut(&mut self) -> &mut HashSet<Directives>;
+
+    fn dynamic_directives(&self) -> HashSet<Directives> {
+        HashSet::<Directives>::new()
+    }
 
     fn update_directives(&mut self) -> bool {
         let new_directives = self.directives();
@@ -127,20 +126,20 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
         Directives::iter().collect()
     }
 
-    fn directives(&self, options: &CompilationOptions) -> HashSet<Directives> {
+    fn directives(&self) -> HashSet<Directives> {
         if self.dynamic_recompilation_enabled() {
-            return self.dynamic_directives(options);
+            return self.dynamic_directives();
         }
         self.all_directives()
     }
 }
 
-pub fn preprocess_directives<D: PreprocessorDirectives>(
+pub fn preprocess_directives<Directives: PreprocessorDirectives>(
     shader_source: Vec<String>,
-    preprocessor_directives: &HashSet<D>,
+    preprocessor_directives: &HashSet<Directives>,
 ) -> Vec<String>
 where
-    <D as FromStr>::Err: Debug,
+    <Directives as FromStr>::Err: Debug,
 {
     // Handle ifdef preprocessor macro
     let mut branch_stack = Vec::<(bool, bool)>::new();
@@ -164,7 +163,8 @@ where
                         // and we hit another branch decide whether or not to
                         // take it, push it to the stack and carry on
                         let ifdef_directive =
-                            D::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
+                            Directives::from_str(line.trim().trim_start_matches("#ifdef").trim())
+                                .unwrap();
                         let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
                         branch_stack.push((take_branch, take_branch));
                     } else {
@@ -179,7 +179,8 @@ where
                         // we have not yet taken a branch of the current
                         // conditional, check if we want to take this branch
                         let else_ifdef_directive =
-                            D::from_str(line.trim().trim_start_matches("#elifdef").trim()).unwrap();
+                            Directives::from_str(line.trim().trim_start_matches("#elifdef").trim())
+                                .unwrap();
                         *current_branch_taken =
                             preprocessor_directives.contains(&else_ifdef_directive);
                         *branch_taken |= *current_branch_taken;
@@ -204,7 +205,7 @@ where
                 // decide whether or not to take the branch, push it to the
                 // stack and carry on
                 let ifdef_directive =
-                    D::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
+                    Directives::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
                 let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
                 branch_stack.push((take_branch, take_branch));
 
@@ -218,12 +219,12 @@ where
         .collect::<Vec<String>>()
 }
 
-pub fn process_shader_source<D: PreprocessorDirectives>(
+pub fn process_shader_source<Directives: PreprocessorDirectives>(
     shader_source: &str,
-    preprocessor_directives: &HashSet<D>,
+    preprocessor_directives: &HashSet<Directives>,
 ) -> String
 where
-    <D as FromStr>::Err: Debug,
+    <Directives as FromStr>::Err: Debug,
 {
     let mut processed_source = Vec::<String>::new();
 

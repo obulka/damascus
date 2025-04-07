@@ -8,11 +8,6 @@
 
 
 struct RenderParameters {
-    flags: u32,
-}
-
-
-struct RenderState {
     resolution: vec2f,
     pan: vec2f,
     zoom: f32,
@@ -25,9 +20,6 @@ struct RenderState {
 var<uniform> _render_parameters: RenderParameters;
 
 @group(UNIFORM_BIND_GROUP) @binding(1)
-var<uniform> _render_state: RenderState;
-
-@group(UNIFORM_BIND_GROUP) @binding(2)
 var<uniform> _viewer_grade: Grade;
 
 @group(TEXTURE_BIND_GROUP) @binding(0)

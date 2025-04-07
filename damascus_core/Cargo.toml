@@ -12,5 +12,6 @@ glam = { version = "0.30", features = ["serde"] }
 image = { version = "0.25" }
 rand = "0.9"
 serde = "1.0"
+serde-hashkey = { version = "0.4.5", features = ["ordered-float"] }
 strum = { version = "0.27", features = ["derive"] }
 wgpu = { version = "24.0.0", default-features = false }

@@ -3,11 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include CompositorConstants
+#include TextureViewerConstants
 #include Math
 #include Random
 #include Texture
-#include CompositorRenderParameters
+#include TextureViewerRenderParameters
 
 
 struct FragmentInput {

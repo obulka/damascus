@@ -7,7 +7,7 @@ use std::{collections::HashSet, str::FromStr};
 
 use strum::{EnumCount, EnumIter, EnumString};
 
-use super::{process_shader_source, Compiler, PreprocessorDirectives};
+use super::PreprocessorDirectives;
 
 use crate::{
     geometry::{
@@ -16,8 +16,8 @@ use crate::{
     },
     lights::{Light, Lights},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
-    renderers::ray_marcher::{AOVs, GPURayMarcher, RayMarcher, Std430GPURayMarcher},
-    Hashable,
+    render_passes::ray_marcher::RayMarcherRenderData,
+    textures::AOVs,
 };
 
 pub const RAY_MARCHER_VERTEX_SHADER: String =
@@ -171,7 +171,7 @@ pub fn all_directives_for_light() -> HashSet<RayMarcherPreprocessorDirectives> {
 }
 
 pub fn directives_for_ray_marcher(
-    ray_marcher: &RayMarcher,
+    ray_marcher: &RayMarcherRenderData,
 ) -> HashSet<RayMarcherPreprocessorDirectives> {
     let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
 

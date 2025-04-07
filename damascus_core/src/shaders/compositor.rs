@@ -7,12 +7,9 @@ use std::collections::HashSet;
 
 use strum::{EnumCount, EnumIter, EnumString};
 
-use super::{process_shader_source, CompilerSettings, PreprocessorDirectives};
+use super::{process_shader_source, Compiler, PreprocessorDirectives};
 
-use crate::{
-    renderers::compositor::{Compositor, GPUCompositor, Std430GPUCompositor},
-    Settings,
-};
+use crate::renderers::compositor::{Compositor, GPUCompositor, Std430GPUCompositor};
 
 #[derive(
     Debug,
@@ -62,33 +59,23 @@ pub fn directives_for_compositor(
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct CompositorCompilerSettings {}
+pub struct CompositorCompiler {}
 
-impl Default for CompositorCompilerSettings {
+impl Default for CompositorCompiler {
     fn default() -> Self {
         Self {}
     }
 }
 
-impl CompositorCompilerSettings {}
+impl CompositorCompiler {}
 
-impl Settings for CompositorCompilerSettings {}
-
-impl
-    CompilerSettings<
-        CompositorPreprocessorDirectives,
-        Compositor,
-        GPUCompositor,
-        Std430GPUCompositor,
-    > for CompositorCompilerSettings
-{
-    fn directives(&self, _renderer: &Compositor) -> HashSet<CompositorPreprocessorDirectives> {
+impl Compiler<Compositor, CompositorPreprocessorDirectives> for CompositorCompiler {
+    fn dynamic_directives(
+        &self,
+        _options: &Compositor,
+    ) -> HashSet<CompositorPreprocessorDirectives> {
         let preprocessor_directives = HashSet::<CompositorPreprocessorDirectives>::new();
         //TODO
         preprocessor_directives
-    }
-
-    fn dynamic_recompilation_enabled(&self) -> bool {
-        true
     }
 }

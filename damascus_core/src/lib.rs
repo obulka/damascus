@@ -26,4 +26,4 @@ pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
     }
 }
 
-pub trait Settings: Copy + Clone + serde::Serialize + for<'a> serde::Deserialize<'a> {}
+pub trait Hashable: Clone + serde::Serialize + for<'a> serde::Deserialize<'a> {}

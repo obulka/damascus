@@ -6,6 +6,7 @@
 use crevice::std430::AsStd430;
 use glam::{Mat3, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
+use wgpu;
 
 pub mod camera;
 pub mod primitive;
@@ -62,19 +63,6 @@ pub enum Repetition {
     Infinite,
 }
 
-pub struct Quad {
-    pub corners: [glam::Vec3; 4],
-}
-
-impl Quad {
-    pub fn new(
-        corner_0: glam::Vec3,
-        corner_1: glam::Vec3,
-        corner_2: glam::Vec3,
-        corner_3: glam::Vec3,
-    ) -> Self {
-        Self {
-            corners: [corner_0, corner_1, corner_2, corner_3],
-        }
-    }
+pub trait Vertex<G: Copy + Clone + AsStd430<Output = S>, S>: DualDevice<G, S> {
+    fn attr_array() -> [wgpu::VertexAttribute; _];
 }

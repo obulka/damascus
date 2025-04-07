@@ -353,8 +353,7 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        let _data_changed: bool = self.reconstruct_if_hash_changed(render_state, settings)
-            || self.recompile_if_hash_changed(render_state, compiler_settings);
+        let _data_changed: bool = self.reconstruct_or_recompile_if_hash_changed(render_state);
 
         if self.paused() {
             self.render_state.previous_frame_time = SystemTime::now();

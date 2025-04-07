@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 use crevice::std430::AsStd430;
 use strum::{EnumCount, EnumString, IntoEnumIterator};
 
-use super::{renderers::Renderer, Settings};
+use super::{renderers::Renderer, Hashable};
 
 pub mod compositor;
 pub mod ray_marcher;
@@ -82,16 +82,57 @@ pub trait PreprocessorDirectives:
 {
 }
 
-pub trait CompilerSettings<
-    D: PreprocessorDirectives,
-    R: Renderer<G, S>,
-    G: Copy + Clone + AsStd430<Output = S>,
-    S,
->: Settings
-{
-    fn directives(&self, renderer: &R) -> HashSet<D>;
+pub trait ShaderSource<Directives: PreprocessorDirectives> {
+    fn dynamic_directives(&self) -> HashSet<Directives>;
 
-    fn dynamic_recompilation_enabled(&self) -> bool;
+    fn vertex_shader_raw(&self) -> String;
+
+    fn fragment_shader_raw(&self) -> String;
+
+    fn current_directives(&self) -> &HashSet<Directives>;
+
+    fn current_directives_mut(&mut self) -> &mut HashSet<Directives>;
+
+    fn update_directives(&mut self) -> bool {
+        let new_directives = self.directives();
+        let current_directives = self.current_directives_mut();
+
+        // Check if the directives have changed and store them if they have
+        if new_directives == *current_directives {
+            return false;
+        }
+        *current_directives = new_directives;
+        true
+    }
+
+    fn vertex_shader(&self) -> wgsl::ShaderSource<'_> {
+        wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
+            self.vertex_shader_raw(),
+            self.current_directives(),
+        )))
+    }
+
+    fn fragment_shader(&self) -> wgsl::ShaderSource<'_> {
+        wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
+            self.fragment_shader_raw(),
+            self.current_directives(),
+        )))
+    }
+
+    fn dynamic_recompilation_enabled(&self) -> bool {
+        true
+    }
+
+    fn all_directives(&self) -> HashSet<Directives> {
+        Directives::iter().collect()
+    }
+
+    fn directives(&self, options: &CompilationOptions) -> HashSet<Directives> {
+        if self.dynamic_recompilation_enabled() {
+            return self.dynamic_directives(options);
+        }
+        self.all_directives()
+    }
 }
 
 pub fn preprocess_directives<D: PreprocessorDirectives>(

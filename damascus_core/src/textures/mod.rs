@@ -7,7 +7,31 @@ use crevice::std430::AsStd430;
 
 use glam;
 
-use crate::DualDevice;
+use super::{geometry::Vertex, DualDevice};
+
+#[derive(
+    Debug,
+    Default,
+    Display,
+    Copy,
+    Clone,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum AOVs {
+    #[default]
+    Beauty,
+    WorldPosition,
+    LocalPosition,
+    Normals,
+    Depth,
+    Cryptomatte,
+    Stats,
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -102,36 +126,51 @@ impl Default for Texture {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPUVertex {
-    texture_coordinate: glam::Vec2,
+pub struct GPUTextureVertex {
+    uv_coordinate: glam::Vec2,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct Vertex {
-    pub texture_coordinate: glam::Vec2,
+pub struct TextureVertex {
+    pub uv_coordinate: glam::Vec2,
 }
 
-impl Default for Vertex {
+impl Default for TextureVertex {
     fn default() -> Self {
         Self {
-            texture_coordinate: glam::Vec2::ZERO,
+            uv_coordinate: glam::Vec2::ZERO,
         }
     }
 }
 
-impl Vertex {
+impl TextureVertex {
     pub fn new(x: f32, y: f32) -> Self {
         Self {
-            texture_coordinate: glam::Vec2::new(x, y),
+            uv_coordinate: glam::Vec2::new(x, y),
         }
     }
 }
 
-impl DualDevice<GPUVertex, Std430GPUVertex> for Vertex {
-    fn to_gpu(&self) -> GPUVertex {
-        GPUVertex {
-            texture_coordinate: self.texture_coordinate,
+impl DualDevice<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
+    fn to_gpu(&self) -> GPUTextureVertex {
+        GPUTextureVertex {
+            uv_coordinate: self.uv_coordinate,
         }
     }
+}
+
+impl Vertex<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
+    fn attr_array() -> [wgpu::VertexAttribute; 1] {
+        wgpu::vertex_attr_array![0 => Float32x2]
+    }
+}
+
+pub fn texture_corner_vertices_2d() -> Vec<Std430GPUTextureVertex> {
+    vec![
+        TextureVertex::new(1., 1.).as_std430(),
+        TextureVertex::new(-1., 1.).as_std430(),
+        TextureVertex::new(1., -1.).as_std430(),
+        TextureVertex::new(-1., -1.).as_std430(),
+    ]
 }

@@ -156,58 +156,39 @@ impl BindGroups {
     }
 }
 
-#[derive(Clone)]
-pub struct RenderResource {
-    pub render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffers: Vec<VertexBuffer>,
-    pub bind_groups: BindGroups,
-}
-
-pub struct RenderResources {
-    pub resources: Vec<RenderResource>,
-}
-
 pub struct BufferData<'a> {
     pub uniform: Vec<&'a [u8]>,
     pub storage: Vec<&'a [u8]>,
 }
 
-impl RenderResources {
-    pub fn bind_groups(&self) -> Vec<BindGroups> {
-        self.resources
-            .iter()
-            .map(|resource| resource.bind_groups.clone())
-            .collect()
-    }
+#[derive(Clone)]
+pub struct RenderResource {
+    pub render_pipeline: wgpu::RenderPipeline,
+    pub vertex_buffer: VertexBuffer,
+    pub bind_groups: BindGroups,
+}
 
-    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: Vec<BufferData<'_>>) {
-        for (resource, data) in self.resources.iter().zip(buffer_data) {
-            if let Some(uniform_bind_group) = &resource.bind_groups.uniform_bind_group {
-                uniform_bind_group.write(queue, data.uniform);
-            }
-            if let Some(storage_bind_group) = &resource.bind_groups.storage_bind_group {
-                storage_bind_group.write(queue, data.storage);
-            }
-            if let Some(texture_bind_group) = &resource.bind_groups.texture_bind_group {
-                texture_bind_group.write(queue);
-            }
+impl RenderResource {
+    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: BufferData<'_>) {
+        if let Some(uniform_bind_group) = &self.bind_groups.uniform_bind_group {
+            uniform_bind_group.write(queue, buffer_data.uniform);
+        }
+        if let Some(storage_bind_group) = &self.bind_groups.storage_bind_group {
+            storage_bind_group.write(queue, buffer_data.storage);
+        }
+        if let Some(texture_bind_group) = &self.bind_groups.texture_bind_group {
+            texture_bind_group.write(queue);
         }
         // self.storage_texture_bind_group.write(queue, storage_texture_data);
     }
 
     pub fn paint(&self, render_pass: &mut wgpu::RenderPass<'_>) {
-        for resource in self.resources.iter() {
-            render_pass.set_pipeline(&resource.render_pipeline);
+        render_pass.set_pipeline(&self.render_pipeline);
 
-            resource.bind_groups.set_bind_groups(render_pass);
+        self.bind_groups.set_bind_groups(render_pass);
 
-            let mut vertices: u32 = 0;
-            for (index, buffer) in resource.vertex_buffers.iter().enumerate() {
-                render_pass.set_vertex_buffer(index as u32, buffer.buffer.slice(..));
-                vertices += buffer.vertex_count;
-            }
+        render_pass.set_vertex_buffer(0, self.vertex_buffer.buffer.slice(..));
 
-            render_pass.draw(0..vertices, 0..1);
-        }
+        render_pass.draw(0..self.vertex_buffer.vertex_count, 0..1);
     }
 }

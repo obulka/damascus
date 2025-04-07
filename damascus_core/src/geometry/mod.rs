@@ -8,6 +8,8 @@ use glam::{Mat3, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu;
 
+use super::DualDevice;
+
 pub mod camera;
 pub mod primitive;
 

@@ -3,10 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include CompositorConstants
+#include TextureViewerConstants
 #include Math
 #include Texture
-#include CompositorRenderParameters
+#include TextureViewerRenderParameters
 
 
 struct VertexInput {
@@ -34,16 +34,16 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
     );
 
     texture_uv.y *=
-        _render_state.resolution.x * texture_dimensions.y
-        / (_render_state.resolution.y * texture_dimensions.x);
+        _render_parameters.resolution.x * texture_dimensions.y
+        / (_render_parameters.resolution.y * texture_dimensions.x);
 
     out.ndc_coordinate = vec4(
         (
             scale_screen_to_uv(
-                _render_state.pan,
-                _render_state.resolution,
+                _render_parameters.pan,
+                _render_parameters.resolution,
             ) + texture_uv
-        ) / _render_state.zoom,
+        ) / _render_parameters.zoom,
         0.,
         1.,
     );

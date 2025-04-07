@@ -278,7 +278,7 @@ fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     // Use the UV coordinates and resolution to get texture coordinates
     var current_pixel_indices: vec2f = uv_to_screen(
         in.uv_coordinate.xy,
-        _render_state.resolution,
+        _render_parameters.resolution,
     );
     var texture_coordinates = vec2u(current_pixel_indices);
 
@@ -287,11 +287,11 @@ fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     var pixel_colour: vec4f = select(
         vec4f(),
         textureLoad(_progressive_rendering_texture, texture_coordinates),
-        _render_state.paths_rendered_per_pixel > 0.,
+        _render_parameters.paths_rendered_per_pixel > 0.,
     );
 
     // If the render is paused just return the current texture value
-    if bool(_render_state.flags & PAUSED) {
+    if bool(_render_parameters.flags & PAUSED) {
         return pixel_colour;
     }
 
@@ -301,7 +301,7 @@ fn fs_main(in: FragmentInput) -> @location(0) vec4f {
         * random_vec3f(
             _render_parameters.seeds
             + frag_coord_seed
-            + _render_state.paths_rendered_per_pixel
+            + _render_parameters.paths_rendered_per_pixel
         ) + vec3(3553.392716193805, 7251.898513581492, 1848.9387464811002)
         * vec2f_to_random_f32(current_pixel_indices);
 
@@ -311,7 +311,7 @@ fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     var uv_coordinates: vec2f = pixels_to_uv(
         // Add a random offset to the uv_coordinates for anti-aliasing 
         current_pixel_indices + random_vec2f(seed.xy),
-        _render_state.resolution,
+        _render_parameters.resolution,
     );
 
     // Create and march a ray
@@ -321,9 +321,9 @@ fn fs_main(in: FragmentInput) -> @location(0) vec4f {
     // Read, update, and store the current value for our pixel
     // so that the render can be done progressively
     pixel_colour = (
-        _render_state.paths_rendered_per_pixel * pixel_colour
+        _render_parameters.paths_rendered_per_pixel * pixel_colour
         + vec4(ray.colour, 1.)
-    ) / (_render_state.paths_rendered_per_pixel + 1.);
+    ) / (_render_parameters.paths_rendered_per_pixel + 1.);
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;

@@ -11,7 +11,7 @@ use serde_hashkey::{Key, OrderedFloatPolicy};
 
 use super::{
     resources::{Buffer, StorageTextureView},
-    RenderPass, TextureProcessingPass,
+    RenderPass,
 };
 
 use crate::{
@@ -27,7 +27,9 @@ use crate::{
         },
         ShaderSource,
     },
-    textures::{AOVs, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex},
+    textures::{
+        texture_corner_vertices_2d, AOVs, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex,
+    },
     DualDevice, Hashable,
 };
 
@@ -62,12 +64,12 @@ impl Hashable for RayMarcherCompilationData {}
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-pub struct RayMarcherPipelineData {
+pub struct RayMarcherConstructionData {
     pub num_primitives: usize,
     pub num_lights: usize,
 }
 
-impl Hashable for RayMarcherPipelineData {}
+impl Hashable for RayMarcherConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -116,7 +118,7 @@ pub struct RayMarcherRenderData {
 
 impl Default for RayMarcherRenderData {
     fn default() -> Self {
-        RayMarcher {
+        Self {
             scene: Scene::default(),
             max_distance: 100.,
             max_ray_steps: 1000,
@@ -178,7 +180,6 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
             output_aov: self.output_aov as u32,
             paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
             resolution: self.resolution.as_vec2(),
-            flags: self.paused as u32,
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1
                 | (self.secondary_sampling as u32) << 2
@@ -192,8 +193,8 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
 pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
-    recompile_hash: Key<OrderedFloatPolicy>,
-    reconstruct_hash: Key<OrderedFloatPolicy>,
+    recompilation_hash: Key<OrderedFloatPolicy>,
+    reconstruction_hash: Key<OrderedFloatPolicy>,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
@@ -202,8 +203,8 @@ impl Default for RayMarcher {
         Self {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
-            recompile_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
+            recompilation_hash: Key::<OrderedFloatPolicy>::Unit,
+            reconstruction_hash: Key::<OrderedFloatPolicy>::Unit,
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
     }
@@ -219,7 +220,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_ray_marcher());
         } else {
-            preprocessor_directives.extend(directives_for_ray_marcher(self));
+            preprocessor_directives.extend(directives_for_ray_marcher(&self.render_data));
         }
 
         if !self
@@ -235,7 +236,8 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_material());
         } else {
-            preprocessor_directives.extend(directives_for_material(&self.scene.atmosphere));
+            preprocessor_directives
+                .extend(directives_for_material(&self.render_data.scene.atmosphere));
         }
 
         if !self
@@ -244,7 +246,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_light());
         } else {
-            for light in &self.scene.lights {
+            for light in &self.render_data.scene.lights {
                 preprocessor_directives.extend(directives_for_light(&light));
             }
         }
@@ -254,7 +256,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
             .enable_dynamic_recompilation_for_primitives
             || self.enable_dynamic_recompilation_for_materials
         {
-            for primitive in &self.scene.primitives {
+            for primitive in &self.render_data.scene.primitives {
                 if self
                     .compilation_data()
                     .enable_dynamic_recompilation_for_materials
@@ -301,7 +303,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
 impl
     RenderPass<
         RayMarcherCompilationData,
-        RayMarcherPipelineData,
+        RayMarcherConstructionData,
         TextureVertex,
         GPUTextureVertex,
         Std430GPUTextureVertex,
@@ -312,8 +314,8 @@ impl
         &self.compilation_data
     }
 
-    fn pipeline_data(&self) -> &RayMarcherPipelineData {
-        &RayMarcherPipelineData {
+    fn construction_data(&self) -> &RayMarcherConstructionData {
+        &RayMarcherConstructionData {
             num_primitives: self.render_data.scene.primitives.len(),
             num_lights: self.render_data.scene.lights.len(),
         }
@@ -323,20 +325,24 @@ impl
         "ray marcher"
     }
 
-    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.recompile_hash
+    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.recompilation_hash
     }
 
-    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.recompile_hash
+    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.recompilation_hash
     }
 
-    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.reconstruct_hash
+    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.reconstruction_hash
     }
 
-    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.reconstruct_hash
+    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.reconstruction_hash
+    }
+
+    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
+        texture_corner_vertices_2d()
     }
 
     fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
@@ -445,5 +451,3 @@ impl
         self.render_data.paths_rendered_per_pixel = 0;
     }
 }
-
-impl TextureProcessingPass for RayMarcher {}

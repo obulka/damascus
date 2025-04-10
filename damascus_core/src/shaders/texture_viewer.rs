@@ -7,9 +7,9 @@ use strum::{EnumCount, EnumIter, EnumString};
 
 use super::PreprocessorDirectives;
 
-pub const TEXTURE_VIEWER_VERTEX_SHADER: String =
+pub const TEXTURE_VIEWER_VERTEX_SHADER: &str =
     include_str!("./wgsl/pipelines/texture_viewer/vertex_shader.wgsl");
-pub const TEXTURE_VIEWER_FRAGMENT_SHADER: String =
+pub const TEXTURE_VIEWER_FRAGMENT_SHADER: &str =
     include_str!("./wgsl/pipelines/texture_viewer/fragment_shader.wgsl");
 
 #[derive(

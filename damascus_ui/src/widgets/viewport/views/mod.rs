@@ -189,17 +189,17 @@ pub trait View: Default {
         settings: &mut V,
         compiler_settings: &mut C,
     ) -> bool {
-        let mut reconstruct_pipeline: bool = self.show_top_bar(render_state, ui, settings);
+        let mut reconstruct_render_resource: bool = self.show_top_bar(render_state, ui, settings);
         let paint_callback = self.show_frame(render_state, ui, settings, compiler_settings);
-        reconstruct_pipeline |= self.show_bottom_bar(render_state, ui);
+        reconstruct_render_resource |= self.show_bottom_bar(render_state, ui);
 
-        if !reconstruct_pipeline {
+        if !reconstruct_render_resource {
             if let Some(callback) = paint_callback {
                 ui.painter().add(callback);
             }
         }
 
-        reconstruct_pipeline
+        reconstruct_render_resource
     }
 }
 
@@ -220,17 +220,17 @@ impl Views {
         }
     }
 
-    pub fn reconstruct_pipeline(
+    pub fn reconstruct_render_resource(
         &mut self,
         render_state: &egui_wgpu::RenderState,
-        settings: &ViewportSettings,
     ) {
+        render_state.renderer.write().callback_resources.clear();
         match self {
             Self::RayMarcher { view } => {
-                view.reconstruct_pipeline(render_state, &settings.ray_marcher_view)
+                view.reconstruct_render_resource(&render_state.device, render_state.target_format.into())
             }
             Self::Compositor { view } => {
-                view.reconstruct_pipeline(render_state, &settings.compositor_view)
+                view.reconstruct_render_resource(&render_state.device, render_state.target_format.into())
             }
             _ => {}
         }

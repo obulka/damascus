@@ -29,7 +29,7 @@ use texture_viewer::TextureViewer;
 
 pub trait RenderPass<
     CompilationData: Hashable,
-    PipelineData: Hashable,
+    ConstructionData: Hashable,
     Vertex: geometry::Vertex<GPUVertex, Std430GPUVertex>,
     GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
     Std430GPUVertex,
@@ -38,24 +38,24 @@ pub trait RenderPass<
 {
     fn compilation_data(&self) -> &CompilationData;
 
-    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy>;
+    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy>;
 
-    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
+    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
 
-    fn pipeline_data(&self) -> &PipelineData;
+    fn construction_data(&self) -> &ConstructionData;
 
-    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy>;
+    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy>;
 
-    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
+    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
 
     fn vertices(&self) -> Vec<Std430GPUVertex>;
 
-    fn new(render_state: &egui_wgpu::RenderState) -> Self {
+    fn new(render_state: &wgpu::RenderState) -> Self {
         let mut render_pass = Self::default();
-        render_pass.update_recompile_hash();
-        render_pass.update_reconstruct_hash();
+        render_pass.update_recompilation_hash();
+        render_pass.update_reconstruction_hash();
 
-        Self::construct_pipeline(&mut render_pass, render_state);
+        Self::render_resource(&mut render_pass, render_state);
 
         render_pass
     }
@@ -66,19 +66,19 @@ pub trait RenderPass<
 
     fn reset(&mut self) {}
 
-    fn create_recompile_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
+    fn create_recompilation_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(self.compilation_data())
     }
 
-    fn create_reconstruct_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.pipeline_data())
+    fn create_reconstruction_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(self.construction_data())
     }
 
-    fn update_recompile_hash(&mut self) -> bool {
+    fn update_recompilation_hash(&mut self) -> bool {
         let mut hash_changed = false;
-        if let Ok(recompile_hash) = self.create_recompile_hash() {
-            if recompile_hash != *self.recompile_hash() {
-                *self.recompile_hash_mut() = recompile_hash;
+        if let Ok(recompilation_hash) = self.create_recompilation_hash() {
+            if recompilation_hash != *self.recompilation_hash() {
+                *self.recompilation_hash_mut() = recompilation_hash;
                 hash_changed = true;
             }
         }
@@ -86,20 +86,20 @@ pub trait RenderPass<
         self.update_directives() || hash_changed
     }
 
-    fn update_reconstruct_hash(&mut self) -> bool {
-        if let Ok(reconstruct_hash) = self.create_reconstruct_hash() {
-            if reconstruct_hash != *self.reconstruct_hash() {
-                *self.reconstruct_hash_mut() = reconstruct_hash;
+    fn update_reconstruction_hash(&mut self) -> bool {
+        if let Ok(reconstruction_hash) = self.create_reconstruction_hash() {
+            if reconstruction_hash != *self.reconstruction_hash() {
+                *self.reconstruction_hash_mut() = reconstruction_hash;
                 return true;
             }
         }
         false
     }
 
-    fn create_render_pipeline(
+    fn render_pipeline(
         &self,
         device: &wgpu::Device,
-        texture_format: wgpu::TextureFormat,
+        target_state: wgpu::ColorTargetState,
         bind_groups: &BindGroups,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout: wgpu::PipelineLayout =
@@ -133,7 +133,7 @@ pub trait RenderPass<
             fragment: Some(wgpu::FragmentState {
                 module: &fragment_shader,
                 entry_point: Some("fs_main"),
-                targets: &[Some(texture_format.into())],
+                targets: &[Some(target_state)],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
@@ -147,9 +147,7 @@ pub trait RenderPass<
         })
     }
 
-    fn construct_pipeline(&mut self, render_state: &egui_wgpu::RenderState) {
-        let device = &render_state.device;
-
+    fn render_resource(&mut self, device: &wgpu::Device, target_state: wgpu::ColorTargetState) -> RenderResource {
         let vertex_buffer: VertexBuffer = self.create_vertex_buffer(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device);
@@ -188,34 +186,28 @@ pub trait RenderPass<
         };
 
         let render_pipeline: wgpu::RenderPipeline =
-            self.create_render_pipeline(device, render_state.target_format, &bind_groups);
+            self.render_pipeline(device, target_state, &bind_groups);
 
-        render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(RenderResource {
-                render_pipeline,
-                vertex_buffer,
-                bind_groups,
-            });
-    }
-
-    fn reconstruct_pipeline(&mut self, render_state: &egui_wgpu::RenderState) {
-        render_state.renderer.write().callback_resources.clear();
-        self.reset();
-        self.construct_pipeline(render_state);
-    }
-
-    fn reconstruct_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
-        if self.update_reconstruct_hash() {
-            self.reconstruct_pipeline(render_state);
-            return true;
+        RenderResource {
+            render_pipeline,
+            vertex_buffer,
+            bind_groups,
         }
-        false
     }
 
-    fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
+    fn reconstruct_render_resource(&mut self, device: &wgpu::Device, target_state: wgpu::ColorTargetState) {
+        self.reset();
+        self.render_resource(device, target_state);
+    }
+
+    fn reconstruct_if_hash_changed(&mut self, render_state: &wgpu::RenderState) -> Option<RenderResource> {
+        if self.update_reconstruction_hash() {
+            return Some(self.reconstruct_render_resource(render_state));
+        }
+        None
+    }
+
+    fn recompile_shader(&mut self, render_resource: &mut RenderResource, device: &wgpu::Device, target_state: wgpu::ColorTargetState) {
         if let Some(render_resource) = render_state
             .renderer
             .write()
@@ -226,7 +218,7 @@ pub trait RenderPass<
 
             let device = &render_state.device;
 
-            let render_pipeline: wgpu::RenderPipeline = self.create_render_pipeline(
+            let render_pipeline: wgpu::RenderPipeline = self.render_pipeline(
                 device,
                 render_state.target_format,
                 &render_resource.bind_groups(),
@@ -236,8 +228,8 @@ pub trait RenderPass<
         }
     }
 
-    fn recompile_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
-        if self.update_recompile_hash() {
+    fn recompile_if_hash_changed(&mut self, render_state: &wgpu::RenderState) -> bool {
+        if self.update_recompilation_hash() {
             self.recompile_shader(render_state);
             return true;
         }
@@ -246,7 +238,7 @@ pub trait RenderPass<
 
     fn reconstruct_or_recompile_if_hash_changed(
         &mut self,
-        render_state: &egui_wgpu::RenderState,
+        render_state: &wgpu::RenderState,
     ) -> bool {
         self.reconstruct_if_hash_changed(render_state)
             || self.recompile_if_hash_changed(render_state)
@@ -501,20 +493,6 @@ pub trait RenderPass<
     }
 }
 
-pub trait TextureProcessingPass:
-    RenderPass<
-    TextureVertex,
-    GPUTextureVertex,
-    Std430GPUTextureVertex,
-    CompilationData: Hashable,
-    PipelineData: Hashable,
->
-{
-    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
-        texture_corner_vertices_2d()
-    }
-}
-
 // pub enum RenderPasses {
 //     RayMarcher { pass: RayMarcher },
 //     TextureViewer { pass: TextureViewer },
@@ -522,21 +500,21 @@ pub trait TextureProcessingPass:
 // }
 
 // impl RenderPasses {
-//     pub fn new(render_state: &egui_wgpu::RenderState) -> Self {
+//     pub fn new(render_state: &wgpu::RenderState) -> Self {
 //         Self::RayMarcher {
 //             pass: RayMarcher::new(render_state),
 //         }
 //     }
 
-//     pub fn reconstruct_pipeline(&mut self, render_state: &egui_wgpu::RenderState) {
+//     pub fn reconstruct_render_resource(&mut self, render_state: &wgpu::RenderState) {
 //         match self {
-//             Self::RayMarcher { pass } => pass.reconstruct_pipeline(render_state),
-//             Self::Compositor { pass } => pass.reconstruct_pipeline(render_state),
+//             Self::RayMarcher { pass } => pass.reconstruct_render_resource(render_state),
+//             Self::Compositor { pass } => pass.reconstruct_render_resource(render_state),
 //             _ => {}
 //         }
 //     }
 
-//     pub fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
+//     pub fn recompile_shader(&mut self, render_state: &wgpu::RenderState) {
 //         match self {
 //             Self::RayMarcher { pass } => pass.recompile_shader(render_state),
 //             Self::Compositor { pass } => pass.recompile_shader(render_state),
@@ -554,7 +532,7 @@ pub trait TextureProcessingPass:
 
 //     pub fn recompile_if_preprocessor_directives_changed(
 //         &mut self,
-//         render_state: &egui_wgpu::RenderState,
+//         render_state: &wgpu::RenderState,
 //     ) {
 //         if self.update_directives() {
 //             self.recompile_shader(render_state);

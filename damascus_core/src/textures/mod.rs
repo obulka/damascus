@@ -161,7 +161,7 @@ impl DualDevice<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
 }
 
 impl Vertex<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
-    fn attr_array() -> [wgpu::VertexAttribute; 1] {
+    fn attr_array() -> [wgpu::VertexAttribute] {
         wgpu::vertex_attr_array![0 => Float32x2]
     }
 }

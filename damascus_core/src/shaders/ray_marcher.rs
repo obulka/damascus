@@ -20,9 +20,9 @@ use crate::{
     textures::AOVs,
 };
 
-pub const RAY_MARCHER_VERTEX_SHADER: String =
+pub const RAY_MARCHER_VERTEX_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/vertex_shader.wgsl");
-pub const RAY_MARCHER_FRAGMENT_SHADER: String =
+pub const RAY_MARCHER_FRAGMENT_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/fragment_shader.wgsl");
 
 #[derive(

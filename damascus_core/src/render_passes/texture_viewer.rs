@@ -12,7 +12,7 @@ use serde_hashkey::{Key, OrderedFloatPolicy};
 
 use super::{
     resources::{Buffer, TextureView},
-    RenderPass, TextureProcessingPass,
+    RenderPass,
 };
 
 use crate::{
@@ -23,7 +23,10 @@ use crate::{
         },
         ShaderSource,
     },
-    textures::{GPUTextureVertex, Grade, Std430GPUTextureVertex, Texture, TextureVertex},
+    textures::{
+        texture_corner_vertices_2d, GPUTextureVertex, Grade, Std430GPUTextureVertex, Texture,
+        TextureVertex,
+    },
     DualDevice, Hashable,
 };
 
@@ -46,11 +49,11 @@ impl Hashable for TextureViewerCompilationData {}
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct TextureViewerPipelineData {
+pub struct TextureViewerConstructionData {
     pub texture: Texture,
 }
 
-impl Hashable for TextureViewerPipelineData {}
+impl Hashable for TextureViewerConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -108,19 +111,19 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
 #[serde(default)]
 pub struct TextureViewer {
     pub render_data: TextureViewerRenderData,
-    pub pipeline_data: TextureViewerPipelineData,
-    recompile_hash: Key<OrderedFloatPolicy>,
-    reconstruct_hash: Key<OrderedFloatPolicy>,
+    pub construction_data: TextureViewerConstructionData,
+    recompilation_hash: Key<OrderedFloatPolicy>,
+    reconstruction_hash: Key<OrderedFloatPolicy>,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
 impl Default for TextureViewer {
     fn default() -> Self {
-        TextureViewer {
+        Self {
             render_data: TextureViewerRenderData::default(),
-            pipeline_data: TextureViewerPipelineData::default(),
-            recompile_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
+            construction_data: TextureViewerConstructionData::default(),
+            recompilation_hash: Key::<OrderedFloatPolicy>::Unit,
+            reconstruction_hash: Key::<OrderedFloatPolicy>::Unit,
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(),
         }
     }
@@ -147,7 +150,7 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 impl
     RenderPass<
         TextureViewerCompilationData,
-        TextureViewerPipelineData,
+        TextureViewerConstructionData,
         TextureVertex,
         GPUTextureVertex,
         Std430GPUTextureVertex,
@@ -158,28 +161,32 @@ impl
         &TextureViewerCompilationData {}
     }
 
-    fn pipeline_data(&self) -> &TextureViewerPipelineData {
-        &self.pipeline_data
+    fn construction_data(&self) -> &TextureViewerConstructionData {
+        &self.construction_data
     }
 
     fn label(&self) -> String {
         "texture viewer"
     }
 
-    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.recompile_hash
+    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.recompilation_hash
     }
 
-    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.recompile_hash
+    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.recompilation_hash
     }
 
-    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.reconstruct_hash
+    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy> {
+        &self.reconstruction_hash
     }
 
-    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.reconstruct_hash
+    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
+        &mut self.reconstruction_hash
+    }
+
+    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
+        texture_corner_vertices_2d()
     }
 
     fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
@@ -207,7 +214,7 @@ impl
         let mut width: u32 = 10;
         let mut height: u32 = 10;
         let mut texture_data = Rgba32FImage::new(width, height);
-        if let Ok(image) = ImageReader::open(&self.pipeline_data.texture.filepath) {
+        if let Ok(image) = ImageReader::open(&self.construction_data.texture.filepath) {
             if let Ok(decoded_image) = image.decode() {
                 texture_data = decoded_image.to_rgba32f();
                 (width, height) = texture_data.dimensions();
@@ -217,7 +224,7 @@ impl
         let size = wgpu::Extent3d {
             width: width,
             height: height,
-            depth_or_array_layers: self.pipeline_data.texture.layers,
+            depth_or_array_layers: self.construction_data.texture.layers,
         };
         let texture_descriptor = wgpu::TextureDescriptor {
             size: size,
@@ -244,5 +251,3 @@ impl
         }]
     }
 }
-
-impl TextureProcessingPass for TextureViewer {}

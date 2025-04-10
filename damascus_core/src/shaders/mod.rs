@@ -6,6 +6,7 @@
 use std::{borrow::Cow, collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
 use strum::{EnumCount, EnumString, IntoEnumIterator};
+use wgpu;
 
 pub mod ray_marcher;
 pub mod texture_viewer;
@@ -104,14 +105,14 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
         true
     }
 
-    fn vertex_shader(&self) -> wgsl::ShaderSource<'_> {
+    fn vertex_shader(&self) -> wgpu::ShaderSource<'_> {
         wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
             self.vertex_shader_raw(),
             self.current_directives(),
         )))
     }
 
-    fn fragment_shader(&self) -> wgsl::ShaderSource<'_> {
+    fn fragment_shader(&self) -> wgpu::ShaderSource<'_> {
         wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
             self.fragment_shader_raw(),
             self.current_directives(),

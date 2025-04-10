@@ -192,3 +192,8 @@ impl RenderResource {
         render_pass.draw(0..self.vertex_buffer.vertex_count, 0..1);
     }
 }
+
+#[derive(Clone)]
+pub struct RenderResources {
+    resources: Vec<RenderResource>,
+}

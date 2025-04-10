@@ -82,8 +82,8 @@ impl Viewport {
         )
     }
 
-    pub fn reconstruct_pipeline(&mut self, render_state: &egui_wgpu::RenderState) {
-        self.view.reconstruct_pipeline(render_state, &self.settings);
+    pub fn reconstruct_render_resource(&mut self, render_state: &egui_wgpu::RenderState) {
+        self.view.reconstruct_render_resource(render_state);
     }
 
     fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {
@@ -95,7 +95,7 @@ impl Viewport {
 
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-        let mut reconstruct_pipeline = false;
+        let mut reconstruct_render_resource = false;
         egui::Window::new("viewer")
             .default_width(720.)
             .default_height(405.)
@@ -114,11 +114,11 @@ impl Viewport {
             .constrain(true)
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
-                reconstruct_pipeline = self.view.show(render_state, ui, &mut self.settings);
+                reconstruct_render_resource = self.view.show(render_state, ui, &mut self.settings);
             });
 
-        if reconstruct_pipeline {
-            self.reconstruct_pipeline(render_state);
+        if reconstruct_render_resource {
+            self.reconstruct_render_resource(render_state);
         }
     }
 }

@@ -9,7 +9,9 @@
 const DYNAMIC_LEVEL_OF_DETAIL: u32 = 1u;
 const SAMPLE_ATMOSPHERE: u32 = 2u;
 const SECONDARY_SAMPLING: u32 = 4u;
-const PAUSED: u32 = 8u;
+
+// RenderState
+const PAUSED: u32 = 1u;
 
 
 struct RenderParameters {
@@ -24,8 +26,6 @@ struct RenderParameters {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
-    paths_rendered_per_pixel: f32,
-    resolution: vec2f,
     flags: u32,
 }
 
@@ -38,6 +38,13 @@ struct SceneParameters {
 }
 
 
+struct RenderState {
+    paths_rendered_per_pixel: f32,
+    resolution: vec2f,
+    flags: u32,
+}
+
+
 // Global render settings
 @group(UNIFORM_BIND_GROUP) @binding(0)
 var<uniform> _render_parameters: RenderParameters;
@@ -45,3 +52,7 @@ var<uniform> _render_parameters: RenderParameters;
 
 @group(UNIFORM_BIND_GROUP) @binding(1)
 var<uniform> _scene_parameters: SceneParameters;
+
+
+@group(UNIFORM_BIND_GROUP) @binding(2)
+var<uniform> _render_state: RenderState;

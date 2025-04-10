@@ -3,9 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::time::SystemTime;
+
 use crevice::std430::AsStd430;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
-use wgpu;
+use wgpu::{self, util::DeviceExt};
 
 use crate::{
     geometry, shaders,
@@ -27,44 +29,78 @@ use resources::{
 };
 use texture_viewer::TextureViewer;
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct FrameCounter {
+    pub frame_counter: u32,
+    pub previous_frame_time: SystemTime,
+    pub fps: f32,
+}
+
+impl Default for FrameCounter {
+    fn default() -> Self {
+        Self {
+            frame_counter: 0,
+            previous_frame_time: SystemTime::now(),
+            fps: 0.,
+        }
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct RenderPassHashes {
+    reset: Key<OrderedFloatPolicy>,
+    recompile: Key<OrderedFloatPolicy>,
+    reconstruct: Key<OrderedFloatPolicy>,
+}
+
+impl Default for RenderPassHashes {
+    fn default() -> Self {
+        Self {
+            reset: Key::<OrderedFloatPolicy>::Unit,
+            recompile: Key::<OrderedFloatPolicy>::Unit,
+            reconstruct: Key::<OrderedFloatPolicy>::Unit,
+        }
+    }
+}
+
 pub trait RenderPass<
+    ResetData: Hashable,
     CompilationData: Hashable,
     ConstructionData: Hashable,
     Vertex: geometry::Vertex<GPUVertex, Std430GPUVertex>,
     GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
-    Std430GPUVertex,
+    Std430GPUVertex: bytemuck::Pod,
     Directives: shaders::PreprocessorDirectives,
 >: Default + shaders::ShaderSource<Directives>
 {
+    fn reset_data(&self) -> &ResetData;
+
     fn compilation_data(&self) -> &CompilationData;
-
-    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy>;
-
-    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
 
     fn construction_data(&self) -> &ConstructionData;
 
-    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy>;
+    fn hashes(&self) -> &RenderPassHashes;
 
-    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy>;
+    fn hashes_mut(&mut self) -> &mut RenderPassHashes;
 
     fn vertices(&self) -> Vec<Std430GPUVertex>;
 
-    fn new(render_state: &wgpu::RenderState) -> Self {
+    fn new(device: &wgpu::Device, target_state: wgpu::ColorTargetState) -> Self {
         let mut render_pass = Self::default();
-        render_pass.update_recompilation_hash();
-        render_pass.update_reconstruction_hash();
-
-        Self::render_resource(&mut render_pass, render_state);
-
+        render_pass.update_hashes();
+        Self::render_resource(&mut render_pass, device, target_state);
         render_pass
     }
 
     fn label(&self) -> String {
-        ""
+        String::new()
     }
 
-    fn reset(&mut self) {}
+    fn create_reset_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(self.reset_data())
+    }
 
     fn create_recompilation_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(self.compilation_data())
@@ -74,11 +110,21 @@ pub trait RenderPass<
         to_key_with_ordered_float(self.construction_data())
     }
 
+    fn update_reset_hash(&mut self) -> bool {
+        if let Ok(reset_hash) = self.create_reset_hash() {
+            if reset_hash != (*self.hashes()).reset {
+                (*self.hashes_mut()).reset = reset_hash;
+                return true;
+            }
+        }
+        false
+    }
+
     fn update_recompilation_hash(&mut self) -> bool {
         let mut hash_changed = false;
         if let Ok(recompilation_hash) = self.create_recompilation_hash() {
-            if recompilation_hash != *self.recompilation_hash() {
-                *self.recompilation_hash_mut() = recompilation_hash;
+            if recompilation_hash != (*self.hashes()).recompile {
+                (*self.hashes_mut()).recompile = recompilation_hash;
                 hash_changed = true;
             }
         }
@@ -88,12 +134,69 @@ pub trait RenderPass<
 
     fn update_reconstruction_hash(&mut self) -> bool {
         if let Ok(reconstruction_hash) = self.create_reconstruction_hash() {
-            if reconstruction_hash != *self.reconstruction_hash() {
-                *self.reconstruction_hash_mut() = reconstruction_hash;
+            if reconstruction_hash != (*self.hashes()).reconstruct {
+                (*self.hashes_mut()).reconstruct = reconstruction_hash;
                 return true;
             }
         }
         false
+    }
+
+    fn update_hashes(&mut self) -> bool {
+        let mut hash_changed = false;
+        hash_changed |= self.update_reset_hash();
+        hash_changed |= self.update_recompilation_hash();
+        hash_changed |= self.update_reconstruction_hash();
+        hash_changed
+    }
+
+    fn reset(&mut self) {}
+
+    fn reset_if_hash_changed(&mut self) -> bool {
+        if self.update_reconstruction_hash() {
+            self.reset();
+            return true;
+        }
+        false
+    }
+
+    fn reconstruct_if_hash_changed(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> Option<RenderResource> {
+        if self.update_reconstruction_hash() {
+            return Some(self.reconstruct_render_resource(device, target_state));
+        }
+        None
+    }
+
+    fn recompile_if_hash_changed(
+        &mut self,
+        render_resource: &mut RenderResource,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> bool {
+        if self.update_recompilation_hash() {
+            self.recompile_shader(render_resource, device, target_state);
+            return true;
+        }
+        false
+    }
+
+    fn update_if_hash_changed(
+        &mut self,
+        render_resource: &mut RenderResource,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> bool {
+        if let Some(new_resource) = self.reconstruct_if_hash_changed(device, target_state.clone()) {
+            *render_resource = new_resource;
+            return true;
+        }
+
+        self.recompile_if_hash_changed(render_resource, device, target_state)
+            || self.reset_if_hash_changed()
     }
 
     fn render_pipeline(
@@ -104,7 +207,7 @@ pub trait RenderPass<
     ) -> wgpu::RenderPipeline {
         let pipeline_layout: wgpu::PipelineLayout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some(self.label() + " pipeline layout"),
+                label: Some(&(self.label() + " pipeline layout")),
                 bind_group_layouts: &bind_groups.bind_group_layouts(),
                 push_constant_ranges: &[],
             });
@@ -127,7 +230,7 @@ pub trait RenderPass<
             vertex: wgpu::VertexState {
                 module: &vertex_shader,
                 entry_point: Some("vs_main"),
-                buffers: &self.create_vertex_buffer_layout(),
+                buffers: &[self.create_vertex_buffer_layout()],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -147,7 +250,23 @@ pub trait RenderPass<
         })
     }
 
-    fn render_resource(&mut self, device: &wgpu::Device, target_state: wgpu::ColorTargetState) -> RenderResource {
+    fn recompile_shader(
+        &mut self,
+        render_resource: &mut RenderResource,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) {
+        self.reset();
+        let render_pipeline: wgpu::RenderPipeline =
+            self.render_pipeline(device, target_state, &render_resource.bind_groups);
+        render_resource.render_pipeline = render_pipeline;
+    }
+
+    fn render_resource(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> RenderResource {
         let vertex_buffer: VertexBuffer = self.create_vertex_buffer(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device);
@@ -195,53 +314,13 @@ pub trait RenderPass<
         }
     }
 
-    fn reconstruct_render_resource(&mut self, device: &wgpu::Device, target_state: wgpu::ColorTargetState) {
-        self.reset();
-        self.render_resource(device, target_state);
-    }
-
-    fn reconstruct_if_hash_changed(&mut self, render_state: &wgpu::RenderState) -> Option<RenderResource> {
-        if self.update_reconstruction_hash() {
-            return Some(self.reconstruct_render_resource(render_state));
-        }
-        None
-    }
-
-    fn recompile_shader(&mut self, render_resource: &mut RenderResource, device: &wgpu::Device, target_state: wgpu::ColorTargetState) {
-        if let Some(render_resource) = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .get_mut::<RenderResource>()
-        {
-            self.reset();
-
-            let device = &render_state.device;
-
-            let render_pipeline: wgpu::RenderPipeline = self.render_pipeline(
-                device,
-                render_state.target_format,
-                &render_resource.bind_groups(),
-            );
-
-            render_resource.render_pipeline = render_pipeline;
-        }
-    }
-
-    fn recompile_if_hash_changed(&mut self, render_state: &wgpu::RenderState) -> bool {
-        if self.update_recompilation_hash() {
-            self.recompile_shader(render_state);
-            return true;
-        }
-        false
-    }
-
-    fn reconstruct_or_recompile_if_hash_changed(
+    fn reconstruct_render_resource(
         &mut self,
-        render_state: &wgpu::RenderState,
-    ) -> bool {
-        self.reconstruct_if_hash_changed(render_state)
-            || self.recompile_if_hash_changed(render_state)
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> RenderResource {
+        self.reset();
+        self.render_resource(device, target_state)
     }
 
     fn create_vertex_buffer(&mut self, device: &wgpu::Device) -> VertexBuffer {
@@ -250,11 +329,11 @@ pub trait RenderPass<
         VertexBuffer {
             buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("vertex buffer"),
-                contents: bytemuck::cast_slice(vertices),
+                contents: bytemuck::cast_slice(vertices.as_slice()),
                 usage: wgpu::BufferUsages::VERTEX,
             }),
             vertex_count: vertex_count,
-        };
+        }
     }
 
     fn create_vertex_buffer_layout(&self) -> wgpu::VertexBufferLayout<'_> {
@@ -455,8 +534,8 @@ pub trait RenderPass<
 
     fn create_storage_texture_view_bind_group(
         device: &wgpu::Device,
-        storage_texture_views: &Vec<StorageTextureView>,
-    ) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+        storage_texture_views: Vec<StorageTextureView>,
+    ) -> StorageTextureViewBindGroup {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = storage_texture_views
             .iter()
             .enumerate()

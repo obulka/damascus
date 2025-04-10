@@ -201,7 +201,14 @@ impl
 
         self.update_camera(ui, &rect, &response);
 
-        let _data_changed: bool = self.reconstruct_or_recompile_if_hash_changed(render_state);
+        if let Some(render_resource) = render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            let _data_changed: bool = self.update_if_hash_changed(render_state);
+        }
 
         let mut paths_rendered: u32 = 0;
 

@@ -8,10 +8,11 @@ use std::{collections::HashSet, time::SystemTime};
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2, Vec3};
 use serde_hashkey::{Key, OrderedFloatPolicy};
+use wgpu::{self, util::DeviceExt};
 
 use super::{
     resources::{Buffer, StorageTextureView},
-    RenderPass,
+    FrameCounter, RenderPass, RenderPassHashes,
 };
 
 use crate::{
@@ -85,7 +86,6 @@ pub struct GPURayMarcherRenderData {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
-    paths_rendered_per_pixel: f32,
     resolution: Vec2,
     flags: u32,
 }
@@ -108,12 +108,7 @@ pub struct RayMarcherRenderData {
     pub light_sampling_bias: f32,
     pub secondary_sampling: bool,
     pub output_aov: AOVs,
-    pub frame_counter: u32,
-    pub previous_frame_time: SystemTime,
-    pub fps: f32,
-    pub paths_rendered_per_pixel: u32,
     pub resolution: UVec2,
-    pub paused: bool,
 }
 
 impl Default for RayMarcherRenderData {
@@ -134,15 +129,12 @@ impl Default for RayMarcherRenderData {
             light_sampling_bias: 0.,
             secondary_sampling: false,
             output_aov: AOVs::default(),
-            frame_counter: 0,
-            previous_frame_time: SystemTime::now(),
-            fps: 0.,
-            paths_rendered_per_pixel: 0,
             resolution: UVec2::ZERO,
-            paused: true,
         }
     }
 }
+
+impl Hashable for RayMarcherRenderData {}
 
 impl RayMarcherRenderData {
     pub fn reset_render_data(&mut self) {
@@ -178,14 +170,19 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
             max_light_sampling_bounces: self.max_light_sampling_bounces,
             light_sampling_bias: self.light_sampling_bias * self.light_sampling_bias,
             output_aov: self.output_aov as u32,
-            paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
             resolution: self.resolution.as_vec2(),
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1
-                | (self.secondary_sampling as u32) << 2
-                | (self.paused as u32) << 3,
+                | (self.secondary_sampling as u32) << 2,
         }
     }
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, AsStd430)]
+pub struct GPURayMarcher {
+    paths_rendered_per_pixel: f32,
+    flags: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -193,8 +190,10 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
 pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
-    recompilation_hash: Key<OrderedFloatPolicy>,
-    reconstruction_hash: Key<OrderedFloatPolicy>,
+    pub frame_counter: FrameCounter,
+    pub paths_rendered_per_pixel: u32,
+    paused: bool,
+    hashes: RenderPassHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
@@ -203,9 +202,20 @@ impl Default for RayMarcher {
         Self {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
-            recompilation_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruction_hash: Key::<OrderedFloatPolicy>::Unit,
+            frame_counter: FrameCounter::default(),
+            paths_rendered_per_pixel: 0,
+            paused: true,
+            hashes: RenderPassHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
+        }
+    }
+}
+
+impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
+    fn to_gpu(&self) -> GPURayMarcher {
+        GPURayMarcher {
+            paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
+            flags: self.paused as u32,
         }
     }
 }
@@ -254,7 +264,9 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         if self
             .compilation_data()
             .enable_dynamic_recompilation_for_primitives
-            || self.enable_dynamic_recompilation_for_materials
+            || self
+                .compilation_data()
+                .enable_dynamic_recompilation_for_materials
         {
             for primitive in &self.render_data.scene.primitives {
                 if self
@@ -275,11 +287,11 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         preprocessor_directives
     }
 
-    fn vertex_shader_raw(&self) -> String {
+    fn vertex_shader_raw(&self) -> &str {
         RAY_MARCHER_VERTEX_SHADER
     }
 
-    fn fragment_shader_raw(&self) -> String {
+    fn fragment_shader_raw(&self) -> &str {
         RAY_MARCHER_FRAGMENT_SHADER
     }
 
@@ -302,6 +314,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
 
 impl
     RenderPass<
+        RayMarcherRenderData,
         RayMarcherCompilationData,
         RayMarcherConstructionData,
         TextureVertex,
@@ -310,6 +323,10 @@ impl
         RayMarcherPreprocessorDirectives,
     > for RayMarcher
 {
+    fn reset_data(&self) -> &RayMarcherRenderData {
+        &self.render_data
+    }
+
     fn compilation_data(&self) -> &RayMarcherCompilationData {
         &self.compilation_data
     }
@@ -322,23 +339,15 @@ impl
     }
 
     fn label(&self) -> String {
-        "ray marcher"
+        "ray marcher".to_owned()
     }
 
-    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.recompilation_hash
+    fn hashes(&self) -> &RenderPassHashes {
+        &self.hashes
     }
 
-    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.recompilation_hash
-    }
-
-    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.reconstruction_hash
-    }
-
-    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.reconstruction_hash
+    fn hashes_mut(&mut self) -> &mut RenderPassHashes {
+        &mut self.hashes
     }
 
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
@@ -359,6 +368,14 @@ impl
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("ray marcher scene parameter buffer"),
                     contents: bytemuck::cast_slice(&[self.render_data.scene.as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("ray marcher scene parameter buffer"),
+                    contents: bytemuck::cast_slice(&[self.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::FRAGMENT,
@@ -448,6 +465,6 @@ impl
     }
 
     fn reset(&mut self) {
-        self.render_data.paths_rendered_per_pixel = 0;
+        self.paths_rendered_per_pixel = 0;
     }
 }

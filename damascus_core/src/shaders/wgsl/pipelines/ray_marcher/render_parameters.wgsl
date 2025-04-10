@@ -26,6 +26,7 @@ struct RenderParameters {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
+    resolution: vec2f,
     flags: u32,
 }
 
@@ -40,7 +41,6 @@ struct SceneParameters {
 
 struct RenderState {
     paths_rendered_per_pixel: f32,
-    resolution: vec2f,
     flags: u32,
 }
 

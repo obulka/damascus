@@ -142,7 +142,7 @@ pub trait View: Default {
                 .on_hover_text("restart the render")
                 .clicked()
             {
-                self.recompile_shader(render_state);
+                self.reset();
             }
 
             let tooltip: &str;
@@ -220,27 +220,39 @@ impl Views {
         }
     }
 
-    pub fn reconstruct_render_resource(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-    ) {
+    pub fn reconstruct_render_resource(&mut self, render_state: &egui_wgpu::RenderState) {
         render_state.renderer.write().callback_resources.clear();
         match self {
-            Self::RayMarcher { view } => {
-                view.reconstruct_render_resource(&render_state.device, render_state.target_format.into())
-            }
-            Self::Compositor { view } => {
-                view.reconstruct_render_resource(&render_state.device, render_state.target_format.into())
-            }
+            Self::RayMarcher { view } => view.reconstruct_render_resource(
+                &render_state.device,
+                render_state.target_format.into(),
+            ),
+            Self::Compositor { view } => view.reconstruct_render_resource(
+                &render_state.device,
+                render_state.target_format.into(),
+            ),
             _ => {}
         }
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(render_resources);
     }
 
     pub fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
-        match self {
-            Self::RayMarcher { view } => view.recompile_shader(render_state),
-            Self::Compositor { view } => view.recompile_shader(render_state),
-            _ => {}
+        if let Some(render_resource) = render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            match self {
+                Self::RayMarcher { view } => view.recompile_shader(render_state),
+                Self::Compositor { view } => view.recompile_shader(render_state),
+                _ => {}
+            }
         }
     }
 

@@ -13,9 +13,9 @@ use crate::DualDevice;
 pub struct GPUCamera {
     aperture: f32,
     focal_distance: f32,
-    world_matrix: Mat4,
-    inverse_world_matrix: Mat4,
-    inverse_projection_matrix: Mat4,
+    camera_to_world: Mat4,
+    world_to_camera: Mat4,
+    screen_to_camera: Mat4,
     flags: u32,
 }
 
@@ -118,9 +118,9 @@ impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
         GPUCamera {
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
-            world_matrix: self.world_matrix,
-            inverse_world_matrix: self.world_matrix.inverse(),
-            inverse_projection_matrix: self.projection_matrix().inverse(),
+            camera_to_world: self.world_matrix,
+            world_to_camera: self.world_matrix.inverse(),
+            screen_to_camera: self.projection_matrix().inverse(),
             flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
     }

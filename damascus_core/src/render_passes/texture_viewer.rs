@@ -9,10 +9,11 @@ use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{Key, OrderedFloatPolicy};
+use wgpu::{self, util::DeviceExt};
 
 use super::{
     resources::{Buffer, TextureView},
-    RenderPass,
+    FrameCounter, RenderPass, RenderPassHashes,
 };
 
 use crate::{
@@ -53,46 +54,45 @@ pub struct TextureViewerConstructionData {
     pub texture: Texture,
 }
 
+impl Default for TextureViewerConstructionData {
+    fn default() -> Self {
+        Self {
+            texture: Texture::default(),
+        }
+    }
+}
+
+impl TextureViewerConstructionData {}
+
 impl Hashable for TextureViewerConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUTextureViewerRenderData {
     resolution: Vec2,
-    pan: Vec2,
-    zoom: f32,
+    frame: u32,
     flags: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewerRenderData {
-    pub frame_counter: u32,
-    pub previous_frame_time: SystemTime,
-    pub fps: f32,
     pub resolution: UVec2,
-    pub pan: Vec2,
-    pub zoom: f32,
-    pub grade: Grade,
-    pub paused: bool,
+    pub frame: u32,
 }
 
 impl Default for TextureViewerRenderData {
     fn default() -> Self {
         Self {
-            frame_counter: 0,
-            previous_frame_time: SystemTime::now(),
-            fps: 0.,
             resolution: UVec2::ZERO,
-            pan: Vec2::ZERO,
-            zoom: 1.0,
-            grade: Grade::default(),
-            paused: true,
+            frame: 1001,
         }
     }
 }
 
 impl TextureViewerRenderData {}
+
+impl Hashable for TextureViewerRenderData {}
 
 impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
     for TextureViewerRenderData
@@ -100,11 +100,18 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
     fn to_gpu(&self) -> GPUTextureViewerRenderData {
         GPUTextureViewerRenderData {
             resolution: self.resolution.as_vec2(),
-            pan: self.pan,
-            zoom: self.zoom,
+            frame: self.frame,
             flags: 0,
         }
     }
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, AsStd430)]
+pub struct GPUTextureViewer {
+    pan: Vec2,
+    zoom: f32,
+    flags: u32,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -112,8 +119,12 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
 pub struct TextureViewer {
     pub render_data: TextureViewerRenderData,
     pub construction_data: TextureViewerConstructionData,
-    recompilation_hash: Key<OrderedFloatPolicy>,
-    reconstruction_hash: Key<OrderedFloatPolicy>,
+    pub pan: Vec2,
+    pub zoom: f32,
+    pub grade: Grade,
+    pub frame_counter: FrameCounter,
+    pub paused: bool,
+    hashes: RenderPassHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
@@ -122,19 +133,33 @@ impl Default for TextureViewer {
         Self {
             render_data: TextureViewerRenderData::default(),
             construction_data: TextureViewerConstructionData::default(),
-            recompilation_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruction_hash: Key::<OrderedFloatPolicy>::Unit,
+            pan: Vec2::ZERO,
+            zoom: 1.0,
+            grade: Grade::default(),
+            frame_counter: FrameCounter::default(),
+            hashes: RenderPassHashes::default(),
+            paused: true,
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(),
         }
     }
 }
 
+impl DualDevice<GPUTextureViewer, Std430GPUTextureViewer> for TextureViewer {
+    fn to_gpu(&self) -> GPUTextureViewer {
+        GPUTextureViewer {
+            pan: self.pan,
+            zoom: self.zoom,
+            flags: 0,
+        }
+    }
+}
+
 impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
-    fn vertex_shader_raw(&self) -> String {
+    fn vertex_shader_raw(&self) -> &str {
         TEXTURE_VIEWER_VERTEX_SHADER
     }
 
-    fn fragment_shader_raw(&self) -> String {
+    fn fragment_shader_raw(&self) -> &str {
         TEXTURE_VIEWER_FRAGMENT_SHADER
     }
 
@@ -149,6 +174,7 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 
 impl
     RenderPass<
+        TextureViewerRenderData,
         TextureViewerCompilationData,
         TextureViewerConstructionData,
         TextureVertex,
@@ -157,6 +183,10 @@ impl
         TextureViewerPreprocessorDirectives,
     > for TextureViewer
 {
+    fn reset_data(&self) -> &TextureViewerRenderData {
+        &self.render_data
+    }
+
     fn compilation_data(&self) -> &TextureViewerCompilationData {
         &TextureViewerCompilationData {}
     }
@@ -166,23 +196,15 @@ impl
     }
 
     fn label(&self) -> String {
-        "texture viewer"
+        "texture viewer".to_owned()
     }
 
-    fn recompilation_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.recompilation_hash
+    fn hashes(&self) -> &RenderPassHashes {
+        &self.hashes
     }
 
-    fn recompilation_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.recompilation_hash
-    }
-
-    fn reconstruction_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.reconstruction_hash
-    }
-
-    fn reconstruction_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.reconstruction_hash
+    fn hashes_mut(&mut self) -> &mut RenderPassHashes {
+        &mut self.hashes
     }
 
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
@@ -195,6 +217,14 @@ impl
                 buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                     label: Some("compositor render parameter buffer"),
                     contents: bytemuck::cast_slice(&[self.render_data.as_std430()]),
+                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                }),
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+            },
+            Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("compositor render parameter buffer"),
+                    contents: bytemuck::cast_slice(&[self.as_std430()]),
                     usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 }),
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,

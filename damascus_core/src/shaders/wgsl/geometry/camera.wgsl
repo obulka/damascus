@@ -11,14 +11,14 @@ const LATLONG: u32 = 2u;
 struct Camera {
     aperture: f32,
     focal_distance: f32,
-    world_matrix: mat4x4f,
-    inverse_world_matrix: mat4x4f,
-    inverse_projection_matrix: mat4x4f,
+    camera_to_world: mat4x4f,
+    world_to_camera: mat4x4f,
+    screen_to_camera: mat4x4f,
     flags: u32,
 }
 
 
-@group(UNIFORM_BIND_GROUP) @binding(2)
+@group(UNIFORM_BIND_GROUP) @binding(3)
 var<uniform> _render_camera: Camera;
 
 
@@ -37,7 +37,7 @@ fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
 
 fn world_to_camera_space(world_position: vec3f) -> vec3f {
     return (
-        _render_camera.inverse_world_matrix
+        _render_camera.world_to_camera
         * vec4(world_position, 1.)
     ).xyz;
 }
@@ -50,9 +50,9 @@ fn world_to_camera_space(world_position: vec3f) -> vec3f {
  */
 fn render_camera_position() -> vec3f {
     return vec3(
-        _render_camera.world_matrix[3][0],
-        _render_camera.world_matrix[3][1],
-        _render_camera.world_matrix[3][2],
+        _render_camera.camera_to_world[3][0],
+        _render_camera.camera_to_world[3][1],
+        _render_camera.camera_to_world[3][2],
     );
 }
 
@@ -64,15 +64,15 @@ fn render_camera_position() -> vec3f {
  */
 fn render_camera_rotation() -> mat3x3f {
     var rotation_matrix = mat3x3f();
-    rotation_matrix[0][0] = _render_camera.world_matrix[0][0];
-    rotation_matrix[0][1] = _render_camera.world_matrix[0][1];
-    rotation_matrix[0][2] = _render_camera.world_matrix[0][2];
-    rotation_matrix[1][0] = _render_camera.world_matrix[1][0];
-    rotation_matrix[1][1] = _render_camera.world_matrix[1][1];
-    rotation_matrix[1][2] = _render_camera.world_matrix[1][2];
-    rotation_matrix[2][0] = _render_camera.world_matrix[2][0];
-    rotation_matrix[2][1] = _render_camera.world_matrix[2][1];
-    rotation_matrix[2][2] = _render_camera.world_matrix[2][2];
+    rotation_matrix[0][0] = _render_camera.camera_to_world[0][0];
+    rotation_matrix[0][1] = _render_camera.camera_to_world[0][1];
+    rotation_matrix[0][2] = _render_camera.camera_to_world[0][2];
+    rotation_matrix[1][0] = _render_camera.camera_to_world[1][0];
+    rotation_matrix[1][1] = _render_camera.camera_to_world[1][1];
+    rotation_matrix[1][2] = _render_camera.camera_to_world[1][2];
+    rotation_matrix[2][0] = _render_camera.camera_to_world[2][0];
+    rotation_matrix[2][1] = _render_camera.camera_to_world[2][1];
+    rotation_matrix[2][2] = _render_camera.camera_to_world[2][2];
     return rotation_matrix;
 }
 
@@ -98,9 +98,9 @@ fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
     var ray = Ray(
         render_camera_position(),
         normalize((
-            _render_camera.world_matrix
+            _render_camera.camera_to_world
             * vec4(
-                (_render_camera.inverse_projection_matrix * vec4(uv_coordinate, 0., 1.)).xyz,
+                (_render_camera.screen_to_camera * vec4(uv_coordinate, 0., 1.)).xyz,
                 0.,
             )
         ).xyz),
@@ -114,13 +114,13 @@ fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
 
     // Depth of field
     var camera_forward: vec3f = (
-        _render_camera.world_matrix * vec4(0., 0., -1., 0.)
+        _render_camera.camera_to_world * vec4(0., 0., -1., 0.)
     ).xyz;
     var camera_right: vec3f = (
-        _render_camera.world_matrix * vec4(1., 0., 0., 0.)
+        _render_camera.camera_to_world * vec4(1., 0., 0., 0.)
     ).xyz;
     var camera_up: vec3f = (
-        _render_camera.world_matrix * vec4(0., 1., 0., 0.)
+        _render_camera.camera_to_world * vec4(0., 1., 0., 0.)
     ).xyz;
 
     var focal_plane_point: vec3f = (

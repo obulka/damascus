@@ -81,9 +81,9 @@ pub trait PreprocessorDirectives:
 }
 
 pub trait ShaderSource<Directives: PreprocessorDirectives> {
-    fn vertex_shader_raw(&self) -> String;
+    fn vertex_shader_raw(&self) -> &str;
 
-    fn fragment_shader_raw(&self) -> String;
+    fn fragment_shader_raw(&self) -> &str;
 
     fn current_directives(&self) -> &HashSet<Directives>;
 
@@ -138,10 +138,7 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
 pub fn preprocess_directives<Directives: PreprocessorDirectives>(
     shader_source: Vec<String>,
     preprocessor_directives: &HashSet<Directives>,
-) -> Vec<String>
-where
-    <Directives as FromStr>::Err: Debug,
-{
+) -> Vec<String> {
     // Handle ifdef preprocessor macro
     let mut branch_stack = Vec::<(bool, bool)>::new();
     shader_source
@@ -223,10 +220,7 @@ where
 pub fn process_shader_source<Directives: PreprocessorDirectives>(
     shader_source: &str,
     preprocessor_directives: &HashSet<Directives>,
-) -> String
-where
-    <Directives as FromStr>::Err: Debug,
-{
+) -> String {
     let mut processed_source = Vec::<String>::new();
 
     // Read shader source and replace includes with shader source files.

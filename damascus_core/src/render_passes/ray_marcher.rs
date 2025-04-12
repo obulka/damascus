@@ -3,11 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, time::SystemTime};
+use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2, Vec3};
-use serde_hashkey::{Key, OrderedFloatPolicy};
+use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
 use super::{
@@ -31,7 +31,7 @@ use crate::{
     textures::{
         texture_corner_vertices_2d, AOVs, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex,
     },
-    DualDevice, Hashable,
+    DualDevice,
 };
 
 pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
@@ -60,8 +60,6 @@ impl Default for RayMarcherCompilationData {
 
 impl RayMarcherCompilationData {}
 
-impl Hashable for RayMarcherCompilationData {}
-
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
@@ -69,8 +67,6 @@ pub struct RayMarcherConstructionData {
     pub num_primitives: usize,
     pub num_lights: usize,
 }
-
-impl Hashable for RayMarcherConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -133,8 +129,6 @@ impl Default for RayMarcherRenderData {
         }
     }
 }
-
-impl Hashable for RayMarcherRenderData {}
 
 impl RayMarcherRenderData {
     pub fn reset_render_data(&mut self) {
@@ -225,7 +219,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
 
         if !self
-            .compilation_data()
+            .compilation_data
             .enable_dynamic_recompilation_for_ray_marcher
         {
             preprocessor_directives.extend(all_directives_for_ray_marcher());
@@ -234,14 +228,14 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         }
 
         if !self
-            .compilation_data()
+            .compilation_data
             .enable_dynamic_recompilation_for_primitives
         {
             preprocessor_directives.extend(all_directives_for_primitive());
         }
 
         if !self
-            .compilation_data()
+            .compilation_data
             .enable_dynamic_recompilation_for_materials
         {
             preprocessor_directives.extend(all_directives_for_material());
@@ -251,7 +245,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         }
 
         if !self
-            .compilation_data()
+            .compilation_data
             .enable_dynamic_recompilation_for_lights
         {
             preprocessor_directives.extend(all_directives_for_light());
@@ -262,21 +256,21 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         }
 
         if self
-            .compilation_data()
+            .compilation_data
             .enable_dynamic_recompilation_for_primitives
             || self
-                .compilation_data()
+                .compilation_data
                 .enable_dynamic_recompilation_for_materials
         {
             for primitive in &self.render_data.scene.primitives {
                 if self
-                    .compilation_data()
+                    .compilation_data
                     .enable_dynamic_recompilation_for_materials
                 {
                     preprocessor_directives.extend(directives_for_material(&primitive.material));
                 }
                 if self
-                    .compilation_data()
+                    .compilation_data
                     .enable_dynamic_recompilation_for_primitives
                 {
                     preprocessor_directives.extend(directives_for_primitive(&primitive));
@@ -304,7 +298,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 
     fn dynamic_recompilation_enabled(&self) -> bool {
-        let data = self.compilation_data();
+        let data = self.compilation_data;
         data.enable_dynamic_recompilation_for_primitives
             || data.enable_dynamic_recompilation_for_materials
             || data.enable_dynamic_recompilation_for_ray_marcher
@@ -314,30 +308,12 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
 
 impl
     RenderPass<
-        RayMarcherRenderData,
-        RayMarcherCompilationData,
-        RayMarcherConstructionData,
         TextureVertex,
         GPUTextureVertex,
         Std430GPUTextureVertex,
         RayMarcherPreprocessorDirectives,
     > for RayMarcher
 {
-    fn reset_data(&self) -> &RayMarcherRenderData {
-        &self.render_data
-    }
-
-    fn compilation_data(&self) -> &RayMarcherCompilationData {
-        &self.compilation_data
-    }
-
-    fn construction_data(&self) -> &RayMarcherConstructionData {
-        &RayMarcherConstructionData {
-            num_primitives: self.render_data.scene.primitives.len(),
-            num_lights: self.render_data.scene.lights.len(),
-        }
-    }
-
     fn label(&self) -> String {
         "ray marcher".to_owned()
     }
@@ -348,6 +324,21 @@ impl
 
     fn hashes_mut(&mut self) -> &mut RenderPassHashes {
         &mut self.hashes
+    }
+
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.render_data)
+    }
+
+    fn create_recompilation_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.compilation_data)
+    }
+
+    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&RayMarcherConstructionData {
+            num_primitives: self.render_data.scene.primitives.len(),
+            num_lights: self.render_data.scene.lights.len(),
+        })
     }
 
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {

@@ -3,10 +3,9 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{borrow::Cow, collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
+use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
 use strum::{EnumCount, EnumString, IntoEnumIterator};
-use wgpu;
 
 pub mod ray_marcher;
 pub mod texture_viewer;
@@ -105,18 +104,12 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
         true
     }
 
-    fn vertex_shader(&self) -> wgpu::ShaderSource<'_> {
-        wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
-            self.vertex_shader_raw(),
-            self.current_directives(),
-        )))
+    fn vertex_shader(&self) -> String {
+        process_shader_source(self.vertex_shader_raw(), self.current_directives())
     }
 
-    fn fragment_shader(&self) -> wgpu::ShaderSource<'_> {
-        wgpu::ShaderSource::Wgsl(Cow::Borrowed(&process_shader_source(
-            self.fragment_shader_raw(),
-            self.current_directives(),
-        )))
+    fn fragment_shader(&self) -> String {
+        process_shader_source(self.fragment_shader_raw(), self.current_directives())
     }
 
     fn dynamic_recompilation_enabled(&self) -> bool {
@@ -160,11 +153,13 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                         // If we are currently in a branch and have taken it
                         // and we hit another branch decide whether or not to
                         // take it, push it to the stack and carry on
-                        let ifdef_directive =
+                        if let Ok(ifdef_directive) =
                             Directives::from_str(line.trim().trim_start_matches("#ifdef").trim())
-                                .unwrap();
-                        let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
-                        branch_stack.push((take_branch, take_branch));
+                        {
+                            let take_branch: bool =
+                                preprocessor_directives.contains(&ifdef_directive);
+                            branch_stack.push((take_branch, take_branch));
+                        }
                     } else {
                         // If we are not in the current branch we want
                         // to skip further directives until the next endif
@@ -176,12 +171,13 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                         // If we are in a branch and hit an else ifdef, and
                         // we have not yet taken a branch of the current
                         // conditional, check if we want to take this branch
-                        let else_ifdef_directive =
+                        if let Ok(else_ifdef_directive) =
                             Directives::from_str(line.trim().trim_start_matches("#elifdef").trim())
-                                .unwrap();
-                        *current_branch_taken =
-                            preprocessor_directives.contains(&else_ifdef_directive);
-                        *branch_taken |= *current_branch_taken;
+                        {
+                            *current_branch_taken =
+                                preprocessor_directives.contains(&else_ifdef_directive);
+                            *branch_taken |= *current_branch_taken;
+                        }
                     } else if *current_branch_taken {
                         *current_branch_taken = false;
                     }
@@ -202,10 +198,12 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                 // If we are not currently in a branch and we hit a branch
                 // decide whether or not to take the branch, push it to the
                 // stack and carry on
-                let ifdef_directive =
-                    Directives::from_str(line.trim().trim_start_matches("#ifdef").trim()).unwrap();
-                let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
-                branch_stack.push((take_branch, take_branch));
+                if let Ok(ifdef_directive) =
+                    Directives::from_str(line.trim().trim_start_matches("#ifdef").trim())
+                {
+                    let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
+                    branch_stack.push((take_branch, take_branch));
+                }
 
                 return false;
             }
@@ -226,12 +224,12 @@ pub fn process_shader_source<Directives: PreprocessorDirectives>(
     // Read shader source and replace includes with shader source files.
     for line in shader_source.split("\n") {
         if line.trim().starts_with("#include") {
-            for line in Includes::from_str(line.trim().trim_start_matches("#include").trim())
-                .unwrap()
-                .source()
-                .split("\n")
+            if let Ok(include) =
+                Includes::from_str(line.trim().trim_start_matches("#include").trim())
             {
-                processed_source.push(line.to_string());
+                for line in include.source().split("\n") {
+                    processed_source.push(line.to_string());
+                }
             }
         } else if line.trim().starts_with("//") || line.trim() == "" {
             continue;

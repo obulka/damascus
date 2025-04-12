@@ -3,12 +3,12 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, time::SystemTime};
+use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
-use serde_hashkey::{Key, OrderedFloatPolicy};
+use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
 use super::{
@@ -28,24 +28,8 @@ use crate::{
         texture_corner_vertices_2d, GPUTextureVertex, Grade, Std430GPUTextureVertex, Texture,
         TextureVertex,
     },
-    DualDevice, Hashable,
+    DualDevice,
 };
-
-// A change in the data within this struct will trigger the pass to
-// recompile
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
-#[serde(default)]
-pub struct TextureViewerCompilationData {}
-
-impl Default for TextureViewerCompilationData {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
-impl TextureViewerCompilationData {}
-
-impl Hashable for TextureViewerCompilationData {}
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
@@ -63,8 +47,6 @@ impl Default for TextureViewerConstructionData {
 }
 
 impl TextureViewerConstructionData {}
-
-impl Hashable for TextureViewerConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -91,8 +73,6 @@ impl Default for TextureViewerRenderData {
 }
 
 impl TextureViewerRenderData {}
-
-impl Hashable for TextureViewerRenderData {}
 
 impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
     for TextureViewerRenderData
@@ -174,27 +154,12 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 
 impl
     RenderPass<
-        TextureViewerRenderData,
-        TextureViewerCompilationData,
-        TextureViewerConstructionData,
         TextureVertex,
         GPUTextureVertex,
         Std430GPUTextureVertex,
         TextureViewerPreprocessorDirectives,
     > for TextureViewer
 {
-    fn reset_data(&self) -> &TextureViewerRenderData {
-        &self.render_data
-    }
-
-    fn compilation_data(&self) -> &TextureViewerCompilationData {
-        &TextureViewerCompilationData {}
-    }
-
-    fn construction_data(&self) -> &TextureViewerConstructionData {
-        &self.construction_data
-    }
-
     fn label(&self) -> String {
         "texture viewer".to_owned()
     }
@@ -205,6 +170,14 @@ impl
 
     fn hashes_mut(&mut self) -> &mut RenderPassHashes {
         &mut self.hashes
+    }
+
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.render_data)
+    }
+
+    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.construction_data)
     }
 
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {

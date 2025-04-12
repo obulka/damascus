@@ -195,5 +195,5 @@ impl RenderResource {
 
 #[derive(Clone)]
 pub struct RenderResources {
-    resources: Vec<RenderResource>,
+    pub resources: Vec<RenderResource>,
 }

@@ -72,10 +72,9 @@ pub trait RenderPass<
 
     fn vertices(&self) -> Vec<Std430GPUVertex>;
 
-    fn new(device: &wgpu::Device, target_state: wgpu::ColorTargetState) -> Self {
+    fn new() -> Self {
         let mut render_pass = Self::default();
         render_pass.update_hashes();
-        Self::render_resource(&mut render_pass, device, target_state);
         render_pass
     }
 
@@ -151,19 +150,19 @@ pub trait RenderPass<
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         if self.update_reconstruction_hash() {
-            return Some(self.reconstruct_render_resource(device, target_state));
+            return Some(self.render_resource(device, target_state));
         }
         None
     }
 
     fn recompile_if_hash_changed(
         &mut self,
-        render_resource: &mut RenderResource,
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
     ) -> bool {
         if self.update_recompilation_hash() {
-            self.recompile_shader(render_resource, device, target_state);
+            self.recompile_shader(device, target_state, render_resource);
             return true;
         }
         false
@@ -171,17 +170,23 @@ pub trait RenderPass<
 
     fn update_if_hash_changed(
         &mut self,
-        render_resource: &mut RenderResource,
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
     ) -> bool {
         if let Some(new_resource) = self.reconstruct_if_hash_changed(device, target_state.clone()) {
             *render_resource = new_resource;
+            self.update_recompilation_hash();
+            self.update_reset_hash();
             return true;
         }
 
-        self.recompile_if_hash_changed(render_resource, device, target_state)
-            || self.reset_if_hash_changed()
+        if self.recompile_if_hash_changed(device, target_state, render_resource) {
+            self.update_reset_hash();
+            return true;
+        }
+
+        self.reset_if_hash_changed()
     }
 
     fn render_pipeline(
@@ -237,9 +242,9 @@ pub trait RenderPass<
 
     fn recompile_shader(
         &mut self,
-        render_resource: &mut RenderResource,
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
     ) {
         self.reset();
         let render_pipeline: wgpu::RenderPipeline =
@@ -252,6 +257,8 @@ pub trait RenderPass<
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
     ) -> RenderResource {
+        self.reset();
+
         let vertex_buffer: VertexBuffer = self.create_vertex_buffer(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device);
@@ -299,16 +306,7 @@ pub trait RenderPass<
         }
     }
 
-    fn reconstruct_render_resource(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-    ) -> RenderResource {
-        self.reset();
-        self.render_resource(device, target_state)
-    }
-
-    fn create_vertex_buffer(&mut self, device: &wgpu::Device) -> VertexBuffer {
+    fn create_vertex_buffer(&self, device: &wgpu::Device) -> VertexBuffer {
         let vertices: Vec<Std430GPUVertex> = self.vertices();
         let vertex_count: u32 = vertices.len() as u32;
         VertexBuffer {
@@ -562,43 +560,53 @@ pub enum RenderPasses {
     TextureViewer { pass: TextureViewer },
 }
 
-// impl RenderPasses {
-//     pub fn new(render_state: &wgpu::RenderState) -> Self {
-//         Self::RayMarcher {
-//             pass: RayMarcher::new(render_state),
-//         }
-//     }
+impl RenderPasses {
+    pub fn new() -> Self {
+        Self::TextureViewer {
+            pass: TextureViewer::new(),
+        }
+    }
 
-//     pub fn reconstruct_render_resource(&mut self, render_state: &wgpu::RenderState) {
-//         match self {
-//             Self::RayMarcher { pass } => pass.reconstruct_render_resource(render_state),
-//             Self::Compositor { pass } => pass.reconstruct_render_resource(render_state),
-//             _ => {}
-//         }
-//     }
+    pub fn render_resource(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+    ) -> RenderResource {
+        match self {
+            Self::RayMarcher { pass } => pass.render_resource(device, target_state),
+            Self::TextureViewer { pass } => pass.render_resource(device, target_state),
+        }
+    }
 
-//     pub fn recompile_shader(&mut self, render_state: &wgpu::RenderState) {
-//         match self {
-//             Self::RayMarcher { pass } => pass.recompile_shader(render_state),
-//             Self::Compositor { pass } => pass.recompile_shader(render_state),
-//             _ => {}
-//         }
-//     }
+    pub fn recompile_shader(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
+    ) {
+        match self {
+            Self::RayMarcher { pass } => {
+                pass.recompile_shader(device, target_state, render_resource)
+            }
+            Self::TextureViewer { pass } => {
+                pass.recompile_shader(device, target_state, render_resource)
+            }
+        }
+    }
 
-//     pub fn update_directives(&mut self) -> bool {
-//         match self {
-//             Self::RayMarcher { pass } => pass.update_directives(),
-//             Self::Compositor { pass } => pass.update_directives(),
-//             _ => false,
-//         }
-//     }
-
-//     pub fn recompile_if_preprocessor_directives_changed(
-//         &mut self,
-//         render_state: &wgpu::RenderState,
-//     ) {
-//         if self.update_directives() {
-//             self.recompile_shader(render_state);
-//         }
-//     }
-// }
+    pub fn update_if_hash_changed(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
+    ) -> bool {
+        match self {
+            Self::RayMarcher { pass } => {
+                pass.update_if_hash_changed(device, target_state, render_resource)
+            }
+            Self::TextureViewer { pass } => {
+                pass.update_if_hash_changed(device, target_state, render_resource)
+            }
+        }
+    }
+}

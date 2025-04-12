@@ -3,19 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::time::SystemTime;
+use std::{borrow::Cow, time::SystemTime};
 
 use crevice::std430::AsStd430;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
-use crate::{
-    geometry, shaders,
-    textures::{
-        texture_corner_vertices_2d, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex,
-    },
-    Hashable,
-};
+use crate::{geometry, shaders};
 
 // mod grade;
 pub mod ray_marcher;
@@ -66,21 +60,12 @@ impl Default for RenderPassHashes {
 }
 
 pub trait RenderPass<
-    ResetData: Hashable,
-    CompilationData: Hashable,
-    ConstructionData: Hashable,
     Vertex: geometry::Vertex<GPUVertex, Std430GPUVertex>,
     GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
     Std430GPUVertex: bytemuck::Pod,
     Directives: shaders::PreprocessorDirectives,
 >: Default + shaders::ShaderSource<Directives>
 {
-    fn reset_data(&self) -> &ResetData;
-
-    fn compilation_data(&self) -> &CompilationData;
-
-    fn construction_data(&self) -> &ConstructionData;
-
     fn hashes(&self) -> &RenderPassHashes;
 
     fn hashes_mut(&mut self) -> &mut RenderPassHashes;
@@ -98,16 +83,16 @@ pub trait RenderPass<
         String::new()
     }
 
-    fn create_reset_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.reset_data())
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.hashes().reset)
     }
 
-    fn create_recompilation_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.compilation_data())
+    fn create_recompilation_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.hashes().recompile)
     }
 
-    fn create_reconstruction_hash(&self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(self.construction_data())
+    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.hashes().reconstruct)
     }
 
     fn update_reset_hash(&mut self) -> bool {
@@ -215,13 +200,13 @@ pub trait RenderPass<
         let vertex_shader: wgpu::ShaderModule =
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("vertex shader"),
-                source: self.vertex_shader(),
+                source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.vertex_shader())),
             });
 
         let fragment_shader: wgpu::ShaderModule =
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: Some("fragment shader"),
-                source: self.fragment_shader(),
+                source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.fragment_shader())),
             });
 
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -340,7 +325,7 @@ pub trait RenderPass<
         wgpu::VertexBufferLayout {
             array_stride: std::mem::size_of::<Std430GPUVertex>() as wgpu::BufferAddress,
             step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &Vertex::attr_array(),
+            attributes: Vertex::attr_array(),
         }
     }
 
@@ -572,11 +557,10 @@ pub trait RenderPass<
     }
 }
 
-// pub enum RenderPasses {
-//     RayMarcher { pass: RayMarcher },
-//     TextureViewer { pass: TextureViewer },
-//     Error { error: anyhow::Error },
-// }
+pub enum RenderPasses {
+    RayMarcher { pass: RayMarcher },
+    TextureViewer { pass: TextureViewer },
+}
 
 // impl RenderPasses {
 //     pub fn new(render_state: &wgpu::RenderState) -> Self {

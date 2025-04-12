@@ -66,5 +66,5 @@ pub enum Repetition {
 }
 
 pub trait Vertex<G: Copy + Clone + AsStd430<Output = S>, S>: DualDevice<G, S> {
-    fn attr_array() -> [wgpu::VertexAttribute];
+    fn attr_array() -> &'static [wgpu::VertexAttribute];
 }

@@ -138,7 +138,7 @@ pub trait RenderPass<
     fn reset(&mut self) {}
 
     fn reset_if_hash_changed(&mut self) -> bool {
-        if self.update_reconstruction_hash() {
+        if self.update_reset_hash() {
             self.reset();
             return true;
         }

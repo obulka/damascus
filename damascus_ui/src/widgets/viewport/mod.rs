@@ -5,37 +5,28 @@
 
 use eframe::{egui, egui_wgpu};
 
-mod settings;
 pub mod views;
 
-pub use settings::ViewportSettings;
 pub use views::Views;
-
 use views::{CompositorView, RayMarcherView, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
 pub struct Viewport {
-    pub settings: ViewportSettings,
     pub view: Views,
 }
 
 impl Viewport {
     pub const ICON_SIZE: f32 = 25.;
 
-    pub fn new<'a>(
-        creation_context: &'a eframe::CreationContext<'a>,
-        settings: ViewportSettings,
-    ) -> Self {
+    pub fn new<'a>(creation_context: &'a eframe::CreationContext<'a>) -> Self {
         if let Some(wgpu_render_state) = &creation_context.wgpu_render_state {
             return Self {
-                settings: settings,
-                view: Views::new(&wgpu_render_state, &settings),
+                view: Views::new(&wgpu_render_state),
             };
         }
 
         Self {
-            settings: settings,
             view: Views::Error {
                 error: anyhow::Error::msg("Failed to create new viewport"),
             },
@@ -47,11 +38,7 @@ impl Viewport {
             return;
         }
 
-        let mut view = RayMarcherView::new(
-            render_state,
-            &self.settings.ray_marcher_view,
-            &self.settings.compiler_settings.ray_marcher,
-        );
+        let mut view = RayMarcherView::new();
         view.enable_and_play();
 
         self.view = Views::RayMarcher { view };
@@ -62,11 +49,7 @@ impl Viewport {
             return;
         }
 
-        let mut view = CompositorView::new(
-            render_state,
-            &self.settings.compositor_view,
-            &self.settings.compiler_settings.compositor,
-        );
+        let mut view = CompositorView::new();
         view.enable();
 
         self.view = Views::Compositor { view };
@@ -76,10 +59,8 @@ impl Viewport {
         &mut self,
         render_state: &egui_wgpu::RenderState,
     ) {
-        self.view.recompile_if_preprocessor_directives_changed(
-            render_state,
-            &self.settings.compiler_settings,
-        )
+        self.view
+            .recompile_if_preprocessor_directives_changed(render_state)
     }
 
     pub fn reconstruct_render_resource(&mut self, render_state: &egui_wgpu::RenderState) {
@@ -114,7 +95,7 @@ impl Viewport {
             .constrain(true)
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
-                reconstruct_render_resource = self.view.show(render_state, ui, &mut self.settings);
+                reconstruct_render_resource = self.view.show(render_state, ui);
             });
 
         if reconstruct_render_resource {

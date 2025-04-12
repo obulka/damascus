@@ -298,11 +298,17 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 
     fn dynamic_recompilation_enabled(&self) -> bool {
-        let data = self.compilation_data;
-        data.enable_dynamic_recompilation_for_primitives
-            || data.enable_dynamic_recompilation_for_materials
-            || data.enable_dynamic_recompilation_for_ray_marcher
-            || data.enable_dynamic_recompilation_for_lights
+        self.compilation_data
+            .enable_dynamic_recompilation_for_primitives
+            || self
+                .compilation_data
+                .enable_dynamic_recompilation_for_materials
+            || self
+                .compilation_data
+                .enable_dynamic_recompilation_for_ray_marcher
+            || self
+                .compilation_data
+                .enable_dynamic_recompilation_for_lights
     }
 }
 

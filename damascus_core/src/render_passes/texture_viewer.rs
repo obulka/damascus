@@ -119,7 +119,7 @@ impl Default for TextureViewer {
             frame_counter: FrameCounter::default(),
             hashes: RenderPassHashes::default(),
             paused: true,
-            preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(),
+            preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
     }
 }

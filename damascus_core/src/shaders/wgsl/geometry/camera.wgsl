@@ -14,6 +14,7 @@ struct Camera {
     camera_to_world: mat4x4f,
     world_to_camera: mat4x4f,
     screen_to_camera: mat4x4f,
+    camera_to_screen: mat4x4f,
     flags: u32,
 }
 

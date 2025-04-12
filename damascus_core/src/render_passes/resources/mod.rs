@@ -197,3 +197,9 @@ impl RenderResource {
 pub struct RenderResources {
     pub resources: Vec<RenderResource>,
 }
+
+impl RenderResources {
+    pub fn new(resources: Vec<RenderResource>) -> Self {
+        Self { resources }
+    }
+}

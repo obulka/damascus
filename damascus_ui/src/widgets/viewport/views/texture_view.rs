@@ -20,29 +20,28 @@ use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
-    render_passes::resources::{Buffer, BufferData, StorageTextureView, TextureView},
-    renderers::compositor::{
-        Compositor, CompositorRenderState, GPUCompositor, Std430GPUCompositor,
-        Std430GPUCompositorRenderState,
+    render_passes::{
+        resources::RenderResources,
+        texture_viewer::{
+            GPUTextureViewer, Std430GPUTextureViewer, Std430GPUTextureViewerRenderState,
+            TextureViewer, TextureViewerRenderState,
+        },
     },
-    shaders::{
-        self,
-        compositor::{CompositorCompilerSettings, CompositorPreprocessorDirectives},
-    },
+    shaders::{self, texture_viewer::TextureViewerPreprocessorDirectives},
     textures::{Grade, Texture},
     DualDevice,
 };
 
-use super::{settings::CompositorViewSettings, RenderResources, View};
+use super::View;
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-struct CompositorViewCallback {
-    render_parameters: Std430GPUCompositor,
-    render_state: Std430GPUCompositorRenderState,
+struct TextureViewCallback {
+    render_parameters: Std430GPUTextureViewer,
+    render_state: Std430GPUTextureViewerRenderState,
 }
 
-impl egui_wgpu::CallbackTrait for CompositorViewCallback {
+impl egui_wgpu::CallbackTrait for TextureViewCallback {
     fn prepare(
         &self,
         _device: &wgpu::Device,
@@ -77,185 +76,31 @@ impl egui_wgpu::CallbackTrait for CompositorViewCallback {
     }
 }
 
-pub struct CompositorView {
-    pub renderer: Compositor,
+pub struct TextureView {
+    pub render_passes: Vec<RenderPasses>,
     pub frames_to_update_fps: u32,
     pub stats_text: String,
+    final_pass: RenderPasses,
     disabled: bool,
     camera_controls_enabled: bool,
-    render_state: CompositorRenderState,
-    recompile_hash: Key<OrderedFloatPolicy>,
-    reconstruct_hash: Key<OrderedFloatPolicy>,
-    preprocessor_directives: HashSet<CompositorPreprocessorDirectives>,
 }
 
-impl Default for CompositorView {
+impl Default for TextureView {
     fn default() -> Self {
         Self {
-            renderer: Compositor::default(),
+            render_passes: Vec::<RenderPasses>::new(),
             frames_to_update_fps: 10,
             stats_text: String::new(),
+            final_pass: RenderPasses::TextureViewer {
+                pass: TextureViewer::new(),
+            },
             disabled: true,
             camera_controls_enabled: true,
-            render_state: CompositorRenderState::default(),
-            recompile_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
-            preprocessor_directives: HashSet::<CompositorPreprocessorDirectives>::new(),
         }
     }
 }
 
-impl
-    View<
-        Compositor,
-        GPUCompositor,
-        Std430GPUCompositor,
-        CompositorCompilerSettings,
-        CompositorPreprocessorDirectives,
-        CompositorViewSettings,
-    > for CompositorView
-{
-    fn renderer(&self) -> &Compositor {
-        &self.renderer
-    }
-
-    fn renderer_mut(&mut self) -> &mut Compositor {
-        &mut self.renderer
-    }
-
-    fn recompile_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.recompile_hash
-    }
-
-    fn recompile_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.recompile_hash
-    }
-
-    fn create_reconstruct_hash(
-        &self,
-        _settings: &CompositorViewSettings,
-    ) -> Result<Key<OrderedFloatPolicy>, Error> {
-        Ok(Key::<OrderedFloatPolicy>::Unit)
-    }
-
-    fn reconstruct_hash(&self) -> &Key<OrderedFloatPolicy> {
-        &self.reconstruct_hash
-    }
-
-    fn reconstruct_hash_mut(&mut self) -> &mut Key<OrderedFloatPolicy> {
-        &mut self.reconstruct_hash
-    }
-
-    fn current_preprocessor_directives(&self) -> &HashSet<CompositorPreprocessorDirectives> {
-        &self.preprocessor_directives
-    }
-
-    fn current_preprocessor_directives_mut(
-        &mut self,
-    ) -> &mut HashSet<CompositorPreprocessorDirectives> {
-        &mut self.preprocessor_directives
-    }
-
-    fn fragment_shaders(&self) -> Vec<String> {
-        vec![shaders::compositor::compositor_fragment_shader(
-            self.current_preprocessor_directives(),
-        )]
-    }
-
-    fn vertex_shaders(&self) -> Vec<String> {
-        vec![shaders::compositor::compositor_vertex_shader(
-            self.current_preprocessor_directives(),
-        )]
-    }
-
-    fn create_uniform_buffers(
-        &self,
-        device: &wgpu::Device,
-        settings: &CompositorViewSettings,
-    ) -> Vec<Vec<Buffer>> {
-        vec![vec![
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("compositor render parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.renderer().as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("compositor render state buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_state.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-            },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("viewer grade buffer"),
-                    contents: bytemuck::cast_slice(&[Grade::default()
-                        .gain(settings.viewer_gain)
-                        .gamma(settings.viewer_gamma)
-                        .as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-        ]]
-    }
-
-    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<Vec<TextureView>> {
-        let mut width: u32 = 10;
-        let mut height: u32 = 10;
-        let mut texture_data = Rgba32FImage::new(width, height);
-        if let Ok(image) = ImageReader::open(&self.renderer().texture.filepath) {
-            if let Ok(decoded_image) = image.decode() {
-                texture_data = decoded_image.to_rgba32f();
-                (width, height) = texture_data.dimensions();
-            }
-        }
-
-        let size = wgpu::Extent3d {
-            width: width,
-            height: height,
-            depth_or_array_layers: self.renderer().texture.layers,
-        };
-        let texture_descriptor = wgpu::TextureDescriptor {
-            size: size,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::COPY_SRC
-                | wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("compositor texture"),
-            view_formats: &[],
-        };
-        let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
-        let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
-        vec![vec![TextureView {
-            texture: texture,
-            texture_view: texture_view,
-            texture_data: texture_data,
-            visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-            view_dimension: wgpu::TextureViewDimension::D2,
-            size: size,
-        }]]
-    }
-
-    fn create_storage_buffers(
-        &self,
-        _device: &wgpu::Device,
-        _settings: &CompositorViewSettings,
-    ) -> Vec<Vec<Buffer>> {
-        vec![vec![]]
-    }
-
-    fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<Vec<StorageTextureView>> {
-        vec![vec![]]
-    }
+impl View for TextureView {
     fn disable(&mut self) {
         self.pause();
         self.disabled = true;
@@ -283,12 +128,7 @@ impl
         self.render_state.paused
     }
 
-    fn show_top_bar(
-        &mut self,
-        _render_state: &egui_wgpu::RenderState,
-        ui: &mut egui::Ui,
-        settings: &mut CompositorViewSettings,
-    ) -> bool {
+    fn show_top_bar(&mut self, _render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         ui.horizontal(|ui| {
             ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
                 .on_hover_text("The gain to apply upon display.");
@@ -325,8 +165,6 @@ impl
         ui: &mut egui::Ui,
         render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
-        settings: &CompositorViewSettings,
-        compiler_settings: &CompositorCompilerSettings,
     ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
@@ -379,7 +217,7 @@ impl
 
         let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            CompositorViewCallback {
+            TextureViewCallback {
                 render_parameters: self.renderer().as_std430(),
                 render_state: self.render_state.as_std430(),
             },
@@ -389,7 +227,7 @@ impl
     }
 }
 
-impl CompositorView {
+impl TextureView {
     pub fn disable_camera_controls(&mut self) {
         self.camera_controls_enabled = false;
     }
@@ -398,14 +236,9 @@ impl CompositorView {
         self.camera_controls_enabled = true;
     }
 
-    pub fn set_texture(
-        &mut self,
-        texture: Texture,
-        render_state: &egui_wgpu::RenderState,
-        settings: &CompositorViewSettings,
-    ) {
+    pub fn set_texture(&mut self, texture: Texture, render_state: &egui_wgpu::RenderState) {
         self.renderer_mut().texture = texture;
-        self.reconstruct_pipeline(render_state, settings);
+        self.reconstruct_pipeline(render_state);
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {

@@ -16,6 +16,7 @@ pub struct GPUCamera {
     camera_to_world: Mat4,
     world_to_camera: Mat4,
     screen_to_camera: Mat4,
+    camera_to_screen: Mat4,
     flags: u32,
 }
 
@@ -115,12 +116,14 @@ impl Camera {
 
 impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
     fn to_gpu(&self) -> GPUCamera {
+        let projection_matrix: Mat4 = self.projection_matrix();
         GPUCamera {
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
             camera_to_world: self.world_matrix,
             world_to_camera: self.world_matrix.inverse(),
-            screen_to_camera: self.projection_matrix().inverse(),
+            screen_to_camera: projection_matrix.inverse(),
+            camera_to_screen: projection_matrix,
             flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
     }

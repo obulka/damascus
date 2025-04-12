@@ -18,11 +18,7 @@ use eframe::{
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
-    render_passes::resources::{
-        BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, RenderResources,
-        StorageTextureView, StorageTextureViewBindGroup, TextureView, TextureViewBindGroup,
-        VertexBuffer,
-    },
+    render_passes::resources::{RenderResource, RenderResources},
     renderers::Renderer,
     shaders::{CompilerSettings, PreprocessorDirectives},
     textures::{Std430GPUVertex, Vertex},
@@ -33,23 +29,23 @@ use super::settings::{self, ViewportCompilerSettings, ViewportSettings};
 
 use crate::icons::Icons;
 
-mod compositor_view;
-mod ray_marcher_view;
+mod scene_view;
+mod texture_view;
 
-pub use compositor_view::CompositorView;
-pub use ray_marcher_view::RayMarcherView;
+pub use scene_view::SceneView;
+pub use texture_view::TextureView;
 
 pub trait View: Default {
     const ICON_SIZE: f32 = 25.;
 
-    fn new(render_state: &egui_wgpu::RenderState, settings: &V, compiler_settings: &C) -> Self {
-        let mut pipeline = Self::default();
-        pipeline.set_recompile_hash(compiler_settings);
-        pipeline.set_reconstruct_hash(settings);
+    fn render_passes(&self) -> &Vec<RenderPasses>;
 
-        Self::construct_pipeline(&mut pipeline, render_state, settings);
+    fn render_passes_mut(&mut self) -> &mut Vec<RenderPasses>;
 
-        pipeline
+    fn new(render_state: &egui_wgpu::RenderState) -> Self {
+        let mut view = Self::default();
+        view.reconstruct_render_resources(render_state);
+        view
     }
 
     fn disable(&mut self) {}
@@ -86,36 +82,93 @@ pub trait View: Default {
         self.play();
     }
 
-    fn reset(&mut self) {}
+    fn reset(&mut self) {
+        self.render_passes_mut()
+            .iter_mut()
+            .map(|render_pass| render_pass.reset())
+            .collect()
+    }
+
+    fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {
+        if let Some(render_resources) = render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            self.render_passes_mut()
+                .iter_mut()
+                .zip(&mut render_resources.resources)
+                .map(|(render_pass, render_resource)| {
+                    render_pass.recompile_shader(
+                        &render_state.device,
+                        render_state.target_format.into(),
+                        render_resource,
+                    )
+                })
+                .collect()
+        }
+    }
+
+    fn reconstruct_render_resources(&mut self, render_state: &egui_wgpu::RenderState) {
+        render_state.renderer.write().callback_resources.clear();
+
+        let mut render_resources = RenderResources::new(
+            self.render_passes_mut()
+                .iter_mut()
+                .map(|render_pass| {
+                    render_pass
+                        .render_resource(&render_state.device, render_state.target_format.into())
+                })
+                .collect(),
+        );
+
+        render_state
+            .renderer
+            .write()
+            .callback_resources
+            .insert(render_resources);
+    }
+
+    fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) {
+        if let Some(render_resources) = render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            self.render_passes_mut()
+                .iter_mut()
+                .zip(&mut render_resources.resources)
+                .map(|(render_pass, render_resource)| {
+                    render_pass.update_if_hash_changed(
+                        &render_state.device,
+                        render_state.target_format.into(),
+                        render_resource,
+                    )
+                })
+                .collect()
+        }
+    }
 
     fn custom_painting(
         &mut self,
         ui: &mut egui::Ui,
         render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
-        settings: &V,
-        compiler_settings: &C,
     ) -> Option<epaint::PaintCallback>;
 
     fn show_frame(
         &mut self,
         render_state: &egui_wgpu::RenderState,
         ui: &mut egui::Ui,
-        settings: &V,
-        compiler_settings: &C,
     ) -> Option<epaint::PaintCallback> {
         let mut paint_callback = None;
         egui::Frame::canvas(ui.style()).show(ui, |ui| {
             let mut available_size: egui::Vec2 = ui.available_size().round();
             available_size.y -= Self::controls_height(ui.style());
             if available_size.x > 0. && available_size.y > 0. {
-                paint_callback = self.custom_painting(
-                    ui,
-                    render_state,
-                    available_size,
-                    settings,
-                    compiler_settings,
-                );
+                paint_callback = self.custom_painting(ui, render_state, available_size);
             }
         });
         paint_callback
@@ -164,12 +217,7 @@ pub trait View: Default {
         });
     }
 
-    fn show_top_bar(
-        &mut self,
-        _render_state: &egui_wgpu::RenderState,
-        _ui: &mut egui::Ui,
-        _settings: &mut V,
-    ) -> bool {
+    fn show_top_bar(&mut self, _render_state: &egui_wgpu::RenderState, _ui: &mut egui::Ui) -> bool {
         false
     }
 
@@ -182,15 +230,9 @@ pub trait View: Default {
         false
     }
 
-    fn show(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        ui: &mut egui::Ui,
-        settings: &mut V,
-        compiler_settings: &mut C,
-    ) -> bool {
-        let mut reconstruct_render_resource: bool = self.show_top_bar(render_state, ui, settings);
-        let paint_callback = self.show_frame(render_state, ui, settings, compiler_settings);
+    fn show(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
+        let mut reconstruct_render_resource: bool = self.show_top_bar(render_state, ui);
+        let paint_callback = self.show_frame(render_state, ui);
         reconstruct_render_resource |= self.show_bottom_bar(render_state, ui);
 
         if !reconstruct_render_resource {
@@ -204,44 +246,27 @@ pub trait View: Default {
 }
 
 pub enum Views {
-    RayMarcher { view: RayMarcherView },
-    Compositor { view: CompositorView },
+    Texture { view: TextureView },
+    Scene { view: SceneView },
     Error { error: anyhow::Error },
 }
 
 impl Views {
-    pub fn new(render_state: &egui_wgpu::RenderState, settings: &ViewportSettings) -> Self {
-        Self::RayMarcher {
-            view: RayMarcherView::new(
-                render_state,
-                &settings.ray_marcher_view,
-                &settings.compiler_settings.ray_marcher,
-            ),
+    pub fn new(render_state: &egui_wgpu::RenderState) -> Self {
+        Self::Scene {
+            view: SceneView::new(render_state),
         }
     }
 
-    pub fn reconstruct_render_resource(&mut self, render_state: &egui_wgpu::RenderState) {
-        render_state.renderer.write().callback_resources.clear();
+    pub fn reconstruct_render_resources(&mut self, render_state: &egui_wgpu::RenderState) {
         match self {
-            Self::RayMarcher { view } => view.reconstruct_render_resource(
-                &render_state.device,
-                render_state.target_format.into(),
-            ),
-            Self::Compositor { view } => view.reconstruct_render_resource(
-                &render_state.device,
-                render_state.target_format.into(),
-            ),
+            Self::Scene { view } => view.reconstruct_render_resources(render_state),
+            Self::Texture { view } => view.reconstruct_render_resources(render_state),
             _ => {}
         }
-
-        render_state
-            .renderer
-            .write()
-            .callback_resources
-            .insert(render_resources);
     }
 
-    pub fn recompile_shader(&mut self, render_state: &egui_wgpu::RenderState) {
+    pub fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {
         if let Some(render_resource) = render_state
             .renderer
             .write()
@@ -249,137 +274,105 @@ impl Views {
             .get_mut::<RenderResources>()
         {
             match self {
-                Self::RayMarcher { view } => view.recompile_shader(render_state),
-                Self::Compositor { view } => view.recompile_shader(render_state),
+                Self::Scene { view } => view.recompile_shader(render_state),
+                Self::Texture { view } => view.recompile_shader(render_state),
                 _ => {}
             }
         }
     }
 
-    pub fn update_preprocessor_directives(
-        &mut self,
-        compiler_settings: &ViewportCompilerSettings,
-    ) -> bool {
+    pub fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) {
         match self {
-            Self::RayMarcher { view } => {
-                view.update_preprocessor_directives(&compiler_settings.ray_marcher)
-            }
-            Self::Compositor { view } => {
-                view.update_preprocessor_directives(&compiler_settings.compositor)
-            }
-            _ => false,
-        }
-    }
-
-    pub fn recompile_if_preprocessor_directives_changed(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        compiler_settings: &ViewportCompilerSettings,
-    ) {
-        if self.update_preprocessor_directives(compiler_settings) {
-            self.recompile_shader(render_state);
+            Self::Scene { view } => view.update_if_hash_changed(render_state),
+            Self::Texture { view } => view.update_if_hash_changed(render_state),
+            _ => {}
         }
     }
 
     pub fn disable(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.disable(),
-            Self::Compositor { view } => view.disable(),
+            Self::Scene { view } => view.disable(),
+            Self::Texture { view } => view.disable(),
             _ => {}
         }
     }
 
     pub fn enable(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.enable(),
-            Self::Compositor { view } => view.enable(),
+            Self::Scene { view } => view.enable(),
+            Self::Texture { view } => view.enable(),
             _ => {}
         }
     }
 
     pub fn enabled(&mut self) -> bool {
         match self {
-            Self::RayMarcher { view } => view.enabled(),
-            Self::Compositor { view } => view.enabled(),
+            Self::Scene { view } => view.enabled(),
+            Self::Texture { view } => view.enabled(),
             _ => !self.disabled(),
         }
     }
 
     pub fn disabled(&mut self) -> bool {
         match self {
-            Self::RayMarcher { view } => view.disabled(),
-            Self::Compositor { view } => view.disabled(),
+            Self::Scene { view } => view.disabled(),
+            Self::Texture { view } => view.disabled(),
             _ => false,
         }
     }
 
     pub fn pause(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.pause(),
-            Self::Compositor { view } => view.pause(),
+            Self::Scene { view } => view.pause(),
+            Self::Texture { view } => view.pause(),
             _ => {}
         }
     }
 
     pub fn play(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.play(),
-            Self::Compositor { view } => view.play(),
+            Self::Scene { view } => view.play(),
+            Self::Texture { view } => view.play(),
             _ => {}
         }
     }
 
     pub fn toggle_play_pause(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.toggle_play_pause(),
-            Self::Compositor { view } => view.toggle_play_pause(),
+            Self::Scene { view } => view.toggle_play_pause(),
+            Self::Texture { view } => view.toggle_play_pause(),
             _ => {}
         }
     }
 
     pub fn paused(&self) -> bool {
         match self {
-            Self::RayMarcher { view } => view.paused(),
-            Self::Compositor { view } => view.paused(),
+            Self::Scene { view } => view.paused(),
+            Self::Texture { view } => view.paused(),
             _ => false,
         }
     }
 
     pub fn reset(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.reset(),
-            Self::Compositor { view } => view.reset(),
+            Self::Scene { view } => view.reset(),
+            Self::Texture { view } => view.reset(),
             _ => {}
         }
     }
 
     pub fn enable_and_play(&mut self) {
         match self {
-            Self::RayMarcher { view } => view.enable_and_play(),
-            Self::Compositor { view } => view.enable_and_play(),
+            Self::Scene { view } => view.enable_and_play(),
+            Self::Texture { view } => view.enable_and_play(),
             _ => {}
         }
     }
 
-    pub fn show(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        ui: &mut egui::Ui,
-        settings: &mut ViewportSettings,
-    ) -> bool {
+    pub fn show(&mut self, render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         match self {
-            Self::RayMarcher { view } => view.show(
-                render_state,
-                ui,
-                &mut settings.ray_marcher_view,
-                &mut settings.compiler_settings.ray_marcher,
-            ),
-            Self::Compositor { view } => view.show(
-                render_state,
-                ui,
-                &mut settings.compositor_view,
-                &mut settings.compiler_settings.compositor,
-            ),
+            Self::Scene { view } => view.show(render_state, ui),
+            Self::Texture { view } => view.show(render_state, ui),
             _ => false,
         }
     }

@@ -105,7 +105,7 @@ pub trait RenderPass<
     }
 
     fn update_recompilation_hash(&mut self) -> bool {
-        let mut hash_changed = false;
+        let mut hash_changed = self.dynamic_recompilation_enabled() && self.update_directives();
         if let Ok(recompilation_hash) = self.create_recompilation_hash() {
             if recompilation_hash != (*self.hashes()).recompile {
                 (*self.hashes_mut()).recompile = recompilation_hash;
@@ -113,7 +113,7 @@ pub trait RenderPass<
             }
         }
 
-        self.update_directives() || hash_changed
+        hash_changed
     }
 
     fn update_reconstruction_hash(&mut self) -> bool {
@@ -153,6 +153,19 @@ pub trait RenderPass<
             return Some(self.render_resource(device, target_state));
         }
         None
+    }
+
+    fn recompile_if_preprocessor_directives_changed(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
+    ) -> bool {
+        if self.dynamic_recompilation_enabled() && self.update_directives() {
+            self.recompile_shader(device, target_state, render_resource);
+            return true;
+        }
+        false
     }
 
     fn recompile_if_hash_changed(

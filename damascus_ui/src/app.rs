@@ -20,7 +20,7 @@ use super::widgets::{
         NodeGraph, NodeGraphEditorState, NodeGraphResponse,
     },
     toolbar::show_toolbar,
-    viewport::{Viewport, ViewportSettings, Views},
+    viewport::{Viewport, Views},
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -28,7 +28,6 @@ use super::widgets::{
 pub struct PersistentData {
     pub context: Context,
     pub editor_state: NodeGraphEditorState,
-    pub viewport_settings: ViewportSettings,
 }
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -83,7 +82,7 @@ impl Damascus {
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
             context: persistent_data.context,
             node_graph: NodeGraph::new(persistent_data.editor_state),
-            viewport: Viewport::new(creation_context, persistent_data.viewport_settings),
+            viewport: Viewport::new(creation_context),
         }
     }
 
@@ -125,7 +124,6 @@ impl eframe::App for Damascus {
             &PersistentData {
                 context: self.context.clone(),
                 editor_state: self.node_graph.editor_state().clone(),
-                viewport_settings: self.viewport.settings,
             },
         );
     }
@@ -321,11 +319,9 @@ impl eframe::App for Damascus {
                             self.viewport.switch_to_compositor_view(render_state);
 
                             match &mut self.viewport.view {
-                                Views::Compositor { view } => view.set_texture(
-                                    value.value().clone(),
-                                    render_state,
-                                    &self.viewport.settings.compositor_view,
-                                ),
+                                Views::Compositor { view } => {
+                                    view.set_texture(value.value().clone(), render_state)
+                                }
                                 Views::Error { error } => Self::display_error(ctx, error),
                                 _ => {}
                             }

@@ -87,6 +87,45 @@ impl View for TextureView {
         self.render_data.paused
     }
 
+    fn disable_camera_controls(&mut self) {
+        self.camera_controls_enabled = false;
+    }
+
+    fn enable_camera_controls(&mut self) {
+        self.camera_controls_enabled = true;
+    }
+
+    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
+        if !self.camera_controls_enabled {
+            return;
+        }
+        let drag_delta: egui::Vec2 = response.drag_delta();
+        self.render_data.pan +=
+            glam::Vec2::new(drag_delta.x, -drag_delta.y) * self.render_data.zoom;
+        if response.hovered() {
+            let scroll_delta = ui.input(|i| i.smooth_scroll_delta.y);
+            if scroll_delta != 0.0 {
+                let cursor_pos_egui: egui::Vec2 = ui.ctx().input(|i| {
+                    i.pointer.hover_pos().unwrap_or(rect.size().to_pos2() * 0.5) - rect.min
+                });
+                let cursor_pos = glam::Vec2::new(
+                    cursor_pos_egui.x - rect.width() * 0.5,
+                    rect.height() * 0.5 - cursor_pos_egui.y,
+                );
+
+                let hovered_image_pixel_before: glam::Vec2 =
+                    cursor_pos * self.render_data.zoom - self.render_data.pan;
+
+                self.render_data.zoom /= (scroll_delta * 0.002).exp();
+
+                let hovered_image_pixel: glam::Vec2 =
+                    cursor_pos * self.render_data.zoom - self.render_data.pan;
+
+                self.render_data.pan += hovered_image_pixel - hovered_image_pixel_before;
+            }
+        }
+    }
+
     fn show_top_bar(&mut self, _render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         ui.horizontal(|ui| {
             if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
@@ -174,63 +213,17 @@ impl View for TextureView {
             }
         }
 
-        let callback = Some(egui_wgpu::Callback::new_paint_callback(
+        Some(egui_wgpu::Callback::new_paint_callback(
             rect,
             ViewCallback {
                 buffer_data: self
-                    .render_passes
+                    .render_passes()
                     .iter()
                     .map(|render_pass| render_pass.buffer_data())
                     .collect(),
             },
-        ));
-
-        callback
+        ))
     }
 }
 
-impl TextureView {
-    pub fn disable_camera_controls(&mut self) {
-        self.camera_controls_enabled = false;
-    }
-
-    pub fn enable_camera_controls(&mut self) {
-        self.camera_controls_enabled = true;
-    }
-
-    pub fn set_texture(&mut self, texture: Texture, render_state: &egui_wgpu::RenderState) {
-        self.renderer_mut().texture = texture;
-        self.reconstruct_pipeline(render_state);
-    }
-
-    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        if !self.camera_controls_enabled {
-            return;
-        }
-        let drag_delta: egui::Vec2 = response.drag_delta();
-        self.render_data.pan +=
-            glam::Vec2::new(drag_delta.x, -drag_delta.y) * self.render_data.zoom;
-        if response.hovered() {
-            let scroll_delta = ui.input(|i| i.smooth_scroll_delta.y);
-            if scroll_delta != 0.0 {
-                let cursor_pos_egui: egui::Vec2 = ui.ctx().input(|i| {
-                    i.pointer.hover_pos().unwrap_or(rect.size().to_pos2() * 0.5) - rect.min
-                });
-                let cursor_pos = glam::Vec2::new(
-                    cursor_pos_egui.x - rect.width() * 0.5,
-                    rect.height() * 0.5 - cursor_pos_egui.y,
-                );
-
-                let hovered_image_pixel_before: glam::Vec2 =
-                    cursor_pos * self.render_data.zoom - self.render_data.pan;
-
-                self.render_data.zoom /= (scroll_delta * 0.002).exp();
-
-                let hovered_image_pixel: glam::Vec2 =
-                    cursor_pos * self.render_data.zoom - self.render_data.pan;
-
-                self.render_data.pan += hovered_image_pixel - hovered_image_pixel_before;
-            }
-        }
-    }
-}
+impl TextureView {}

@@ -96,6 +96,41 @@ impl View for SceneView {
         self.render_state.paused
     }
 
+    fn disable_camera_controls(&mut self) {
+        self.camera_controls_enabled = false;
+    }
+
+    fn enable_camera_controls(&mut self) {
+        self.camera_controls_enabled = true;
+    }
+
+    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
+        self.render_data.scene.render_camera.aspect_ratio = rect.width() / rect.height();
+        if !self.camera_controls_enabled {
+            return;
+        }
+        // Allow some basic camera movement
+        let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
+            glam::Mat4::from_quat(glam::Quat::from_euler(
+                glam::EulerRot::XYZ,
+                0.00015 * response.drag_delta().y,
+                0.00015 * response.drag_delta().x,
+                0.,
+            ))
+        } else {
+            glam::Mat4::from_translation(glam::Vec3::new(
+                -0.0015 * response.drag_delta().x,
+                0.0015 * response.drag_delta().y,
+                if response.hovered() {
+                    -0.015 * ui.input(|input| input.smooth_scroll_delta.y)
+                } else {
+                    0.
+                },
+            ))
+        };
+        self.render_data.scene.render_camera.world_matrix *= camera_transform;
+    }
+
     fn show_bottom_bar(
         &mut self,
         render_state: &egui_wgpu::RenderState,
@@ -169,7 +204,7 @@ impl View for SceneView {
             rect,
             ViewCallback {
                 buffer_data: self
-                    .render_passes
+                    .render_passes()
                     .iter()
                     .map(|render_pass| render_pass.buffer_data())
                     .collect(),
@@ -183,90 +218,86 @@ impl View for SceneView {
 }
 
 impl SceneView {
-    pub fn disable_camera_controls(&mut self) {
-        self.camera_controls_enabled = false;
-    }
-
-    pub fn enable_camera_controls(&mut self) {
-        self.camera_controls_enabled = true;
-    }
-
     pub fn set_renderer_to_default_with_camera(&mut self, camera: Camera) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene.render_camera = camera;
-        self.renderer_mut().scene.primitives = vec![Primitive::default()];
-        self.enable_camera_controls();
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene.render_camera = camera;
+                    pass.render_data.scene.primitives = vec![Primitive::default()];
+                    self.enable_camera_controls();
+                }
+            }
+        }
     }
 
     pub fn set_renderer_to_default_with_lights(&mut self, lights: Vec<Light>) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene.lights = lights;
-        self.renderer_mut().scene.primitives = vec![Primitive::default()];
-        self.enable_camera_controls();
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene.lights = lights;
+                    pass.render_data.scene.primitives = vec![Primitive::default()];
+                    self.enable_camera_controls();
+                }
+            }
+        }
     }
 
     pub fn set_renderer_to_default_with_atmosphere(&mut self, atmosphere: Material) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene.clear_primitives();
-        self.renderer_mut().scene.clear_lights();
-        self.renderer_mut().scene.atmosphere = atmosphere;
-        self.enable_camera_controls();
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene.clear_primitives();
+                    pass.render_data.scene.clear_lights();
+                    pass.render_data.scene.atmosphere = atmosphere;
+                    self.enable_camera_controls();
+                }
+            }
+        }
     }
 
     pub fn set_renderer_to_default_with_procedural_texture(&mut self, texture: ProceduralTexture) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene.clear_primitives();
-        self.renderer_mut().scene.clear_lights();
-        self.renderer_mut().scene.atmosphere = Material::default();
-        self.renderer_mut().scene.atmosphere.diffuse_colour_texture = texture;
-        self.enable_camera_controls();
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene.clear_primitives();
+                    pass.render_data.scene.clear_lights();
+                    pass.render_data.scene.atmosphere = Material::default();
+                    pass.render_data.scene.atmosphere.diffuse_colour_texture = texture;
+                    self.enable_camera_controls();
+                }
+            }
+        }
     }
 
     pub fn set_renderer_to_default_with_primitives(&mut self, primitives: Vec<Primitive>) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene.primitives = primitives;
-        self.renderer_mut().scene.lights = vec![Light {
-            light_type: Lights::AmbientOcclusion,
-            ..Default::default()
-        }];
-        self.enable_camera_controls();
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene.primitives = primitives;
+                    pass.render_data.scene.lights = vec![Light {
+                        light_type: Lights::AmbientOcclusion,
+                        ..Default::default()
+                    }];
+                    self.enable_camera_controls();
+                }
+            }
+        }
     }
 
     pub fn set_renderer_to_default_with_scene(&mut self, scene: Scene) {
-        self.renderer_mut().reset_render_parameters();
-        self.renderer_mut().scene = scene;
-        self.disable_camera_controls();
-    }
-
-    pub fn set_renderer(&mut self, renderer: RayMarcher) {
-        *self.renderer_mut() = renderer;
-        self.disable_camera_controls();
-    }
-
-    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        self.renderer_mut().scene.render_camera.aspect_ratio = rect.width() / rect.height();
-        if !self.camera_controls_enabled {
-            return;
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.reset_render_parameters();
+                    pass.render_data.scene = scene;
+                    self.disable_camera_controls();
+                }
+            }
         }
-        // Allow some basic camera movement
-        let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
-            glam::Mat4::from_quat(glam::Quat::from_euler(
-                glam::EulerRot::XYZ,
-                0.00015 * response.drag_delta().y,
-                0.00015 * response.drag_delta().x,
-                0.,
-            ))
-        } else {
-            glam::Mat4::from_translation(glam::Vec3::new(
-                -0.0015 * response.drag_delta().x,
-                0.0015 * response.drag_delta().y,
-                if response.hovered() {
-                    -0.015 * ui.input(|input| input.smooth_scroll_delta.y)
-                } else {
-                    0.
-                },
-            ))
-        };
-        self.renderer_mut().scene.render_camera.world_matrix *= camera_transform;
     }
 }

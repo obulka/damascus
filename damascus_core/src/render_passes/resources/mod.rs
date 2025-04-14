@@ -67,7 +67,7 @@ pub struct BufferBindGroup {
 }
 
 impl BufferBindGroup {
-    pub fn write(&self, queue: &wgpu::Queue, buffer_data: Vec<BufferDescriptor>) {
+    pub fn write(&self, queue: &wgpu::Queue, buffer_data: &Vec<BufferDescriptor>) {
         for (buffer, data) in self.buffers.iter().zip(buffer_data) {
             queue.write_buffer(&buffer.buffer, 0, data.data.as_slice());
         }
@@ -177,12 +177,12 @@ pub struct RenderResource {
 }
 
 impl RenderResource {
-    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: BufferData) {
+    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: &BufferData) {
         if let Some(uniform_bind_group) = &self.bind_groups.uniform_bind_group {
-            uniform_bind_group.write(queue, buffer_data.uniform);
+            uniform_bind_group.write(queue, &buffer_data.uniform);
         }
         if let Some(storage_bind_group) = &self.bind_groups.storage_bind_group {
-            storage_bind_group.write(queue, buffer_data.storage);
+            storage_bind_group.write(queue, &buffer_data.storage);
         }
         if let Some(texture_bind_group) = &self.bind_groups.texture_bind_group {
             texture_bind_group.write(queue);

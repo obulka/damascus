@@ -38,6 +38,41 @@ mod texture_view;
 pub use scene_view::SceneView;
 pub use texture_view::TextureView;
 
+struct ViewCallback {
+    buffer_data: Vec<BufferData>,
+}
+
+impl egui_wgpu::CallbackTrait for SceneViewCallback<'a> {
+    fn prepare(
+        &self,
+        _device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
+        _encoder: &mut wgpu::CommandEncoder,
+        resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        let resources: &RenderResources = resources.get().unwrap();
+
+        for data in &self.buffer_data {
+            resources.write_bind_groups(queue, data);
+        }
+
+        Vec::new()
+    }
+
+    fn paint(
+        &self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'static>,
+        resources: &egui_wgpu::CallbackResources,
+    ) {
+        let resources: &RenderResources = resources.get().unwrap();
+        if let Some(resource) = resources.resources.last() {
+            resource.paint(render_pass);
+        }
+    }
+}
+
 pub trait View: Default {
     const ICON_SIZE: f32 = 25.;
 

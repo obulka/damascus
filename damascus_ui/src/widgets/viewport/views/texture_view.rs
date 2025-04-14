@@ -21,7 +21,7 @@ use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
     render_passes::{
-        resources::RenderResources,
+        resources::{BufferData, RenderResources},
         texture_viewer::{
             GPUTextureViewer, Std430GPUTextureViewer, Std430GPUTextureViewerRenderState,
             TextureViewer, TextureViewerRenderState,
@@ -33,49 +33,9 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::View;
+use super::{View, ViewCallback};
 
 use crate::MAX_TEXTURE_DIMENSION;
-
-struct TextureViewCallback {
-    render_parameters: Std430GPUTextureViewer,
-    render_data: Std430GPUTextureViewerRenderData,
-}
-
-impl egui_wgpu::CallbackTrait for TextureViewCallback {
-    fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _encoder: &mut wgpu::CommandEncoder,
-        resources: &mut egui_wgpu::CallbackResources,
-    ) -> Vec<wgpu::CommandBuffer> {
-        let resources: &RenderResources = resources.get().unwrap();
-        resources.write_bind_groups(
-            queue,
-            vec![BufferData {
-                uniform: vec![
-                    bytemuck::cast_slice(&[self.render_parameters]),
-                    bytemuck::cast_slice(&[self.render_data]),
-                ],
-                storage: vec![],
-            }],
-        );
-
-        vec![]
-    }
-
-    fn paint(
-        &self,
-        _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'static>,
-        resources: &egui_wgpu::CallbackResources,
-    ) {
-        let resources: &RenderResources = resources.get().unwrap();
-        resources.paint(render_pass);
-    }
-}
 
 pub struct TextureView {
     pub render_passes: Vec<RenderPasses>,
@@ -216,9 +176,12 @@ impl View for TextureView {
 
         let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            TextureViewCallback {
-                render_parameters: self.renderer().as_std430(),
-                render_state: self.render_data.as_std430(),
+            ViewCallback {
+                buffer_data: self
+                    .render_passes
+                    .iter()
+                    .map(|render_pass| render_pass.buffer_data())
+                    .collect(),
             },
         ));
 

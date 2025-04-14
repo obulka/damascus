@@ -26,7 +26,7 @@ use damascus_core::{
             GPURayMarcher, RayMarcher, RayMarcherRenderState, Std430GPURayMarcher,
             Std430GPURayMarcherRenderState,
         },
-        resources::RenderResources,
+        resources::{BufferData, RenderResources},
     },
     scene::{Scene, Std430GPUSceneParameters},
     shaders::{
@@ -36,44 +36,9 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::{settings::SceneViewSettings, RenderResources, View};
+use super::{settings::SceneViewSettings, RenderResources, View, ViewCallback};
 
 use crate::MAX_TEXTURE_DIMENSION;
-
-struct SceneViewCallback<'a> {
-    buffer_data: Vec<BufferData<'a>>,
-}
-
-impl egui_wgpu::CallbackTrait for SceneViewCallback<'a> {
-    fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _encoder: &mut wgpu::CommandEncoder,
-        resources: &mut egui_wgpu::CallbackResources,
-    ) -> Vec<wgpu::CommandBuffer> {
-        let resources: &RenderResources = resources.get().unwrap();
-
-        for data in &self.buffer_data {
-            resources.write_bind_groups(queue, data.clone());
-        }
-
-        Vec::new()
-    }
-
-    fn paint(
-        &self,
-        _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'static>,
-        resources: &egui_wgpu::CallbackResources,
-    ) {
-        let resources: &RenderResources = resources.get().unwrap();
-        if let Some(resource) = resources.resources.last() {
-            resource.paint(render_pass);
-        }
-    }
-}
 
 pub struct SceneView {
     pub render_passes: Vec<RenderPasses>,
@@ -202,24 +167,12 @@ impl View for SceneView {
 
         let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            SceneViewCallback {
-                render_parameters: self.renderer().as_std430(),
-                scene_parameters: self
-                    .renderer()
-                    .scene
-                    .scene_parameters(settings.max_primitives, settings.max_lights),
-                render_state: self.render_state.as_std430(),
-                render_camera: self.renderer().scene.render_camera.as_std430(),
-                primitives: self
-                    .renderer
-                    .scene
-                    .create_gpu_primitives(settings.max_primitives),
-                lights: self.renderer.scene.create_gpu_lights(settings.max_lights),
-                atmosphere: self.renderer().scene.atmosphere(),
-                emissive_primitive_indices: self
-                    .renderer
-                    .scene
-                    .emissive_primitive_indices(settings.max_primitives),
+            ViewCallback {
+                buffer_data: self
+                    .render_passes
+                    .iter()
+                    .map(|render_pass| render_pass.buffer_data())
+                    .collect(),
             },
         ));
 

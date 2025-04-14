@@ -18,8 +18,9 @@ pub mod texture_viewer;
 
 use ray_marcher::RayMarcher;
 use resources::{
-    BindGroups, BindingResource, Buffer, BufferBindGroup, RenderResource, StorageTextureView,
-    StorageTextureViewBindGroup, TextureView, TextureViewBindGroup, VertexBuffer,
+    BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
+    RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
+    TextureViewBindGroup, VertexBuffer,
 };
 use texture_viewer::TextureViewer;
 
@@ -29,6 +30,7 @@ pub struct FrameCounter {
     pub frame_counter: u32,
     pub previous_frame_time: SystemTime,
     pub fps: f32,
+    pub frames_to_update_fps: u32,
 }
 
 impl Default for FrameCounter {
@@ -37,7 +39,31 @@ impl Default for FrameCounter {
             frame_counter: 0,
             previous_frame_time: SystemTime::now(),
             fps: 0.,
+            frames_to_update_fps: 10,
         }
+    }
+}
+
+impl FrameCounter {
+    pub fn tick(&mut self) {
+        if self.frame_counter % self.frames_to_update_fps == 0 {
+            match SystemTime::now().duration_since(self.previous_frame_time) {
+                Ok(frame_time) => {
+                    self.fps = self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                }
+                Err(_) => self.fps = 0.,
+            }
+
+            self.previous_frame_time = SystemTime::now();
+            self.frame_counter = 1;
+        } else {
+            self.frame_counter += 1;
+        }
+    }
+
+    pub fn reset(&mut self) {
+        self.previous_frame_time = SystemTime::now();
+        self.frame_counter = 1;
     }
 }
 
@@ -69,6 +95,10 @@ pub trait RenderPass<
     fn hashes(&self) -> &RenderPassHashes;
 
     fn hashes_mut(&mut self) -> &mut RenderPassHashes;
+
+    fn frame_counter(&self) -> &FrameCounter;
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter;
 
     fn vertices(&self) -> Vec<Std430GPUVertex>;
 
@@ -202,6 +232,21 @@ pub trait RenderPass<
         self.reset_if_hash_changed()
     }
 
+    fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
+        vec![]
+    }
+
+    fn storage_buffer_data(&self) -> Vec<BufferDescriptor> {
+        vec![]
+    }
+
+    fn buffer_data(&self) -> BufferData {
+        BufferData {
+            uniform: self.uniform_buffer_data(),
+            storage: self.storage_buffer_data(),
+        }
+    }
+
     fn render_pipeline(
         &self,
         device: &wgpu::Device,
@@ -217,18 +262,18 @@ pub trait RenderPass<
 
         let vertex_shader: wgpu::ShaderModule =
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("vertex shader"),
+                label: Some(&(self.label() + " vertex shader")),
                 source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.vertex_shader())),
             });
 
         let fragment_shader: wgpu::ShaderModule =
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("fragment shader"),
+                label: Some(&(self.label() + " fragment shader")),
                 source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(&self.fragment_shader())),
             });
 
         device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("render pipeline"),
+            label: Some(&(self.label() + " render pipeline")),
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
                 module: &vertex_shader,
@@ -281,25 +326,23 @@ pub trait RenderPass<
 
         let mut uniform_bind_group: Option<BufferBindGroup> = None;
         if !uniform_buffers.is_empty() {
-            uniform_bind_group = Some(Self::create_uniform_bind_group(device, uniform_buffers));
+            uniform_bind_group = Some(self.create_uniform_bind_group(device, uniform_buffers));
         }
 
         let mut storage_bind_group: Option<BufferBindGroup> = None;
         if !storage_buffers.is_empty() {
-            storage_bind_group = Some(Self::create_storage_bind_group(device, storage_buffers));
+            storage_bind_group = Some(self.create_storage_bind_group(device, storage_buffers));
         }
 
         let mut texture_bind_group: Option<TextureViewBindGroup> = None;
         if !texture_views.is_empty() {
-            texture_bind_group = Some(Self::create_texture_view_bind_group(device, texture_views));
+            texture_bind_group = Some(self.create_texture_view_bind_group(device, texture_views));
         }
 
         let mut storage_texture_bind_group: Option<StorageTextureViewBindGroup> = None;
         if !storage_texture_views.is_empty() {
-            storage_texture_bind_group = Some(Self::create_storage_texture_view_bind_group(
-                device,
-                storage_texture_views,
-            ));
+            storage_texture_bind_group =
+                Some(self.create_storage_texture_view_bind_group(device, storage_texture_views));
         }
 
         let bind_groups = BindGroups {
@@ -324,7 +367,7 @@ pub trait RenderPass<
         let vertex_count: u32 = vertices.len() as u32;
         VertexBuffer {
             buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("vertex buffer"),
+                label: Some(&(self.label() + " vertex buffer")),
                 contents: bytemuck::cast_slice(vertices.as_slice()),
                 usage: wgpu::BufferUsages::VERTEX,
             }),
@@ -340,12 +383,32 @@ pub trait RenderPass<
         }
     }
 
-    fn create_uniform_buffers(&self, _device: &wgpu::Device) -> Vec<Buffer> {
-        vec![]
+    fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
+        self.uniform_buffer_data()
+            .into_iter()
+            .map(|buffer_descriptor| Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&(self.label() + " uniform buffer")),
+                    contents: buffer_descriptor.data.as_slice(),
+                    usage: buffer_descriptor.usage,
+                }),
+                visibility: buffer_descriptor.visibility,
+            })
+            .collect()
     }
 
-    fn create_storage_buffers(&self, _device: &wgpu::Device) -> Vec<Buffer> {
-        vec![]
+    fn create_storage_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
+        self.storage_buffer_data()
+            .into_iter()
+            .map(|buffer_descriptor| Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&(self.label() + " storage buffer")),
+                    contents: buffer_descriptor.data.as_slice(),
+                    usage: buffer_descriptor.usage,
+                }),
+                visibility: buffer_descriptor.visibility,
+            })
+            .collect()
     }
 
     fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
@@ -420,7 +483,11 @@ pub trait RenderPass<
         }
     }
 
-    fn create_uniform_bind_group(device: &wgpu::Device, buffers: Vec<Buffer>) -> BufferBindGroup {
+    fn create_uniform_bind_group(
+        &self,
+        device: &wgpu::Device,
+        buffers: Vec<Buffer>,
+    ) -> BufferBindGroup {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
@@ -429,7 +496,7 @@ pub trait RenderPass<
 
         let bind_group_layout: wgpu::BindGroupLayout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("uniform bind group layout"),
+                label: Some(&(self.label() + " uniform bind group layout")),
                 entries: &bind_group_layout_entries,
             });
 
@@ -443,7 +510,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group: wgpu::BindGroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("uniform bind group"),
+            label: Some(&(self.label() + " uniform bind group")),
             layout: &bind_group_layout,
             entries: &bind_group_entries,
         });
@@ -455,7 +522,11 @@ pub trait RenderPass<
         }
     }
 
-    fn create_storage_bind_group(device: &wgpu::Device, buffers: Vec<Buffer>) -> BufferBindGroup {
+    fn create_storage_bind_group(
+        &self,
+        device: &wgpu::Device,
+        buffers: Vec<Buffer>,
+    ) -> BufferBindGroup {
         let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
             .iter()
             .enumerate()
@@ -463,7 +534,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("storage bind group layout"),
+            label: Some(&(self.label() + " storage bind group layout")),
             entries: &bind_group_layout_entries,
         });
 
@@ -477,7 +548,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("storage bind group"),
+            label: Some(&(self.label() + " storage bind group")),
             layout: &bind_group_layout,
             entries: &bind_group_entries,
         });
@@ -490,6 +561,7 @@ pub trait RenderPass<
     }
 
     fn create_texture_view_bind_group(
+        &self,
         device: &wgpu::Device,
         texture_views: Vec<TextureView>,
     ) -> TextureViewBindGroup {
@@ -502,7 +574,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("texture bind group layout"),
+            label: Some(&(self.label() + " texture bind group layout")),
             entries: &bind_group_layout_entries,
         });
 
@@ -516,7 +588,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("texture bind group"),
+            label: Some(&(self.label() + " texture bind group")),
             layout: &bind_group_layout,
             entries: &bind_group_entries,
         });
@@ -529,6 +601,7 @@ pub trait RenderPass<
     }
 
     fn create_storage_texture_view_bind_group(
+        &self,
         device: &wgpu::Device,
         storage_texture_views: Vec<StorageTextureView>,
     ) -> StorageTextureViewBindGroup {
@@ -541,7 +614,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("storage texture bind group layout"),
+            label: Some(&(self.label() + " storage texture bind group layout")),
             entries: &bind_group_layout_entries,
         });
 
@@ -555,7 +628,7 @@ pub trait RenderPass<
             .collect();
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("storage texture bind group"),
+            label: Some(&(self.label() + " storage texture bind group")),
             layout: &bind_group_layout,
             entries: &bind_group_entries,
         });

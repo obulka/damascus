@@ -9,10 +9,10 @@ use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
-use wgpu::{self, util::DeviceExt};
+use wgpu;
 
 use super::{
-    resources::{Buffer, TextureView},
+    resources::{BufferDescriptor, TextureView},
     FrameCounter, RenderPass, RenderPassHashes,
 };
 
@@ -184,30 +184,29 @@ impl
         texture_corner_vertices_2d()
     }
 
-    fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
+    fn frame_counter(&self) -> &FrameCounter {
+        &self.frame_counter
+    }
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        &mut self.frame_counter
+    }
+
+    fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("compositor render parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_data.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.render_data.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("compositor render parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("viewer grade buffer"),
-                    contents: bytemuck::cast_slice(&[self.grade.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.grade.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
         ]

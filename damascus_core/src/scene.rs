@@ -11,7 +11,7 @@ use super::{
         primitive::{Primitive, Std430GPUPrimitive},
     },
     lights::{Light, Std430GPULight},
-    materials::{Material, Std430GPUMaterial},
+    materials::Material,
 };
 use crate::DualDevice;
 
@@ -92,10 +92,6 @@ impl Scene {
             emissive_indices.push(index as u32);
         }
         emissive_indices
-    }
-
-    pub fn atmosphere(&self) -> Std430GPUMaterial {
-        self.atmosphere.as_std430()
     }
 
     pub fn clear_primitives(&mut self) {

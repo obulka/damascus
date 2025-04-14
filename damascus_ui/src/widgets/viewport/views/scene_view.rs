@@ -21,10 +21,12 @@ use damascus_core::{
     },
     lights::{Light, Lights, Std430GPULight},
     materials::{Material, ProceduralTexture, Std430GPUMaterial},
-    render_passes::resources::{Buffer, BufferData, StorageTextureView, TextureView},
-    renderers::ray_marcher::{
-        GPURayMarcher, RayMarcher, RayMarcherRenderState, Std430GPURayMarcher,
-        Std430GPURayMarcherRenderState,
+    render_passes::{
+        ray_marcher::{
+            GPURayMarcher, RayMarcher, RayMarcherRenderState, Std430GPURayMarcher,
+            Std430GPURayMarcherRenderState,
+        },
+        resources::RenderResources,
     },
     scene::{Scene, Std430GPUSceneParameters},
     shaders::{
@@ -34,22 +36,15 @@ use damascus_core::{
     DualDevice,
 };
 
-use super::{settings::RayMarcherViewSettings, RenderResources, View};
+use super::{settings::SceneViewSettings, RenderResources, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
-struct RayMarcherViewCallback {
-    render_parameters: Std430GPURayMarcher,
-    scene_parameters: Std430GPUSceneParameters,
-    render_state: Std430GPURayMarcherRenderState,
-    render_camera: Std430GPUCamera,
-    primitives: Vec<Std430GPUPrimitive>,
-    lights: Vec<Std430GPULight>,
-    atmosphere: Std430GPUMaterial,
-    emissive_primitive_indices: Vec<u32>,
+struct SceneViewCallback<'a> {
+    buffer_data: Vec<BufferData<'a>>,
 }
 
-impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
+impl egui_wgpu::CallbackTrait for SceneViewCallback<'a> {
     fn prepare(
         &self,
         _device: &wgpu::Device,
@@ -59,23 +54,11 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
-        resources.write_bind_groups(
-            queue,
-            vec![BufferData {
-                uniform: vec![
-                    bytemuck::cast_slice(&[self.render_parameters]),
-                    bytemuck::cast_slice(&[self.scene_parameters]),
-                    bytemuck::cast_slice(&[self.render_state]),
-                    bytemuck::cast_slice(&[self.render_camera]),
-                ],
-                storage: vec![
-                    bytemuck::cast_slice(self.primitives.as_slice()),
-                    bytemuck::cast_slice(self.lights.as_slice()),
-                    bytemuck::cast_slice(&[self.atmosphere]),
-                    bytemuck::cast_slice(self.emissive_primitive_indices.as_slice()),
-                ],
-            }],
-        );
+
+        for data in &self.buffer_data {
+            resources.write_bind_groups(queue, data.clone());
+        }
+
         Vec::new()
     }
 
@@ -86,48 +69,41 @@ impl egui_wgpu::CallbackTrait for RayMarcherViewCallback {
         resources: &egui_wgpu::CallbackResources,
     ) {
         let resources: &RenderResources = resources.get().unwrap();
-        resources.paint(render_pass);
-    }
-}
-
-pub struct RayMarcherView {
-    pub renderer: RayMarcher,
-    pub frames_to_update_fps: u32,
-    pub stats_text: String,
-    disabled: bool,
-    camera_controls_enabled: bool,
-    render_state: RayMarcherRenderState,
-    recompile_hash: Key<OrderedFloatPolicy>,
-    reconstruct_hash: Key<OrderedFloatPolicy>,
-    preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
-}
-
-impl Default for RayMarcherView {
-    fn default() -> Self {
-        Self {
-            renderer: RayMarcher::default(),
-            frames_to_update_fps: 10,
-            stats_text: String::new(),
-            disabled: true,
-            camera_controls_enabled: true,
-            render_state: RayMarcherRenderState::default(),
-            recompile_hash: Key::<OrderedFloatPolicy>::Unit,
-            reconstruct_hash: Key::<OrderedFloatPolicy>::Unit,
-            preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
+        if let Some(resource) = resources.resources.last() {
+            resource.paint(render_pass);
         }
     }
 }
 
-impl
-    View<
-        RayMarcher,
-        GPURayMarcher,
-        Std430GPURayMarcher,
-        RayMarcherCompilerSettings,
-        RayMarcherPreprocessorDirectives,
-        RayMarcherViewSettings,
-    > for RayMarcherView
-{
+pub struct SceneView {
+    pub render_passes: Vec<RenderPasses>,
+    pub stats_text: String,
+    disabled: bool,
+    camera_controls_enabled: bool,
+}
+
+impl Default for SceneView {
+    fn default() -> Self {
+        Self {
+            render_passes: vec![RenderPasses::RayMarcher {
+                pass: RayMarcher::new(),
+            }],
+            stats_text: String::new(),
+            disabled: true,
+            camera_controls_enabled: true,
+        }
+    }
+}
+
+impl View for SceneView {
+    fn render_passes(&self) -> &Vec<RenderPasses> {
+        &self.render_passes
+    }
+
+    fn render_passes_mut(&mut self) -> &mut Vec<RenderPasses> {
+        &mut self.render_passes
+    }
+
     fn disable(&mut self) {
         self.pause();
         self.disabled = true;
@@ -170,73 +146,63 @@ impl
         ui: &mut egui::Ui,
         render_state: &egui_wgpu::RenderState,
         available_size: egui::Vec2,
-        settings: &RayMarcherViewSettings,
-        compiler_settings: &RayMarcherCompilerSettings,
     ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
-        self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
-            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::RayMarcher { pass } => {
+                    pass.render_data.resolution =
+                        glam::UVec2::new(rect.width() as u32, rect.height() as u32)
+                            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
 
-        self.stats_text = format!(
-            "{:} paths per pixel @ {:.2} fps @ {:.0}x{:.0}",
-            self.render_state.paths_rendered_per_pixel,
-            self.render_state.fps,
-            rect.max.x - rect.min.x,
-            rect.max.y - rect.min.y
-        );
+                    self.stats_text = format!(
+                        "{:} paths per pixel @ {:.2} fps @ {:.0}x{:.0}",
+                        pass.paths_rendered_per_pixel,
+                        pass.frame_counter().fps,
+                        rect.max.x - rect.min.x,
+                        rect.max.y - rect.min.y
+                    );
 
-        if self.disabled {
-            self.stats_text += " - viewer disabled, activate a node to enable it";
-            return None;
-        }
-
-        ui.ctx().request_repaint();
-
-        if ui.ctx().memory(|memory| memory.focused().is_none())
-            && ui.input(|input| input.key_pressed(egui::Key::Space))
-        {
-            self.toggle_play_pause();
-        }
-
-        self.update_camera(ui, &rect, &response);
-
-        if let Some(render_resource) = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .get_mut::<RenderResources>()
-        {
-            let _data_changed: bool = self.update_if_hash_changed(render_state);
-        }
-
-        let mut paths_rendered: u32 = 0;
-
-        if self.paused() {
-            self.render_state.previous_frame_time = SystemTime::now();
-            self.render_state.frame_counter = 1;
-        } else {
-            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                    Ok(frame_time) => {
-                        self.render_state.fps =
-                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                    if self.disabled {
+                        self.stats_text += " - viewer disabled, activate a node to enable it";
+                        return None;
                     }
-                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+
+                    ui.ctx().request_repaint();
+
+                    if ui.ctx().memory(|memory| memory.focused().is_none())
+                        && ui.input(|input| input.key_pressed(egui::Key::Space))
+                    {
+                        self.toggle_play_pause();
+                    }
+
+                    self.update_camera(ui, &rect, &response);
+
+                    if let Some(render_resource) = render_state
+                        .renderer
+                        .write()
+                        .callback_resources
+                        .get_mut::<RenderResources>()
+                    {
+                        let _data_changed: bool = self.update_if_hash_changed(render_state);
+                    }
+
+                    let mut paths_rendered: u32 = 0;
+                    if self.paused() {
+                        pass.frame_counter_mut().reset();
+                    } else {
+                        pass.frame_counter_mut().tick();
+                        paths_rendered = 1;
+                    }
                 }
-
-                self.render_state.previous_frame_time = SystemTime::now();
-                self.render_state.frame_counter = 1;
-            } else {
-                self.render_state.frame_counter += 1;
+                _ => {}
             }
-
-            paths_rendered = 1;
         }
 
         let callback = Some(egui_wgpu::Callback::new_paint_callback(
             rect,
-            RayMarcherViewCallback {
+            SceneViewCallback {
                 render_parameters: self.renderer().as_std430(),
                 scene_parameters: self
                     .renderer()
@@ -263,7 +229,7 @@ impl
     }
 }
 
-impl RayMarcherView {
+impl SceneView {
     pub fn disable_camera_controls(&mut self) {
         self.camera_controls_enabled = false;
     }

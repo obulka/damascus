@@ -26,6 +26,7 @@ use damascus_core::{
             GPUTextureViewer, Std430GPUTextureViewer, Std430GPUTextureViewerRenderState,
             TextureViewer, TextureViewerRenderState,
         },
+        RenderPasses,
     },
     shaders::{self, texture_viewer::TextureViewerPreprocessorDirectives},
     textures::{Grade, Texture},
@@ -38,7 +39,7 @@ use crate::MAX_TEXTURE_DIMENSION;
 
 struct TextureViewCallback {
     render_parameters: Std430GPUTextureViewer,
-    render_state: Std430GPUTextureViewerRenderState,
+    render_data: Std430GPUTextureViewerRenderData,
 }
 
 impl egui_wgpu::CallbackTrait for TextureViewCallback {
@@ -56,7 +57,7 @@ impl egui_wgpu::CallbackTrait for TextureViewCallback {
             vec![BufferData {
                 uniform: vec![
                     bytemuck::cast_slice(&[self.render_parameters]),
-                    bytemuck::cast_slice(&[self.render_state]),
+                    bytemuck::cast_slice(&[self.render_data]),
                 ],
                 storage: vec![],
             }],
@@ -80,7 +81,6 @@ pub struct TextureView {
     pub render_passes: Vec<RenderPasses>,
     pub frames_to_update_fps: u32,
     pub stats_text: String,
-    final_pass: RenderPasses,
     disabled: bool,
     camera_controls_enabled: bool,
 }
@@ -88,12 +88,11 @@ pub struct TextureView {
 impl Default for TextureView {
     fn default() -> Self {
         Self {
-            render_passes: Vec::<RenderPasses>::new(),
+            render_passes: vec![RenderPasses::TextureViewer {
+                pass: TextureViewer::new(),
+            }],
             frames_to_update_fps: 10,
             stats_text: String::new(),
-            final_pass: RenderPasses::TextureViewer {
-                pass: TextureViewer::new(),
-            },
             disabled: true,
             camera_controls_enabled: true,
         }
@@ -115,37 +114,44 @@ impl View for TextureView {
     }
 
     fn pause(&mut self) {
-        self.render_state.paused = true;
+        self.render_data.paused = true;
     }
 
     fn play(&mut self) {
         if !self.disabled {
-            self.render_state.paused = false;
+            self.render_data.paused = false;
         }
     }
 
     fn paused(&self) -> bool {
-        self.render_state.paused
+        self.render_data.paused
     }
 
     fn show_top_bar(&mut self, _render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
         ui.horizontal(|ui| {
-            ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
-                .on_hover_text("The gain to apply upon display.");
-            ui.add(
-                egui::Slider::new(&mut settings.viewer_gain, 0.0..=64.)
-                    .clamping(egui::SliderClamping::Never)
-                    .logarithmic(true)
-                    .smallest_positive(0.01),
-            );
-            ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
-                .on_hover_text("The gamma to apply upon display.");
-            ui.add(
-                egui::Slider::new(&mut settings.viewer_gamma, 0.0..=64.)
-                    .clamping(egui::SliderClamping::Never)
-                    .logarithmic(true)
-                    .smallest_positive(0.01),
-            );
+            if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+                match final_pass {
+                    RenderPasses::TextureViewer { pass } => {
+                        ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
+                            .on_hover_text("The gain to apply upon display.");
+                        ui.add(
+                            egui::Slider::new(&mut pass.grade.viewer_gain, 0.0..=64.)
+                                .clamping(egui::SliderClamping::Never)
+                                .logarithmic(true)
+                                .smallest_positive(0.01),
+                        );
+                        ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
+                            .on_hover_text("The gamma to apply upon display.");
+                        ui.add(
+                            egui::Slider::new(&mut pass.grade.viewer_gamma, 0.0..=64.)
+                                .clamping(egui::SliderClamping::Never)
+                                .logarithmic(true)
+                                .smallest_positive(0.01),
+                        );
+                    }
+                    _ => {}
+                }
+            }
         });
         false
     }
@@ -168,50 +174,43 @@ impl View for TextureView {
     ) -> Option<epaint::PaintCallback> {
         let (rect, response) = ui.allocate_at_least(available_size, egui::Sense::drag());
 
-        self.render_state.resolution = glam::UVec2::new(rect.width() as u32, rect.height() as u32)
-            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            match final_pass {
+                RenderPasses::TextureViewer { pass } => {
+                    pass.render_data.resolution =
+                        glam::UVec2::new(rect.width() as u32, rect.height() as u32)
+                            .min(glam::UVec2::splat(MAX_TEXTURE_DIMENSION));
 
-        self.stats_text = format!(
-            "{:.2} fps @ {:.0}x{:.0}",
-            self.render_state.fps,
-            rect.max.x - rect.min.x,
-            rect.max.y - rect.min.y
-        );
+                    self.stats_text = format!(
+                        "{:.2} fps @ {:.0}x{:.0}",
+                        pass.frame_counter().fps,
+                        rect.max.x - rect.min.x,
+                        rect.max.y - rect.min.y
+                    );
 
-        if self.disabled {
-            self.stats_text += " - viewer disabled, activate a node to enable it";
-            return None;
-        }
-
-        if ui.ctx().memory(|memory| memory.focused().is_none())
-            && ui.input(|input| input.key_pressed(egui::Key::Space))
-        {
-            self.toggle_play_pause();
-        }
-
-        self.update_camera(ui, &rect, &response);
-
-        let _data_changed: bool = self.update_if_hash_changed(render_state);
-
-        if self.paused() {
-            self.render_state.previous_frame_time = SystemTime::now();
-            self.render_state.frame_counter = 1;
-        } else {
-            ui.ctx().request_repaint();
-
-            if self.render_state.frame_counter % self.frames_to_update_fps == 0 {
-                match SystemTime::now().duration_since(self.render_state.previous_frame_time) {
-                    Ok(frame_time) => {
-                        self.render_state.fps =
-                            self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
+                    if self.disabled {
+                        self.stats_text += " - viewer disabled, activate a node to enable it";
+                        return None;
                     }
-                    Err(_) => panic!("SystemTime before UNIX EPOCH!"),
-                }
 
-                self.render_state.previous_frame_time = SystemTime::now();
-                self.render_state.frame_counter = 1;
-            } else {
-                self.render_state.frame_counter += 1;
+                    if ui.ctx().memory(|memory| memory.focused().is_none())
+                        && ui.input(|input| input.key_pressed(egui::Key::Space))
+                    {
+                        self.toggle_play_pause();
+                    }
+
+                    self.update_camera(ui, &rect, &response);
+
+                    let _data_changed: bool = self.update_if_hash_changed(render_state);
+
+                    if self.paused() {
+                        pass.frame_counter_mut().reset();
+                    } else {
+                        pass.frame_counter_mut().tick();
+                        ui.ctx().request_repaint();
+                    }
+                }
+                _ => {}
             }
         }
 
@@ -219,7 +218,7 @@ impl View for TextureView {
             rect,
             TextureViewCallback {
                 render_parameters: self.renderer().as_std430(),
-                render_state: self.render_state.as_std430(),
+                render_state: self.render_data.as_std430(),
             },
         ));
 
@@ -246,8 +245,8 @@ impl TextureView {
             return;
         }
         let drag_delta: egui::Vec2 = response.drag_delta();
-        self.render_state.pan +=
-            glam::Vec2::new(drag_delta.x, -drag_delta.y) * self.render_state.zoom;
+        self.render_data.pan +=
+            glam::Vec2::new(drag_delta.x, -drag_delta.y) * self.render_data.zoom;
         if response.hovered() {
             let scroll_delta = ui.input(|i| i.smooth_scroll_delta.y);
             if scroll_delta != 0.0 {
@@ -260,14 +259,14 @@ impl TextureView {
                 );
 
                 let hovered_image_pixel_before: glam::Vec2 =
-                    cursor_pos * self.render_state.zoom - self.render_state.pan;
+                    cursor_pos * self.render_data.zoom - self.render_data.pan;
 
-                self.render_state.zoom /= (scroll_delta * 0.002).exp();
+                self.render_data.zoom /= (scroll_delta * 0.002).exp();
 
                 let hovered_image_pixel: glam::Vec2 =
-                    cursor_pos * self.render_state.zoom - self.render_state.pan;
+                    cursor_pos * self.render_data.zoom - self.render_data.pan;
 
-                self.render_state.pan += hovered_image_pixel - hovered_image_pixel_before;
+                self.render_data.pan += hovered_image_pixel - hovered_image_pixel_before;
             }
         }
     }

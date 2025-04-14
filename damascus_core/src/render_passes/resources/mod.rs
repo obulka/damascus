@@ -67,9 +67,9 @@ pub struct BufferBindGroup {
 }
 
 impl BufferBindGroup {
-    pub fn write(&self, queue: &wgpu::Queue, buffer_data: Vec<&[u8]>) {
+    pub fn write(&self, queue: &wgpu::Queue, buffer_data: Vec<BufferDescriptor>) {
         for (buffer, data) in self.buffers.iter().zip(buffer_data) {
-            queue.write_buffer(&buffer.buffer, 0, data);
+            queue.write_buffer(&buffer.buffer, 0, data.data.as_slice());
         }
     }
 }
@@ -156,9 +156,17 @@ impl BindGroups {
     }
 }
 
-pub struct BufferData<'a> {
-    pub uniform: Vec<&'a [u8]>,
-    pub storage: Vec<&'a [u8]>,
+#[derive(Clone)]
+pub struct BufferDescriptor {
+    pub data: Vec<u8>,
+    pub usage: wgpu::BufferUsages,
+    pub visibility: wgpu::ShaderStages,
+}
+
+#[derive(Clone)]
+pub struct BufferData {
+    pub uniform: Vec<BufferDescriptor>,
+    pub storage: Vec<BufferDescriptor>,
 }
 
 #[derive(Clone)]
@@ -169,7 +177,7 @@ pub struct RenderResource {
 }
 
 impl RenderResource {
-    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: BufferData<'_>) {
+    pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: BufferData) {
         if let Some(uniform_bind_group) = &self.bind_groups.uniform_bind_group {
             uniform_bind_group.write(queue, buffer_data.uniform);
         }

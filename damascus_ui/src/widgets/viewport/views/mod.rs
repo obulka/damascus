@@ -18,7 +18,10 @@ use eframe::{
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 
 use damascus_core::{
-    render_passes::resources::{RenderResource, RenderResources},
+    render_passes::{
+        resources::{RenderResource, RenderResources},
+        RenderPass, RenderPasses,
+    },
     renderers::Renderer,
     shaders::{CompilerSettings, PreprocessorDirectives},
     textures::{Std430GPUVertex, Vertex},
@@ -42,12 +45,6 @@ pub trait View: Default {
 
     fn render_passes_mut(&mut self) -> &mut Vec<RenderPasses>;
 
-    fn new(render_state: &egui_wgpu::RenderState) -> Self {
-        let mut view = Self::default();
-        view.reconstruct_render_resources(render_state);
-        view
-    }
-
     fn disable(&mut self) {}
 
     fn enable(&mut self) {}
@@ -56,15 +53,28 @@ pub trait View: Default {
         false
     }
 
-    fn enabled(&mut self) -> bool {
-        !self.disabled()
-    }
-
     fn pause(&mut self);
 
     fn play(&mut self);
 
     fn paused(&self) -> bool;
+
+    fn custom_painting(
+        &mut self,
+        ui: &mut egui::Ui,
+        render_state: &egui_wgpu::RenderState,
+        available_size: egui::Vec2,
+    ) -> Option<epaint::PaintCallback>;
+
+    fn new(render_state: &egui_wgpu::RenderState) -> Self {
+        let mut view = Self::default();
+        view.reconstruct_render_resources(render_state);
+        view
+    }
+
+    fn enabled(&mut self) -> bool {
+        !self.disabled()
+    }
 
     fn toggle_play_pause(&mut self) {
         if self.disabled() {
@@ -130,7 +140,8 @@ pub trait View: Default {
             .insert(render_resources);
     }
 
-    fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) {
+    fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
+        let mut updated = false;
         if let Some(render_resources) = render_state
             .renderer
             .write()
@@ -141,7 +152,7 @@ pub trait View: Default {
                 .iter_mut()
                 .zip(&mut render_resources.resources)
                 .map(|(render_pass, render_resource)| {
-                    render_pass.update_if_hash_changed(
+                    updated |= render_pass.update_if_hash_changed(
                         &render_state.device,
                         render_state.target_format.into(),
                         render_resource,
@@ -149,14 +160,8 @@ pub trait View: Default {
                 })
                 .collect()
         }
+        updated
     }
-
-    fn custom_painting(
-        &mut self,
-        ui: &mut egui::Ui,
-        render_state: &egui_wgpu::RenderState,
-        available_size: egui::Vec2,
-    ) -> Option<epaint::PaintCallback>;
 
     fn show_frame(
         &mut self,
@@ -258,6 +263,22 @@ impl Views {
         }
     }
 
+    pub fn reset(&mut self) {
+        match self {
+            Self::Scene { view } => view.reset(),
+            Self::Texture { view } => view.reset(),
+            _ => {}
+        }
+    }
+
+    pub fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {
+        match self {
+            Self::Scene { view } => view.recompile_shader(render_state),
+            Self::Texture { view } => view.recompile_shader(render_state),
+            _ => {}
+        }
+    }
+
     pub fn reconstruct_render_resources(&mut self, render_state: &egui_wgpu::RenderState) {
         match self {
             Self::Scene { view } => view.reconstruct_render_resources(render_state),
@@ -266,26 +287,11 @@ impl Views {
         }
     }
 
-    pub fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {
-        if let Some(render_resource) = render_state
-            .renderer
-            .write()
-            .callback_resources
-            .get_mut::<RenderResources>()
-        {
-            match self {
-                Self::Scene { view } => view.recompile_shader(render_state),
-                Self::Texture { view } => view.recompile_shader(render_state),
-                _ => {}
-            }
-        }
-    }
-
-    pub fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) {
+    pub fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
         match self {
             Self::Scene { view } => view.update_if_hash_changed(render_state),
             Self::Texture { view } => view.update_if_hash_changed(render_state),
-            _ => {}
+            _ => false,
         }
     }
 
@@ -350,14 +356,6 @@ impl Views {
             Self::Scene { view } => view.paused(),
             Self::Texture { view } => view.paused(),
             _ => false,
-        }
-    }
-
-    pub fn reset(&mut self) {
-        match self {
-            Self::Scene { view } => view.reset(),
-            Self::Texture { view } => view.reset(),
-            _ => {}
         }
     }
 

@@ -8,16 +8,14 @@ use std::collections::HashSet;
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2, Vec3};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
-use wgpu::{self, util::DeviceExt};
+use wgpu;
 
 use super::{
-    resources::{Buffer, StorageTextureView},
+    resources::{BufferDescriptor, StorageTextureView},
     FrameCounter, RenderPass, RenderPassHashes,
 };
 
 use crate::{
-    geometry::primitive::Std430GPUPrimitive,
-    lights::Std430GPULight,
     scene::Scene,
     shaders::{
         ray_marcher::{
@@ -347,88 +345,63 @@ impl
         })
     }
 
+    fn frame_counter(&self) -> &FrameCounter {
+        &self.frame_counter
+    }
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        &mut self.frame_counter
+    }
+
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
         texture_corner_vertices_2d()
     }
 
-    fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
+    fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher render parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_data.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.render_data.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher scene parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_data.scene.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.render_data.scene.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher scene parameter buffer"),
-                    contents: bytemuck::cast_slice(&[self.as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher camera buffer"),
-                    contents: bytemuck::cast_slice(&[self
-                        .render_data
-                        .scene
-                        .render_camera
-                        .as_std430()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.render_data.scene.render_camera.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
         ]
     }
 
-    fn create_storage_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
-        let primitives: Vec<Std430GPUPrimitive> = self.render_data.scene.create_gpu_primitives();
-        let lights: Vec<Std430GPULight> = self.render_data.scene.create_gpu_lights();
-        let emissive_primitive_indices: Vec<u32> =
-            self.render_data.scene.emissive_primitive_indices();
+    fn storage_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher primitives buffer"),
-                    contents: &[bytemuck::cast_slice(primitives.as_slice())].concat(),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(self.render_data.scene.create_gpu_primitives()),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher lights buffer"),
-                    contents: &[bytemuck::cast_slice(lights.as_slice())].concat(),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(self.render_data.scene.create_gpu_lights()),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher render globals buffer"),
-                    contents: bytemuck::cast_slice(&[self.render_data.scene.atmosphere()]),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(vec![self.render_data.scene.atmosphere.as_std430()]),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
-            Buffer {
-                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("ray marcher emissive primitive ids"),
-                    contents: &[bytemuck::cast_slice(emissive_primitive_indices.as_slice())]
-                        .concat(),
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                }),
+            BufferDescriptor {
+                data: bytemuck::cast_vec(self.render_data.scene.emissive_primitive_indices()),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
         ]

@@ -8,7 +8,7 @@ use eframe::{egui, egui_wgpu};
 pub mod views;
 
 pub use views::Views;
-use views::{CompositorView, RayMarcherView, View};
+use views::{SceneView, TextureView, View};
 
 use crate::MAX_TEXTURE_DIMENSION;
 
@@ -34,25 +34,25 @@ impl Viewport {
     }
 
     pub fn switch_to_ray_marcher_view(&mut self, render_state: &egui_wgpu::RenderState) {
-        if matches!(self.view, Views::RayMarcher { .. }) {
+        if matches!(self.view, Views::Scene { .. }) {
             return;
         }
 
-        let mut view = RayMarcherView::new();
+        let mut view = SceneView::new(render_state);
         view.enable_and_play();
 
-        self.view = Views::RayMarcher { view };
+        self.view = Views::Scene { view };
     }
 
     pub fn switch_to_compositor_view(&mut self, render_state: &egui_wgpu::RenderState) {
-        if matches!(self.view, Views::Compositor { .. }) {
+        if matches!(self.view, Views::Texture { .. }) {
             return;
         }
 
-        let mut view = CompositorView::new();
+        let mut view = TextureView::new(render_state);
         view.enable();
 
-        self.view = Views::Compositor { view };
+        self.view = Views::Texture { view };
     }
 
     pub fn recompile_if_preprocessor_directives_changed(

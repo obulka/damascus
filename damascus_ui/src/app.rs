@@ -82,7 +82,7 @@ impl Damascus {
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
             context: persistent_data.context,
             node_graph: NodeGraph::new(persistent_data.editor_state),
-            viewport: Viewport::new(creation_context),
+            viewport: Viewport::new((&creation_context.wgpu_render_state).unwrap()),
         }
     }
 

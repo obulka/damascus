@@ -42,7 +42,7 @@ struct ViewCallback {
     buffer_data: Vec<BufferData>,
 }
 
-impl egui_wgpu::CallbackTrait for SceneViewCallback<'a> {
+impl egui_wgpu::CallbackTrait for ViewCallback {
     fn prepare(
         &self,
         _device: &wgpu::Device,
@@ -94,6 +94,12 @@ pub trait View: Default {
 
     fn paused(&self) -> bool;
 
+    fn disable_camera_controls(&mut self) {}
+
+    fn enable_camera_controls(&mut self) {}
+
+    fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {}
+
     fn custom_painting(
         &mut self,
         ui: &mut egui::Ui,
@@ -132,6 +138,14 @@ pub trait View: Default {
             .iter_mut()
             .map(|render_pass| render_pass.reset())
             .collect()
+    }
+
+    fn set_final_pass(&mut self, render_pass: RenderPasses) {
+        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+            *final_pass = render_pass;
+        } else {
+            self.render_passes_mut().push(render_pass);
+        }
     }
 
     fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {

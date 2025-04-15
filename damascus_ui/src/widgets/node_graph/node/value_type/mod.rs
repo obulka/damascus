@@ -13,9 +13,7 @@ use strum::IntoEnumIterator;
 
 use damascus_core::{
     geometry::{camera, primitive},
-    lights, materials,
-    renderers::ray_marcher,
-    scene, textures,
+    lights, materials, render_passes, scene,
 };
 
 use super::{
@@ -27,9 +25,9 @@ mod inputs;
 pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, camera::Camera, combo_box::ComboBox, filepath::Filepath,
     float::Float, integer::Integer, lights::Lights, mat3::Mat3, mat4::Mat4, material::Material,
-    primitives::Primitives, procedural_texture::ProceduralTexture, scene::Scene, texture::Texture,
-    unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3,
-    vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
+    primitives::Primitives, procedural_texture::ProceduralTexture, render_passes::RenderPasses,
+    scene::Scene, unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3, vec2::Vec2,
+    vec3::Vec3, vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -43,7 +41,6 @@ pub use ui_data::UIData;
 /// with a DataType of Float and a ValueType of Vec2.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum NodeValueType {
-    // Base types
     Bool { value: Bool },
     BVec3 { value: BVec3 },
     ComboBox { value: ComboBox },
@@ -57,16 +54,13 @@ pub enum NodeValueType {
     Vec4 { value: Vec4 },
     Mat3 { value: Mat3 },
     Mat4 { value: Mat4 },
-
-    // Composite types
     Camera { value: Camera },
     Light { value: Lights },
     Material { value: Material },
     Primitive { value: Primitives },
     ProceduralTexture { value: ProceduralTexture },
-    RayMarcher { value: ray_marcher::RayMarcher },
+    RenderPass { value: RenderPasses },
     Scene { value: Scene },
-    Texture { value: Texture },
 }
 
 impl Default for NodeValueType {
@@ -243,9 +237,9 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a ray_marcher
-    pub fn try_to_ray_marcher(self) -> anyhow::Result<ray_marcher::RayMarcher> {
-        if let NodeValueType::RayMarcher { value } = self {
-            Ok(value)
+    pub fn try_to_render_pass(self) -> anyhow::Result<Vec<render_passes::RenderPasses>> {
+        if let NodeValueType::RenderPass { value } = self {
+            Ok(value.value().clone())
         } else {
             anyhow::bail!("Invalid cast from {:?} to RayMarcher", self)
         }
@@ -257,15 +251,6 @@ impl NodeValueType {
             Ok(value.value().clone())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Scene", self)
-        }
-    }
-
-    /// Tries to downcast this value type to a texture
-    pub fn try_to_texture(self) -> anyhow::Result<textures::Texture> {
-        if let NodeValueType::Texture { value } = self {
-            Ok(value.value().clone())
-        } else {
-            anyhow::bail!("Invalid cast from {:?} to Texture", self)
         }
     }
 }
@@ -308,11 +293,11 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Mat4 { value } => value.create_ui(ui, param_name),
             NodeValueType::Material { value } => value.create_ui(ui, param_name),
             NodeValueType::Camera { value } => value.create_ui(ui, param_name),
+            NodeValueType::Light { value } => value.create_ui(ui, param_name),
             NodeValueType::Primitive { value } => value.create_ui(ui, param_name),
             NodeValueType::ProceduralTexture { value } => value.create_ui(ui, param_name),
-            NodeValueType::Light { value } => value.create_ui(ui, param_name),
             NodeValueType::Scene { value } => value.create_ui(ui, param_name),
-            NodeValueType::Texture { value } => value.create_ui(ui, param_name),
+            NodeValueType::RenderPass { value } => value.create_ui(ui, param_name),
             _ => {
                 ui.add(egui::Button::new(param_name).stroke(egui::Stroke::NONE));
                 false
@@ -348,11 +333,11 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Mat4 { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Material { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Camera { value } => value.create_ui_connected(ui, param_name),
+            NodeValueType::Light { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Primitive { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::ProceduralTexture { value } => value.create_ui_connected(ui, param_name),
-            NodeValueType::Light { value } => value.create_ui_connected(ui, param_name),
+            NodeValueType::RenderPass { value } => value.create_ui_connected(ui, param_name),
             NodeValueType::Scene { value } => value.create_ui_connected(ui, param_name),
-            NodeValueType::Texture { value } => value.create_ui_connected(ui, param_name),
             _ => {
                 ui.add(egui::Button::new(param_name).stroke(egui::Stroke::NONE));
                 false

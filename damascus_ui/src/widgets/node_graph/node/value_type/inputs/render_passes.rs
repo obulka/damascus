@@ -3,35 +3,35 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use damascus_core::textures;
+use damascus_core::render_passes;
 
 use super::{UIData, UIInput};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct Texture {
-    value: textures::Texture,
+pub struct RenderPasses {
+    value: Vec<render_passes::RenderPasses>,
     ui_data: UIData,
 }
 
-impl Default for Texture {
+impl Default for RenderPasses {
     fn default() -> Self {
         Self {
-            value: textures::Texture::default(),
+            value: vec![],
             ui_data: UIData::default(),
         }
     }
 }
 
-impl UIInput<textures::Texture> for Texture {
-    fn new(value: textures::Texture) -> Self {
+impl UIInput<Vec<render_passes::RenderPasses>> for RenderPasses {
+    fn new(value: Vec<render_passes::RenderPasses>) -> Self {
         Self {
             value: value,
             ..Default::default()
         }
     }
 
-    fn value(&self) -> &textures::Texture {
+    fn value(&self) -> &Vec<render_passes::RenderPasses> {
         &self.value
     }
 

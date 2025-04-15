@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{borrow::Cow, time::SystemTime};
+use std::{borrow::Cow, fmt::Debug, time::SystemTime};
 
 use crevice::std430::AsStd430;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
@@ -90,7 +90,13 @@ pub trait RenderPass<
     GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
     Std430GPUVertex: bytemuck::Pod,
     Directives: shaders::PreprocessorDirectives,
->: Default + shaders::ShaderSource<Directives>
+>:
+    Debug
+    + Default
+    + Clone
+    + serde::Serialize
+    + for<'a> serde::Deserialize<'a>
+    + shaders::ShaderSource<Directives>
 {
     fn hashes(&self) -> &RenderPassHashes;
 
@@ -641,6 +647,7 @@ pub trait RenderPass<
     }
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum RenderPasses {
     RayMarcher { pass: RayMarcher },
     TextureViewer { pass: TextureViewer },

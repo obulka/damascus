@@ -9,7 +9,7 @@ use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
-use damascus_core::{geometry, lights, materials, renderers::ray_marcher, scene, textures};
+use damascus_core::{geometry, lights, materials, render_passes::ray_marcher, scene, textures};
 
 use super::{Graph, NodeGraphResponse, NodeGraphState};
 
@@ -23,8 +23,8 @@ pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
     BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Filepath, Float, Lights, Mat4, Material,
-    NodeValueType, Primitives, ProceduralTexture, RangedInput, Scene, Texture, UIData, UIInput,
-    UVec3, UnsignedInteger, Vec3, Vec4,
+    NodeValueType, Primitives, ProceduralTexture, RangedInput, RenderPasses, Scene, UIData,
+    UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -316,17 +316,6 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     true,
                 );
             };
-        let _input_ray_marcher =
-            |graph: &mut Graph, name: &str, default: ray_marcher::RayMarcher| {
-                graph.add_input_param(
-                    node_id,
-                    name.to_string(),
-                    NodeDataType::RayMarcher,
-                    NodeValueType::RayMarcher { value: default },
-                    egui_node_graph::InputParamKind::ConnectionOnly,
-                    true,
-                );
-            };
         let input_scene = |graph: &mut Graph, name: &str, default: Scene| {
             graph.add_input_param(
                 node_id,
@@ -337,12 +326,12 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 true,
             );
         };
-        let input_texture = |graph: &mut Graph, name: &str, default: Texture| {
+        let input_render_pass = |graph: &mut Graph, name: &str, default: RenderPasses| {
             graph.add_input_param(
                 node_id,
                 name.to_string(),
-                NodeDataType::Texture,
-                NodeValueType::Texture { value: default },
+                NodeDataType::RenderPass,
+                NodeValueType::RenderPass { value: default },
                 egui_node_graph::InputParamKind::ConnectionOnly,
                 true,
             );
@@ -366,14 +355,11 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
         let output_procedural_texture = |graph: &mut Graph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), NodeDataType::ProceduralTexture);
         };
-        let output_ray_marcher = |graph: &mut Graph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), NodeDataType::RayMarcher);
-        };
         let output_scene = |graph: &mut Graph, name: &str| {
             graph.add_output_param(node_id, name.to_string(), NodeDataType::Scene);
         };
-        let output_texture = |graph: &mut Graph, name: &str| {
-            graph.add_output_param(node_id, name.to_string(), NodeDataType::Texture);
+        let output_render_pass = |graph: &mut Graph, name: &str| {
+            graph.add_output_param(node_id, name.to_string(), NodeDataType::RenderPass);
         };
 
         match self {
@@ -604,11 +590,15 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
             }
             NodeTemplate::Grade => {
                 let default_grade = textures::Grade::default();
-                input_texture(
+                input_render_pass(
                     graph,
                     "texture",
-                    Texture::new(textures::Texture::default())
-                        .with_ui_data(UIData::default().with_tooltip("The texture to grade.")),
+                    RenderPasses::new(vec![]).with_ui_data(UIData::default().with_tooltip(
+                        indoc! {
+                            "A render pass which results in the production of the
+                            texture to grade."
+                        },
+                    )),
                 );
                 input_float(
                     graph,
@@ -661,7 +651,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     Bool::new(default_grade.invert)
                         .with_ui_data(UIData::default().with_tooltip("Invert the colour.")),
                 );
-                output_texture(graph, "out");
+                output_render_pass(graph, "out");
             }
             NodeTemplate::Material => {
                 let default_material = materials::Material::default();
@@ -1608,7 +1598,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 output_procedural_texture(graph, "out");
             }
             NodeTemplate::RayMarcher => {
-                let default_ray_marcher = ray_marcher::RayMarcher::default();
+                let default_ray_marcher = ray_marcher::RayMarcherRenderData::default();
                 input_scene(
                     graph,
                     "scene",
@@ -1761,7 +1751,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::from_enum::<ray_marcher::AOVs>(default_ray_marcher.output_aov)
+                    ComboBox::from_enum::<textures::AOVs>(default_ray_marcher.output_aov)
                         .with_ui_data(UIData::default().with_tooltip(indoc! {
                             "The AOV type to output.\nThe stats AOV has the
                             average number of bounces in the red channel,
@@ -1770,7 +1760,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             Each is displayed as a fraction of the maximums."
                         })),
                 );
-                output_ray_marcher(graph, "out");
+                output_render_pass(graph, "out");
             }
             NodeTemplate::Scene => {
                 let default_scene = scene::Scene::default();
@@ -1812,7 +1802,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     Filepath::new(default_texture.filepath)
                         .with_ui_data(UIData::default().with_tooltip("The path to the texture.")),
                 );
-                output_texture(graph, "out");
+                output_render_pass(graph, "out");
             }
         }
     }

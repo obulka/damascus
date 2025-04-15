@@ -17,7 +17,7 @@ pub enum NodeGraphResponse {
     ClearActiveNode,
     InputValueChanged(NodeId, NodeTemplate, String),
     CheckPreprocessorDirectives,
-    ReconstructRenderPipeline,
+    ReconstructRenderResources,
 }
 
 impl UserResponseTrait for NodeGraphResponse {}

@@ -14,14 +14,14 @@ use strum::IntoEnumIterator;
 use damascus_core::{
     geometry::{self, camera, primitive},
     lights, materials,
-    renderers::ray_marcher,
+    render_passes::{self, ray_marcher, texture_viewer},
     scene, textures,
 };
 
 use super::node::{
     value_type::{
-        Camera, Lights, Mat4, Material, NodeValueType, Primitives, ProceduralTexture, Scene,
-        Texture, UIInput,
+        Camera, Lights, Mat4, Material, NodeValueType, Primitives, ProceduralTexture, RenderPasses,
+        Scene, UIInput,
     },
     NodeData, NodeDataType, NodeTemplate,
 };
@@ -242,16 +242,24 @@ pub fn evaluate_node(
             )
         }
 
-        // fn input_ray_marcher(&mut self, name: &str) -> anyhow::Result<ray_marcher::RayMarcher> {
-        //     self.evaluate_input(name)?.try_to_ray_marcher()
-        // }
-
-        fn output_ray_marcher(
+        fn input_render_pass(
             &mut self,
             name: &str,
-            value: ray_marcher::RayMarcher,
+        ) -> anyhow::Result<Vec<render_passes::RenderPasses>> {
+            self.evaluate_input(name)?.try_to_render_pass()
+        }
+
+        fn output_render_pass(
+            &mut self,
+            name: &str,
+            value: Vec<render_passes::RenderPasses>,
         ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(name, NodeValueType::RayMarcher { value })
+            self.populate_output(
+                name,
+                NodeValueType::RenderPass {
+                    value: RenderPasses::new(value),
+                },
+            )
         }
 
         fn input_scene(&mut self, name: &str) -> anyhow::Result<scene::Scene> {
@@ -267,23 +275,6 @@ pub fn evaluate_node(
                 name,
                 NodeValueType::Scene {
                     value: Scene::new(value),
-                },
-            )
-        }
-
-        fn input_texture(&mut self, name: &str) -> anyhow::Result<textures::Texture> {
-            self.evaluate_input(name)?.try_to_texture()
-        }
-
-        fn output_texture(
-            &mut self,
-            name: &str,
-            value: textures::Texture,
-        ) -> anyhow::Result<NodeValueType> {
-            self.populate_output(
-                name,
-                NodeValueType::Texture {
-                    value: Texture::new(value),
                 },
             )
         }
@@ -374,7 +365,7 @@ pub fn evaluate_node(
             evaluator.output_light("out", scene_lights)
         }
         NodeTemplate::Grade => {
-            let texture = evaluator.input_texture("texture")?;
+            let texture = evaluator.input_render_pass("texture")?;
             let black_point = evaluator.input_float("black_point")?;
             let white_point = evaluator.input_float("white_point")?;
             let lift = evaluator.input_float("lift")?;
@@ -382,7 +373,7 @@ pub fn evaluate_node(
             let gamma = evaluator.input_float("gamma")?;
             let invert = evaluator.input_bool("invert")?;
 
-            evaluator.output_texture("out", texture)
+            evaluator.output_render_pass("out", texture) // TODO append own pass
         }
         NodeTemplate::Material => {
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
@@ -686,27 +677,28 @@ pub fn evaluate_node(
             let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
             let secondary_sampling = evaluator.input_bool("secondary_sampling")?;
-            let output_aov = evaluator.input_combo_box::<ray_marcher::AOVs>("output_aov")?;
+            let output_aov = evaluator.input_combo_box::<textures::AOVs>("output_aov")?;
 
-            evaluator.output_ray_marcher(
+            evaluator.output_render_pass(
                 "out",
-                ray_marcher::RayMarcher {
-                    scene: scene,
-                    max_distance: max_distance,
-                    max_ray_steps: max_ray_steps,
-                    max_bounces: max_bounces,
-                    hit_tolerance: hit_tolerance,
-                    shadow_bias: shadow_bias,
-                    max_brightness: max_brightness,
-                    seeds: seeds,
-                    dynamic_level_of_detail: dynamic_level_of_detail,
-                    equiangular_samples: equiangular_samples,
-                    max_light_sampling_bounces: max_light_sampling_bounces,
-                    sample_atmosphere: sample_atmosphere,
-                    light_sampling_bias: light_sampling_bias,
-                    secondary_sampling: secondary_sampling,
-                    output_aov: output_aov,
-                },
+                vec![render_passes::RenderPasses::RayMarcher {
+                    pass: ray_marcher::RayMarcher::default()
+                        .scene(scene)
+                        .max_distance(max_distance)
+                        .max_ray_steps(max_ray_steps)
+                        .max_bounces(max_bounces)
+                        .hit_tolerance(hit_tolerance)
+                        .shadow_bias(shadow_bias)
+                        .max_brightness(max_brightness)
+                        .seeds(seeds)
+                        .dynamic_level_of_detail(dynamic_level_of_detail)
+                        .equiangular_samples(equiangular_samples)
+                        .max_light_sampling_bounces(max_light_sampling_bounces)
+                        .sample_atmosphere(sample_atmosphere)
+                        .light_sampling_bias(light_sampling_bias)
+                        .secondary_sampling(secondary_sampling)
+                        .output_aov(output_aov),
+                }],
             )
         }
         NodeTemplate::Scene => {
@@ -726,12 +718,14 @@ pub fn evaluate_node(
         }
         NodeTemplate::Texture => {
             let filepath = evaluator.input_filepath("filepath")?;
-            evaluator.output_texture(
+            evaluator.output_render_pass(
                 "out",
-                textures::Texture {
-                    layers: 1,
-                    filepath: filepath,
-                },
+                vec![render_passes::RenderPasses::TextureViewer {
+                    pass: texture_viewer::TextureViewer::default().texture(textures::Texture {
+                        layers: 1,
+                        filepath: filepath,
+                    }),
+                }],
             )
         }
     }

@@ -438,3 +438,85 @@ impl
         self.paths_rendered_per_pixel = 0;
     }
 }
+
+impl RayMarcher {
+    pub fn scene(mut self, scene: Scene) -> Self {
+        self.render_data.scene = scene;
+        self
+    }
+
+    pub fn max_distance(mut self, max_distance: f32) -> Self {
+        self.render_data.max_distance = max_distance;
+        self
+    }
+
+    pub fn max_ray_steps(mut self, max_ray_steps: u32) -> Self {
+        self.render_data.max_ray_steps = max_ray_steps;
+        self
+    }
+
+    pub fn max_bounces(mut self, max_bounces: u32) -> Self {
+        self.render_data.max_bounces = max_bounces;
+        self
+    }
+
+    pub fn hit_tolerance(mut self, hit_tolerance: f32) -> Self {
+        self.render_data.hit_tolerance = hit_tolerance;
+        self
+    }
+
+    pub fn shadow_bias(mut self, shadow_bias: f32) -> Self {
+        self.render_data.shadow_bias = shadow_bias;
+        self
+    }
+
+    pub fn max_brightness(mut self, max_brightness: f32) -> Self {
+        self.render_data.max_brightness = max_brightness;
+        self
+    }
+
+    pub fn seeds(mut self, seeds: Vec3) -> Self {
+        self.render_data.seeds = seeds;
+        self
+    }
+
+    pub fn dynamic_level_of_detail(mut self, dynamic_level_of_detail: bool) -> Self {
+        self.render_data.dynamic_level_of_detail = dynamic_level_of_detail;
+        self
+    }
+
+    pub fn equiangular_samples(mut self, equiangular_samples: u32) -> Self {
+        self.render_data.equiangular_samples = equiangular_samples;
+        self
+    }
+
+    pub fn max_light_sampling_bounces(mut self, max_light_sampling_bounces: u32) -> Self {
+        self.render_data.max_light_sampling_bounces = max_light_sampling_bounces;
+        self
+    }
+
+    pub fn sample_atmosphere(mut self, sample_atmosphere: bool) -> Self {
+        self.render_data.sample_atmosphere = sample_atmosphere;
+        self
+    }
+
+    pub fn light_sampling_bias(mut self, light_sampling_bias: f32) -> Self {
+        self.render_data.light_sampling_bias = light_sampling_bias;
+        self
+    }
+
+    pub fn secondary_sampling(mut self, secondary_sampling: bool) -> Self {
+        self.render_data.secondary_sampling = secondary_sampling;
+        self
+    }
+
+    pub fn output_aov(mut self, output_aov: AOVs) -> Self {
+        self.render_data.output_aov = output_aov;
+        self
+    }
+
+    pub fn resolution(mut self, resolution: UVec2) -> Self {
+        self.render_data.resolution = resolution;
+        self
+    }
+}

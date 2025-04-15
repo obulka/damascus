@@ -9,9 +9,15 @@ use eframe::{
     epaint,
 };
 
-use damascus_core::render_passes::{
-    resources::{RenderResource, RenderResources},
-    RenderPass, RenderPasses,
+use damascus_core::{
+    geometry::{camera::Camera, primitive::Primitive},
+    lights::{Light, Lights},
+    materials::{Material, ProceduralTexture},
+    render_passes::{
+        resources::{BufferData, RenderResources},
+        RenderPass, RenderPasses,
+    },
+    scene::Scene,
 };
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
@@ -31,8 +37,8 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
 
-        for data in &self.buffer_data {
-            resources.write_bind_groups(queue, data);
+        for (data, render_resource) in self.buffer_data.iter().zip(&resources.resources) {
+            render_resource.write_bind_groups(queue, data);
         }
 
         Vec::new()
@@ -51,11 +57,23 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
     }
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Viewport {
     pub render_passes: Vec<RenderPasses>,
     pub stats_text: String,
     disabled: bool,
     camera_controls_enabled: bool,
+}
+
+impl Default for Viewport {
+    fn default() -> Self {
+        Self {
+            render_passes: vec![],
+            stats_text: String::new(),
+            disabled: true,
+            camera_controls_enabled: true,
+        }
+    }
 }
 
 impl Viewport {
@@ -235,6 +253,7 @@ impl Viewport {
     }
 
     fn update_3d_camera(
+        &self,
         ui: &egui::Ui,
         rect: &egui::Rect,
         response: &egui::Response,
@@ -270,7 +289,7 @@ impl Viewport {
         if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    Self::update_3d_camera(
+                    self.update_3d_camera(
                         ui,
                         rect,
                         response,
@@ -324,8 +343,7 @@ impl Viewport {
         self.stats_text = format!("{:.0}x{:.0}", resolution.x, resolution.y);
 
         if self.disabled {
-            serecompile_if_preprocessor_directives_changedlf.stats_text +=
-                " - viewer disabled, activate a node to enable it";
+            self.stats_text += " - viewer disabled, activate a node to enable it";
             return None;
         }
 
@@ -360,7 +378,7 @@ impl Viewport {
                     pass.render_data.resolution = resolution;
 
                     self.stats_text =
-                        format!("{:.2} fps @ ", pass.frame_counter().fps,) + self.stats_text;
+                        format!("{:.2} fps @ ", pass.frame_counter().fps) + self.stats_text;
 
                     if self.paused() {
                         pass.frame_counter_mut().reset();

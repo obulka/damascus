@@ -253,3 +253,10 @@ impl
         }]
     }
 }
+
+impl TextureViewer {
+    pub fn texture(mut self, texture: Texture) -> Self {
+        self.construction_data.texture = texture;
+        self
+    }
+}

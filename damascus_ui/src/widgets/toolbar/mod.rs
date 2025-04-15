@@ -9,14 +9,12 @@ use std::io::{BufReader, Read, Write};
 use eframe::egui;
 use egui_modal;
 
-use damascus_core::scene::Scene;
-
 use super::{
     dialog,
     node_graph::{NodeGraph, NodeGraphResponse},
     viewport::Viewport,
 };
-use crate::{app::Context, MAX_BUFFER_SIZE};
+use crate::app::Context;
 
 fn save(file_path: &str, node_graph: &NodeGraph, modal: &egui_modal::Modal, success_dialog: bool) {
     let Ok(mut file) = File::create(file_path) else {
@@ -174,7 +172,7 @@ pub fn show_toolbar(
             }
 
             let mut dynamic_compilation_settings_changed: bool = false;
-            let mut ray_marcher_pipeline_reconstruction_required: bool = false;
+            let mut render_resource_reconstruction_required: bool = false;
             // Settings menu
             ui.menu_button("Settings", |ui| {
                 // ui.menu_button("Ray Marcher", |ui| {
@@ -231,8 +229,8 @@ pub fn show_toolbar(
                 // });
             });
 
-            if ray_marcher_pipeline_reconstruction_required {
-                response.push(NodeGraphResponse::ReconstructRenderPipeline);
+            if render_resource_reconstruction_required {
+                response.push(NodeGraphResponse::ReconstructRenderResources);
             } else if dynamic_compilation_settings_changed {
                 response.push(NodeGraphResponse::CheckPreprocessorDirectives);
             }

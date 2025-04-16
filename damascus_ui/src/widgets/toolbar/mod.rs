@@ -81,7 +81,7 @@ pub fn show_toolbar(
     egui_context: &egui::Context,
     context: &mut Context,
     node_graph: &mut NodeGraph,
-    viewport: &mut Viewport,
+    _viewport: &mut Viewport,
 ) -> Vec<NodeGraphResponse> {
     let mut response = Vec::<NodeGraphResponse>::new();
 
@@ -171,69 +171,17 @@ pub fn show_toolbar(
                 }
             }
 
-            let mut dynamic_compilation_settings_changed: bool = false;
-            let mut render_resource_reconstruction_required: bool = false;
             // Settings menu
-            ui.menu_button("Settings", |ui| {
-                // ui.menu_button("Ray Marcher", |ui| {
-                //     ui.menu_button("Compiler Settings", |ui| {
-                //         ui.horizontal(|ui| {
-                //             ui.label("dynamic recompilation for materials");
-                //             dynamic_compilation_settings_changed |= ui
-                //                 .add(egui::Checkbox::without_text(
-                //                     &mut viewport
-                //                         .settings
-                //                         .compiler_settings
-                //                         .ray_marcher
-                //                         .enable_dynamic_recompilation_for_materials,
-                //                 ))
-                //                 .clicked();
-                //         });
-                //         ui.horizontal(|ui| {
-                //             ui.label("dynamic recompilation for primitives");
-                //             dynamic_compilation_settings_changed |= ui
-                //                 .add(egui::Checkbox::without_text(
-                //                     &mut viewport
-                //                         .settings
-                //                         .compiler_settings
-                //                         .ray_marcher
-                //                         .enable_dynamic_recompilation_for_primitives,
-                //                 ))
-                //                 .clicked();
-                //         });
-                //         ui.horizontal(|ui| {
-                //             ui.label("dynamic recompilation for ray marcher");
-                //             dynamic_compilation_settings_changed |= ui
-                //                 .add(egui::Checkbox::without_text(
-                //                     &mut viewport
-                //                         .settings
-                //                         .compiler_settings
-                //                         .ray_marcher
-                //                         .enable_dynamic_recompilation_for_ray_marcher,
-                //                 ))
-                //                 .clicked();
-                //         });
-                //         ui.horizontal(|ui| {
-                //             ui.label("dynamic recompilation for lights");
-                //             dynamic_compilation_settings_changed |= ui
-                //                 .add(egui::Checkbox::without_text(
-                //                     &mut viewport
-                //                         .settings
-                //                         .compiler_settings
-                //                         .ray_marcher
-                //                         .enable_dynamic_recompilation_for_lights,
-                //                 ))
-                //                 .clicked();
-                //         });
-                //     });
-                // });
-            });
-
-            if render_resource_reconstruction_required {
-                response.push(NodeGraphResponse::ReconstructRenderResources);
-            } else if dynamic_compilation_settings_changed {
-                response.push(NodeGraphResponse::CheckPreprocessorDirectives);
-            }
+            // ui.menu_button("Settings", |ui| {
+            //     ui.menu_button("user interface", |ui| {
+            //         ui.horizontal(|ui| {
+            //             ui.label("font size");
+            //             egui_context.all_styles_mut(|style| {
+            //                 style.spacing.item_spacing = egui::vec2(10.0, 20.0);
+            //             });
+            //         });
+            //     });
+            // });
         });
     });
 

@@ -182,9 +182,7 @@ pub struct GPURayMarcher {
 pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
-    pub frame_counter: FrameCounter,
-    pub paths_rendered_per_pixel: u32,
-    paused: bool,
+    pub subframe_counter: FrameCounter,
     hashes: RenderPassHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
@@ -194,9 +192,7 @@ impl Default for RayMarcher {
         Self {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
-            frame_counter: FrameCounter::default(),
-            paths_rendered_per_pixel: 0,
-            paused: true,
+            subframe_counter: FrameCounter::default(),
             hashes: RenderPassHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
@@ -206,8 +202,8 @@ impl Default for RayMarcher {
 impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
-            paths_rendered_per_pixel: self.paths_rendered_per_pixel as f32,
-            flags: self.paused as u32,
+            paths_rendered_per_pixel: self.subframe_counter.frame as f32,
+            flags: self.subframe_counter.paused as u32,
         }
     }
 }
@@ -346,11 +342,11 @@ impl
     }
 
     fn frame_counter(&self) -> &FrameCounter {
-        &self.frame_counter
+        &self.subframe_counter
     }
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter {
-        &mut self.frame_counter
+        &mut self.subframe_counter
     }
 
     fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
@@ -432,10 +428,6 @@ impl
             format: texture_descriptor.format,
             view_dimension: wgpu::TextureViewDimension::D2,
         }]
-    }
-
-    fn reset(&mut self) {
-        self.paths_rendered_per_pixel = 0;
     }
 }
 

@@ -107,17 +107,26 @@ impl Viewport {
     }
 
     pub fn pause(&mut self) {
-        self.render_state.paused = true;
+        for render_pass in self.render_passes_mut() {
+            render_pass.frame_counter_mut().pause()
+        }
     }
 
     pub fn play(&mut self) {
-        if !self.disabled {
-            self.render_state.paused = false;
+        if self.disabled {
+            return;
+        }
+
+        for render_pass in self.render_passes_mut() {
+            render_pass.frame_counter_mut().play()
         }
     }
 
     pub fn paused(&self) -> bool {
-        self.render_state.paused
+        if let Some(render_pass) = self.render_passes().first() {
+            return render_pass.frame_counter().paused;
+        }
+        true
     }
 
     pub fn disable_camera_controls(&mut self) {
@@ -156,7 +165,7 @@ impl Viewport {
     }
 
     pub fn set_final_pass(&mut self, render_pass: RenderPasses) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             *final_pass = render_pass;
         } else {
             self.render_passes_mut().push(render_pass);
@@ -164,10 +173,10 @@ impl Viewport {
     }
 
     pub fn view_camera(&mut self, camera: Camera) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene.render_camera = camera;
                     pass.render_data.scene.primitives = vec![Primitive::default()];
                     self.enable_camera_controls();
@@ -178,10 +187,10 @@ impl Viewport {
     }
 
     pub fn view_lights(&mut self, lights: Vec<Light>) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene.lights = lights;
                     pass.render_data.scene.primitives = vec![Primitive::default()];
                     self.enable_camera_controls();
@@ -192,10 +201,10 @@ impl Viewport {
     }
 
     pub fn view_atmosphere(&mut self, atmosphere: Material) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene.clear_primitives();
                     pass.render_data.scene.clear_lights();
                     pass.render_data.scene.atmosphere = atmosphere;
@@ -207,10 +216,10 @@ impl Viewport {
     }
 
     pub fn view_procedural_texture(&mut self, texture: ProceduralTexture) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene.clear_primitives();
                     pass.render_data.scene.clear_lights();
                     pass.render_data.scene.atmosphere = Material::default();
@@ -223,10 +232,10 @@ impl Viewport {
     }
 
     pub fn view_primitives(&mut self, primitives: Vec<Primitive>) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene.primitives = primitives;
                     pass.render_data.scene.lights = vec![Light {
                         light_type: Lights::AmbientOcclusion,
@@ -240,10 +249,10 @@ impl Viewport {
     }
 
     pub fn view_scene(&mut self, scene: Scene) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_parameters();
+                    pass.render_data.reset_render_data();
                     pass.render_data.scene = scene;
                     self.disable_camera_controls();
                 }
@@ -286,9 +295,9 @@ impl Viewport {
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
+                RenderPasses::RayMarcher { ref mut pass } => {
                     self.update_3d_camera(
                         ui,
                         rect,
@@ -325,7 +334,6 @@ impl Viewport {
                         }
                     }
                 }
-                _ => {}
             }
         }
     }
@@ -355,35 +363,27 @@ impl Viewport {
 
         self.update_camera(ui, &rect, &response);
 
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.resolution = resolution;
 
                     self.stats_text = format!(
                         "{:} paths per pixel @ {:.2} fps @ ",
-                        pass.paths_rendered_per_pixel,
+                        pass.frame_counter().frame,
                         pass.frame_counter().fps,
-                    ) + self.stats_text;
+                    ) + &self.stats_text;
 
                     ui.ctx().request_repaint();
-
-                    if self.paused() {
-                        pass.frame_counter_mut().reset();
-                    } else {
-                        pass.frame_counter_mut().tick();
-                    }
+                    pass.frame_counter_mut().tick()
                 }
                 RenderPasses::TextureViewer { pass } => {
                     pass.render_data.resolution = resolution;
 
                     self.stats_text =
-                        format!("{:.2} fps @ ", pass.frame_counter().fps) + self.stats_text;
+                        format!("{:.2} fps @ ", pass.frame_counter().fps) + &self.stats_text;
 
-                    if self.paused() {
-                        pass.frame_counter_mut().reset();
-                    } else {
-                        pass.frame_counter_mut().tick();
+                    if !self.paused() {
                         ui.ctx().request_repaint();
                     }
                 }
@@ -391,42 +391,46 @@ impl Viewport {
             }
         }
 
-        Some(egui_wgpu::Callback::new_paint_callback(
-            rect,
-            ViewportCallback {
-                buffer_data: self
-                    .render_passes()
-                    .iter()
-                    .map(|render_pass| {
-                        if let Some(render_resource) = render_state
-                            .renderer
-                            .write()
-                            .callback_resources
-                            .get_mut::<RenderResources>()
-                        {
+        if let Some(render_resources) = render_state
+            .renderer
+            .write()
+            .callback_resources
+            .get_mut::<RenderResources>()
+        {
+            return Some(egui_wgpu::Callback::new_paint_callback(
+                rect,
+                ViewportCallback {
+                    buffer_data: self
+                        .render_passes()
+                        .iter()
+                        .zip(&mut render_resources.resources)
+                        .map(|(render_pass, render_resource)| {
                             render_pass.update_if_hash_changed(
                                 &render_state.device,
                                 render_state.target_format.into(),
                                 render_resource,
                             );
-                        }
+                            let buffer_data: BufferData = render_pass.buffer_data();
 
-                        let buffer_data: BufferData = render_pass.buffer_data();
-
-                        if !self.paused() {
+                            // TODO these frame counters will not be much different/correct
+                            // with multiple passes
                             match render_pass {
                                 RenderPasses::RayMarcher { pass } => {
-                                    pass.paths_rendered_per_pixel += 1;
+                                    pass.frame_counter_mut().tick();
                                 }
-                                _ => {}
+                                RenderPasses::TextureViewer { pass } => {
+                                    pass.frame_counter_mut().tick();
+                                }
                             }
-                        }
 
-                        buffer_data
-                    })
-                    .collect(),
-            },
-        ))
+                            buffer_data
+                        })
+                        .collect(),
+                },
+            ));
+        }
+
+        None
     }
 
     pub fn recompile_if_preprocessor_directives_changed(
@@ -439,17 +443,17 @@ impl Viewport {
             .callback_resources
             .get_mut::<RenderResources>()
         {
-            self.render_passes_mut()
+            for (render_pass, render_resource) in self
+                .render_passes_mut()
                 .iter_mut()
                 .zip(&mut render_resources.resources)
-                .map(|(render_pass, render_resource)| {
-                    render_pass.recompile_if_preprocessor_directives_changed(
-                        &render_state.device,
-                        render_state.target_format.into(),
-                        render_resource,
-                    )
-                })
-                .collect()
+            {
+                render_pass.recompile_if_preprocessor_directives_changed(
+                    &render_state.device,
+                    render_state.target_format.into(),
+                    render_resource,
+                );
+            }
         }
     }
 
@@ -460,38 +464,37 @@ impl Viewport {
             .callback_resources
             .get_mut::<RenderResources>()
         {
-            self.render_passes_mut()
+            for (render_pass, render_resource) in self
+                .render_passes_mut()
                 .iter_mut()
                 .zip(&mut render_resources.resources)
-                .map(|(render_pass, render_resource)| {
-                    render_pass.recompile_shader(
-                        &render_state.device,
-                        render_state.target_format.into(),
-                        render_resource,
-                    )
-                })
-                .collect()
+            {
+                render_pass.recompile_shader(
+                    &render_state.device,
+                    render_state.target_format.into(),
+                    render_resource,
+                )
+            }
         }
     }
 
     pub fn reconstruct_render_resources(&mut self, render_state: &egui_wgpu::RenderState) {
         render_state.renderer.write().callback_resources.clear();
-
-        let mut render_resources = RenderResources::new(
-            self.render_passes_mut()
-                .iter_mut()
-                .map(|render_pass| {
-                    render_pass
-                        .render_resource(&render_state.device, render_state.target_format.into())
-                })
-                .collect(),
-        );
-
         render_state
             .renderer
             .write()
             .callback_resources
-            .insert(render_resources);
+            .insert(RenderResources::new(
+                self.render_passes_mut()
+                    .iter_mut()
+                    .map(|render_pass| {
+                        render_pass.render_resource(
+                            &render_state.device,
+                            render_state.target_format.into(),
+                        )
+                    })
+                    .collect(),
+            ));
     }
 
     pub fn update_if_hash_changed(&mut self, render_state: &egui_wgpu::RenderState) -> bool {
@@ -537,11 +540,7 @@ impl Viewport {
         (Self::ICON_SIZE + style.spacing.button_padding.y + style.spacing.item_spacing.y) * 2. + 1.
     }
 
-    fn show_restart_pause_play_buttons(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        ui: &mut egui::Ui,
-    ) {
+    fn show_restart_pause_play_buttons(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui
                 .add_enabled(
@@ -576,18 +575,18 @@ impl Viewport {
         });
     }
 
-    fn show_top_bar(&mut self, _render_state: &egui_wgpu::RenderState, ui: &mut egui::Ui) -> bool {
-        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+    fn show_top_bar(&mut self, ui: &mut egui::Ui) -> bool {
+        if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::TextureViewer { pass } => {
                     ui.horizontal(|ui| {
-                        if let Some(final_pass) = (*self.render_passes_mut()).last_mut() {
+                        if let Some(final_pass) = self.render_passes_mut().last_mut() {
                             match final_pass {
                                 RenderPasses::TextureViewer { pass } => {
                                     ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
                                         .on_hover_text("The gain to apply upon display.");
                                     ui.add(
-                                        egui::Slider::new(&mut pass.grade.viewer_gain, 0.0..=64.)
+                                        egui::Slider::new(&mut pass.grade.gain, 0.0..=64.)
                                             .clamping(egui::SliderClamping::Never)
                                             .logarithmic(true)
                                             .smallest_positive(0.01),
@@ -595,7 +594,7 @@ impl Viewport {
                                     ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
                                         .on_hover_text("The gamma to apply upon display.");
                                     ui.add(
-                                        egui::Slider::new(&mut pass.grade.viewer_gamma, 0.0..=64.)
+                                        egui::Slider::new(&mut pass.grade.gamma, 0.0..=64.)
                                             .clamping(egui::SliderClamping::Never)
                                             .logarithmic(true)
                                             .smallest_positive(0.01),
@@ -612,12 +611,8 @@ impl Viewport {
         false
     }
 
-    fn show_bottom_bar(
-        &mut self,
-        render_state: &egui_wgpu::RenderState,
-        ui: &mut egui::Ui,
-    ) -> bool {
-        self.show_restart_pause_play_buttons(render_state, ui);
+    fn show_bottom_bar(&mut self, ui: &mut egui::Ui) -> bool {
+        self.show_restart_pause_play_buttons(ui);
         ui.add(egui::Label::new(&self.stats_text).truncate());
         false
     }
@@ -631,7 +626,7 @@ impl Viewport {
 
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-        let mut reconstruct_render_resource = false;
+        let mut reconstruct_render_resources = false;
         egui::Window::new("viewer")
             .default_width(720.)
             .default_height(405.)
@@ -651,19 +646,19 @@ impl Viewport {
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
 
-                let mut reconstruct_render_resource: bool = self.show_top_bar(render_state, ui);
+                let mut reconstruct_render_resources: bool = self.show_top_bar(ui);
                 let paint_callback = self.show_frame(render_state, ui);
-                reconstruct_render_resource |= self.show_bottom_bar(render_state, ui);
+                reconstruct_render_resources |= self.show_bottom_bar(ui);
 
-                if !reconstruct_render_resource {
+                if !reconstruct_render_resources {
                     if let Some(callback) = paint_callback {
                         ui.painter().add(callback);
                     }
                 }
             });
 
-        if reconstruct_render_resource {
-            self.reconstruct_render_resource(render_state);
+        if reconstruct_render_resources {
+            self.reconstruct_render_resources(render_state);
         }
     }
 }

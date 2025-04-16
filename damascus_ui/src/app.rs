@@ -82,7 +82,7 @@ impl Damascus {
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
             context: persistent_data.context,
             node_graph: NodeGraph::new(persistent_data.editor_state),
-            viewport: Viewport::new(&(&creation_context.wgpu_render_state).unwrap()),
+            viewport: Viewport::new(creation_context.wgpu_render_state.as_ref().unwrap()),
         }
     }
 
@@ -276,6 +276,7 @@ impl eframe::App for Damascus {
                             NodeGraphResponse::ReconstructRenderResources => {
                                 self.viewport.reconstruct_render_resources(render_state);
                             }
+                            _ => {}
                         }
                     }
                 } else {

@@ -256,7 +256,8 @@ impl eframe::App for Damascus {
                             self.viewport.view_primitives(value.value().clone())
                         }
                         NodeValueType::RenderPass { value } => {
-                            *self.viewport.render_passes_mut() = value.value().clone()
+                            *self.viewport.render_passes_mut() = value.value().clone();
+                            self.viewport.reconstruct_render_resources(render_state)
                         }
                         NodeValueType::Scene { value } => {
                             self.viewport.view_scene(value.value().clone())

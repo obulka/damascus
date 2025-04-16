@@ -43,7 +43,7 @@ impl Default for FrameCounter {
             previous_frame_time: SystemTime::now(),
             fps: 0.,
             frames_to_update_fps: 10,
-            paused: true,
+            paused: false,
         }
     }
 }
@@ -74,9 +74,9 @@ impl FrameCounter {
             }
 
             self.update_frame_time();
-        } else {
-            self.frame += 1;
         }
+
+        self.frame += 1;
     }
 
     pub fn pause(&mut self) {
@@ -101,7 +101,7 @@ impl FrameCounter {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RenderPassHashes {
     reset: Key<OrderedFloatPolicy>,

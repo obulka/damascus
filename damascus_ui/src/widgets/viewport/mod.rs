@@ -165,6 +165,55 @@ impl Viewport {
             .collect()
     }
 
+    pub fn update_render_passes(
+        &mut self,
+        new_render_passes: &Vec<RenderPasses>,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        if self.render_passes().is_empty() {
+            *self.render_passes_mut() = new_render_passes.clone();
+            self.reconstruct_render_resources(render_state);
+            return;
+        }
+
+        let mut reconstruct = false;
+        for (current_passes, new_passes) in
+            self.render_passes_mut().iter_mut().zip(new_render_passes)
+        {
+            match (current_passes, new_passes) {
+                (
+                    RenderPasses::RayMarcher { pass: current_pass },
+                    RenderPasses::RayMarcher { pass: new_pass },
+                ) => {
+                    if current_pass.hashes() == new_pass.hashes() {
+                        continue;
+                    }
+                    current_pass.render_data = new_pass.render_data.clone();
+                    current_pass.compilation_data = new_pass.compilation_data;
+                }
+                (
+                    RenderPasses::TextureViewer { pass: current_pass },
+                    RenderPasses::TextureViewer { pass: new_pass },
+                ) => {
+                    if current_pass.hashes() == new_pass.hashes() {
+                        continue;
+                    }
+                    current_pass.render_data = new_pass.render_data;
+                    current_pass.construction_data = new_pass.construction_data.clone();
+                }
+                _ => {
+                    reconstruct = true;
+                    break;
+                }
+            }
+        }
+        if reconstruct {
+            *self.render_passes_mut() = new_render_passes.clone();
+            self.reconstruct_render_resources(render_state);
+            return;
+        }
+    }
+
     pub fn set_final_pass(&mut self, render_pass: RenderPasses) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             *final_pass = render_pass;
@@ -173,6 +222,7 @@ impl Viewport {
         }
     }
 
+    // TODO create default pass to view these, dont rely on last being raymarcher
     pub fn view_camera(&mut self, camera: Camera) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {

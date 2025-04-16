@@ -56,7 +56,7 @@ pub struct GPUTextureViewerRenderData {
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewerRenderData {
     pub resolution: UVec2,

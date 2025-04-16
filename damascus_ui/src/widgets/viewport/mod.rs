@@ -262,14 +262,14 @@ impl Viewport {
     }
 
     fn update_3d_camera(
-        &self,
         ui: &egui::Ui,
         rect: &egui::Rect,
         response: &egui::Response,
+        camera_controls_disabled: bool,
         camera: &mut Camera,
     ) {
         camera.aspect_ratio = rect.width() / rect.height();
-        if !self.camera_controls_enabled {
+        if camera_controls_disabled {
             return;
         }
         // Allow some basic camera movement
@@ -295,18 +295,20 @@ impl Viewport {
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {
+        let camera_controls_disabled = !self.camera_controls_enabled;
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { ref mut pass } => {
-                    self.update_3d_camera(
+                    Self::update_3d_camera(
                         ui,
                         rect,
                         response,
+                        camera_controls_disabled,
                         &mut pass.render_data.scene.render_camera,
                     );
                 }
                 RenderPasses::TextureViewer { pass } => {
-                    if !self.camera_controls_enabled {
+                    if camera_controls_disabled {
                         return;
                     }
                     let drag_delta: egui::Vec2 = response.drag_delta();
@@ -375,7 +377,6 @@ impl Viewport {
                     ) + &self.stats_text;
 
                     ui.ctx().request_repaint();
-                    pass.frame_counter_mut().tick()
                 }
                 RenderPasses::TextureViewer { pass } => {
                     pass.render_data.resolution = resolution;
@@ -387,7 +388,6 @@ impl Viewport {
                         ui.ctx().request_repaint();
                     }
                 }
-                _ => {}
             }
         }
 
@@ -401,8 +401,8 @@ impl Viewport {
                 rect,
                 ViewportCallback {
                     buffer_data: self
-                        .render_passes()
-                        .iter()
+                        .render_passes_mut()
+                        .iter_mut()
                         .zip(&mut render_resources.resources)
                         .map(|(render_pass, render_resource)| {
                             render_pass.update_if_hash_changed(
@@ -580,29 +580,22 @@ impl Viewport {
             match final_pass {
                 RenderPasses::TextureViewer { pass } => {
                     ui.horizontal(|ui| {
-                        if let Some(final_pass) = self.render_passes_mut().last_mut() {
-                            match final_pass {
-                                RenderPasses::TextureViewer { pass } => {
-                                    ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
-                                        .on_hover_text("The gain to apply upon display.");
-                                    ui.add(
-                                        egui::Slider::new(&mut pass.grade.gain, 0.0..=64.)
-                                            .clamping(egui::SliderClamping::Never)
-                                            .logarithmic(true)
-                                            .smallest_positive(0.01),
-                                    );
-                                    ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
-                                        .on_hover_text("The gamma to apply upon display.");
-                                    ui.add(
-                                        egui::Slider::new(&mut pass.grade.gamma, 0.0..=64.)
-                                            .clamping(egui::SliderClamping::Never)
-                                            .logarithmic(true)
-                                            .smallest_positive(0.01),
-                                    );
-                                }
-                                _ => {}
-                            }
-                        }
+                        ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
+                            .on_hover_text("The gain to apply upon display.");
+                        ui.add(
+                            egui::Slider::new(&mut pass.grade.gain, 0.0..=64.)
+                                .clamping(egui::SliderClamping::Never)
+                                .logarithmic(true)
+                                .smallest_positive(0.01),
+                        );
+                        ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
+                            .on_hover_text("The gamma to apply upon display.");
+                        ui.add(
+                            egui::Slider::new(&mut pass.grade.gamma, 0.0..=64.)
+                                .clamping(egui::SliderClamping::Never)
+                                .logarithmic(true)
+                                .smallest_positive(0.01),
+                        );
                     });
                 }
                 _ => {}
@@ -646,7 +639,7 @@ impl Viewport {
             .show(ctx, |ui| {
                 Self::set_button_backgrounds_transparent(ui);
 
-                let mut reconstruct_render_resources: bool = self.show_top_bar(ui);
+                reconstruct_render_resources |= self.show_top_bar(ui);
                 let paint_callback = self.show_frame(render_state, ui);
                 reconstruct_render_resources |= self.show_bottom_bar(ui);
 

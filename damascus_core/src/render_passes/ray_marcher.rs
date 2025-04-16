@@ -356,22 +356,23 @@ impl
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.render_data.as_std430()]),
+                data: bytemuck::cast_slice(&[self.render_data.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.render_data.scene.as_std430()]),
+                data: bytemuck::cast_slice(&[self.render_data.scene.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.as_std430()]),
+                data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.render_data.scene.render_camera.as_std430()]),
+                data: bytemuck::cast_slice(&[self.render_data.scene.render_camera.as_std430()])
+                    .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
@@ -381,22 +382,33 @@ impl
     fn storage_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
             BufferDescriptor {
-                data: bytemuck::cast_vec(self.render_data.scene.create_gpu_primitives()),
+                data: bytemuck::cast_slice(
+                    self.render_data.scene.create_gpu_primitives().as_slice(),
+                )
+                .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(self.render_data.scene.create_gpu_lights()),
+                data: bytemuck::cast_slice(self.render_data.scene.create_gpu_lights().as_slice())
+                    .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.render_data.scene.atmosphere.as_std430()]),
+                data: bytemuck::cast_slice(&[self.render_data.scene.atmosphere.as_std430()])
+                    .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(self.render_data.scene.emissive_primitive_indices()),
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .scene
+                        .emissive_primitive_indices()
+                        .as_slice(),
+                )
+                .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },

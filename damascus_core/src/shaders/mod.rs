@@ -36,7 +36,7 @@ impl Includes {
     fn source(&self) -> &str {
         match *self {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
-            Self::Camera => include_str!("./wgsl/geometry/camera.wgsl"),
+            Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
             Self::TextureViewerConstants => {
                 include_str!("./wgsl/pipelines/texture_viewer/constants.wgsl")
             }

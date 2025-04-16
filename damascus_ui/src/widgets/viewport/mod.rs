@@ -10,7 +10,8 @@ use eframe::{
 };
 
 use damascus_core::{
-    geometry::{camera::Camera, primitive::Primitive},
+    camera::Camera,
+    geometry::primitive::Primitive,
     lights::{Light, Lights},
     materials::{Material, ProceduralTexture},
     render_passes::{

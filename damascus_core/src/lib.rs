@@ -7,6 +7,7 @@
 
 use crevice::std430::AsStd430;
 
+pub mod camera;
 pub mod geometry;
 pub mod lights;
 pub mod materials;

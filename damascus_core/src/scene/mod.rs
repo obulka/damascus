@@ -6,10 +6,8 @@
 use crevice::std430::AsStd430;
 
 use super::{
-    geometry::{
-        camera::Camera,
-        primitive::{Primitive, Std430GPUPrimitive},
-    },
+    camera::Camera,
+    geometry::primitive::{Primitive, Std430GPUPrimitive},
     lights::{Light, Std430GPULight},
     materials::Material,
 };
@@ -73,14 +71,11 @@ impl Scene {
                 gpu_primitive.id = (index + 1) as u32;
                 gpu_primitive.as_std430()
             })
-            .collect::<Vec<Std430GPUPrimitive>>()
+            .collect()
     }
 
     pub fn create_gpu_lights(&self) -> Vec<Std430GPULight> {
-        self.lights
-            .iter()
-            .map(|light| light.as_std430())
-            .collect::<Vec<Std430GPULight>>()
+        self.lights.iter().map(|light| light.as_std430()).collect()
     }
 
     pub fn emissive_primitive_indices(&self) -> Vec<u32> {
@@ -90,6 +85,9 @@ impl Scene {
                 continue;
             }
             emissive_indices.push(index as u32);
+        }
+        if emissive_indices.is_empty() {
+            emissive_indices.push(0);
         }
         emissive_indices
     }

@@ -193,17 +193,17 @@ impl
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.render_data.as_std430()]),
+                data: bytemuck::cast_slice(&[self.render_data.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.as_std430()]),
+                data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_vec(vec![self.grade.as_std430()]),
+                data: bytemuck::cast_slice(&[self.grade.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },

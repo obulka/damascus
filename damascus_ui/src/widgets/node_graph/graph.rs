@@ -365,13 +365,28 @@ pub fn evaluate_node(
             evaluator.output_light("out", scene_lights)
         }
         NodeTemplate::Grade => {
-            let texture = evaluator.input_render_pass("texture")?;
+            let mut texture = evaluator.input_render_pass("texture")?;
             let black_point = evaluator.input_float("black_point")?;
             let white_point = evaluator.input_float("white_point")?;
             let lift = evaluator.input_float("lift")?;
             let gain = evaluator.input_float("gain")?;
             let gamma = evaluator.input_float("gamma")?;
             let invert = evaluator.input_bool("invert")?;
+
+            if let Some(final_pass) = texture.last_mut() {
+                match final_pass {
+                    // TODO this is a hack for testing, build a custom pass for grading
+                    render_passes::RenderPasses::TextureViewer { pass } => {
+                        pass.grade.black_point = black_point;
+                        pass.grade.white_point = white_point;
+                        pass.grade.lift = lift;
+                        pass.grade.gain = gain;
+                        pass.grade.gamma = gamma;
+                        pass.grade.invert = invert;
+                    }
+                    _ => {}
+                }
+            }
 
             evaluator.output_render_pass("out", texture) // TODO append own pass
         }

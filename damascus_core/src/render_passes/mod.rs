@@ -27,26 +27,45 @@ use texture_viewer::TextureViewer;
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct FrameCounter {
-    pub frame_counter: u32,
+    pub first_frame: u32,
+    pub frame: u32,
     pub previous_frame_time: SystemTime,
     pub fps: f32,
     pub frames_to_update_fps: u32,
+    pub paused: bool,
 }
 
 impl Default for FrameCounter {
     fn default() -> Self {
         Self {
-            frame_counter: 0,
+            first_frame: 0,
+            frame: 0,
             previous_frame_time: SystemTime::now(),
             fps: 0.,
             frames_to_update_fps: 10,
+            paused: true,
         }
     }
 }
 
 impl FrameCounter {
+    pub fn first_frame(mut self, first_frame: u32) -> Self {
+        self.first_frame = first_frame;
+        self
+    }
+
+    pub fn paused(mut self, paused: bool) -> Self {
+        self.paused = paused;
+        self
+    }
+
     pub fn tick(&mut self) {
-        if self.frame_counter % self.frames_to_update_fps == 0 {
+        if self.paused {
+            self.update_frame_time();
+            return;
+        }
+
+        if self.frames_since_first() % self.frames_to_update_fps == 0 {
             match SystemTime::now().duration_since(self.previous_frame_time) {
                 Ok(frame_time) => {
                     self.fps = self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
@@ -54,16 +73,31 @@ impl FrameCounter {
                 Err(_) => self.fps = 0.,
             }
 
-            self.previous_frame_time = SystemTime::now();
-            self.frame_counter = 1;
+            self.update_frame_time();
         } else {
-            self.frame_counter += 1;
+            self.frame += 1;
         }
     }
 
-    pub fn reset(&mut self) {
+    pub fn pause(&mut self) {
+        self.paused = true;
+    }
+
+    pub fn play(&mut self) {
+        self.paused = false;
+    }
+
+    pub fn frames_since_first(&self) -> u32 {
+        self.frame - self.first_frame
+    }
+
+    pub fn update_frame_time(&mut self) {
         self.previous_frame_time = SystemTime::now();
-        self.frame_counter = 1;
+    }
+
+    pub fn reset(&mut self) {
+        self.update_frame_time();
+        self.frame = self.first_frame;
     }
 }
 
@@ -170,7 +204,9 @@ pub trait RenderPass<
         hash_changed
     }
 
-    fn reset(&mut self) {}
+    fn reset(&mut self) {
+        self.frame_counter_mut().reset();
+    }
 
     fn reset_if_hash_changed(&mut self) -> bool {
         if self.update_reset_hash() {
@@ -660,6 +696,27 @@ impl RenderPasses {
         }
     }
 
+    pub fn reset(&mut self) {
+        match self {
+            Self::RayMarcher { pass } => pass.reset(),
+            Self::TextureViewer { pass } => pass.reset(),
+        }
+    }
+
+    pub fn frame_counter(&self) -> &FrameCounter {
+        match self {
+            Self::RayMarcher { pass } => pass.frame_counter(),
+            Self::TextureViewer { pass } => pass.frame_counter(),
+        }
+    }
+
+    pub fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        match self {
+            Self::RayMarcher { pass } => pass.frame_counter_mut(),
+            Self::TextureViewer { pass } => pass.frame_counter_mut(),
+        }
+    }
+
     pub fn render_resource(
         &mut self,
         device: &wgpu::Device,
@@ -668,6 +725,33 @@ impl RenderPasses {
         match self {
             Self::RayMarcher { pass } => pass.render_resource(device, target_state),
             Self::TextureViewer { pass } => pass.render_resource(device, target_state),
+        }
+    }
+
+    pub fn buffer_data(&self) -> BufferData {
+        match self {
+            Self::RayMarcher { pass } => pass.buffer_data(),
+            Self::TextureViewer { pass } => pass.buffer_data(),
+        }
+    }
+
+    pub fn recompile_if_preprocessor_directives_changed(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
+    ) -> bool {
+        match self {
+            Self::RayMarcher { pass } => pass.recompile_if_preprocessor_directives_changed(
+                device,
+                target_state,
+                render_resource,
+            ),
+            Self::TextureViewer { pass } => pass.recompile_if_preprocessor_directives_changed(
+                device,
+                target_state,
+                render_resource,
+            ),
         }
     }
 

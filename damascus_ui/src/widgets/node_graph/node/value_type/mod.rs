@@ -298,10 +298,6 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::ProceduralTexture { value } => value.create_ui(ui, param_name),
             NodeValueType::Scene { value } => value.create_ui(ui, param_name),
             NodeValueType::RenderPass { value } => value.create_ui(ui, param_name),
-            _ => {
-                ui.add(egui::Button::new(param_name).stroke(egui::Stroke::NONE));
-                false
-            }
         };
 
         if value_changed {

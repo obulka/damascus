@@ -103,7 +103,6 @@ pub struct TextureViewer {
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
-    pub paused: bool,
     hashes: RenderPassHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
@@ -118,7 +117,6 @@ impl Default for TextureViewer {
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
             hashes: RenderPassHashes::default(),
-            paused: true,
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
     }

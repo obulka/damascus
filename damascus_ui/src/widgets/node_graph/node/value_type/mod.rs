@@ -11,10 +11,7 @@ use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
 use strum::IntoEnumIterator;
 
-use damascus_core::{
-    geometry::{camera, primitive},
-    lights, materials, render_passes, scene,
-};
+use damascus_core::{camera, geometry::primitive, lights, materials, render_passes, scene};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},

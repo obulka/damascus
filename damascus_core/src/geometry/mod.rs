@@ -10,7 +10,6 @@ use wgpu;
 
 use super::DualDevice;
 
-pub mod camera;
 pub mod primitive;
 
 #[repr(C)]

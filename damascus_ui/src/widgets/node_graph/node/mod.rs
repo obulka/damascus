@@ -9,7 +9,9 @@ use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
-use damascus_core::{geometry, lights, materials, render_passes::ray_marcher, scene, textures};
+use damascus_core::{
+    camera, geometry, lights, materials, render_passes::ray_marcher, scene, textures,
+};
 
 use super::{Graph, NodeGraphResponse, NodeGraphState};
 
@@ -397,7 +399,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 output_matrix4(graph, "out");
             }
             NodeTemplate::Camera => {
-                let default_camera = geometry::camera::Camera::default();
+                let default_camera = camera::Camera::default();
                 input_float(
                     graph,
                     "focal_length",

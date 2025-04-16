@@ -12,7 +12,8 @@ use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
 use damascus_core::{
-    geometry::{self, camera, primitive},
+    camera,
+    geometry::{self, primitive},
     lights, materials,
     render_passes::{self, ray_marcher, texture_viewer},
     scene, textures,

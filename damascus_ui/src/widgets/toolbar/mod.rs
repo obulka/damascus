@@ -83,8 +83,6 @@ pub fn show_toolbar(
     node_graph: &mut NodeGraph,
     _viewport: &mut Viewport,
 ) -> Vec<NodeGraphResponse> {
-    let mut response = Vec::<NodeGraphResponse>::new();
-
     let mut modal =
         egui_modal::Modal::new(egui_context, "dialog_modal").with_style(&egui_modal::ModalStyle {
             ..Default::default()
@@ -185,5 +183,5 @@ pub fn show_toolbar(
         });
     });
 
-    response
+    Vec::<NodeGraphResponse>::new()
 }

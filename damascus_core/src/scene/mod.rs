@@ -63,7 +63,8 @@ impl Scene {
     }
 
     pub fn create_gpu_primitives(&self) -> Vec<Std430GPUPrimitive> {
-        self.primitives
+        let mut gpu_primitives: Vec<Std430GPUPrimitive> = self
+            .primitives
             .iter()
             .enumerate()
             .map(|(index, primitive)| {
@@ -71,11 +72,20 @@ impl Scene {
                 gpu_primitive.id = (index + 1) as u32;
                 gpu_primitive.as_std430()
             })
-            .collect()
+            .collect();
+        if gpu_primitives.is_empty() {
+            gpu_primitives.push(Primitive::default().as_std430());
+        }
+        gpu_primitives
     }
 
     pub fn create_gpu_lights(&self) -> Vec<Std430GPULight> {
-        self.lights.iter().map(|light| light.as_std430()).collect()
+        let mut gpu_lights: Vec<Std430GPULight> =
+            self.lights.iter().map(|light| light.as_std430()).collect();
+        if gpu_lights.is_empty() {
+            gpu_lights.push(Light::default().as_std430());
+        }
+        gpu_lights
     }
 
     pub fn emissive_primitive_indices(&self) -> Vec<u32> {

@@ -15,7 +15,7 @@ use damascus_core::{
     camera,
     geometry::{self, primitive},
     lights, materials,
-    render_passes::{self, ray_marcher, texture_viewer},
+    render_passes::{self, ray_marcher, texture_viewer, RenderPass},
     scene, textures,
 };
 
@@ -713,7 +713,8 @@ pub fn evaluate_node(
                         .sample_atmosphere(sample_atmosphere)
                         .light_sampling_bias(light_sampling_bias)
                         .secondary_sampling(secondary_sampling)
-                        .output_aov(output_aov),
+                        .output_aov(output_aov)
+                        .finalized(),
                 }],
             )
         }
@@ -737,10 +738,12 @@ pub fn evaluate_node(
             evaluator.output_render_pass(
                 "out",
                 vec![render_passes::RenderPasses::TextureViewer {
-                    pass: texture_viewer::TextureViewer::default().texture(textures::Texture {
-                        layers: 1,
-                        filepath: filepath,
-                    }),
+                    pass: texture_viewer::TextureViewer::default()
+                        .texture(textures::Texture {
+                            layers: 1,
+                            filepath: filepath,
+                        })
+                        .finalized(),
                 }],
             )
         }

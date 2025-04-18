@@ -35,6 +35,10 @@ impl UIInput<materials::ProceduralTexture> for ProceduralTexture {
         &self.value
     }
 
+    fn deref(self) -> materials::ProceduralTexture {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

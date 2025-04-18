@@ -45,6 +45,10 @@ impl UIInput<glam::BVec3> for BVec3 {
         &self.value
     }
 
+    fn deref(self) -> glam::BVec3 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

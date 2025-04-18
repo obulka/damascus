@@ -44,6 +44,10 @@ impl UIInput<glam::Vec2> for Vec2 {
         &self.value
     }
 
+    fn deref(self) -> glam::Vec2 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

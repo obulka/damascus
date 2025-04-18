@@ -6,10 +6,18 @@
 use std::{borrow::Cow, fmt::Debug, time::SystemTime};
 
 use crevice::std430::AsStd430;
+use glam::{Mat4, Vec3};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
-use crate::{geometry, shaders};
+use crate::{
+    camera::Camera,
+    geometry::{self, primitive::Primitive},
+    lights::Light,
+    materials::Material,
+    scene::Scene,
+    shaders,
+};
 
 // mod grade;
 pub mod ray_marcher;
@@ -714,6 +722,10 @@ impl RenderPasses {
         }
     }
 
+    pub fn variant_matches(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
+
     pub fn reset(&mut self) {
         match self {
             Self::RayMarcher { pass } => pass.reset(),
@@ -802,6 +814,63 @@ impl RenderPasses {
             Self::TextureViewer { pass } => {
                 pass.update_if_hash_changed(device, target_state, render_resource)
             }
+        }
+    }
+
+    pub fn default_pass_for_camera(camera: Camera) -> Self {
+        Self::RayMarcher {
+            pass: RayMarcher::default()
+                .scene(
+                    Scene::default()
+                        .render_camera(camera)
+                        .primitives(vec![Primitive::default()])
+                        .lights(vec![Light::default()]),
+                )
+                .finalized(),
+        }
+    }
+
+    pub fn default_pass_for_lights(lights: Vec<Light>) -> Self {
+        Self::RayMarcher {
+            pass: RayMarcher::default()
+                .scene(
+                    Scene::default()
+                        .render_camera(
+                            Camera::default().world_matrix(Mat4::from_translation(Vec3::Z * 5.)),
+                        )
+                        .primitives(vec![Primitive::default()])
+                        .lights(lights),
+                )
+                .finalized(),
+        }
+    }
+
+    pub fn default_pass_for_primitives(primitives: Vec<Primitive>) -> Self {
+        Self::RayMarcher {
+            pass: RayMarcher::default()
+                .scene(
+                    Scene::default()
+                        .render_camera(
+                            Camera::default().world_matrix(Mat4::from_translation(Vec3::Z * 5.)),
+                        )
+                        .primitives(primitives)
+                        .lights(vec![Light::default()]),
+                )
+                .finalized(),
+        }
+    }
+
+    pub fn default_pass_for_material(material: Material) -> Self {
+        Self::RayMarcher {
+            pass: RayMarcher::default()
+                .scene(Scene::default().atmosphere(material))
+                .finalized(),
+        }
+    }
+
+    pub fn default_pass_for_scene(scene: Scene) -> Self {
+        Self::RayMarcher {
+            pass: RayMarcher::default().scene(scene).finalized(),
         }
     }
 }

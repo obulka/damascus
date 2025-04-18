@@ -35,6 +35,10 @@ impl UIInput<camera::Camera> for Camera {
         &self.value
     }
 
+    fn deref(self) -> camera::Camera {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

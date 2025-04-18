@@ -35,6 +35,10 @@ impl UIInput<materials::Material> for Material {
         &self.value
     }
 
+    fn deref(self) -> materials::Material {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

@@ -37,6 +37,10 @@ impl UIInput<i32> for Integer {
         &self.value
     }
 
+    fn deref(self) -> i32 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

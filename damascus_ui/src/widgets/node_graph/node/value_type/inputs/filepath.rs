@@ -99,6 +99,10 @@ impl UIInput<String> for Filepath {
         &self.value
     }
 
+    fn deref(self) -> String {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

@@ -37,6 +37,10 @@ impl UIInput<u32> for UnsignedInteger {
         &self.value
     }
 
+    fn deref(self) -> u32 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

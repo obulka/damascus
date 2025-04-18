@@ -167,11 +167,12 @@ impl Viewport {
 
     pub fn update_render_passes(
         &mut self,
-        new_render_passes: &Vec<RenderPasses>,
+        new_render_passes: Vec<RenderPasses>,
         render_state: &egui_wgpu::RenderState,
     ) {
-        if self.render_passes().is_empty() {
-            *self.render_passes_mut() = new_render_passes.clone();
+        if self.render_passes().is_empty() || self.render_passes().len() != new_render_passes.len()
+        {
+            *self.render_passes_mut() = new_render_passes;
             self.reconstruct_render_resources(render_state);
             return;
         }
@@ -180,24 +181,28 @@ impl Viewport {
         for (current_passes, new_passes) in
             self.render_passes_mut().iter_mut().zip(new_render_passes)
         {
+            if !current_passes.variant_matches(&new_passes) {
+                *current_passes = new_passes;
+                reconstruct = true;
+                continue;
+            }
+
             match (current_passes, new_passes) {
                 (
                     RenderPasses::RayMarcher { pass: current_pass },
-                    RenderPasses::RayMarcher { pass: new_pass },
+                    RenderPasses::RayMarcher { pass: mut new_pass },
                 ) => {
                     // TODO these wont need to affect the hash once we are rendering
-                    // to a fixed size texture so we can avoid this clone unless the
-                    // hashes actually change
-                    let mut new_pass_clone = new_pass.clone();
-                    new_pass_clone.render_data.resolution = current_pass.render_data.resolution;
-                    new_pass_clone.render_data.scene.render_camera.aspect_ratio =
+                    // to a fixed size texture
+                    new_pass.render_data.resolution = current_pass.render_data.resolution;
+                    new_pass.render_data.scene.render_camera.aspect_ratio =
                         current_pass.render_data.scene.render_camera.aspect_ratio;
-                    new_pass_clone.update_hashes();
-                    if current_pass.hashes() == new_pass_clone.hashes() {
+                    new_pass.update_hashes();
+                    if current_pass.hashes() == new_pass.hashes() {
                         continue;
                     }
-                    current_pass.render_data = new_pass_clone.render_data;
-                    current_pass.compilation_data = new_pass_clone.compilation_data;
+                    current_pass.render_data = new_pass.render_data;
+                    current_pass.compilation_data = new_pass.compilation_data;
                 }
                 (
                     RenderPasses::TextureViewer { pass: current_pass },
@@ -207,20 +212,13 @@ impl Viewport {
                         continue;
                     }
                     current_pass.render_data = new_pass.render_data;
-                    if current_pass.hashes().reconstruct != new_pass.hashes().reconstruct {
-                        current_pass.construction_data = new_pass.construction_data.clone();
-                    }
+                    current_pass.construction_data = new_pass.construction_data;
                 }
-                _ => {
-                    reconstruct = true;
-                    break;
-                }
+                _ => {}
             }
         }
         if reconstruct {
-            *self.render_passes_mut() = new_render_passes.clone();
             self.reconstruct_render_resources(render_state);
-            return;
         }
     }
 
@@ -232,36 +230,55 @@ impl Viewport {
         }
     }
 
-    // TODO create default pass to view these, dont rely on last being raymarcher
-    pub fn view_camera(&mut self, camera: Camera) {
+    pub fn view_camera(&mut self, camera: Camera, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.reset_render_data();
                     pass.render_data.scene.render_camera = camera;
                     pass.render_data.scene.primitives = vec![Primitive::default()];
-                    self.enable_camera_controls();
                 }
-                _ => {}
+                _ => {
+                    self.update_render_passes(
+                        vec![RenderPasses::default_pass_for_camera(camera)],
+                        render_state,
+                    );
+                }
             }
+        } else {
+            self.update_render_passes(
+                vec![RenderPasses::default_pass_for_camera(camera)],
+                render_state,
+            );
         }
+        self.enable_camera_controls();
     }
 
-    pub fn view_lights(&mut self, lights: Vec<Light>) {
+    pub fn view_lights(&mut self, lights: Vec<Light>, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.reset_render_data();
                     pass.render_data.scene.lights = lights;
                     pass.render_data.scene.primitives = vec![Primitive::default()];
-                    self.enable_camera_controls();
                 }
-                _ => {}
+                _ => {
+                    self.update_render_passes(
+                        vec![RenderPasses::default_pass_for_lights(lights)],
+                        render_state,
+                    );
+                }
             }
+        } else {
+            self.update_render_passes(
+                vec![RenderPasses::default_pass_for_lights(lights)],
+                render_state,
+            );
         }
+        self.enable_camera_controls();
     }
 
-    pub fn view_atmosphere(&mut self, atmosphere: Material) {
+    pub fn view_atmosphere(&mut self, atmosphere: Material, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
@@ -271,12 +288,26 @@ impl Viewport {
                     pass.render_data.scene.atmosphere = atmosphere;
                     self.enable_camera_controls();
                 }
-                _ => {}
+                _ => {
+                    self.update_render_passes(
+                        vec![RenderPasses::default_pass_for_material(atmosphere)],
+                        render_state,
+                    );
+                }
             }
         }
+        self.update_render_passes(
+            vec![RenderPasses::default_pass_for_material(atmosphere)],
+            render_state,
+        );
     }
 
-    pub fn view_procedural_texture(&mut self, texture: ProceduralTexture) {
+    pub fn view_procedural_texture(
+        &mut self,
+        texture: ProceduralTexture,
+        _render_state: &egui_wgpu::RenderState,
+    ) {
+        // TODO this can be removed once materials take real textures instead of procedural ones
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
@@ -293,30 +324,54 @@ impl Viewport {
         }
     }
 
-    pub fn view_primitives(&mut self, primitives: Vec<Primitive>) {
+    pub fn view_primitives(
+        &mut self,
+        primitives: Vec<Primitive>,
+        render_state: &egui_wgpu::RenderState,
+    ) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.reset_render_data();
                     pass.render_data.scene.primitives = primitives;
-                    self.enable_camera_controls();
                 }
-                _ => {}
+                _ => {
+                    self.update_render_passes(
+                        vec![RenderPasses::default_pass_for_primitives(primitives)],
+                        render_state,
+                    );
+                }
             }
+        } else {
+            self.update_render_passes(
+                vec![RenderPasses::default_pass_for_primitives(primitives)],
+                render_state,
+            );
         }
+        self.enable_camera_controls();
     }
 
-    pub fn view_scene(&mut self, scene: Scene) {
+    pub fn view_scene(&mut self, scene: Scene, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.reset_render_data();
                     pass.render_data.scene = scene;
-                    self.disable_camera_controls();
                 }
-                _ => {}
+                _ => {
+                    self.update_render_passes(
+                        vec![RenderPasses::default_pass_for_scene(scene)],
+                        render_state,
+                    );
+                }
             }
+        } else {
+            self.update_render_passes(
+                vec![RenderPasses::default_pass_for_scene(scene)],
+                render_state,
+            );
         }
+        self.disable_camera_controls();
     }
 
     fn update_3d_camera(
@@ -334,8 +389,8 @@ impl Viewport {
         let camera_transform = if response.dragged_by(egui::PointerButton::Secondary) {
             glam::Mat4::from_quat(glam::Quat::from_euler(
                 glam::EulerRot::XYZ,
-                0.00015 * response.drag_delta().y,
-                0.00015 * response.drag_delta().x,
+                0.0015 * response.drag_delta().y,
+                0.0015 * response.drag_delta().x,
                 0.,
             ))
         } else {

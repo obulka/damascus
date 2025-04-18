@@ -12,7 +12,7 @@ use eframe::{
 use damascus_core::{
     camera::Camera,
     geometry::primitive::Primitive,
-    lights::{Light, Lights},
+    lights::Light,
     materials::{Material, ProceduralTexture},
     render_passes::{
         resources::{BufferData, RenderResources},
@@ -185,11 +185,19 @@ impl Viewport {
                     RenderPasses::RayMarcher { pass: current_pass },
                     RenderPasses::RayMarcher { pass: new_pass },
                 ) => {
-                    if current_pass.hashes() == new_pass.hashes() {
+                    // TODO these wont need to affect the hash once we are rendering
+                    // to a fixed size texture so we can avoid this clone unless the
+                    // hashes actually change
+                    let mut new_pass_clone = new_pass.clone();
+                    new_pass_clone.render_data.resolution = current_pass.render_data.resolution;
+                    new_pass_clone.render_data.scene.render_camera.aspect_ratio =
+                        current_pass.render_data.scene.render_camera.aspect_ratio;
+                    new_pass_clone.update_hashes();
+                    if current_pass.hashes() == new_pass_clone.hashes() {
                         continue;
                     }
-                    current_pass.render_data = new_pass.render_data.clone();
-                    current_pass.compilation_data = new_pass.compilation_data;
+                    current_pass.render_data = new_pass_clone.render_data;
+                    current_pass.compilation_data = new_pass_clone.compilation_data;
                 }
                 (
                     RenderPasses::TextureViewer { pass: current_pass },
@@ -199,7 +207,9 @@ impl Viewport {
                         continue;
                     }
                     current_pass.render_data = new_pass.render_data;
-                    current_pass.construction_data = new_pass.construction_data.clone();
+                    if current_pass.hashes().reconstruct != new_pass.hashes().reconstruct {
+                        current_pass.construction_data = new_pass.construction_data.clone();
+                    }
                 }
                 _ => {
                     reconstruct = true;
@@ -274,7 +284,8 @@ impl Viewport {
                     pass.render_data.scene.clear_primitives();
                     pass.render_data.scene.clear_lights();
                     pass.render_data.scene.atmosphere = Material::default();
-                    pass.render_data.scene.atmosphere.diffuse_colour_texture = texture;
+                    pass.render_data.scene.atmosphere.emissive_intensity = 1.0;
+                    pass.render_data.scene.atmosphere.emissive_colour_texture = texture;
                     self.enable_camera_controls();
                 }
                 _ => {}
@@ -288,10 +299,6 @@ impl Viewport {
                 RenderPasses::RayMarcher { pass } => {
                     pass.render_data.reset_render_data();
                     pass.render_data.scene.primitives = primitives;
-                    pass.render_data.scene.lights = vec![Light {
-                        light_type: Lights::AmbientOcclusion,
-                        ..Default::default()
-                    }];
                     self.enable_camera_controls();
                 }
                 _ => {}

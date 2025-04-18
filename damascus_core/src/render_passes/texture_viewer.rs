@@ -170,10 +170,6 @@ impl
         &mut self.hashes
     }
 
-    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.render_data)
-    }
-
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.construction_data)
     }

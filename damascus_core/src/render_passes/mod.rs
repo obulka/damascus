@@ -65,7 +65,9 @@ impl FrameCounter {
             return;
         }
 
-        if self.frames_since_first() % self.frames_to_update_fps == 0 {
+        if self.frame != self.first_frame
+            && self.frames_since_first() % self.frames_to_update_fps == 0
+        {
             match SystemTime::now().duration_since(self.previous_frame_time) {
                 Ok(frame_time) => {
                     self.fps = self.frames_to_update_fps as f32 / frame_time.as_secs_f32();
@@ -101,12 +103,12 @@ impl FrameCounter {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RenderPassHashes {
-    reset: Key<OrderedFloatPolicy>,
-    recompile: Key<OrderedFloatPolicy>,
-    reconstruct: Key<OrderedFloatPolicy>,
+    pub reset: Key<OrderedFloatPolicy>,
+    pub recompile: Key<OrderedFloatPolicy>,
+    pub reconstruct: Key<OrderedFloatPolicy>,
 }
 
 impl Default for RenderPassHashes {
@@ -116,6 +118,14 @@ impl Default for RenderPassHashes {
             recompile: Key::<OrderedFloatPolicy>::Unit,
             reconstruct: Key::<OrderedFloatPolicy>::Unit,
         }
+    }
+}
+
+impl PartialEq for RenderPassHashes {
+    fn eq(&self, other: &Self) -> bool {
+        self.reset == other.reset
+            && self.recompile == other.recompile
+            && self.reconstruct == other.reconstruct
     }
 }
 
@@ -146,6 +156,11 @@ pub trait RenderPass<
         let mut render_pass = Self::default();
         render_pass.update_hashes();
         render_pass
+    }
+
+    fn finalized(mut self) -> Self {
+        self.update_hashes();
+        self
     }
 
     fn label(&self) -> String {
@@ -222,6 +237,9 @@ pub trait RenderPass<
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         if self.update_reconstruction_hash() {
+            if self.dynamic_recompilation_enabled() {
+                self.update_directives();
+            }
             return Some(self.render_resource(device, target_state));
         }
         None

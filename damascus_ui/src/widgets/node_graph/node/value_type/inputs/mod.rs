@@ -68,6 +68,8 @@ pub trait UIInput<T> {
 
     fn value(&self) -> &T;
 
+    fn deref(self) -> T;
+
     fn with_ui_data(mut self, ui_data: UIData) -> Self
     where
         Self: Sized,

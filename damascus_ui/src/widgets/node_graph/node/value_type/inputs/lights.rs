@@ -26,6 +26,10 @@ impl UIInput<Vec<lights::Light>> for Lights {
         &self.value
     }
 
+    fn deref(self) -> Vec<lights::Light> {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

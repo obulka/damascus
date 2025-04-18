@@ -79,11 +79,11 @@ impl Camera {
         }
     }
 
-    fn aperture_from_f_stop(f_stop: f32, focal_length: f32) -> f32 {
+    pub fn aperture_from_f_stop(f_stop: f32, focal_length: f32) -> f32 {
         focal_length / f_stop / 1000.0
     }
 
-    fn projection_matrix(&self) -> Mat4 {
+    pub fn projection_matrix(&self) -> Mat4 {
         let far_to_near_plane_distance = self.far_plane - self.near_plane;
         Mat4::from_cols(
             Vec4::new(
@@ -111,6 +111,56 @@ impl Camera {
                 0.,
             ),
         )
+    }
+
+    pub fn aspect_ratio(mut self, aspect_ratio: f32) -> Self {
+        self.aspect_ratio = aspect_ratio;
+        self
+    }
+
+    pub fn focal_length(mut self, focal_length: f32) -> Self {
+        self.focal_length = focal_length;
+        self
+    }
+
+    pub fn horizontal_aperture(mut self, horizontal_aperture: f32) -> Self {
+        self.horizontal_aperture = horizontal_aperture;
+        self
+    }
+
+    pub fn near_plane(mut self, near_plane: f32) -> Self {
+        self.near_plane = near_plane;
+        self
+    }
+
+    pub fn far_plane(mut self, far_plane: f32) -> Self {
+        self.far_plane = far_plane;
+        self
+    }
+
+    pub fn focal_distance(mut self, focal_distance: f32) -> Self {
+        self.focal_distance = focal_distance;
+        self
+    }
+
+    pub fn f_stop(mut self, f_stop: f32) -> Self {
+        self.f_stop = f_stop;
+        self
+    }
+
+    pub fn world_matrix(mut self, world_matrix: Mat4) -> Self {
+        self.world_matrix = world_matrix;
+        self
+    }
+
+    pub fn enable_depth_of_field(mut self, enable_depth_of_field: bool) -> Self {
+        self.enable_depth_of_field = enable_depth_of_field;
+        self
+    }
+
+    pub fn latlong(mut self, latlong: bool) -> Self {
+        self.latlong = latlong;
+        self
     }
 }
 

@@ -35,6 +35,10 @@ impl UIInput<Vec<render_passes::RenderPasses>> for RenderPasses {
         &self.value
     }
 
+    fn deref(self) -> Vec<render_passes::RenderPasses> {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

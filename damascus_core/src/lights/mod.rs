@@ -13,10 +13,10 @@ use crate::DualDevice;
     Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
 )]
 pub enum Lights {
-    #[default]
     Directional,
     Point,
     Ambient,
+    #[default]
     AmbientOcclusion,
 }
 
@@ -47,8 +47,8 @@ pub struct Light {
 impl Default for Light {
     fn default() -> Self {
         Self {
-            light_type: Lights::Directional,
-            dimensional_data: Vec3::new(0., -1., 0.),
+            light_type: Lights::default(),
+            dimensional_data: Vec3::X,
             intensity: 1.,
             falloff: 2,
             colour: Vec3::ONE,

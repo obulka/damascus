@@ -62,6 +62,10 @@ impl UIInput<[f32; 3]> for Vec3 {
         &self.value
     }
 
+    fn deref(self) -> [f32; 3] {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

@@ -35,6 +35,10 @@ impl UIInput<bool> for Bool {
         &self.value
     }
 
+    fn deref(self) -> bool {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

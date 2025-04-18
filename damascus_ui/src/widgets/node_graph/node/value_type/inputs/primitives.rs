@@ -26,6 +26,10 @@ impl UIInput<Vec<Primitive>> for Primitives {
         &self.value
     }
 
+    fn deref(self) -> Vec<Primitive> {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

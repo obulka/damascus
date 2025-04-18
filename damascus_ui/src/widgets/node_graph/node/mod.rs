@@ -519,8 +519,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "direction",
-                    Vec3::from_vec3(default_light.dimensional_data).with_ui_data(
-                        UIData::default().with_tooltip("The direction vector of the light."),
+                    Vec3::from_vec3(glam::Vec3::NEG_Y).with_ui_data(
+                        UIData::default()
+                            .with_tooltip("The direction vector of the light.")
+                            .with_hidden(),
                     ),
                 );
                 input_vector3(
@@ -535,14 +537,10 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_uint(
                     graph,
                     "iterations",
-                    UnsignedInteger::new(1)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip(
-                                    "The number of iterations used to compute the occlusion.",
-                                )
-                                .with_hidden(),
-                        )
+                    UnsignedInteger::new(default_light.dimensional_data.x as u32)
+                        .with_ui_data(UIData::default().with_tooltip(
+                            "The number of iterations used to compute the occlusion.",
+                        ))
                         .with_range(1..=10),
                 );
                 input_float(

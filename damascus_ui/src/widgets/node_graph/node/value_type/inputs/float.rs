@@ -37,6 +37,10 @@ impl UIInput<f32> for Float {
         &self.value
     }
 
+    fn deref(self) -> f32 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

@@ -44,6 +44,26 @@ impl Default for Scene {
 }
 
 impl Scene {
+    pub fn render_camera(mut self, render_camera: Camera) -> Self {
+        self.render_camera = render_camera;
+        self
+    }
+
+    pub fn atmosphere(mut self, atmosphere: Material) -> Self {
+        self.atmosphere = atmosphere;
+        self
+    }
+
+    pub fn lights(mut self, lights: Vec<Light>) -> Self {
+        self.lights = lights;
+        self
+    }
+
+    pub fn primitives(mut self, primitives: Vec<Primitive>) -> Self {
+        self.primitives = primitives;
+        self
+    }
+
     pub fn max_primitives_in_buffer(max_buffer_size: usize) -> usize {
         max_buffer_size / size_of::<Std430GPUPrimitive>()
     }

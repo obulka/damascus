@@ -10,6 +10,8 @@ use eframe::egui;
 use egui_node_graph::NodeResponse;
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
+use damascus_core::render_passes::RenderPasses;
+
 use super::widgets::{
     node_graph::{
         evaluate_node,
@@ -241,26 +243,36 @@ impl eframe::App for Damascus {
                     };
                     match value_type {
                         NodeValueType::Camera { value } => {
-                            self.viewport.view_camera(*value.value())
+                            self.viewport.view_camera(value.deref(), render_state)
                         }
                         NodeValueType::Light { value } => {
-                            self.viewport.view_lights(value.value().clone())
+                            self.viewport.view_lights(value.deref(), render_state)
                         }
                         NodeValueType::Material { value } => {
-                            self.viewport.view_atmosphere(*value.value())
+                            self.viewport.view_atmosphere(value.deref(), render_state)
                         }
-                        NodeValueType::ProceduralTexture { value } => {
-                            self.viewport.view_procedural_texture(*value.value())
-                        }
+                        NodeValueType::ProceduralTexture { value } => self
+                            .viewport
+                            .view_procedural_texture(value.deref(), render_state),
                         NodeValueType::Primitive { value } => {
-                            self.viewport.view_primitives(value.value().clone())
+                            self.viewport.view_primitives(value.deref(), render_state)
                         }
                         NodeValueType::RenderPass { value } => {
+                            if let Some(final_pass) = value.value().last() {
+                                match final_pass {
+                                    RenderPasses::RayMarcher { pass: _ } => {
+                                        self.viewport.disable_camera_controls();
+                                    }
+                                    _ => {
+                                        self.viewport.enable_camera_controls();
+                                    }
+                                }
+                            }
                             self.viewport
-                                .update_render_passes(value.value(), render_state);
+                                .update_render_passes(value.deref(), render_state);
                         }
                         NodeValueType::Scene { value } => {
-                            self.viewport.view_scene(value.value().clone())
+                            self.viewport.view_scene(value.deref(), render_state)
                         }
                         _ => {}
                     }

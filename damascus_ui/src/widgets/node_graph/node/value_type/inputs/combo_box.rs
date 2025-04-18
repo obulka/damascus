@@ -81,6 +81,10 @@ impl UIInput<String> for ComboBox {
         &self.selected
     }
 
+    fn deref(self) -> String {
+        self.selected
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

@@ -35,6 +35,10 @@ impl UIInput<scene::Scene> for Scene {
         &self.value
     }
 
+    fn deref(self) -> scene::Scene {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

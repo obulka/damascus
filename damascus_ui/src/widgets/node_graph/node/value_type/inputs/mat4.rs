@@ -66,6 +66,10 @@ impl UIInput<glam::Mat4> for Mat4 {
         &self.value
     }
 
+    fn deref(self) -> glam::Mat4 {
+        self.value
+    }
+
     fn ui_data(&self) -> &UIData {
         &self.ui_data
     }

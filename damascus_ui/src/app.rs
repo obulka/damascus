@@ -70,7 +70,7 @@ pub struct Damascus {
 const PERSISTENCE_KEY: &str = "damascus";
 
 impl Damascus {
-    const LAZY_UPDATE_DELAY: f32 = 0.3;
+    const LAZY_UPDATE_DELAY: f32 = 1.0;
 
     /// Called once before the first frame.
     /// Load previous app state (if any).
@@ -81,7 +81,7 @@ impl Damascus {
             .unwrap_or_default();
         Self {
             last_lazy_update: SystemTime::now()
-                - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.) as u64),
+                - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.0) as u64),
             context: persistent_data.context,
             node_graph: NodeGraph::new(persistent_data.editor_state),
             viewport: Viewport::new(creation_context.wgpu_render_state.as_ref().unwrap()),
@@ -131,7 +131,7 @@ impl eframe::App for Damascus {
     }
 
     fn auto_save_interval(&self) -> Duration {
-        Duration::from_secs(10)
+        Duration::from_secs(15)
     }
 
     /// Called each time the UI needs repainting, which may be many times per second.

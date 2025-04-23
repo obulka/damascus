@@ -64,6 +64,7 @@ impl RayMarcherCompilationData {}
 pub struct RayMarcherConstructionData {
     pub num_primitives: usize,
     pub num_lights: usize,
+    pub num_emissive_primitives: usize,
 }
 
 #[repr(C)]
@@ -338,6 +339,7 @@ impl
         to_key_with_ordered_float(&RayMarcherConstructionData {
             num_primitives: self.render_data.scene.primitives.len(),
             num_lights: self.render_data.scene.lights.len(),
+            num_emissive_primitives: self.render_data.scene.num_emissive_primitives(),
         })
     }
 

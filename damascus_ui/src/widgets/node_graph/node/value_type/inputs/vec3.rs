@@ -3,18 +3,33 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use core::ops::RangeInclusive;
+
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, Collapsible, Colour, UIData, UIInput};
+use super::{create_drag_value_ui, Collapsible, Colour, RangedInput, UIData, UIInput};
 
-#[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Vec3 {
     value: [f32; 3],
     ui_data: UIData,
     collapsed: bool,
     pub is_colour: bool,
+    pub range: RangeInclusive<f32>,
+}
+
+impl Default for Vec3 {
+    fn default() -> Self {
+        Self {
+            value: [0., 0., 0.],
+            ui_data: UIData::default(),
+            collapsed: false,
+            is_colour: false,
+            range: 0.0..=1.,
+        }
+    }
 }
 
 impl Vec3 {
@@ -44,6 +59,7 @@ impl UIInput<[f32; 3]> for Vec3 {
             self.create_parameter_label(ui, label);
             has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
             if self.collapsed() {
+                has_changed |= ui.add(self.create_slider()).changed();
                 self.value[1] = self.value[0];
                 self.value[2] = self.value[0];
             } else {
@@ -101,5 +117,19 @@ impl Collapsible<[f32; 3]> for Vec3 {
 
     fn collapsed(&self) -> bool {
         self.collapsed
+    }
+}
+
+impl RangedInput<[f32; 3]> for Vec3 {
+    fn value_mut(&mut self) -> &mut [f32; 3] {
+        &mut self.value
+    }
+
+    fn range_mut(&mut self) -> &mut RangeInclusive<f32> {
+        &mut self.range
+    }
+
+    fn range(&self) -> &RangeInclusive<f32> {
+        &self.range
     }
 }

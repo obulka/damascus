@@ -284,7 +284,7 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::Filepath { value } => value.create_ui(ui, param_name),
             NodeValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),
             NodeValueType::Vec2 { value } => value.create_ui(ui, param_name),
-            NodeValueType::Vec3 { value } => value.create_ui(ui, param_name),
+            NodeValueType::Vec3 { value } => UIInput::create_ui(value, ui, param_name),
             NodeValueType::Vec4 { value } => value.create_ui(ui, param_name),
             NodeValueType::Mat3 { value } => value.create_ui(ui, param_name),
             NodeValueType::Mat4 { value } => value.create_ui(ui, param_name),

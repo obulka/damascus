@@ -50,7 +50,7 @@ impl UIInput<f32> for Float {
     }
 }
 
-impl RangedInput<f32> for Float {
+impl RangedInput<f32, f32> for Float {
     fn value_mut(&mut self) -> &mut f32 {
         &mut self.value
     }

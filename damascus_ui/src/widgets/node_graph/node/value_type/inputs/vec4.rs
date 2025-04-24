@@ -3,18 +3,33 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use core::ops::RangeInclusive;
+
 use eframe::egui;
 use glam;
 
-use super::{create_drag_value_ui, Collapsible, Colour, UIData, UIInput};
+use super::{create_drag_value_ui, Collapsible, Colour, RangedInput, UIData, UIInput};
 
-#[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Vec4 {
     value: [f32; 4],
     ui_data: UIData,
     collapsed: bool,
     pub is_colour: bool,
+    pub range: RangeInclusive<f32>,
+}
+
+impl Default for Vec4 {
+    fn default() -> Self {
+        Self {
+            value: [0., 0., 0., 0.],
+            ui_data: UIData::default(),
+            collapsed: false,
+            is_colour: false,
+            range: 0.0..=1.,
+        }
+    }
 }
 
 impl Vec4 {
@@ -36,30 +51,6 @@ impl UIInput<[f32; 4]> for Vec4 {
             value: value,
             ..Default::default()
         }
-    }
-
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
-        let mut has_changed = false;
-        ui.horizontal(|ui| {
-            self.create_parameter_label(ui, label);
-            has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
-            if self.collapsed() {
-                self.value[1] = self.value[0];
-                self.value[2] = self.value[0];
-                self.value[3] = self.value[0];
-            } else {
-                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
-                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
-                has_changed |= create_drag_value_ui(ui, &mut self.value[3]).changed();
-            }
-            if self.is_colour && !self.collapsed() {
-                has_changed |= ui
-                    .color_edit_button_rgba_unmultiplied(&mut self.value)
-                    .changed();
-            }
-            has_changed |= self.collapse_button(ui);
-        });
-        has_changed
     }
 
     fn value(&self) -> &[f32; 4] {
@@ -105,5 +96,44 @@ impl Collapsible<[f32; 4]> for Vec4 {
 
     fn collapsed(&self) -> bool {
         self.collapsed
+    }
+}
+
+impl RangedInput<[f32; 4], f32> for Vec4 {
+    fn value_mut(&mut self) -> &mut f32 {
+        &mut self.value[0]
+    }
+
+    fn range_mut(&mut self) -> &mut RangeInclusive<f32> {
+        &mut self.range
+    }
+
+    fn range(&self) -> &RangeInclusive<f32> {
+        &self.range
+    }
+
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
+        ui.horizontal(|ui| {
+            self.create_parameter_label(ui, label);
+            if self.collapsed() {
+                has_changed |= ui.add(self.create_slider()).changed();
+                self.value[1] = self.value[0];
+                self.value[2] = self.value[0];
+                self.value[3] = self.value[0];
+            } else {
+                has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[3]).changed();
+            }
+            if self.is_colour && !self.collapsed() {
+                has_changed |= ui
+                    .color_edit_button_rgba_unmultiplied(&mut self.value)
+                    .changed();
+            }
+            has_changed |= self.collapse_button(ui);
+        });
+        has_changed
     }
 }

@@ -50,7 +50,7 @@ impl UIInput<u32> for UnsignedInteger {
     }
 }
 
-impl RangedInput<u32> for UnsignedInteger {
+impl RangedInput<u32, u32> for UnsignedInteger {
     fn value_mut(&mut self) -> &mut u32 {
         &mut self.value
     }

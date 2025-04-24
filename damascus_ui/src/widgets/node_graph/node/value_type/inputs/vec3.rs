@@ -53,27 +53,6 @@ impl UIInput<[f32; 3]> for Vec3 {
         }
     }
 
-    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
-        let mut has_changed = false;
-        ui.horizontal(|ui| {
-            self.create_parameter_label(ui, label);
-            has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
-            if self.collapsed() {
-                has_changed |= ui.add(self.create_slider()).changed();
-                self.value[1] = self.value[0];
-                self.value[2] = self.value[0];
-            } else {
-                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
-                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
-            }
-            if self.is_colour && !self.collapsed() {
-                has_changed |= ui.color_edit_button_rgb(&mut self.value).changed();
-            }
-            has_changed |= self.collapse_button(ui);
-        });
-        has_changed
-    }
-
     fn value(&self) -> &[f32; 3] {
         &self.value
     }
@@ -120,9 +99,9 @@ impl Collapsible<[f32; 3]> for Vec3 {
     }
 }
 
-impl RangedInput<[f32; 3]> for Vec3 {
-    fn value_mut(&mut self) -> &mut [f32; 3] {
-        &mut self.value
+impl RangedInput<[f32; 3], f32> for Vec3 {
+    fn value_mut(&mut self) -> &mut f32 {
+        &mut self.value[0]
     }
 
     fn range_mut(&mut self) -> &mut RangeInclusive<f32> {
@@ -131,5 +110,26 @@ impl RangedInput<[f32; 3]> for Vec3 {
 
     fn range(&self) -> &RangeInclusive<f32> {
         &self.range
+    }
+
+    fn show_ui(&mut self, ui: &mut egui::Ui, label: &str) -> bool {
+        let mut has_changed = false;
+        ui.horizontal(|ui| {
+            self.create_parameter_label(ui, label);
+            if self.collapsed() {
+                has_changed |= ui.add(self.create_slider()).changed();
+                self.value[1] = self.value[0];
+                self.value[2] = self.value[0];
+            } else {
+                has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
+            }
+            if self.is_colour && !self.collapsed() {
+                has_changed |= ui.color_edit_button_rgb(&mut self.value).changed();
+            }
+            has_changed |= self.collapse_button(ui);
+        });
+        has_changed
     }
 }

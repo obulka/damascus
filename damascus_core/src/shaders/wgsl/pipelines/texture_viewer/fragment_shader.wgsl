@@ -11,13 +11,15 @@
 
 
 struct FragmentInput {
-    @location(0) texture_coordinate: vec4f,
-    @builtin(position) frag_coordinate: vec4f, // pixel centers
+    // Pixel index to read from the texture
+    @location(TEXTURE_COORDINATE_LOCATION) texture_coordinate: vec4f,
+    // Pixel centers in pixel space ie. [0.5, 0.5], [0.5, 1.5], ...
+    @builtin(position) frag_coordinate: vec4f,
 }
 
 
 @fragment
-fn fs_main(in: FragmentInput) -> @location(0) vec4f {
+fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var pixel_colour = textureLoad(
         _texture,
         vec2u(in.texture_coordinate.xy),

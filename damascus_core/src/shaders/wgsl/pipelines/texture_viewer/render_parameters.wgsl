@@ -8,7 +8,7 @@
 
 
 struct RenderParameters {
-    resolution: vec2f,
+    resolution: vec2f, // Resolution of the entire view area, not the image or its display size
     frame: u32,
     flags: u32,
 }
@@ -22,14 +22,14 @@ struct RenderState {
 
 
 // Global render settings
-@group(UNIFORM_BIND_GROUP) @binding(0)
+@group(UNIFORM_BIND_GROUP) @binding(RENDER_PARAMETERS_BINDING)
 var<uniform> _render_parameters: RenderParameters;
 
-@group(UNIFORM_BIND_GROUP) @binding(1)
+@group(UNIFORM_BIND_GROUP) @binding(RENDER_STATE_BINDING)
 var<uniform> _render_state: RenderState;
 
-@group(UNIFORM_BIND_GROUP) @binding(2)
+@group(UNIFORM_BIND_GROUP) @binding(VIEWER_GRADE_BINDING)
 var<uniform> _viewer_grade: Grade;
 
-@group(TEXTURE_BIND_GROUP) @binding(0)
+@group(TEXTURE_BIND_GROUP) @binding(TEXTURE_BINDING)
 var _texture: texture_2d<f32>;

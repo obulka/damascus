@@ -162,7 +162,7 @@ impl DualDevice<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
 
 impl Vertex<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
     fn attr_array() -> &'static [wgpu::VertexAttribute] {
-        &wgpu::vertex_attr_array![0 => Float32x2]
+        &wgpu::vertex_attr_array![0 => Float32x2] // A vec2f @location(0) for UV coords
     }
 }
 

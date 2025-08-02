@@ -10,13 +10,15 @@
 
 
 struct VertexInput {
-    @location(0) uv_coordinate: vec2f,
+    @location(VERTEX_UV_LOCATION) uv_coordinate: vec2f,
 }
 
 
 struct VertexOutput {
-    @location(0) texture_coordinate: vec4f,
-    @builtin(position) ndc_coordinate: vec4f, // <[-1, 1], [-1, 1], [0, 1]>
+    // Pass the pixel indices to the fragment shader
+    @location(TEXTURE_COORDINATE_LOCATION) texture_coordinate: vec4f,
+    // NDC location of the vertex <[-1, 1], [-1, 1], [0, 1], (0, inf)>
+    @builtin(position) ndc_coordinate: vec4f,
 }
 
 

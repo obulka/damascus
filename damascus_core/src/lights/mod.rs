@@ -24,12 +24,12 @@ pub enum Lights {
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPULight {
     light_type: u32,
+    falloff: u32,
+    soften_shadows: u32,
     dimensional_data: Vec3,
     intensity: f32,
-    falloff: u32,
     colour: Vec3,
     shadow_hardness: f32,
-    soften_shadows: u32,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]

@@ -260,18 +260,18 @@ fn octave_noise(
 
 
 struct ProceduralTexture {
+    flags: u32,
     texture_type: u32,
-    scale: vec4f,
-    grade: Grade,
     octaves: u32,
     lacunarity: f32,
-    amplitude_gain: f32,
+    scale: vec4f,
     low_frequency_scale: vec4f,
     high_frequency_scale: vec4f,
     low_frequency_translation: vec4f,
     high_frequency_translation: vec4f,
     hue_rotation: mat3x3f,
-    flags: u32,
+    amplitude_gain: f32,
+    grade: Grade,
 }
 
 

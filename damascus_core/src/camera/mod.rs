@@ -11,13 +11,13 @@ use crate::DualDevice;
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
+    flags: u32,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: Mat4,
     world_to_camera: Mat4,
     screen_to_camera: Mat4,
     camera_to_screen: Mat4,
-    flags: u32,
 }
 
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]

@@ -11,12 +11,12 @@ const AMBIENT_OCCLUSION: u32 = 3u;
 
 struct Light {
     light_type: u32,
+    falloff: u32,
+    soften_shadows: u32,
     dimensional_data: vec3f,
     intensity: f32,
-    falloff: u32,
     colour: vec3f,
     shadow_hardness: f32,
-    soften_shadows: u32,
 }
 
 
@@ -25,7 +25,7 @@ struct Lights {
 }
 
 
-@group(STORAGE_BIND_GROUP) @binding(1)
+@group(STORAGE_BIND_GROUP) @binding(LIGHTS_BINDING)
 var<storage, read> _lights: Lights;
 
 

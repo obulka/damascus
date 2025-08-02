@@ -10,24 +10,24 @@ const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
 
 struct Material {
     diffuse_colour: vec3f,
-    diffuse_colour_texture: ProceduralTexture,
     specular_probability: f32,
-    specular_probability_texture: ProceduralTexture,
-    specular_roughness: f32,
-    specular_roughness_texture: ProceduralTexture,
     specular_colour: vec3f,
-    specular_colour_texture: ProceduralTexture,
-    transmissive_probability: f32,
-    transmissive_probability_texture: ProceduralTexture,
-    transmissive_roughness: f32,
-    transmissive_roughness_texture: ProceduralTexture,
+    specular_roughness: f32,
     extinction_colour: vec3f,
-    extinction_colour_texture: ProceduralTexture,
+    transmissive_probability: f32,
     emissive_colour: vec3f,
-    emissive_colour_texture: ProceduralTexture,
-    refractive_index: f32,
-    refractive_index_texture: ProceduralTexture,
+    transmissive_roughness: f32,
     scattering_colour: vec3f,
+    refractive_index: f32,
+    diffuse_colour_texture: ProceduralTexture,
+    specular_probability_texture: ProceduralTexture,
+    specular_roughness_texture: ProceduralTexture,
+    specular_colour_texture: ProceduralTexture,
+    transmissive_probability_texture: ProceduralTexture,
+    transmissive_roughness_texture: ProceduralTexture,
+    extinction_colour_texture: ProceduralTexture,
+    emissive_colour_texture: ProceduralTexture,
+    refractive_index_texture: ProceduralTexture,
     scattering_colour_texture: ProceduralTexture,
 }
 
@@ -47,7 +47,7 @@ struct NestedDielectrics {
 
 
 // TODO this could be uniform but can't get the alignment right
-@group(STORAGE_BIND_GROUP) @binding(2)
+@group(STORAGE_BIND_GROUP) @binding(ATMOSPHERE_BINDING)
 var<storage, read> _atmosphere: Material;
 
 

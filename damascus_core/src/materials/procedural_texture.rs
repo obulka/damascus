@@ -38,18 +38,18 @@ pub enum ProceduralTextureType {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUProceduralTexture {
+    flags: u32,
     texture_type: u32,
-    scale: Vec4,
-    grade: GPUGrade,
     octaves: u32,
     lacunarity: f32,
-    amplitude_gain: f32,
+    scale: Vec4,
     low_frequency_scale: Vec4,
     high_frequency_scale: Vec4,
     low_frequency_translation: Vec4,
     high_frequency_translation: Vec4,
     hue_rotation: Mat3,
-    flags: u32,
+    amplitude_gain: f32,
+    grade: GPUGrade,
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]

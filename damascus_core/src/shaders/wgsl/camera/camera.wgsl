@@ -9,17 +9,17 @@ const LATLONG: u32 = 2u;
 
 
 struct Camera {
+    flags: u32,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: mat4x4f,
     world_to_camera: mat4x4f,
     screen_to_camera: mat4x4f,
     camera_to_screen: mat4x4f,
-    flags: u32,
 }
 
 
-@group(UNIFORM_BIND_GROUP) @binding(3)
+@group(UNIFORM_BIND_GROUP) @binding(RENDER_CAMERA_BINDING)
 var<uniform> _render_camera: Camera;
 
 

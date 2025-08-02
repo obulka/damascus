@@ -61,18 +61,18 @@ pub enum Shapes {
 pub struct GPUPrimitive {
     pub id: u32,
     shape: u32,
+    modifiers: u32,
+    num_descendants: u32,
+    negative_repetitions: Vec3,
+    blend_strength: f32,
+    positive_repetitions: Vec3,
+    wall_thickness: f32,
+    spacing: Vec3,
+    edge_radius: f32,
+    dimensional_data: Vec4,
+    elongation: Vec3,
     transform: Transform,
     material: GPUMaterial,
-    modifiers: u32,
-    negative_repetitions: Vec3,
-    positive_repetitions: Vec3,
-    spacing: Vec3,
-    blend_strength: f32,
-    wall_thickness: f32,
-    edge_radius: f32,
-    elongation: Vec3,
-    num_descendants: u32,
-    dimensional_data: Vec4,
 }
 
 #[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]

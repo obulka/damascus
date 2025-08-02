@@ -17,8 +17,8 @@ pub mod primitive;
 #[serde(default)]
 pub struct Transform {
     translation: Vec3,
-    inverse_rotation: Mat3,
     uniform_scale: f32,
+    inverse_rotation: Mat3,
 }
 
 #[derive(

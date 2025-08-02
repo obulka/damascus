@@ -6,26 +6,26 @@
 
 struct Transform {
     translation: vec3f,
-    inverse_rotation: mat3x3f,
     uniform_scale: f32,
+    inverse_rotation: mat3x3f,
 }
 
 
 struct Primitive {
     id: u32,
     shape: u32,
+    modifiers: u32,
+    num_descendants: u32,
+    negative_repetitions: vec3f,
+    blend_strength: f32,
+    positive_repetitions: vec3f,
+    wall_thickness: f32,
+    spacing: vec3f,
+    edge_radius: f32,
+    dimensional_data: vec4f,
+    elongation: vec3f,
     transform: Transform,
     material: Material,
-    modifiers: u32,
-    negative_repetitions: vec3f,
-    positive_repetitions: vec3f,
-    spacing: vec3f,
-    blend_strength: f32,
-    wall_thickness: f32,
-    edge_radius: f32,
-    elongation: vec3f,
-    num_descendants: u32,
-    dimensional_data: vec4f,
 }
 
 
@@ -34,11 +34,11 @@ struct Primitives {
 }
 
 
-@group(STORAGE_BIND_GROUP) @binding(0)
+@group(STORAGE_BIND_GROUP) @binding(PRIMITIVES_BINDING)
 var<storage, read> _primitives: Primitives;
 
 
-@group(STORAGE_BIND_GROUP) @binding(3)
+@group(STORAGE_BIND_GROUP) @binding(EMISSIVE_INDICES_BINDING)
 var<storage, read> _emissive_indices: array<u32>;
 
 

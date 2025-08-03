@@ -30,7 +30,7 @@ pub struct Camera {
     pub far_plane: f32,
     pub focal_distance: f32,
     pub f_stop: f32,
-    pub world_matrix: Mat4,
+    pub camera_to_world: Mat4,
     pub enable_depth_of_field: bool,
     pub latlong: bool,
 }
@@ -61,7 +61,7 @@ impl Camera {
         far_plane: f32,
         focal_distance: f32,
         f_stop: f32,
-        world_matrix: Mat4,
+        camera_to_world: Mat4,
         enable_depth_of_field: bool,
         latlong: bool,
     ) -> Self {
@@ -73,7 +73,7 @@ impl Camera {
             far_plane: far_plane,
             focal_distance: focal_distance,
             f_stop: f_stop,
-            world_matrix: world_matrix,
+            camera_to_world: camera_to_world,
             enable_depth_of_field: enable_depth_of_field,
             latlong: latlong,
         }
@@ -83,7 +83,7 @@ impl Camera {
         focal_length / f_stop / 1000.0
     }
 
-    pub fn projection_matrix(&self) -> Mat4 {
+    pub fn camera_to_screen(&self) -> Mat4 {
         let far_to_near_plane_distance = self.far_plane - self.near_plane;
         Mat4::from_cols(
             Vec4::new(
@@ -148,8 +148,8 @@ impl Camera {
         self
     }
 
-    pub fn world_matrix(mut self, world_matrix: Mat4) -> Self {
-        self.world_matrix = world_matrix;
+    pub fn camera_to_world(mut self, camera_to_world: Mat4) -> Self {
+        self.camera_to_world = camera_to_world;
         self
     }
 
@@ -166,14 +166,14 @@ impl Camera {
 
 impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
     fn to_gpu(&self) -> GPUCamera {
-        let projection_matrix: Mat4 = self.projection_matrix();
+        let camera_to_screen: Mat4 = self.camera_to_screen();
         GPUCamera {
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
-            camera_to_world: self.world_matrix,
-            world_to_camera: self.world_matrix.inverse(),
-            screen_to_camera: projection_matrix.inverse(),
-            camera_to_screen: projection_matrix,
+            camera_to_world: self.camera_to_world,
+            world_to_camera: self.camera_to_world.inverse(),
+            screen_to_camera: camera_to_screen.inverse(),
+            camera_to_screen: camera_to_screen,
             flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
     }

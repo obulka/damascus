@@ -23,19 +23,6 @@ struct Camera {
 var<uniform> _render_camera: Camera;
 
 
-/**
- * Convert location of a pixel in an image into uv.
- *
- * @arg pixel_coordinates: The x, and y positions of the pixel.
- * @arg resolution: The image width, and height.
- *
- * @returns: The uv position.
- */
-fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return 2. * pixel_coordinates / resolution - 1.;
-}
-
-
 fn world_to_camera_space(world_position: vec3f) -> vec3f {
     return (
         _render_camera.world_to_camera

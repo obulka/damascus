@@ -177,12 +177,12 @@ impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
             BufferDescriptor {
                 data: bytemuck::cast_slice(&[self.render_data.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                visibility: wgpu::ShaderStages::VERTEX,
             },
             BufferDescriptor {
                 data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                visibility: wgpu::ShaderStages::VERTEX,
             },
             BufferDescriptor {
                 data: bytemuck::cast_slice(&[self.grade.as_std430()]).to_vec(),

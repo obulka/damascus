@@ -310,7 +310,7 @@ pub fn evaluate_node(
             let far_plane = evaluator.input_float("far_plane")?;
             let focal_distance = evaluator.input_float("focal_distance")?;
             let f_stop = evaluator.input_float("f_stop")?;
-            let world_matrix = evaluator.input_matrix4("world_matrix")?;
+            let camera_to_world = evaluator.input_matrix4("world_matrix")?;
             let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
             let latlong = evaluator.input_bool("latlong")?;
             evaluator.output_camera(
@@ -323,7 +323,7 @@ pub fn evaluate_node(
                     far_plane,
                     focal_distance,
                     f_stop,
-                    world_matrix,
+                    camera_to_world,
                     enable_depth_of_field,
                     latlong,
                 ),
@@ -331,14 +331,14 @@ pub fn evaluate_node(
         }
         NodeTemplate::Light => {
             let mut scene_lights = evaluator.input_light("lights")?;
-            let world_matrix = evaluator.input_matrix4("world_matrix")?;
+            let local_to_world = evaluator.input_matrix4("world_matrix")?;
             let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
             let dimensional_data = match light_type {
-                lights::Lights::Directional => (world_matrix
+                lights::Lights::Directional => (local_to_world
                     * glam::Vec4::from((evaluator.input_vector3("direction")?, 1.)))
                 .xyz()
                 .normalize(),
-                lights::Lights::Point => (world_matrix
+                lights::Lights::Point => (local_to_world
                     * glam::Vec4::from((evaluator.input_vector3("position")?, 1.)))
                 .xyz(),
                 lights::Lights::AmbientOcclusion => {
@@ -602,14 +602,14 @@ pub fn evaluate_node(
             let wall_thickness = evaluator.input_float("wall_thickness")?;
             let elongate = evaluator.input_bool("elongate")?;
             let elongation = evaluator.input_vector3("elongation")?;
-            let world_matrix = evaluator.input_matrix4("world_matrix")?;
+            let local_to_world = evaluator.input_matrix4("world_matrix")?;
             for child in descendants.iter_mut() {
-                child.world_matrix = world_matrix * child.world_matrix;
+                child.local_to_world = local_to_world * child.local_to_world;
             }
 
             let primitive = primitive::Primitive {
                 shape: shape,
-                world_matrix: world_matrix,
+                local_to_world: local_to_world,
                 material: material,
                 hollow: hollow,
                 wall_thickness: wall_thickness,

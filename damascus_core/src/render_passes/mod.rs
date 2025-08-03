@@ -890,7 +890,7 @@ impl RenderPasses {
                 .scene(
                     Scene::default()
                         .render_camera(
-                            Camera::default().world_matrix(Mat4::from_translation(Vec3::Z * 5.)),
+                            Camera::default().camera_to_world(Mat4::from_translation(Vec3::Z * 5.)),
                         )
                         .primitives(vec![Primitive::default()])
                         .lights(lights),
@@ -905,7 +905,7 @@ impl RenderPasses {
                 .scene(
                     Scene::default()
                         .render_camera(
-                            Camera::default().world_matrix(Mat4::from_translation(Vec3::Z * 5.)),
+                            Camera::default().camera_to_world(Mat4::from_translation(Vec3::Z * 5.)),
                         )
                         .primitives(primitives)
                         .lights(vec![Light::default()]),

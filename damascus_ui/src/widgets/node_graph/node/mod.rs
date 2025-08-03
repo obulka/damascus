@@ -458,7 +458,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_matrix4(
                     graph,
                     "world_matrix",
-                    Mat4::new(default_camera.world_matrix).with_ui_data(
+                    Mat4::new(default_camera.camera_to_world).with_ui_data(
                         UIData::default().with_tooltip("The world matrix/axis of the camera."),
                     ),
                 );
@@ -1255,7 +1255,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_matrix4(
                     graph,
                     "world_matrix",
-                    Mat4::new(default_primitive.world_matrix).with_ui_data(
+                    Mat4::new(default_primitive.local_to_world).with_ui_data(
                         UIData::default().with_tooltip("The world matrix/axis of the primitive."),
                     ),
                 );

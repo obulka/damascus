@@ -404,7 +404,7 @@ impl Viewport {
                 },
             ))
         };
-        camera.world_matrix *= camera_transform;
+        camera.camera_to_world *= camera_transform;
     }
 
     fn update_camera(&mut self, ui: &egui::Ui, rect: &egui::Rect, response: &egui::Response) {

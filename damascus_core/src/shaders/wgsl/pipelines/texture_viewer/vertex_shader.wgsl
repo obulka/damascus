@@ -40,7 +40,7 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
     out.texture_coordinate = vec4(
-        uv_to_screen(vec2f(texture_uv.x, -texture_uv.y), texture_dimensions),
+        uv_to_pixels(vec2f(texture_uv.x, -texture_uv.y), texture_dimensions),
         0.,
         1.,
     );
@@ -51,7 +51,7 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
 
     out.ndc_coordinate = vec4(
         (
-            scale_screen_to_uv(
+            scale_pixels_to_uv(
                 _render_state.pan,
                 _render_parameters.resolution,
             ) + texture_uv

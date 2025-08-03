@@ -79,7 +79,7 @@ pub struct GPUPrimitive {
 #[serde(default)]
 pub struct Primitive {
     pub shape: Shapes,
-    pub world_matrix: Mat4,
+    pub local_to_world: Mat4,
     pub material: Material,
     pub edge_radius: f32,
     pub repetition: Repetition,
@@ -102,7 +102,7 @@ impl Default for Primitive {
     fn default() -> Self {
         Self {
             shape: Shapes::Sphere,
-            world_matrix: Mat4::IDENTITY,
+            local_to_world: Mat4::IDENTITY,
             material: Material::default(),
             edge_radius: 0.,
             repetition: Repetition::None,
@@ -127,7 +127,7 @@ impl Primitive {}
 
 impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
     fn to_gpu(&self) -> GPUPrimitive {
-        let (scale, quaternion, translation) = self.world_matrix.to_scale_rotation_translation();
+        let (scale, quaternion, translation) = self.local_to_world.to_scale_rotation_translation();
         GPUPrimitive {
             id: 0,
             shape: self.shape as u32,

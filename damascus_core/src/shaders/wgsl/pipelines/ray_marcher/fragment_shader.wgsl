@@ -276,7 +276,7 @@ struct FragmentInput {
 @fragment
 fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     // Use the UV coordinates and resolution to get texture coordinates
-    var current_pixel_indices: vec2f = uv_to_screen(
+    var current_pixel_indices: vec2f = uv_to_pixels(
         in.uv_coordinate.xy,
         _render_parameters.resolution,
     );

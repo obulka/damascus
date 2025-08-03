@@ -7,32 +7,32 @@ const INVERT: u32 = 1u;
 
 
 /**
- * Convert location of a pixel in screen/image space from uvs.
+ * Convert location in uv space to pixel space.
  *
  * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
  * @arg resolution: The image width, and height.
  *
  * @returns: The pixel indices.
  */
-fn uv_to_screen(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
+fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return (pixel_coordinates + 1.) * (resolution - 1.) * 0.5;
 }
 
 
 /**
- * Convert location of a pixel in screen/image space from uvs.
+ * Convert location in pixel space to uv space.
  *
  * @arg pixel_coordinates: The x, and y positions of the pixel in uv space.
  * @arg resolution: The image width, and height.
  *
  * @returns: The pixel indices.
  */
-fn screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
+fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return pixel_coordinates * 2. / (resolution - 1.) - 1.;
 }
 
 
-fn scale_screen_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
+fn scale_pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return pixel_coordinates * 2. / resolution;
 }
 

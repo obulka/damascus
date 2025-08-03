@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 use glam;
 use strum::{Display, EnumIter, EnumString};
 
-use super::{geometry::Vertex, DualDevice};
+use super::DualDevice;
 
 #[derive(
     Debug,
@@ -157,12 +157,6 @@ impl DualDevice<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
         GPUTextureVertex {
             uv_coordinate: self.uv_coordinate,
         }
-    }
-}
-
-impl Vertex<GPUTextureVertex, Std430GPUTextureVertex> for TextureVertex {
-    fn attr_array() -> &'static [wgpu::VertexAttribute] {
-        &wgpu::vertex_attr_array![0 => Float32x2] // A vec2f @location(0) for UV coords
     }
 }
 

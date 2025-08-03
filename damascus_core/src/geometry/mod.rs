@@ -6,9 +6,6 @@
 use crevice::std430::AsStd430;
 use glam::{Mat3, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
-use wgpu;
-
-use super::DualDevice;
 
 pub mod primitive;
 
@@ -62,8 +59,4 @@ pub enum Repetition {
     None,
     Finite,
     Infinite,
-}
-
-pub trait Vertex<G: Copy + Clone + AsStd430<Output = S>, S>: DualDevice<G, S> {
-    fn attr_array() -> &'static [wgpu::VertexAttribute];
 }

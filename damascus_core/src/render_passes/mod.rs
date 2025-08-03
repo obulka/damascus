@@ -5,18 +5,13 @@
 
 use std::{borrow::Cow, fmt::Debug, time::SystemTime};
 
-use crevice::std430::AsStd430;
 use glam::{Mat4, Vec3};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
-    camera::Camera,
-    geometry::{self, primitive::Primitive},
-    lights::Light,
-    materials::Material,
-    scene::Scene,
-    shaders,
+    camera::Camera, geometry::primitive::Primitive, lights::Light, materials::Material,
+    scene::Scene, shaders, textures::texture_corner_vertices_2d,
 };
 
 // mod grade;
@@ -28,7 +23,7 @@ use ray_marcher::RayMarcher;
 use resources::{
     BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
     RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
-    TextureViewBindGroup, VertexBuffer,
+    TextureViewBindGroup,
 };
 use texture_viewer::TextureViewer;
 
@@ -137,12 +132,7 @@ impl PartialEq for RenderPassHashes {
     }
 }
 
-pub trait RenderPass<
-    Vertex: geometry::Vertex<GPUVertex, Std430GPUVertex>,
-    GPUVertex: Copy + Clone + AsStd430<Output = Std430GPUVertex>,
-    Std430GPUVertex: bytemuck::Pod,
-    Directives: shaders::PreprocessorDirectives,
->:
+pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     Debug
     + Default
     + Clone
@@ -157,8 +147,6 @@ pub trait RenderPass<
     fn frame_counter(&self) -> &FrameCounter;
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter;
-
-    fn vertices(&self) -> Vec<Std430GPUVertex>;
 
     fn new() -> Self {
         let mut render_pass = Self::default();
@@ -300,6 +288,22 @@ pub trait RenderPass<
         self.reset_if_hash_changed()
     }
 
+    fn vertex_count(&self) -> u32 {
+        4
+    }
+
+    fn instance_count(&self) -> u32 {
+        1
+    }
+
+    fn vertex_buffer_data(&self) -> Vec<BufferDescriptor> {
+        vec![BufferDescriptor {
+            data: bytemuck::cast_slice(texture_corner_vertices_2d().as_slice()).to_vec(),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+            visibility: wgpu::ShaderStages::VERTEX,
+        }]
+    }
+
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![]
     }
@@ -310,6 +314,7 @@ pub trait RenderPass<
 
     fn buffer_data(&self) -> BufferData {
         BufferData {
+            vertex: self.vertex_buffer_data(),
             uniform: self.uniform_buffer_data(),
             storage: self.storage_buffer_data(),
         }
@@ -346,7 +351,7 @@ pub trait RenderPass<
             vertex: wgpu::VertexState {
                 module: &vertex_shader,
                 entry_point: Some("vs_main"),
-                buffers: &[self.create_vertex_buffer_layout()],
+                buffers: &[],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
@@ -385,12 +390,15 @@ pub trait RenderPass<
     ) -> RenderResource {
         self.reset();
 
-        let vertex_buffer: VertexBuffer = self.create_vertex_buffer(device);
+        let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device);
         let texture_views: Vec<TextureView> = self.create_texture_views(device);
         let storage_texture_views: Vec<StorageTextureView> =
             self.create_storage_texture_views(device);
+
+        let vertex_bind_group: BufferBindGroup =
+            self.create_vertex_bind_group(device, vertex_buffers);
 
         let mut uniform_bind_group: Option<BufferBindGroup> = None;
         if !uniform_buffers.is_empty() {
@@ -414,6 +422,7 @@ pub trait RenderPass<
         }
 
         let bind_groups = BindGroups {
+            vertex_bind_group,
             uniform_bind_group,
             storage_bind_group,
             texture_bind_group,
@@ -424,31 +433,25 @@ pub trait RenderPass<
             self.render_pipeline(device, target_state, &bind_groups);
 
         RenderResource {
-            render_pipeline,
-            vertex_buffer,
-            bind_groups,
+            render_pipeline: render_pipeline,
+            bind_groups: bind_groups,
+            vertex_count: self.vertex_count(),
+            instance_count: self.instance_count(),
         }
     }
 
-    fn create_vertex_buffer(&self, device: &wgpu::Device) -> VertexBuffer {
-        let vertices: Vec<Std430GPUVertex> = self.vertices();
-        let vertex_count: u32 = vertices.len() as u32;
-        VertexBuffer {
-            buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some(&(self.label() + " vertex buffer")),
-                contents: bytemuck::cast_slice(vertices.as_slice()),
-                usage: wgpu::BufferUsages::VERTEX,
-            }),
-            vertex_count: vertex_count,
-        }
-    }
-
-    fn create_vertex_buffer_layout(&self) -> wgpu::VertexBufferLayout<'_> {
-        wgpu::VertexBufferLayout {
-            array_stride: std::mem::size_of::<Std430GPUVertex>() as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: Vertex::attr_array(),
-        }
+    fn create_vertex_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
+        self.vertex_buffer_data()
+            .into_iter()
+            .map(|buffer_descriptor| Buffer {
+                buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some(&(self.label() + " vertex buffer")),
+                    contents: buffer_descriptor.data.as_slice(),
+                    usage: buffer_descriptor.usage,
+                }),
+                visibility: buffer_descriptor.visibility,
+            })
+            .collect()
     }
 
     fn create_uniform_buffers(&self, device: &wgpu::Device) -> Vec<Buffer> {
@@ -485,6 +488,19 @@ pub trait RenderPass<
 
     fn create_storage_texture_views(&self, _device: &wgpu::Device) -> Vec<StorageTextureView> {
         vec![]
+    }
+
+    fn vertex_bind_group_layout_entry(binding: u32, buffer: &Buffer) -> wgpu::BindGroupLayoutEntry {
+        wgpu::BindGroupLayoutEntry {
+            binding: binding,
+            visibility: buffer.visibility,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage { read_only: true },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        }
     }
 
     fn uniform_bind_group_layout_entry(
@@ -548,6 +564,44 @@ pub trait RenderPass<
                 view_dimension: storage_texture_view.view_dimension,
             },
             count: None,
+        }
+    }
+
+    fn create_vertex_bind_group(
+        &self,
+        device: &wgpu::Device,
+        buffers: Vec<Buffer>,
+    ) -> BufferBindGroup {
+        let bind_group_layout_entries: Vec<wgpu::BindGroupLayoutEntry> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| Self::vertex_bind_group_layout_entry(binding as u32, &buffer))
+            .collect();
+
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: Some(&(self.label() + " vertex bind group layout")),
+            entries: &bind_group_layout_entries,
+        });
+
+        let bind_group_entries: Vec<wgpu::BindGroupEntry<'_>> = buffers
+            .iter()
+            .enumerate()
+            .map(|(binding, buffer)| wgpu::BindGroupEntry {
+                binding: binding as u32,
+                resource: buffer.as_resource(),
+            })
+            .collect();
+
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some(&(self.label() + " vertex bind group")),
+            layout: &bind_group_layout,
+            entries: &bind_group_entries,
+        });
+
+        BufferBindGroup {
+            bind_group,
+            bind_group_layout,
+            buffers,
         }
     }
 

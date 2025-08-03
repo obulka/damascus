@@ -11,12 +11,6 @@ pub trait BindingResource {
 }
 
 #[derive(Clone)]
-pub struct VertexBuffer {
-    pub buffer: wgpu::Buffer,
-    pub vertex_count: u32,
-}
-
-#[derive(Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
     pub visibility: wgpu::ShaderStages,
@@ -112,6 +106,7 @@ pub struct StorageTextureViewBindGroup {
 
 #[derive(Clone)]
 pub struct BindGroups {
+    pub vertex_bind_group: BufferBindGroup,
     pub uniform_bind_group: Option<BufferBindGroup>,
     pub storage_bind_group: Option<BufferBindGroup>,
     pub texture_bind_group: Option<TextureViewBindGroup>,
@@ -121,6 +116,9 @@ pub struct BindGroups {
 impl BindGroups {
     pub fn bind_group_layouts(&self) -> Vec<&wgpu::BindGroupLayout> {
         let mut bind_group_layouts: Vec<&wgpu::BindGroupLayout> = vec![];
+
+        bind_group_layouts.push(&self.vertex_bind_group.bind_group_layout);
+
         if let Some(uniform_bind_group) = &self.uniform_bind_group {
             bind_group_layouts.push(&uniform_bind_group.bind_group_layout);
         }
@@ -138,17 +136,21 @@ impl BindGroups {
 
     pub fn set_bind_groups(&self, render_pass: &mut wgpu::RenderPass<'_>) {
         let mut bind_group: u32 = 0;
+
+        render_pass.set_bind_group(bind_group, &self.vertex_bind_group.bind_group, &[]);
+        bind_group += 1;
+
         if let Some(uniform_bind_group) = &self.uniform_bind_group {
             render_pass.set_bind_group(bind_group, &uniform_bind_group.bind_group, &[]);
-            bind_group += 1
+            bind_group += 1;
         }
         if let Some(storage_bind_group) = &self.storage_bind_group {
             render_pass.set_bind_group(bind_group, &storage_bind_group.bind_group, &[]);
-            bind_group += 1
+            bind_group += 1;
         }
         if let Some(texture_bind_group) = &self.texture_bind_group {
             render_pass.set_bind_group(bind_group, &texture_bind_group.bind_group, &[]);
-            bind_group += 1
+            bind_group += 1;
         }
         if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
             render_pass.set_bind_group(bind_group, &storage_texture_bind_group.bind_group, &[]);
@@ -165,6 +167,7 @@ pub struct BufferDescriptor {
 
 #[derive(Clone)]
 pub struct BufferData {
+    pub vertex: Vec<BufferDescriptor>,
     pub uniform: Vec<BufferDescriptor>,
     pub storage: Vec<BufferDescriptor>,
 }
@@ -172,12 +175,17 @@ pub struct BufferData {
 #[derive(Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
-    pub vertex_buffer: VertexBuffer,
     pub bind_groups: BindGroups,
+    pub vertex_count: u32,
+    pub instance_count: u32,
 }
 
 impl RenderResource {
     pub fn write_bind_groups(&self, queue: &wgpu::Queue, buffer_data: &BufferData) {
+        self.bind_groups
+            .vertex_bind_group
+            .write(queue, &buffer_data.vertex);
+
         if let Some(uniform_bind_group) = &self.bind_groups.uniform_bind_group {
             uniform_bind_group.write(queue, &buffer_data.uniform);
         }
@@ -195,9 +203,10 @@ impl RenderResource {
 
         self.bind_groups.set_bind_groups(render_pass);
 
-        render_pass.set_vertex_buffer(0, self.vertex_buffer.buffer.slice(..));
-
-        render_pass.draw(0..self.vertex_buffer.vertex_count, 0..1);
+        // Reference each value w/in these ranges in the vertex shader
+        // w/ @builtin(vertex_index) & @builtin(instance_index)
+        // respectively
+        render_pass.draw(0..self.vertex_count, 0..self.instance_count);
     }
 }
 

@@ -10,7 +10,8 @@
 
 
 struct VertexInput {
-    @location(VERTEX_UV_LOCATION) uv_coordinate: vec2f,
+    @builtin(vertex_index) vertex_index: u32,
+    @builtin(instance_index) instance_index: u32,
 }
 
 
@@ -22,9 +23,18 @@ struct VertexOutput {
 }
 
 
+struct VertexData {
+    uv_coordinate: vec2f,
+}
+
+
+@group(VERTEX_BIND_GROUP) @binding(VERTEX_DATA_BINDING)
+var<storage, read> _vertex_data: array<VertexData>;
+
+
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {
-    var texture_uv: vec2f = vertex_input.uv_coordinate;
+    var texture_uv: vec2f = _vertex_data[vertex_input.vertex_index].uv_coordinate;
 
     var texture_dimensions = vec2f(textureDimensions(_texture));
 

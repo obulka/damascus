@@ -24,10 +24,7 @@ use crate::{
         },
         ShaderSource,
     },
-    textures::{
-        texture_corner_vertices_2d, GPUTextureVertex, Grade, Std430GPUTextureVertex, Texture,
-        TextureVertex,
-    },
+    textures::{Grade, Texture},
     DualDevice,
 };
 
@@ -150,14 +147,7 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
     }
 }
 
-impl
-    RenderPass<
-        TextureVertex,
-        GPUTextureVertex,
-        Std430GPUTextureVertex,
-        TextureViewerPreprocessorDirectives,
-    > for TextureViewer
-{
+impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn label(&self) -> String {
         "texture viewer".to_owned()
     }
@@ -172,10 +162,6 @@ impl
 
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.construction_data)
-    }
-
-    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
-        texture_corner_vertices_2d()
     }
 
     fn frame_counter(&self) -> &FrameCounter {

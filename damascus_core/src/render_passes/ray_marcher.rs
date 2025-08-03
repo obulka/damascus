@@ -26,9 +26,7 @@ use crate::{
         },
         ShaderSource,
     },
-    textures::{
-        texture_corner_vertices_2d, AOVs, GPUTextureVertex, Std430GPUTextureVertex, TextureVertex,
-    },
+    textures::AOVs,
     DualDevice,
 };
 
@@ -307,14 +305,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 }
 
-impl
-    RenderPass<
-        TextureVertex,
-        GPUTextureVertex,
-        Std430GPUTextureVertex,
-        RayMarcherPreprocessorDirectives,
-    > for RayMarcher
-{
+impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn label(&self) -> String {
         "ray marcher".to_owned()
     }
@@ -349,10 +340,6 @@ impl
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter {
         &mut self.subframe_counter
-    }
-
-    fn vertices(&self) -> Vec<Std430GPUTextureVertex> {
-        texture_corner_vertices_2d()
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {

@@ -12,10 +12,20 @@ use std::sync::Arc;
 use damascus_ui::{MAX_BUFFER_SIZE, MAX_TEXTURE_DIMENSION};
 
 fn main() {
-    use eframe::{egui::Visuals, egui_wgpu, wgpu};
+    use eframe::{
+        egui::{ViewportBuilder, Visuals},
+        egui_wgpu, icon_data, wgpu,
+    };
 
     let options = eframe::NativeOptions {
+        vsync: false,
         renderer: eframe::Renderer::Wgpu,
+        viewport: ViewportBuilder::default()
+            .with_app_id("damascus")
+            .with_icon(
+                icon_data::from_png_bytes(&include_bytes!("../assets/icons/metal.png")[..])
+                    .unwrap(),
+            ),
         wgpu_options: egui_wgpu::WgpuConfiguration {
             wgpu_setup: egui_wgpu::WgpuSetup::CreateNew(egui_wgpu::WgpuSetupCreateNew {
                 device_descriptor: Arc::new(|adapter| {

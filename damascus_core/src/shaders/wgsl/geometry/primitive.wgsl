@@ -29,13 +29,8 @@ struct Primitive {
 }
 
 
-struct Primitives {
-    primitives: array<Primitive>,
-}
-
-
 @group(STORAGE_BIND_GROUP) @binding(PRIMITIVES_BINDING)
-var<storage, read> _primitives: Primitives;
+var<storage, read> _primitives: array<Primitive>;
 
 
 @group(STORAGE_BIND_GROUP) @binding(EMISSIVE_INDICES_BINDING)
@@ -55,7 +50,7 @@ fn is_child_of(child: ptr<function, Primitive>, prospective_parent_id: u32) -> b
         prospective_parent_id < (*child).id
         && (
             prospective_parent_id
-            + _primitives.primitives[prospective_parent_id - 1u].num_descendants
+            + _primitives[prospective_parent_id - 1u].num_descendants
         ) >= (*child).id
     );
 }

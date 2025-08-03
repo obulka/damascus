@@ -77,7 +77,7 @@ fn find_nearest_descendant(
                 searching_for_next_parent,
             );
             // Get the next parent and apply the current blended material
-            *family = _primitives.primitives[current_parent_index];
+            *family = _primitives[current_parent_index];
             (*family).id = child.id;
             (*family).material = child.material;
 
@@ -93,7 +93,7 @@ fn find_nearest_descendant(
 
         // Get and process the child, blending the material and distance
         // in the chosen manner
-        child = _primitives.primitives[child_index];
+        child = _primitives[child_index];
         var distance_to_child: f32 = distance_to_textured_primitive(position, &child);
 
         var child_is_bounding_volume: bool = bool(child.modifiers & BOUNDING_VOLUME);
@@ -168,7 +168,7 @@ fn find_nearest_primitive(
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
     while primitives_processed < _scene_parameters.num_primitives {
-        primitive = _primitives.primitives[primitives_processed];
+        primitive = _primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
         var signed_distance_field: f32 = find_nearest_descendant(
@@ -202,7 +202,7 @@ fn find_nearest_primitive(
     }
     // Ensure the number of descendants is that of the closest primitive
     var unmodified_closest_primitive: Primitive = (
-        _primitives.primitives[(*closest_primitive).id - 1u]
+        _primitives[(*closest_primitive).id - 1u]
     );
     (*closest_primitive).num_descendants = unmodified_closest_primitive.num_descendants;
     (*closest_primitive).dimensional_data = unmodified_closest_primitive.dimensional_data;
@@ -283,7 +283,7 @@ fn distance_to_descendants(
                 searching_for_next_parent,
             );
             // Get the next parent and apply the current blended material
-            *family = _primitives.primitives[current_parent_index];
+            *family = _primitives[current_parent_index];
 
             // Update the child index to point to the first child of the
             // new parent
@@ -297,7 +297,7 @@ fn distance_to_descendants(
 
         // Get and process the child, blending the material and distance
         // in the chosen manner
-        child = _primitives.primitives[child_index];
+        child = _primitives[child_index];
         var distance_to_child: f32 = distance_to_primitive(position, &child);
 
         var child_is_bounding_volume: bool = bool(child.modifiers & BOUNDING_VOLUME);
@@ -363,7 +363,7 @@ fn signed_distance_to_scene(
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
     while primitives_processed < _scene_parameters.num_primitives {
-        primitive = _primitives.primitives[primitives_processed];
+        primitive = _primitives[primitives_processed];
         var num_descendants: u32 = primitive.num_descendants;
 
         var signed_distance_field: f32 = distance_to_descendants(

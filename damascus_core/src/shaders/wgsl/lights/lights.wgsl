@@ -20,13 +20,8 @@ struct Light {
 }
 
 
-struct Lights {
-    lights: array<Light>,
-}
-
-
 @group(STORAGE_BIND_GROUP) @binding(LIGHTS_BINDING)
-var<storage, read> _lights: Lights;
+var<storage, read> _lights: array<Light>;
 
 
 /**
@@ -289,7 +284,7 @@ fn sample_non_physical_light(
     light_geometry_factor: ptr<function, f32>,
 ) -> vec3f {
     // Read the light properties
-    var light: Light = _lights.lights[light_index];
+    var light: Light = _lights[light_index];
 
     switch light.light_type {
 #ifdef EnableDirectionalLights
@@ -380,7 +375,7 @@ fn sample_physical_light(
     light_geometry_factor: ptr<function, f32>,
     light_sampling_pdf: ptr<function, f32>,
 ) -> vec3f {
-    var emissive_primitive: Primitive = _primitives.primitives[_emissive_indices[light_index]];
+    var emissive_primitive: Primitive = _primitives[_emissive_indices[light_index]];
     var light_position: vec3f = emissive_primitive.transform.translation;
     var radius: f32 = length(
         emissive_primitive.transform.uniform_scale * emissive_primitive.dimensional_data,

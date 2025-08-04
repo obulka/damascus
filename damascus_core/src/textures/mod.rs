@@ -168,3 +168,7 @@ pub fn texture_corner_vertices_2d() -> Vec<Std430GPUTextureVertex> {
         TextureVertex::new(-1., -1.).as_std430(),
     ]
 }
+
+pub fn texture_corner_indices_2d() -> Vec<u32> {
+    vec![0, 1, 2, 3]
+}

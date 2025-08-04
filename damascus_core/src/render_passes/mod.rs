@@ -3,15 +3,20 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{borrow::Cow, fmt::Debug, time::SystemTime};
+use std::{borrow::Cow, fmt::Debug, ops::Range, time::SystemTime};
 
 use glam::{Mat4, Vec3};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
-    camera::Camera, geometry::primitive::Primitive, lights::Light, materials::Material,
-    scene::Scene, shaders, textures::texture_corner_vertices_2d,
+    camera::Camera,
+    geometry::primitive::Primitive,
+    lights::Light,
+    materials::Material,
+    scene::Scene,
+    shaders,
+    textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
 };
 
 // mod grade;
@@ -288,12 +293,24 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
         self.reset_if_hash_changed()
     }
 
-    fn vertex_count(&self) -> u32 {
-        4
+    fn index_count(&self) -> Range<u32> {
+        0..4
     }
 
-    fn instance_count(&self) -> u32 {
-        1
+    fn index_buffer_data(&self) -> BufferDescriptor {
+        BufferDescriptor {
+            data: bytemuck::cast_slice(texture_corner_indices_2d().as_slice()).to_vec(),
+            usage: wgpu::BufferUsages::INDEX,
+            visibility: wgpu::ShaderStages::NONE,
+        }
+    }
+
+    fn base_vertex(&self) -> i32 {
+        0
+    }
+
+    fn instance_count(&self) -> Range<u32> {
+        0..1
     }
 
     fn vertex_buffer_data(&self) -> Vec<BufferDescriptor> {
@@ -390,6 +407,7 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     ) -> RenderResource {
         self.reset();
 
+        let index_buffer: Buffer = self.create_index_buffer(device);
         let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);
         let storage_buffers: Vec<Buffer> = self.create_storage_buffers(device);
@@ -434,9 +452,23 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
 
         RenderResource {
             render_pipeline: render_pipeline,
+            index_buffer: index_buffer,
             bind_groups: bind_groups,
-            vertex_count: self.vertex_count(),
+            index_count: self.index_count(),
+            base_vertex: self.base_vertex(),
             instance_count: self.instance_count(),
+        }
+    }
+
+    fn create_index_buffer(&self, device: &wgpu::Device) -> Buffer {
+        let buffer_descriptor: BufferDescriptor = self.index_buffer_data();
+        Buffer {
+            buffer: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some(&(self.label() + " index buffer")),
+                contents: buffer_descriptor.data.as_slice(),
+                usage: buffer_descriptor.usage,
+            }),
+            visibility: buffer_descriptor.visibility,
         }
     }
 

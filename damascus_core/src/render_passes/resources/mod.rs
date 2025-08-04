@@ -3,6 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::ops::Range;
+
 use image::Rgba32FImage;
 use wgpu;
 
@@ -175,9 +177,11 @@ pub struct BufferData {
 #[derive(Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
+    pub index_buffer: Buffer,
     pub bind_groups: BindGroups,
-    pub vertex_count: u32,
-    pub instance_count: u32,
+    pub index_count: Range<u32>,
+    pub base_vertex: i32,
+    pub instance_count: Range<u32>,
 }
 
 impl RenderResource {
@@ -203,10 +207,19 @@ impl RenderResource {
 
         self.bind_groups.set_bind_groups(render_pass);
 
+        render_pass.set_index_buffer(
+            self.index_buffer.buffer.slice(..),
+            wgpu::IndexFormat::Uint32,
+        );
+
         // Reference each value w/in these ranges in the vertex shader
         // w/ @builtin(vertex_index) & @builtin(instance_index)
         // respectively
-        render_pass.draw(0..self.vertex_count, 0..self.instance_count);
+        render_pass.draw_indexed(
+            self.index_count.clone(),
+            self.base_vertex,
+            self.instance_count.clone(),
+        );
     }
 }
 

@@ -287,7 +287,7 @@ pub fn evaluate_node(
         NodeTemplate::Axis => {
             let input_axis = evaluator.input_matrix4("axis")?;
             let translate = evaluator.input_vector3("translate")?;
-            let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.0;
+            let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.;
             let uniform_scale = evaluator.input_float("uniform_scale")?;
 
             let quaternion =

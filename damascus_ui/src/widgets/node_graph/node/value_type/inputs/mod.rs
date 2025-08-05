@@ -25,6 +25,7 @@ pub mod procedural_texture;
 pub mod render_passes;
 pub mod scene;
 pub mod unsigned_integer;
+pub mod unsigned_integer_vec2;
 pub mod unsigned_integer_vec3;
 pub mod vec2;
 pub mod vec3;

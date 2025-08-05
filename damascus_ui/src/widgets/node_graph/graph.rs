@@ -8,7 +8,7 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use egui_node_graph;
-use glam::{UVec2, Vec4Swizzles};
+use glam::Vec4Swizzles;
 use strum::IntoEnumIterator;
 
 use damascus_core::{
@@ -108,6 +108,10 @@ pub fn evaluate_node(
 
         fn input_uint(&mut self, name: &str) -> anyhow::Result<u32> {
             self.evaluate_input(name)?.try_to_uint()
+        }
+
+        fn input_uint_vector2(&mut self, name: &str) -> anyhow::Result<glam::UVec2> {
+            self.evaluate_input(name)?.try_to_uvec2()
         }
 
         fn input_uint_vector3(&mut self, name: &str) -> anyhow::Result<glam::UVec3> {
@@ -310,19 +314,20 @@ pub fn evaluate_node(
             let far_plane = evaluator.input_float("far_plane")?;
             let focal_distance = evaluator.input_float("focal_distance")?;
             let f_stop = evaluator.input_float("f_stop")?;
+            let sensor_resolution = evaluator.input_uint_vector2("sensor_resolution")?;
             let camera_to_world = evaluator.input_matrix4("world_matrix")?;
             let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
             let latlong = evaluator.input_bool("latlong")?;
             evaluator.output_camera(
                 "out",
                 camera::Camera::new(
-                    UVec2::ZERO, // TODO use the root resolution or add a resolution knob
                     focal_length,
                     horizontal_aperture,
                     near_plane,
                     far_plane,
                     focal_distance,
                     f_stop,
+                    sensor_resolution,
                     camera_to_world,
                     enable_depth_of_field,
                     latlong,

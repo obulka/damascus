@@ -24,13 +24,13 @@ pub struct GPUCamera {
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Camera {
-    pub sensor_resolution: UVec2,
     pub focal_length: f32,
     pub horizontal_aperture: f32,
     pub near_plane: f32,
     pub far_plane: f32,
     pub focal_distance: f32,
     pub f_stop: f32,
+    pub sensor_resolution: UVec2,
     pub camera_to_world: Mat4,
     pub enable_depth_of_field: bool,
     pub latlong: bool,
@@ -39,13 +39,13 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self::new(
-            UVec2::new(1920, 1080),
             50.,
             24.576,
             0.1,
             10000.,
             2.,
             16.,
+            UVec2::new(1920, 1080),
             Mat4::IDENTITY,
             false,
             false,
@@ -55,25 +55,25 @@ impl Default for Camera {
 
 impl Camera {
     pub fn new(
-        sensor_resolution: UVec2,
         focal_length: f32,
         horizontal_aperture: f32,
         near_plane: f32,
         far_plane: f32,
         focal_distance: f32,
         f_stop: f32,
+        sensor_resolution: UVec2,
         camera_to_world: Mat4,
         enable_depth_of_field: bool,
         latlong: bool,
     ) -> Self {
         Self {
-            sensor_resolution: sensor_resolution,
             focal_length: focal_length,
             horizontal_aperture: horizontal_aperture,
             near_plane: near_plane,
             far_plane: far_plane,
             focal_distance: focal_distance,
             f_stop: f_stop,
+            sensor_resolution: sensor_resolution,
             camera_to_world: camera_to_world,
             enable_depth_of_field: enable_depth_of_field,
             latlong: latlong,
@@ -116,11 +116,6 @@ impl Camera {
         )
     }
 
-    pub fn sensor_resolution(mut self, sensor_resolution: UVec2) -> Self {
-        self.sensor_resolution = sensor_resolution;
-        self
-    }
-
     pub fn focal_length(mut self, focal_length: f32) -> Self {
         self.focal_length = focal_length;
         self
@@ -148,6 +143,11 @@ impl Camera {
 
     pub fn f_stop(mut self, f_stop: f32) -> Self {
         self.f_stop = f_stop;
+        self
+    }
+
+    pub fn sensor_resolution(mut self, sensor_resolution: UVec2) -> Self {
+        self.sensor_resolution = sensor_resolution;
         self
     }
 

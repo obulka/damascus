@@ -26,7 +26,7 @@ pub use node_data::NodeData;
 use value_type::{
     BVec3, Bool, Camera, Collapsible, Colour, ComboBox, Filepath, Float, Lights, Mat4, Material,
     NodeValueType, Primitives, ProceduralTexture, RangedInput, RenderPasses, Scene, UIData,
-    UIInput, UVec3, UnsignedInteger, Vec3, Vec4,
+    UIInput, UVec2, UVec3, UnsignedInteger, Vec3, Vec4,
 };
 
 /// NodeTemplate is a mechanism to define node templates. It's what the graph
@@ -181,6 +181,16 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 name.to_string(),
                 NodeDataType::UnsignedInteger,
                 NodeValueType::UnsignedInteger { value: default },
+                egui_node_graph::InputParamKind::ConstantOnly,
+                true,
+            );
+        };
+        let input_uint_vector2 = |graph: &mut Graph, name: &str, default: UVec2| {
+            graph.add_input_param(
+                node_id,
+                name.to_string(),
+                NodeDataType::UVec2,
+                NodeValueType::UVec2 { value: default },
                 egui_node_graph::InputParamKind::ConstantOnly,
                 true,
             );
@@ -454,6 +464,17 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                                 .with_tooltip("The distance to the far plane of the camera."),
                         )
                         .with_range(11.0..=10000.),
+                );
+                input_uint_vector2(
+                    graph,
+                    "sensor_resolution",
+                    UVec2::new(default_camera.sensor_resolution)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The resolution of the camera sensor, used
+                                when generating a texture by rendering
+                                through this camera.",
+                        }))
+                        .with_range(1..=4096),
                 );
                 input_matrix4(
                     graph,

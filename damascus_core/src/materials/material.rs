@@ -107,27 +107,27 @@ impl DualDevice<GPUMaterial, Std430GPUMaterial> for Material {
     fn to_gpu(&self) -> GPUMaterial {
         GPUMaterial {
             diffuse_colour: self.diffuse_colour,
-            diffuse_colour_texture: self.diffuse_colour_texture.to_gpu(),
             specular_probability: self.specular_probability,
-            specular_probability_texture: self.specular_probability_texture.to_gpu(),
-            specular_roughness: self.specular_roughness,
-            specular_roughness_texture: self.specular_roughness_texture.to_gpu(),
             specular_colour: self.specular_colour,
-            specular_colour_texture: self.specular_colour_texture.to_gpu(),
+            specular_roughness: self.specular_roughness,
             transmissive_probability: self
                 .transmissive_probability
                 .min(1. - self.specular_probability),
-            transmissive_probability_texture: self.transmissive_probability_texture.to_gpu(),
-            transmissive_roughness: self.transmissive_roughness,
-            transmissive_roughness_texture: self.transmissive_roughness_texture.to_gpu(),
             extinction_colour: (1. - self.transmissive_colour.clamp(Vec3::ZERO, Vec3::ONE))
                 * self.extinction_coefficient,
-            extinction_colour_texture: self.transmissive_colour_texture.to_gpu(),
+            transmissive_roughness: self.transmissive_roughness,
             emissive_colour: self.scaled_emissive_colour(),
-            emissive_colour_texture: self.emissive_colour_texture.to_gpu(),
-            refractive_index: self.refractive_index,
-            refractive_index_texture: self.refractive_index_texture.to_gpu(),
             scattering_colour: self.scattering_colour * self.scattering_coefficient,
+            refractive_index: self.refractive_index,
+            diffuse_colour_texture: self.diffuse_colour_texture.to_gpu(),
+            specular_probability_texture: self.specular_probability_texture.to_gpu(),
+            specular_roughness_texture: self.specular_roughness_texture.to_gpu(),
+            specular_colour_texture: self.specular_colour_texture.to_gpu(),
+            transmissive_probability_texture: self.transmissive_probability_texture.to_gpu(),
+            transmissive_roughness_texture: self.transmissive_roughness_texture.to_gpu(),
+            extinction_colour_texture: self.transmissive_colour_texture.to_gpu(),
+            emissive_colour_texture: self.emissive_colour_texture.to_gpu(),
+            refractive_index_texture: self.refractive_index_texture.to_gpu(),
             scattering_colour_texture: self.scattering_colour_texture.to_gpu(),
         }
     }

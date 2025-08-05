@@ -94,12 +94,11 @@ impl DualDevice<GPUProceduralTexture, Std430GPUProceduralTexture> for Procedural
     fn to_gpu(&self) -> GPUProceduralTexture {
         let radian_hue_rotation: Vec3 = self.hue_rotation_angles * std::f32::consts::PI / 180.;
         GPUProceduralTexture {
+            flags: self.use_trap_colour as u32,
             texture_type: self.texture_type as u32,
-            scale: self.scale,
-            grade: self.grade.to_gpu(),
             octaves: self.octaves.max(1),
             lacunarity: self.lacunarity,
-            amplitude_gain: self.amplitude_gain,
+            scale: self.scale,
             low_frequency_scale: self.low_frequency_scale,
             high_frequency_scale: self.high_frequency_scale,
             low_frequency_translation: self.low_frequency_translation,
@@ -110,7 +109,8 @@ impl DualDevice<GPUProceduralTexture, Std430GPUProceduralTexture> for Procedural
                 radian_hue_rotation.y,
                 radian_hue_rotation.z,
             ),
-            flags: self.use_trap_colour as u32,
+            amplitude_gain: self.amplitude_gain,
+            grade: self.grade.to_gpu(),
         }
     }
 }

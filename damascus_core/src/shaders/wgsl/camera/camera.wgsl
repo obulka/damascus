@@ -10,6 +10,7 @@ const LATLONG: u32 = 2u;
 
 struct Camera {
     flags: u32,
+    sensor_resolution: vec2f,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: mat4x4f,

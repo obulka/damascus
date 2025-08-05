@@ -8,14 +8,14 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 use egui_node_graph;
-use glam::Vec4Swizzles;
+use glam::{UVec2, Vec4Swizzles};
 use strum::IntoEnumIterator;
 
 use damascus_core::{
     camera,
     geometry::{self, primitive},
     lights, materials,
-    render_passes::{self, ray_marcher, texture_viewer, RenderPass},
+    render_passes::{self, ray_marcher, texture, RenderPass},
     scene, textures,
 };
 
@@ -316,7 +316,7 @@ pub fn evaluate_node(
             evaluator.output_camera(
                 "out",
                 camera::Camera::new(
-                    1., // TODO use the root resolution or add a resolution knob
+                    UVec2::ZERO, // TODO use the root resolution or add a resolution knob
                     focal_length,
                     horizontal_aperture,
                     near_plane,
@@ -738,7 +738,7 @@ pub fn evaluate_node(
             evaluator.output_render_pass(
                 "out",
                 vec![render_passes::RenderPasses::TextureViewer {
-                    pass: texture_viewer::TextureViewer::default()
+                    pass: texture::view::TextureViewer::default()
                         .texture(textures::Texture {
                             layers: 1,
                             filepath: filepath,

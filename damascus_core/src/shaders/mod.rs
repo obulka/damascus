@@ -8,7 +8,7 @@ use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 use strum::{EnumCount, EnumString, IntoEnumIterator};
 
 pub mod ray_marcher;
-pub mod texture_viewer;
+pub mod texture;
 
 #[derive(Debug, EnumString)]
 pub enum Includes {
@@ -38,10 +38,10 @@ impl Includes {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
             Self::TextureViewerConstants => {
-                include_str!("./wgsl/pipelines/texture_viewer/constants.wgsl")
+                include_str!("./wgsl/pipelines/texture/view/constants.wgsl")
             }
             Self::TextureViewerRenderParameters => {
-                include_str!("./wgsl/pipelines/texture_viewer/render_parameters.wgsl")
+                include_str!("./wgsl/pipelines/texture/view/render_parameters.wgsl")
             }
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),

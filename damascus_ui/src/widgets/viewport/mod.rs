@@ -8,6 +8,7 @@ use eframe::{
     egui_wgpu::{self, wgpu},
     epaint,
 };
+use glam::UVec2;
 
 use damascus_core::{
     camera::Camera,
@@ -33,7 +34,7 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
         _device: &wgpu::Device,
         queue: &wgpu::Queue,
         _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        _encoder: &mut wgpu::CommandEncoder,
+        encoder: &mut wgpu::CommandEncoder,
         resources: &mut egui_wgpu::CallbackResources,
     ) -> Vec<wgpu::CommandBuffer> {
         let resources: &RenderResources = resources.get().unwrap();
@@ -42,7 +43,11 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
             render_resource.write_bind_groups(queue, data);
         }
 
-        Vec::new()
+        // if let Some(resource) = resources.resources.last() {
+        //     resource.paint(&mut encoder.begin_render_pass(&wgpu::RenderPassDescriptor::default()));
+        // }
+
+        vec![]
     }
 
     fn paint(
@@ -194,9 +199,11 @@ impl Viewport {
                 ) => {
                     // TODO these wont need to affect the hash once we are rendering
                     // to a fixed size texture
-                    new_pass.render_data.resolution = current_pass.render_data.resolution;
-                    new_pass.render_data.scene.render_camera.aspect_ratio =
-                        current_pass.render_data.scene.render_camera.aspect_ratio;
+                    new_pass.render_data.scene.render_camera.sensor_resolution = current_pass
+                        .render_data
+                        .scene
+                        .render_camera
+                        .sensor_resolution;
                     new_pass.update_hashes();
                     if current_pass.hashes() == new_pass.hashes() {
                         continue;
@@ -381,7 +388,7 @@ impl Viewport {
         camera_controls_disabled: bool,
         camera: &mut Camera,
     ) {
-        camera.aspect_ratio = rect.width() / rect.height();
+        camera.sensor_resolution = UVec2::new(rect.width() as u32, rect.height() as u32);
         if camera_controls_disabled {
             return;
         }
@@ -481,7 +488,7 @@ impl Viewport {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
                 RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.resolution = resolution;
+                    pass.render_data.scene.render_camera.sensor_resolution = resolution;
 
                     self.stats_text = format!(
                         "{:} paths per pixel @ {:.2} fps @ ",

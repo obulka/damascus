@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
-use glam::{Mat4, Vec4};
+use glam::{Mat4, UVec2, Vec2, Vec4};
 
 use crate::DualDevice;
 
@@ -12,6 +12,7 @@ use crate::DualDevice;
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
     flags: u32,
+    sensor_resolution: Vec2,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: Mat4,
@@ -23,7 +24,7 @@ pub struct GPUCamera {
 #[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Camera {
-    pub aspect_ratio: f32,
+    pub sensor_resolution: UVec2,
     pub focal_length: f32,
     pub horizontal_aperture: f32,
     pub near_plane: f32,
@@ -38,7 +39,7 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Self {
         Self::new(
-            1.,
+            UVec2::new(1920, 1080),
             50.,
             24.576,
             0.1,
@@ -54,7 +55,7 @@ impl Default for Camera {
 
 impl Camera {
     pub fn new(
-        aspect_ratio: f32,
+        sensor_resolution: UVec2,
         focal_length: f32,
         horizontal_aperture: f32,
         near_plane: f32,
@@ -66,7 +67,7 @@ impl Camera {
         latlong: bool,
     ) -> Self {
         Self {
-            aspect_ratio: aspect_ratio,
+            sensor_resolution: sensor_resolution,
             focal_length: focal_length,
             horizontal_aperture: horizontal_aperture,
             near_plane: near_plane,
@@ -94,7 +95,9 @@ impl Camera {
             ),
             Vec4::new(
                 0.,
-                2. * self.focal_length / self.horizontal_aperture * self.aspect_ratio,
+                2. * self.focal_length / self.horizontal_aperture
+                    * (self.sensor_resolution.x as f32)
+                    / (self.sensor_resolution.y as f32),
                 0.,
                 0.,
             ),
@@ -113,8 +116,8 @@ impl Camera {
         )
     }
 
-    pub fn aspect_ratio(mut self, aspect_ratio: f32) -> Self {
-        self.aspect_ratio = aspect_ratio;
+    pub fn sensor_resolution(mut self, sensor_resolution: UVec2) -> Self {
+        self.sensor_resolution = sensor_resolution;
         self
     }
 
@@ -168,13 +171,14 @@ impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
     fn to_gpu(&self) -> GPUCamera {
         let camera_to_screen: Mat4 = self.camera_to_screen();
         GPUCamera {
+            flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
+            sensor_resolution: self.sensor_resolution.as_vec2(),
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
             camera_to_world: self.camera_to_world,
             world_to_camera: self.camera_to_world.inverse(),
             screen_to_camera: camera_to_screen.inverse(),
             camera_to_screen: camera_to_screen,
-            flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
         }
     }
 }

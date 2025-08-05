@@ -23,8 +23,9 @@ pub use inputs::{
     boolean::Bool, boolean_vec3::BVec3, camera::Camera, combo_box::ComboBox, filepath::Filepath,
     float::Float, integer::Integer, lights::Lights, mat3::Mat3, mat4::Mat4, material::Material,
     primitives::Primitives, procedural_texture::ProceduralTexture, render_passes::RenderPasses,
-    scene::Scene, unsigned_integer::UnsignedInteger, unsigned_integer_vec3::UVec3, vec2::Vec2,
-    vec3::Vec3, vec4::Vec4, Collapsible, Colour, RangedInput, UIInput,
+    scene::Scene, unsigned_integer::UnsignedInteger, unsigned_integer_vec2::UVec2,
+    unsigned_integer_vec3::UVec3, vec2::Vec2, vec3::Vec3, vec4::Vec4, Collapsible, Colour,
+    RangedInput, UIInput,
 };
 mod ui_data;
 pub use ui_data::UIData;
@@ -44,6 +45,7 @@ pub enum NodeValueType {
     Filepath { value: Filepath },
     Integer { value: Integer },
     UnsignedInteger { value: UnsignedInteger },
+    UVec2 { value: UVec2 },
     UVec3 { value: UVec3 },
     Float { value: Float },
     Vec2 { value: Vec2 },
@@ -104,6 +106,15 @@ impl NodeValueType {
             Ok(value.deref())
         } else {
             anyhow::bail!("Invalid cast from {:?} to uint", self)
+        }
+    }
+
+    /// Tries to downcast this value type to a UVec3
+    pub fn try_to_uvec2(self) -> anyhow::Result<glam::UVec2> {
+        if let NodeValueType::UVec2 { value } = self {
+            Ok(value.deref())
+        } else {
+            anyhow::bail!("Invalid cast from {:?} to UVec2", self)
         }
     }
 
@@ -280,6 +291,7 @@ impl WidgetValueTrait for NodeValueType {
             NodeValueType::UnsignedInteger { value } => {
                 RangedInput::create_ui(value, ui, param_name)
             }
+            NodeValueType::UVec2 { value } => RangedInput::create_ui(value, ui, param_name),
             NodeValueType::UVec3 { value } => RangedInput::create_ui(value, ui, param_name),
             NodeValueType::Filepath { value } => value.create_ui(ui, param_name),
             NodeValueType::Float { value } => RangedInput::create_ui(value, ui, param_name),

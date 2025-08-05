@@ -135,91 +135,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "label": "camera",
-          "inputs": [
-            [
-              "focal_length",
-              {
-                "idx": 16,
-                "version": 1
-              }
-            ],
-            [
-              "focal_distance",
-              {
-                "idx": 17,
-                "version": 1
-              }
-            ],
-            [
-              "f_stop",
-              {
-                "idx": 18,
-                "version": 1
-              }
-            ],
-            [
-              "horizontal_aperture",
-              {
-                "idx": 19,
-                "version": 1
-              }
-            ],
-            [
-              "near_plane",
-              {
-                "idx": 20,
-                "version": 1
-              }
-            ],
-            [
-              "far_plane",
-              {
-                "idx": 21,
-                "version": 1
-              }
-            ],
-            [
-              "world_matrix",
-              {
-                "idx": 22,
-                "version": 1
-              }
-            ],
-            [
-              "enable_depth_of_field",
-              {
-                "idx": 23,
-                "version": 1
-              }
-            ],
-            [
-              "latlong",
-              {
-                "idx": 24,
-                "version": 1
-              }
-            ]
-          ],
-          "outputs": [
-            [
-              "out",
-              {
-                "idx": 2,
-                "version": 1
-              }
-            ]
-          ],
-          "user_data": {
-            "template": "Camera"
-          }
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -3611,6 +3528,108 @@
           }
         },
         "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 25,
+            "version": 3
+          },
+          "label": "camera",
+          "inputs": [
+            [
+              "focal_length",
+              {
+                "idx": 440,
+                "version": 3
+              }
+            ],
+            [
+              "focal_distance",
+              {
+                "idx": 439,
+                "version": 3
+              }
+            ],
+            [
+              "f_stop",
+              {
+                "idx": 438,
+                "version": 3
+              }
+            ],
+            [
+              "horizontal_aperture",
+              {
+                "idx": 437,
+                "version": 3
+              }
+            ],
+            [
+              "near_plane",
+              {
+                "idx": 436,
+                "version": 3
+              }
+            ],
+            [
+              "far_plane",
+              {
+                "idx": 435,
+                "version": 3
+              }
+            ],
+            [
+              "sensor_resolution",
+              {
+                "idx": 434,
+                "version": 3
+              }
+            ],
+            [
+              "world_matrix",
+              {
+                "idx": 449,
+                "version": 1
+              }
+            ],
+            [
+              "enable_depth_of_field",
+              {
+                "idx": 450,
+                "version": 1
+              }
+            ],
+            [
+              "latlong",
+              {
+                "idx": 451,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 25,
+                "version": 3
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Camera"
+          }
+        },
+        "version": 3
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "inputs": [
@@ -3630,14 +3649,17 @@
               "value": {
                 "value": {
                   "render_camera": {
-                    "aspect_ratio": 1.0,
                     "focal_length": 50.0,
                     "horizontal_aperture": 24.576,
                     "near_plane": 0.1,
                     "far_plane": 10000.0,
                     "focal_distance": 2.0,
                     "f_stop": 16.0,
-                    "world_matrix": [
+                    "sensor_resolution": [
+                      1920,
+                      1080
+                    ],
+                    "camera_to_world": [
                       1.0,
                       0.0,
                       0.0,
@@ -4287,7 +4309,7 @@
           "value": {
             "UnsignedInteger": {
               "value": {
-                "value": 100,
+                "value": 200,
                 "ui_data": {
                   "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
                   "hidden": false
@@ -4661,297 +4683,40 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 16,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 50.0,
-                "ui_data": {
-                  "tooltip": "The focal length of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 5.0,
-                  "end": 100.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 17,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 2.0,
-                "ui_data": {
-                  "tooltip": "The focal distance of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 18,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 16.0,
-                "ui_data": {
-                  "tooltip": "The f-stop of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 30.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 19,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 24.576,
-                "ui_data": {
-                  "tooltip": "The horizontal aperture of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 50.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 20,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 0.1,
-                "ui_data": {
-                  "tooltip": "The distance to the near plane of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 0.1,
-                  "end": 10.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 21,
-            "version": 1
-          },
-          "typ": "Float",
-          "value": {
-            "Float": {
-              "value": {
-                "value": 10000.0,
-                "ui_data": {
-                  "tooltip": "The distance to the far plane of the camera.",
-                  "hidden": false
-                },
-                "range": {
-                  "start": 11.0,
-                  "end": 10000.0
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 22,
-            "version": 1
-          },
-          "typ": "Mat4",
-          "value": {
-            "Mat4": {
-              "value": {
-                "value": [
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  0.0,
-                  1.0
-                ],
-                "ui_data": {
-                  "tooltip": "The world matrix/axis of the camera.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConnectionOrConstant",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 23,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "If enabled, this camera will render with depth of field.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
-        "value": {
-          "id": {
-            "idx": 24,
-            "version": 1
-          },
-          "typ": "Bool",
-          "value": {
-            "Bool": {
-              "value": {
-                "value": false,
-                "ui_data": {
-                  "tooltip": "Output a LatLong, 360 degree field of view image.",
-                  "hidden": false
-                }
-              }
-            }
-          },
-          "kind": "ConstantOnly",
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "shown_inline": true,
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -6662,6 +6427,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the negative x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -6694,6 +6464,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the positive x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -7009,14 +6784,17 @@
             "Camera": {
               "value": {
                 "value": {
-                  "aspect_ratio": 1.0,
                   "focal_length": 50.0,
                   "horizontal_aperture": 24.576,
                   "near_plane": 0.1,
                   "far_plane": 10000.0,
                   "focal_distance": 2.0,
                   "f_stop": 16.0,
-                  "world_matrix": [
+                  "sensor_resolution": [
+                    1920,
+                    1080
+                  ],
+                  "camera_to_world": [
                     1.0,
                     0.0,
                     0.0,
@@ -7755,7 +7533,7 @@
           "value": {
             "ComboBox": {
               "value": {
-                "selected": "AmbientOcclusion",
+                "selected": "Point",
                 "options": [
                   "Directional",
                   "Point",
@@ -7834,7 +7612,7 @@
                 ],
                 "ui_data": {
                   "tooltip": "The position of the point light.",
-                  "hidden": true
+                  "hidden": false
                 },
                 "collapsed": false,
                 "is_colour": false,
@@ -7868,7 +7646,7 @@
                 "value": 1,
                 "ui_data": {
                   "tooltip": "The number of iterations used to compute the occlusion.",
-                  "hidden": false
+                  "hidden": true
                 },
                 "range": {
                   "start": 1,
@@ -8107,7 +7885,7 @@
                 "value": [
                   0.0,
                   0.0,
-                  1.0
+                  2.0
                 ],
                 "ui_data": {
                   "tooltip": "The translation of this axis.",
@@ -8341,7 +8119,7 @@
             "Vec3": {
               "value": {
                 "value": [
-                  -23.0,
+                  320.0,
                   0.0,
                   0.0
                 ],
@@ -10128,6 +9906,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the negative x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -10160,6 +9943,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the positive x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -10713,7 +10501,7 @@
                 "value": [
                   0.0,
                   30.0,
-                  0.0
+                  -37.0
                 ],
                 "ui_data": {
                   "tooltip": "The rotation of this axis.",
@@ -11740,7 +11528,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.3,
+                "value": 1.0,
                 "ui_data": {
                   "tooltip": "The index of refraction of the material.",
                   "hidden": false
@@ -12298,6 +12086,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the positive x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -12330,6 +12123,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the negative x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -15056,7 +14854,7 @@
           "value": {
             "ComboBox": {
               "value": {
-                "selected": "Point",
+                "selected": "AmbientOcclusion",
                 "options": [
                   "Directional",
                   "Point",
@@ -16944,7 +16742,7 @@
                 ],
                 "ui_data": {
                   "tooltip": "The position of the point light.",
-                  "hidden": false
+                  "hidden": true
                 },
                 "collapsed": false,
                 "is_colour": false,
@@ -16978,7 +16776,7 @@
                 "value": 1,
                 "ui_data": {
                   "tooltip": "The number of iterations used to compute the occlusion.",
-                  "hidden": true
+                  "hidden": false
                 },
                 "range": {
                   "start": 1,
@@ -17007,7 +16805,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 1.6,
+                "value": 4.5,
                 "ui_data": {
                   "tooltip": "The intensity of the light.",
                   "hidden": false
@@ -18836,6 +18634,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the negative x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -18868,6 +18671,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the positive x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -19460,6 +19268,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the negative x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -19492,6 +19305,11 @@
                 "ui_data": {
                   "tooltip": "The number of repetitions along the positive x, y, and z axes.",
                   "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
                 }
               }
             }
@@ -22590,7 +22408,11 @@
                   "hidden": false
                 },
                 "collapsed": true,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -22881,7 +22703,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -22916,7 +22742,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -22951,7 +22781,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -22986,7 +22820,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23150,7 +22988,11 @@
                   "hidden": false
                 },
                 "collapsed": true,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23441,7 +23283,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23476,7 +23322,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23511,7 +23361,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23546,7 +23400,11 @@
                   "hidden": true
                 },
                 "collapsed": false,
-                "is_colour": false
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
               }
             }
           },
@@ -23653,6 +23511,367 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 434,
+            "version": 3
+          },
+          "typ": "UVec2",
+          "value": {
+            "UVec2": {
+              "value": {
+                "value": [
+                  1920,
+                  1080
+                ],
+                "ui_data": {
+                  "tooltip": "The resolution of the camera sensor, used\nwhen generating a texture by rendering\nthrough this camera.",
+                  "hidden": false
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 1,
+                  "end": 4096
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 435,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 10000.0,
+                "ui_data": {
+                  "tooltip": "The distance to the far plane of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 11.0,
+                  "end": 10000.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 436,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.1,
+                "ui_data": {
+                  "tooltip": "The distance to the near plane of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 437,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 24.576,
+                "ui_data": {
+                  "tooltip": "The horizontal aperture of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 50.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 438,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 16.0,
+                "ui_data": {
+                  "tooltip": "The f-stop of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 30.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 439,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 2.0,
+                "ui_data": {
+                  "tooltip": "The focal distance of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.1,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 440,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 50.0,
+                "ui_data": {
+                  "tooltip": "The focal length of the camera.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 5.0,
+                  "end": 100.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 449,
+            "version": 1
+          },
+          "typ": "Mat4",
+          "value": {
+            "Mat4": {
+              "value": {
+                "value": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The world matrix/axis of the camera.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOrConstant",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 450,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, this camera will render with depth of field.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 451,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Output a LatLong, 360 degree field of view image.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
       }
     ],
     "outputs": [
@@ -23676,19 +23895,8 @@
         "version": 1
       },
       {
-        "value": {
-          "id": {
-            "idx": 2,
-            "version": 1
-          },
-          "node": {
-            "idx": 2,
-            "version": 1
-          },
-          "typ": "Camera",
-          "_phantom": null
-        },
-        "version": 1
+        "value": null,
+        "version": 2
       },
       {
         "value": {
@@ -24019,6 +24227,29 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 25,
+            "version": 3
+          },
+          "node": {
+            "idx": 25,
+            "version": 3
+          },
+          "typ": "Camera",
+          "_phantom": null
+        },
+        "version": 3
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "connections": [
@@ -24114,11 +24345,8 @@
         "version": 0
       },
       {
-        "value": {
-          "idx": 7,
-          "version": 1
-        },
-        "version": 1
+        "value": null,
+        "version": 0
       },
       {
         "value": null,
@@ -24323,8 +24551,8 @@
       },
       {
         "value": {
-          "idx": 2,
-          "version": 1
+          "idx": 25,
+          "version": 3
         },
         "version": 1
       },
@@ -24347,8 +24575,11 @@
         "version": 1
       },
       {
-        "value": null,
-        "version": 0
+        "value": {
+          "idx": 3,
+          "version": 7
+        },
+        "version": 1
       },
       {
         "value": null,
@@ -25670,6 +25901,229 @@
           "version": 1
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": null,
+        "version": 0
+      },
+      {
+        "value": {
+          "idx": 7,
+          "version": 1
+        },
+        "version": 1
       }
     ]
   },
@@ -25679,16 +26133,12 @@
       "version": 1
     },
     {
-      "idx": 2,
+      "idx": 7,
       "version": 1
     },
     {
-      "idx": 4,
-      "version": 1
-    },
-    {
-      "idx": 3,
-      "version": 7
+      "idx": 8,
+      "version": 3
     },
     {
       "idx": 15,
@@ -25700,10 +26150,6 @@
     },
     {
       "idx": 10,
-      "version": 1
-    },
-    {
-      "idx": 9,
       "version": 1
     },
     {
@@ -25747,10 +26193,6 @@
       "version": 1
     },
     {
-      "idx": 12,
-      "version": 1
-    },
-    {
       "idx": 19,
       "version": 1
     },
@@ -25759,15 +26201,27 @@
       "version": 1
     },
     {
+      "idx": 9,
+      "version": 1
+    },
+    {
+      "idx": 12,
+      "version": 1
+    },
+    {
+      "idx": 3,
+      "version": 7
+    },
+    {
+      "idx": 4,
+      "version": 1
+    },
+    {
       "idx": 1,
       "version": 1
     },
     {
-      "idx": 7,
-      "version": 1
-    },
-    {
-      "idx": 8,
+      "idx": 25,
       "version": 3
     }
   ],
@@ -25781,180 +26235,192 @@
     },
     {
       "value": {
-        "x": -1517.847,
-        "y": 1642.6172
+        "x": 387.4292,
+        "y": 4205.587
       },
       "version": 1
     },
     {
-      "value": {
-        "x": -1951.2594,
-        "y": 1383.0225
-      },
-      "version": 1
+      "value": null,
+      "version": 0
     },
     {
       "value": {
-        "x": -2301.8218,
-        "y": 2062.5925
+        "x": -187.91528,
+        "y": 4500.5376
       },
       "version": 7
     },
     {
       "value": {
-        "x": -2363.4211,
-        "y": 1654.5546
+        "x": -203.46924,
+        "y": 4253.9316
       },
       "version": 1
     },
     {
       "value": {
-        "x": -1664.7985,
-        "y": 1755.5768
+        "x": 280.99756,
+        "y": 4274.501
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2059.4343,
-        "y": 1908.3878
+        "x": 2.0698242,
+        "y": 4382.502
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2224.6587,
-        "y": 1458.2518
+        "x": -56.33911,
+        "y": 4142.433
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2486.6133,
-        "y": 1388.4613
+        "x": -206.25464,
+        "y": 4109.0957
       },
       "version": 3
     },
     {
       "value": {
-        "x": -2884.5771,
-        "y": 1652.5034
+        "x": -571.2534,
+        "y": 4212.792
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3324.1816,
-        "y": 1817.4717
+        "x": -891.8364,
+        "y": 4318.25
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2587.3408,
-        "y": 2004.5295
+        "x": -371.04785,
+        "y": 4450.4556
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4365.584,
-        "y": 1328.2034
+        "x": -594.0122,
+        "y": 3880.2698
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3101.6287,
-        "y": 1826.9932
+        "x": -734.53076,
+        "y": 4324.9785
       },
       "version": 7
     },
     {
       "value": {
-        "x": -3372.0752,
-        "y": 1613.0397
+        "x": -925.68945,
+        "y": 4173.753
       },
       "version": 7
     },
     {
       "value": {
-        "x": -2615.1108,
-        "y": 1651.8986
+        "x": -390.67188,
+        "y": 4201.2227
       },
       "version": 5
     },
     {
       "value": {
-        "x": -3760.7817,
-        "y": 1239.1901
+        "x": -1200.4059,
+        "y": 3909.531
       },
       "version": 5
     },
     {
       "value": {
-        "x": -3445.226,
-        "y": 784.2652
+        "x": -977.38586,
+        "y": 3587.9985
       },
       "version": 5
     },
     {
       "value": {
-        "x": -3150.427,
-        "y": 1434.3456
+        "x": -769.02246,
+        "y": 4047.4602
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3741.249,
-        "y": 645.2416
+        "x": -1186.6127,
+        "y": 3489.7358
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3681.647,
-        "y": 1074.8694
+        "x": -1144.4836,
+        "y": 3793.3933
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3903.519,
-        "y": 1060.2391
+        "x": -1301.287,
+        "y": 3783.0513
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2030.5061,
-        "y": 2274.878
+        "x": 22.51294,
+        "y": 4641.5444
       },
       "version": 3
     },
     {
       "value": {
-        "x": -2242.9302,
-        "y": 2500.1716
+        "x": -127.62451,
+        "y": 4800.7695
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3966.1475,
-        "y": 1246.8706
+        "x": -1345.5588,
+        "y": 3914.9592
       },
       "version": 1
+    },
+    {
+      "value": {
+        "x": 94.86572,
+        "y": 4080.1238
+      },
+      "version": 3
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
     }
   ],
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 3344.4417,
-      "y": -1248.4106
+      "x": 1322.5703,
+      "y": -3474.8843
     },
-    "zoom": 0.7178129,
+    "zoom": 0.5073406,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

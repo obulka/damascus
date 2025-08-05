@@ -131,12 +131,6 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
         GPUPrimitive {
             id: 0,
             shape: self.shape as u32,
-            transform: Transform {
-                translation: translation,
-                inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),
-                uniform_scale: scale.x,
-            },
-            material: self.material.to_gpu(),
             modifiers: self.repetition as u32
                 | (self.elongate as u32) << 2
                 | (self.mirror.x as u32) << 3
@@ -149,15 +143,21 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
                     0
                 }
                 | (self.bounding_volume as u32) << 9,
-            negative_repetitions: self.negative_repetitions.as_vec3(),
-            positive_repetitions: self.positive_repetitions.as_vec3(),
-            spacing: self.spacing,
-            blend_strength: self.blend_strength,
-            wall_thickness: self.wall_thickness,
-            edge_radius: self.edge_radius,
-            elongation: self.elongation,
             num_descendants: self.num_descendants,
+            negative_repetitions: self.negative_repetitions.as_vec3(),
+            blend_strength: self.blend_strength,
+            positive_repetitions: self.positive_repetitions.as_vec3(),
+            wall_thickness: self.wall_thickness,
+            spacing: self.spacing,
+            edge_radius: self.edge_radius,
             dimensional_data: self.dimensional_data,
+            elongation: self.elongation,
+            transform: Transform {
+                translation: translation,
+                inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),
+                uniform_scale: scale.x,
+            },
+            material: self.material.to_gpu(),
         }
     }
 }

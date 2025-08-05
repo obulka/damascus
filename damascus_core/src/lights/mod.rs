@@ -64,12 +64,12 @@ impl DualDevice<GPULight, Std430GPULight> for Light {
     fn to_gpu(&self) -> GPULight {
         GPULight {
             light_type: self.light_type as u32,
+            falloff: self.falloff,
+            soften_shadows: self.soften_shadows as u32,
             dimensional_data: self.dimensional_data,
             intensity: self.intensity,
-            falloff: self.falloff,
             colour: self.colour,
             shadow_hardness: self.shadow_hardness,
-            soften_shadows: self.soften_shadows as u32,
         }
     }
 }

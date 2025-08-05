@@ -26,12 +26,12 @@ impl BindingResource for Buffer {
 
 #[derive(Clone)]
 pub struct TextureView {
+    // Can get rid of texture field in wgpu v26
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
     pub texture_data: Rgba32FImage,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
-    pub size: wgpu::Extent3d,
 }
 
 impl BindingResource for TextureView {
@@ -93,7 +93,7 @@ impl TextureViewBindGroup {
                     bytes_per_row: Some(16 * texture_view.texture_data.width()),
                     rows_per_image: Some(texture_view.texture_data.height()),
                 },
-                texture_view.size,
+                texture_view.texture.size(),
             );
         }
     }
@@ -212,9 +212,6 @@ impl RenderResource {
             wgpu::IndexFormat::Uint32,
         );
 
-        // Reference each value w/in these ranges in the vertex shader
-        // w/ @builtin(vertex_index) & @builtin(instance_index)
-        // respectively
         render_pass.draw_indexed(
             self.index_count.clone(),
             self.base_vertex,

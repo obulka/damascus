@@ -102,7 +102,7 @@ impl DualDevice<GPUGrade, Std430GPUGrade> for Grade {
             white_point: self.white_point,
             lift: self.lift,
             gain: self.gain,
-            gamma: 1.0 / self.gamma,
+            gamma: 1. / self.gamma,
             flags: self.invert as u32,
         }
     }

@@ -5,12 +5,12 @@
 
 use strum::{EnumCount, EnumIter, EnumString};
 
-use super::PreprocessorDirectives;
+use crate::shaders::PreprocessorDirectives;
 
 pub const TEXTURE_VIEWER_VERTEX_SHADER: &str =
-    include_str!("./wgsl/pipelines/texture_viewer/vertex_shader.wgsl");
+    include_str!("../wgsl/pipelines/texture/view/vertex_shader.wgsl");
 pub const TEXTURE_VIEWER_FRAGMENT_SHADER: &str =
-    include_str!("./wgsl/pipelines/texture_viewer/fragment_shader.wgsl");
+    include_str!("../wgsl/pipelines/texture/view/fragment_shader.wgsl");
 
 #[derive(
     Debug,

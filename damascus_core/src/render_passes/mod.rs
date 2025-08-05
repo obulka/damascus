@@ -19,10 +19,9 @@ use crate::{
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
 };
 
-// mod grade;
 pub mod ray_marcher;
 pub mod resources;
-pub mod texture_viewer;
+pub mod texture;
 
 use ray_marcher::RayMarcher;
 use resources::{
@@ -30,7 +29,7 @@ use resources::{
     RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
     TextureViewBindGroup,
 };
-use texture_viewer::TextureViewer;
+use texture::view::TextureViewer;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[serde(default)]

@@ -278,7 +278,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     // Use the UV coordinates and resolution to get texture coordinates
     var current_pixel_indices: vec2f = uv_to_pixels(
         in.uv_coordinate.xy,
-        _render_parameters.resolution,
+        _render_camera.sensor_resolution,
     );
     var texture_coordinates = vec2u(current_pixel_indices);
 
@@ -311,7 +311,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var uv_coordinates: vec2f = pixels_to_uv(
         // Add a random offset to the uv_coordinates for anti-aliasing 
         current_pixel_indices + random_vec2f(seed.xy),
-        _render_parameters.resolution,
+        _render_camera.sensor_resolution,
     );
 
     // Create and march a ray

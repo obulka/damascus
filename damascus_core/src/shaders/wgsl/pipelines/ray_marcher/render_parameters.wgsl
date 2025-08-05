@@ -26,7 +26,6 @@ struct RenderParameters {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
-    resolution: vec2f,
     flags: u32,
 }
 

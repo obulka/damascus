@@ -6,7 +6,7 @@
 use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
-use glam::{UVec2, Vec2, Vec3};
+use glam::Vec3;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu;
 
@@ -79,7 +79,6 @@ pub struct GPURayMarcherRenderData {
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
     output_aov: u32,
-    resolution: Vec2,
     flags: u32,
 }
 
@@ -101,7 +100,6 @@ pub struct RayMarcherRenderData {
     pub light_sampling_bias: f32,
     pub secondary_sampling: bool,
     pub output_aov: AOVs,
-    pub resolution: UVec2,
 }
 
 impl Default for RayMarcherRenderData {
@@ -122,7 +120,6 @@ impl Default for RayMarcherRenderData {
             light_sampling_bias: 0.,
             secondary_sampling: false,
             output_aov: AOVs::default(),
-            resolution: UVec2::ZERO,
         }
     }
 }
@@ -161,7 +158,6 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
             max_light_sampling_bounces: self.max_light_sampling_bounces,
             light_sampling_bias: self.light_sampling_bias * self.light_sampling_bias,
             output_aov: self.output_aov as u32,
-            resolution: self.resolution.as_vec2(),
             flags: self.dynamic_level_of_detail as u32
                 | (self.sample_atmosphere as u32) << 1
                 | (self.secondary_sampling as u32) << 2,
@@ -505,11 +501,6 @@ impl RayMarcher {
 
     pub fn output_aov(mut self, output_aov: AOVs) -> Self {
         self.render_data.output_aov = output_aov;
-        self
-    }
-
-    pub fn resolution(mut self, resolution: UVec2) -> Self {
-        self.render_data.resolution = resolution;
         self
     }
 }

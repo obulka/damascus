@@ -3,6 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
@@ -67,6 +72,7 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
 pub struct Viewport {
     pub render_passes: Vec<RenderPasses>,
     pub stats_text: String,
+    single_window: bool,
     disabled: bool,
     camera_controls_enabled: bool,
 }
@@ -76,6 +82,7 @@ impl Default for Viewport {
         Self {
             render_passes: vec![],
             stats_text: String::new(),
+            single_window: true,
             disabled: true,
             camera_controls_enabled: true,
         }
@@ -496,7 +503,9 @@ impl Viewport {
                         pass.frame_counter().fps,
                     ) + &self.stats_text;
 
-                    ui.ctx().request_repaint();
+                    if !self.paused() {
+                        ui.ctx().request_repaint();
+                    }
                 }
                 RenderPasses::TextureViewer { pass } => {
                     pass.render_data.resolution = resolution;
@@ -740,38 +749,74 @@ impl Viewport {
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         let mut reconstruct_render_resources = false;
-        egui::Window::new("viewer")
-            .default_width(720.)
-            .default_height(405.)
-            .max_width(
-                (screen_size.x * 0.9)
-                    .round()
-                    .min(MAX_TEXTURE_DIMENSION as f32),
-            )
-            .max_height(
-                (screen_size.y * 0.9)
-                    .round()
-                    .min(MAX_TEXTURE_DIMENSION as f32),
-            )
-            .resizable(true)
-            .movable(true)
-            .constrain(true)
-            .show(ctx, |ui| {
-                Self::set_button_backgrounds_transparent(ui);
+        if self.single_window {
+            let mut single_window = self.single_window;
+            egui::Window::new("viewer")
+                .open(&mut single_window)
+                .default_width(720.)
+                .default_height(405.)
+                .max_width(
+                    (screen_size.x * 0.9)
+                        .round()
+                        .min(MAX_TEXTURE_DIMENSION as f32),
+                )
+                .max_height(
+                    (screen_size.y * 0.9)
+                        .round()
+                        .min(MAX_TEXTURE_DIMENSION as f32),
+                )
+                .resizable(true)
+                .movable(true)
+                .constrain(true)
+                .show(ctx, |ui| {
+                    Self::set_button_backgrounds_transparent(ui);
 
-                reconstruct_render_resources |= self.show_top_bar(ui);
-                let paint_callback = self.show_frame(render_state, ui);
-                reconstruct_render_resources |= self.show_bottom_bar(ui);
+                    reconstruct_render_resources |= self.show_top_bar(ui);
+                    let paint_callback = self.show_frame(render_state, ui);
+                    reconstruct_render_resources |= self.show_bottom_bar(ui);
 
-                if !reconstruct_render_resources {
-                    if let Some(callback) = paint_callback {
-                        ui.painter().add(callback);
+                    if !reconstruct_render_resources {
+                        if let Some(callback) = paint_callback {
+                            ui.painter().add(callback);
+                        }
                     }
-                }
-            });
+                });
+            self.single_window = single_window;
+            if reconstruct_render_resources {
+                self.reconstruct_render_resources(render_state);
+            }
+        } else {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("damscus viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("damscus viewport")
+                    .with_inner_size([720., 405.])
+                    .with_resizable(true),
+                move |ctx, class| {
+                    if ctx.input(|i| i.viewport().close_requested())
+                        || class != egui::ViewportClass::Immediate
+                    {
+                        self.single_window = true;
+                    } else {
+                        egui::CentralPanel::default().show(ctx, |ui| {
+                            Self::set_button_backgrounds_transparent(ui);
 
-        if reconstruct_render_resources {
-            self.reconstruct_render_resources(render_state);
+                            reconstruct_render_resources |= self.show_top_bar(ui);
+                            let paint_callback = self.show_frame(render_state, ui);
+                            reconstruct_render_resources |= self.show_bottom_bar(ui);
+
+                            if !reconstruct_render_resources {
+                                if let Some(callback) = paint_callback {
+                                    ui.painter().add(callback);
+                                }
+                            }
+                        });
+                        if reconstruct_render_resources {
+                            self.reconstruct_render_resources(render_state);
+                        }
+                    }
+                },
+            );
         }
     }
 }

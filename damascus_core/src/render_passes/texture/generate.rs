@@ -28,7 +28,7 @@ pub trait TextureGenerationPass<Directives: shaders::PreprocessorDirectives>:
         "texture generation".to_owned()
     }
 
-    fn descriptors(&self) -> Vec<wgpu::TextureDescriptor>;
+    fn descriptors(&self) -> Vec<wgpu::TextureDescriptor<'_>>;
 
     // fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
     //     self.descriptors()

@@ -134,6 +134,8 @@ impl eframe::App for Damascus {
         Duration::from_secs(15)
     }
 
+    // fn raw_input_hook(&mut self, _ctx: &Context, _raw_input: &mut RawInput) {}
+
     /// Called each time the UI needs repainting, which may be many times per second.
     /// Put your widgets into a `SidePanel`, `TopPanel`, `CentralPanel`, `Window` or `Area`.
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {

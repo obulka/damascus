@@ -3,10 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
+use std::sync::{Arc, Mutex};
 
 use eframe::{
     egui,
@@ -69,27 +66,40 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct Viewport {
-    pub render_passes: Vec<RenderPasses>,
-    pub stats_text: String,
-    single_window: bool,
+pub struct ViewportState {
+    render_passes: Vec<RenderPasses>,
+    stats_text: String,
+    embedded_window: bool,
     disabled: bool,
     camera_controls_enabled: bool,
 }
 
-impl Default for Viewport {
+impl Default for ViewportState {
     fn default() -> Self {
         Self {
             render_passes: vec![],
             stats_text: String::new(),
-            single_window: true,
+            embedded_window: true,
             disabled: true,
             camera_controls_enabled: true,
         }
     }
 }
 
-impl Viewport {
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct Viewport {
+    state: Arc<Mutex<ViewportState>>,
+}
+
+impl Default for Viewport {
+    fn default() -> Self {
+        Self {
+            state: Arc::new(Mutex::new(ViewportState::default())),
+        }
+    }
+}
+
+impl ViewportState {
     pub const ICON_SIZE: f32 = 25.;
 
     pub fn new(render_state: &egui_wgpu::RenderState) -> Self {
@@ -738,7 +748,9 @@ impl Viewport {
         ui.add(egui::Label::new(&self.stats_text).truncate());
         false
     }
+}
 
+impl Viewport {
     fn set_button_backgrounds_transparent(ui: &mut egui::Ui) {
         let style: &mut egui::Style = ui.style_mut();
         style.visuals.widgets.inactive.weak_bg_fill = egui::Color32::TRANSPARENT;
@@ -746,73 +758,283 @@ impl Viewport {
         style.visuals.widgets.active.weak_bg_fill = egui::Color32::TRANSPARENT;
     }
 
+    pub fn new(render_state: &egui_wgpu::RenderState) -> Self {
+        Self {
+            state: Arc::new(Mutex::new(ViewportState::new(render_state))),
+        }
+    }
+
+    // pub fn render_passes(&self) -> &Vec<RenderPasses> {}
+
+    // pub fn render_passes_mut(&mut self) -> &mut Vec<RenderPasses> {}
+
+    pub fn disable(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).disable();
+        }
+    }
+
+    pub fn enable(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).enable();
+        }
+    }
+
+    // pub fn disabled(&mut self) -> bool {}
+
+    pub fn pause(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).pause();
+        }
+    }
+
+    pub fn play(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).play();
+        }
+    }
+
+    // pub fn paused(&self) -> bool {}
+
+    pub fn disable_camera_controls(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).disable_camera_controls();
+        }
+    }
+
+    pub fn enable_camera_controls(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).enable_camera_controls();
+        }
+    }
+
+    // pub fn enabled(&mut self) -> bool {}
+
+    pub fn toggle_play_pause(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).toggle_play_pause();
+        }
+    }
+
+    pub fn enable_and_play(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).enable_and_play();
+        }
+    }
+
+    pub fn reset(&mut self) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).reset();
+        }
+    }
+
+    pub fn update_render_passes(
+        &mut self,
+        new_render_passes: Vec<RenderPasses>,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).update_render_passes(new_render_passes, render_state);
+        }
+    }
+
+    pub fn set_final_pass(&mut self, render_pass: RenderPasses) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).set_final_pass(render_pass);
+        }
+    }
+
+    pub fn view_camera(&mut self, camera: Camera, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_camera(camera, render_state);
+        }
+    }
+
+    pub fn view_lights(&mut self, lights: Vec<Light>, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_lights(lights, render_state);
+        }
+    }
+
+    pub fn view_atmosphere(&mut self, atmosphere: Material, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_atmosphere(atmosphere, render_state);
+        }
+    }
+
+    pub fn view_procedural_texture(
+        &mut self,
+        texture: ProceduralTexture,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_procedural_texture(texture, render_state);
+        }
+    }
+
+    pub fn view_primitives(
+        &mut self,
+        primitives: Vec<Primitive>,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_primitives(primitives, render_state);
+        }
+    }
+
+    pub fn view_scene(&mut self, scene: Scene, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).view_scene(scene, render_state);
+        }
+    }
+
+    pub fn recompile_if_preprocessor_directives_changed(
+        &mut self,
+        render_state: &egui_wgpu::RenderState,
+    ) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).recompile_if_preprocessor_directives_changed(render_state);
+        }
+    }
+
+    pub fn recompile_shaders(&mut self, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).recompile_shaders(render_state);
+        }
+    }
+
+    pub fn reconstruct_render_resources(&mut self, render_state: &egui_wgpu::RenderState) {
+        let state_mutex = Arc::clone(&self.state);
+        let mut lock = state_mutex.lock();
+        if let Ok(ref mut mutex) = lock {
+            (**mutex).reconstruct_render_resources(render_state);
+        }
+    }
+
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
-        let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
-        let mut reconstruct_render_resources = false;
-        if self.single_window {
-            let mut single_window = self.single_window;
-            egui::Window::new("viewer")
-                .open(&mut single_window)
-                .default_width(720.)
-                .default_height(405.)
-                .max_width(
-                    (screen_size.x * 0.9)
-                        .round()
-                        .min(MAX_TEXTURE_DIMENSION as f32),
-                )
-                .max_height(
-                    (screen_size.y * 0.9)
-                        .round()
-                        .min(MAX_TEXTURE_DIMENSION as f32),
-                )
-                .resizable(true)
-                .movable(true)
-                .constrain(true)
-                .show(ctx, |ui| {
-                    Self::set_button_backgrounds_transparent(ui);
+        let state_mutex = Arc::clone(&self.state);
 
-                    reconstruct_render_resources |= self.show_top_bar(ui);
-                    let paint_callback = self.show_frame(render_state, ui);
-                    reconstruct_render_resources |= self.show_bottom_bar(ui);
+        let mut embedded_window = true;
+        {
+            let mut state_lock = state_mutex.lock();
+            if let Ok(ref mut mutex) = state_lock {
+                embedded_window = (**mutex).embedded_window;
+            }
+        }
 
-                    if !reconstruct_render_resources {
-                        if let Some(callback) = paint_callback {
-                            ui.painter().add(callback);
+        if embedded_window {
+            let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
+
+            let mut state_lock = state_mutex.lock();
+            if let Ok(ref mut mutex) = state_lock {
+                let mut reconstruct_render_resources = false;
+                egui::Window::new("viewer")
+                    .open(&mut embedded_window)
+                    .default_width(720.)
+                    .default_height(405.)
+                    .max_width(
+                        (screen_size.x * 0.9)
+                            .round()
+                            .min(MAX_TEXTURE_DIMENSION as f32),
+                    )
+                    .max_height(
+                        (screen_size.y * 0.9)
+                            .round()
+                            .min(MAX_TEXTURE_DIMENSION as f32),
+                    )
+                    .resizable(true)
+                    .movable(true)
+                    .constrain(true)
+                    .show(ctx, |ui| {
+                        Self::set_button_backgrounds_transparent(ui);
+
+                        reconstruct_render_resources |= (**mutex).show_top_bar(ui);
+                        let paint_callback = (**mutex).show_frame(render_state, ui);
+                        reconstruct_render_resources |= (**mutex).show_bottom_bar(ui);
+
+                        if !reconstruct_render_resources {
+                            if let Some(callback) = paint_callback {
+                                ui.painter().add(callback);
+                            }
                         }
-                    }
-                });
-            self.single_window = single_window;
-            if reconstruct_render_resources {
-                self.reconstruct_render_resources(render_state);
+                    });
+
+                (**mutex).embedded_window = embedded_window;
+                if reconstruct_render_resources {
+                    (**mutex).reconstruct_render_resources(render_state);
+                }
             }
         } else {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("damscus viewport"),
+            let render_state_clone: egui_wgpu::RenderState = render_state.clone();
+            ctx.show_viewport_deferred(
+                egui::ViewportId::from_hash_of("damascus viewer"),
                 egui::ViewportBuilder::default()
-                    .with_title("damscus viewport")
+                    .with_title("damascus viewer")
                     .with_inner_size([720., 405.])
                     .with_resizable(true),
                 move |ctx, class| {
-                    if ctx.input(|i| i.viewport().close_requested())
-                        || class != egui::ViewportClass::Immediate
-                    {
-                        self.single_window = true;
-                    } else {
-                        egui::CentralPanel::default().show(ctx, |ui| {
-                            Self::set_button_backgrounds_transparent(ui);
+                    let mut lock = state_mutex.lock();
+                    if let Ok(ref mut mutex) = lock {
+                        if ctx.input(|input| input.viewport().close_requested())
+                            || class != egui::ViewportClass::Deferred
+                        {
+                            (**mutex).embedded_window = true;
+                        } else {
+                            let mut reconstruct_render_resources = false;
+                            egui::CentralPanel::default().show(ctx, |ui| {
+                                Self::set_button_backgrounds_transparent(ui);
 
-                            reconstruct_render_resources |= self.show_top_bar(ui);
-                            let paint_callback = self.show_frame(render_state, ui);
-                            reconstruct_render_resources |= self.show_bottom_bar(ui);
+                                reconstruct_render_resources |= (**mutex).show_top_bar(ui);
+                                let paint_callback = (**mutex).show_frame(&render_state_clone, ui);
+                                reconstruct_render_resources |= (**mutex).show_bottom_bar(ui);
 
-                            if !reconstruct_render_resources {
-                                if let Some(callback) = paint_callback {
-                                    ui.painter().add(callback);
+                                if !reconstruct_render_resources {
+                                    if let Some(callback) = paint_callback {
+                                        ui.painter().add(callback);
+                                    }
                                 }
+                            });
+                            if reconstruct_render_resources {
+                                (**mutex).reconstruct_render_resources(&render_state_clone);
                             }
-                        });
-                        if reconstruct_render_resources {
-                            self.reconstruct_render_resources(render_state);
                         }
                     }
                 },

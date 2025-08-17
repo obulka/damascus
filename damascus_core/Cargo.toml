@@ -6,12 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bytemuck = "1.13"
+bytemuck = "1.23"
 crevice = { version = "0.18.0", features = ["glam"] }
 glam = { version = "0.30", features = ["serde"] }
 image = { version = "0.25" }
 rand = "0.9"
-serde = "1.0"
+serde = "1"
 serde-hashkey = { version = "0.4.5", features = ["ordered-float"] }
 strum = { version = "0.27", features = ["derive"] }
-wgpu = { version = "24.0", default-features = false }
+wgpu = { version = "25.0", default-features = false }

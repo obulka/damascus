@@ -47,6 +47,7 @@ fn main() {
                             ..base_limits
                         },
                         memory_hints: wgpu::MemoryHints::Performance,
+                        ..Default::default()
                     }
                 }),
                 power_preference: wgpu::PowerPreference::HighPerformance,

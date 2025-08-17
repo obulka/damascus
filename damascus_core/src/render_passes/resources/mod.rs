@@ -12,7 +12,7 @@ pub trait BindingResource {
     fn as_resource(&self) -> wgpu::BindingResource<'_>;
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
     pub visibility: wgpu::ShaderStages,
@@ -24,9 +24,10 @@ impl BindingResource for Buffer {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TextureView {
-    // Can get rid of texture field in wgpu v26
+    // TODO Can get rid of texture field in wgpu v26
+    // as it provides self.texture_view.texture()
     pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
     pub texture_data: Rgba32FImage,
@@ -40,7 +41,7 @@ impl BindingResource for TextureView {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct StorageTextureView {
     pub texture_view: wgpu::TextureView,
     pub visibility: wgpu::ShaderStages,
@@ -55,7 +56,7 @@ impl BindingResource for StorageTextureView {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BufferBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -70,7 +71,7 @@ impl BufferBindGroup {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct TextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -99,14 +100,14 @@ impl TextureViewBindGroup {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct StorageTextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub storage_texture_views: Vec<StorageTextureView>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BindGroups {
     pub vertex_bind_group: BufferBindGroup,
     pub uniform_bind_group: Option<BufferBindGroup>,
@@ -116,6 +117,24 @@ pub struct BindGroups {
 }
 
 impl BindGroups {
+    pub fn num_bind_groups(&self) -> u32 {
+        let mut bind_group_count: u32 = 1;
+
+        if let Some(uniform_bind_group) = &self.uniform_bind_group {
+            bind_group_count += 1;
+        }
+        if let Some(storage_bind_group) = &self.storage_bind_group {
+            bind_group_count += 1;
+        }
+        if let Some(texture_bind_group) = &self.texture_bind_group {
+            bind_group_count += 1;
+        }
+        if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
+            bind_group_count += 1;
+        }
+        bind_group_count
+    }
+
     pub fn bind_group_layouts(&self) -> Vec<&wgpu::BindGroupLayout> {
         let mut bind_group_layouts: Vec<&wgpu::BindGroupLayout> = vec![];
 
@@ -160,21 +179,21 @@ impl BindGroups {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BufferDescriptor {
     pub data: Vec<u8>,
     pub usage: wgpu::BufferUsages,
     pub visibility: wgpu::ShaderStages,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct BufferData {
     pub vertex: Vec<BufferDescriptor>,
     pub uniform: Vec<BufferDescriptor>,
     pub storage: Vec<BufferDescriptor>,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
     pub index_buffer: Buffer,
@@ -220,7 +239,7 @@ impl RenderResource {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RenderResources {
     pub resources: Vec<RenderResource>,
 }

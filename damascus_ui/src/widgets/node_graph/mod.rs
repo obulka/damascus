@@ -3,20 +3,109 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use eframe::egui;
-use egui_node_graph::{GraphResponse, NodeResponse};
+use std::collections::HashMap;
+
+use eframe::{
+    egui,
+    egui_wgpu::{self, wgpu},
+    epaint,
+};
+use egui_node_graph::{GraphResponse, Node, NodeId, NodeResponse, OutputId};
+use quick_cache::{
+    unsync::{Cache, DefaultLifecycle},
+    DefaultHashBuilder, OptionsBuilder, UnitWeighter,
+};
+
+use damascus_core::{
+    camera::Camera,
+    geometry::primitive::Primitive,
+    lights::Light,
+    materials::{Material, ProceduralTexture},
+    render_passes::{
+        resources::{BufferData, RenderResource, RenderResources},
+        RenderPass, RenderPasses,
+    },
+    scene::Scene,
+};
 
 mod graph;
 pub mod node;
 mod response;
 mod state;
 
-pub use graph::{evaluate_node, Graph};
-use node::{AllNodeTemplates, NodeData};
+pub use graph::evaluate_output;
+use node::{value_type::NodeValueType, AllNodeTemplates, NodeData, NodeDataType};
 pub use response::NodeGraphResponse;
 pub use state::{NodeGraphEditorState, NodeGraphState};
 
+pub type Graph = egui_node_graph::Graph<NodeData, NodeDataType, NodeValueType, NodeGraphState>;
+pub type NodeOutputCache = Cache<OutputId, NodeValueType>;
+
+struct NodeGraphCallback {
+    buffer_data: Vec<BufferData>,
+}
+
+impl NodeGraphCallback {
+    fn render_pass_descriptor(&self, resource: &RenderResource) -> wgpu::RenderPassDescriptor<'_> {
+        // wgpu::RenderPassDescriptor {
+        //     label: "render to texture",
+        //     color_attachments: &'a [Some(wgpu::RenderPassColorAttachment {
+        //         view: &'tex TextureView,
+        //         depth_slice: None, // TODO support 3d textures
+        //         resolve_target: Option<&'tex TextureView>,
+        //         ops: Operations<Color>,
+        //     })],
+        //     depth_stencil_attachment: None, // TODO support depth buffer
+        //     timestamp_writes: None, // TODO support timestamp queries
+        //     occlusion_query_set: None, // TODO support occlusion culling
+        // }
+        wgpu::RenderPassDescriptor::default()
+    }
+}
+
+impl egui_wgpu::CallbackTrait for NodeGraphCallback {
+    fn prepare(
+        &self,
+        _device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
+        encoder: &mut wgpu::CommandEncoder,
+        resources: &mut egui_wgpu::CallbackResources,
+    ) -> Vec<wgpu::CommandBuffer> {
+        let resources: &RenderResources = resources.get().unwrap();
+
+        for (data, render_resource) in self.buffer_data.iter().zip(&resources.resources) {
+            render_resource.write_bind_groups(queue, data);
+        }
+
+        if resources.resources.len() > 0 {
+            resources.resources[..resources.resources.len() - 1]
+                .iter()
+                .for_each(|resource: &RenderResource| {
+                    resource.paint(
+                        &mut encoder.begin_render_pass(&self.render_pass_descriptor(resource)),
+                    );
+                });
+        }
+
+        vec![]
+    }
+
+    fn paint(
+        &self,
+        _info: egui::PaintCallbackInfo,
+        render_pass: &mut wgpu::RenderPass<'static>,
+        resources: &egui_wgpu::CallbackResources,
+    ) {
+        let resources: &RenderResources = resources.get().unwrap();
+        if let Some(resource) = resources.resources.last() {
+            resource.paint(render_pass);
+        }
+    }
+}
+
 pub struct NodeGraph {
+    pub output_cache: NodeOutputCache,
     editor_state: NodeGraphEditorState,
     user_state: NodeGraphState,
 }
@@ -24,14 +113,35 @@ pub struct NodeGraph {
 impl NodeGraph {
     pub fn new(editor_state: NodeGraphEditorState) -> Self {
         Self {
+            output_cache: NodeOutputCache::with_options(
+                OptionsBuilder::new()
+                    .estimated_items_capacity(10000)
+                    .weight_capacity(10000)
+                    .build()
+                    .unwrap(),
+                UnitWeighter,
+                DefaultHashBuilder::default(),
+                DefaultLifecycle::default(),
+            ),
             editor_state,
             user_state: NodeGraphState::default(),
         }
     }
 
+    pub fn remove_from_cache(&mut self, ids: Vec<OutputId>) {
+        for id in ids.iter() {
+            self.output_cache.remove(id);
+        }
+    }
+
+    pub fn clear_cache(&mut self) {
+        self.output_cache.clear();
+    }
+
     pub fn clear(&mut self) {
         self.editor_state = NodeGraphEditorState::default();
         self.user_state = NodeGraphState::default();
+        self.output_cache.clear();
     }
 
     pub fn set_editor_state(&mut self, editor_state: NodeGraphEditorState) {
@@ -53,6 +163,68 @@ impl NodeGraph {
 
     pub fn user_state_mut(&mut self) -> &mut NodeGraphState {
         &mut self.user_state
+    }
+
+    pub fn populate_output(
+        &mut self,
+        node_id: NodeId,
+        param_name: &str,
+        value: NodeValueType,
+    ) -> anyhow::Result<NodeValueType> {
+        let output_id = self.node(node_id).get_output(param_name)?;
+        self.output_cache.insert(output_id, value.clone());
+        Ok(value)
+    }
+
+    pub fn graph(&self) -> &Graph {
+        &self.editor_state.graph
+    }
+
+    pub fn graph_mut(&mut self) -> &mut Graph {
+        &mut self.editor_state.graph
+    }
+
+    pub fn node(&self, node_id: NodeId) -> &Node<NodeData> {
+        &self.graph()[node_id]
+    }
+
+    pub fn node_mut(&mut self, node_id: NodeId) -> &mut Node<NodeData> {
+        &mut self.graph_mut()[node_id]
+    }
+
+    // Evaluates the input value of
+    pub fn evaluate_input(
+        &mut self,
+        node_id: NodeId,
+        param_name: &str,
+    ) -> anyhow::Result<NodeValueType> {
+        let input_id = self.node(node_id).get_input(param_name)?;
+
+        // The output of another node is connected.
+        if let Some(other_output_id) = self.editor_state.graph.connection(input_id) {
+            // The value was already computed due to the evaluation of some other
+            // node. We simply return value from the cache.
+            if let Some(other_value) = self.output_cache.get(&other_output_id) {
+                Ok((*other_value).clone())
+            }
+            // This is the first time encountering this node, so we need to
+            // recursively evaluate it.
+            else {
+                // Calling this will populate the cache
+                evaluate_output(self, other_output_id)?;
+
+                // Now that we know the value is cached, return it
+                Ok((*self
+                    .output_cache
+                    .get(&other_output_id)
+                    .expect("Cache should be populated"))
+                .clone())
+            }
+        }
+        // No existing connection, take the inline value instead.
+        else {
+            Ok(self.editor_state.graph[input_id].value.clone())
+        }
     }
 
     pub fn show(&mut self, ctx: &egui::Context) -> GraphResponse<NodeGraphResponse, NodeData> {

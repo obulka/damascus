@@ -5,7 +5,7 @@
 
 use egui_node_graph::{InputId, NodeId, OutputId};
 
-use super::{super::NodeGraphResponse, Graph, NodeValueType, UIInput};
+use super::{super::NodeGraphResponse, NodeGraph, NodeValueType, UIInput};
 
 mod light;
 mod primitive;
@@ -95,7 +95,7 @@ pub trait NodeCallbacks {
 
     fn input_value_changed(
         &self,
-        _graph: &mut Graph,
+        _node_graph: &mut NodeGraph,
         _node_id: NodeId,
         _input_name: &String,
     ) -> Vec<NodeGraphResponse> {
@@ -104,7 +104,7 @@ pub trait NodeCallbacks {
 
     fn input_disconnected(
         &self,
-        _graph: &mut Graph,
+        _node_graph: &mut NodeGraph,
         _input_id: InputId,
         _output_id: OutputId,
     ) -> Vec<NodeGraphResponse> {
@@ -113,7 +113,7 @@ pub trait NodeCallbacks {
 
     fn input_connected(
         &self,
-        _graph: &mut Graph,
+        _node_graph: &mut NodeGraph,
         _input_id: InputId,
         _output_id: OutputId,
     ) -> Vec<NodeGraphResponse> {

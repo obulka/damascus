@@ -169,17 +169,14 @@ pub fn show_toolbar(
                 }
             }
 
-            // Settings menu
-            // ui.menu_button("Settings", |ui| {
-            //     ui.menu_button("user interface", |ui| {
-            //         ui.horizontal(|ui| {
-            //             ui.label("font size");
-            //             egui_context.all_styles_mut(|style| {
-            //                 style.spacing.item_spacing = egui::vec2(10.0, 20.0);
-            //             });
-            //         });
-            //     });
-            // });
+            // Cache menu
+            ui.menu_button("Cache", |ui| {
+                ui.horizontal(|ui| {
+                    if ui.button("clear node cache").clicked() {
+                        node_graph.output_cache.clear();
+                    }
+                });
+            });
         });
     });
 

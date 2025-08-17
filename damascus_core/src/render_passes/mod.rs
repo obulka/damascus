@@ -144,6 +144,16 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     + for<'a> serde::Deserialize<'a>
     + shaders::ShaderSource<Directives>
 {
+    // fn num_inputs(&self) -> u32 {
+    //     self.inputs().len()
+    // }
+
+    // fn inputs(&self) -> Vec {
+    //     vec![]
+    // }
+
+    // fn output(&self) -> TextureView;
+
     fn hashes(&self) -> &RenderPassHashes;
 
     fn hashes_mut(&mut self) -> &mut RenderPassHashes;
@@ -843,7 +853,13 @@ impl RenderPasses {
         }
     }
 
-    pub fn buffer_data(&self) -> BufferData {
+    pub fn buffer_data(
+        &mut self,
+        device: &wgpu::Device,
+        target_state: wgpu::ColorTargetState,
+        render_resource: &mut RenderResource,
+    ) -> BufferData {
+        self.update_if_hash_changed(device, target_state, render_resource);
         match self {
             Self::RayMarcher { pass } => pass.buffer_data(),
             Self::TextureViewer { pass } => pass.buffer_data(),

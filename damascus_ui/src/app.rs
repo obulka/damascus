@@ -14,12 +14,12 @@ use damascus_core::render_passes::RenderPasses;
 
 use super::widgets::{
     node_graph::{
-        evaluate_node,
+        evaluate_output,
         node::{
             callbacks::NodeCallbacks,
             value_type::{Bool, NodeValueType, UIInput},
         },
-        NodeGraph, NodeGraphEditorState, NodeGraphResponse,
+        NodeGraph, NodeGraphEditorState, NodeGraphResponse, NodeOutputCache,
     },
     toolbar::show_toolbar,
     viewport::Viewport,
@@ -182,8 +182,11 @@ impl eframe::App for Damascus {
                                 input_name,
                             ) => {
                                 // Perform callbacks when inputs have changed
+                                self.node_graph.remove_from_cache(
+                                    self.node_graph.graph().child_outputs(node_id),
+                                );
                                 responses.append(&mut node_template.input_value_changed(
-                                    &mut self.node_graph.editor_state_mut().graph,
+                                    &mut self.node_graph,
                                     node_id,
                                     &input_name,
                                 ));
@@ -197,84 +200,87 @@ impl eframe::App for Damascus {
                             }
                         }
                     }
-                    // NodeResponse::DisconnectEvent { output, input } => {
-                    //     let graph = &self.node_graph.editor_state().graph;
-                    //     let node_template = graph[graph.get_input(input).node].user_data.template;
-                    //     responses.append(&mut node_template.input_disconnected(
-                    //         &mut self.node_graph.editor_state_mut().graph,
-                    //         input,
-                    //         output,
-                    //     ));
-                    // }
-                    // NodeResponse::ConnectEventEnded { output, input } => {
-                    //     let graph = &self.node_graph.editor_state().graph;
-                    //     let node_template = graph[graph.get_input(input).node].user_data.template;
-                    //     responses.append(&mut node_template.input_connected(
-                    //         &mut self.node_graph.editor_state_mut().graph,
-                    //         input,
-                    //         output,
-                    //     ));
-                    // }
+                    NodeResponse::DisconnectEvent { output, input } => {
+                        self.node_graph.remove_from_cache(
+                            self.node_graph
+                                .graph()
+                                .child_outputs(self.node_graph.graph().get_input(input).node),
+                        );
+                        let graph = self.node_graph.graph();
+                        let node_template = graph[graph.get_input(input).node].user_data.template;
+                        responses.append(&mut node_template.input_disconnected(
+                            &mut self.node_graph,
+                            input,
+                            output,
+                        ));
+                    }
+                    NodeResponse::ConnectEventEnded { output, input } => {
+                        self.node_graph.remove_from_cache(
+                            self.node_graph
+                                .graph()
+                                .child_outputs(self.node_graph.graph().get_input(input).node),
+                        );
+                        let graph = self.node_graph.graph();
+                        let node_template = graph[graph.get_input(input).node].user_data.template;
+                        responses.append(&mut node_template.input_connected(
+                            &mut self.node_graph,
+                            input,
+                            output,
+                        ));
+                    }
                     _ => {}
                 }
             }
 
-            if let Some(node) = self.node_graph.user_state().active_node {
-                if self
-                    .node_graph
-                    .editor_state()
-                    .graph
-                    .nodes
-                    .contains_key(node)
-                {
-                    let value_type = match evaluate_node(
-                        &self.node_graph.editor_state().graph,
-                        node,
-                        &mut HashMap::new(),
-                    ) {
-                        Ok(value) => value,
-                        Err(error) => {
-                            Self::display_error(ctx, &error);
+            if let Some(node_id) = self.node_graph.user_state().active_node {
+                if self.node_graph.graph().nodes.contains_key(node_id) {
+                    let output = self.node_graph.node(node_id).output_ids().next();
+                    if let Some(output_id) = output {
+                        let value_type = match evaluate_output(&mut self.node_graph, output_id) {
+                            Ok(value) => value,
+                            Err(error) => {
+                                Self::display_error(ctx, &error);
 
-                            NodeValueType::Bool {
-                                value: Bool::new(false),
-                            }
-                        }
-                    };
-                    match value_type {
-                        NodeValueType::Camera { value } => {
-                            self.viewport.view_camera(value.deref(), render_state)
-                        }
-                        NodeValueType::Light { value } => {
-                            self.viewport.view_lights(value.deref(), render_state)
-                        }
-                        NodeValueType::Material { value } => {
-                            self.viewport.view_atmosphere(value.deref(), render_state)
-                        }
-                        NodeValueType::ProceduralTexture { value } => self
-                            .viewport
-                            .view_procedural_texture(value.deref(), render_state),
-                        NodeValueType::Primitive { value } => {
-                            self.viewport.view_primitives(value.deref(), render_state)
-                        }
-                        NodeValueType::RenderPass { value } => {
-                            if let Some(final_pass) = value.value().last() {
-                                match final_pass {
-                                    RenderPasses::RayMarcher { pass: _ } => {
-                                        self.viewport.disable_camera_controls();
-                                    }
-                                    _ => {
-                                        self.viewport.enable_camera_controls();
-                                    }
+                                NodeValueType::Bool {
+                                    value: Bool::new(false),
                                 }
                             }
-                            self.viewport
-                                .update_render_passes(value.deref(), render_state);
+                        };
+                        match value_type {
+                            NodeValueType::Camera { value } => {
+                                self.viewport.view_camera(value.deref(), render_state)
+                            }
+                            NodeValueType::Light { value } => {
+                                self.viewport.view_lights(value.deref(), render_state)
+                            }
+                            NodeValueType::Material { value } => {
+                                self.viewport.view_atmosphere(value.deref(), render_state)
+                            }
+                            NodeValueType::ProceduralTexture { value } => self
+                                .viewport
+                                .view_procedural_texture(value.deref(), render_state),
+                            NodeValueType::Primitive { value } => {
+                                self.viewport.view_primitives(value.deref(), render_state)
+                            }
+                            NodeValueType::RenderPass { value } => {
+                                if let Some(final_pass) = value.value().last() {
+                                    match final_pass {
+                                        RenderPasses::RayMarcher { pass: _ } => {
+                                            self.viewport.disable_camera_controls();
+                                        }
+                                        _ => {
+                                            self.viewport.enable_camera_controls();
+                                        }
+                                    }
+                                }
+                                self.viewport
+                                    .update_render_passes(value.deref(), render_state);
+                            }
+                            NodeValueType::Scene { value } => {
+                                self.viewport.view_scene(value.deref(), render_state)
+                            }
+                            _ => {}
                         }
-                        NodeValueType::Scene { value } => {
-                            self.viewport.view_scene(value.deref(), render_state)
-                        }
-                        _ => {}
                     }
 
                     for response in responses

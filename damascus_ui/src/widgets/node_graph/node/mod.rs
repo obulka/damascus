@@ -13,7 +13,7 @@ use damascus_core::{
     camera, geometry, lights, materials, render_passes::ray_marcher, scene, textures,
 };
 
-use super::{Graph, NodeGraphResponse, NodeGraphState};
+use super::{Graph, NodeGraph, NodeGraphResponse, NodeGraphState, NodeOutputCache};
 
 pub mod callbacks;
 mod data_type;
@@ -51,43 +51,45 @@ pub enum NodeTemplate {
 impl NodeCallbacks for NodeTemplate {
     fn input_value_changed(
         &self,
-        graph: &mut Graph,
+        node_graph: &mut NodeGraph,
         node_id: egui_node_graph::NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
         match self {
-            NodeTemplate::Light => LightCallbacks.input_value_changed(graph, node_id, input_name),
+            NodeTemplate::Light => {
+                LightCallbacks.input_value_changed(node_graph, node_id, input_name)
+            }
             NodeTemplate::Primitive => {
-                PrimitiveCallbacks.input_value_changed(graph, node_id, input_name)
+                PrimitiveCallbacks.input_value_changed(node_graph, node_id, input_name)
             }
             NodeTemplate::ProceduralTexture => {
-                ProceduralTextureCallbacks.input_value_changed(graph, node_id, input_name)
+                ProceduralTextureCallbacks.input_value_changed(node_graph, node_id, input_name)
             }
             _ => Vec::new(),
         }
     }
 
-    // fn input_disconnected(
-    //     &self,
-    //     _graph: &mut Graph,
-    //     _input_id: egui_node_graph::InputId,
-    //     _output_id: egui_node_graph::OutputId,
-    // ) -> Vec<NodeGraphResponse> {
-    //     match self {
-    //         _ => Vec::new(),
-    //     }
-    // }
+    fn input_disconnected(
+        &self,
+        _graph: &mut NodeGraph,
+        _input_id: egui_node_graph::InputId,
+        _output_id: egui_node_graph::OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        match self {
+            _ => Vec::new(),
+        }
+    }
 
-    // fn input_connected(
-    //     &self,
-    //     _graph: &mut Graph,
-    //     _input_id: egui_node_graph::InputId,
-    //     _output_id: egui_node_graph::OutputId,
-    // ) -> Vec<NodeGraphResponse> {
-    //     match self {
-    //         _ => Vec::new(),
-    //     }
-    // }
+    fn input_connected(
+        &self,
+        _graph: &mut NodeGraph,
+        _input_id: egui_node_graph::InputId,
+        _output_id: egui_node_graph::OutputId,
+    ) -> Vec<NodeGraphResponse> {
+        match self {
+            _ => Vec::new(),
+        }
+    }
 }
 
 // A trait for the node kinds, which tells the library how to build new nodes

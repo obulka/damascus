@@ -291,7 +291,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     );
 
     // If the render is paused just return the current texture value
-    if bool(_render_state.flags & PAUSED) {
+    if bool(_render_state.flags & PAUSED) && _render_state.paths_rendered_per_pixel > 1 {
         return pixel_colour;
     }
 

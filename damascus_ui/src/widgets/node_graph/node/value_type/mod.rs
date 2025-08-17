@@ -244,7 +244,7 @@ impl NodeValueType {
         }
     }
 
-    /// Tries to downcast this value type to a ray_marcher
+    /// Tries to downcast this value type to a render_pass
     pub fn try_to_render_pass(self) -> anyhow::Result<Vec<render_passes::RenderPasses>> {
         if let NodeValueType::RenderPass { value } = self {
             Ok(value.deref())

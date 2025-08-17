@@ -21,7 +21,7 @@ use damascus_core::{
     lights::Light,
     materials::{Material, ProceduralTexture},
     render_passes::{
-        resources::{BufferData, RenderResources},
+        resources::{BufferData, RenderResource, RenderResources},
         RenderPass, RenderPasses,
     },
     scene::Scene,
@@ -31,6 +31,24 @@ use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
 
 struct ViewportCallback {
     buffer_data: Vec<BufferData>,
+}
+
+impl ViewportCallback {
+    fn render_pass_descriptor(&self, resource: &RenderResource) -> wgpu::RenderPassDescriptor<'_> {
+        // wgpu::RenderPassDescriptor {
+        //     label: "render to texture",
+        //     color_attachments: &'a [Some(wgpu::RenderPassColorAttachment {
+        //         view: &'tex TextureView,
+        //         depth_slice: None, // TODO support 3d textures
+        //         resolve_target: Option<&'tex TextureView>,
+        //         ops: Operations<Color>,
+        //     })],
+        //     depth_stencil_attachment: None, // TODO support depth buffer
+        //     timestamp_writes: None, // TODO support timestamp queries
+        //     occlusion_query_set: None, // TODO support occlusion culling
+        // }
+        wgpu::RenderPassDescriptor::default()
+    }
 }
 
 impl egui_wgpu::CallbackTrait for ViewportCallback {
@@ -48,9 +66,15 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
             render_resource.write_bind_groups(queue, data);
         }
 
-        // if let Some(resource) = resources.resources.last() {
-        //     resource.paint(&mut encoder.begin_render_pass(&wgpu::RenderPassDescriptor::default()));
-        // }
+        if resources.resources.len() > 0 {
+            resources.resources[..resources.resources.len() - 1]
+                .iter()
+                .for_each(|resource: &RenderResource| {
+                    resource.paint(
+                        &mut encoder.begin_render_pass(&self.render_pass_descriptor(resource)),
+                    );
+                });
+        }
 
         vec![]
     }
@@ -72,7 +96,7 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
 pub struct Viewport {
     pub render_passes: Vec<RenderPasses>,
     pub stats_text: String,
-    single_window: bool,
+    embedded: bool,
     disabled: bool,
     camera_controls_enabled: bool,
 }
@@ -82,7 +106,7 @@ impl Default for Viewport {
         Self {
             render_passes: vec![],
             stats_text: String::new(),
-            single_window: true,
+            embedded: true,
             disabled: true,
             camera_controls_enabled: true,
         }
@@ -534,23 +558,15 @@ impl Viewport {
                         .iter_mut()
                         .zip(&mut render_resources.resources)
                         .map(|(render_pass, render_resource)| {
-                            render_pass.update_if_hash_changed(
+                            let buffer_data: BufferData = render_pass.buffer_data(
                                 &render_state.device,
                                 render_state.target_format.into(),
                                 render_resource,
                             );
-                            let buffer_data: BufferData = render_pass.buffer_data();
 
                             // TODO these frame counters will not be much different/correct
                             // with multiple passes
-                            match render_pass {
-                                RenderPasses::RayMarcher { pass } => {
-                                    pass.frame_counter_mut().tick();
-                                }
-                                RenderPasses::TextureViewer { pass } => {
-                                    pass.frame_counter_mut().tick();
-                                }
-                            }
+                            render_pass.frame_counter_mut().tick();
 
                             buffer_data
                         })
@@ -749,10 +765,10 @@ impl Viewport {
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         let mut reconstruct_render_resources = false;
-        if self.single_window {
-            let mut single_window = self.single_window;
+        if self.embedded {
+            let mut embedded = self.embedded;
             egui::Window::new("viewer")
-                .open(&mut single_window)
+                .open(&mut embedded)
                 .default_width(720.)
                 .default_height(405.)
                 .max_width(
@@ -781,7 +797,7 @@ impl Viewport {
                         }
                     }
                 });
-            self.single_window = single_window;
+            self.embedded = embedded;
             if reconstruct_render_resources {
                 self.reconstruct_render_resources(render_state);
             }
@@ -796,7 +812,7 @@ impl Viewport {
                     if ctx.input(|i| i.viewport().close_requested())
                         || class != egui::ViewportClass::Immediate
                     {
-                        self.single_window = true;
+                        self.embedded = true;
                     } else {
                         egui::CentralPanel::default().show(ctx, |ui| {
                             Self::set_button_backgrounds_transparent(ui);

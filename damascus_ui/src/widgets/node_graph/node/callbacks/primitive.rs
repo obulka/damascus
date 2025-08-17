@@ -7,7 +7,10 @@ use egui_node_graph::NodeId;
 
 use damascus_core::geometry::{self, primitive};
 
-use super::{super::NodeGraphResponse, Graph, NodeCallbacks, NodeValueType, UIInput};
+use super::{
+    super::{Graph, NodeGraphResponse},
+    NodeCallbacks, NodeGraph, NodeValueType, UIInput,
+};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct PrimitiveCallbacks;
@@ -15,7 +18,7 @@ pub struct PrimitiveCallbacks;
 impl NodeCallbacks for PrimitiveCallbacks {
     fn input_value_changed(
         &self,
-        graph: &mut Graph,
+        node_graph: &mut NodeGraph,
         node_id: NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
@@ -30,6 +33,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
         {
             return Vec::new();
         }
+        let graph: &mut Graph = &mut node_graph.editor_state_mut().graph;
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
             let mut to_show = vec![];

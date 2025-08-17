@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
 use std::fmt::Display;
 use std::str::FromStr;
 
@@ -26,36 +25,27 @@ use super::node::{
     },
     NodeData, NodeDataType, NodeTemplate,
 };
-use super::NodeGraphState;
-
-pub type Graph = egui_node_graph::Graph<NodeData, NodeDataType, NodeValueType, NodeGraphState>;
-type OutputsCache = HashMap<egui_node_graph::OutputId, NodeValueType>;
+use super::{Graph, NodeGraph, NodeGraphState};
 
 /// Recursively evaluates all dependencies of this node, then evaluates the node itself.
-pub fn evaluate_node(
-    graph: &Graph,
-    node_id: egui_node_graph::NodeId,
-    outputs_cache: &mut OutputsCache,
+pub fn evaluate_output(
+    node_graph: &mut NodeGraph,
+    output_id: egui_node_graph::OutputId,
 ) -> anyhow::Result<NodeValueType> {
-    // To solve a similar problem as creating node types above, we define an
-    // Evaluator as a convenience. It may be overkill for this small example,
-    // but something like this makes the code much more readable when the
-    // number of nodes starts growing.
+    if let Some(value) = node_graph.output_cache.get(&output_id) {
+        return Ok((*value).clone());
+    }
+
+    let node_id: egui_node_graph::NodeId = node_graph.graph()[output_id].node;
 
     struct Evaluator<'a> {
-        graph: &'a Graph,
-        outputs_cache: &'a mut OutputsCache,
+        node_graph: &'a mut NodeGraph,
         node_id: egui_node_graph::NodeId,
     }
     impl<'a> Evaluator<'a> {
-        fn new(
-            graph: &'a Graph,
-            outputs_cache: &'a mut OutputsCache,
-            node_id: egui_node_graph::NodeId,
-        ) -> Self {
+        fn new(node_graph: &'a mut NodeGraph, node_id: egui_node_graph::NodeId) -> Self {
             Self {
-                graph,
-                outputs_cache,
+                node_graph,
                 node_id,
             }
         }
@@ -63,7 +53,7 @@ pub fn evaluate_node(
         fn evaluate_input(&mut self, name: &str) -> anyhow::Result<NodeValueType> {
             // Calling `evaluate_input` recursively evaluates other nodes in the
             // graph until the input value for a paramater has been computed.
-            evaluate_input(self.graph, self.node_id, name, self.outputs_cache)
+            self.node_graph.evaluate_input(self.node_id, name)
         }
 
         fn populate_output(
@@ -84,7 +74,7 @@ pub fn evaluate_node(
             //
             // Note that this is just one possible semantic interpretation of
             // the graphs, you can come up with your own evaluation semantics!
-            populate_output(self.graph, self.outputs_cache, self.node_id, name, value)
+            self.node_graph.populate_output(self.node_id, name, value)
         }
 
         fn input_bool(&mut self, name: &str) -> anyhow::Result<bool> {
@@ -285,10 +275,9 @@ pub fn evaluate_node(
         }
     }
 
-    let node = &graph[node_id];
-    let mut evaluator = Evaluator::new(graph, outputs_cache, node_id);
-    match node.user_data.template {
+    match node_graph.node(node_id).user_data.template {
         NodeTemplate::Axis => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let input_axis = evaluator.input_matrix4("axis")?;
             let translate = evaluator.input_vector3("translate")?;
             let rotate = evaluator.input_vector3("rotate")? * std::f32::consts::PI / 180.;
@@ -308,6 +297,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Camera => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let focal_length = evaluator.input_float("focal_length")?;
             let horizontal_aperture = evaluator.input_float("horizontal_aperture")?;
             let near_plane = evaluator.input_float("near_plane")?;
@@ -335,6 +325,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Light => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let mut scene_lights = evaluator.input_light("lights")?;
             let local_to_world = evaluator.input_matrix4("world_matrix")?;
             let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
@@ -371,6 +362,7 @@ pub fn evaluate_node(
             evaluator.output_light("out", scene_lights)
         }
         NodeTemplate::Grade => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let mut texture = evaluator.input_render_pass("texture")?;
             let black_point = evaluator.input_float("black_point")?;
             let white_point = evaluator.input_float("white_point")?;
@@ -397,6 +389,7 @@ pub fn evaluate_node(
             evaluator.output_render_pass("out", texture) // TODO append own pass
         }
         NodeTemplate::Material => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let diffuse_colour = evaluator.input_vector3("diffuse_colour")?;
             let diffuse_colour_texture =
                 evaluator.input_procedural_texture("diffuse_colour_texture")?;
@@ -461,6 +454,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Primitive => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut descendants = evaluator.input_primitive("children")?;
             let material = evaluator.input_material("material")?;
@@ -638,6 +632,7 @@ pub fn evaluate_node(
             evaluator.output_primitive("out", scene_primitives)
         }
         NodeTemplate::ProceduralTexture => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let texture_type =
                 evaluator.input_combo_box::<materials::ProceduralTextureType>("texture_type")?;
             let scale = evaluator.input_vector4("scale")?;
@@ -684,6 +679,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::RayMarcher => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let scene = evaluator.input_scene("scene")?;
             let max_distance = evaluator.input_float("max_distance")?;
             let max_ray_steps = evaluator.input_uint("max_ray_steps")?;
@@ -724,6 +720,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Scene => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let render_camera = evaluator.input_camera("render_camera")?;
             let primitives = evaluator.input_primitive("primitives")?;
             let lights = evaluator.input_light("lights")?;
@@ -739,6 +736,7 @@ pub fn evaluate_node(
             )
         }
         NodeTemplate::Texture => {
+            let mut evaluator = Evaluator::new(node_graph, node_id);
             let filepath = evaluator.input_filepath("filepath")?;
             evaluator.output_render_pass(
                 "out",
@@ -752,52 +750,5 @@ pub fn evaluate_node(
                 }],
             )
         }
-    }
-}
-
-fn populate_output(
-    graph: &Graph,
-    outputs_cache: &mut OutputsCache,
-    node_id: egui_node_graph::NodeId,
-    param_name: &str,
-    value: NodeValueType,
-) -> anyhow::Result<NodeValueType> {
-    let output_id = graph[node_id].get_output(param_name)?;
-    outputs_cache.insert(output_id, value.clone());
-    Ok(value)
-}
-
-// Evaluates the input value of
-fn evaluate_input(
-    graph: &Graph,
-    node_id: egui_node_graph::NodeId,
-    param_name: &str,
-    outputs_cache: &mut OutputsCache,
-) -> anyhow::Result<NodeValueType> {
-    let input_id = graph[node_id].get_input(param_name)?;
-
-    // The output of another node is connected.
-    if let Some(other_output_id) = graph.connection(input_id) {
-        // The value was already computed due to the evaluation of some other
-        // node. We simply return value from the cache.
-        if let Some(other_value) = outputs_cache.get(&other_output_id) {
-            Ok((*other_value).clone())
-        }
-        // This is the first time encountering this node, so we need to
-        // recursively evaluate it.
-        else {
-            // Calling this will populate the cache
-            evaluate_node(graph, graph[other_output_id].node, outputs_cache)?;
-
-            // Now that we know the value is cached, return it
-            Ok((*outputs_cache
-                .get(&other_output_id)
-                .expect("Cache should be populated"))
-            .clone())
-        }
-    }
-    // No existing connection, take the inline value instead.
-    else {
-        Ok(graph[input_id].value.clone())
     }
 }

@@ -7,7 +7,10 @@ use egui_node_graph::NodeId;
 
 use damascus_core::lights;
 
-use super::{super::NodeGraphResponse, Graph, NodeCallbacks, NodeValueType};
+use super::{
+    super::{Graph, NodeGraphResponse},
+    NodeCallbacks, NodeGraph, NodeValueType,
+};
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub struct LightCallbacks;
@@ -15,13 +18,14 @@ pub struct LightCallbacks;
 impl NodeCallbacks for LightCallbacks {
     fn input_value_changed(
         &self,
-        graph: &mut Graph,
+        node_graph: &mut NodeGraph,
         node_id: NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
         if input_name != "light_type" {
             return Vec::new();
         }
+        let graph: &mut Graph = &mut node_graph.editor_state_mut().graph;
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
             let mut to_show = vec![];

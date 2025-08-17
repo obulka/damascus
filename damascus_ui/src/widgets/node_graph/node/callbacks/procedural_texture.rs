@@ -8,8 +8,8 @@ use egui_node_graph::{Node, NodeId};
 use damascus_core::materials::ProceduralTextureType;
 
 use super::{
-    super::{NodeData, NodeGraphResponse},
-    Graph, NodeCallbacks, NodeValueType, UIInput,
+    super::{Graph, NodeData, NodeGraphResponse},
+    NodeCallbacks, NodeGraph, NodeValueType, UIInput,
 };
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
@@ -32,13 +32,15 @@ impl ProceduralTextureCallbacks {
 impl NodeCallbacks for ProceduralTextureCallbacks {
     fn input_value_changed(
         &self,
-        graph: &mut Graph,
+        node_graph: &mut NodeGraph,
         node_id: NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
         if !["texture_type", "use_trap_colour"].contains(&input_name.as_str()) {
             return Vec::new();
         }
+        let graph: &mut Graph = &mut node_graph.editor_state_mut().graph;
+
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
             let mut to_show = vec![];

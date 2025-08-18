@@ -368,7 +368,7 @@ fn sample_non_physical_light(
 
 
 fn sample_physical_light(
-    seed: ptr<function, u32>,
+    seed: ptr<function, Seed>,
     light_index: u32,
     surface_position: vec3f,
     surface_normal: vec3f,
@@ -461,7 +461,7 @@ fn sample_physical_light(
  * @returns: The colour of the sampled light.
  */
 fn light_sampling(
-    seed: ptr<function, u32>,
+    seed: ptr<function, Seed>,
     ray: ptr<function, Ray>,
     surface_normal: vec3f,
     material_brdf: vec3f,

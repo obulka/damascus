@@ -45,7 +45,7 @@
  * @returns: The material pdf.
  */
 fn material_interaction(
-    seed: ptr<function, u32>,
+    seed: ptr<function, Seed>,
     offset: f32,
     distance_since_last_bounce: f32,
     intersection_position: vec3f,
@@ -115,7 +115,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: ptr<function, u32>, ray: ptr<function, Ray>) {
+fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
 
@@ -292,11 +292,12 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     }
 
     // Create a random seed which will be different for each pixel
-    var seed: u32 = (
+    var seed = Seed(
         _render_parameters.seed
-        + texture_coordinates.y * _render_camera.sensor_resolution.x
-        + texture_coordinates.x
-        + _render_state.paths_rendered_per_pixel * 719393u
+            + texture_coordinates.y * _render_camera.sensor_resolution.x
+            + texture_coordinates.x
+            + _render_state.paths_rendered_per_pixel * 1664525u,
+        _render_state.paths_rendered_per_pixel + 2891336453u,
     );
 
     // Get modified UV coordinates with a random offset from the original
@@ -312,14 +313,14 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var ray: Ray = create_render_camera_ray(&seed, uv_coordinates);
     march_path(&seed, &ray);
 
-    if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
+    // if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
         // Read, update, and store the current value for our pixel
         // so that the render can be done progressively
         pixel_colour = (
             f32(_render_state.paths_rendered_per_pixel) * pixel_colour
             + vec4(ray.colour, 1.)
         ) / f32(_render_state.paths_rendered_per_pixel + 1);
-    }
+    // }
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;

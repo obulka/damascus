@@ -168,7 +168,7 @@ fn schlick_reflection_coefficient(
  * @returns: The material PDF.
  */
 fn sample_material(
-    seed: ptr<function, u32>,
+    seed: ptr<function, Seed>,
     surface_normal: vec3f,
     offset: f32,
     primitive: ptr<function, Primitive>,

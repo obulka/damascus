@@ -368,7 +368,7 @@ fn sample_non_physical_light(
 
 
 fn sample_physical_light(
-    seed: vec3f,
+    seed: ptr<function, u32>,
     light_index: u32,
     surface_position: vec3f,
     surface_normal: vec3f,
@@ -382,7 +382,7 @@ fn sample_physical_light(
     );
 
     var light_normal: vec3f = cosine_direction_in_hemisphere(
-        seed.xy,
+        seed,
         normalize(surface_position - light_position),
     );
     var light_direction: vec3f = light_position - surface_position + light_normal * length(
@@ -391,7 +391,7 @@ fn sample_physical_light(
     var distance_to_light: f32 = length(light_direction);
     light_direction = normalize(mix(
         normalize(light_direction),
-        cosine_direction_in_hemisphere(seed.y + seed.zx, surface_normal),
+        cosine_direction_in_hemisphere(seed, surface_normal),
         _render_parameters.light_sampling_bias,
     ));
 
@@ -425,10 +425,14 @@ fn sample_physical_light(
                 distance_travelled * distance_travelled,
                 pixel_footprint,
             );
+            // TODO this is only correct for a few prims (maybe just sphere)
             var radius: f32 = length(
                 nearest_primitive.transform.uniform_scale * nearest_primitive.dimensional_data,
             );
-            *light_sampling_pdf /= 2.0f * PI * radius * radius;
+            *light_sampling_pdf /= 0.1 * TWO_PI * (1. + _render_parameters.light_sampling_bias) * (
+                1. - sqrt(saturate_f32(1. - radius * radius / distance_to_light))
+            );
+
             return nearest_primitive.material.emissive_colour;
         }
 
@@ -457,16 +461,13 @@ fn sample_physical_light(
  * @returns: The colour of the sampled light.
  */
 fn light_sampling(
-    seed: vec3f,
+    seed: ptr<function, u32>,
     ray: ptr<function, Ray>,
     surface_normal: vec3f,
     material_brdf: vec3f,
     material_pdf: f32,
 ) -> vec3f {
-    var light_id = u32(
-        f32(_scene_parameters.num_lights)
-        * vec3f_to_random_f32(seed * vec3(4.82314437644, 1.9647352337074, 5.084007537183))
-    );
+    var light_id = u32(f32(_scene_parameters.num_lights) * random_f32(seed));
     var light_sampling_pdf: f32 = 1. / f32(_scene_parameters.num_lights);
     var light_colour = vec3(0.);
     var light_geometry_factor: f32 = 1.;
@@ -481,6 +482,7 @@ fn light_sampling(
             &light_geometry_factor,
         );
 #ifdef EnablePhysicalLights
+#ifdef EnableLightSampling
     } else {
         light_colour = sample_physical_light(
             seed,
@@ -493,6 +495,7 @@ fn light_sampling(
             &light_geometry_factor,
             &light_sampling_pdf,
         );
+#endif
     }
 #endif
 

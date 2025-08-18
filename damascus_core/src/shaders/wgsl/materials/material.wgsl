@@ -168,7 +168,7 @@ fn schlick_reflection_coefficient(
  * @returns: The material PDF.
  */
 fn sample_material(
-    seed: vec3f,
+    seed: ptr<function, u32>,
     surface_normal: vec3f,
     offset: f32,
     primitive: ptr<function, Primitive>,
@@ -178,7 +178,7 @@ fn sample_material(
     light_sampling_pdf: ptr<function, f32>,
 ) -> f32 {
     var diffuse_direction: vec3f = cosine_direction_in_hemisphere(
-        seed.xy,
+        seed,
         surface_normal,
     );
 
@@ -226,7 +226,7 @@ fn sample_material(
     );
 
     // Interact with material according to the adjusted probabilities
-    var rng: f32 = vec3f_to_random_f32(seed);
+    var rng: f32 = random_f32(seed);
 #endif
 #ifdef EnableTransmissiveMaterials
     if (

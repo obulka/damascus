@@ -45,7 +45,7 @@
  * @returns: The material pdf.
  */
 fn material_interaction(
-    seed: vec3f,
+    seed: ptr<function, u32>,
     offset: f32,
     distance_since_last_bounce: f32,
     intersection_position: vec3f,
@@ -96,7 +96,12 @@ fn material_interaction(
         sample_lights_pdf(f32(_scene_parameters.num_lights)),
     );
 
-    (*ray).throughput *= material_brdf * material_geometry_factor / material_pdf;
+    // Trigger exit if we hit a bright emissive source
+    (*ray).throughput = select(
+        (*ray).throughput * material_brdf * material_geometry_factor / material_pdf,
+        vec3f(0.),
+        length((*primitive).material.emissive_colour) > 1.,
+    );
 
     return material_pdf;
 }
@@ -110,7 +115,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
+fn march_path(seed: ptr<function, u32>, ray: ptr<function, Ray>) {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
 
@@ -121,7 +126,6 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
     );
 #endif
 
-    var path_seed: vec3f = seed;
     var dynamic_level_of_detail = bool(_render_parameters.flags & DYNAMIC_LEVEL_OF_DETAIL);
 
     var distance_travelled: f32 = 0.;
@@ -195,7 +199,7 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
             }
 #endif
             previous_material_pdf = material_interaction(
-                path_seed,
+                seed,
                 2. * pixel_footprint * _render_parameters.shadow_bias,
                 distance_since_last_bounce,
                 intersection_position,
@@ -207,9 +211,8 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
             );
 
             // Exit if we have reached the bounce limit or with a random chance
-            var rng: f32 = vec3f_to_random_f32(path_seed);
             var exit_probability: f32 = max_component_vec3f((*ray).throughput);
-            if (bounces >= _render_parameters.max_bounces || exit_probability <= rng) {
+            if (bounces >= _render_parameters.max_bounces || exit_probability <= random_f32(seed)) {
 #ifdef EnableAOVs
                 final_aovs(
                     _render_parameters.output_aov,
@@ -229,12 +232,6 @@ fn march_path(seed: vec3f, ray: ptr<function, Ray>) {
             // Reset the pixel footprint so multiple reflections don't reduce precision
             // If this isn't done artifacts can appear after refraction/reflection
             pixel_footprint = _render_parameters.hit_tolerance;
-
-            // Update the random seed for the next iteration
-            path_seed = (
-                vec3(5771.878299824461, 8245.463474397617, 3274.701002467521)
-                * random_vec3f(path_seed.zxy + f32(bounces))
-            );
         }
         pixel_footprint += select(
             0.,
@@ -275,11 +272,10 @@ struct FragmentInput {
 
 @fragment
 fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
+    var sensor_resolution = vec2f(_render_camera.sensor_resolution);
+
     // Use the UV coordinates and resolution to get texture coordinates
-    var current_pixel_indices: vec2f = uv_to_pixels(
-        in.uv_coordinate.xy,
-        _render_camera.sensor_resolution,
-    );
+    var current_pixel_indices: vec2f = uv_to_pixels(in.uv_coordinate.xy, sensor_resolution);
     var texture_coordinates = vec2u(current_pixel_indices);
 
     // Load the current state of the progressive render, unless this is
@@ -287,43 +283,43 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var pixel_colour: vec4f = select(
         vec4f(),
         textureLoad(_progressive_rendering_texture, texture_coordinates),
-        _render_state.paths_rendered_per_pixel > 0.,
+        _render_state.paths_rendered_per_pixel > 0,
     );
 
     // If the render is paused just return the current texture value
-    if bool(_render_state.flags & PAUSED) && _render_state.paths_rendered_per_pixel > 1 {
+    if bool(_render_state.flags & PAUSED) && _render_state.paths_rendered_per_pixel > 0 {
         return pixel_colour;
     }
 
     // Create a random seed which will be different for each pixel
-    var frag_coord_seed = vec3(vec2f_to_random_f32(in.frag_coordinate.xy));
-    var seed = vec3(2214.2410943055584, 5844.16158969744, 6821.991985188833)
-        * random_vec3f(
-            _render_parameters.seeds
-            + frag_coord_seed
-            + _render_state.paths_rendered_per_pixel
-        ) + vec3(3553.392716193805, 7251.898513581492, 1848.9387464811002)
-        * vec2f_to_random_f32(current_pixel_indices);
+    var seed: u32 = (
+        _render_parameters.seed
+        + texture_coordinates.y * _render_camera.sensor_resolution.x
+        + texture_coordinates.x
+        + _render_state.paths_rendered_per_pixel * 719393u
+    );
 
     // Get modified UV coordinates with a random offset from the original
     // without straying outside the bounds of the current pixel. This
     // provides antialiasing for free
     var uv_coordinates: vec2f = pixels_to_uv(
         // Add a random offset to the uv_coordinates for anti-aliasing 
-        current_pixel_indices + random_vec2f(seed.xy),
-        _render_camera.sensor_resolution,
+        current_pixel_indices + random_vec2f(&seed),
+        sensor_resolution,
     );
 
     // Create and march a ray
-    var ray: Ray = create_render_camera_ray(seed.zx, uv_coordinates);
-    march_path(seed, &ray);
+    var ray: Ray = create_render_camera_ray(&seed, uv_coordinates);
+    march_path(&seed, &ray);
 
-    // Read, update, and store the current value for our pixel
-    // so that the render can be done progressively
-    pixel_colour = (
-        _render_state.paths_rendered_per_pixel * pixel_colour
-        + vec4(ray.colour, 1.)
-    ) / (_render_state.paths_rendered_per_pixel + 1.);
+    if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
+        // Read, update, and store the current value for our pixel
+        // so that the render can be done progressively
+        pixel_colour = (
+            f32(_render_state.paths_rendered_per_pixel) * pixel_colour
+            + vec4(ray.colour, 1.)
+        ) / f32(_render_state.paths_rendered_per_pixel + 1);
+    }
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;

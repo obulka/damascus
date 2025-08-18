@@ -10,9 +10,11 @@ use super::{super::NodeGraphResponse, NodeGraph, NodeValueType, UIInput};
 mod light;
 mod primitive;
 mod procedural_texture;
+mod ray_marcher;
 pub use light::LightCallbacks;
 pub use primitive::PrimitiveCallbacks;
 pub use procedural_texture::ProceduralTextureCallbacks;
+pub use ray_marcher::RayMarcherCallbacks;
 
 pub trait NodeCallbacks {
     fn show_input(&self, value_type: &mut NodeValueType) {

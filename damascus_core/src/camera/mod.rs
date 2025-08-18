@@ -12,7 +12,7 @@ use crate::DualDevice;
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUCamera {
     flags: u32,
-    sensor_resolution: Vec2,
+    sensor_resolution: UVec2,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: Mat4,
@@ -172,7 +172,7 @@ impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
         let camera_to_screen: Mat4 = self.camera_to_screen();
         GPUCamera {
             flags: self.enable_depth_of_field as u32 | (self.latlong as u32) << 1,
-            sensor_resolution: self.sensor_resolution.as_vec2(),
+            sensor_resolution: self.sensor_resolution,
             aperture: Self::aperture_from_f_stop(self.f_stop, self.focal_length),
             focal_distance: self.focal_distance,
             camera_to_world: self.camera_to_world,

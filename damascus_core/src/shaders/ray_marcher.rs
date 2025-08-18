@@ -92,6 +92,7 @@ pub enum RayMarcherPreprocessorDirectives {
     EnablePointLights,
     EnableAmbientOcclusion,
     EnableSoftShadows,
+    EnableLightSampling,
 }
 
 impl PreprocessorDirectives for RayMarcherPreprocessorDirectives {}
@@ -177,6 +178,9 @@ pub fn directives_for_ray_marcher(
 
     if ray_marcher.output_aov > AOVs::Beauty {
         preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableAOVs);
+    }
+    if ray_marcher.light_sampling {
+        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableLightSampling);
     }
 
     preprocessor_directives

@@ -7,7 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::time::{Duration, SystemTime};
 
 use eframe::egui;
-use egui_node_graph::NodeResponse;
+use egui_node_graph::{NodeId, NodeResponse};
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
 use damascus_core::render_passes::RenderPasses;
@@ -170,7 +170,7 @@ impl eframe::App for Damascus {
                         match user_event {
                             NodeGraphResponse::SetActiveNode(node) => {
                                 self.node_graph.user_state_mut().active_node = Some(node);
-                                self.viewport.enable_and_play();
+                                self.viewport.enable();
                                 responses.push(NodeGraphResponse::CheckPreprocessorDirectives)
                             }
                             NodeGraphResponse::ClearActiveNode => {
@@ -200,21 +200,35 @@ impl eframe::App for Damascus {
                             }
                         }
                     }
-                    NodeResponse::DisconnectEvent { output, input } => {
+                    NodeResponse::DeleteNodeFull { node_id: _, node } => {
                         self.node_graph.remove_from_cache(
-                            self.node_graph
-                                .graph()
-                                .child_outputs(self.node_graph.graph().get_input(input).node),
+                            node.outputs
+                                .into_iter()
+                                .map(|(_, output_id)| output_id)
+                                .collect(),
                         );
-                        let graph = self.node_graph.graph();
-                        let node_template = graph[graph.get_input(input).node].user_data.template;
-                        responses.append(&mut node_template.input_disconnected(
-                            &mut self.node_graph,
-                            input,
-                            output,
-                        ));
                     }
-                    NodeResponse::ConnectEventEnded { output, input } => {
+                    NodeResponse::DisconnectEvent {
+                        input: input_id,
+                        output: output_id,
+                    } => {
+                        // This can be triggered when nodes are deleted but the input node
+                        // won't exist, so trust the DeleteNodeFull callback to remove
+                        // the deleted outputs from the cache
+                        if let Some(input) = self.node_graph.graph().try_get_input(input_id) {
+                            let node_id: NodeId = input.node;
+                            self.node_graph
+                                .remove_from_cache(self.node_graph.graph().child_outputs(node_id));
+
+                            let node_template = self.node_graph.graph()[node_id].user_data.template;
+                            responses.append(&mut node_template.input_disconnected(
+                                &mut self.node_graph,
+                                input_id,
+                                output_id,
+                            ));
+                        }
+                    }
+                    NodeResponse::ConnectEventEnded { input, output } => {
                         self.node_graph.remove_from_cache(
                             self.node_graph
                                 .graph()

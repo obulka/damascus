@@ -313,14 +313,14 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var ray: Ray = create_render_camera_ray(&seed, uv_coordinates);
     march_path(&seed, &ray);
 
-    // if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
+    if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
         // Read, update, and store the current value for our pixel
         // so that the render can be done progressively
         pixel_colour = (
             f32(_render_state.paths_rendered_per_pixel) * pixel_colour
             + vec4(ray.colour, 1.)
         ) / f32(_render_state.paths_rendered_per_pixel + 1);
-    // }
+    }
     textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;

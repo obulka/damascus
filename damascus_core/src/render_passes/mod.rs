@@ -50,7 +50,7 @@ impl Default for FrameCounter {
             previous_frame_time: SystemTime::now(),
             fps: 0.,
             frames_to_update_fps: 10,
-            paused: false,
+            paused: true,
         }
     }
 }

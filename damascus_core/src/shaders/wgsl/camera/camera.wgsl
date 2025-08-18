@@ -73,7 +73,7 @@ fn render_camera_rotation() -> mat3x3f {
  * @arg seed: The seed to use in randomization.
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
-fn create_render_camera_ray(seed: ptr<function, u32>, uv_coordinate: vec2f) -> Ray {
+fn create_render_camera_ray(seed: ptr<function, Seed>, uv_coordinate: vec2f) -> Ray {
     if (bool(_render_camera.flags & LATLONG)) {
         return Ray(
             render_camera_position(),

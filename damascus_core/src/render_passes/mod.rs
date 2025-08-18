@@ -69,6 +69,9 @@ impl FrameCounter {
     pub fn tick(&mut self) {
         if self.paused {
             self.update_frame_time();
+            if self.frame == 0 {
+                self.frame = 1;
+            }
             return;
         }
 

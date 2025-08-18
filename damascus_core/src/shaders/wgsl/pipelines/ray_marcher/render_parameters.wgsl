@@ -21,7 +21,7 @@ struct RenderParameters {
     hit_tolerance: f32,
     shadow_bias: f32,
     max_brightness: f32,
-    seeds: vec3f,
+    seed: u32,
     equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
@@ -39,7 +39,7 @@ struct SceneParameters {
 
 
 struct RenderState {
-    paths_rendered_per_pixel: f32,
+    paths_rendered_per_pixel: u32,
     flags: u32,
 }
 

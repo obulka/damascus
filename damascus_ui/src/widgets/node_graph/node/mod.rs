@@ -20,7 +20,10 @@ mod data_type;
 mod node_data;
 pub mod value_type;
 
-use callbacks::{LightCallbacks, NodeCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks};
+use callbacks::{
+    LightCallbacks, NodeCallbacks, PrimitiveCallbacks, ProceduralTextureCallbacks,
+    RayMarcherCallbacks,
+};
 pub use data_type::NodeDataType;
 pub use node_data::NodeData;
 use value_type::{
@@ -64,6 +67,9 @@ impl NodeCallbacks for NodeTemplate {
             }
             NodeTemplate::ProceduralTexture => {
                 ProceduralTextureCallbacks.input_value_changed(node_graph, node_id, input_name)
+            }
+            NodeTemplate::RayMarcher => {
+                RayMarcherCallbacks.input_value_changed(node_graph, node_id, input_name)
             }
             _ => Vec::new(),
         }
@@ -1689,16 +1695,15 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                         }))
                         .with_range(1.0..=1000000.),
                 );
-                input_vector3(
+                input_uint(
                     graph,
-                    "seeds",
-                    Vec3::from_vec3(default_ray_marcher.seeds).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "The seeds used to generate per-pixel, random seeds.
-                            Be sure these are different on each render used for
-                            adaptive sampling."
-                        }),
-                    ),
+                    "seed",
+                    UnsignedInteger::new(default_ray_marcher.seed)
+                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                            "The seed used to generate per-pixel, random seeds.
+                            Be sure this is different for each parallel render."
+                        }))
+                        .with_range(0..=100),
                 );
                 input_bool(
                     graph,
@@ -1723,52 +1728,71 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                         }))
                         .with_range(0..=10),
                 );
+                input_bool(
+                    graph,
+                    "light_sampling",
+                    Bool::new(default_ray_marcher.light_sampling).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
+                            "Send a ray towards light sources when hitting a diffuse surface."
+                        }),
+                    ),
+                );
                 input_uint(
                     graph,
                     "max_light_sampling_bounces",
                     UnsignedInteger::new(default_ray_marcher.max_light_sampling_bounces)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "The maximum number of bounces during light sampling.
+                        .with_ui_data(
+                            UIData::default()
+                                .with_tooltip(indoc! {
+                                    "The maximum number of bounces during light sampling.
                             Light sampling will be disabled if this is 0. Light
                             sampling means that each time a surface is hit, the
                             direct illumination from lights in the scene will be
                             computed, which helps to reduce noise very quickly.\nTODO"
-                        }))
+                                })
+                                .with_hidden(),
+                        )
                         .with_range(0..=50),
                 );
                 input_bool(
                     graph,
                     "sample_atmosphere",
                     Bool::new(default_ray_marcher.sample_atmosphere).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "Include the skybox in the list of lights that can be
-                            sampled during light sampling."
-                        }),
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "Include the skybox in the list of lights that can be
+                                sampled during light sampling."
+                            })
+                            .with_hidden(),
                     ),
                 );
                 input_float(
                     graph,
                     "light_sampling_bias",
                     Float::new(default_ray_marcher.light_sampling_bias).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "A fully biased (1) light sampling means that on each
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "A fully biased (1) light sampling means that on each
                             light sample the ray will be initialised pointing
                             directly at the light. Reducing this bias means that
                             some rays will be pointed away from the light. This,
                             when combined with multiple 'max light sampling
                             bounces' allows the renderer to find difficult paths,
                             such as volumetric caustics.\nTODO"
-                        }),
+                            })
+                            .with_hidden(),
                     ),
                 );
                 input_bool(
                     graph,
                     "secondary_sampling",
                     Bool::new(default_ray_marcher.secondary_sampling).with_ui_data(
-                        UIData::default().with_tooltip(indoc! {
-                            "Sample the artificial lights (those in the 'lights'
-                            input) while casting shadow rays for light sampling.\nTODO"
-                        }),
+                        UIData::default()
+                            .with_tooltip(indoc! {
+                                "Sample the artificial lights (those in the 'lights'
+                                input) while casting shadow rays for light sampling.\nTODO"
+                            })
+                            .with_hidden(),
                     ),
                 );
                 input_combo_box(

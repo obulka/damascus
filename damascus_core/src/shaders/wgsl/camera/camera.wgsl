@@ -10,7 +10,7 @@ const LATLONG: u32 = 2u;
 
 struct Camera {
     flags: u32,
-    sensor_resolution: vec2f,
+    sensor_resolution: vec2u,
     aperture: f32,
     focal_distance: f32,
     camera_to_world: mat4x4f,
@@ -73,7 +73,7 @@ fn render_camera_rotation() -> mat3x3f {
  * @arg seed: The seed to use in randomization.
  * @arg uv_coordinate: The u, and v locations of the pixel.
  */
-fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
+fn create_render_camera_ray(seed: ptr<function, u32>, uv_coordinate: vec2f) -> Ray {
     if (bool(_render_camera.flags & LATLONG)) {
         return Ray(
             render_camera_position(),
@@ -123,11 +123,7 @@ fn create_render_camera_ray(seed: vec2f, uv_coordinate: vec2f) -> Ray {
     );
     var focal_point: vec3f = ray.origin + focal_point_distance * ray.direction;
 
-    var point_in_unit_circle: vec2f = uniform_point_in_unit_circle(seed);
-    var offset: vec2f = point_in_unit_circle.x * _render_camera.aperture * vec2(
-        cos(point_in_unit_circle.y),
-        sin(point_in_unit_circle.y),
-    );
+    var offset: vec2f = uniform_point_in_circle(seed, _render_camera.aperture);
 
     ray.origin += camera_right * offset.x + camera_up * offset.y;
     ray.direction = normalize(focal_point - ray.origin);

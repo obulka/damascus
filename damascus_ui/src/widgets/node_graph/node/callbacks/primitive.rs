@@ -33,7 +33,7 @@ impl NodeCallbacks for PrimitiveCallbacks {
         {
             return Vec::new();
         }
-        let graph: &mut Graph = &mut node_graph.editor_state_mut().graph;
+        let graph: &mut Graph = node_graph.graph_mut();
         if let Some(node) = graph.nodes.get(node_id) {
             let mut to_hide = vec![];
             let mut to_show = vec![];

@@ -687,9 +687,10 @@ pub fn evaluate_output(
             let hit_tolerance = evaluator.input_float("hit_tolerance")?;
             let shadow_bias = evaluator.input_float("shadow_bias")?;
             let max_brightness = evaluator.input_float("max_brightness")?;
-            let seeds = evaluator.input_vector3("seeds")?;
+            let seed = evaluator.input_uint("seed")?;
             let dynamic_level_of_detail = evaluator.input_bool("dynamic_level_of_detail")?;
             let equiangular_samples = evaluator.input_uint("equiangular_samples")?;
+            let light_sampling = evaluator.input_bool("light_sampling")?;
             let max_light_sampling_bounces = evaluator.input_uint("max_light_sampling_bounces")?;
             let sample_atmosphere = evaluator.input_bool("sample_atmosphere")?;
             let light_sampling_bias = evaluator.input_float("light_sampling_bias")?;
@@ -707,10 +708,11 @@ pub fn evaluate_output(
                         .hit_tolerance(hit_tolerance)
                         .shadow_bias(shadow_bias)
                         .max_brightness(max_brightness)
-                        .seeds(seeds)
+                        .seed(seed)
                         .dynamic_level_of_detail(dynamic_level_of_detail)
                         .equiangular_samples(equiangular_samples)
                         .max_light_sampling_bounces(max_light_sampling_bounces)
+                        .light_sampling(light_sampling)
                         .sample_atmosphere(sample_atmosphere)
                         .light_sampling_bias(light_sampling_bias)
                         .secondary_sampling(secondary_sampling)

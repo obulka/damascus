@@ -74,7 +74,7 @@ pub struct GPURayMarcherRenderData {
     hit_tolerance: f32,
     shadow_bias: f32,
     max_brightness: f32,
-    seeds: Vec3,
+    seed: u32,
     equiangular_samples: u32,
     max_light_sampling_bounces: u32,
     light_sampling_bias: f32,
@@ -92,9 +92,10 @@ pub struct RayMarcherRenderData {
     pub hit_tolerance: f32,
     pub shadow_bias: f32,
     pub max_brightness: f32,
-    pub seeds: Vec3,
+    pub seed: u32,
     pub dynamic_level_of_detail: bool,
     pub equiangular_samples: u32,
+    pub light_sampling: bool,
     pub max_light_sampling_bounces: u32,
     pub sample_atmosphere: bool,
     pub light_sampling_bias: f32,
@@ -112,9 +113,10 @@ impl Default for RayMarcherRenderData {
             hit_tolerance: 0.0001,
             shadow_bias: 1.,
             max_brightness: 999999999.9,
-            seeds: Vec3::new(1111., 2222., 3333.),
+            seed: 42,
             dynamic_level_of_detail: true,
             equiangular_samples: 0,
+            light_sampling: false,
             max_light_sampling_bounces: 1,
             sample_atmosphere: false,
             light_sampling_bias: 0.,
@@ -134,9 +136,10 @@ impl RayMarcherRenderData {
         self.hit_tolerance = default_ray_marcher.hit_tolerance;
         self.shadow_bias = default_ray_marcher.shadow_bias;
         self.max_brightness = default_ray_marcher.max_brightness;
-        self.seeds = default_ray_marcher.seeds;
+        self.seed = default_ray_marcher.seed;
         self.dynamic_level_of_detail = default_ray_marcher.dynamic_level_of_detail;
         self.equiangular_samples = default_ray_marcher.equiangular_samples;
+        self.light_sampling = default_ray_marcher.light_sampling;
         self.max_light_sampling_bounces = default_ray_marcher.max_light_sampling_bounces;
         self.sample_atmosphere = default_ray_marcher.sample_atmosphere;
         self.light_sampling_bias = default_ray_marcher.light_sampling_bias;
@@ -153,7 +156,7 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
             hit_tolerance: self.hit_tolerance.max(0.),
             shadow_bias: self.shadow_bias,
             max_brightness: self.max_brightness,
-            seeds: self.seeds,
+            seed: self.seed,
             equiangular_samples: self.equiangular_samples,
             max_light_sampling_bounces: self.max_light_sampling_bounces,
             light_sampling_bias: self.light_sampling_bias * self.light_sampling_bias,
@@ -168,7 +171,7 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPURayMarcher {
-    paths_rendered_per_pixel: f32,
+    paths_rendered_per_pixel: u32,
     flags: u32,
 }
 
@@ -197,7 +200,7 @@ impl Default for RayMarcher {
 impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
         GPURayMarcher {
-            paths_rendered_per_pixel: self.subframe_counter.frame as f32,
+            paths_rendered_per_pixel: self.subframe_counter.frame,
             flags: self.subframe_counter.paused as u32,
         }
     }
@@ -464,8 +467,8 @@ impl RayMarcher {
         self
     }
 
-    pub fn seeds(mut self, seeds: Vec3) -> Self {
-        self.render_data.seeds = seeds;
+    pub fn seed(mut self, seed: u32) -> Self {
+        self.render_data.seed = seed;
         self
     }
 
@@ -481,6 +484,11 @@ impl RayMarcher {
 
     pub fn max_light_sampling_bounces(mut self, max_light_sampling_bounces: u32) -> Self {
         self.render_data.max_light_sampling_bounces = max_light_sampling_bounces;
+        self
+    }
+
+    pub fn light_sampling(mut self, light_sampling: bool) -> Self {
+        self.render_data.light_sampling = light_sampling;
         self
     }
 

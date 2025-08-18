@@ -5,24 +5,22 @@
 
 use egui_node_graph::NodeId;
 
-use damascus_core::lights;
-
 use super::{
     super::{Graph, NodeGraphResponse},
-    NodeCallbacks, NodeGraph, NodeValueType,
+    NodeCallbacks, NodeGraph, NodeValueType, UIInput,
 };
 
 #[derive(Clone, Copy, serde::Serialize, serde::Deserialize)]
-pub struct LightCallbacks;
+pub struct RayMarcherCallbacks;
 
-impl NodeCallbacks for LightCallbacks {
+impl NodeCallbacks for RayMarcherCallbacks {
     fn input_value_changed(
         &self,
         node_graph: &mut NodeGraph,
         node_id: NodeId,
         input_name: &String,
     ) -> Vec<NodeGraphResponse> {
-        if input_name != "light_type" {
+        if input_name != "light_sampling" {
             return Vec::new();
         }
         let graph: &mut Graph = node_graph.graph_mut();
@@ -32,28 +30,19 @@ impl NodeCallbacks for LightCallbacks {
             if let Ok(input_id) = node.get_input(input_name) {
                 if let Some(input_param) = graph.inputs.get(input_id) {
                     match input_param.value() {
-                        NodeValueType::ComboBox { ref value } => {
-                            match value.as_enum::<lights::Lights>() {
-                                Ok(lights::Lights::Directional) => {
-                                    to_show.push("direction");
-                                    to_hide.push("iterations");
-                                    to_hide.push("position")
-                                }
-                                Ok(lights::Lights::Point) => {
-                                    to_hide.push("direction");
-                                    to_hide.push("iterations");
-                                    to_show.push("position");
-                                }
-                                Ok(lights::Lights::AmbientOcclusion) => {
-                                    to_hide.push("direction");
-                                    to_show.push("iterations");
-                                    to_hide.push("position")
-                                }
-                                _ => {
-                                    to_hide.push("direction");
-                                    to_hide.push("iterations");
-                                    to_hide.push("position");
-                                }
+                        NodeValueType::Bool { ref value } => {
+                            if *value.value() {
+                                to_show.push("sample_atmosphere");
+                                to_show.push("light_sampling_bias");
+                                to_show.push("secondary_sampling");
+                                to_show.push("max_light_sampling_bounces");
+                                to_show.push("sample_atmosphere");
+                            } else {
+                                to_hide.push("sample_atmosphere");
+                                to_hide.push("light_sampling_bias");
+                                to_hide.push("secondary_sampling");
+                                to_hide.push("max_light_sampling_bounces");
+                                to_hide.push("sample_atmosphere");
                             }
                         }
                         _ => {}

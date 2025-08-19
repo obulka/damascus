@@ -13,6 +13,7 @@ struct Camera {
     sensor_resolution: vec2u,
     aperture: f32,
     focal_distance: f32,
+    near_plane: f32,
     camera_to_world: mat4x4f,
     world_to_camera: mat4x4f,
     screen_to_camera: mat4x4f,
@@ -98,6 +99,11 @@ fn create_render_camera_ray(seed: ptr<function, Seed>, uv_coordinate: vec2f) -> 
     );
 
     if (!bool(_render_camera.flags & ENABLE_DEPTH_OF_FIELD)) {
+        ray.origin += (
+            ray.direction
+            * random_f32(seed)
+            * _render_camera.near_plane
+        );
         return ray;
     }
 

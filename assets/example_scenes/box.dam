@@ -8125,6 +8125,18 @@
           }
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "inputs": [
@@ -8804,7 +8816,7 @@
           "value": {
             "UnsignedInteger": {
               "value": {
-                "value": 1,
+                "value": 3,
                 "ui_data": {
                   "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
                   "hidden": false
@@ -9886,7 +9898,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 17.0,
+                "value": 26.0,
                 "ui_data": {
                   "tooltip": "The focal length of the camera.",
                   "hidden": false
@@ -9918,7 +9930,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 4.0,
+                "value": 3.5,
                 "ui_data": {
                   "tooltip": "The focal distance of the camera.",
                   "hidden": false
@@ -10014,7 +10026,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.01,
+                "value": 0.0,
                 "ui_data": {
                   "tooltip": "The distance to the near plane of the camera.",
                   "hidden": false
@@ -10159,7 +10171,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": true,
+                "value": false,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -31194,7 +31206,7 @@
               "value": {
                 "value": [
                   0.3,
-                  0.3,
+                  0.35,
                   0.0
                 ],
                 "ui_data": {
@@ -50790,7 +50802,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.0,
+                "value": 0.05,
                 "ui_data": {
                   "tooltip": "The thickness of the walls of the shape, if\nthe shape is hollow.",
                   "hidden": false
@@ -53413,6 +53425,54 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "outputs": [
@@ -54229,6 +54289,18 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
+      },
+      {
+        "value": null,
+        "version": 2
       }
     ],
     "connections": {
@@ -54319,11 +54391,8 @@
           "version": 1
         },
         {
-          "value": {
-            "idx": 34,
-            "version": 3
-          },
-          "version": 1
+          "value": null,
+          "version": 0
         },
         {
           "value": {
@@ -54574,8 +54643,11 @@
           "version": 0
         },
         {
-          "value": null,
-          "version": 0
+          "value": {
+            "idx": 19,
+            "version": 1
+          },
+          "version": 1
         },
         {
           "value": {
@@ -58224,6 +58296,66 @@
             "version": 1
           },
           "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
         }
       ],
       "children": [
@@ -58397,7 +58529,12 @@
           "version": 1
         },
         {
-          "value": [],
+          "value": [
+            {
+              "idx": 79,
+              "version": 1
+            }
+          ],
           "version": 1
         },
         {
@@ -58421,12 +58558,12 @@
         {
           "value": [
             {
-              "idx": 595,
-              "version": 3
-            },
-            {
               "idx": 363,
               "version": 1
+            },
+            {
+              "idx": 595,
+              "version": 3
             }
           ],
           "version": 1
@@ -58491,13 +58628,8 @@
           "version": 1
         },
         {
-          "value": [
-            {
-              "idx": 19,
-              "version": 1
-            }
-          ],
-          "version": 3
+          "value": null,
+          "version": 0
         },
         {
           "value": [
@@ -58538,15 +58670,15 @@
         {
           "value": [
             {
-              "idx": 932,
-              "version": 1
-            },
-            {
               "idx": 573,
               "version": 5
             },
             {
               "idx": 516,
+              "version": 1
+            },
+            {
+              "idx": 932,
               "version": 1
             },
             {
@@ -58657,12 +58789,12 @@
         {
           "value": [
             {
-              "idx": 746,
-              "version": 3
-            },
-            {
               "idx": 827,
               "version": 1
+            },
+            {
+              "idx": 746,
+              "version": 3
             }
           ],
           "version": 1
@@ -58690,6 +58822,27 @@
             {
               "idx": 596,
               "version": 3
+            }
+          ],
+          "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": [],
+          "version": 1
+        },
+        {
+          "value": [
+            {
+              "idx": 976,
+              "version": 1
             }
           ],
           "version": 1
@@ -58895,10 +59048,6 @@
       "version": 1
     },
     {
-      "idx": 46,
-      "version": 7
-    },
-    {
       "idx": 52,
       "version": 1
     },
@@ -58913,6 +59062,10 @@
     {
       "idx": 1,
       "version": 1
+    },
+    {
+      "idx": 46,
+      "version": 7
     }
   ],
   "connection_in_progress": null,
@@ -58925,390 +59078,402 @@
     },
     {
       "value": {
-        "x": -1783.9739,
-        "y": 3655.3828
+        "x": -5160.6704,
+        "y": 3128.5376
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2132.292,
-        "y": 3693.3486
+        "x": -5243.204,
+        "y": 3137.5305
       },
       "version": 1
     },
     {
       "value": {
-        "x": -2950.073,
-        "y": 3037.8333
+        "x": -5436.959,
+        "y": 2982.2227
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3547.5732,
-        "y": 3283.7046
+        "x": -5578.525,
+        "y": 3040.476
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4155.769,
-        "y": 3152.6147
+        "x": -5722.6206,
+        "y": 3009.4165
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3212.996,
-        "y": 4798.3105
+        "x": -5499.2437,
+        "y": 3399.324
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3818.8389,
-        "y": 5404.3877
+        "x": -5642.795,
+        "y": 3542.9233
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4944.1313,
-        "y": 3726.5515
+        "x": -5909.4067,
+        "y": 3145.3965
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5789.3,
-        "y": 3842.719
+        "x": -6109.6475,
+        "y": 3172.9229
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5814.2695,
-        "y": 2899.5112
+        "x": -6115.5605,
+        "y": 2949.4502
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6498.9604,
-        "y": 4084.3315
+        "x": -6277.793,
+        "y": 3230.1611
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6698.806,
-        "y": 2908.2715
+        "x": -6325.1343,
+        "y": 2951.5273
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6704.299,
-        "y": 1951.9443
+        "x": -6326.4375,
+        "y": 2724.9478
       },
       "version": 1
     },
     {
       "value": {
-        "x": -7388.981,
-        "y": 3136.7817
+        "x": -6488.6523,
+        "y": 3005.6675
       },
       "version": 1
     },
     {
       "value": {
-        "x": -7588.8667,
-        "y": 1960.7385
+        "x": -6536.012,
+        "y": 2727.031
       },
       "version": 1
     },
     {
       "value": {
-        "x": -7588.3057,
-        "y": 1013.12585
+        "x": -6535.8794,
+        "y": 2502.5146
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8273.018,
-        "y": 2197.924
+        "x": -6698.108,
+        "y": 2783.2266
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8457.854,
-        "y": 1023.8473
+        "x": -6741.896,
+        "y": 2505.0574
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6061.911,
-        "y": 158.04895
+        "x": -6174.2397,
+        "y": 2299.9224
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6746.62,
-        "y": 1342.8593
+        "x": -6336.4595,
+        "y": 2580.64
       },
       "version": 1
     },
     {
       "value": {
-        "x": -6946.418,
-        "y": 166.82385
+        "x": -6383.797,
+        "y": 2302.0046
       },
       "version": 1
     },
     {
       "value": {
-        "x": -7823.8364,
-        "y": -719.56836
+        "x": -6591.6694,
+        "y": 2091.9932
       },
       "version": 1
     },
     {
       "value": {
-        "x": -9233.021,
-        "y": -2748.8438
+        "x": -6925.5547,
+        "y": 1611.2012
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8472.273,
-        "y": -394.89893
+        "x": -6745.3184,
+        "y": 2168.917
       },
       "version": 3
     },
     {
       "value": {
-        "x": -266.64038,
-        "y": 3364.913
+        "x": -4801.1714,
+        "y": 3059.7188
       },
       "version": 1
     },
     {
       "value": {
-        "x": -327.6831,
-        "y": 2751.687
+        "x": -4815.64,
+        "y": 2914.4282
       },
       "version": 1
     },
     {
       "value": {
-        "x": -242.53589,
-        "y": 3978.719
+        "x": -4795.464,
+        "y": 3205.1436
       },
       "version": 1
     },
     {
       "value": {
-        "x": -251.26123,
-        "y": 4607.2207
+        "x": -4797.53,
+        "y": 3354.0505
       },
       "version": 1
     },
     {
       "value": {
-        "x": -390.7256,
-        "y": 5285.702
+        "x": -4830.5664,
+        "y": 3514.8013
       },
       "version": 3
     },
     {
       "value": {
-        "x": 285.64355,
-        "y": 4634.841
+        "x": -4670.3213,
+        "y": 3360.5947
       },
       "version": 1
     },
     {
       "value": {
-        "x": 143.13477,
-        "y": 5278.0864
+        "x": -4704.0894,
+        "y": 3512.9985
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8640.021,
-        "y": -1331.4697
+        "x": -6785.0605,
+        "y": 1947.0195
       },
       "version": 1
     },
     {
       "value": {
-        "x": -9273.098,
-        "y": -998.29443
+        "x": -6935.0566,
+        "y": 2025.9562
       },
       "version": 1
     },
     {
       "value": {
-        "x": -3114.5474,
-        "y": 4021.4822
+        "x": -5475.923,
+        "y": 3215.273
       },
       "version": 3
     },
     {
       "value": {
-        "x": -6825.8276,
-        "y": -681.60254
+        "x": -6355.2305,
+        "y": 2100.989
       },
       "version": 3
     },
     {
       "value": {
-        "x": -7652.461,
-        "y": 274.56897
+        "x": -6551.0825,
+        "y": 2327.5308
       },
       "version": 1
     },
     {
       "value": {
-        "x": -9511.597,
-        "y": -2177.1572
+        "x": -6991.5645,
+        "y": 1746.649
       },
       "version": 1
     },
     {
       "value": {
-        "x": -10221.127,
-        "y": -976.0283
+        "x": -7159.662,
+        "y": 2031.2294
       },
       "version": 1
     },
     {
       "value": {
-        "x": -10409.127,
-        "y": -2167.4404
+        "x": -7204.194,
+        "y": 1748.9502
       },
       "version": 1
     },
     {
       "value": {
-        "x": -10395.68,
-        "y": -3021.2046
+        "x": -7201.024,
+        "y": 1546.6746
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11072.627,
-        "y": -1792.102
+        "x": -7361.4175,
+        "y": 1837.8816
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11298.939,
-        "y": -3029.391
+        "x": -7415.021,
+        "y": 1544.7365
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11287.654,
-        "y": -3938.0767
+        "x": -7412.356,
+        "y": 1329.4414
       },
       "version": 3
     },
     {
       "value": {
-        "x": -11693.34,
-        "y": -1799.4932
+        "x": -7508.4663,
+        "y": 1836.1323
       },
       "version": 1
     },
     {
       "value": {
-        "x": -11948.576,
-        "y": -3470.5195
+        "x": -7568.953,
+        "y": 1440.2205
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8589.678,
-        "y": -3075.4932
+        "x": -6773.134,
+        "y": 1533.8116
       },
       "version": 7
     },
     {
       "value": {
-        "x": -12609.909,
-        "y": -3204.814
+        "x": -7725.633,
+        "y": 1503.1748
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12172.945,
-        "y": -4811.1157
+        "x": -7622.099,
+        "y": 1122.5969
       },
       "version": 1
     },
     {
       "value": {
-        "x": -12849.808,
-        "y": -3582.0244
+        "x": -7782.466,
+        "y": 1413.8018
       },
       "version": 1
     },
     {
       "value": {
-        "x": -13058.448,
-        "y": -4823.116
+        "x": -7831.896,
+        "y": 1119.7532
       },
       "version": 1
     },
     {
       "value": {
-        "x": -13470.558,
-        "y": -3589.4517
+        "x": -7929.54,
+        "y": 1412.0449
       },
       "version": 1
     },
     {
       "value": {
-        "x": -8352.309,
-        "y": -1816.5747
+        "x": -6716.8926,
+        "y": 1832.0856
       },
       "version": 1
     },
     {
       "value": {
-        "x": -7726.2646,
-        "y": -2183.6597
+        "x": -6568.5615,
+        "y": 1745.1101
       },
       "version": 1
     },
     {
       "value": {
-        "x": 2112.276,
-        "y": 4442.9756
+        "x": -4237.5386,
+        "y": 3315.137
       },
       "version": 1
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
+    },
+    {
+      "value": null,
+      "version": 0
     }
   ],
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 4393.8877,
-      "y": -2064.689
+      "x": 7599.1006,
+      "y": -2058.4531
     },
-    "zoom": 2.0,
+    "zoom": 0.47385487,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

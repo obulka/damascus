@@ -92,6 +92,11 @@ pub fn show_toolbar(
     egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {
         egui::menu::bar(ui, |ui| {
             // File menu
+            let mut new_requested: bool = egui_context.memory(|memory| memory.focused().is_none())
+                && egui_context.input(|input| {
+                    input.key_pressed(egui::Key::N)
+                        && input.modifiers.matches_logically(egui::Modifiers::CTRL)
+                });
             let mut load_requested: bool = egui_context.memory(|memory| memory.focused().is_none())
                 && egui_context.input(|input| {
                     input.key_pressed(egui::Key::L)
@@ -114,6 +119,9 @@ pub fn show_toolbar(
             let success_dialog: bool = !save_requested;
 
             ui.menu_button("File", |ui| {
+                new_requested |= ui
+                    .add(egui::Button::new("new").shortcut_text("Ctrl+N"))
+                    .clicked();
                 load_requested |= ui
                     .add(egui::Button::new("load").shortcut_text("Ctrl+L"))
                     .clicked();
@@ -128,6 +136,8 @@ pub fn show_toolbar(
                     ui.close_menu();
                 }
             });
+
+            save_requested |= new_requested && context.dirty(node_graph);
 
             let mut saved: bool = false;
             if load_requested {
@@ -152,7 +162,7 @@ pub fn show_toolbar(
                     saved = true;
                 }
             }
-            if (save_requested && !saved) || save_as_requested {
+            if save_requested && !saved || save_as_requested {
                 let mut file_dialog = rfd::FileDialog::new()
                     .set_title("save to file")
                     .add_filter("damascus", &["dam"]);
@@ -167,6 +177,10 @@ pub fn show_toolbar(
                     save(&file_path, node_graph, &modal, true);
                     context.update(file_path, node_graph);
                 }
+            }
+            if new_requested {
+                node_graph.clear();
+                *context = Context::default();
             }
 
             // Cache menu

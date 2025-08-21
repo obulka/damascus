@@ -146,15 +146,6 @@ impl eframe::App for Damascus {
             }
         }
 
-        if ctx.memory(|memory| memory.focused().is_none())
-            && ctx.input(|input| {
-                input.key_pressed(egui::Key::N)
-                    && input.modifiers.matches_logically(egui::Modifiers::CTRL)
-            })
-        {
-            self.node_graph.clear();
-        }
-
         let mut responses = show_toolbar(
             ctx,
             &mut self.context,

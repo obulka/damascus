@@ -1634,16 +1634,6 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                     Scene::new(default_ray_marcher.scene)
                         .with_ui_data(UIData::default().with_tooltip("The scene to render.")),
                 );
-                input_float(
-                    graph,
-                    "max_distance",
-                    Float::new(default_ray_marcher.max_distance)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
-                            "Each ray, once spawned is only allowed to travel
-                            this distance before it is culled."
-                        }))
-                        .with_range(10.0..=10000.),
-                );
                 input_uint(
                     graph,
                     "max_ray_steps",

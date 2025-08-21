@@ -68,7 +68,6 @@ pub struct RayMarcherConstructionData {
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPURayMarcherRenderData {
-    max_distance: f32,
     max_ray_steps: u32,
     max_bounces: u32,
     hit_tolerance: f32,
@@ -86,7 +85,6 @@ pub struct GPURayMarcherRenderData {
 #[serde(default)]
 pub struct RayMarcherRenderData {
     pub scene: Scene,
-    pub max_distance: f32,
     pub max_ray_steps: u32,
     pub max_bounces: u32,
     pub hit_tolerance: f32,
@@ -107,7 +105,6 @@ impl Default for RayMarcherRenderData {
     fn default() -> Self {
         Self {
             scene: Scene::default(),
-            max_distance: 100.,
             max_ray_steps: 1000,
             max_bounces: 1,
             hit_tolerance: 0.0001,
@@ -130,7 +127,6 @@ impl RayMarcherRenderData {
     pub fn reset_render_data(&mut self) {
         let default_ray_marcher = Self::default();
 
-        self.max_distance = default_ray_marcher.max_distance;
         self.max_ray_steps = default_ray_marcher.max_ray_steps;
         self.max_bounces = default_ray_marcher.max_bounces;
         self.hit_tolerance = default_ray_marcher.hit_tolerance;
@@ -150,7 +146,6 @@ impl RayMarcherRenderData {
 impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayMarcherRenderData {
     fn to_gpu(&self) -> GPURayMarcherRenderData {
         GPURayMarcherRenderData {
-            max_distance: self.max_distance.max(1e-8),
             max_ray_steps: self.max_ray_steps.max(1),
             max_bounces: self.max_bounces.max(1),
             hit_tolerance: self.hit_tolerance.max(0.),
@@ -434,11 +429,6 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 impl RayMarcher {
     pub fn scene(mut self, scene: Scene) -> Self {
         self.render_data.scene = scene;
-        self
-    }
-
-    pub fn max_distance(mut self, max_distance: f32) -> Self {
-        self.render_data.max_distance = max_distance;
         self
     }
 

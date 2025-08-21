@@ -6,6 +6,7 @@
 
 const PI: f32 = 3.141592653589793;
 const TWO_PI: f32 = 6.28318530718;
+const MAX_F32: f32 = 3.40282346638528859812e+38f;
 
 
 // wish we could overload functions

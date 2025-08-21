@@ -15,7 +15,6 @@ const PAUSED: u32 = 1u;
 
 
 struct RenderParameters {
-    max_distance: f32,
     max_ray_steps: u32,
     max_bounces: u32,
     hit_tolerance: f32,

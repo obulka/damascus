@@ -298,7 +298,7 @@ fn sample_non_physical_light(
                 shadow_intensity_at_position = sample_soft_shadow(
                     surface_position,
                     light_direction,
-                    _render_parameters.max_distance,
+                    render_camera_far_to_near_plane(),
                     light.shadow_hardness,
                 );
             } else {
@@ -306,7 +306,7 @@ fn sample_non_physical_light(
                 shadow_intensity_at_position = sample_shadow(
                     surface_position,
                     light_direction,
-                    _render_parameters.max_distance,
+                    render_camera_far_to_near_plane(),
                 );
 #ifdef EnableSoftShadows
             }

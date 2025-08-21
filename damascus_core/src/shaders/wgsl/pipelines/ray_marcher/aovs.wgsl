@@ -57,7 +57,9 @@ fn final_aovs(
             (*ray).colour = vec3(
                 f32(bounces) / f32(_render_parameters.max_bounces),
                 f32(iterations) / f32(_render_parameters.max_ray_steps),
-                distance_travelled / _render_parameters.max_distance,
+                distance_travelled
+                    * dot((*ray).direction, render_camera_forward())
+                    / render_camera_far_to_near_plane(),
             );
         }
         default {}
@@ -107,7 +109,9 @@ fn ray_miss_aovs(
             (*ray).colour = vec3(
                 f32(bounces) / f32(_render_parameters.max_bounces),
                 f32(iterations) / f32(_render_parameters.max_ray_steps),
-                distance_travelled / _render_parameters.max_distance,
+                distance_travelled
+                    * dot((*ray).direction, render_camera_forward())
+                    / render_camera_far_to_near_plane(),
             );
         }
         default {

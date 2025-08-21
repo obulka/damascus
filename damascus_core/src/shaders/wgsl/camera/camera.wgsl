@@ -13,7 +13,6 @@ struct Camera {
     sensor_resolution: vec2u,
     aperture: f32,
     focal_distance: f32,
-    near_plane: f32,
     camera_to_world: mat4x4f,
     world_to_camera: mat4x4f,
     screen_to_camera: mat4x4f,
@@ -34,6 +33,48 @@ fn world_to_camera_space(world_position: vec3f) -> vec3f {
 
 
 /**
+ * Get the right direction of the render camera.
+ *
+ * @returns: The right direction of the render camera.
+ */
+fn render_camera_right() -> vec3f {
+    return vec3(
+        _render_camera.camera_to_world[0][0],
+        _render_camera.camera_to_world[0][1],
+        _render_camera.camera_to_world[0][2],
+    );
+}
+
+
+/**
+ * Get the up direction of the render camera.
+ *
+ * @returns: The up direction of the render camera.
+ */
+fn render_camera_up() -> vec3f {
+    return vec3(
+        _render_camera.camera_to_world[1][0],
+        _render_camera.camera_to_world[1][1],
+        _render_camera.camera_to_world[1][2],
+    );
+}
+
+
+/**
+ * Get the forward direction of the render camera.
+ *
+ * @returns: The forward direction of the render camera.
+ */
+fn render_camera_forward() -> vec3f {
+    return -vec3(
+        _render_camera.camera_to_world[2][0],
+        _render_camera.camera_to_world[2][1],
+        _render_camera.camera_to_world[2][2],
+    );
+}
+
+
+/**
  * Get the position of the render camera.
  *
  * @returns: The position of the render camera.
@@ -43,6 +84,50 @@ fn render_camera_position() -> vec3f {
         _render_camera.camera_to_world[3][0],
         _render_camera.camera_to_world[3][1],
         _render_camera.camera_to_world[3][2],
+    );
+}
+
+
+/**
+ * Get the near plane of the render camera.
+ *
+ * @returns: The near plane of the render camera.
+ */
+fn render_camera_near_plane() -> f32 {
+    return (
+        _render_camera.camera_to_screen[3][2]
+        / (_render_camera.camera_to_screen[2][2] - 1.)
+    );
+}
+
+
+/**
+ * Get the far plane of the render camera.
+ *
+ * @returns: The far plane of the render camera.
+ */
+fn render_camera_far_plane() -> f32 {
+    return (
+        _render_camera.camera_to_screen[3][2]
+        / (_render_camera.camera_to_screen[2][2] + 1.)
+    );
+}
+
+
+/**
+ * Get the distance between the near and far plane of
+ * the render camera.
+ *
+ * @returns: The distance between the near and far
+ *     plane of the render camera.
+ */
+fn render_camera_far_to_near_plane() -> f32 {
+    return (
+        -2. * _render_camera.camera_to_screen[3][2]
+        / (
+            (_render_camera.camera_to_screen[2][2] - 1.)
+            * (_render_camera.camera_to_screen[2][2] + 1.)
+        )
     );
 }
 
@@ -101,27 +186,19 @@ fn create_render_camera_ray(seed: ptr<function, Seed>, uv_coordinate: vec2f) -> 
     if (!bool(_render_camera.flags & ENABLE_DEPTH_OF_FIELD)) {
         ray.origin += (
             ray.direction
+            * render_camera_near_plane()
             * random_f32(seed)
-            * _render_camera.near_plane
+            / dot(ray.direction, render_camera_forward())
         );
         return ray;
     }
 
     // Depth of field
-    var camera_forward: vec3f = (
-        _render_camera.camera_to_world * vec4(0., 0., -1., 0.)
-    ).xyz;
-    var camera_right: vec3f = (
-        _render_camera.camera_to_world * vec4(1., 0., 0., 0.)
-    ).xyz;
-    var camera_up: vec3f = (
-        _render_camera.camera_to_world * vec4(0., 1., 0., 0.)
-    ).xyz;
-
+    var camera_forward: vec3f = render_camera_forward();
     var focal_plane_point: vec3f = (
         ray.origin + camera_forward * _render_camera.focal_distance
     );
-    var focal_plane_normal: vec3f = -camera_forward;
+    var focal_plane_normal: vec3f = camera_forward;
 
     var focal_point_distance: f32 = (
         (dot(focal_plane_normal, focal_plane_point) - dot(ray.origin, focal_plane_normal))
@@ -131,7 +208,7 @@ fn create_render_camera_ray(seed: ptr<function, Seed>, uv_coordinate: vec2f) -> 
 
     var offset: vec2f = uniform_point_in_circle(seed, _render_camera.aperture);
 
-    ray.origin += camera_right * offset.x + camera_up * offset.y;
+    ray.origin += render_camera_right() * offset.x + render_camera_up() * offset.y;
     ray.direction = normalize(focal_point - ray.origin);
 
     return ray;

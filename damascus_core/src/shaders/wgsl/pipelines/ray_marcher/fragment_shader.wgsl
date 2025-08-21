@@ -143,9 +143,14 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
     // Data for the next ray
     var position_on_ray: vec3f = (*ray).origin;
 
+    var max_distance: f32 = (
+        render_camera_far_to_near_plane()
+        / dot((*ray).direction, render_camera_forward())
+    );
+
     // March the ray
     while (
-        distance_travelled < _render_parameters.max_distance
+        distance_travelled < max_distance
         && iterations < _render_parameters.max_ray_steps
         && element_sum_vec3f((*ray).throughput) > pixel_footprint
         && length((*ray).colour) < _render_parameters.max_brightness
@@ -245,7 +250,7 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
 
     var corrected_distance = (
         distance_since_last_bounce
-        + _render_parameters.max_distance
+        + max_distance
         - distance_travelled
     );
 

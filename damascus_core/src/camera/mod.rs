@@ -69,7 +69,7 @@ impl Camera {
         Self {
             focal_length: focal_length,
             horizontal_aperture: horizontal_aperture,
-            near_plane: near_plane,
+            near_plane: near_plane.max(1e-5),
             far_plane: far_plane,
             focal_distance: focal_distance,
             f_stop: f_stop,

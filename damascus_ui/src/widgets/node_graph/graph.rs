@@ -681,7 +681,6 @@ pub fn evaluate_output(
         NodeTemplate::RayMarcher => {
             let mut evaluator = Evaluator::new(node_graph, node_id);
             let scene = evaluator.input_scene("scene")?;
-            let max_distance = evaluator.input_float("max_distance")?;
             let max_ray_steps = evaluator.input_uint("max_ray_steps")?;
             let max_bounces = evaluator.input_uint("max_bounces")?;
             let hit_tolerance = evaluator.input_float("hit_tolerance")?;
@@ -702,7 +701,6 @@ pub fn evaluate_output(
                 vec![render_passes::RenderPasses::RayMarcher {
                     pass: ray_marcher::RayMarcher::default()
                         .scene(scene)
-                        .max_distance(max_distance)
                         .max_ray_steps(max_ray_steps)
                         .max_bounces(max_bounces)
                         .hit_tolerance(hit_tolerance)

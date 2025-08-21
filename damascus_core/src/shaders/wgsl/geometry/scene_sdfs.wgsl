@@ -22,10 +22,10 @@ fn find_nearest_descendant(
     );
 
     // If we are inside the bounding volume we don't want the initial distance
-    // to be to the boundary, so set it to the maximum distance instead.
+    // to be to the boundary, so set it to the maximum instead.
     distance_to_family = select(
         distance_to_family,
-        _render_parameters.max_distance,
+        MAX_F32,
         family_is_bounded && !out_of_familys_boundary,
     );
 
@@ -163,7 +163,7 @@ fn find_nearest_primitive(
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
 ) {
-    var distance_to_scene: f32 = _render_parameters.max_distance;
+    var distance_to_scene: f32 = MAX_F32;
     var primitive: Primitive;
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
@@ -231,7 +231,7 @@ fn distance_to_descendants(
     // to be to the boundary, so set it to the maximum distance instead.
     distance_to_family = select(
         distance_to_family,
-        _render_parameters.max_distance,
+        MAX_F32,
         family_is_bounded && !out_of_familys_boundary,
     );
 
@@ -358,7 +358,7 @@ fn signed_distance_to_scene(
     position: vec3f,
     pixel_footprint: f32,
 ) -> f32 {
-    var distance_to_scene: f32 = _render_parameters.max_distance;
+    var distance_to_scene: f32 = MAX_F32;
     var primitive: Primitive;
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;

@@ -6686,8 +6686,343 @@
         "version": 1
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 46,
+            "version": 7
+          },
+          "label": "primitive",
+          "inputs": [
+            [
+              "siblings",
+              {
+                "idx": 571,
+                "version": 5
+              }
+            ],
+            [
+              "children",
+              {
+                "idx": 572,
+                "version": 5
+              }
+            ],
+            [
+              "material",
+              {
+                "idx": 573,
+                "version": 5
+              }
+            ],
+            [
+              "shape",
+              {
+                "idx": 574,
+                "version": 5
+              }
+            ],
+            [
+              "radius",
+              {
+                "idx": 499,
+                "version": 3
+              }
+            ],
+            [
+              "radii",
+              {
+                "idx": 498,
+                "version": 3
+              }
+            ],
+            [
+              "height",
+              {
+                "idx": 497,
+                "version": 3
+              }
+            ],
+            [
+              "hollow_radius",
+              {
+                "idx": 496,
+                "version": 3
+              }
+            ],
+            [
+              "hollow_height",
+              {
+                "idx": 495,
+                "version": 3
+              }
+            ],
+            [
+              "solid_angle",
+              {
+                "idx": 494,
+                "version": 3
+              }
+            ],
+            [
+              "width",
+              {
+                "idx": 493,
+                "version": 3
+              }
+            ],
+            [
+              "depth",
+              {
+                "idx": 492,
+                "version": 3
+              }
+            ],
+            [
+              "thickness",
+              {
+                "idx": 491,
+                "version": 3
+              }
+            ],
+            [
+              "corner_radius",
+              {
+                "idx": 490,
+                "version": 3
+              }
+            ],
+            [
+              "base",
+              {
+                "idx": 489,
+                "version": 3
+              }
+            ],
+            [
+              "normal",
+              {
+                "idx": 488,
+                "version": 3
+              }
+            ],
+            [
+              "negative_height",
+              {
+                "idx": 487,
+                "version": 3
+              }
+            ],
+            [
+              "positive_height",
+              {
+                "idx": 486,
+                "version": 3
+              }
+            ],
+            [
+              "angle",
+              {
+                "idx": 485,
+                "version": 3
+              }
+            ],
+            [
+              "lower_radius",
+              {
+                "idx": 484,
+                "version": 3
+              }
+            ],
+            [
+              "upper_radius",
+              {
+                "idx": 901,
+                "version": 1
+              }
+            ],
+            [
+              "ring_radius",
+              {
+                "idx": 902,
+                "version": 1
+              }
+            ],
+            [
+              "tube_radius",
+              {
+                "idx": 903,
+                "version": 1
+              }
+            ],
+            [
+              "cap_angle",
+              {
+                "idx": 904,
+                "version": 1
+              }
+            ],
+            [
+              "radial_extent",
+              {
+                "idx": 905,
+                "version": 1
+              }
+            ],
+            [
+              "power",
+              {
+                "idx": 906,
+                "version": 1
+              }
+            ],
+            [
+              "iterations",
+              {
+                "idx": 907,
+                "version": 1
+              }
+            ],
+            [
+              "max_square_radius",
+              {
+                "idx": 908,
+                "version": 1
+              }
+            ],
+            [
+              "scale",
+              {
+                "idx": 909,
+                "version": 1
+              }
+            ],
+            [
+              "min_square_radius",
+              {
+                "idx": 910,
+                "version": 1
+              }
+            ],
+            [
+              "folding_limit",
+              {
+                "idx": 911,
+                "version": 1
+              }
+            ],
+            [
+              "world_matrix",
+              {
+                "idx": 912,
+                "version": 1
+              }
+            ],
+            [
+              "edge_radius",
+              {
+                "idx": 913,
+                "version": 1
+              }
+            ],
+            [
+              "repetition",
+              {
+                "idx": 914,
+                "version": 1
+              }
+            ],
+            [
+              "negative_repetitions",
+              {
+                "idx": 915,
+                "version": 1
+              }
+            ],
+            [
+              "positive_repetitions",
+              {
+                "idx": 916,
+                "version": 1
+              }
+            ],
+            [
+              "spacing",
+              {
+                "idx": 917,
+                "version": 1
+              }
+            ],
+            [
+              "bounding_volume",
+              {
+                "idx": 918,
+                "version": 1
+              }
+            ],
+            [
+              "blend_type",
+              {
+                "idx": 919,
+                "version": 1
+              }
+            ],
+            [
+              "blend_strength",
+              {
+                "idx": 920,
+                "version": 1
+              }
+            ],
+            [
+              "mirror",
+              {
+                "idx": 921,
+                "version": 1
+              }
+            ],
+            [
+              "hollow",
+              {
+                "idx": 922,
+                "version": 1
+              }
+            ],
+            [
+              "wall_thickness",
+              {
+                "idx": 923,
+                "version": 1
+              }
+            ],
+            [
+              "elongate",
+              {
+                "idx": 924,
+                "version": 1
+              }
+            ],
+            [
+              "elongation",
+              {
+                "idx": 925,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 46,
+                "version": 7
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Primitive"
+          }
+        },
+        "version": 7
       },
       {
         "value": {
@@ -7365,6 +7700,428 @@
           ],
           "user_data": {
             "template": "Axis"
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 52,
+            "version": 1
+          },
+          "label": "axis",
+          "inputs": [
+            [
+              "axis",
+              {
+                "idx": 926,
+                "version": 1
+              }
+            ],
+            [
+              "translate",
+              {
+                "idx": 927,
+                "version": 1
+              }
+            ],
+            [
+              "rotate",
+              {
+                "idx": 928,
+                "version": 1
+              }
+            ],
+            [
+              "uniform_scale",
+              {
+                "idx": 929,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 52,
+                "version": 1
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Axis"
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 53,
+            "version": 1
+          },
+          "label": "primitive",
+          "inputs": [
+            [
+              "siblings",
+              {
+                "idx": 930,
+                "version": 1
+              }
+            ],
+            [
+              "children",
+              {
+                "idx": 931,
+                "version": 1
+              }
+            ],
+            [
+              "material",
+              {
+                "idx": 932,
+                "version": 1
+              }
+            ],
+            [
+              "shape",
+              {
+                "idx": 933,
+                "version": 1
+              }
+            ],
+            [
+              "radius",
+              {
+                "idx": 934,
+                "version": 1
+              }
+            ],
+            [
+              "radii",
+              {
+                "idx": 935,
+                "version": 1
+              }
+            ],
+            [
+              "height",
+              {
+                "idx": 936,
+                "version": 1
+              }
+            ],
+            [
+              "hollow_radius",
+              {
+                "idx": 937,
+                "version": 1
+              }
+            ],
+            [
+              "hollow_height",
+              {
+                "idx": 938,
+                "version": 1
+              }
+            ],
+            [
+              "solid_angle",
+              {
+                "idx": 939,
+                "version": 1
+              }
+            ],
+            [
+              "width",
+              {
+                "idx": 940,
+                "version": 1
+              }
+            ],
+            [
+              "depth",
+              {
+                "idx": 941,
+                "version": 1
+              }
+            ],
+            [
+              "thickness",
+              {
+                "idx": 942,
+                "version": 1
+              }
+            ],
+            [
+              "corner_radius",
+              {
+                "idx": 943,
+                "version": 1
+              }
+            ],
+            [
+              "base",
+              {
+                "idx": 944,
+                "version": 1
+              }
+            ],
+            [
+              "normal",
+              {
+                "idx": 945,
+                "version": 1
+              }
+            ],
+            [
+              "negative_height",
+              {
+                "idx": 946,
+                "version": 1
+              }
+            ],
+            [
+              "positive_height",
+              {
+                "idx": 947,
+                "version": 1
+              }
+            ],
+            [
+              "angle",
+              {
+                "idx": 948,
+                "version": 1
+              }
+            ],
+            [
+              "lower_radius",
+              {
+                "idx": 949,
+                "version": 1
+              }
+            ],
+            [
+              "upper_radius",
+              {
+                "idx": 950,
+                "version": 1
+              }
+            ],
+            [
+              "ring_radius",
+              {
+                "idx": 951,
+                "version": 1
+              }
+            ],
+            [
+              "tube_radius",
+              {
+                "idx": 952,
+                "version": 1
+              }
+            ],
+            [
+              "cap_angle",
+              {
+                "idx": 953,
+                "version": 1
+              }
+            ],
+            [
+              "radial_extent",
+              {
+                "idx": 954,
+                "version": 1
+              }
+            ],
+            [
+              "power",
+              {
+                "idx": 955,
+                "version": 1
+              }
+            ],
+            [
+              "iterations",
+              {
+                "idx": 956,
+                "version": 1
+              }
+            ],
+            [
+              "max_square_radius",
+              {
+                "idx": 957,
+                "version": 1
+              }
+            ],
+            [
+              "scale",
+              {
+                "idx": 958,
+                "version": 1
+              }
+            ],
+            [
+              "min_square_radius",
+              {
+                "idx": 959,
+                "version": 1
+              }
+            ],
+            [
+              "folding_limit",
+              {
+                "idx": 960,
+                "version": 1
+              }
+            ],
+            [
+              "world_matrix",
+              {
+                "idx": 961,
+                "version": 1
+              }
+            ],
+            [
+              "edge_radius",
+              {
+                "idx": 962,
+                "version": 1
+              }
+            ],
+            [
+              "repetition",
+              {
+                "idx": 963,
+                "version": 1
+              }
+            ],
+            [
+              "negative_repetitions",
+              {
+                "idx": 964,
+                "version": 1
+              }
+            ],
+            [
+              "positive_repetitions",
+              {
+                "idx": 965,
+                "version": 1
+              }
+            ],
+            [
+              "spacing",
+              {
+                "idx": 966,
+                "version": 1
+              }
+            ],
+            [
+              "bounding_volume",
+              {
+                "idx": 967,
+                "version": 1
+              }
+            ],
+            [
+              "blend_type",
+              {
+                "idx": 968,
+                "version": 1
+              }
+            ],
+            [
+              "blend_strength",
+              {
+                "idx": 969,
+                "version": 1
+              }
+            ],
+            [
+              "mirror",
+              {
+                "idx": 970,
+                "version": 1
+              }
+            ],
+            [
+              "hollow",
+              {
+                "idx": 971,
+                "version": 1
+              }
+            ],
+            [
+              "wall_thickness",
+              {
+                "idx": 972,
+                "version": 1
+              }
+            ],
+            [
+              "elongate",
+              {
+                "idx": 973,
+                "version": 1
+              }
+            ],
+            [
+              "elongation",
+              {
+                "idx": 974,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 53,
+                "version": 1
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Primitive"
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 54,
+            "version": 1
+          },
+          "label": "texture",
+          "inputs": [
+            [
+              "filepath",
+              {
+                "idx": 975,
+                "version": 1
+              }
+            ]
+          ],
+          "outputs": [
+            [
+              "out",
+              {
+                "idx": 54,
+                "version": 1
+              }
+            ]
+          ],
+          "user_data": {
+            "template": "Texture"
           }
         },
         "version": 1
@@ -8047,7 +8804,7 @@
           "value": {
             "UnsignedInteger": {
               "value": {
-                "value": 5,
+                "value": 1,
                 "ui_data": {
                   "tooltip": "Limits the number of times the rays can intersect\nan object per subpixel.",
                   "hidden": false
@@ -9129,7 +9886,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 25.0,
+                "value": 17.0,
                 "ui_data": {
                   "tooltip": "The focal length of the camera.",
                   "hidden": false
@@ -9161,7 +9918,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 2.0,
+                "value": 4.0,
                 "ui_data": {
                   "tooltip": "The focal distance of the camera.",
                   "hidden": false
@@ -9193,7 +9950,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 16.0,
+                "value": 0.1,
                 "ui_data": {
                   "tooltip": "The f-stop of the camera.",
                   "hidden": false
@@ -9225,7 +9982,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 24.576,
+                "value": 24.0,
                 "ui_data": {
                   "tooltip": "The horizontal aperture of the camera.",
                   "hidden": false
@@ -9257,7 +10014,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.1,
+                "value": 0.01,
                 "ui_data": {
                   "tooltip": "The distance to the near plane of the camera.",
                   "hidden": false
@@ -9289,7 +10046,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 10000.0,
+                "value": 100.0,
                 "ui_data": {
                   "tooltip": "The distance to the far plane of the camera.",
                   "hidden": false
@@ -9402,7 +10159,7 @@
           "value": {
             "Bool": {
               "value": {
-                "value": false,
+                "value": true,
                 "ui_data": {
                   "tooltip": "If enabled, this camera will render with depth of field.",
                   "hidden": false
@@ -9506,7 +10263,7 @@
                 "value": [
                   0.0,
                   1.0,
-                  5.0
+                  2.95
                 ],
                 "ui_data": {
                   "tooltip": "The translation of this axis.",
@@ -24425,7 +25182,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.0,
+                "value": 5.0,
                 "ui_data": {
                   "tooltip": "The extinction coefficient of the material.",
                   "hidden": false
@@ -24458,8 +25215,8 @@
             "Vec3": {
               "value": {
                 "value": [
-                  1.0,
-                  1.0,
+                  0.19617367,
+                  0.27661216,
                   1.0
                 ],
                 "ui_data": {
@@ -30436,8 +31193,8 @@
             "Vec3": {
               "value": {
                 "value": [
-                  -0.5,
-                  1.0,
+                  0.3,
+                  0.3,
                   0.0
                 ],
                 "ui_data": {
@@ -30475,7 +31232,7 @@
               "value": {
                 "value": [
                   -45.0,
-                  45.0,
+                  117.0,
                   0.0
                 ],
                 "ui_data": {
@@ -30511,7 +31268,7 @@
           "value": {
             "Float": {
               "value": {
-                "value": 0.8,
+                "value": 0.5,
                 "ui_data": {
                   "tooltip": "The uniform scale of this axis.\n\nWe use uniform scale because the signed distance\nfields cannot have their individual axes scaled.",
                   "hidden": false
@@ -30534,68 +31291,528 @@
         "version": 1
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 484,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The radius of the cone at y = -height/2.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 485,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle between the tip and base of the cone [0-90]\nmeasured between the y-axis and wall of the cone.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 90.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 486,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The distance along the positive y-axis before entering the dome.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 487,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The distance along the negative y-axis before entering the dome.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 488,
+            "version": 3
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The normal direction of the plane.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 489,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The equilateral triangles edge length (xy-plane).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 490,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.05,
+                "ui_data": {
+                  "tooltip": "The radius of the corners of the rhombus' xy-plane parallel face.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 491,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.05,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 492,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The depth (z-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 493,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The width (x-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 494,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle between the edge of the solid angle and the\ny-axis on [0-180] measured between the y-axis and wall\nof the solid angle.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 180.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 495,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The height (y-axis) of the center of the sphere\nthat is cut from the solid, above solidRadius +\nhollowRadius, the result will be a standard\nsphere of radius solidRadius.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 496,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The radius of the sphere that is cut from the solid.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 497,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The height (y-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 498,
+            "version": 3
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.5,
+                  0.5,
+                  0.5
+                ],
+                "ui_data": {
+                  "tooltip": "The radii of the ellipsoid.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
-        "value": null,
-        "version": 2
+        "value": {
+          "id": {
+            "idx": 499,
+            "version": 3
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The radius.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 3
       },
       {
         "value": {
@@ -33507,20 +34724,677 @@
         "version": 3
       },
       {
-        "value": null,
-        "version": 4
+        "value": {
+          "id": {
+            "idx": 571,
+            "version": 5
+          },
+          "typ": "Primitive",
+          "value": {
+            "Primitive": {
+              "value": {
+                "value": [],
+                "ui_data": {
+                  "tooltip": "The siblings of this primitive.\n\nThese will be unaffected by this primitive's\nblend_type and transform.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 5
       },
       {
-        "value": null,
-        "version": 4
+        "value": {
+          "id": {
+            "idx": 572,
+            "version": 5
+          },
+          "typ": "Primitive",
+          "value": {
+            "Primitive": {
+              "value": {
+                "value": [],
+                "ui_data": {
+                  "tooltip": "The children of this primitive.\n\nThese will be transformed using this primitive's\nblend_type and transform.\n\nIf this primitive is a bounding volume, children\noutside of its bounds will not be rendered, and\nincreased performance can be achieved when\nrendering the children.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 5
       },
       {
-        "value": null,
-        "version": 4
+        "value": {
+          "id": {
+            "idx": 573,
+            "version": 5
+          },
+          "typ": "Material",
+          "value": {
+            "Material": {
+              "value": {
+                "value": {
+                  "diffuse_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "diffuse_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_probability": 0.0,
+                  "specular_probability_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_roughness": 0.0,
+                  "specular_roughness_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "specular_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "transmissive_probability": 0.0,
+                  "transmissive_probability_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "transmissive_roughness": 0.0,
+                  "transmissive_roughness_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "extinction_coefficient": 0.0,
+                  "transmissive_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "transmissive_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "emissive_intensity": 0.0,
+                  "emissive_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "emissive_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "refractive_index": 1.3,
+                  "refractive_index_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "scattering_coefficient": 0.0,
+                  "scattering_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "scattering_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  }
+                },
+                "ui_data": {
+                  "tooltip": "The primitive's material.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 5
       },
       {
-        "value": null,
-        "version": 4
+        "value": {
+          "id": {
+            "idx": 574,
+            "version": 5
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "Octahedron",
+                "options": [
+                  "CappedCone",
+                  "CappedTorus",
+                  "Capsule",
+                  "Cone",
+                  "CutSphere",
+                  "Cylinder",
+                  "DeathStar",
+                  "Ellipsoid",
+                  "HexagonalPrism",
+                  "HollowSphere",
+                  "InfiniteCone",
+                  "InfiniteCylinder",
+                  "Link",
+                  "Mandelbox",
+                  "Mandelbulb",
+                  "Octahedron",
+                  "Plane",
+                  "RectangularPrism",
+                  "RectangularPrismFrame",
+                  "Rhombus",
+                  "RoundedCone",
+                  "SolidAngle",
+                  "Sphere",
+                  "Torus",
+                  "TriangularPrism"
+                ],
+                "ui_data": {
+                  "tooltip": "The shape of the primitive.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 5
       },
       {
         "value": {
@@ -34845,7 +36719,7 @@
             "Vec3": {
               "value": {
                 "value": [
-                  0.0,
+                  -0.4,
                   0.5,
                   -0.2
                 ],
@@ -48508,6 +50382,3037 @@
           "_phantom": null
         },
         "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 901,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.125,
+                "ui_data": {
+                  "tooltip": "The radius of the cone at y = height/2.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 902,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.3,
+                "ui_data": {
+                  "tooltip": "The radius (xy-plane) of the ring of the torus.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 903,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.2,
+                "ui_data": {
+                  "tooltip": "The radius of the tube of the torus.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 5.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 904,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle (xy-plane, symmetric about y-axis) to\ncap at, in the range [0-180.].",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 180.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 905,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The maximum distance along the x, y, and z axes.\nie. The vertices are at +/-radial_extent on the x, y,\nand z axes.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 906,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 8.0,
+                "ui_data": {
+                  "tooltip": "One greater than the axes of symmetry in the xy-plane.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 2.0,
+                  "end": 30.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 907,
+            "version": 1
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 10,
+                "ui_data": {
+                  "tooltip": "The number of iterations to compute, the higher this\nis, the slower it will be to compute, but the more\ndetail the fractal will have.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1,
+                  "end": 30
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 908,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 4.0,
+                "ui_data": {
+                  "tooltip": "When the square radius has reached this length, stop iterating.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 9.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 909,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": -1.75,
+                "ui_data": {
+                  "tooltip": "The amount to scale the position between folds.\nCan be negative or positive.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": -5.0,
+                  "end": 5.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 910,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.001,
+                "ui_data": {
+                  "tooltip": "The minimum square radius to use when spherically folding.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.001,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 911,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.8,
+                "ui_data": {
+                  "tooltip": "Clamp the position between +/- this value when\nperforming the box fold. Higher values will result\nin a denser fractal.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.01,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 912,
+            "version": 1
+          },
+          "typ": "Mat4",
+          "value": {
+            "Mat4": {
+              "value": {
+                "value": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The world matrix/axis of the primitive.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOrConstant",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 913,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls of the shape, if\nthe shape is hollow.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 914,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "None",
+                "options": [
+                  "None",
+                  "Finite",
+                  "Infinite"
+                ],
+                "ui_data": {
+                  "tooltip": "Repeat objects in the scene with no extra memory\nconsumption. Note that if the repeated objects overlap\nsome strange things can occur.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 915,
+            "version": 1
+          },
+          "typ": "UVec3",
+          "value": {
+            "UVec3": {
+              "value": {
+                "value": [
+                  0,
+                  0,
+                  0
+                ],
+                "ui_data": {
+                  "tooltip": "The number of repetitions along the negative x, y, and z axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 916,
+            "version": 1
+          },
+          "typ": "UVec3",
+          "value": {
+            "UVec3": {
+              "value": {
+                "value": [
+                  1,
+                  1,
+                  1
+                ],
+                "ui_data": {
+                  "tooltip": "The number of repetitions along the positive x, y, and z axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 917,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The spacing along each positive axis to repeat the objects.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 918,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, this object will act as a bounding volume\nfor all its children. This means that until a ray hits\nthe bounding volume, none of the child object's signed\ndistance fields will be computed. This can vastly\nimprove performance, especially when many complex\nobjects are far from the camera. This option does\nnot always play well with lighting effects that depend\non the number of iterations in the computation such\nas 'ambient occlusion' and 'softened shadows' due\nto the variation near the surface of the bounding object.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 919,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "Union",
+                "options": [
+                  "Union",
+                  "Subtraction",
+                  "Intersection"
+                ],
+                "ui_data": {
+                  "tooltip": "The type of interaction this object will have with its children.\n\n\tUnion: All objects will appear as normal.\n\n\tSubtraction: This object will be subtracted from all of its\n\n\t\tchildren, leaving holes.\n\n\tIntersection: Only the region where this object and its\n\n\t\tchildren overlap will remain.\n\n\tSmooth Union: All children will smoothly blend together\n\n\t\twith this object according to the 'blend strength'.\n\n\tSmooth Subtraction:This object will be subtracted from all\n\n\t\tof its children,  leaving holes that are smoothed\n\n\t\taccording to the 'blend strength'.\n\n\tSmooth Intersection: Only the region where this object\n\n\t\tand its children overlap will remain, and the remaining\n\n\t\tregions will be smoothed according to the 'blend\n\n\t\tstrength'.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 920,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The amount to blend with this primitive's children.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 921,
+            "version": 1
+          },
+          "typ": "BVec3",
+          "value": {
+            "BVec3": {
+              "value": {
+                "value": [
+                  false,
+                  false,
+                  false
+                ],
+                "ui_data": {
+                  "tooltip": "Mirror along the x, y, and z axes.",
+                  "hidden": false
+                },
+                "collapsed": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 922,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, the object will be hollow, with a\nthickness of 'wall thickness'.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 923,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.01,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls of the shape, if\nthe shape is hollow.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.001,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 924,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Enable the elongation of the object.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 925,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The elongation of the object along the respective axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 926,
+            "version": 1
+          },
+          "typ": "Mat4",
+          "value": {
+            "Mat4": {
+              "value": {
+                "value": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The parent axis.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOrConstant",
+          "node": {
+            "idx": 52,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 927,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.5,
+                  1.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The translation of this axis.",
+                  "hidden": false
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 52,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 928,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  -45.0,
+                  -45.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The rotation of this axis.",
+                  "hidden": false
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 52,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 929,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.8,
+                "ui_data": {
+                  "tooltip": "The uniform scale of this axis.\n\nWe use uniform scale because the signed distance\nfields cannot have their individual axes scaled.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.01,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 52,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 930,
+            "version": 1
+          },
+          "typ": "Primitive",
+          "value": {
+            "Primitive": {
+              "value": {
+                "value": [],
+                "ui_data": {
+                  "tooltip": "The siblings of this primitive.\n\nThese will be unaffected by this primitive's\nblend_type and transform.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 931,
+            "version": 1
+          },
+          "typ": "Primitive",
+          "value": {
+            "Primitive": {
+              "value": {
+                "value": [],
+                "ui_data": {
+                  "tooltip": "The children of this primitive.\n\nThese will be transformed using this primitive's\nblend_type and transform.\n\nIf this primitive is a bounding volume, children\noutside of its bounds will not be rendered, and\nincreased performance can be achieved when\nrendering the children.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 932,
+            "version": 1
+          },
+          "typ": "Material",
+          "value": {
+            "Material": {
+              "value": {
+                "value": {
+                  "diffuse_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "diffuse_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_probability": 0.0,
+                  "specular_probability_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_roughness": 0.0,
+                  "specular_roughness_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "specular_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "specular_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "transmissive_probability": 0.0,
+                  "transmissive_probability_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "transmissive_roughness": 0.0,
+                  "transmissive_roughness_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "extinction_coefficient": 0.0,
+                  "transmissive_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "transmissive_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "emissive_intensity": 0.0,
+                  "emissive_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "emissive_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "refractive_index": 1.3,
+                  "refractive_index_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  },
+                  "scattering_coefficient": 0.0,
+                  "scattering_colour": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "scattering_colour_texture": {
+                    "texture_type": "None",
+                    "scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "grade": {
+                      "black_point": 0.0,
+                      "white_point": 1.0,
+                      "lift": 0.0,
+                      "gain": 1.0,
+                      "gamma": 1.0,
+                      "invert": false
+                    },
+                    "octaves": 10,
+                    "lacunarity": 2.0,
+                    "amplitude_gain": 0.75,
+                    "low_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "high_frequency_scale": [
+                      1.0,
+                      1.0,
+                      1.0,
+                      1.0
+                    ],
+                    "low_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "high_frequency_translation": [
+                      0.0,
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "hue_rotation_angles": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "use_trap_colour": false
+                  }
+                },
+                "ui_data": {
+                  "tooltip": "The primitive's material.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 933,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "Torus",
+                "options": [
+                  "CappedCone",
+                  "CappedTorus",
+                  "Capsule",
+                  "Cone",
+                  "CutSphere",
+                  "Cylinder",
+                  "DeathStar",
+                  "Ellipsoid",
+                  "HexagonalPrism",
+                  "HollowSphere",
+                  "InfiniteCone",
+                  "InfiniteCylinder",
+                  "Link",
+                  "Mandelbox",
+                  "Mandelbulb",
+                  "Octahedron",
+                  "Plane",
+                  "RectangularPrism",
+                  "RectangularPrismFrame",
+                  "Rhombus",
+                  "RoundedCone",
+                  "SolidAngle",
+                  "Sphere",
+                  "Torus",
+                  "TriangularPrism"
+                ],
+                "ui_data": {
+                  "tooltip": "The shape of the primitive.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 934,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The radius.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 935,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.5,
+                  0.5,
+                  0.5
+                ],
+                "ui_data": {
+                  "tooltip": "The radii of the ellipsoid.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 936,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The height (y-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 937,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The radius of the sphere that is cut from the solid.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 938,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The height (y-axis) of the center of the sphere\nthat is cut from the solid, above solidRadius +\nhollowRadius, the result will be a standard\nsphere of radius solidRadius.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 939,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle between the edge of the solid angle and the\ny-axis on [0-180] measured between the y-axis and wall\nof the solid angle.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 180.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 940,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The width (x-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 941,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.75,
+                "ui_data": {
+                  "tooltip": "The depth (z-axis).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 942,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.05,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 943,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.05,
+                "ui_data": {
+                  "tooltip": "The radius of the corners of the rhombus' xy-plane parallel face.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 944,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The equilateral triangles edge length (xy-plane).",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 945,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The normal direction of the plane.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 946,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The distance along the negative y-axis before entering the dome.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 947,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The distance along the positive y-axis before entering the dome.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 948,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle between the tip and base of the cone [0-90]\nmeasured between the y-axis and wall of the cone.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 90.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 949,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.25,
+                "ui_data": {
+                  "tooltip": "The radius of the cone at y = -height/2.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 950,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.125,
+                "ui_data": {
+                  "tooltip": "The radius of the cone at y = height/2.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 951,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.3,
+                "ui_data": {
+                  "tooltip": "The radius (xy-plane) of the ring of the torus.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 952,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.2,
+                "ui_data": {
+                  "tooltip": "The radius of the tube of the torus.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 5.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 953,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 30.0,
+                "ui_data": {
+                  "tooltip": "The angle (xy-plane, symmetric about y-axis) to\ncap at, in the range [0-180.].",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 180.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 954,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.5,
+                "ui_data": {
+                  "tooltip": "The maximum distance along the x, y, and z axes.\nie. The vertices are at +/-radial_extent on the x, y,\nand z axes.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 10.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 955,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 8.0,
+                "ui_data": {
+                  "tooltip": "One greater than the axes of symmetry in the xy-plane.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 2.0,
+                  "end": 30.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 956,
+            "version": 1
+          },
+          "typ": "UnsignedInteger",
+          "value": {
+            "UnsignedInteger": {
+              "value": {
+                "value": 10,
+                "ui_data": {
+                  "tooltip": "The number of iterations to compute, the higher this\nis, the slower it will be to compute, but the more\ndetail the fractal will have.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1,
+                  "end": 30
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 957,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 4.0,
+                "ui_data": {
+                  "tooltip": "When the square radius has reached this length, stop iterating.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 1.0,
+                  "end": 9.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 958,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": -1.75,
+                "ui_data": {
+                  "tooltip": "The amount to scale the position between folds.\nCan be negative or positive.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": -5.0,
+                  "end": 5.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 959,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.001,
+                "ui_data": {
+                  "tooltip": "The minimum square radius to use when spherically folding.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.001,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 960,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.8,
+                "ui_data": {
+                  "tooltip": "Clamp the position between +/- this value when\nperforming the box fold. Higher values will result\nin a denser fractal.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.01,
+                  "end": 2.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 961,
+            "version": 1
+          },
+          "typ": "Mat4",
+          "value": {
+            "Mat4": {
+              "value": {
+                "value": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The world matrix/axis of the primitive.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConnectionOrConstant",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 962,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls of the shape, if\nthe shape is hollow.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 963,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "None",
+                "options": [
+                  "None",
+                  "Finite",
+                  "Infinite"
+                ],
+                "ui_data": {
+                  "tooltip": "Repeat objects in the scene with no extra memory\nconsumption. Note that if the repeated objects overlap\nsome strange things can occur.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 964,
+            "version": 1
+          },
+          "typ": "UVec3",
+          "value": {
+            "UVec3": {
+              "value": {
+                "value": [
+                  0,
+                  0,
+                  0
+                ],
+                "ui_data": {
+                  "tooltip": "The number of repetitions along the negative x, y, and z axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 965,
+            "version": 1
+          },
+          "typ": "UVec3",
+          "value": {
+            "UVec3": {
+              "value": {
+                "value": [
+                  1,
+                  1,
+                  1
+                ],
+                "ui_data": {
+                  "tooltip": "The number of repetitions along the positive x, y, and z axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "range": {
+                  "start": 0,
+                  "end": 10
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 966,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  1.0,
+                  1.0,
+                  1.0
+                ],
+                "ui_data": {
+                  "tooltip": "The spacing along each positive axis to repeat the objects.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 967,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, this object will act as a bounding volume\nfor all its children. This means that until a ray hits\nthe bounding volume, none of the child object's signed\ndistance fields will be computed. This can vastly\nimprove performance, especially when many complex\nobjects are far from the camera. This option does\nnot always play well with lighting effects that depend\non the number of iterations in the computation such\nas 'ambient occlusion' and 'softened shadows' due\nto the variation near the surface of the bounding object.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 968,
+            "version": 1
+          },
+          "typ": "ComboBox",
+          "value": {
+            "ComboBox": {
+              "value": {
+                "selected": "Union",
+                "options": [
+                  "Union",
+                  "Subtraction",
+                  "Intersection"
+                ],
+                "ui_data": {
+                  "tooltip": "The type of interaction this object will have with its children.\n\n\tUnion: All objects will appear as normal.\n\n\tSubtraction: This object will be subtracted from all of its\n\n\t\tchildren, leaving holes.\n\n\tIntersection: Only the region where this object and its\n\n\t\tchildren overlap will remain.\n\n\tSmooth Union: All children will smoothly blend together\n\n\t\twith this object according to the 'blend strength'.\n\n\tSmooth Subtraction:This object will be subtracted from all\n\n\t\tof its children,  leaving holes that are smoothed\n\n\t\taccording to the 'blend strength'.\n\n\tSmooth Intersection: Only the region where this object\n\n\t\tand its children overlap will remain, and the remaining\n\n\t\tregions will be smoothed according to the 'blend\n\n\t\tstrength'.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 969,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.0,
+                "ui_data": {
+                  "tooltip": "The amount to blend with this primitive's children.",
+                  "hidden": false
+                },
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 970,
+            "version": 1
+          },
+          "typ": "BVec3",
+          "value": {
+            "BVec3": {
+              "value": {
+                "value": [
+                  false,
+                  false,
+                  false
+                ],
+                "ui_data": {
+                  "tooltip": "Mirror along the x, y, and z axes.",
+                  "hidden": false
+                },
+                "collapsed": false
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 971,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "If enabled, the object will be hollow, with a\nthickness of 'wall thickness'.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 972,
+            "version": 1
+          },
+          "typ": "Float",
+          "value": {
+            "Float": {
+              "value": {
+                "value": 0.01,
+                "ui_data": {
+                  "tooltip": "The thickness of the walls of the shape, if\nthe shape is hollow.",
+                  "hidden": true
+                },
+                "range": {
+                  "start": 0.001,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 973,
+            "version": 1
+          },
+          "typ": "Bool",
+          "value": {
+            "Bool": {
+              "value": {
+                "value": false,
+                "ui_data": {
+                  "tooltip": "Enable the elongation of the object.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 974,
+            "version": 1
+          },
+          "typ": "Vec3",
+          "value": {
+            "Vec3": {
+              "value": {
+                "value": [
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "ui_data": {
+                  "tooltip": "The elongation of the object along the respective axes.",
+                  "hidden": true
+                },
+                "collapsed": false,
+                "is_colour": false,
+                "range": {
+                  "start": 0.0,
+                  "end": 1.0
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 975,
+            "version": 1
+          },
+          "typ": "Filepath",
+          "value": {
+            "Filepath": {
+              "value": {
+                "value": "/home/ob1/Pictures/Screenshots/Screenshot from 2025-08-18 08-58-20.png",
+                "show_image": true,
+                "ui_data": {
+                  "tooltip": "The path to the texture.",
+                  "hidden": false
+                }
+              }
+            }
+          },
+          "kind": "ConstantOnly",
+          "node": {
+            "idx": 54,
+            "version": 1
+          },
+          "shown_inline": true,
+          "_phantom": null
+        },
+        "version": 1
       }
     ],
     "outputs": [
@@ -49191,8 +54096,19 @@
         "version": 1
       },
       {
-        "value": null,
-        "version": 6
+        "value": {
+          "id": {
+            "idx": 46,
+            "version": 7
+          },
+          "node": {
+            "idx": 46,
+            "version": 7
+          },
+          "typ": "Primitive",
+          "_phantom": null
+        },
+        "version": 7
       },
       {
         "value": {
@@ -49265,6 +54181,51 @@
             "version": 1
           },
           "typ": "Mat4",
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 52,
+            "version": 1
+          },
+          "node": {
+            "idx": 52,
+            "version": 1
+          },
+          "typ": "Mat4",
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 53,
+            "version": 1
+          },
+          "node": {
+            "idx": 53,
+            "version": 1
+          },
+          "typ": "Primitive",
+          "_phantom": null
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "id": {
+            "idx": 54,
+            "version": 1
+          },
+          "node": {
+            "idx": 54,
+            "version": 1
+          },
+          "typ": "RenderPass",
           "_phantom": null
         },
         "version": 1
@@ -49613,11 +54574,8 @@
           "version": 0
         },
         {
-          "value": {
-            "idx": 19,
-            "version": 1
-          },
-          "version": 1
+          "value": null,
+          "version": 0
         },
         {
           "value": {
@@ -51646,8 +56604,11 @@
           "version": 0
         },
         {
-          "value": null,
-          "version": 0
+          "value": {
+            "idx": 39,
+            "version": 1
+          },
+          "version": 5
         },
         {
           "value": null,
@@ -51741,8 +56702,11 @@
           "version": 3
         },
         {
-          "value": null,
-          "version": 0
+          "value": {
+            "idx": 53,
+            "version": 1
+          },
+          "version": 3
         },
         {
           "value": null,
@@ -52884,6 +57848,382 @@
             "version": 1
           },
           "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": {
+            "idx": 23,
+            "version": 1
+          },
+          "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": {
+            "idx": 46,
+            "version": 7
+          },
+          "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": {
+            "idx": 39,
+            "version": 1
+          },
+          "version": 1
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": null,
+          "version": 0
+        },
+        {
+          "value": {
+            "idx": 52,
+            "version": 1
+          },
+          "version": 1
         }
       ],
       "children": [
@@ -53042,27 +58382,22 @@
         {
           "value": [
             {
+              "idx": 293,
+              "version": 1
+            },
+            {
               "idx": 149,
               "version": 1
             },
             {
               "idx": 221,
               "version": 1
-            },
-            {
-              "idx": 293,
-              "version": 1
             }
           ],
           "version": 1
         },
         {
-          "value": [
-            {
-              "idx": 79,
-              "version": 1
-            }
-          ],
+          "value": [],
           "version": 1
         },
         {
@@ -53086,18 +58421,23 @@
         {
           "value": [
             {
-              "idx": 363,
-              "version": 1
-            },
-            {
               "idx": 595,
               "version": 3
+            },
+            {
+              "idx": 363,
+              "version": 1
             }
           ],
           "version": 1
         },
         {
-          "value": [],
+          "value": [
+            {
+              "idx": 912,
+              "version": 1
+            }
+          ],
           "version": 1
         },
         {
@@ -53198,15 +58538,23 @@
         {
           "value": [
             {
+              "idx": 932,
+              "version": 1
+            },
+            {
+              "idx": 573,
+              "version": 5
+            },
+            {
               "idx": 516,
               "version": 1
             },
             {
-              "idx": 437,
+              "idx": 603,
               "version": 1
             },
             {
-              "idx": 603,
+              "idx": 437,
               "version": 1
             }
           ],
@@ -53269,11 +58617,15 @@
         {
           "value": [
             {
-              "idx": 800,
-              "version": 3
+              "idx": 930,
+              "version": 1
+            },
+            {
+              "idx": 363,
+              "version": 1
             }
           ],
-          "version": 5
+          "version": 7
         },
         {
           "value": [
@@ -53305,12 +58657,12 @@
         {
           "value": [
             {
-              "idx": 827,
-              "version": 1
-            },
-            {
               "idx": 746,
               "version": 3
+            },
+            {
+              "idx": 827,
+              "version": 1
             }
           ],
           "version": 1
@@ -53320,6 +58672,24 @@
             {
               "idx": 870,
               "version": 1
+            }
+          ],
+          "version": 1
+        },
+        {
+          "value": [
+            {
+              "idx": 961,
+              "version": 1
+            }
+          ],
+          "version": 1
+        },
+        {
+          "value": [
+            {
+              "idx": 596,
+              "version": 3
             }
           ],
           "version": 1
@@ -53369,10 +58739,6 @@
       "version": 1
     },
     {
-      "idx": 18,
-      "version": 1
-    },
-    {
       "idx": 16,
       "version": 1
     },
@@ -53418,10 +58784,6 @@
     },
     {
       "idx": 27,
-      "version": 1
-    },
-    {
-      "idx": 1,
       "version": 1
     },
     {
@@ -53485,10 +58847,6 @@
       "version": 1
     },
     {
-      "idx": 23,
-      "version": 1
-    },
-    {
       "idx": 47,
       "version": 1
     },
@@ -53498,10 +58856,6 @@
     },
     {
       "idx": 32,
-      "version": 1
-    },
-    {
-      "idx": 50,
       "version": 1
     },
     {
@@ -53517,7 +58871,19 @@
       "version": 3
     },
     {
+      "idx": 22,
+      "version": 1
+    },
+    {
+      "idx": 23,
+      "version": 1
+    },
+    {
       "idx": 36,
+      "version": 1
+    },
+    {
+      "idx": 50,
       "version": 1
     },
     {
@@ -53525,7 +58891,27 @@
       "version": 3
     },
     {
-      "idx": 22,
+      "idx": 53,
+      "version": 1
+    },
+    {
+      "idx": 46,
+      "version": 7
+    },
+    {
+      "idx": 52,
+      "version": 1
+    },
+    {
+      "idx": 18,
+      "version": 1
+    },
+    {
+      "idx": 54,
+      "version": 1
+    },
+    {
+      "idx": 1,
       "version": 1
     }
   ],
@@ -53539,355 +58925,379 @@
     },
     {
       "value": {
-        "x": -4343.932,
-        "y": 1895.439
+        "x": -1783.9739,
+        "y": 3655.3828
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4409.5996,
-        "y": 1904.3489
+        "x": -2132.292,
+        "y": 3693.3486
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4520.276,
-        "y": 1815.6316
+        "x": -2950.073,
+        "y": 3037.8333
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4601.1396,
-        "y": 1848.9056
+        "x": -3547.5732,
+        "y": 3283.7046
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4683.446,
-        "y": 1831.1681
+        "x": -4155.769,
+        "y": 3152.6147
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4555.8555,
-        "y": 2053.8875
+        "x": -3212.996,
+        "y": 4798.3105
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4637.851,
-        "y": 2135.91
+        "x": -3818.8389,
+        "y": 5404.3877
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4790.1396,
-        "y": 1908.8398
+        "x": -4944.1313,
+        "y": 3726.5515
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4904.5205,
-        "y": 1924.5619
+        "x": -5789.3,
+        "y": 3842.719
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4907.903,
-        "y": 1796.9136
+        "x": -5814.2695,
+        "y": 2899.5112
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5000.5635,
-        "y": 1957.2612
+        "x": -6498.9604,
+        "y": 4084.3315
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5027.61,
-        "y": 1798.0985
+        "x": -6698.806,
+        "y": 2908.2715
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5028.353,
-        "y": 1668.6755
+        "x": -6704.299,
+        "y": 1951.9443
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5121.018,
-        "y": 1829.023
+        "x": -7388.981,
+        "y": 3136.7817
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5148.066,
-        "y": 1669.8647
+        "x": -7588.8667,
+        "y": 1960.7385
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5147.9854,
-        "y": 1541.6182
+        "x": -7588.3057,
+        "y": 1013.12585
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5240.652,
-        "y": 1701.9647
+        "x": -8273.018,
+        "y": 2197.924
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5267.7007,
-        "y": 1542.8037
+        "x": -8457.854,
+        "y": 1023.8473
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4941.414,
-        "y": 1425.897
+        "x": -6061.911,
+        "y": 158.04895
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5034.076,
-        "y": 1586.2443
+        "x": -6746.62,
+        "y": 1342.8593
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5061.123,
-        "y": 1427.0852
+        "x": -6946.418,
+        "y": 166.82385
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5184.491,
-        "y": 1216.6675
+        "x": -7823.8364,
+        "y": -719.56836
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5163.9634,
-        "y": 1430.3197
+        "x": -9233.021,
+        "y": -2748.8438
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5272.2456,
-        "y": 1260.6058
+        "x": -8472.273,
+        "y": -394.89893
       },
       "version": 3
     },
     {
       "value": {
-        "x": -4157.1147,
-        "y": 1859.8989
+        "x": -266.64038,
+        "y": 3364.913
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4165.3696,
-        "y": 1776.9077
+        "x": -327.6831,
+        "y": 2751.687
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4153.8496,
-        "y": 1942.9695
+        "x": -242.53589,
+        "y": 3978.719
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4155.029,
-        "y": 2028.029
+        "x": -251.26123,
+        "y": 4607.2207
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4173.904,
-        "y": 2119.8506
+        "x": -390.7256,
+        "y": 5285.702
       },
       "version": 3
     },
     {
       "value": {
-        "x": -4082.3708,
-        "y": 2031.7664
+        "x": 285.64355,
+        "y": 4634.841
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4101.6553,
-        "y": 2118.819
+        "x": 143.13477,
+        "y": 5278.0864
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5294.941,
-        "y": 1133.856
+        "x": -8640.021,
+        "y": -1331.4697
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5380.621,
-        "y": 1178.946
+        "x": -9273.098,
+        "y": -998.29443
       },
       "version": 1
     },
     {
       "value": {
-        "x": -4542.535,
-        "y": 1948.7546
+        "x": -3114.5474,
+        "y": 4021.4822
       },
       "version": 3
     },
     {
       "value": {
-        "x": -5074.0356,
-        "y": 1314.9312
+        "x": -6825.8276,
+        "y": -681.60254
       },
       "version": 3
     },
     {
       "value": {
-        "x": -5161.8477,
-        "y": 1356.7152
+        "x": -7652.461,
+        "y": 274.56897
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5412.8975,
-        "y": 1019.40295
+        "x": -9511.597,
+        "y": -2177.1572
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5508.914,
-        "y": 1181.96
+        "x": -10221.127,
+        "y": -976.0283
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5534.375,
-        "y": 1020.7184
+        "x": -10409.127,
+        "y": -2167.4404
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5532.55,
-        "y": 905.1761
+        "x": -10395.68,
+        "y": -3021.2046
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5624.16,
-        "y": 1071.5149
+        "x": -11072.627,
+        "y": -1792.102
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5654.789,
-        "y": 904.0668
+        "x": -11298.939,
+        "y": -3029.391
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5653.2656,
-        "y": 781.0934
+        "x": -11287.654,
+        "y": -3938.0767
       },
       "version": 3
     },
     {
       "value": {
-        "x": -5708.167,
-        "y": 1070.5138
+        "x": -11693.34,
+        "y": -1799.4932
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5742.7017,
-        "y": 844.36707
-      },
-      "version": 1
-    },
-    {
-      "value": null,
-      "version": 0
-    },
-    {
-      "value": {
-        "x": -5832.206,
-        "y": 880.3262
+        "x": -11948.576,
+        "y": -3470.5195
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5773.074,
-        "y": 662.9401
+        "x": -8589.678,
+        "y": -3075.4932
+      },
+      "version": 7
+    },
+    {
+      "value": {
+        "x": -12609.909,
+        "y": -3204.814
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5864.6816,
-        "y": 829.27826
+        "x": -12172.945,
+        "y": -4811.1157
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5892.916,
-        "y": 661.3152
+        "x": -12849.808,
+        "y": -3582.0244
       },
       "version": 1
     },
     {
       "value": {
-        "x": -5948.6885,
-        "y": 828.2741
+        "x": -13058.448,
+        "y": -4823.116
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -13470.558,
+        "y": -3589.4517
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -8352.309,
+        "y": -1816.5747
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": -7726.2646,
+        "y": -2183.6597
+      },
+      "version": 1
+    },
+    {
+      "value": {
+        "x": 2112.276,
+        "y": 4442.9756
       },
       "version": 1
     }
@@ -53895,10 +59305,10 @@
   "node_finder": null,
   "pan_zoom": {
     "pan": {
-      "x": 6626.663,
-      "y": -628.86426
+      "x": 4393.8877,
+      "y": -2064.689
     },
-    "zoom": 0.2706704,
+    "zoom": 2.0,
     "enable_zoom_from_out_of_rect": false
   },
   "_user_state": null

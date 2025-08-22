@@ -22,14 +22,15 @@ use super::widgets::{
         NodeGraph, NodeGraphEditorState, NodeGraphResponse, NodeOutputCache,
     },
     toolbar::show_toolbar,
-    viewport::Viewport,
+    viewport::{Viewport, ViewportState},
 };
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct PersistentData {
     pub context: Context,
-    pub editor_state: NodeGraphEditorState,
+    pub node_graph_editor_state: NodeGraphEditorState,
+    pub viewport_state: ViewportState,
 }
 
 #[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -83,8 +84,11 @@ impl Damascus {
             last_lazy_update: SystemTime::now()
                 - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.0) as u64),
             context: persistent_data.context,
-            node_graph: NodeGraph::new(persistent_data.editor_state),
-            viewport: Viewport::new(creation_context.wgpu_render_state.as_ref().unwrap()),
+            node_graph: NodeGraph::new(persistent_data.node_graph_editor_state),
+            viewport: Viewport::new(
+                persistent_data.viewport_state,
+                creation_context.wgpu_render_state.as_ref().unwrap(),
+            ),
         }
     }
 
@@ -125,7 +129,8 @@ impl eframe::App for Damascus {
             PERSISTENCE_KEY,
             &PersistentData {
                 context: self.context.clone(),
-                editor_state: self.node_graph.editor_state().clone(),
+                node_graph_editor_state: self.node_graph.editor_state().clone(),
+                viewport_state: self.viewport.state,
             },
         );
     }

@@ -29,6 +29,18 @@ use damascus_core::{
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};
 
+#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
+pub struct ViewportState {
+    pub embedded: bool,
+}
+
+impl Default for ViewportState {
+    fn default() -> Self {
+        Self { embedded: true }
+    }
+}
+
 struct ViewportCallback {
     buffer_data: Vec<BufferData>,
 }
@@ -96,7 +108,7 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
 pub struct Viewport {
     pub render_passes: Vec<RenderPasses>,
     pub stats_text: String,
-    embedded: bool,
+    pub state: ViewportState,
     disabled: bool,
     camera_controls_enabled: bool,
 }
@@ -106,7 +118,7 @@ impl Default for Viewport {
         Self {
             render_passes: vec![],
             stats_text: String::new(),
-            embedded: true,
+            state: ViewportState::default(),
             disabled: true,
             camera_controls_enabled: true,
         }
@@ -116,8 +128,11 @@ impl Default for Viewport {
 impl Viewport {
     pub const ICON_SIZE: f32 = 25.;
 
-    pub fn new(render_state: &egui_wgpu::RenderState) -> Self {
-        let mut view = Self::default();
+    pub fn new(viewport_state: ViewportState, render_state: &egui_wgpu::RenderState) -> Self {
+        let mut view = Self {
+            state: viewport_state,
+            ..Default::default()
+        };
         view.reconstruct_render_resources(render_state);
         view
     }
@@ -765,8 +780,8 @@ impl Viewport {
     pub fn show(&mut self, ctx: &egui::Context, render_state: &egui_wgpu::RenderState) {
         let screen_size: egui::Vec2 = ctx.input(|input| input.screen_rect.size());
         let mut reconstruct_render_resources = false;
-        if self.embedded {
-            let mut embedded = self.embedded;
+        if self.state.embedded {
+            let mut embedded = self.state.embedded;
             egui::Window::new("viewer")
                 .open(&mut embedded)
                 .default_width(720.)
@@ -797,7 +812,7 @@ impl Viewport {
                         }
                     }
                 });
-            self.embedded = embedded;
+            self.state.embedded = embedded;
             if reconstruct_render_resources {
                 self.reconstruct_render_resources(render_state);
             }
@@ -812,7 +827,7 @@ impl Viewport {
                     if ctx.input(|i| i.viewport().close_requested())
                         || class != egui::ViewportClass::Immediate
                     {
-                        self.embedded = true;
+                        self.state.embedded = true;
                     } else {
                         egui::CentralPanel::default().show(ctx, |ui| {
                             Self::set_button_backgrounds_transparent(ui);

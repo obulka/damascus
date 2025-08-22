@@ -41,69 +41,6 @@ pub use state::{NodeGraphEditorState, NodeGraphState};
 pub type Graph = egui_node_graph::Graph<NodeData, NodeDataType, NodeValueType, NodeGraphState>;
 pub type NodeOutputCache = Cache<OutputId, NodeValueType>;
 
-struct NodeGraphCallback {
-    buffer_data: Vec<BufferData>,
-}
-
-impl NodeGraphCallback {
-    fn render_pass_descriptor(&self, resource: &RenderResource) -> wgpu::RenderPassDescriptor<'_> {
-        // wgpu::RenderPassDescriptor {
-        //     label: "render to texture",
-        //     color_attachments: &'a [Some(wgpu::RenderPassColorAttachment {
-        //         view: &'tex TextureView,
-        //         depth_slice: None, // TODO support 3d textures
-        //         resolve_target: Option<&'tex TextureView>,
-        //         ops: Operations<Color>,
-        //     })],
-        //     depth_stencil_attachment: None, // TODO support depth buffer
-        //     timestamp_writes: None, // TODO support timestamp queries
-        //     occlusion_query_set: None, // TODO support occlusion culling
-        // }
-        wgpu::RenderPassDescriptor::default()
-    }
-}
-
-impl egui_wgpu::CallbackTrait for NodeGraphCallback {
-    fn prepare(
-        &self,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        _screen_descriptor: &egui_wgpu::ScreenDescriptor,
-        encoder: &mut wgpu::CommandEncoder,
-        resources: &mut egui_wgpu::CallbackResources,
-    ) -> Vec<wgpu::CommandBuffer> {
-        let resources: &RenderResources = resources.get().unwrap();
-
-        for (data, render_resource) in self.buffer_data.iter().zip(&resources.resources) {
-            render_resource.write_bind_groups(queue, data);
-        }
-
-        if resources.resources.len() > 0 {
-            resources.resources[..resources.resources.len() - 1]
-                .iter()
-                .for_each(|resource: &RenderResource| {
-                    resource.paint(
-                        &mut encoder.begin_render_pass(&self.render_pass_descriptor(resource)),
-                    );
-                });
-        }
-
-        vec![]
-    }
-
-    fn paint(
-        &self,
-        _info: egui::PaintCallbackInfo,
-        render_pass: &mut wgpu::RenderPass<'static>,
-        resources: &egui_wgpu::CallbackResources,
-    ) {
-        let resources: &RenderResources = resources.get().unwrap();
-        if let Some(resource) = resources.resources.last() {
-            resource.paint(render_pass);
-        }
-    }
-}
-
 pub struct NodeGraph {
     pub output_cache: NodeOutputCache,
     editor_state: NodeGraphEditorState,

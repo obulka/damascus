@@ -16,7 +16,7 @@ use quick_cache::{
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
 };
 
-use damascus_core::{
+use damascus::{
     camera::Camera,
     geometry::primitive::Primitive,
     lights::Light,

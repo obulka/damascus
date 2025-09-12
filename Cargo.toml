@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "damascus_core",
+    "damascus",
     "damascus_ui",
 ]
 

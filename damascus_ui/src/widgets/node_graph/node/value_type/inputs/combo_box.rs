@@ -3,54 +3,34 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::fmt::Display;
 use std::str::FromStr;
 
 use eframe::egui;
-use strum::IntoEnumIterator;
+
+use damascus::{Enum, Enumerator};
 
 use super::{UIData, UIInput};
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct ComboBox {
-    selected: String,
-    options: Vec<String>,
+    value: Enum,
     ui_data: UIData,
 }
 
 impl ComboBox {
-    pub fn from_enum<E: IntoEnumIterator + Display + FromStr>(enumeration: E) -> Self {
-        let mut options = vec![];
-        for enum_option in E::iter() {
-            options.push(format!("{}", enum_option));
-        }
+    pub fn from<E: Enumerator>(enumerator: E) -> Self {
         Self {
-            selected: format!("{}", enumeration),
-            options: options,
+            value: Enum::from(enumerator),
             ..Default::default()
-        }
-    }
-
-    #[inline]
-    pub fn with_options(mut self, options: Vec<String>) -> Self {
-        self.options = options;
-        self
-    }
-
-    pub fn as_enum<E: IntoEnumIterator + Display + FromStr>(&self) -> anyhow::Result<E> {
-        if let Ok(enum_value) = E::from_str(self.value()) {
-            Ok(enum_value)
-        } else {
-            anyhow::bail!(format!("Could not cast {} to enum.", self.value()))
         }
     }
 }
 
-impl UIInput<String> for ComboBox {
-    fn new(selected: String) -> Self {
+impl UIInput<Enum> for ComboBox {
+    fn new(value: Enum) -> Self {
         Self {
-            selected: selected,
+            value: value,
             ..Default::default()
         }
     }
@@ -60,13 +40,13 @@ impl UIInput<String> for ComboBox {
         ui.horizontal(|ui| {
             self.create_parameter_label(ui, label);
             egui::ComboBox::from_id_salt(label)
-                .selected_text(&self.selected)
+                .selected_text(&self.value.variant)
                 .width(ui.available_width())
                 .show_ui(ui, |ui| {
-                    for enum_option in self.options.iter() {
+                    for enum_option in self.value.variants.iter() {
                         has_changed |= ui
                             .selectable_value(
-                                &mut self.selected,
+                                &mut self.value.variant,
                                 enum_option.to_string(),
                                 enum_option,
                             )
@@ -77,12 +57,12 @@ impl UIInput<String> for ComboBox {
         has_changed
     }
 
-    fn value(&self) -> &String {
-        &self.selected
+    fn value(&self) -> &Enum {
+        &self.value
     }
 
-    fn deref(self) -> String {
-        self.selected
+    fn deref(self) -> Enum {
+        self.value
     }
 
     fn ui_data(&self) -> &UIData {

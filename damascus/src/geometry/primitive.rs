@@ -10,7 +10,7 @@ use strum::{Display, EnumIter, EnumString};
 use super::{BlendType, Repetition, Transform};
 use crate::{
     materials::{GPUMaterial, Material},
-    DualDevice,
+    DualDevice, Enumerator,
 };
 
 #[derive(
@@ -55,6 +55,8 @@ pub enum Shapes {
     Torus,
     TriangularPrism,
 }
+
+impl Enumerator for Shapes {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

@@ -9,9 +9,7 @@ use egui_node_graph;
 use indoc::indoc;
 use strum::{EnumIter, IntoEnumIterator};
 
-use damascus_core::{
-    camera, geometry, lights, materials, render_passes::ray_marcher, scene, textures,
-};
+use damascus::{camera, geometry, lights, materials, render_passes::ray_marcher, scene, textures};
 
 use super::{Graph, NodeGraph, NodeGraphResponse, NodeGraphState, NodeOutputCache};
 
@@ -393,14 +391,14 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "translate",
-                    Vec3::from_vec3(glam::Vec3::ZERO).with_ui_data(
+                    Vec3::new(glam::Vec3::ZERO).with_ui_data(
                         UIData::default().with_tooltip("The translation of this axis."),
                     ),
                 );
                 input_vector3(
                     graph,
                     "rotate",
-                    Vec3::from_vec3(glam::Vec3::ZERO)
+                    Vec3::new(glam::Vec3::ZERO)
                         .with_ui_data(UIData::default().with_tooltip("The rotation of this axis.")),
                 );
                 input_float(
@@ -535,7 +533,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "light_type",
-                    ComboBox::from_enum::<lights::Lights>(default_light.light_type).with_ui_data(
+                    ComboBox::from(default_light.light_type).with_ui_data(
                         UIData::default().with_tooltip(indoc! {
                             "The type of non-physical light to create.\n
                             \tPoint: A point light.\n
@@ -548,7 +546,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "direction",
-                    Vec3::from_vec3(glam::Vec3::NEG_Y).with_ui_data(
+                    Vec3::new(glam::Vec3::NEG_Y).with_ui_data(
                         UIData::default()
                             .with_tooltip("The direction vector of the light.")
                             .with_hidden(),
@@ -557,7 +555,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "position",
-                    Vec3::from_vec3(glam::Vec3::Y).with_ui_data(
+                    Vec3::new(glam::Vec3::Y).with_ui_data(
                         UIData::default()
                             .with_tooltip("The position of the point light.")
                             .with_hidden(),
@@ -592,7 +590,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "colour",
-                    Vec3::from_vec3(default_light.colour)
+                    Vec3::new(default_light.colour)
                         .with_ui_data(UIData::default().with_tooltip("The light colour."))
                         .as_colour(),
                 );
@@ -687,7 +685,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "diffuse_colour",
-                    Vec3::from_vec3(default_material.diffuse_colour)
+                    Vec3::new(default_material.diffuse_colour)
                         .with_ui_data(
                             UIData::default().with_tooltip("The diffuse colour of the material."),
                         )
@@ -740,7 +738,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "specular_colour",
-                    Vec3::from_vec3(default_material.specular_colour)
+                    Vec3::new(default_material.specular_colour)
                         .with_ui_data(
                             UIData::default().with_tooltip("The specular colour of the material."),
                         )
@@ -801,7 +799,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "transmissive_colour",
-                    Vec3::from_vec3(default_material.transmissive_colour)
+                    Vec3::new(default_material.transmissive_colour)
                         .with_ui_data(
                             UIData::default()
                                 .with_tooltip("The transmitted colour of the material."),
@@ -828,7 +826,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "emissive_colour",
-                    Vec3::from_vec3(default_material.emissive_colour)
+                    Vec3::new(default_material.emissive_colour)
                         .with_ui_data(
                             UIData::default().with_tooltip("The emissive colour of the material."),
                         )
@@ -873,7 +871,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "scattering_colour",
-                    Vec3::from_vec3(default_material.scattering_colour)
+                    Vec3::new(default_material.scattering_colour)
                         .with_ui_data(
                             UIData::default()
                                 .with_tooltip("The scattering colour of the material."),
@@ -923,10 +921,9 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "shape",
-                    ComboBox::from_enum::<geometry::primitive::Shapes>(default_primitive.shape)
-                        .with_ui_data(
-                            UIData::default().with_tooltip("The shape of the primitive."),
-                        ),
+                    ComboBox::from(default_primitive.shape).with_ui_data(
+                        UIData::default().with_tooltip("The shape of the primitive."),
+                    ),
                 );
                 // Sphere dimensions
                 input_float(
@@ -941,7 +938,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "radii",
-                    Vec3::from_vec3(glam::Vec3::splat(0.5)).with_ui_data(
+                    Vec3::new(glam::Vec3::splat(0.5)).with_ui_data(
                         UIData::default()
                             .with_tooltip("The radii of the ellipsoid.")
                             .with_hidden(),
@@ -1074,7 +1071,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "normal",
-                    Vec3::from_vec3(glam::Vec3::Z).with_ui_data(
+                    Vec3::new(glam::Vec3::Z).with_ui_data(
                         UIData::default()
                             .with_tooltip("The normal direction of the plane.")
                             .with_hidden(),
@@ -1301,12 +1298,13 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "repetition",
-                    ComboBox::from_enum::<geometry::Repetition>(default_primitive.repetition)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    ComboBox::from(default_primitive.repetition).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "Repeat objects in the scene with no extra memory
                             consumption. Note that if the repeated objects overlap
                             some strange things can occur."
-                        })),
+                        }),
+                    ),
                 );
                 input_uint_vector3(
                     graph,
@@ -1333,7 +1331,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "spacing",
-                    Vec3::from_vec3(default_primitive.spacing).with_ui_data(
+                    Vec3::new(default_primitive.spacing).with_ui_data(
                         UIData::default()
                             .with_tooltip(
                                 "The spacing along each positive axis to repeat the objects.",
@@ -1362,8 +1360,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "blend_type",
-                    ComboBox::from_enum::<geometry::BlendType>(default_primitive.blend_type)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    ComboBox::from(default_primitive.blend_type).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "The type of interaction this object will have with its children.\n
                             \tUnion: All objects will appear as normal.\n
                             \tSubtraction: This object will be subtracted from all of its\n
@@ -1379,7 +1377,8 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                             \t\tand its children overlap will remain, and the remaining\n
                             \t\tregions will be smoothed according to the 'blend\n
                             \t\tstrength'.",
-                        })),
+                        }),
+                    ),
                 );
                 input_float(
                     graph,
@@ -1430,7 +1429,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "elongation",
-                    Vec3::from_vec3(default_primitive.elongation).with_ui_data(
+                    Vec3::new(default_primitive.elongation).with_ui_data(
                         UIData::default()
                             .with_tooltip("The elongation of the object along the respective axes.")
                             .with_hidden(),
@@ -1443,15 +1442,14 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "texture_type",
-                    ComboBox::from_enum::<materials::ProceduralTextureType>(
-                        default_procedural_texture.texture_type,
-                    )
-                    .with_ui_data(UIData::default().with_tooltip("The type of texture to use.")),
+                    ComboBox::from(default_procedural_texture.texture_type).with_ui_data(
+                        UIData::default().with_tooltip("The type of texture to use."),
+                    ),
                 );
                 input_vector4(
                     graph,
                     "scale",
-                    Vec4::from_vec4(default_procedural_texture.scale)
+                    Vec4::new(default_procedural_texture.scale)
                         .with_ui_data(
                             UIData::default()
                                 .with_tooltip("The scale factor of the texture.")
@@ -1557,7 +1555,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector4(
                     graph,
                     "low_frequency_scale",
-                    Vec4::from_vec4(default_procedural_texture.low_frequency_scale).with_ui_data(
+                    Vec4::new(default_procedural_texture.low_frequency_scale).with_ui_data(
                         UIData::default()
                             .with_tooltip("The amount to scale lower frequencies between octaves.")
                             .with_hidden(),
@@ -1566,7 +1564,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector4(
                     graph,
                     "high_frequency_scale",
-                    Vec4::from_vec4(default_procedural_texture.high_frequency_scale).with_ui_data(
+                    Vec4::new(default_procedural_texture.high_frequency_scale).with_ui_data(
                         UIData::default()
                             .with_tooltip("The amount to scale higher frequencies between octaves.")
                             .with_hidden(),
@@ -1575,26 +1573,24 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector4(
                     graph,
                     "low_frequency_translation",
-                    Vec4::from_vec4(default_procedural_texture.low_frequency_translation)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip(
-                                    "The amount to translate lower frequencies between octaves.",
-                                )
-                                .with_hidden(),
-                        ),
+                    Vec4::new(default_procedural_texture.low_frequency_translation).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(
+                                "The amount to translate lower frequencies between octaves.",
+                            )
+                            .with_hidden(),
+                    ),
                 );
                 input_vector4(
                     graph,
                     "high_frequency_translation",
-                    Vec4::from_vec4(default_procedural_texture.high_frequency_translation)
-                        .with_ui_data(
-                            UIData::default()
-                                .with_tooltip(
-                                    "The amount to translate higher frequencies between octaves.",
-                                )
-                                .with_hidden(),
-                        ),
+                    Vec4::new(default_procedural_texture.high_frequency_translation).with_ui_data(
+                        UIData::default()
+                            .with_tooltip(
+                                "The amount to translate higher frequencies between octaves.",
+                            )
+                            .with_hidden(),
+                    ),
                 );
                 input_bool(
                     graph,
@@ -1617,7 +1613,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_vector3(
                     graph,
                     "hue_rotation_angles",
-                    Vec3::from_vec3(default_procedural_texture.hue_rotation_angles).with_ui_data(
+                    Vec3::new(default_procedural_texture.hue_rotation_angles).with_ui_data(
                         UIData::default()
                             .with_tooltip("Rotation of the colour.")
                             .with_hidden(),
@@ -1788,14 +1784,15 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 input_combo_box(
                     graph,
                     "output_aov",
-                    ComboBox::from_enum::<textures::AOVs>(default_ray_marcher.output_aov)
-                        .with_ui_data(UIData::default().with_tooltip(indoc! {
+                    ComboBox::from(default_ray_marcher.output_aov).with_ui_data(
+                        UIData::default().with_tooltip(indoc! {
                             "The AOV type to output.\nThe stats AOV has the
                             average number of bounces in the red channel,
                             average number of steps in the green channel,
                             and the distance travelled in the blue channel.
                             Each is displayed as a fraction of the maximums."
-                        })),
+                        }),
+                    ),
                 );
                 output_render_pass(graph, "out");
             }

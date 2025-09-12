@@ -15,7 +15,7 @@ use eframe::{
 };
 use glam::UVec2;
 
-use damascus_core::{
+use damascus::{
     camera::Camera,
     geometry::primitive::Primitive,
     lights::Light,

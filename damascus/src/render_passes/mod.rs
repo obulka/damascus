@@ -355,6 +355,7 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
         target_state: wgpu::ColorTargetState,
         bind_groups: &BindGroups,
     ) -> wgpu::RenderPipeline {
+        println!("{:?}", target_state);
         let pipeline_layout: wgpu::PipelineLayout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some(&(self.label() + " pipeline layout")),

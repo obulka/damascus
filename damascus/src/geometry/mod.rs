@@ -9,6 +9,8 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 pub mod primitive;
 
+use crate::Enumerator;
+
 #[repr(C)]
 #[derive(Debug, Default, Copy, Clone, AsStd430, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -40,6 +42,8 @@ pub enum BlendType {
     Intersection,
 }
 
+impl Enumerator for BlendType {}
+
 #[derive(
     Debug,
     Display,
@@ -60,3 +64,5 @@ pub enum Repetition {
     Finite,
     Infinite,
 }
+
+impl Enumerator for Repetition {}

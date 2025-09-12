@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 use glam;
 use strum::{Display, EnumIter, EnumString};
 
-use super::DualDevice;
+use super::{DualDevice, Enumerator};
 
 #[derive(
     Debug,
@@ -32,6 +32,8 @@ pub enum AOVs {
     Cryptomatte,
     Stats,
 }
+
+impl Enumerator for AOVs {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

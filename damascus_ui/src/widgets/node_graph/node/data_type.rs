@@ -8,14 +8,13 @@ use std::borrow::Cow;
 use eframe::egui;
 use egui_node_graph::DataTypeTrait;
 
-use super::NodeGraphState;
+use super::{value_type::NodeValueType, NodeGraphState};
 
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow
 /// attaching incompatible datatypes.
 #[derive(Clone, PartialEq, Debug, Eq, serde::Serialize, serde::Deserialize)]
 pub enum NodeDataType {
-    // Base types
     Bool,
     BVec3,
     ComboBox,
@@ -30,8 +29,6 @@ pub enum NodeDataType {
     Vec4,
     Mat3,
     Mat4,
-
-    // Composite types
     Camera,
     Light,
     Material,

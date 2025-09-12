@@ -3,15 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::fmt::Display;
-use std::str::FromStr;
-
 use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
-use strum::IntoEnumIterator;
 
-use damascus_core::{camera, geometry::primitive, lights, materials, render_passes, scene};
+use damascus::{
+    camera, geometry::primitive, lights, materials, render_passes, scene, Enum, Enumerator,
+};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},
@@ -128,9 +126,9 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to an enum
-    pub fn try_to_enum<E: IntoEnumIterator + Display + FromStr>(self) -> anyhow::Result<E> {
+    pub fn try_to_enum<E: Enumerator>(self) -> anyhow::Result<E> {
         if let NodeValueType::ComboBox { value } = self {
-            value.as_enum::<E>()
+            Ok(value.value().as_enumerator())
         } else {
             anyhow::bail!("Invalid cast from {:?} to combo_box", self)
         }
@@ -166,7 +164,7 @@ impl NodeValueType {
     /// Tries to downcast this value type to a vector3
     pub fn try_to_vec3(self) -> anyhow::Result<glam::Vec3> {
         if let NodeValueType::Vec3 { value } = self {
-            Ok(value.as_vec3())
+            Ok(value.deref())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec3", self)
         }
@@ -175,7 +173,7 @@ impl NodeValueType {
     /// Tries to downcast this value type to a vector4
     pub fn try_to_vec4(self) -> anyhow::Result<glam::Vec4> {
         if let NodeValueType::Vec4 { value } = self {
-            Ok(value.as_vec4())
+            Ok(value.deref())
         } else {
             anyhow::bail!("Invalid cast from {:?} to Vec4", self)
         }

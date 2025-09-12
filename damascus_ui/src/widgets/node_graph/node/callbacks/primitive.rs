@@ -5,7 +5,7 @@
 
 use egui_node_graph::NodeId;
 
-use damascus_core::geometry::{self, primitive};
+use damascus::geometry::{self, primitive};
 
 use super::{
     super::{Graph, NodeGraphResponse},
@@ -71,128 +71,127 @@ impl NodeCallbacks for PrimitiveCallbacks {
                                 "folding_limit",
                             ]);
                             match input_param.value() {
-                                NodeValueType::ComboBox { ref value } => {
-                                    match value.as_enum::<primitive::Shapes>() {
-                                        Ok(primitive::Shapes::CappedCone)
-                                        | Ok(primitive::Shapes::RoundedCone) => {
+                                NodeValueType::ComboBox { value } => {
+                                    match value.value().as_enumerator() {
+                                        primitive::Shapes::CappedCone
+                                        | primitive::Shapes::RoundedCone => {
                                             to_show.push("height");
                                             to_show.push("lower_radius");
                                             to_show.push("upper_radius");
                                         }
-                                        Ok(primitive::Shapes::CappedTorus) => {
+                                        primitive::Shapes::CappedTorus => {
                                             to_show.push("ring_radius");
                                             to_show.push("tube_radius");
                                             to_show.push("cap_angle");
                                         }
-                                        Ok(primitive::Shapes::Capsule) => {
+                                        primitive::Shapes::Capsule => {
                                             to_show.push("radius");
                                             to_show.push("negative_height");
                                             to_show.push("positive_height");
                                         }
-                                        Ok(primitive::Shapes::Cone) => {
+                                        primitive::Shapes::Cone => {
                                             to_show.push("angle");
                                             to_show.push("height");
                                         }
-                                        Ok(primitive::Shapes::CutSphere) => {
+                                        primitive::Shapes::CutSphere => {
                                             to_show.push("radius");
                                             to_show.push("height");
                                         }
-                                        Ok(primitive::Shapes::Cylinder) => {
+                                        primitive::Shapes::Cylinder => {
                                             to_show.push("radius");
                                             to_show.push("height");
                                         }
-                                        Ok(primitive::Shapes::DeathStar) => {
+                                        primitive::Shapes::DeathStar => {
                                             to_show.push("radius");
                                             to_show.push("hollow_radius");
                                             to_show.push("hollow_height");
                                         }
-                                        Ok(primitive::Shapes::Ellipsoid) => {
+                                        primitive::Shapes::Ellipsoid => {
                                             to_show.push("radii");
                                         }
-                                        Ok(primitive::Shapes::HexagonalPrism) => {
+                                        primitive::Shapes::HexagonalPrism => {
                                             to_show.push("height");
                                             to_show.push("depth");
                                         }
-                                        Ok(primitive::Shapes::HollowSphere) => {
+                                        primitive::Shapes::HollowSphere => {
                                             to_show.push("radius");
                                             to_show.push("height");
                                             to_show.push("thickness");
                                         }
-                                        Ok(primitive::Shapes::InfiniteCone) => {
+                                        primitive::Shapes::InfiniteCone => {
                                             to_show.push("angle");
                                         }
-                                        Ok(primitive::Shapes::InfiniteCylinder) => {
+                                        primitive::Shapes::InfiniteCylinder => {
                                             to_show.push("radius");
                                         }
-                                        Ok(primitive::Shapes::Link) => {
+                                        primitive::Shapes::Link => {
                                             to_show.push("ring_radius");
                                             to_show.push("tube_radius");
                                             to_show.push("height");
                                         }
-                                        Ok(primitive::Shapes::Mandelbox) => {
+                                        primitive::Shapes::Mandelbox => {
                                             to_show.push("scale");
                                             to_show.push("iterations");
                                             to_show.push("min_square_radius");
                                             to_show.push("folding_limit");
                                         }
-                                        Ok(primitive::Shapes::Mandelbulb) => {
+                                        primitive::Shapes::Mandelbulb => {
                                             to_show.push("power");
                                             to_show.push("iterations");
                                             to_show.push("max_square_radius");
                                         }
-                                        Ok(primitive::Shapes::Octahedron) => {
+                                        primitive::Shapes::Octahedron => {
                                             to_show.push("radial_extent");
                                         }
-                                        Ok(primitive::Shapes::Plane) => {
+                                        primitive::Shapes::Plane => {
                                             to_show.push("normal");
                                         }
-                                        Ok(primitive::Shapes::RectangularPrism) => {
+                                        primitive::Shapes::RectangularPrism => {
                                             to_show.push("width");
                                             to_show.push("height");
                                             to_show.push("depth");
                                         }
-                                        Ok(primitive::Shapes::RectangularPrismFrame) => {
+                                        primitive::Shapes::RectangularPrismFrame => {
                                             to_show.push("width");
                                             to_show.push("height");
                                             to_show.push("depth");
                                             to_show.push("thickness");
                                         }
-                                        Ok(primitive::Shapes::Rhombus) => {
+                                        primitive::Shapes::Rhombus => {
                                             to_show.push("width");
                                             to_show.push("height");
                                             to_show.push("depth");
                                             to_show.push("corner_radius");
                                         }
-                                        Ok(primitive::Shapes::SolidAngle) => {
+                                        primitive::Shapes::SolidAngle => {
                                             to_show.push("radius");
                                             to_show.push("solid_angle");
                                         }
-                                        Ok(primitive::Shapes::Sphere) => {
+                                        primitive::Shapes::Sphere => {
                                             to_show.push("radius");
                                         }
-                                        Ok(primitive::Shapes::Torus) => {
+                                        primitive::Shapes::Torus => {
                                             to_show.push("ring_radius");
                                             to_show.push("tube_radius");
                                         }
-                                        Ok(primitive::Shapes::TriangularPrism) => {
+                                        primitive::Shapes::TriangularPrism => {
                                             to_show.push("base");
                                             to_show.push("depth");
                                         }
-                                        _ => {}
                                     }
                                 }
                                 _ => {}
                             }
                         }
                         "repetition" => match input_param.value() {
-                            NodeValueType::ComboBox { ref value } => {
-                                match value.as_enum::<geometry::Repetition>() {
-                                    Ok(geometry::Repetition::Finite) => {
+                            NodeValueType::ComboBox { value } => {
+                                match value.value().as_enumerator() {
+                                    geometry::Repetition::Finite => {
                                         to_show.push("negative_repetitions");
                                         to_show.push("positive_repetitions");
                                         to_show.push("spacing");
                                     }
-                                    Ok(geometry::Repetition::Infinite) => {
+                                    geometry::Repetition::Infinite => {
                                         to_hide.push("negative_repetitions");
                                         to_hide.push("positive_repetitions");
                                         to_show.push("spacing");

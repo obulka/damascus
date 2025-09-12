@@ -10,7 +10,7 @@ use eframe::egui;
 use egui_node_graph::{NodeId, NodeResponse};
 use serde_hashkey::{to_key_with_ordered_float, Key, OrderedFloatPolicy};
 
-use damascus_core::render_passes::RenderPasses;
+use damascus::render_passes::RenderPasses;
 
 use super::widgets::{
     node_graph::{

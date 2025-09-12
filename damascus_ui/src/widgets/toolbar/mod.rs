@@ -90,7 +90,7 @@ pub fn show_toolbar(
     modal.show_dialog();
 
     egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {
-        egui::menu::bar(ui, |ui| {
+        egui::MenuBar::new().ui(ui, |ui| {
             // File menu
             let mut new_requested: bool = egui_context.memory(|memory| memory.focused().is_none())
                 && egui_context.input(|input| {
@@ -133,7 +133,7 @@ pub fn show_toolbar(
                     .clicked();
 
                 if load_requested || save_requested || save_as_requested {
-                    ui.close_menu();
+                    ui.close();
                 }
             });
 

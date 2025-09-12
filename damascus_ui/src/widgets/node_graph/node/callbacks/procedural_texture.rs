@@ -5,7 +5,7 @@
 
 use egui_node_graph::{Node, NodeId};
 
-use damascus_core::materials::ProceduralTextureType;
+use damascus::materials::ProceduralTextureType;
 
 use super::{
     super::{Graph, NodeData, NodeGraphResponse},
@@ -49,8 +49,8 @@ impl NodeCallbacks for ProceduralTextureCallbacks {
                     match input_name.as_str() {
                         "texture_type" => match input_param.value() {
                             NodeValueType::ComboBox { ref value } => {
-                                match value.as_enum::<ProceduralTextureType>() {
-                                    Ok(ProceduralTextureType::Grade) => {
+                                match value.value().as_enumerator() {
+                                    ProceduralTextureType::Grade => {
                                         to_show.push("black_point");
                                         to_show.push("white_point");
                                         to_show.push("lift");
@@ -74,7 +74,7 @@ impl NodeCallbacks for ProceduralTextureCallbacks {
                                         to_hide.push("low_frequency_translation");
                                         to_hide.push("high_frequency_translation");
                                     }
-                                    Ok(ProceduralTextureType::Checkerboard) => {
+                                    ProceduralTextureType::Checkerboard => {
                                         to_show.push("scale");
                                         to_show.push("black_point");
                                         to_show.push("white_point");
@@ -98,8 +98,8 @@ impl NodeCallbacks for ProceduralTextureCallbacks {
                                         to_hide.push("low_frequency_translation");
                                         to_hide.push("high_frequency_translation");
                                     }
-                                    Ok(ProceduralTextureType::FBMNoise)
-                                    | Ok(ProceduralTextureType::TurbulenceNoise) => {
+                                    ProceduralTextureType::FBMNoise
+                                    | ProceduralTextureType::TurbulenceNoise => {
                                         to_show.push("scale");
                                         to_show.push("black_point");
                                         to_show.push("white_point");

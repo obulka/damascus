@@ -13,7 +13,7 @@ use super::{create_drag_value_ui, Collapsible, Colour, RangedInput, UIData, UIIn
 #[derive(Clone, PartialEq, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Vec3 {
-    value: [f32; 3],
+    value: glam::Vec3,
     ui_data: UIData,
     collapsed: bool,
     pub is_colour: bool,
@@ -23,7 +23,7 @@ pub struct Vec3 {
 impl Default for Vec3 {
     fn default() -> Self {
         Self {
-            value: [0., 0., 0.],
+            value: glam::Vec3::ZERO,
             ui_data: UIData::default(),
             collapsed: false,
             is_colour: false,
@@ -32,32 +32,19 @@ impl Default for Vec3 {
     }
 }
 
-impl Vec3 {
-    pub fn from_vec3(value: glam::Vec3) -> Self {
-        return Self {
-            value: value.to_array(),
-            ..Default::default()
-        };
-    }
-
-    pub fn as_vec3(&self) -> glam::Vec3 {
-        glam::Vec3::from_array(self.value)
-    }
-}
-
-impl UIInput<[f32; 3]> for Vec3 {
-    fn new(value: [f32; 3]) -> Self {
+impl UIInput<glam::Vec3> for Vec3 {
+    fn new(value: glam::Vec3) -> Self {
         Self {
             value: value,
             ..Default::default()
         }
     }
 
-    fn value(&self) -> &[f32; 3] {
+    fn value(&self) -> &glam::Vec3 {
         &self.value
     }
 
-    fn deref(self) -> [f32; 3] {
+    fn deref(self) -> glam::Vec3 {
         self.value
     }
 
@@ -70,7 +57,7 @@ impl UIInput<[f32; 3]> for Vec3 {
     }
 }
 
-impl Colour<[f32; 3]> for Vec3 {
+impl Colour<glam::Vec3> for Vec3 {
     fn is_colour(&self) -> &bool {
         &self.is_colour
     }
@@ -80,7 +67,7 @@ impl Colour<[f32; 3]> for Vec3 {
     }
 }
 
-impl Collapsible<[f32; 3]> for Vec3 {
+impl Collapsible<glam::Vec3> for Vec3 {
     fn with_collapsed(mut self) -> Self {
         self.collapsed = true;
         self
@@ -99,9 +86,9 @@ impl Collapsible<[f32; 3]> for Vec3 {
     }
 }
 
-impl RangedInput<[f32; 3], f32> for Vec3 {
+impl RangedInput<glam::Vec3, f32> for Vec3 {
     fn value_mut(&mut self) -> &mut f32 {
-        &mut self.value[0]
+        &mut self.value.x
     }
 
     fn range_mut(&mut self) -> &mut RangeInclusive<f32> {
@@ -118,15 +105,15 @@ impl RangedInput<[f32; 3], f32> for Vec3 {
             self.create_parameter_label(ui, label);
             if self.collapsed() {
                 has_changed |= ui.add(self.create_slider()).changed();
-                self.value[1] = self.value[0];
-                self.value[2] = self.value[0];
+                self.value.y = self.value.x;
+                self.value.z = self.value.x;
             } else {
-                has_changed |= create_drag_value_ui(ui, &mut self.value[0]).changed();
-                has_changed |= create_drag_value_ui(ui, &mut self.value[1]).changed();
-                has_changed |= create_drag_value_ui(ui, &mut self.value[2]).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.x).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.y).changed();
+                has_changed |= create_drag_value_ui(ui, &mut self.value.z).changed();
             }
             if self.is_colour && !self.collapsed() {
-                has_changed |= ui.color_edit_button_rgb(&mut self.value).changed();
+                has_changed |= ui.color_edit_button_rgb(self.value.as_mut()).changed();
             }
             has_changed |= self.collapse_button(ui);
         });

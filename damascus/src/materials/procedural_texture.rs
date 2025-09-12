@@ -9,7 +9,7 @@ use strum::{Display, EnumIter, EnumString};
 
 use crate::{
     textures::{GPUGrade, Grade},
-    DualDevice,
+    DualDevice, Enumerator,
 };
 
 #[derive(
@@ -34,6 +34,8 @@ pub enum ProceduralTextureType {
     TurbulenceNoise,
     // VoronoiNoise,
 }
+
+impl Enumerator for ProceduralTextureType {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

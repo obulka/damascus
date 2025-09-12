@@ -8,7 +8,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 crevice = { version = "0.18.0", features = ["glam"] }
-damascus_core = { path = "../damascus_core" }
+damascus = { path = "../damascus" }
 anyhow = "1.0"
 eframe = { version = "0.32", features = ["persistence", "wgpu"]}
 egui_extras = { version = "0.32", features = ["all_loaders"] }

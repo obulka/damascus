@@ -3,19 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::fmt::Display;
-use std::str::FromStr;
-
 use egui_node_graph;
 use glam::Vec4Swizzles;
-use strum::IntoEnumIterator;
 
-use damascus_core::{
+use damascus::{
     camera,
     geometry::{self, primitive},
     lights, materials,
     render_passes::{self, ray_marcher, texture, RenderPass},
-    scene, textures,
+    scene, textures, Enumerator,
 };
 
 use super::node::{
@@ -85,10 +81,7 @@ pub fn evaluate_output(
             self.evaluate_input(name)?.try_to_bvec3()
         }
 
-        fn input_combo_box<E: IntoEnumIterator + Display + FromStr>(
-            &mut self,
-            name: &str,
-        ) -> anyhow::Result<E> {
+        fn input_combo_box<E: Enumerator>(&mut self, name: &str) -> anyhow::Result<E> {
             self.evaluate_input(name)?.try_to_enum::<E>()
         }
 

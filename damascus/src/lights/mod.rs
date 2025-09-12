@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 use glam::Vec3;
 use strum::{Display, EnumIter, EnumString};
 
-use crate::DualDevice;
+use crate::{DualDevice, Enumerator};
 
 #[derive(
     Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
@@ -19,6 +19,8 @@ pub enum Lights {
     #[default]
     AmbientOcclusion,
 }
+
+impl Enumerator for Lights {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]

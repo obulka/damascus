@@ -36,6 +36,10 @@ pub struct NodeGraph {
 impl NodeGraph {
     pub fn new() -> Self {
         Self {
+            nodes: Nodes::default(),
+            inputs: Inputs::default(),
+            outputs: Outputs::default(),
+            edges: Edges::default(),
             cache: OutputCache::with_options(
                 OptionsBuilder::new()
                     .estimated_items_capacity(10000)
@@ -46,7 +50,6 @@ impl NodeGraph {
                 DefaultHashBuilder::default(),
                 DefaultLifecycle::default(),
             ),
-            ..Default::default()
         }
     }
 
@@ -318,6 +321,8 @@ impl_index_traits!(OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {
+    use glam::Mat4;
+
     use super::*;
 
     #[test]
@@ -328,7 +333,13 @@ mod tests {
         let axis_input: InputId = node_graph.add_input(axis_id, InputData::Mat4(Mat4::IDENTITY));
         let axis_output: OutputId = node_graph.add_output(axis_id, OutputData::Mat4);
 
-        assert_eq!(true, true);
-        assert!(true);
+        let primitive_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive_axis_input: InputId =
+            node_graph.add_input(primitive_id, InputData::Mat4(Mat4::IDENTITY));
+
+        assert_eq!(node_graph.nodes.len(), 2);
+        assert_eq!(node_graph.inputs.len(), 2);
+        assert_eq!(node_graph.outputs.len(), 1);
+        assert_eq!(node_graph.edges.len(), 0);
     }
 }

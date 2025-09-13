@@ -49,42 +49,17 @@ impl Error for NodeDoesNotContainInputError {}
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Node {
     pub id: NodeId,
-    pub label: String,
-    pub inputs: Vec<(String, InputId)>,
-    pub outputs: Vec<(String, OutputId)>,
+    pub input_ids: Vec<InputId>,
+    pub output_ids: Vec<OutputId>,
     pub data: NodeData,
 }
 
 impl Node {
     pub fn inputs<'a>(&'a self, graph: &'a NodeGraph) -> impl Iterator<Item = &'a Input> + 'a {
-        self.input_ids().map(|id| graph.get_input(id))
+        self.input_ids.iter().map(|id| graph.get_input(*id))
     }
 
     pub fn outputs<'a>(&'a self, graph: &'a NodeGraph) -> impl Iterator<Item = &'a Output> + 'a {
-        self.output_ids().map(|id| graph.get_output(id))
-    }
-
-    pub fn input_ids(&self) -> impl Iterator<Item = InputId> + '_ {
-        self.inputs.iter().map(|(_label, id)| *id)
-    }
-
-    pub fn output_ids(&self) -> impl Iterator<Item = OutputId> + '_ {
-        self.outputs.iter().map(|(_label, id)| *id)
-    }
-
-    pub fn get_input(&self, input_label: &str) -> Result<InputId> {
-        self.inputs
-            .iter()
-            .find(|(label, _id)| label == input_label)
-            .map(|input| input.1)
-            .ok_or_else(|| NodeDoesNotContainInputError::new(self.id, input_label))
-    }
-
-    pub fn get_output(&self, output_label: &str) -> Result<OutputId> {
-        self.outputs
-            .iter()
-            .find(|(label, _id)| label == output_label)
-            .map(|output| output.1)
-            .ok_or_else(|| NodeDoesNotContainInputError::new(self.id, output_label))
+        self.output_ids.iter().map(|id| graph.get_output(*id))
     }
 }

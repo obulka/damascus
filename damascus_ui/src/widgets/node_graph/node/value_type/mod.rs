@@ -7,9 +7,7 @@ use eframe::egui;
 use egui_node_graph::{NodeId, WidgetValueTrait};
 use glam;
 
-use damascus::{
-    camera, geometry::primitive, lights, materials, render_passes, scene, Enum, Enumerator,
-};
+use damascus::{camera, geometry::primitives, lights, materials, render_passes, scene, Enumerator};
 
 use super::{
     super::{NodeGraphResponse, NodeGraphState},
@@ -128,7 +126,7 @@ impl NodeValueType {
     /// Tries to downcast this value type to an enum
     pub fn try_to_enum<E: Enumerator>(self) -> anyhow::Result<E> {
         if let NodeValueType::ComboBox { value } = self {
-            Ok(value.value().as_enumerator())
+            Ok(value.deref().to_enumerator())
         } else {
             anyhow::bail!("Invalid cast from {:?} to combo_box", self)
         }
@@ -225,7 +223,7 @@ impl NodeValueType {
     }
 
     /// Tries to downcast this value type to a primitive
-    pub fn try_to_primitive(self) -> anyhow::Result<Vec<primitive::Primitive>> {
+    pub fn try_to_primitive(self) -> anyhow::Result<Vec<primitives::Primitive>> {
         if let NodeValueType::Primitive { value } = self {
             Ok(value.deref())
         } else {

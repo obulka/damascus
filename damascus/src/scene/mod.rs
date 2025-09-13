@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 
 use super::{
     camera::Camera,
-    geometry::primitive::{Primitive, Std430GPUPrimitive},
+    geometry::primitives::{Primitive, Std430GPUPrimitive},
     lights::{Light, Std430GPULight},
     materials::Material,
 };

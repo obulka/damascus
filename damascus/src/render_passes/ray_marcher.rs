@@ -6,7 +6,6 @@
 use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
-use glam::Vec3;
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
 use wgpu;
 

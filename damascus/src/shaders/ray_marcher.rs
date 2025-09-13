@@ -11,7 +11,7 @@ use super::PreprocessorDirectives;
 
 use crate::{
     geometry::{
-        primitive::{Primitive, Shapes},
+        primitives::{Primitive, Shapes},
         BlendType, Repetition,
     },
     lights::{Light, Lights},
@@ -100,6 +100,7 @@ impl PreprocessorDirectives for RayMarcherPreprocessorDirectives {}
 pub fn all_directives_for_ray_marcher() -> HashSet<RayMarcherPreprocessorDirectives> {
     HashSet::<RayMarcherPreprocessorDirectives>::from([
         RayMarcherPreprocessorDirectives::EnableAOVs,
+        RayMarcherPreprocessorDirectives::EnableLightSampling,
     ])
 }
 

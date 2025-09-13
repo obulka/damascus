@@ -5,7 +5,7 @@
 
 #![allow(long_running_const_eval)]
 
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
 use crevice::std430::AsStd430;
@@ -55,6 +55,13 @@ impl Enum {
             _ => E::default(),
         }
     }
+
+    pub fn to_enumerator<E: Enumerator>(self) -> E {
+        match E::from_str(&self.variant) {
+            Ok(variant) => variant,
+            _ => E::default(),
+        }
+    }
 }
 
 impl<E: Enumerator> From<E> for Enum {
@@ -63,5 +70,11 @@ impl<E: Enumerator> From<E> for Enum {
             variant: enumerator.variant(),
             variants: E::variants(),
         }
+    }
+}
+
+pub trait Error: Clone + Debug + Display {
+    fn as_err<E>(self) -> std::result::Result<E, Self> {
+        Err(self)
     }
 }

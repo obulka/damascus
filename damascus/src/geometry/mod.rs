@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 use glam::{Mat3, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-pub mod primitive;
+pub mod primitives;
 
 use crate::Enumerator;
 

@@ -3,29 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
-
-use eframe::{
-    egui,
-    egui_wgpu::{self, wgpu},
-    epaint,
-};
+use eframe::egui;
 use egui_node_graph::{GraphResponse, Node, NodeId, NodeResponse, OutputId};
 use quick_cache::{
     unsync::{Cache, DefaultLifecycle},
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
-};
-
-use damascus::{
-    camera::Camera,
-    geometry::primitive::Primitive,
-    lights::Light,
-    materials::{Material, ProceduralTexture},
-    render_passes::{
-        resources::{BufferData, RenderResource, RenderResources},
-        RenderPass, RenderPasses,
-    },
-    scene::Scene,
 };
 
 mod graph;

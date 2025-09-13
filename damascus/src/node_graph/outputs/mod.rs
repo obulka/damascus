@@ -5,11 +5,11 @@
 
 use slotmap::SlotMap;
 
-pub mod input;
-pub mod input_data;
+pub mod output;
+pub mod output_data;
 
-use input::Input;
+use output::Output;
 
-slotmap::new_key_type! { pub struct InputId; }
+slotmap::new_key_type! { pub struct OutputId; }
 
-pub type Inputs = SlotMap<InputId, Input>;
+pub type Outputs = SlotMap<OutputId, Output>;

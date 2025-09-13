@@ -3,9 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashSet;
+
 use slotmap::SecondaryMap;
 
-#[derive(Clone, Copy, Debug, Default, serde::Serialize, serde::Deserialize)]
+use super::{inputs::InputId, outputs::OutputId};
+
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Edges {
     parents: SecondaryMap<InputId, OutputId>,
@@ -93,23 +97,23 @@ impl Edges {
     }
 
     pub fn disconnect_outputs(&mut self, output_ids: Vec<OutputId>) -> Vec<(InputId, OutputId)> {
-        let mut disconnect_events: Vec<(InputId, OutputId)> = vec![];
+        let mut disconnected: Vec<(InputId, OutputId)> = vec![];
         for output_id in output_ids.into_iter() {
             for input_id in self.children_owned(output_id).into_iter() {
                 self.remove_input(input_id);
-                disconnect_events.push((input_id, output_id));
+                disconnected.push((input_id, output_id));
             }
         }
-        disconnect_events
+        disconnected
     }
 
     pub fn disconnect_inputs(&mut self, input_ids: Vec<InputId>) -> Vec<(InputId, OutputId)> {
-        let mut disconnect_events: Vec<(InputId, OutputId)> = vec![];
+        let mut disconnected: Vec<(InputId, OutputId)> = vec![];
         for input_id in input_ids.into_iter() {
             if let Some(output_id) = self.remove_input(input_id) {
-                disconnect_events.push((input_id, output_id));
+                disconnected.push((input_id, output_id));
             }
         }
-        disconnect_events
+        disconnected
     }
 }

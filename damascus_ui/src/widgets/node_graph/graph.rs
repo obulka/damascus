@@ -8,7 +8,7 @@ use glam::Vec4Swizzles;
 
 use damascus::{
     camera,
-    geometry::{self, primitive},
+    geometry::{self, primitives},
     lights, materials,
     render_passes::{self, ray_marcher, texture, RenderPass},
     scene, textures, Enumerator,
@@ -19,9 +19,9 @@ use super::node::{
         Camera, Lights, Mat4, Material, NodeValueType, Primitives, ProceduralTexture, RenderPasses,
         Scene, UIInput,
     },
-    NodeData, NodeDataType, NodeTemplate,
+    NodeTemplate,
 };
-use super::{Graph, NodeGraph, NodeGraphState};
+use super::NodeGraph;
 
 /// Recursively evaluates all dependencies of this node, then evaluates the node itself.
 pub fn evaluate_output(
@@ -193,14 +193,14 @@ pub fn evaluate_output(
             )
         }
 
-        fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<primitive::Primitive>> {
+        fn input_primitive(&mut self, name: &str) -> anyhow::Result<Vec<primitives::Primitive>> {
             self.evaluate_input(name)?.try_to_primitive()
         }
 
         fn output_primitive(
             &mut self,
             name: &str,
-            value: Vec<primitive::Primitive>,
+            value: Vec<primitives::Primitive>,
         ) -> anyhow::Result<NodeValueType> {
             self.populate_output(
                 name,
@@ -451,130 +451,132 @@ pub fn evaluate_output(
             let mut scene_primitives = evaluator.input_primitive("siblings")?;
             let mut descendants = evaluator.input_primitive("children")?;
             let material = evaluator.input_material("material")?;
-            let shape = evaluator.input_combo_box::<primitive::Shapes>("shape")?;
+            let shape = evaluator.input_combo_box::<primitives::Shapes>("shape")?;
 
             let dimensional_data = match shape {
-                primitive::Shapes::CappedCone | primitive::Shapes::RoundedCone => glam::Vec4::new(
-                    evaluator.input_float("height")?,
-                    evaluator.input_float("lower_radius")?,
-                    evaluator.input_float("upper_radius")?,
-                    0.,
-                ),
-                primitive::Shapes::CappedTorus => glam::Vec4::new(
+                primitives::Shapes::CappedCone | primitives::Shapes::RoundedCone => {
+                    glam::Vec4::new(
+                        evaluator.input_float("height")?,
+                        evaluator.input_float("lower_radius")?,
+                        evaluator.input_float("upper_radius")?,
+                        0.,
+                    )
+                }
+                primitives::Shapes::CappedTorus => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     evaluator.input_float("cap_angle")?,
                     0.,
                 ),
-                primitive::Shapes::Capsule => glam::Vec4::new(
+                primitives::Shapes::Capsule => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("negative_height")?,
                     evaluator.input_float("positive_height")?,
                     0.,
                 ),
-                primitive::Shapes::Cone => glam::Vec4::new(
+                primitives::Shapes::Cone => glam::Vec4::new(
                     evaluator.input_float("angle")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::CutSphere => glam::Vec4::new(
+                primitives::Shapes::CutSphere => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::Cylinder => glam::Vec4::new(
+                primitives::Shapes::Cylinder => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::DeathStar => glam::Vec4::new(
+                primitives::Shapes::DeathStar => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("hollow_radius")?,
                     evaluator.input_float("hollow_height")?,
                     0.,
                 ),
-                primitive::Shapes::Ellipsoid => {
+                primitives::Shapes::Ellipsoid => {
                     glam::Vec4::from((evaluator.input_vector3("radii")?, 0.))
                 }
-                primitive::Shapes::HexagonalPrism => glam::Vec4::new(
+                primitives::Shapes::HexagonalPrism => glam::Vec4::new(
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::HollowSphere => glam::Vec4::new(
+                primitives::Shapes::HollowSphere => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("thickness")?,
                     0.,
                 ),
-                primitive::Shapes::InfiniteCone => {
+                primitives::Shapes::InfiniteCone => {
                     glam::Vec4::new(evaluator.input_float("angle")?, 0., 0., 0.)
                 }
-                primitive::Shapes::InfiniteCylinder => {
+                primitives::Shapes::InfiniteCylinder => {
                     glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
                 }
-                primitive::Shapes::Link => glam::Vec4::new(
+                primitives::Shapes::Link => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     evaluator.input_float("height")?,
                     0.,
                 ),
-                primitive::Shapes::Mandelbox => glam::Vec4::new(
+                primitives::Shapes::Mandelbox => glam::Vec4::new(
                     evaluator.input_float("scale")?,
                     evaluator.input_uint("iterations")? as f32,
                     evaluator.input_float("min_square_radius")?,
                     evaluator.input_float("folding_limit")?,
                 ),
-                primitive::Shapes::Mandelbulb => glam::Vec4::new(
+                primitives::Shapes::Mandelbulb => glam::Vec4::new(
                     evaluator.input_float("power")?,
                     evaluator.input_uint("iterations")? as f32,
                     evaluator.input_float("max_square_radius")?,
                     0.,
                 ),
-                primitive::Shapes::Octahedron => {
+                primitives::Shapes::Octahedron => {
                     glam::Vec4::new(evaluator.input_float("radial_extent")?, 0., 0., 0.)
                 }
-                primitive::Shapes::Plane => {
+                primitives::Shapes::Plane => {
                     glam::Vec4::from((evaluator.input_vector3("normal")?, 0.))
                 }
-                primitive::Shapes::RectangularPrism => glam::Vec4::new(
+                primitives::Shapes::RectangularPrism => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     0.,
                 ),
-                primitive::Shapes::RectangularPrismFrame => glam::Vec4::new(
+                primitives::Shapes::RectangularPrismFrame => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     evaluator.input_float("thickness")?,
                 ),
-                primitive::Shapes::Rhombus => glam::Vec4::new(
+                primitives::Shapes::Rhombus => glam::Vec4::new(
                     evaluator.input_float("width")?,
                     evaluator.input_float("height")?,
                     evaluator.input_float("depth")?,
                     evaluator.input_float("corner_radius")?,
                 ),
-                primitive::Shapes::SolidAngle => glam::Vec4::new(
+                primitives::Shapes::SolidAngle => glam::Vec4::new(
                     evaluator.input_float("radius")?,
                     evaluator.input_float("solid_angle")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::Sphere => {
+                primitives::Shapes::Sphere => {
                     glam::Vec4::new(evaluator.input_float("radius")?, 0., 0., 0.)
                 }
-                primitive::Shapes::Torus => glam::Vec4::new(
+                primitives::Shapes::Torus => glam::Vec4::new(
                     evaluator.input_float("ring_radius")?,
                     evaluator.input_float("tube_radius")?,
                     0.,
                     0.,
                 ),
-                primitive::Shapes::TriangularPrism => glam::Vec4::new(
+                primitives::Shapes::TriangularPrism => glam::Vec4::new(
                     evaluator.input_float("base")?,
                     evaluator.input_float("depth")?,
                     0.,
@@ -599,7 +601,7 @@ pub fn evaluate_output(
                 child.local_to_world = local_to_world * child.local_to_world;
             }
 
-            let primitive = primitive::Primitive {
+            let primitive = primitives::Primitive {
                 shape: shape,
                 local_to_world: local_to_world,
                 material: material,

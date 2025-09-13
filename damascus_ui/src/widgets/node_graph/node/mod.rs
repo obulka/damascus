@@ -11,7 +11,7 @@ use strum::{EnumIter, IntoEnumIterator};
 
 use damascus::{camera, geometry, lights, materials, render_passes::ray_marcher, scene, textures};
 
-use super::{Graph, NodeGraph, NodeGraphResponse, NodeGraphState, NodeOutputCache};
+use super::{Graph, NodeGraph, NodeGraphResponse, NodeGraphState};
 
 pub mod callbacks;
 mod data_type;
@@ -889,7 +889,7 @@ impl egui_node_graph::NodeTemplateTrait for NodeTemplate {
                 output_material(graph, "out");
             }
             NodeTemplate::Primitive => {
-                let default_primitive = geometry::primitive::Primitive::default();
+                let default_primitive = geometry::primitives::Primitive::default();
                 input_primitive(
                     graph,
                     "siblings",

@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
-use glam::{Mat4, UVec2, Vec2, Vec4};
+use glam::{Mat4, UVec2, Vec4};
 
 use crate::DualDevice;
 

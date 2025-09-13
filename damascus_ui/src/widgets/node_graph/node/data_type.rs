@@ -8,7 +8,7 @@ use std::borrow::Cow;
 use eframe::egui;
 use egui_node_graph::DataTypeTrait;
 
-use super::{value_type::NodeValueType, NodeGraphState};
+use super::NodeGraphState;
 
 /// `DataType`s are what defines the possible range of connections when
 /// attaching two ports together. The graph UI will make sure to not allow

@@ -11,7 +11,7 @@ use wgpu::{self, util::DeviceExt};
 
 use crate::{
     camera::Camera,
-    geometry::primitive::Primitive,
+    geometry::primitives::Primitive,
     lights::Light,
     materials::Material,
     scene::Scene,
@@ -812,6 +812,14 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
 pub enum RenderPasses {
     RayMarcher { pass: RayMarcher },
     TextureViewer { pass: TextureViewer },
+}
+
+impl Default for RenderPasses {
+    fn default() -> Self {
+        Self::TextureViewer {
+            pass: TextureViewer::default(),
+        }
+    }
 }
 
 impl RenderPasses {

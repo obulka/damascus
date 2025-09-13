@@ -120,16 +120,16 @@ impl BindGroups {
     pub fn num_bind_groups(&self) -> u32 {
         let mut bind_group_count: u32 = 1;
 
-        if let Some(uniform_bind_group) = &self.uniform_bind_group {
+        if let Some(_uniform_bind_group) = &self.uniform_bind_group {
             bind_group_count += 1;
         }
-        if let Some(storage_bind_group) = &self.storage_bind_group {
+        if let Some(_storage_bind_group) = &self.storage_bind_group {
             bind_group_count += 1;
         }
-        if let Some(texture_bind_group) = &self.texture_bind_group {
+        if let Some(_texture_bind_group) = &self.texture_bind_group {
             bind_group_count += 1;
         }
-        if let Some(storage_texture_bind_group) = &self.storage_texture_bind_group {
+        if let Some(_storage_texture_bind_group) = &self.storage_texture_bind_group {
             bind_group_count += 1;
         }
         bind_group_count

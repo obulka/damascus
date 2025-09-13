@@ -21,18 +21,16 @@ use crate::Enumerator;
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum NodeData {
-    Axis,
+pub enum OutputData {
+    Mat4,
     Camera,
     Light,
-    Grade,
     Material,
     Primitive,
     ProceduralTexture,
-    RayMarcher,
-    Scene,
     #[default]
-    Texture,
+    RenderPass,
+    Scene,
 }
 
-impl Enumerator for NodeData {}
+impl Enumerator for OutputData {}

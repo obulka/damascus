@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use damascus::geometry::primitive::Primitive;
+use damascus::geometry::primitives::Primitive;
 
 use super::{UIData, UIInput};
 

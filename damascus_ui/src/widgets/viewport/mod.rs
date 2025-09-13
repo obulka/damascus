@@ -3,11 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
-
 use eframe::{
     egui,
     egui_wgpu::{self, wgpu},
@@ -17,7 +12,7 @@ use glam::UVec2;
 
 use damascus::{
     camera::Camera,
-    geometry::primitive::Primitive,
+    geometry::primitives::Primitive,
     lights::Light,
     materials::{Material, ProceduralTexture},
     render_passes::{
@@ -46,7 +41,7 @@ struct ViewportCallback {
 }
 
 impl ViewportCallback {
-    fn render_pass_descriptor(&self, resource: &RenderResource) -> wgpu::RenderPassDescriptor<'_> {
+    fn render_pass_descriptor(&self, _resource: &RenderResource) -> wgpu::RenderPassDescriptor<'_> {
         // wgpu::RenderPassDescriptor {
         //     label: "render to texture",
         //     color_attachments: &'a [Some(wgpu::RenderPassColorAttachment {

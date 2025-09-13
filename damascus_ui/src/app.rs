@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::time::{Duration, SystemTime};
 
 use eframe::egui;
@@ -19,7 +19,7 @@ use super::widgets::{
             callbacks::NodeCallbacks,
             value_type::{Bool, NodeValueType, UIInput},
         },
-        NodeGraph, NodeGraphEditorState, NodeGraphResponse, NodeOutputCache,
+        NodeGraph, NodeGraphEditorState, NodeGraphResponse,
     },
     toolbar::show_toolbar,
     viewport::{Viewport, ViewportState},

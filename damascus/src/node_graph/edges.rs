@@ -17,6 +17,10 @@ pub struct Edges {
 }
 
 impl Edges {
+    pub fn len(&self) -> usize {
+        self.parents.len()
+    }
+
     pub fn parent_owned(&self, input_id: InputId) -> Option<OutputId> {
         self.parent(input_id).copied()
     }

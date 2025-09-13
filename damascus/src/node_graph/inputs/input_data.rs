@@ -96,6 +96,8 @@ pub enum InputData {
     Scene(Scene),
 }
 
+impl Enumerator for InputData {}
+
 impl InputData {
     pub fn try_to_bool(self) -> Result<bool> {
         match self {
@@ -244,5 +246,3 @@ impl InputData {
         }
     }
 }
-
-impl Enumerator for InputData {}

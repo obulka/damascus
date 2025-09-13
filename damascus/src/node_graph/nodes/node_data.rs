@@ -36,3 +36,9 @@ pub enum NodeData {
 }
 
 impl Enumerator for NodeData {}
+
+impl NodeData {
+    pub fn class(&self) -> String {
+        format!("{}", self)
+    }
+}

@@ -186,7 +186,7 @@ pub struct BufferDescriptor {
     pub visibility: wgpu::ShaderStages,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct BufferData {
     pub vertex: Vec<BufferDescriptor>,
     pub uniform: Vec<BufferDescriptor>,
@@ -241,11 +241,11 @@ impl RenderResource {
 
 #[derive(Debug, Clone)]
 pub struct RenderResources {
-    pub resources: Vec<RenderResource>,
+    pub resources: Vec<Option<RenderResource>>,
 }
 
 impl RenderResources {
-    pub fn new(resources: Vec<RenderResource>) -> Self {
+    pub fn new(resources: Vec<Option<RenderResource>>) -> Self {
         Self { resources }
     }
 }

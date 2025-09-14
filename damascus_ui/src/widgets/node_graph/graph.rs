@@ -367,13 +367,13 @@ pub fn evaluate_output(
             if let Some(final_pass) = texture.last_mut() {
                 match final_pass {
                     // TODO this is a hack for testing, build a custom pass for grading
-                    render_passes::RenderPasses::TextureViewer { pass } => {
-                        pass.grade.black_point = black_point;
-                        pass.grade.white_point = white_point;
-                        pass.grade.lift = lift;
-                        pass.grade.gain = gain;
-                        pass.grade.gamma = gamma;
-                        pass.grade.invert = invert;
+                    render_passes::RenderPasses::TextureViewer { render_pass } => {
+                        render_pass.grade.black_point = black_point;
+                        render_pass.grade.white_point = white_point;
+                        render_pass.grade.lift = lift;
+                        render_pass.grade.gain = gain;
+                        render_pass.grade.gamma = gamma;
+                        render_pass.grade.invert = invert;
                     }
                     _ => {}
                 }
@@ -694,7 +694,7 @@ pub fn evaluate_output(
             evaluator.output_render_pass(
                 "out",
                 vec![render_passes::RenderPasses::RayMarcher {
-                    pass: ray_marcher::RayMarcher::default()
+                    render_pass: ray_marcher::RayMarcher::default()
                         .scene(scene)
                         .max_ray_steps(max_ray_steps)
                         .max_bounces(max_bounces)
@@ -736,7 +736,7 @@ pub fn evaluate_output(
             evaluator.output_render_pass(
                 "out",
                 vec![render_passes::RenderPasses::TextureViewer {
-                    pass: texture::view::TextureViewer::default()
+                    render_pass: texture::view::TextureViewer::default()
                         .texture(textures::Texture {
                             layers: 1,
                             filepath: filepath,

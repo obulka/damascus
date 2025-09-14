@@ -5,7 +5,7 @@
 
 use crevice::std430::AsStd430;
 use glam::{BVec3, Mat4, UVec3, Vec3, Vec4};
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{BlendType, Repetition, Transform};
 use crate::{
@@ -19,6 +19,7 @@ use crate::{
     Default,
     Copy,
     Clone,
+    EnumCount,
     EnumIter,
     EnumString,
     Eq,

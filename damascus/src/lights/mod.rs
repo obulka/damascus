@@ -5,12 +5,21 @@
 
 use crevice::std430::AsStd430;
 use glam::Vec3;
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{DualDevice, Enumerator};
 
 #[derive(
-    Debug, Default, Display, Copy, Clone, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Default,
+    Display,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum Lights {
     Directional,

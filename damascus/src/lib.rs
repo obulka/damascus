@@ -9,7 +9,7 @@ use std::fmt::{Debug, Display};
 use std::str::FromStr;
 
 use crevice::std430::AsStd430;
-use strum::IntoEnumIterator;
+use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
 pub mod geometry;
@@ -31,7 +31,7 @@ pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
     }
 }
 
-pub trait Enumerator: IntoEnumIterator + Default + Display + FromStr {
+pub trait Enumerator: IntoEnumIterator + EnumCount + Default + Display + FromStr {
     fn variant(self) -> String {
         format!("{}", self)
     }

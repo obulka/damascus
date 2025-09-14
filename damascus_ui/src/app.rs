@@ -275,7 +275,7 @@ impl eframe::App for Damascus {
                             NodeValueType::RenderPass { value } => {
                                 if let Some(final_pass) = value.value().last() {
                                     match final_pass {
-                                        RenderPasses::RayMarcher { pass: _ } => {
+                                        RenderPasses::RayMarcher { render_pass: _ } => {
                                             self.viewport.disable_camera_controls();
                                         }
                                         _ => {

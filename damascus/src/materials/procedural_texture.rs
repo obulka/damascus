@@ -5,7 +5,7 @@
 
 use crevice::std430::AsStd430;
 use glam::{EulerRot, Mat3, Vec3, Vec4};
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     textures::{GPUGrade, Grade},
@@ -18,6 +18,7 @@ use crate::{
     Display,
     Copy,
     Clone,
+    EnumCount,
     EnumIter,
     EnumString,
     PartialEq,

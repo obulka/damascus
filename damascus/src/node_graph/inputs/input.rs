@@ -9,14 +9,16 @@ use super::{super::nodes::NodeId, input_data::InputData, InputId};
 pub struct Input {
     pub id: InputId,
     pub node_id: NodeId,
+    pub name: String,
     pub data: InputData,
 }
 
 impl Input {
-    pub fn new(id: InputId, node_id: NodeId, data: InputData) -> Self {
+    pub fn new(id: InputId, node_id: NodeId, name: String, data: InputData) -> Self {
         Self {
             id: id,
             node_id: node_id,
+            name: name,
             data: data,
         }
     }

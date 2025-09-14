@@ -5,7 +5,7 @@
 
 use crevice::std430::AsStd430;
 use glam;
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{DualDevice, Enumerator};
 
@@ -15,6 +15,7 @@ use super::{DualDevice, Enumerator};
     Display,
     Copy,
     Clone,
+    EnumCount,
     EnumIter,
     EnumString,
     PartialEq,

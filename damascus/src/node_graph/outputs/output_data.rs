@@ -3,7 +3,9 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
+
+use super::super::inputs::input_data::InputData;
 
 use crate::Enumerator;
 
@@ -14,6 +16,7 @@ use crate::Enumerator;
     Copy,
     Clone,
     EnumIter,
+    EnumCount,
     EnumString,
     Eq,
     PartialEq,
@@ -23,14 +26,20 @@ use crate::Enumerator;
 )]
 pub enum OutputData {
     Mat4,
-    Camera,
-    Light,
-    Material,
-    Primitive,
-    ProceduralTexture,
     #[default]
     RenderPass,
     Scene,
 }
 
 impl Enumerator for OutputData {}
+
+impl OutputData {
+    pub fn can_connect_to_input(&self, input: &InputData) -> bool {
+        match input {
+            InputData::Mat4(..) => *self == OutputData::Mat4,
+            InputData::RenderPass(..) => *self == OutputData::RenderPass,
+            InputData::Scene(..) => *self == OutputData::Scene,
+            _ => false,
+        }
+    }
+}

@@ -50,6 +50,7 @@ impl Enumerator for BlendType {}
     Default,
     Copy,
     Clone,
+    EnumCount,
     EnumIter,
     EnumString,
     Eq,

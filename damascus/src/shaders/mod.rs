@@ -5,12 +5,27 @@
 
 use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
-use strum::{EnumCount, EnumString, IntoEnumIterator};
+use strum::{Display, EnumCount, EnumIter, EnumString, IntoEnumIterator};
+
+use crate::Enumerator;
 
 pub mod ray_marcher;
 pub mod texture;
 
-#[derive(Debug, EnumString)]
+#[derive(
+    Debug,
+    Default,
+    Display,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum Includes {
     AOVs,
     Camera,
@@ -18,6 +33,7 @@ pub enum Includes {
     TextureViewerRenderParameters,
     Material,
     Lights,
+    #[default]
     Math,
     Normals,
     Primitive,
@@ -31,6 +47,8 @@ pub enum Includes {
     SceneSDFs,
     Texture,
 }
+
+impl Enumerator for Includes {}
 
 impl Includes {
     fn source(&self) -> &str {

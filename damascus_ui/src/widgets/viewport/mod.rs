@@ -70,16 +70,20 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
         let resources: &RenderResources = resources.get().unwrap();
 
         for (data, render_resource) in self.buffer_data.iter().zip(&resources.resources) {
-            render_resource.write_bind_groups(queue, data);
+            if let Some(resource) = render_resource {
+                resource.write_bind_groups(queue, data);
+            }
         }
 
         if resources.resources.len() > 0 {
             resources.resources[..resources.resources.len() - 1]
                 .iter()
-                .for_each(|resource: &RenderResource| {
-                    resource.paint(
-                        &mut encoder.begin_render_pass(&self.render_pass_descriptor(resource)),
-                    );
+                .for_each(|render_resource: &Option<RenderResource>| {
+                    if let Some(resource) = render_resource {
+                        resource.paint(
+                            &mut encoder.begin_render_pass(&self.render_pass_descriptor(resource)),
+                        );
+                    }
                 });
         }
 
@@ -93,7 +97,7 @@ impl egui_wgpu::CallbackTrait for ViewportCallback {
         resources: &egui_wgpu::CallbackResources,
     ) {
         let resources: &RenderResources = resources.get().unwrap();
-        if let Some(resource) = resources.resources.last() {
+        if let Some(Some(resource)) = resources.resources.last() {
             resource.paint(render_pass);
         }
     }
@@ -155,7 +159,9 @@ impl Viewport {
 
     pub fn pause(&mut self) {
         for render_pass in self.render_passes_mut() {
-            render_pass.frame_counter_mut().pause()
+            if let Some(frame_counter) = render_pass.frame_counter_mut() {
+                frame_counter.pause();
+            }
         }
     }
 
@@ -165,13 +171,17 @@ impl Viewport {
         }
 
         for render_pass in self.render_passes_mut() {
-            render_pass.frame_counter_mut().play()
+            if let Some(frame_counter) = render_pass.frame_counter_mut() {
+                frame_counter.play();
+            }
         }
     }
 
     pub fn paused(&self) -> bool {
         if let Some(render_pass) = self.render_passes().first() {
-            return render_pass.frame_counter().paused;
+            if let Some(frame_counter) = render_pass.frame_counter() {
+                return frame_counter.paused;
+            }
         }
         true
     }
@@ -235,8 +245,12 @@ impl Viewport {
 
             match (current_passes, new_passes) {
                 (
-                    RenderPasses::RayMarcher { pass: current_pass },
-                    RenderPasses::RayMarcher { pass: mut new_pass },
+                    RenderPasses::RayMarcher {
+                        render_pass: current_pass,
+                    },
+                    RenderPasses::RayMarcher {
+                        render_pass: mut new_pass,
+                    },
                 ) => {
                     // TODO these wont need to affect the hash once we are rendering
                     // to a fixed size texture
@@ -253,8 +267,12 @@ impl Viewport {
                     current_pass.compilation_data = new_pass.compilation_data;
                 }
                 (
-                    RenderPasses::TextureViewer { pass: current_pass },
-                    RenderPasses::TextureViewer { pass: new_pass },
+                    RenderPasses::TextureViewer {
+                        render_pass: current_pass,
+                    },
+                    RenderPasses::TextureViewer {
+                        render_pass: new_pass,
+                    },
                 ) => {
                     if current_pass.hashes() == new_pass.hashes() {
                         continue;
@@ -281,10 +299,10 @@ impl Viewport {
     pub fn view_camera(&mut self, camera: Camera, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene.render_camera = camera;
-                    pass.render_data.scene.primitives = vec![Primitive::default()];
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene.render_camera = camera;
+                    render_pass.render_data.scene.primitives = vec![Primitive::default()];
                 }
                 _ => {
                     self.update_render_passes(
@@ -305,10 +323,10 @@ impl Viewport {
     pub fn view_lights(&mut self, lights: Vec<Light>, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene.lights = lights;
-                    pass.render_data.scene.primitives = vec![Primitive::default()];
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene.lights = lights;
+                    render_pass.render_data.scene.primitives = vec![Primitive::default()];
                 }
                 _ => {
                     self.update_render_passes(
@@ -329,11 +347,11 @@ impl Viewport {
     pub fn view_atmosphere(&mut self, atmosphere: Material, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene.clear_primitives();
-                    pass.render_data.scene.clear_lights();
-                    pass.render_data.scene.atmosphere = atmosphere;
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene.clear_primitives();
+                    render_pass.render_data.scene.clear_lights();
+                    render_pass.render_data.scene.atmosphere = atmosphere;
                     self.enable_camera_controls();
                 }
                 _ => {
@@ -358,13 +376,17 @@ impl Viewport {
         // TODO this can be removed once materials take real textures instead of procedural ones
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene.clear_primitives();
-                    pass.render_data.scene.clear_lights();
-                    pass.render_data.scene.atmosphere = Material::default();
-                    pass.render_data.scene.atmosphere.emissive_intensity = 1.0;
-                    pass.render_data.scene.atmosphere.emissive_colour_texture = texture;
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene.clear_primitives();
+                    render_pass.render_data.scene.clear_lights();
+                    render_pass.render_data.scene.atmosphere = Material::default();
+                    render_pass.render_data.scene.atmosphere.emissive_intensity = 1.0;
+                    render_pass
+                        .render_data
+                        .scene
+                        .atmosphere
+                        .emissive_colour_texture = texture;
                     self.enable_camera_controls();
                 }
                 _ => {}
@@ -379,9 +401,9 @@ impl Viewport {
     ) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene.primitives = primitives;
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene.primitives = primitives;
                 }
                 _ => {
                     self.update_render_passes(
@@ -402,9 +424,9 @@ impl Viewport {
     pub fn view_scene(&mut self, scene: Scene, render_state: &egui_wgpu::RenderState) {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.reset_render_data();
-                    pass.render_data.scene = scene;
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass.render_data.reset_render_data();
+                    render_pass.render_data.scene = scene;
                 }
                 _ => {
                     self.update_render_passes(
@@ -459,21 +481,24 @@ impl Viewport {
         let camera_controls_disabled = !self.camera_controls_enabled;
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { ref mut pass } => {
+                RenderPasses::RayMarcher {
+                    ref mut render_pass,
+                } => {
                     Self::update_3d_camera(
                         ui,
                         rect,
                         response,
                         camera_controls_disabled,
-                        &mut pass.render_data.scene.render_camera,
+                        &mut render_pass.render_data.scene.render_camera,
                     );
                 }
-                RenderPasses::TextureViewer { pass } => {
+                RenderPasses::TextureViewer { render_pass } => {
                     if camera_controls_disabled {
                         return;
                     }
                     let drag_delta: egui::Vec2 = response.drag_delta();
-                    pass.pan += glam::Vec2::new(drag_delta.x, -drag_delta.y) * pass.zoom;
+                    render_pass.pan +=
+                        glam::Vec2::new(drag_delta.x, -drag_delta.y) * render_pass.zoom;
                     if response.hovered() {
                         let scroll_delta = ui.input(|i| i.smooth_scroll_delta.y);
                         if scroll_delta != 0.0 {
@@ -487,16 +512,18 @@ impl Viewport {
                             );
 
                             let hovered_image_pixel_before: glam::Vec2 =
-                                cursor_pos * pass.zoom - pass.pan;
+                                cursor_pos * render_pass.zoom - render_pass.pan;
 
-                            pass.zoom /= (scroll_delta * 0.002).exp();
+                            render_pass.zoom /= (scroll_delta * 0.002).exp();
 
-                            let hovered_image_pixel: glam::Vec2 = cursor_pos * pass.zoom - pass.pan;
+                            let hovered_image_pixel: glam::Vec2 =
+                                cursor_pos * render_pass.zoom - render_pass.pan;
 
-                            pass.pan += hovered_image_pixel - hovered_image_pixel_before;
+                            render_pass.pan += hovered_image_pixel - hovered_image_pixel_before;
                         }
                     }
                 }
+                _ => {}
             }
         }
     }
@@ -528,29 +555,34 @@ impl Viewport {
 
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::RayMarcher { pass } => {
-                    pass.render_data.scene.render_camera.sensor_resolution = resolution;
+                RenderPasses::RayMarcher { render_pass } => {
+                    render_pass
+                        .render_data
+                        .scene
+                        .render_camera
+                        .sensor_resolution = resolution;
 
                     self.stats_text = format!(
                         "{:} paths per pixel @ {:.2} fps @ ",
-                        pass.frame_counter().frame,
-                        pass.frame_counter().fps,
+                        render_pass.frame_counter().frame,
+                        render_pass.frame_counter().fps,
                     ) + &self.stats_text;
 
                     if !self.paused() {
                         ui.ctx().request_repaint();
                     }
                 }
-                RenderPasses::TextureViewer { pass } => {
-                    pass.render_data.resolution = resolution;
+                RenderPasses::TextureViewer { render_pass } => {
+                    render_pass.render_data.resolution = resolution;
 
                     self.stats_text =
-                        format!("{:.2} fps @ ", pass.frame_counter().fps) + &self.stats_text;
+                        format!("{:.2} fps @ ", render_pass.frame_counter().fps) + &self.stats_text;
 
                     if !self.paused() {
                         ui.ctx().request_repaint();
                     }
                 }
+                _ => {}
             }
         }
 
@@ -568,15 +600,22 @@ impl Viewport {
                         .iter_mut()
                         .zip(&mut render_resources.resources)
                         .map(|(render_pass, render_resource)| {
-                            let buffer_data: BufferData = render_pass.buffer_data(
-                                &render_state.device,
-                                render_state.target_format.into(),
-                                render_resource,
-                            );
+                            let mut buffer_data = BufferData::default();
+                            if let Some(resource) = render_resource {
+                                buffer_data = render_pass.buffer_data(
+                                    &render_state.device,
+                                    render_state.target_format.into(),
+                                    resource,
+                                );
+                            }
 
                             // TODO these frame counters will not be much different/correct
                             // with multiple passes
-                            render_pass.frame_counter_mut().tick();
+                            // needs to be overhauled, doesnt make much sense having them all
+                            // store pause state for example, just a holdover from past
+                            if let Some(frame_counter) = render_pass.frame_counter_mut() {
+                                frame_counter.tick();
+                            }
 
                             buffer_data
                         })
@@ -603,11 +642,13 @@ impl Viewport {
                 .iter_mut()
                 .zip(&mut render_resources.resources)
             {
-                render_pass.recompile_if_preprocessor_directives_changed(
-                    &render_state.device,
-                    render_state.target_format.into(),
-                    render_resource,
-                );
+                if let Some(resource) = render_resource {
+                    render_pass.recompile_if_preprocessor_directives_changed(
+                        &render_state.device,
+                        render_state.target_format.into(),
+                        resource,
+                    );
+                }
             }
         }
     }
@@ -624,11 +665,13 @@ impl Viewport {
                 .iter_mut()
                 .zip(&mut render_resources.resources)
             {
-                render_pass.recompile_shader(
-                    &render_state.device,
-                    render_state.target_format.into(),
-                    render_resource,
-                )
+                if let Some(resource) = render_resource {
+                    render_pass.recompile_shader(
+                        &render_state.device,
+                        render_state.target_format.into(),
+                        resource,
+                    )
+                }
             }
         }
     }
@@ -664,11 +707,13 @@ impl Viewport {
                 .iter_mut()
                 .zip(&mut render_resources.resources)
                 .map(|(render_pass, render_resource)| {
-                    updated |= render_pass.update_if_hash_changed(
-                        &render_state.device,
-                        render_state.target_format.into(),
-                        render_resource,
-                    )
+                    if let Some(resource) = render_resource {
+                        updated |= render_pass.update_if_hash_changed(
+                            &render_state.device,
+                            render_state.target_format.into(),
+                            resource,
+                        );
+                    }
                 })
                 .collect()
         }
@@ -733,12 +778,12 @@ impl Viewport {
     fn show_top_bar(&mut self, ui: &mut egui::Ui) -> bool {
         if let Some(final_pass) = self.render_passes_mut().last_mut() {
             match final_pass {
-                RenderPasses::TextureViewer { pass } => {
+                RenderPasses::TextureViewer { render_pass } => {
                     ui.horizontal(|ui| {
                         ui.add(egui::Button::new("f/4").stroke(egui::Stroke::NONE))
                             .on_hover_text("The gain to apply upon display.");
                         ui.add(
-                            egui::Slider::new(&mut pass.grade.gain, 0.0..=64.)
+                            egui::Slider::new(&mut render_pass.grade.gain, 0.0..=64.)
                                 .clamping(egui::SliderClamping::Never)
                                 .logarithmic(true)
                                 .smallest_positive(0.01),
@@ -746,7 +791,7 @@ impl Viewport {
                         ui.add(egui::Button::new("γ").stroke(egui::Stroke::NONE))
                             .on_hover_text("The gamma to apply upon display.");
                         ui.add(
-                            egui::Slider::new(&mut pass.grade.gamma, 0.0..=64.)
+                            egui::Slider::new(&mut render_pass.grade.gamma, 0.0..=64.)
                                 .clamping(egui::SliderClamping::Never)
                                 .logarithmic(true)
                                 .smallest_positive(0.01),

@@ -7,6 +7,7 @@ use std::{borrow::Cow, fmt::Debug, ops::Range, time::SystemTime};
 
 use glam::{Mat4, Vec3};
 use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
@@ -17,6 +18,7 @@ use crate::{
     scene::Scene,
     shaders,
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
+    Enumerator,
 };
 
 pub mod ray_marcher;
@@ -808,24 +810,35 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 pub enum RenderPasses {
-    RayMarcher { pass: RayMarcher },
-    TextureViewer { pass: TextureViewer },
+    #[default]
+    Black,
+    White,
+    RayMarcher {
+        render_pass: RayMarcher,
+    },
+    TextureViewer {
+        render_pass: TextureViewer,
+    },
 }
 
-impl Default for RenderPasses {
-    fn default() -> Self {
-        Self::TextureViewer {
-            pass: TextureViewer::default(),
-        }
-    }
-}
+impl Enumerator for RenderPasses {}
 
 impl RenderPasses {
     pub fn new() -> Self {
         Self::TextureViewer {
-            pass: TextureViewer::new(),
+            render_pass: TextureViewer::new(),
         }
     }
 
@@ -835,22 +848,25 @@ impl RenderPasses {
 
     pub fn reset(&mut self) {
         match self {
-            Self::RayMarcher { pass } => pass.reset(),
-            Self::TextureViewer { pass } => pass.reset(),
+            Self::RayMarcher { render_pass } => render_pass.reset(),
+            Self::TextureViewer { render_pass } => render_pass.reset(),
+            _ => {}
         }
     }
 
-    pub fn frame_counter(&self) -> &FrameCounter {
+    pub fn frame_counter(&self) -> Option<&FrameCounter> {
         match self {
-            Self::RayMarcher { pass } => pass.frame_counter(),
-            Self::TextureViewer { pass } => pass.frame_counter(),
+            Self::RayMarcher { render_pass } => Some(render_pass.frame_counter()),
+            Self::TextureViewer { render_pass } => Some(render_pass.frame_counter()),
+            _ => None,
         }
     }
 
-    pub fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+    pub fn frame_counter_mut(&mut self) -> Option<&mut FrameCounter> {
         match self {
-            Self::RayMarcher { pass } => pass.frame_counter_mut(),
-            Self::TextureViewer { pass } => pass.frame_counter_mut(),
+            Self::RayMarcher { render_pass } => Some(render_pass.frame_counter_mut()),
+            Self::TextureViewer { render_pass } => Some(render_pass.frame_counter_mut()),
+            _ => None,
         }
     }
 
@@ -858,10 +874,15 @@ impl RenderPasses {
         &mut self,
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
-    ) -> RenderResource {
+    ) -> Option<RenderResource> {
         match self {
-            Self::RayMarcher { pass } => pass.render_resource(device, target_state),
-            Self::TextureViewer { pass } => pass.render_resource(device, target_state),
+            Self::RayMarcher { render_pass } => {
+                Some(render_pass.render_resource(device, target_state))
+            }
+            Self::TextureViewer { render_pass } => {
+                Some(render_pass.render_resource(device, target_state))
+            }
+            _ => None,
         }
     }
 
@@ -873,8 +894,9 @@ impl RenderPasses {
     ) -> BufferData {
         self.update_if_hash_changed(device, target_state, render_resource);
         match self {
-            Self::RayMarcher { pass } => pass.buffer_data(),
-            Self::TextureViewer { pass } => pass.buffer_data(),
+            Self::RayMarcher { render_pass } => render_pass.buffer_data(),
+            Self::TextureViewer { render_pass } => render_pass.buffer_data(),
+            _ => BufferData::default(),
         }
     }
 
@@ -885,16 +907,19 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { pass } => pass.recompile_if_preprocessor_directives_changed(
-                device,
-                target_state,
-                render_resource,
-            ),
-            Self::TextureViewer { pass } => pass.recompile_if_preprocessor_directives_changed(
-                device,
-                target_state,
-                render_resource,
-            ),
+            Self::RayMarcher { render_pass } => render_pass
+                .recompile_if_preprocessor_directives_changed(
+                    device,
+                    target_state,
+                    render_resource,
+                ),
+            Self::TextureViewer { render_pass } => render_pass
+                .recompile_if_preprocessor_directives_changed(
+                    device,
+                    target_state,
+                    render_resource,
+                ),
+            _ => false,
         }
     }
 
@@ -905,12 +930,13 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) {
         match self {
-            Self::RayMarcher { pass } => {
-                pass.recompile_shader(device, target_state, render_resource)
+            Self::RayMarcher { render_pass } => {
+                render_pass.recompile_shader(device, target_state, render_resource)
             }
-            Self::TextureViewer { pass } => {
-                pass.recompile_shader(device, target_state, render_resource)
+            Self::TextureViewer { render_pass } => {
+                render_pass.recompile_shader(device, target_state, render_resource)
             }
+            _ => {}
         }
     }
 
@@ -921,18 +947,19 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { pass } => {
-                pass.update_if_hash_changed(device, target_state, render_resource)
+            Self::RayMarcher { render_pass } => {
+                render_pass.update_if_hash_changed(device, target_state, render_resource)
             }
-            Self::TextureViewer { pass } => {
-                pass.update_if_hash_changed(device, target_state, render_resource)
+            Self::TextureViewer { render_pass } => {
+                render_pass.update_if_hash_changed(device, target_state, render_resource)
             }
+            _ => false,
         }
     }
 
     pub fn default_pass_for_camera(camera: Camera) -> Self {
         Self::RayMarcher {
-            pass: RayMarcher::default()
+            render_pass: RayMarcher::default()
                 .scene(
                     Scene::default()
                         .render_camera(camera)
@@ -945,7 +972,7 @@ impl RenderPasses {
 
     pub fn default_pass_for_lights(lights: Vec<Light>) -> Self {
         Self::RayMarcher {
-            pass: RayMarcher::default()
+            render_pass: RayMarcher::default()
                 .scene(
                     Scene::default()
                         .render_camera(
@@ -960,7 +987,7 @@ impl RenderPasses {
 
     pub fn default_pass_for_primitives(primitives: Vec<Primitive>) -> Self {
         Self::RayMarcher {
-            pass: RayMarcher::default()
+            render_pass: RayMarcher::default()
                 .scene(
                     Scene::default()
                         .render_camera(
@@ -975,7 +1002,7 @@ impl RenderPasses {
 
     pub fn default_pass_for_material(material: Material) -> Self {
         Self::RayMarcher {
-            pass: RayMarcher::default()
+            render_pass: RayMarcher::default()
                 .scene(Scene::default().atmosphere(material))
                 .finalized(),
         }
@@ -983,7 +1010,7 @@ impl RenderPasses {
 
     pub fn default_pass_for_scene(scene: Scene) -> Self {
         Self::RayMarcher {
-            pass: RayMarcher::default().scene(scene).finalized(),
+            render_pass: RayMarcher::default().scene(scene).finalized(),
         }
     }
 }

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{Display, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::Enumerator;
 
@@ -13,6 +13,7 @@ use crate::Enumerator;
     Default,
     Copy,
     Clone,
+    EnumCount,
     EnumIter,
     EnumString,
     Eq,
@@ -28,7 +29,6 @@ pub enum NodeData {
     Grade,
     Material,
     Primitive,
-    ProceduralTexture,
     RayMarcher,
     Scene,
     #[default]

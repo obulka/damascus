@@ -842,10 +842,6 @@ impl RenderPasses {
         }
     }
 
-    pub fn variant_matches(&self, other: &Self) -> bool {
-        std::mem::discriminant(self) == std::mem::discriminant(other)
-    }
-
     pub fn reset(&mut self) {
         match self {
             Self::RayMarcher { render_pass } => render_pass.reset(),

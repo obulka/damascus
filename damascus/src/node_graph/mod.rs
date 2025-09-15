@@ -28,7 +28,7 @@ pub mod outputs;
 
 use edges::Edges;
 use inputs::{input::Input, input_data::InputData, InputId, Inputs};
-use nodes::{node::Node, node_data::NodeData, NodeId, Nodes};
+use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
 use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
 
 pub type OutputCache = Cache<OutputId, InputData>;
@@ -73,14 +73,14 @@ impl NodeGraph {
             }
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
             for (input_id, _output_id) in disconnected_edges.iter() {
-                new_graph.edges.remove_input(*input_id);
+                new_graph.edges.disconnect_input(*input_id);
             }
         }
 
         new_graph
     }
 
-    pub fn valid_edge(&self, input_id: InputId, output_id: OutputId) -> bool {
+    pub fn is_valid_edge(&self, output_id: OutputId, input_id: InputId) -> bool {
         let input_node_id: NodeId = self[input_id].node_id;
         let output_node_id: NodeId = self[output_id].node_id;
 
@@ -601,7 +601,7 @@ impl NodeGraph {
         let node_id = self[input_id].node_id;
         self[node_id].input_ids.retain(|id| *id != input_id);
         self.inputs.remove(input_id);
-        self.edges.remove_input(input_id);
+        self.edges.disconnect_input(input_id);
     }
 
     pub fn add_output(&mut self, node_id: NodeId, data: OutputData) -> OutputId {
@@ -616,7 +616,7 @@ impl NodeGraph {
         let node_id = self[output_id].node_id;
         self[node_id].output_ids.retain(|id| *id != output_id);
         self.outputs.remove(output_id);
-        self.edges.remove_output(output_id);
+        self.edges.disconnect_output(output_id);
     }
 
     pub fn try_get_parent(&self, input_id: InputId) -> Option<&OutputId> {
@@ -755,12 +755,63 @@ impl NodeGraph {
         for (other_output_id, new_input_ids) in edges_to_recreate.iter() {
             if let Some(new_output_id) = other_to_new_outputs.get(other_output_id) {
                 for new_input_id in new_input_ids.iter() {
-                    self.edges.insert(*new_input_id, *new_output_id);
+                    self.edges.connect(*new_output_id, *new_input_id);
                 }
             }
         }
 
         other_to_new_node_ids
+    }
+
+    pub fn node_inputs(&self, node_id: NodeId) -> impl Iterator<Item = &Input> {
+        self[node_id]
+            .input_ids
+            .iter()
+            .map(|input_id| self.get_input(*input_id))
+    }
+
+    pub fn node_outputs(&self, node_id: NodeId) -> impl Iterator<Item = &Output> {
+        self[node_id]
+            .output_ids
+            .iter()
+            .map(|output_id| self.get_output(*output_id))
+    }
+
+    pub fn node_input(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
+        self.node_inputs(node_id)
+            .find(|input| input.name == name)
+            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
+                node_id,
+                input_name: name.to_string(),
+            })
+    }
+
+    pub fn node_input_id(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
+        self.node_inputs(node_id)
+            .find(|input| input.name == name)
+            .map(|input| input.id)
+            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
+                node_id,
+                input_name: name.to_string(),
+            })
+    }
+
+    pub fn node_first_output(&self, node_id: NodeId) -> Option<&Output> {
+        self.node_outputs(node_id).next()
+    }
+
+    pub fn node_first_output_id(&self, node_id: NodeId) -> Option<&OutputId> {
+        self[node_id].output_ids.iter().next()
+    }
+
+    pub fn connect_node_to_input(&mut self, node_id: NodeId, input_id: InputId) -> bool {
+        if let Some(output_id) = self.node_first_output_id(node_id) {
+            if self.is_valid_edge(*output_id, input_id) {
+                self.edges.connect(*output_id, input_id);
+                return true;
+            }
+        }
+        false
     }
 }
 
@@ -821,6 +872,93 @@ mod tests {
         }
 
         assert_eq!(node_graph.nodes.len(), NodeData::COUNT);
+        assert_eq!(node_graph.edges.len(), 0);
+    }
+
+    #[test]
+    fn test_node_deletion() {
+        let mut node_graph = NodeGraph::new();
+
+        for node_data in NodeData::iter() {
+            node_graph.add_node(node_data);
+        }
+
+        for node_id in node_graph.iter_nodes().collect::<Vec<_>>() {
+            node_graph.remove_node(node_id);
+        }
+
+        assert_eq!(node_graph.nodes.len(), 0);
+        assert_eq!(node_graph.edges.len(), 0);
+    }
+
+    #[test]
+    fn test_node_edge_connection() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        assert_eq!(node_graph.nodes.len(), 3);
+        assert_eq!(node_graph.edges.len(), 0);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, "axis")
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 1);
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, "world_matrix")
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 2);
+    }
+
+    #[test]
+    fn test_node_edge_disconnection() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, "axis")
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, "world_matrix")
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 2);
+
+        node_graph.edges.disconnect_input(
+            node_graph
+                .node_input_id(secondary_axis_id, "axis")
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 1);
+
+        node_graph.edges.disconnect_input(
+            node_graph
+                .node_input_id(camera_id, "world_matrix")
+                .expect("Axis input should exist on Camera node"),
+        );
+
         assert_eq!(node_graph.edges.len(), 0);
     }
 }

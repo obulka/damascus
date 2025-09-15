@@ -45,7 +45,7 @@ impl Edges {
         self.children.get_mut(output_id)
     }
 
-    pub fn remove_input(&mut self, input_id: InputId) -> Option<OutputId> {
+    pub fn disconnect_input(&mut self, input_id: InputId) -> Option<OutputId> {
         if let Some(output_id) = self.parents.remove(input_id) {
             let mut all_children_removed = false;
             if let Some(children) = self.children.get_mut(output_id) {
@@ -60,15 +60,15 @@ impl Edges {
         None
     }
 
-    pub fn remove_output(&mut self, output_id: OutputId) -> HashSet<InputId> {
+    pub fn disconnect_output(&mut self, output_id: OutputId) -> HashSet<InputId> {
         let children = self.children_owned(output_id);
         for input_id in children.iter() {
-            self.remove_input(*input_id);
+            self.disconnect_input(*input_id);
         }
         children
     }
 
-    pub fn insert(&mut self, input_id: InputId, output_id: OutputId) {
+    pub fn connect(&mut self, output_id: OutputId, input_id: InputId) {
         if let Some(parent_output_id) = self.parent_owned(input_id) {
             if parent_output_id == output_id {
                 return;
@@ -104,7 +104,7 @@ impl Edges {
         let mut disconnected: Vec<(InputId, OutputId)> = vec![];
         for output_id in output_ids.into_iter() {
             for input_id in self.children_owned(output_id).into_iter() {
-                self.remove_input(input_id);
+                self.disconnect_input(input_id);
                 disconnected.push((input_id, output_id));
             }
         }
@@ -114,7 +114,7 @@ impl Edges {
     pub fn disconnect_inputs(&mut self, input_ids: Vec<InputId>) -> Vec<(InputId, OutputId)> {
         let mut disconnected: Vec<(InputId, OutputId)> = vec![];
         for input_id in input_ids.into_iter() {
-            if let Some(output_id) = self.remove_input(input_id) {
+            if let Some(output_id) = self.disconnect_input(input_id) {
                 disconnected.push((input_id, output_id));
             }
         }

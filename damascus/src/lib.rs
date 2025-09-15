@@ -39,6 +39,10 @@ pub trait Enumerator: IntoEnumIterator + EnumCount + Default + Display + FromStr
     fn variants() -> Vec<String> {
         Self::iter().map(|variant| format!("{}", variant)).collect()
     }
+
+    fn variant_matches(&self, other: &Self) -> bool {
+        std::mem::discriminant(self) == std::mem::discriminant(other)
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -73,8 +77,4 @@ impl<E: Enumerator> From<E> for Enum {
     }
 }
 
-pub trait Error: Clone + Debug + Display {
-    fn as_err<E>(self) -> std::result::Result<E, Self> {
-        Err(self)
-    }
-}
+pub trait Errors: Enumerator {}

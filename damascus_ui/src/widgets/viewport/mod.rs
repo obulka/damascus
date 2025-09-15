@@ -20,6 +20,7 @@ use damascus::{
         RenderPass, RenderPasses,
     },
     scene::Scene,
+    Enumerator,
 };
 
 use crate::{icons::Icons, MAX_TEXTURE_DIMENSION};

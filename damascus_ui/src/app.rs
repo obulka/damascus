@@ -114,7 +114,7 @@ impl Damascus {
         ctx.debug_painter().text(
             egui::pos2(10.0, 35.0),
             egui::Align2::LEFT_TOP,
-            format!("Error: {}", error),
+            error.to_string(),
             egui::TextStyle::Button.resolve(&ctx.style()),
             egui::Color32::RED,
         );

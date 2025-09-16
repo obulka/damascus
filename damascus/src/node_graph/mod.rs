@@ -90,6 +90,9 @@ impl NodeGraph {
         let output_node_id: NodeId = self[output_id].node_id;
 
         input_node_id != output_node_id
+            && self[output_id]
+                .data
+                .can_connect_to_input(&self[input_id].data)
             && self
                 .ancestor_node_ids(output_node_id)
                 .get(&input_node_id)
@@ -914,5 +917,49 @@ mod tests {
         );
 
         assert_eq!(node_graph.edges.len(), 0);
+    }
+
+    #[test]
+    fn test_valid_edge() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        let primary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(primary_axis_id).unwrap();
+        let primary_axis_axis_input_id: InputId = node_graph
+            .node_input_id(primary_axis_id, AxisInputData::Axis)
+            .expect("Axis input should exist on Axis node");
+
+        let secondary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
+        let secondary_axis_axis_input_id: InputId = node_graph
+            .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            .expect("Axis input should exist on Axis node");
+
+        let camera_output_id: OutputId = *node_graph.node_first_output_id(camera_id).unwrap();
+
+        assert!(node_graph.is_valid_edge(primary_axis_output_id, secondary_axis_axis_input_id));
+        assert!(!node_graph.is_valid_edge(primary_axis_output_id, primary_axis_axis_input_id));
+        assert!(node_graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
+        assert!(!node_graph.is_valid_edge(camera_output_id, primary_axis_axis_input_id));
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        assert!(!node_graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
     }
 }

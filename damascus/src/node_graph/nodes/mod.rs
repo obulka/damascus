@@ -6,7 +6,7 @@
 use std::fmt;
 
 use slotmap::SlotMap;
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use strum::{EnumCount, EnumIter, EnumString};
 
 use crate::{Enumerator, Errors};
 

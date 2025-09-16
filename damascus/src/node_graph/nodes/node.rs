@@ -4,11 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use super::{
-    super::{
-        inputs::{input::Input, InputId},
-        outputs::{output::Output, OutputId},
-        NodeGraph,
-    },
+    super::{inputs::InputId, outputs::OutputId},
     node_data::NodeData,
     NodeId,
 };

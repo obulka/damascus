@@ -33,11 +33,11 @@ pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
 
 pub trait Enumerator: IntoEnumIterator + EnumCount + Default + Display + FromStr {
     fn variant(self) -> String {
-        format!("{}", self)
+        self.to_string()
     }
 
     fn variants() -> Vec<String> {
-        Self::iter().map(|variant| format!("{}", variant)).collect()
+        Self::iter().map(|variant| variant.to_string()).collect()
     }
 
     fn variant_matches(&self, other: &Self) -> bool {

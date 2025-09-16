@@ -5,20 +5,18 @@
 
 use std::collections::{HashMap, HashSet};
 
-use glam::{Mat4, Vec3};
+use glam::Vec3;
 use quick_cache::{
     unsync::{Cache, DefaultLifecycle},
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
 };
 
 use crate::{
-    camera::Camera,
     geometry::primitives::Primitive,
-    lights::Light,
     materials::Material,
     render_passes::{ray_marcher::RayMarcherRenderData, RenderPasses},
     scene::Scene,
-    textures::{Grade, Texture},
+    textures::Texture,
 };
 
 pub mod edges;
@@ -27,7 +25,14 @@ pub mod nodes;
 pub mod outputs;
 
 use edges::Edges;
-use inputs::{input::Input, input_data::InputData, InputId, Inputs};
+use inputs::{
+    input::Input,
+    input_data::{
+        axis::AxisInputData, camera::CameraInputData, grade::GradeInputData, light::LightInputData,
+        InputData, NodeInputData,
+    },
+    InputId, Inputs,
+};
 use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
 use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
 
@@ -100,115 +105,20 @@ impl NodeGraph {
         });
         match data {
             NodeData::Axis => {
-                self.add_input(node_id, "axis", InputData::Mat4(Mat4::IDENTITY));
-                self.add_input(node_id, "translate", InputData::Vec3(Vec3::ZERO));
-                self.add_input(node_id, "rotate", InputData::Vec3(Vec3::ZERO));
-                self.add_input(node_id, "uniform_scale", InputData::Float(1.));
+                AxisInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::Mat4);
             }
             NodeData::Camera => {
-                let default_camera = Camera::default();
-                self.add_input(
-                    node_id,
-                    "focal_length",
-                    InputData::Float(default_camera.focal_length),
-                );
-                self.add_input(
-                    node_id,
-                    "focal_distance",
-                    InputData::Float(default_camera.focal_distance),
-                );
-                self.add_input(node_id, "f_stop", InputData::Float(default_camera.f_stop));
-                self.add_input(
-                    node_id,
-                    "horizontal_aperture",
-                    InputData::Float(default_camera.horizontal_aperture),
-                );
-                self.add_input(
-                    node_id,
-                    "near_plane",
-                    InputData::Float(default_camera.near_plane),
-                );
-                self.add_input(
-                    node_id,
-                    "far_plane",
-                    InputData::Float(default_camera.far_plane),
-                );
-                self.add_input(
-                    node_id,
-                    "sensor_resolution",
-                    InputData::UVec2(default_camera.sensor_resolution),
-                );
-                self.add_input(
-                    node_id,
-                    "world_matrix",
-                    InputData::Mat4(default_camera.camera_to_world),
-                );
-                self.add_input(
-                    node_id,
-                    "enable_depth_of_field",
-                    InputData::Bool(default_camera.enable_depth_of_field),
-                );
-                self.add_input(node_id, "latlong", InputData::Bool(default_camera.latlong));
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::Light => {
-                let default_light = Light::default();
-                self.add_input(node_id, "scene", InputData::Scene(Scene::default()));
-                self.add_input(node_id, "world_matrix", InputData::Mat4(Mat4::IDENTITY));
-                self.add_input(
-                    node_id,
-                    "light_type",
-                    InputData::Enum(default_light.light_type.into()),
-                );
-                self.add_input(node_id, "direction", InputData::Vec3(Vec3::NEG_Y));
-                self.add_input(node_id, "position", InputData::Vec3(Vec3::Y));
-                self.add_input(
-                    node_id,
-                    "iterations",
-                    InputData::UInt(default_light.dimensional_data.x as u32),
-                );
-                self.add_input(
-                    node_id,
-                    "intensity",
-                    InputData::Float(default_light.intensity),
-                );
-                self.add_input(node_id, "falloff", InputData::UInt(default_light.falloff));
-                self.add_input(node_id, "colour", InputData::Vec3(default_light.colour));
-                self.add_input(
-                    node_id,
-                    "shadow_hardness",
-                    InputData::Float(default_light.shadow_hardness),
-                );
-                self.add_input(
-                    node_id,
-                    "soften_shadows",
-                    InputData::Bool(default_light.soften_shadows),
-                );
+                CameraInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::Scene);
             }
             NodeData::Grade => {
-                let default_grade = Grade::default();
-                self.add_input(
-                    node_id,
-                    "texture",
-                    InputData::RenderPass(RenderPasses::Black),
-                );
-                self.add_input(
-                    node_id,
-                    "black_point",
-                    InputData::Float(default_grade.black_point),
-                );
-                self.add_input(
-                    node_id,
-                    "white_point",
-                    InputData::Float(default_grade.white_point),
-                );
-                self.add_input(node_id, "lift", InputData::Float(default_grade.lift));
-                self.add_input(node_id, "gain", InputData::Float(default_grade.gain));
-                self.add_input(node_id, "gamma", InputData::Float(default_grade.gamma));
-                self.add_input(node_id, "invert", InputData::Bool(default_grade.invert));
+                GradeInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::RenderPass);
+            }
+            NodeData::Light => {
+                LightInputData::add_to_node(self, node_id);
+                self.add_output(node_id, OutputData::Scene);
             }
             NodeData::Material => {
                 let default_material = Material::default();
@@ -786,13 +696,27 @@ impl NodeGraph {
             })
     }
 
-    pub fn node_input_id(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
+    pub fn node_input_id_from_string(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
         self.node_inputs(node_id)
             .find(|input| input.name == name)
             .map(|input| input.id)
             .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
                 node_id,
                 input_name: name.to_string(),
+            })
+    }
+
+    pub fn node_input_id<I: NodeInputData>(
+        &self,
+        node_id: NodeId,
+        node_input_data: I,
+    ) -> NodeResult<InputId> {
+        self.node_inputs(node_id)
+            .find(|input| input.name == node_input_data.to_string())
+            .map(|input| input.id)
+            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
+                node_id,
+                input_name: node_input_data.to_string(),
             })
     }
 
@@ -905,7 +829,7 @@ mod tests {
         node_graph.connect_node_to_input(
             primary_axis_id,
             node_graph
-                .node_input_id(secondary_axis_id, "axis")
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
@@ -914,7 +838,37 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, "world_matrix")
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 2);
+    }
+
+    #[test]
+    fn test_node_edge_connection_string() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        assert_eq!(node_graph.nodes.len(), 3);
+        assert_eq!(node_graph.edges.len(), 0);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id_from_string(secondary_axis_id, "Axis")
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        assert_eq!(node_graph.edges.len(), 1);
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id_from_string(camera_id, "WorldMatrix")
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -932,14 +886,14 @@ mod tests {
         node_graph.connect_node_to_input(
             primary_axis_id,
             node_graph
-                .node_input_id(secondary_axis_id, "axis")
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, "world_matrix")
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -947,7 +901,7 @@ mod tests {
 
         node_graph.edges.disconnect_input(
             node_graph
-                .node_input_id(secondary_axis_id, "axis")
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
@@ -955,7 +909,7 @@ mod tests {
 
         node_graph.edges.disconnect_input(
             node_graph
-                .node_input_id(camera_id, "world_matrix")
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
                 .expect("Axis input should exist on Camera node"),
         );
 

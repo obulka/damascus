@@ -6,9 +6,19 @@
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{render_passes::RenderPasses, scene::Scene, Enum, Enumerator};
+use crate::{
+    node_graph::{nodes::NodeId, NodeGraph},
+    render_passes::RenderPasses,
+    scene::Scene,
+    Enum, Enumerator,
+};
 
 use super::{InputErrors, InputResult};
+
+pub mod axis;
+pub mod camera;
+pub mod grade;
+pub mod light;
 
 #[derive(
     Debug,
@@ -203,5 +213,38 @@ impl InputData {
                 conversion_to: "Scene".to_string(),
             }),
         }
+    }
+}
+
+pub trait NodeInputData: Enumerator + Eq {
+    fn default_data(&self) -> InputData;
+
+    fn name(&self) -> String {
+        self.to_string()
+    }
+
+    fn label(&self) -> String {
+        let mut words = Vec::<String>::new();
+        let mut word = String::new();
+
+        for character in self.to_string().chars() {
+            if character.is_uppercase() && !word.is_empty() {
+                words.push(word.clone());
+                word.clear();
+            }
+            word.push_str(&character.to_lowercase().to_string());
+        }
+
+        if !word.is_empty() {
+            words.push(word);
+        }
+
+        words.join(" ")
+    }
+
+    fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
+        Self::iter().for_each(|input| {
+            node_graph.add_input(node_id, &input.name(), input.default_data());
+        });
     }
 }

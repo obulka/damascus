@@ -41,13 +41,13 @@ impl NodeInputData for GradeInputData {
     fn default_data(&self) -> InputData {
         let default_grade = Grade::default();
         match self {
-            GradeInputData::Texture => InputData::RenderPass(RenderPasses::Black),
-            GradeInputData::BlackPoint => InputData::Float(default_grade.black_point),
-            GradeInputData::WhitePoint => InputData::Float(default_grade.white_point),
-            GradeInputData::Lift => InputData::Float(default_grade.lift),
-            GradeInputData::Gain => InputData::Float(default_grade.gain),
-            GradeInputData::Gamma => InputData::Float(default_grade.gamma),
-            GradeInputData::Invert => InputData::Bool(default_grade.invert),
+            Self::Texture => InputData::RenderPass(RenderPasses::Black),
+            Self::BlackPoint => InputData::Float(default_grade.black_point),
+            Self::WhitePoint => InputData::Float(default_grade.white_point),
+            Self::Lift => InputData::Float(default_grade.lift),
+            Self::Gain => InputData::Float(default_grade.gain),
+            Self::Gamma => InputData::Float(default_grade.gamma),
+            Self::Invert => InputData::Bool(default_grade.invert),
         }
     }
 }

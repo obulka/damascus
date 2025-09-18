@@ -5,7 +5,9 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::Enumerator;
+use crate::{scene::Scene, Enumerator};
+
+use super::{InputData, NodeInputData};
 
 #[derive(
     Debug,
@@ -22,17 +24,19 @@ use crate::Enumerator;
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum NodeData {
-    Axis,
-    Camera,
-    Light,
-    Grade,
-    Material,
-    Primitive,
-    RayMarcher,
-    Scene,
+pub enum SceneInputData {
     #[default]
-    Texture,
+    Scene0,
+    Scene1,
 }
 
-impl Enumerator for NodeData {}
+impl Enumerator for SceneInputData {}
+
+impl NodeInputData for SceneInputData {
+    fn default_data(&self) -> InputData {
+        match self {
+            Self::Scene0 => InputData::Scene(Scene::default()),
+            Self::Scene1 => InputData::Scene(Scene::default()),
+        }
+    }
+}

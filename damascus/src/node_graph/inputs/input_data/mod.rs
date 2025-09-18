@@ -19,6 +19,11 @@ pub mod axis;
 pub mod camera;
 pub mod grade;
 pub mod light;
+pub mod material;
+pub mod primitive;
+pub mod ray_marcher;
+pub mod scene;
+pub mod texture;
 
 #[derive(
     Debug,

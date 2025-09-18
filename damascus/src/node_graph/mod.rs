@@ -5,18 +5,9 @@
 
 use std::collections::{HashMap, HashSet};
 
-use glam::Vec3;
 use quick_cache::{
     unsync::{Cache, DefaultLifecycle},
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
-};
-
-use crate::{
-    geometry::primitives::Primitive,
-    materials::Material,
-    render_passes::{ray_marcher::RayMarcherRenderData, RenderPasses},
-    scene::Scene,
-    textures::Texture,
 };
 
 pub mod edges;
@@ -29,6 +20,8 @@ use inputs::{
     input::Input,
     input_data::{
         axis::AxisInputData, camera::CameraInputData, grade::GradeInputData, light::LightInputData,
+        material::MaterialInputData, primitive::PrimitiveInputData,
+        ray_marcher::RayMarcherInputData, scene::SceneInputData, texture::TextureInputData,
         InputData, NodeInputData,
     },
     InputId, Inputs,
@@ -124,354 +117,23 @@ impl NodeGraph {
                 self.add_output(node_id, OutputData::Scene);
             }
             NodeData::Material => {
-                let default_material = Material::default();
-                self.add_input(
-                    node_id,
-                    "diffuse_colour",
-                    InputData::Vec3(default_material.diffuse_colour),
-                );
-                self.add_input(
-                    node_id,
-                    "diffuse_colour_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_probability",
-                    InputData::Float(default_material.specular_probability),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_probability_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_roughness",
-                    InputData::Float(default_material.specular_roughness),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_roughness_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_colour",
-                    InputData::Vec3(default_material.specular_colour),
-                );
-                self.add_input(
-                    node_id,
-                    "specular_colour_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_probability",
-                    InputData::Float(default_material.transmissive_probability),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_probability_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_roughness",
-                    InputData::Float(default_material.transmissive_roughness),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_roughness_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "extinction_coefficient",
-                    InputData::Float(default_material.extinction_coefficient),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_colour",
-                    InputData::Vec3(default_material.transmissive_colour),
-                );
-                self.add_input(
-                    node_id,
-                    "transmissive_colour_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "emissive_intensity",
-                    InputData::Float(default_material.emissive_intensity),
-                );
-                self.add_input(
-                    node_id,
-                    "emissive_colour",
-                    InputData::Vec3(default_material.emissive_colour),
-                );
-                self.add_input(
-                    node_id,
-                    "emissive_colour_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "refractive_index",
-                    InputData::Float(default_material.refractive_index),
-                );
-                self.add_input(
-                    node_id,
-                    "refractive_index_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
-                self.add_input(
-                    node_id,
-                    "scattering_coefficient",
-                    InputData::Float(default_material.scattering_coefficient),
-                );
-                self.add_input(
-                    node_id,
-                    "scattering_colour",
-                    InputData::Vec3(default_material.scattering_colour),
-                );
-                self.add_input(
-                    node_id,
-                    "scattering_colour_texture",
-                    InputData::RenderPass(RenderPasses::White),
-                );
+                MaterialInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::Scene);
             }
             NodeData::Primitive => {
-                let default_primitive = Primitive::default();
-                self.add_input(node_id, "siblings", InputData::Scene(Scene::default()));
-                self.add_input(node_id, "children", InputData::Scene(Scene::default()));
-                self.add_input(node_id, "material", InputData::Scene(Scene::default()));
-                self.add_input(
-                    node_id,
-                    "shape",
-                    InputData::Enum(default_primitive.shape.into()),
-                );
-
-                // Sphere dimensions
-                self.add_input(node_id, "radius", InputData::Float(0.5));
-
-                // Ellipsoid dimensions
-                self.add_input(node_id, "radii", InputData::Vec3(Vec3::splat(0.5)));
-
-                // Cut Sphere dimensions
-                self.add_input(node_id, "height", InputData::Float(0.25));
-
-                // Death Star dimensions
-                self.add_input(node_id, "hollow_radius", InputData::Float(0.5));
-                self.add_input(node_id, "hollow_height", InputData::Float(0.75));
-
-                // Solid Angle Dimensions
-                self.add_input(node_id, "solid_angle", InputData::Float(30.));
-
-                // Rectangular Prism Dimensions
-                self.add_input(node_id, "width", InputData::Float(0.5));
-                self.add_input(node_id, "depth", InputData::Float(0.75));
-
-                // Hollow Sphere dimensions
-                self.add_input(node_id, "thickness", InputData::Float(0.05));
-
-                // Rhombus Dimensions
-                self.add_input(node_id, "corner_radius", InputData::Float(0.05));
-
-                // Triangular Prism Dimensions
-                self.add_input(node_id, "base", InputData::Float(0.5));
-
-                // Plane Dimensions
-                self.add_input(node_id, "normal", InputData::Vec3(Vec3::Z));
-
-                // Capsule Dimensions
-                self.add_input(node_id, "negative_height", InputData::Float(0.25));
-                self.add_input(node_id, "positive_height", InputData::Float(0.25));
-
-                // Cone Dimensions
-                self.add_input(node_id, "angle", InputData::Float(30.));
-
-                // Capped Cone Dimensions
-                self.add_input(node_id, "lower_radius", InputData::Float(0.25));
-                self.add_input(node_id, "upper_radius", InputData::Float(0.125));
-
-                // Torus Dimensions
-                self.add_input(node_id, "ring_radius", InputData::Float(0.3));
-                self.add_input(node_id, "tube_radius", InputData::Float(0.2));
-
-                // Capped Torus Dimensions
-                self.add_input(node_id, "cap_angle", InputData::Float(30.));
-
-                // Octahedron Dimensions
-                self.add_input(node_id, "radial_extent", InputData::Float(0.5));
-
-                // Mandelbulb Dimensions
-                self.add_input(node_id, "power", InputData::Float(8.));
-                self.add_input(node_id, "iterations", InputData::UInt(10));
-                self.add_input(node_id, "max_square_radius", InputData::Float(4.));
-
-                // Mandelbox Dimensions
-                self.add_input(node_id, "scale", InputData::Float(-1.75));
-                self.add_input(node_id, "min_square_radius", InputData::Float(0.001));
-                self.add_input(node_id, "folding_limit", InputData::Float(0.8));
-
-                // Remaining inputs
-                self.add_input(
-                    node_id,
-                    "world_matrix",
-                    InputData::Mat4(default_primitive.local_to_world),
-                );
-                self.add_input(
-                    node_id,
-                    "edge_radius",
-                    InputData::Float(default_primitive.edge_radius),
-                );
-                self.add_input(
-                    node_id,
-                    "repetition",
-                    InputData::Enum(default_primitive.repetition.into()),
-                );
-                self.add_input(
-                    node_id,
-                    "negative_repetitions",
-                    InputData::UVec3(default_primitive.negative_repetitions),
-                );
-                self.add_input(
-                    node_id,
-                    "positive_repetitions",
-                    InputData::UVec3(default_primitive.positive_repetitions),
-                );
-                self.add_input(
-                    node_id,
-                    "spacing",
-                    InputData::Vec3(default_primitive.spacing),
-                );
-                self.add_input(
-                    node_id,
-                    "bounding_volume",
-                    InputData::Bool(default_primitive.bounding_volume),
-                );
-                self.add_input(
-                    node_id,
-                    "blend_type",
-                    InputData::Enum(default_primitive.blend_type.into()),
-                );
-                self.add_input(
-                    node_id,
-                    "blend_strength",
-                    InputData::Float(default_primitive.blend_strength),
-                );
-                self.add_input(
-                    node_id,
-                    "mirror",
-                    InputData::BVec3(default_primitive.mirror),
-                );
-                self.add_input(node_id, "hollow", InputData::Bool(default_primitive.hollow));
-                self.add_input(
-                    node_id,
-                    "wall_thickness",
-                    InputData::Float(default_primitive.wall_thickness),
-                );
-                self.add_input(
-                    node_id,
-                    "elongate",
-                    InputData::Bool(default_primitive.elongate),
-                );
-                self.add_input(
-                    node_id,
-                    "elongation",
-                    InputData::Vec3(default_primitive.elongation),
-                );
+                PrimitiveInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::Scene);
             }
             NodeData::RayMarcher => {
-                let default_ray_marcher = RayMarcherRenderData::default();
-                self.add_input(
-                    node_id,
-                    "scene",
-                    InputData::Scene(default_ray_marcher.scene),
-                );
-                self.add_input(
-                    node_id,
-                    "max_ray_steps",
-                    InputData::UInt(default_ray_marcher.max_ray_steps),
-                );
-                self.add_input(
-                    node_id,
-                    "max_bounces",
-                    InputData::UInt(default_ray_marcher.max_bounces),
-                );
-                self.add_input(
-                    node_id,
-                    "hit_tolerance",
-                    InputData::Float(default_ray_marcher.hit_tolerance),
-                );
-                self.add_input(
-                    node_id,
-                    "shadow_bias",
-                    InputData::Float(default_ray_marcher.shadow_bias),
-                );
-                self.add_input(
-                    node_id,
-                    "max_brightness",
-                    InputData::Float(default_ray_marcher.max_brightness),
-                );
-                self.add_input(node_id, "seed", InputData::UInt(default_ray_marcher.seed));
-                self.add_input(
-                    node_id,
-                    "dynamic_level_of_detail",
-                    InputData::Bool(default_ray_marcher.dynamic_level_of_detail),
-                );
-                self.add_input(
-                    node_id,
-                    "equiangular_samples",
-                    InputData::UInt(default_ray_marcher.equiangular_samples),
-                );
-                self.add_input(
-                    node_id,
-                    "light_sampling",
-                    InputData::Bool(default_ray_marcher.light_sampling),
-                );
-                self.add_input(
-                    node_id,
-                    "max_light_sampling_bounces",
-                    InputData::UInt(default_ray_marcher.max_light_sampling_bounces),
-                );
-                self.add_input(
-                    node_id,
-                    "sample_atmosphere",
-                    InputData::Bool(default_ray_marcher.sample_atmosphere),
-                );
-                self.add_input(
-                    node_id,
-                    "light_sampling_bias",
-                    InputData::Float(default_ray_marcher.light_sampling_bias),
-                );
-                self.add_input(
-                    node_id,
-                    "secondary_sampling",
-                    InputData::Bool(default_ray_marcher.secondary_sampling),
-                );
-                self.add_input(
-                    node_id,
-                    "output_aov",
-                    InputData::Enum(default_ray_marcher.output_aov.into()),
-                );
+                RayMarcherInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::RenderPass);
             }
             NodeData::Scene => {
-                self.add_input(node_id, "scene1", InputData::Scene(Scene::default()));
-                self.add_input(node_id, "scene2", InputData::Scene(Scene::default()));
+                SceneInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::Scene);
             }
             NodeData::Texture => {
-                let default_texture = Texture::default();
-                self.add_input(
-                    node_id,
-                    "filepath",
-                    InputData::Filepath(default_texture.filepath),
-                );
+                TextureInputData::add_to_node(self, node_id);
                 self.add_output(node_id, OutputData::RenderPass);
             }
         }

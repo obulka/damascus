@@ -624,4 +624,142 @@ mod tests {
 
         assert!(!node_graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
     }
+
+    #[test]
+    fn test_node_ancestors() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .expect("Axis input should exist on Primitive node"),
+        );
+
+        node_graph.connect_node_to_input(
+            primitive0_id,
+            node_graph
+                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
+                .expect("Siblings input should exist on Primitive node"),
+        );
+
+        let mut camera_ancestors = HashSet::<NodeId>::new();
+        camera_ancestors.insert(primary_axis_id);
+        camera_ancestors.insert(secondary_axis_id);
+
+        assert_eq!(node_graph.ancestor_node_ids(camera_id), camera_ancestors);
+
+        let mut secondary_axis_ancestors = HashSet::<NodeId>::new();
+        secondary_axis_ancestors.insert(primary_axis_id);
+
+        assert_eq!(
+            node_graph.ancestor_node_ids(secondary_axis_id),
+            secondary_axis_ancestors
+        );
+
+        assert!(node_graph.ancestor_node_ids(primary_axis_id).is_empty());
+
+        let mut primitive1_ancestors = HashSet::<NodeId>::new();
+        primitive1_ancestors.insert(primitive0_id);
+        primitive1_ancestors.insert(secondary_axis_id);
+        primitive1_ancestors.insert(primary_axis_id);
+
+        assert_eq!(
+            node_graph.ancestor_node_ids(primitive1_id),
+            primitive1_ancestors
+        );
+    }
+
+    #[test]
+    fn test_node_descendants() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .expect("Axis input should exist on Primitive node"),
+        );
+
+        node_graph.connect_node_to_input(
+            primitive0_id,
+            node_graph
+                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
+                .expect("Siblings input should exist on Primitive node"),
+        );
+
+        assert!(node_graph.descendant_node_ids(camera_id).is_empty());
+        assert!(node_graph.descendant_node_ids(primitive1_id).is_empty());
+
+        let mut secondary_axis_descendants = HashSet::<NodeId>::new();
+        secondary_axis_descendants.insert(camera_id);
+        secondary_axis_descendants.insert(primitive0_id);
+        secondary_axis_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graph.descendant_node_ids(secondary_axis_id),
+            secondary_axis_descendants
+        );
+
+        let mut primary_axis_descendants = HashSet::<NodeId>::new();
+        primary_axis_descendants.insert(secondary_axis_id);
+        primary_axis_descendants.insert(camera_id);
+        primary_axis_descendants.insert(primitive0_id);
+        primary_axis_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graph.descendant_node_ids(primary_axis_id),
+            primary_axis_descendants
+        );
+
+        let mut primitive0_descendants = HashSet::<NodeId>::new();
+        primitive0_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graph.descendant_node_ids(primitive0_id),
+            primitive0_descendants
+        );
+    }
 }

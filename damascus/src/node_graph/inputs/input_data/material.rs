@@ -5,7 +5,9 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::Enumerator;
+use crate::{materials::Material, render_passes::RenderPasses, Enumerator};
+
+use super::{InputData, NodeInputData};
 
 #[derive(
     Debug,
@@ -22,17 +24,70 @@ use crate::Enumerator;
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum NodeData {
-    Axis,
-    Camera,
-    Light,
-    Grade,
-    Material,
-    Primitive,
-    RayMarcher,
-    Scene,
+pub enum MaterialInputData {
     #[default]
-    Texture,
+    DiffuseColour,
+    DiffuseColourTexture,
+    SpecularProbability,
+    SpecularProbabilityTexture,
+    SpecularRoughness,
+    SpecularRoughnessTexture,
+    SpecularColour,
+    SpecularColourTexture,
+    TransmissiveProbability,
+    TransmissiveProbabilityTexture,
+    TransmissiveRoughness,
+    TransmissiveRoughnessTexture,
+    ExtinctionCoefficient,
+    TransmissiveColour,
+    TransmissiveColourTexture,
+    EmissiveIntensity,
+    EmissiveColour,
+    EmissiveColourTexture,
+    RefractiveIndex,
+    RefractiveIndexTexture,
+    ScatteringCoefficient,
+    ScatteringColour,
+    ScatteringColourTexture,
 }
 
-impl Enumerator for NodeData {}
+impl Enumerator for MaterialInputData {}
+
+impl NodeInputData for MaterialInputData {
+    fn default_data(&self) -> InputData {
+        let default_material = Material::default();
+        match self {
+            Self::DiffuseColour => InputData::Vec3(default_material.diffuse_colour),
+            Self::DiffuseColourTexture => InputData::RenderPass(RenderPasses::White),
+            Self::SpecularProbability => InputData::Float(default_material.specular_probability),
+            Self::SpecularProbabilityTexture => InputData::RenderPass(RenderPasses::White),
+            Self::SpecularRoughness => InputData::Float(default_material.specular_roughness),
+            Self::SpecularRoughnessTexture => InputData::RenderPass(RenderPasses::White),
+            Self::SpecularColour => InputData::Vec3(default_material.specular_colour),
+            Self::SpecularColourTexture => InputData::RenderPass(RenderPasses::White),
+            Self::TransmissiveProbability => {
+                InputData::Float(default_material.transmissive_probability)
+            }
+            Self::TransmissiveProbabilityTexture => InputData::RenderPass(RenderPasses::White),
+            Self::TransmissiveRoughness => {
+                InputData::Float(default_material.transmissive_roughness)
+            }
+            Self::TransmissiveRoughnessTexture => InputData::RenderPass(RenderPasses::White),
+            Self::ExtinctionCoefficient => {
+                InputData::Float(default_material.extinction_coefficient)
+            }
+            Self::TransmissiveColour => InputData::Vec3(default_material.transmissive_colour),
+            Self::TransmissiveColourTexture => InputData::RenderPass(RenderPasses::White),
+            Self::EmissiveIntensity => InputData::Float(default_material.emissive_intensity),
+            Self::EmissiveColour => InputData::Vec3(default_material.emissive_colour),
+            Self::EmissiveColourTexture => InputData::RenderPass(RenderPasses::White),
+            Self::RefractiveIndex => InputData::Float(default_material.refractive_index),
+            Self::RefractiveIndexTexture => InputData::RenderPass(RenderPasses::White),
+            Self::ScatteringCoefficient => {
+                InputData::Float(default_material.scattering_coefficient)
+            }
+            Self::ScatteringColour => InputData::Vec3(default_material.scattering_colour),
+            Self::ScatteringColourTexture => InputData::RenderPass(RenderPasses::White),
+        }
+    }
+}

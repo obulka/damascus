@@ -46,17 +46,17 @@ impl NodeInputData for LightInputData {
     fn default_data(&self) -> InputData {
         let default_light = Light::default();
         match self {
-            LightInputData::Scene => InputData::Scene(Scene::default()),
-            LightInputData::WorldMatrix => InputData::Mat4(Mat4::IDENTITY),
-            LightInputData::LightType => InputData::Enum(default_light.light_type.into()),
-            LightInputData::Direction => InputData::Vec3(Vec3::NEG_Y),
-            LightInputData::Position => InputData::Vec3(Vec3::Y),
-            LightInputData::Iterations => InputData::UInt(default_light.dimensional_data.x as u32),
-            LightInputData::Intensity => InputData::Float(default_light.intensity),
-            LightInputData::Falloff => InputData::UInt(default_light.falloff),
-            LightInputData::Colour => InputData::Vec3(default_light.colour),
-            LightInputData::ShadowHardness => InputData::Float(default_light.shadow_hardness),
-            LightInputData::SoftenShadows => InputData::Bool(default_light.soften_shadows),
+            Self::Scene => InputData::Scene(Scene::default()),
+            Self::WorldMatrix => InputData::Mat4(Mat4::IDENTITY),
+            Self::LightType => InputData::Enum(default_light.light_type.into()),
+            Self::Direction => InputData::Vec3(Vec3::NEG_Y),
+            Self::Position => InputData::Vec3(Vec3::Y),
+            Self::Iterations => InputData::UInt(default_light.dimensional_data.x as u32),
+            Self::Intensity => InputData::Float(default_light.intensity),
+            Self::Falloff => InputData::UInt(default_light.falloff),
+            Self::Colour => InputData::Vec3(default_light.colour),
+            Self::ShadowHardness => InputData::Float(default_light.shadow_hardness),
+            Self::SoftenShadows => InputData::Bool(default_light.soften_shadows),
         }
     }
 }

@@ -38,10 +38,10 @@ impl Enumerator for AxisInputData {}
 impl NodeInputData for AxisInputData {
     fn default_data(&self) -> InputData {
         match self {
-            AxisInputData::Axis => InputData::Mat4(Mat4::IDENTITY),
-            AxisInputData::Translate => InputData::Vec3(Vec3::ZERO),
-            AxisInputData::Rotate => InputData::Vec3(Vec3::ZERO),
-            AxisInputData::UniformScale => InputData::Float(1.),
+            Self::Axis => InputData::Mat4(Mat4::IDENTITY),
+            Self::Translate => InputData::Vec3(Vec3::ZERO),
+            Self::Rotate => InputData::Vec3(Vec3::ZERO),
+            Self::UniformScale => InputData::Float(1.),
         }
     }
 }

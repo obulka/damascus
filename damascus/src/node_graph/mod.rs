@@ -198,8 +198,12 @@ impl NodeGraph {
         self.edges.parent(input_id)
     }
 
-    pub fn try_get_children(&self, output_id: OutputId) -> Option<&HashSet<InputId>> {
-        self.edges.children(output_id)
+    pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
+        self[node_id]
+            .output_ids
+            .iter()
+            .filter_map(|output_id| self.edges.children(*output_id))
+            .flat_map(|input_ids| input_ids.iter().map(|input_id| self[*input_id].node_id))
     }
 
     pub fn try_get_input(&self, input_id: InputId) -> Option<&Input> {
@@ -223,35 +227,25 @@ impl NodeGraph {
     }
 
     pub fn descendant_output_ids(&self, node_id: NodeId) -> HashSet<OutputId> {
-        let mut nodes_to_search: Vec<NodeId> = vec![node_id];
-        let mut output_ids = HashSet::<OutputId>::new();
-        while let Some(search_node_id) = nodes_to_search.pop() {
-            output_ids.extend(self[search_node_id].output_ids.iter().map(|output_id| {
-                if let Some(input_ids) = self.edges.children(*output_id) {
-                    nodes_to_search
-                        .extend(input_ids.iter().map(|input_id| self[*input_id].node_id));
-                }
-                output_id
-            }));
-        }
-        output_ids
+        self.descendants(node_id)
+            .iter()
+            .flat_map(|descendant_id| {
+                self[*descendant_id]
+                    .output_ids
+                    .iter()
+                    .map(|output_id| *output_id)
+            })
+            .collect()
     }
 
-    pub fn descendant_node_ids(&self, node_id: NodeId) -> HashSet<NodeId> {
+    pub fn descendants(&self, node_id: NodeId) -> HashSet<NodeId> {
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         let mut descendant_ids = HashSet::<NodeId>::new();
         while let Some(search_node_id) = nodes_to_search.pop() {
-            self[search_node_id]
-                .output_ids
-                .iter()
-                .for_each(|output_id| {
-                    if let Some(input_ids) = self.edges.children(*output_id) {
-                        nodes_to_search
-                            .extend(input_ids.iter().map(|input_id| self[*input_id].node_id));
-                        descendant_ids
-                            .extend(input_ids.iter().map(|input_id| self[*input_id].node_id));
-                    }
-                });
+            self.children(search_node_id).for_each(|descendant_id| {
+                nodes_to_search.push(descendant_id);
+                descendant_ids.insert(descendant_id);
+            });
         }
         descendant_ids
     }
@@ -456,12 +450,18 @@ mod tests {
     fn test_node_creation() {
         let mut node_graph = NodeGraph::new();
 
+        let mut node_ids = HashSet::<NodeId>::new();
+
         for node_data in NodeData::iter() {
-            node_graph.add_node(node_data);
+            node_ids.insert(node_graph.add_node(node_data));
         }
 
         assert_eq!(node_graph.nodes.len(), NodeData::COUNT);
         assert_eq!(node_graph.edges.len(), 0);
+        assert_eq!(
+            node_ids,
+            node_graph.iter_nodes().collect::<HashSet<NodeId>>()
+        );
     }
 
     #[test]
@@ -499,6 +499,10 @@ mod tests {
         );
 
         assert_eq!(node_graph.edges.len(), 1);
+        assert_eq!(
+            node_graph.children(primary_axis_id).next(),
+            Some(secondary_axis_id)
+        );
 
         node_graph.connect_node_to_input(
             secondary_axis_id,
@@ -730,8 +734,8 @@ mod tests {
                 .expect("Siblings input should exist on Primitive node"),
         );
 
-        assert!(node_graph.descendant_node_ids(camera_id).is_empty());
-        assert!(node_graph.descendant_node_ids(primitive1_id).is_empty());
+        assert!(node_graph.descendants(camera_id).is_empty());
+        assert!(node_graph.descendants(primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -739,7 +743,7 @@ mod tests {
         secondary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graph.descendant_node_ids(secondary_axis_id),
+            node_graph.descendants(secondary_axis_id),
             secondary_axis_descendants
         );
 
@@ -750,7 +754,7 @@ mod tests {
         primary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graph.descendant_node_ids(primary_axis_id),
+            node_graph.descendants(primary_axis_id),
             primary_axis_descendants
         );
 
@@ -758,7 +762,7 @@ mod tests {
         primitive0_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graph.descendant_node_ids(primitive0_id),
+            node_graph.descendants(primitive0_id),
             primitive0_descendants
         );
     }

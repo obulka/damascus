@@ -86,10 +86,7 @@ impl NodeGraph {
             && self[output_id]
                 .data
                 .can_connect_to_input(&self[input_id].data)
-            && self
-                .ancestor_node_ids(output_node_id)
-                .get(&input_node_id)
-                .is_none()
+            && self.ancestors(output_node_id).get(&input_node_id).is_none()
     }
 
     pub fn add_node(&mut self, data: NodeData) -> NodeId {
@@ -240,7 +237,7 @@ impl NodeGraph {
     }
 
     /// Get all ancestor nodes of `node_id` without using recursion
-    pub fn ancestor_node_ids(&self, node_id: NodeId) -> HashSet<NodeId> {
+    pub fn ancestors(&self, node_id: NodeId) -> HashSet<NodeId> {
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         let mut ancestor_ids = HashSet::<NodeId>::new();
         while let Some(search_node_id) = nodes_to_search.pop() {
@@ -670,27 +667,24 @@ mod tests {
         camera_ancestors.insert(primary_axis_id);
         camera_ancestors.insert(secondary_axis_id);
 
-        assert_eq!(node_graph.ancestor_node_ids(camera_id), camera_ancestors);
+        assert_eq!(node_graph.ancestors(camera_id), camera_ancestors);
 
         let mut secondary_axis_ancestors = HashSet::<NodeId>::new();
         secondary_axis_ancestors.insert(primary_axis_id);
 
         assert_eq!(
-            node_graph.ancestor_node_ids(secondary_axis_id),
+            node_graph.ancestors(secondary_axis_id),
             secondary_axis_ancestors
         );
 
-        assert!(node_graph.ancestor_node_ids(primary_axis_id).is_empty());
+        assert!(node_graph.ancestors(primary_axis_id).is_empty());
 
         let mut primitive1_ancestors = HashSet::<NodeId>::new();
         primitive1_ancestors.insert(primitive0_id);
         primitive1_ancestors.insert(secondary_axis_id);
         primitive1_ancestors.insert(primary_axis_id);
 
-        assert_eq!(
-            node_graph.ancestor_node_ids(primitive1_id),
-            primitive1_ancestors
-        );
+        assert_eq!(node_graph.ancestors(primitive1_id), primitive1_ancestors);
     }
 
     #[test]

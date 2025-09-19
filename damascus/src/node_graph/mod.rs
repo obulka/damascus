@@ -150,7 +150,7 @@ impl NodeGraph {
         for input in input_ids.iter() {
             self.inputs.remove(*input);
         }
-        for output in output_ids.clone().iter() {
+        for output in output_ids.iter() {
             self.outputs.remove(*output);
         }
         let removed_node = self.nodes.remove(node_id).expect("Node must exist.");

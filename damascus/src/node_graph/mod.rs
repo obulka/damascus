@@ -138,22 +138,19 @@ impl NodeGraph {
         node_id
     }
 
-    pub fn remove_node(&mut self, node_id: NodeId) -> (Node, Vec<(InputId, OutputId)>) {
-        let mut disconnected_edges = vec![];
+    pub fn remove_node(&mut self, node_id: NodeId) -> (Node, HashMap<InputId, OutputId>) {
+        let mut disconnected_edges = HashMap::<InputId, OutputId>::new();
 
-        disconnected_edges.extend(
-            self.edges
-                .disconnect_inputs(self[node_id].input_ids.clone()),
-        );
-        disconnected_edges.extend(
-            self.edges
-                .disconnect_outputs(self[node_id].output_ids.clone()),
-        );
+        let input_ids: Vec<InputId> = self[node_id].input_ids.clone();
+        let output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
 
-        for input in self[node_id].input_ids.clone().iter() {
+        disconnected_edges.extend(self.edges.disconnect_inputs(input_ids.iter()));
+        disconnected_edges.extend(self.edges.disconnect_outputs(output_ids.iter()));
+
+        for input in input_ids.iter() {
             self.inputs.remove(*input);
         }
-        for output in self[node_id].output_ids.clone().iter() {
+        for output in output_ids.clone().iter() {
             self.outputs.remove(*output);
         }
         let removed_node = self.nodes.remove(node_id).expect("Node must exist.");
@@ -505,7 +502,8 @@ mod tests {
         }
 
         for node_id in node_graph.iter_nodes().collect::<Vec<NodeId>>() {
-            node_graph.remove_node(node_id);
+            let (_node, disconnections) = node_graph.remove_node(node_id);
+            assert!(disconnections.is_empty());
         }
 
         assert_eq!(node_graph.nodes.len(), 0);
@@ -539,7 +537,7 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -569,7 +567,7 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id_from_string(camera_id, "WorldMatrix")
+                .node_input_id_from_string(camera_id, "Axis")
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -594,7 +592,7 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -604,9 +602,74 @@ mod tests {
 
         assert_eq!(node_graph.edges.len(), 1);
 
-        node_graph.disconnect_node_input(camera_id, CameraInputData::WorldMatrix);
+        node_graph.disconnect_node_input(camera_id, CameraInputData::Axis);
 
         assert_eq!(node_graph.edges.len(), 0);
+    }
+
+    #[test]
+    fn test_node_edge_disconnection_on_node_removal() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+
+        let primary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(primary_axis_id).unwrap();
+
+        let secondary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
+        let secondary_axis_axis_input_id: InputId = node_graph
+            .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            .expect("Axis input should exist on Axis node");
+
+        let camera_axis_input_id: InputId = node_graph
+            .node_input_id(camera_id, CameraInputData::Axis)
+            .expect("Axis input should exist on Camera node");
+
+        let primitive_axis_input_id: InputId = node_graph
+            .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            .expect("Axis input should exist on Primitive node");
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, CameraInputData::Axis)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+                .expect("Axis input should exist on Primitive node"),
+        );
+
+        node_graph.connect_node_to_input(
+            primitive0_id,
+            node_graph
+                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
+                .expect("Siblings input should exist on Primitive node"),
+        );
+
+        let mut expected_disconnections = HashMap::<InputId, OutputId>::new();
+        expected_disconnections.insert(secondary_axis_axis_input_id, primary_axis_output_id);
+        expected_disconnections.insert(camera_axis_input_id, secondary_axis_output_id);
+        expected_disconnections.insert(primitive_axis_input_id, secondary_axis_output_id);
+
+        let (_node, disconnections) = node_graph.remove_node(secondary_axis_id);
+        assert_eq!(disconnections, expected_disconnections);
     }
 
     #[test]
@@ -646,7 +709,7 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
@@ -674,14 +737,14 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
@@ -737,14 +800,14 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
@@ -882,14 +945,14 @@ mod tests {
             node_graph.connect_node_to_input(
                 secondary_axis_id,
                 node_graph
-                    .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                    .node_input_id(camera_id, CameraInputData::Axis)
                     .expect("Axis input should exist on Camera node"),
             );
 
             node_graph.connect_node_to_input(
                 secondary_axis_id,
                 node_graph
-                    .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                    .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                     .expect("Axis input should exist on Primitive node"),
             );
 
@@ -1009,14 +1072,14 @@ mod tests {
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
         node_graph.connect_node_to_input(
             secondary_axis_id,
             node_graph
-                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 

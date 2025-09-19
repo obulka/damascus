@@ -33,7 +33,7 @@ pub enum CameraInputData {
     NearPlane,
     FarPlane,
     SensorResolution,
-    WorldMatrix,
+    Axis,
     EnableDepthOfField,
     Latlong,
 }
@@ -51,7 +51,7 @@ impl NodeInputData for CameraInputData {
             Self::NearPlane => InputData::Float(default_camera.near_plane),
             Self::FarPlane => InputData::Float(default_camera.far_plane),
             Self::SensorResolution => InputData::UVec2(default_camera.sensor_resolution),
-            Self::WorldMatrix => InputData::Mat4(default_camera.camera_to_world),
+            Self::Axis => InputData::Mat4(default_camera.camera_to_world),
             Self::EnableDepthOfField => InputData::Bool(default_camera.enable_depth_of_field),
             Self::Latlong => InputData::Bool(default_camera.latlong),
         }

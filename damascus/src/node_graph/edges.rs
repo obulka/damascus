@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use slotmap::SecondaryMap;
 
@@ -100,22 +100,28 @@ impl Edges {
         self.children.iter().map(|(output, input)| (output, input))
     }
 
-    pub fn disconnect_outputs(&mut self, output_ids: Vec<OutputId>) -> Vec<(InputId, OutputId)> {
-        let mut disconnected: Vec<(InputId, OutputId)> = vec![];
-        for output_id in output_ids.into_iter() {
-            for input_id in self.children_owned(output_id).into_iter() {
+    pub fn disconnect_outputs<'a>(
+        &mut self,
+        output_ids: impl Iterator<Item = &'a OutputId> + 'a,
+    ) -> HashMap<InputId, OutputId> {
+        let mut disconnected = HashMap::<InputId, OutputId>::new();
+        for output_id in output_ids {
+            for input_id in self.children_owned(*output_id).into_iter() {
                 self.disconnect_input(input_id);
-                disconnected.push((input_id, output_id));
+                disconnected.insert(input_id, *output_id);
             }
         }
         disconnected
     }
 
-    pub fn disconnect_inputs(&mut self, input_ids: Vec<InputId>) -> Vec<(InputId, OutputId)> {
-        let mut disconnected: Vec<(InputId, OutputId)> = vec![];
-        for input_id in input_ids.into_iter() {
-            if let Some(output_id) = self.disconnect_input(input_id) {
-                disconnected.push((input_id, output_id));
+    pub fn disconnect_inputs<'a>(
+        &mut self,
+        input_ids: impl Iterator<Item = &'a InputId> + 'a,
+    ) -> HashMap<InputId, OutputId> {
+        let mut disconnected = HashMap::<InputId, OutputId>::new();
+        for input_id in input_ids {
+            if let Some(output_id) = self.disconnect_input(*input_id) {
+                disconnected.insert(*input_id, output_id);
             }
         }
         disconnected

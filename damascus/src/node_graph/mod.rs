@@ -194,10 +194,6 @@ impl NodeGraph {
         self.edges.disconnect_output(output_id);
     }
 
-    pub fn try_get_parent(&self, input_id: InputId) -> Option<&OutputId> {
-        self.edges.parent(input_id)
-    }
-
     pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         self[node_id]
             .output_ids
@@ -206,27 +202,19 @@ impl NodeGraph {
             .flat_map(|input_ids| input_ids.iter().map(|input_id| self[*input_id].node_id))
     }
 
-    pub fn try_get_input(&self, input_id: InputId) -> Option<&Input> {
-        self.inputs.get(input_id)
-    }
-
-    pub fn get_input(&self, input_id: InputId) -> &Input {
-        &self[input_id]
-    }
-
-    pub fn try_get_output(&self, output_id: OutputId) -> Option<&Output> {
-        self.outputs.get(output_id)
-    }
-
-    pub fn get_output(&self, output_id: OutputId) -> &Output {
-        &self[output_id]
+    pub fn parents(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
+        self[node_id]
+            .input_ids
+            .iter()
+            .filter_map(|input_id| self.edges.parent(*input_id))
+            .map(|output_id| self[*output_id].node_id)
     }
 
     pub fn iter_nodes(&self) -> impl Iterator<Item = NodeId> + '_ {
         self.nodes.keys()
     }
 
-    pub fn descendant_output_ids(&self, node_id: NodeId) -> HashSet<OutputId> {
+    pub fn descendants_output_ids(&self, node_id: NodeId) -> HashSet<OutputId> {
         self.descendants(node_id)
             .iter()
             .flat_map(|descendant_id| {
@@ -238,6 +226,7 @@ impl NodeGraph {
             .collect()
     }
 
+    /// Get all descendant nodes of `node_id` without using recursion
     pub fn descendants(&self, node_id: NodeId) -> HashSet<NodeId> {
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         let mut descendant_ids = HashSet::<NodeId>::new();
@@ -250,25 +239,31 @@ impl NodeGraph {
         descendant_ids
     }
 
+    /// Get all ancestor nodes of `node_id` without using recursion
     pub fn ancestor_node_ids(&self, node_id: NodeId) -> HashSet<NodeId> {
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         let mut ancestor_ids = HashSet::<NodeId>::new();
         while let Some(search_node_id) = nodes_to_search.pop() {
-            self[search_node_id].input_ids.iter().for_each(|input_id| {
-                if let Some(parent_output_id) = self.edges.parent(*input_id) {
-                    nodes_to_search.push(self[*parent_output_id].node_id);
-                    ancestor_ids.insert(self[*parent_output_id].node_id);
-                }
+            self.parents(search_node_id).for_each(|ancestor_id| {
+                nodes_to_search.push(ancestor_id);
+                ancestor_ids.insert(ancestor_id);
             });
         }
         ancestor_ids
     }
 
+    /// Merge two node graphs together
+    ///
+    /// All nodes and edges will be moved into this graph without cloning,
+    /// and their ids will be updated to avoid clashing
+    ///
+    /// Returns: A map of the former to new node ids
     pub fn merge(&mut self, other: &mut Self) -> HashMap<NodeId, NodeId> {
         let mut other_to_new_node_ids = HashMap::<NodeId, NodeId>::new();
         let mut edges_to_recreate = HashMap::<OutputId, HashSet<InputId>>::new();
         let mut other_to_new_outputs = HashMap::<OutputId, OutputId>::new();
-        for node_id in self.iter_nodes().collect::<HashSet<_>>().into_iter() {
+
+        for node_id in self.iter_nodes().collect::<HashSet<NodeId>>().into_iter() {
             if let Some(mut other_node) = other.nodes.remove(node_id) {
                 // Move the node to this node graph and update its id
                 let new_node_id: NodeId = self.nodes.insert_with_key(|new_node_id| {
@@ -336,14 +331,14 @@ impl NodeGraph {
         self[node_id]
             .input_ids
             .iter()
-            .map(|input_id| self.get_input(*input_id))
+            .map(|input_id| &self[*input_id])
     }
 
     pub fn node_outputs(&self, node_id: NodeId) -> impl Iterator<Item = &Output> {
         self[node_id]
             .output_ids
             .iter()
-            .map(|output_id| self.get_output(*output_id))
+            .map(|output_id| &self[*output_id])
     }
 
     pub fn node_input(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
@@ -395,6 +390,17 @@ impl NodeGraph {
             }
         }
         false
+    }
+
+    pub fn disconnect_node_input<I: NodeInputData>(
+        &mut self,
+        node_id: NodeId,
+        node_input_data: I,
+    ) -> Option<OutputId> {
+        match self.node_input_id(node_id, node_input_data) {
+            Ok(input_id) => self.edges.disconnect_input(input_id),
+            Err(_) => None,
+        }
     }
 }
 
@@ -472,7 +478,7 @@ mod tests {
             node_graph.add_node(node_data);
         }
 
-        for node_id in node_graph.iter_nodes().collect::<Vec<_>>() {
+        for node_id in node_graph.iter_nodes().collect::<Vec<NodeId>>() {
             node_graph.remove_node(node_id);
         }
 
@@ -568,19 +574,11 @@ mod tests {
 
         assert_eq!(node_graph.edges.len(), 2);
 
-        node_graph.edges.disconnect_input(
-            node_graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
-        );
+        node_graph.disconnect_node_input(secondary_axis_id, AxisInputData::Axis);
 
         assert_eq!(node_graph.edges.len(), 1);
 
-        node_graph.edges.disconnect_input(
-            node_graph
-                .node_input_id(camera_id, CameraInputData::WorldMatrix)
-                .expect("Axis input should exist on Camera node"),
-        );
+        node_graph.disconnect_node_input(camera_id, CameraInputData::WorldMatrix);
 
         assert_eq!(node_graph.edges.len(), 0);
     }
@@ -736,6 +734,8 @@ mod tests {
 
         assert!(node_graph.descendants(camera_id).is_empty());
         assert!(node_graph.descendants(primitive1_id).is_empty());
+        assert!(node_graph.descendants_output_ids(camera_id).is_empty());
+        assert!(node_graph.descendants_output_ids(primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -744,7 +744,17 @@ mod tests {
 
         assert_eq!(
             node_graph.descendants(secondary_axis_id),
-            secondary_axis_descendants
+            secondary_axis_descendants,
+        );
+
+        let mut secondary_axis_descendants_output_ids = HashSet::<OutputId>::new();
+        secondary_axis_descendants_output_ids.extend(node_graph[camera_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(node_graph[primitive0_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(node_graph[primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graph.descendants_output_ids(secondary_axis_id),
+            secondary_axis_descendants_output_ids,
         );
 
         let mut primary_axis_descendants = HashSet::<NodeId>::new();
@@ -755,7 +765,18 @@ mod tests {
 
         assert_eq!(
             node_graph.descendants(primary_axis_id),
-            primary_axis_descendants
+            primary_axis_descendants,
+        );
+
+        let mut primary_axis_descendants_output_ids = HashSet::<OutputId>::new();
+        primary_axis_descendants_output_ids.extend(node_graph[secondary_axis_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graph[camera_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graph[primitive0_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graph[primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graph.descendants_output_ids(primary_axis_id),
+            primary_axis_descendants_output_ids,
         );
 
         let mut primitive0_descendants = HashSet::<NodeId>::new();
@@ -763,7 +784,180 @@ mod tests {
 
         assert_eq!(
             node_graph.descendants(primitive0_id),
-            primitive0_descendants
+            primitive0_descendants,
+        );
+
+        let mut primitive0_descendants_output_ids = HashSet::<OutputId>::new();
+        primitive0_descendants_output_ids.extend(node_graph[primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graph.descendants_output_ids(primitive0_id),
+            primitive0_descendants_output_ids,
+        );
+    }
+
+    #[test]
+    fn test_node_graph_merge() {
+        let mut node_graph = NodeGraph::new();
+        let mut node_graph1 = NodeGraph::new();
+
+        let mut node_ids = HashSet::<NodeId>::new();
+        let mut node_ids1 = HashSet::<NodeId>::new();
+
+        for node_data in NodeData::iter() {
+            node_ids.insert(node_graph.add_node(node_data));
+            node_ids1.insert(node_graph1.add_node(node_data));
+        }
+
+        let node_id_lut: HashMap<NodeId, NodeId> = node_graph.merge(&mut node_graph1);
+
+        assert_eq!(node_graph.nodes.len(), NodeData::COUNT * 2);
+        assert_eq!(node_graph.edges.len(), 0);
+        assert_eq!(node_graph1.nodes.len(), 0);
+        assert_eq!(
+            node_ids1,
+            node_id_lut
+                .keys()
+                .map(|node_id| *node_id)
+                .collect::<HashSet<NodeId>>(),
+        );
+        node_ids.extend(node_id_lut.values());
+        assert_eq!(
+            node_ids,
+            node_graph.iter_nodes().collect::<HashSet<NodeId>>(),
+        );
+    }
+
+    #[test]
+    fn test_node_graph_merge_edges() {
+        let mut node_graphs = vec![NodeGraph::new(), NodeGraph::new()];
+
+        let mut primary_axis_ids = Vec::<NodeId>::new();
+        let mut secondary_axis_ids = Vec::<NodeId>::new();
+        let mut camera_ids = Vec::<NodeId>::new();
+        let mut primitive0_ids = Vec::<NodeId>::new();
+        let mut primitive1_ids = Vec::<NodeId>::new();
+
+        node_graphs.iter_mut().for_each(|node_graph| {
+            let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+            let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+            let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+            let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
+            let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+
+            node_graph.connect_node_to_input(
+                primary_axis_id,
+                node_graph
+                    .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                    .expect("Axis input should exist on Axis node"),
+            );
+
+            node_graph.connect_node_to_input(
+                secondary_axis_id,
+                node_graph
+                    .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                    .expect("Axis input should exist on Camera node"),
+            );
+
+            node_graph.connect_node_to_input(
+                secondary_axis_id,
+                node_graph
+                    .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                    .expect("Axis input should exist on Primitive node"),
+            );
+
+            node_graph.connect_node_to_input(
+                primitive0_id,
+                node_graph
+                    .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
+                    .expect("Siblings input should exist on Primitive node"),
+            );
+
+            primary_axis_ids.push(primary_axis_id);
+            secondary_axis_ids.push(secondary_axis_id);
+            camera_ids.push(camera_id);
+            primitive0_ids.push(primitive0_id);
+            primitive1_ids.push(primitive1_id);
+        });
+
+        let mut node_graph: NodeGraph = node_graphs
+            .pop()
+            .expect("node_graphs vec has two node graphs");
+
+        let node_id_lut: HashMap<NodeId, NodeId> = node_graphs[0].merge(&mut node_graph);
+
+        let primary_axis_id: NodeId = *node_id_lut.get(&primary_axis_ids[1]).unwrap();
+        let secondary_axis_id: NodeId = *node_id_lut.get(&secondary_axis_ids[1]).unwrap();
+        let camera_id: NodeId = *node_id_lut.get(&camera_ids[1]).unwrap();
+        let primitive0_id: NodeId = *node_id_lut.get(&primitive0_ids[1]).unwrap();
+        let primitive1_id: NodeId = *node_id_lut.get(&primitive1_ids[1]).unwrap();
+
+        assert!(node_graphs[0].descendants(camera_id).is_empty());
+        assert!(node_graphs[0].descendants(primitive1_id).is_empty());
+        assert!(node_graphs[0].descendants_output_ids(camera_id).is_empty());
+        assert!(node_graphs[0]
+            .descendants_output_ids(primitive1_id)
+            .is_empty());
+
+        let mut secondary_axis_descendants = HashSet::<NodeId>::new();
+        secondary_axis_descendants.insert(camera_id);
+        secondary_axis_descendants.insert(primitive0_id);
+        secondary_axis_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graphs[0].descendants(secondary_axis_id),
+            secondary_axis_descendants,
+        );
+
+        let mut secondary_axis_descendants_output_ids = HashSet::<OutputId>::new();
+        secondary_axis_descendants_output_ids.extend(node_graphs[0][camera_id].output_ids.iter());
+        secondary_axis_descendants_output_ids
+            .extend(node_graphs[0][primitive0_id].output_ids.iter());
+        secondary_axis_descendants_output_ids
+            .extend(node_graphs[0][primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graphs[0].descendants_output_ids(secondary_axis_id),
+            secondary_axis_descendants_output_ids,
+        );
+
+        let mut primary_axis_descendants = HashSet::<NodeId>::new();
+        primary_axis_descendants.insert(secondary_axis_id);
+        primary_axis_descendants.insert(camera_id);
+        primary_axis_descendants.insert(primitive0_id);
+        primary_axis_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graphs[0].descendants(primary_axis_id),
+            primary_axis_descendants,
+        );
+
+        let mut primary_axis_descendants_output_ids = HashSet::<OutputId>::new();
+        primary_axis_descendants_output_ids
+            .extend(node_graphs[0][secondary_axis_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graphs[0][camera_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graphs[0][primitive0_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(node_graphs[0][primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graphs[0].descendants_output_ids(primary_axis_id),
+            primary_axis_descendants_output_ids,
+        );
+
+        let mut primitive0_descendants = HashSet::<NodeId>::new();
+        primitive0_descendants.insert(primitive1_id);
+
+        assert_eq!(
+            node_graphs[0].descendants(primitive0_id),
+            primitive0_descendants,
+        );
+
+        let mut primitive0_descendants_output_ids = HashSet::<OutputId>::new();
+        primitive0_descendants_output_ids.extend(node_graphs[0][primitive1_id].output_ids.iter());
+
+        assert_eq!(
+            node_graphs[0].descendants_output_ids(primitive0_id),
+            primitive0_descendants_output_ids,
         );
     }
 }

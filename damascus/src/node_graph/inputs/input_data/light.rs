@@ -28,7 +28,7 @@ use super::{InputData, NodeInputData};
 pub enum LightInputData {
     #[default]
     Scene,
-    WorldMatrix,
+    Axis,
     LightType,
     Direction,
     Position,
@@ -47,7 +47,7 @@ impl NodeInputData for LightInputData {
         let default_light = Light::default();
         match self {
             Self::Scene => InputData::Scene(Scene::default()),
-            Self::WorldMatrix => InputData::Mat4(Mat4::IDENTITY),
+            Self::Axis => InputData::Mat4(Mat4::IDENTITY),
             Self::LightType => InputData::Enum(default_light.light_type.into()),
             Self::Direction => InputData::Vec3(Vec3::NEG_Y),
             Self::Position => InputData::Vec3(Vec3::Y),

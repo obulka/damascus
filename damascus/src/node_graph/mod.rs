@@ -62,7 +62,7 @@ impl NodeGraph {
         }
     }
 
-    pub fn from_nodes(&self, node_ids: &HashSet<NodeId>) -> Self {
+    pub fn new_from_nodes(&self, node_ids: &HashSet<NodeId>) -> Self {
         let mut new_graph: Self = self.clone();
 
         for node_id in self.iter_nodes() {
@@ -398,6 +398,35 @@ impl NodeGraph {
             Ok(input_id) => self.edges.disconnect_input(input_id),
             Err(_) => None,
         }
+    }
+
+    pub fn input_is_connected(&self, input_id: InputId) -> bool {
+        self.edges.parent(input_id).is_some()
+    }
+
+    pub fn node_input_is_connected<I: NodeInputData>(
+        &self,
+        node_id: NodeId,
+        node_input_data: I,
+    ) -> bool {
+        match self.node_input_id(node_id, node_input_data) {
+            Ok(input_id) => self.input_is_connected(input_id),
+            Err(_) => false,
+        }
+    }
+
+    pub fn output_is_connected(&self, output_id: OutputId) -> bool {
+        if let Some(children) = self.edges.children(output_id) {
+            return !children.is_empty();
+        }
+        false
+    }
+
+    pub fn node_output_is_connected(&self, node_id: NodeId) -> bool {
+        if let Some(output_id) = self.node_first_output_id(node_id) {
+            return self.output_is_connected(*output_id);
+        }
+        false
     }
 }
 
@@ -788,6 +817,10 @@ mod tests {
             node_graph.descendants_output_ids(primitive0_id),
             primitive0_descendants_output_ids,
         );
+        assert_eq!(
+            node_graph.descendants_output_ids(primitive0_id),
+            primitive0_descendants_output_ids,
+        );
     }
 
     #[test]
@@ -953,5 +986,65 @@ mod tests {
             node_graphs[0].descendants_output_ids(primitive0_id),
             primitive0_descendants_output_ids,
         );
+    }
+
+    #[test]
+    fn test_new_from_nodes() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+
+        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(camera_id, CameraInputData::WorldMatrix)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        node_graph.connect_node_to_input(
+            secondary_axis_id,
+            node_graph
+                .node_input_id(primitive0_id, PrimitiveInputData::WorldMatrix)
+                .expect("Axis input should exist on Primitive node"),
+        );
+
+        node_graph.connect_node_to_input(
+            primitive0_id,
+            node_graph
+                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
+                .expect("Siblings input should exist on Primitive node"),
+        );
+
+        let mut node_ids = HashSet::<NodeId>::new();
+        node_ids.insert(primary_axis_id);
+        node_ids.insert(secondary_axis_id);
+
+        let new_node_graph = node_graph.new_from_nodes(&node_ids);
+
+        assert_eq!(
+            new_node_graph.iter_nodes().collect::<HashSet<NodeId>>(),
+            node_ids,
+        );
+        assert_eq!(new_node_graph.descendants(primary_axis_id).len(), 1);
+        assert_eq!(
+            new_node_graph.descendants(primary_axis_id).iter().next(),
+            Some(&secondary_axis_id)
+        );
+        assert!(new_node_graph.node_output_is_connected(primary_axis_id));
+        assert!(!new_node_graph.node_output_is_connected(secondary_axis_id));
+        assert!(!new_node_graph.node_input_is_connected(primary_axis_id, AxisInputData::Axis));
+        assert!(new_node_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
     }
 }

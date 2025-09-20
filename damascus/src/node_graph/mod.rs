@@ -370,7 +370,7 @@ impl NodeGraph {
 
     /// Get all descendant nodes of `node_id` without using recursion
     pub fn descendants(&self, node_id: NodeId) -> Vec<NodeId> {
-        self.for_each_descendant(node_id, |node_id| node_id)
+        self.for_each_descendant(node_id, |descendant_id| descendant_id)
     }
 
     /// Get all ancestor nodes of `node_id` without using recursion
@@ -391,7 +391,7 @@ impl NodeGraph {
 
     /// Get all ancestor nodes of `node_id` without using recursion
     pub fn ancestors(&self, node_id: NodeId) -> Vec<NodeId> {
-        self.for_each_ancestor(node_id, |node_id| node_id)
+        self.for_each_ancestor(node_id, |ancestor_id| ancestor_id)
     }
 
     /// Check if a node is an ancestor of another

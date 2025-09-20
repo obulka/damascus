@@ -70,7 +70,11 @@ pub fn evaluate_output(
             //
             // Note that this is just one possible semantic interpretation of
             // the graphs, you can come up with your own evaluation semantics!
-            self.node_graph.populate_output(self.node_id, name, value)
+            let output_id = self.node_graph.node(self.node_id).get_output(name)?;
+            self.node_graph
+                .output_cache
+                .insert(output_id, value.clone());
+            Ok(value)
         }
 
         fn input_bool(&mut self, name: &str) -> anyhow::Result<bool> {

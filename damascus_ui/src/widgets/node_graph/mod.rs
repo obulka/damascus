@@ -84,17 +84,6 @@ impl NodeGraph {
         &mut self.user_state
     }
 
-    pub fn populate_output(
-        &mut self,
-        node_id: NodeId,
-        param_name: &str,
-        value: NodeValueType,
-    ) -> anyhow::Result<NodeValueType> {
-        let output_id = self.node(node_id).get_output(param_name)?;
-        self.output_cache.insert(output_id, value.clone());
-        Ok(value)
-    }
-
     pub fn graph(&self) -> &Graph {
         &self.editor_state.graph
     }

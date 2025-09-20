@@ -35,20 +35,20 @@ pub enum NodeErrors {
 pub type NodeResult<T> = std::result::Result<T, NodeErrors>;
 
 impl fmt::Display for NodeErrors {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
             NodeErrors::NodeDoesNotContainInputError {
                 node_id,
                 input_name,
             } => write!(
-                f,
+                formatter,
                 "{}: Node({:?}) does not contain an input named: {:?}",
                 self, node_id, input_name,
             ),
             NodeErrors::NoOutputError(node_id) => {
-                write!(f, "{}: No output on Node({:?})", self, node_id)
+                write!(formatter, "{}: No output on Node({:?})", self, node_id)
             }
-            NodeErrors::UnknownError => write!(f, "{}: Skill issue tbh", self),
+            NodeErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
         }
     }
 }

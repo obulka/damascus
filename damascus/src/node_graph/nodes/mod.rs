@@ -20,7 +20,15 @@ slotmap::new_key_type! { pub struct NodeId; }
 pub type Nodes = SlotMap<NodeId, Node>;
 
 #[derive(
-    Debug, Default, Clone, EnumCount, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Default,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum NodeErrors {
     NodeDoesNotContainInputError {

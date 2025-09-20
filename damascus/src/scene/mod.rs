@@ -21,7 +21,7 @@ pub struct GPUSceneParameters {
     num_non_physical_lights: u32,
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Scene {
     pub render_camera: Camera,

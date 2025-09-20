@@ -21,7 +21,15 @@ slotmap::new_key_type! { pub struct InputId; }
 pub type Inputs = SlotMap<InputId, Input>;
 
 #[derive(
-    Debug, Default, Clone, EnumCount, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Default,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum InputErrors {
     InputDowncastError {

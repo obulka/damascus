@@ -21,7 +21,7 @@ pub struct GPUCamera {
     camera_to_screen: Mat4,
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Camera {
     pub focal_length: f32,

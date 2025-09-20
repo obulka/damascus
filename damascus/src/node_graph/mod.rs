@@ -8,6 +8,7 @@ use std::{
     fmt,
 };
 
+use glam::{Mat4, Quat, Vec3};
 use quick_cache::{
     unsync::{Cache, DefaultLifecycle},
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
@@ -36,12 +37,23 @@ use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nod
 use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
 
 #[derive(
-    Debug, Default, Clone, EnumCount, EnumIter, EnumString, serde::Serialize, serde::Deserialize,
+    Debug,
+    Default,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
 )]
 pub enum NodeGraphErrors {
     NodeError(NodeErrors),
     InputError(InputErrors),
-    CacheMissError(OutputId),
+    InvalidNodeData {
+        node_id: NodeId,
+        node_input_data: String,
+    },
     #[default]
     UnknownError,
 }
@@ -53,13 +65,14 @@ impl fmt::Display for NodeGraphErrors {
         match self {
             NodeGraphErrors::NodeError(error) => error.fmt(formatter),
             NodeGraphErrors::InputError(error) => error.fmt(formatter),
-            NodeGraphErrors::CacheMissError(output_id) => {
-                write!(
-                    formatter,
-                    "{:?}: No data in cache for Output({:?})",
-                    self, output_id
-                )
-            }
+            NodeGraphErrors::InvalidNodeData {
+                node_id,
+                node_input_data,
+            } => write!(
+                formatter,
+                "{}: Node({:?}) should contain data for input {:?}",
+                self, node_id, node_input_data
+            ),
             NodeGraphErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
         }
     }
@@ -117,13 +130,17 @@ impl NodeGraph {
         self.outputs.len()
     }
 
+    pub fn remove_output_from_cache(&mut self, output_id: &OutputId) {
+        self.cache.remove(output_id);
+    }
+
     pub fn remove_from_cache(&mut self, node_id: NodeId) {
         let node_output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
         self.descendants_output_ids(node_id)
             .iter()
             .chain(node_output_ids.iter())
             .for_each(|output_id| {
-                self.cache.remove(output_id);
+                self.remove_output_from_cache(output_id);
             });
     }
 
@@ -145,35 +162,120 @@ impl NodeGraph {
         self.edges = Edges::default();
     }
 
-    // Evaluate the input value of a node
-    // pub fn evaluate_output(&mut self, output_id: OutputId) -> NodeGraphResult<InputData> {
-    //     self[self[output_id].node_id].input_ids.iter().
-    //     match self.node_input_id(node_id, node_input_data) {
-    //         Ok(input_id) => {
-    //             if let Some(output_id) = self.edges.parent(input_id) {
-    //                 if let Some(input_data) = self.cache.get(output_id) {
-    //                     // Data was already cached, return it
-    //                     Ok((*input_data).clone())
-    //                 } else {
-    //                     // Parent data must be computed
-    //                     // self.evaluate_output(output_id);
+    fn evaluate_node(
+        &mut self,
+        output_id: OutputId,
+        mut node_input_data: HashMap<String, InputData>,
+    ) -> NodeGraphResult<InputData> {
+        let node_id: NodeId = self[output_id].node_id;
+        match self[node_id].data {
+            NodeData::Axis => {
+                let input_axis: Mat4 = node_input_data
+                    .remove(&AxisInputData::Axis.to_string())
+                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
+                        node_id,
+                        node_input_data: AxisInputData::Axis.to_string(),
+                    })?
+                    .try_to_mat4()
+                    .map_err(|error| NodeGraphErrors::InputError(error))?;
 
-    //                     // The data should now be cached
-    //                     if let Some(input_data) = self.cache.get(output_id) {
-    //                         Ok((*input_data).clone())
-    //                     } else {
-    //                         Err(NodeGraphErrors::CacheMissError(*output_id))
-    //                     }
-    //                 }
-    //             } else {
-    //                 // Input is not connected
-    //                 // Return its current/default value
-    //                 Ok(self[input_id].data.clone())
-    //             }
-    //         }
-    //         Err(error) => Err(NodeGraphErrors::NodeError(error)),
-    //     }
-    // }
+                let translate: Vec3 = node_input_data
+                    .remove(&AxisInputData::Translate.to_string())
+                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
+                        node_id,
+                        node_input_data: AxisInputData::Translate.to_string(),
+                    })?
+                    .try_to_vec3()
+                    .map_err(|error| NodeGraphErrors::InputError(error))?;
+
+                let rotate: Vec3 = node_input_data
+                    .remove(&AxisInputData::Rotate.to_string())
+                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
+                        node_id,
+                        node_input_data: AxisInputData::Rotate.to_string(),
+                    })?
+                    .try_to_vec3()
+                    .map_err(|error| NodeGraphErrors::InputError(error))?
+                    * std::f32::consts::PI
+                    / 180.;
+
+                let uniform_scale: f32 = node_input_data
+                    .remove(&AxisInputData::UniformScale.to_string())
+                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
+                        node_id,
+                        node_input_data: AxisInputData::UniformScale.to_string(),
+                    })?
+                    .try_to_float()
+                    .map_err(|error| NodeGraphErrors::InputError(error))?;
+
+                let quaternion =
+                    Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+
+                let input_data = InputData::Mat4(
+                    input_axis
+                        * glam::Mat4::from_scale_rotation_translation(
+                            glam::Vec3::splat(uniform_scale),
+                            quaternion,
+                            translate,
+                        ),
+                );
+                self.insert_to_cache(output_id, input_data.clone());
+                Ok(input_data)
+            }
+            // NodeData::Camera => {}
+            // NodeData::Grade => {}
+            // NodeData::Light => {}
+            // NodeData::Material => {}
+            // NodeData::Primitive => {}
+            // NodeData::RayMarcher => {}
+            // NodeData::Scene => {}
+            // NodeData::Texture => { }
+            _ => Err(NodeGraphErrors::UnknownError),
+        }
+    }
+
+    // Evaluate the input value of a node
+    pub fn evaluate_output(&mut self, output_id: OutputId) -> NodeGraphResult<InputData> {
+        // The output depends on the data from each of the node's inputs
+        // so iterate over the inputs and collect their data
+        let input_ids: Vec<InputId> = self[self[output_id].node_id].input_ids.clone();
+
+        // We will collect that input data in this map as we ascend the graph
+        let mut input_data_map = HashMap::<String, InputData>::new();
+
+        for input_id in input_ids.into_iter() {
+            // Recursively retrieve the data for this input
+            let result: NodeGraphResult<InputData> = self.evaluate_input(input_id);
+
+            if let Ok(input_data) = result {
+                // If the data was valid, store it for the node to process
+                input_data_map.insert(self[input_id].name.clone(), input_data);
+                continue;
+            }
+
+            // If an error has occured, bail and propogate it
+            return result;
+        }
+
+        // All input data for the node has been collected
+        // so its time to process the data and start descending the graph
+        self.evaluate_node(output_id, input_data_map)
+    }
+
+    pub fn evaluate_input(&mut self, input_id: InputId) -> NodeGraphResult<InputData> {
+        if let Some(output_id) = self.edges.parent(input_id) {
+            if let Some(input_data) = self.cache.get(output_id) {
+                // Data was already cached, return it
+                Ok((*input_data).clone())
+            } else {
+                self.evaluate_output(*output_id)
+            }
+        } else {
+            // Input is not connected
+            // Return its current/default value
+            Ok(self[input_id].data.clone())
+        }
+    }
 
     pub fn new_from_nodes(&self, node_ids: &HashSet<NodeId>) -> Self {
         let mut new_graph: Self = self.clone();
@@ -350,16 +452,16 @@ impl NodeGraph {
     }
 
     /// Check if a node is an ancestor of another
-    pub fn is_descendant(&self, node_id: NodeId, potential_descendant_node_id: NodeId) -> bool {
+    pub fn is_descendant(&self, node_id: NodeId, potential_descendant_id: NodeId) -> bool {
         // Nodes are not their own descendant
-        if node_id == potential_descendant_node_id {
+        if node_id == potential_descendant_id {
             return false;
         }
 
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         while let Some(search_node_id) = nodes_to_search.pop() {
             for descendant_id in self.children(search_node_id) {
-                if descendant_id == potential_descendant_node_id {
+                if descendant_id == potential_descendant_id {
                     return true;
                 }
                 nodes_to_search.push(descendant_id);
@@ -395,16 +497,16 @@ impl NodeGraph {
     }
 
     /// Check if a node is an ancestor of another
-    pub fn is_ancestor(&self, node_id: NodeId, potential_ancestor_node_id: NodeId) -> bool {
+    pub fn is_ancestor(&self, node_id: NodeId, potential_ancestor_id: NodeId) -> bool {
         // Nodes are not their own ancestor
-        if node_id == potential_ancestor_node_id {
+        if node_id == potential_ancestor_id {
             return false;
         }
 
         let mut nodes_to_search: Vec<NodeId> = vec![node_id];
         while let Some(search_node_id) = nodes_to_search.pop() {
             for ancestor_id in self.parents(search_node_id) {
-                if ancestor_id == potential_ancestor_node_id {
+                if ancestor_id == potential_ancestor_id {
                     return true;
                 }
                 nodes_to_search.push(ancestor_id);
@@ -1008,8 +1110,7 @@ mod tests {
         assert_eq!(
             node_graph
                 .descendants(secondary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<NodeId>>(),
             secondary_axis_descendants,
         );
@@ -1022,8 +1123,7 @@ mod tests {
         assert_eq!(
             node_graph
                 .descendants_output_ids(secondary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<OutputId>>(),
             secondary_axis_descendants_output_ids,
         );
@@ -1037,8 +1137,7 @@ mod tests {
         assert_eq!(
             node_graph
                 .descendants(primary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<NodeId>>(),
             primary_axis_descendants,
         );
@@ -1052,8 +1151,7 @@ mod tests {
         assert_eq!(
             node_graph
                 .descendants_output_ids(primary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<OutputId>>(),
             primary_axis_descendants_output_ids,
         );
@@ -1181,8 +1279,7 @@ mod tests {
         assert_eq!(
             node_graphs[0]
                 .descendants(secondary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<NodeId>>(),
             secondary_axis_descendants,
         );
@@ -1197,8 +1294,7 @@ mod tests {
         assert_eq!(
             node_graphs[0]
                 .descendants_output_ids(secondary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<OutputId>>(),
             secondary_axis_descendants_output_ids,
         );
@@ -1212,8 +1308,7 @@ mod tests {
         assert_eq!(
             node_graphs[0]
                 .descendants(primary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<NodeId>>(),
             primary_axis_descendants,
         );
@@ -1228,8 +1323,7 @@ mod tests {
         assert_eq!(
             node_graphs[0]
                 .descendants_output_ids(primary_axis_id)
-                .iter()
-                .copied()
+                .into_iter()
                 .collect::<HashSet<OutputId>>(),
             primary_axis_descendants_output_ids,
         );
@@ -1302,5 +1396,90 @@ mod tests {
         assert!(!new_node_graph.node_output_is_connected(secondary_axis_id));
         assert!(!new_node_graph.node_input_is_connected(primary_axis_id, AxisInputData::Axis));
         assert!(new_node_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
+    }
+
+    #[test]
+    fn test_axis_evaluation() {
+        let mut node_graph = NodeGraph::new();
+
+        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+
+        node_graph.connect_node_to_input(
+            primary_axis_id,
+            node_graph
+                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        let primary_axis_translate_input_id: InputId = node_graph
+            .node_input_id(primary_axis_id, AxisInputData::Translate)
+            .expect("Translate input should exist on Axis node");
+        let primary_axis_rotate_input_id: InputId = node_graph
+            .node_input_id(primary_axis_id, AxisInputData::Rotate)
+            .expect("Translate input should exist on Axis node");
+        let primary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(primary_axis_id).unwrap();
+
+        let secondary_axis_translate_input_id: InputId = node_graph
+            .node_input_id(secondary_axis_id, AxisInputData::Translate)
+            .expect("Translate input should exist on Axis node");
+        let secondary_axis_rotate_input_id: InputId = node_graph
+            .node_input_id(secondary_axis_id, AxisInputData::Rotate)
+            .expect("Rotate input should exist on Axis node");
+        let secondary_axis_output_id: OutputId =
+            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
+
+        assert_eq!(
+            node_graph.evaluate_output(primary_axis_output_id),
+            Ok(InputData::Mat4(Mat4::IDENTITY))
+        );
+        assert_eq!(
+            node_graph.evaluate_output(secondary_axis_output_id),
+            Ok(InputData::Mat4(Mat4::IDENTITY))
+        );
+
+        let primary_translation = Vec3::new(1., 2., 3.);
+        let secondary_translation = Vec3::new(3., 1., 2.);
+
+        let primary_rotation = Vec3::new(13., 75., 69.);
+        let secondary_rotation = Vec3::new(45., 15., 12.);
+
+        let primary_euler_rotation = primary_rotation * std::f32::consts::PI / 180.;
+        let secondary_euler_rotation = secondary_rotation * std::f32::consts::PI / 180.;
+
+        let primary_matrix = Mat4::from_rotation_translation(
+            Quat::from_euler(
+                glam::EulerRot::XYZ,
+                primary_euler_rotation.x,
+                primary_euler_rotation.y,
+                primary_euler_rotation.z,
+            ),
+            primary_translation,
+        );
+        let secondary_matrix = Mat4::from_rotation_translation(
+            Quat::from_euler(
+                glam::EulerRot::XYZ,
+                secondary_euler_rotation.x,
+                secondary_euler_rotation.y,
+                secondary_euler_rotation.z,
+            ),
+            secondary_translation,
+        );
+
+        node_graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
+        node_graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
+
+        node_graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
+        node_graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
+
+        assert_eq!(
+            node_graph.evaluate_output(primary_axis_output_id),
+            Ok(InputData::Mat4(primary_matrix))
+        );
+        assert_eq!(
+            node_graph.evaluate_output(secondary_axis_output_id),
+            Ok(InputData::Mat4(primary_matrix * secondary_matrix))
+        );
     }
 }

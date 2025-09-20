@@ -18,6 +18,7 @@ use crate::{DualDevice, Enumerator};
     EnumCount,
     EnumIter,
     EnumString,
+    PartialEq,
     serde::Serialize,
     serde::Deserialize,
 )]
@@ -43,7 +44,7 @@ pub struct GPULight {
     shadow_hardness: f32,
 }
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Light {
     pub light_type: Lights,

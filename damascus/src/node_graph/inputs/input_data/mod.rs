@@ -33,6 +33,7 @@ pub mod texture;
     EnumCount,
     EnumIter,
     EnumString,
+    PartialEq,
     serde::Serialize,
     serde::Deserialize,
 )]

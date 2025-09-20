@@ -31,7 +31,9 @@ pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
     }
 }
 
-pub trait Enumerator: IntoEnumIterator + EnumCount + Default + Display + FromStr {
+pub trait Enumerator:
+    IntoEnumIterator + EnumCount + Default + Display + FromStr + PartialEq
+{
     fn variant(self) -> String {
         self.to_string()
     }

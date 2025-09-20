@@ -55,7 +55,7 @@ pub struct GPUProceduralTexture {
     grade: GPUGrade,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct ProceduralTexture {
     pub texture_type: ProceduralTextureType,

@@ -33,7 +33,7 @@ use resources::{
 };
 use texture::view::TextureViewer;
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct FrameCounter {
     pub first_frame: u32,
@@ -818,6 +818,7 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     EnumCount,
     EnumIter,
     EnumString,
+    PartialEq,
     serde::Serialize,
     serde::Deserialize,
 )]

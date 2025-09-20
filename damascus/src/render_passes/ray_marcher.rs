@@ -33,7 +33,7 @@ pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
 
 // A change in the data within this struct will trigger the pass to
 // recompile
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcherCompilationData {
     pub enable_dynamic_recompilation_for_materials: bool,
@@ -57,7 +57,7 @@ impl RayMarcherCompilationData {}
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct RayMarcherConstructionData {
     pub num_primitives: usize,
     pub num_lights: usize,
@@ -80,7 +80,7 @@ pub struct GPURayMarcherRenderData {
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcherRenderData {
     pub scene: Scene,
@@ -169,7 +169,7 @@ pub struct GPURayMarcher {
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,

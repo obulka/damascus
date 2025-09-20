@@ -35,7 +35,7 @@ pub struct GPUMaterial {
     scattering_colour_texture: GPUProceduralTexture,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Material {
     pub diffuse_colour: Vec3,

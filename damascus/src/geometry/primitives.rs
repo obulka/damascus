@@ -78,7 +78,7 @@ pub struct GPUPrimitive {
     material: GPUMaterial,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Primitive {
     pub shape: Shapes,

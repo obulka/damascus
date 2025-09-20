@@ -29,7 +29,7 @@ use crate::{
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
     pub texture: Texture,
 }
@@ -52,7 +52,7 @@ pub struct GPUTextureViewerRenderData {
     flags: u32,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewerRenderData {
     pub resolution: UVec2,
@@ -90,7 +90,7 @@ pub struct GPUTextureViewer {
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewer {
     pub render_data: TextureViewerRenderData,

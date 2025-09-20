@@ -97,7 +97,9 @@ impl Edges {
     }
 
     pub fn iter_children(&self) -> impl Iterator<Item = (OutputId, &HashSet<InputId>)> + '_ {
-        self.children.iter().map(|(output, input)| (output, input))
+        self.children
+            .iter()
+            .map(|(output, inputs)| (output, inputs))
     }
 
     pub fn disconnect_outputs<'a>(

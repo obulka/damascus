@@ -35,17 +35,17 @@ pub enum InputErrors {
 pub type InputResult<T> = std::result::Result<T, InputErrors>;
 
 impl fmt::Display for InputErrors {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
             InputErrors::InputDowncastError {
                 data,
                 conversion_to,
             } => write!(
-                f,
+                formatter,
                 "{}: Invalid cast from input data of type: {:?} to: {:?}",
                 self, data, conversion_to,
             ),
-            InputErrors::UnknownError => write!(f, "{}: Skill issue tbh", self),
+            InputErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
         }
     }
 }

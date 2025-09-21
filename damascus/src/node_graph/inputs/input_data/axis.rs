@@ -3,12 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use glam::{Mat4, Vec3};
+use std::collections::HashMap;
+
+use glam::{Mat4, Quat, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::Enumerator;
 
-use super::{InputData, NodeInputData};
+use super::{InputData, InputResult, NodeInputData};
 
 #[derive(
     Debug,
@@ -43,6 +45,28 @@ impl NodeInputData for AxisInputData {
             Self::Rotate => InputData::Vec3(Vec3::ZERO),
             Self::UniformScale => InputData::Float(1.),
         }
+    }
+
+    fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
+        let input_axis: Mat4 = Self::Axis.get_data(data_map)?.try_to_mat4()?;
+
+        let translate: Vec3 = Self::Translate.get_data(data_map)?.try_to_vec3()?;
+
+        let rotate: Vec3 =
+            Self::Rotate.get_data(data_map)?.try_to_vec3()? * std::f32::consts::PI / 180.;
+
+        let uniform_scale: f32 = Self::UniformScale.get_data(data_map)?.try_to_float()?;
+
+        let quaternion = Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+
+        Ok(InputData::Mat4(
+            input_axis
+                * Mat4::from_scale_rotation_translation(
+                    Vec3::splat(uniform_scale),
+                    quaternion,
+                    translate,
+                ),
+        ))
     }
 }
 

@@ -272,4 +272,8 @@ pub trait NodeInputData: Enumerator + Eq {
             .remove(&name)
             .ok_or_else(|| InputErrors::InputDataDoesNotExistError(name))
     }
+
+    fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
+        Err(InputErrors::UnknownError)
+    }
 }

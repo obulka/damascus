@@ -46,41 +46,10 @@ impl Node {
     pub fn evaluate(
         &self,
         _output_id: OutputId,
-        mut input_data: HashMap<String, InputData>,
+        mut data_map: HashMap<String, InputData>,
     ) -> InputResult<InputData> {
         match self.data {
-            NodeData::Axis => {
-                let input_axis: Mat4 = AxisInputData::Axis
-                    .get_data(&mut input_data)?
-                    .try_to_mat4()?;
-
-                let translate: Vec3 = AxisInputData::Translate
-                    .get_data(&mut input_data)?
-                    .try_to_vec3()?;
-
-                let rotate: Vec3 = AxisInputData::Rotate
-                    .get_data(&mut input_data)?
-                    .try_to_vec3()?
-                    * std::f32::consts::PI
-                    / 180.;
-
-                let uniform_scale: f32 = AxisInputData::UniformScale
-                    .get_data(&mut input_data)?
-                    .try_to_float()?;
-
-                let quaternion =
-                    Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
-
-                let input_data = InputData::Mat4(
-                    input_axis
-                        * glam::Mat4::from_scale_rotation_translation(
-                            glam::Vec3::splat(uniform_scale),
-                            quaternion,
-                            translate,
-                        ),
-                );
-                Ok(input_data)
-            }
+            NodeData::Axis => AxisInputData::compute_output(&mut data_map),
             // NodeData::Camera => {}
             // NodeData::Grade => {}
             // NodeData::Light => {}

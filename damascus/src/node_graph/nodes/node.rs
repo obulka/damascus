@@ -54,10 +54,10 @@ impl Node {
             // NodeData::Grade => {}
             NodeData::Light => LightInputData::compute_output(&mut data_map),
             // NodeData::Material => {}
-            // NodeData::Primitive => {}
-            // NodeData::RayMarcher => {}
+            NodeData::Primitive => PrimitiveInputData::compute_output(&mut data_map),
+            NodeData::RayMarcher => RayMarcherInputData::compute_output(&mut data_map),
             // NodeData::Scene => {}
-            // NodeData::Texture => { }
+            NodeData::Texture => TextureInputData::compute_output(&mut data_map),
             _ => Err(InputErrors::UnknownError),
         }
         .map_err(|error| NodeErrors::InputError(error))

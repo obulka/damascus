@@ -302,9 +302,9 @@ pub fn evaluate_output(
             let focal_distance = evaluator.input_float("focal_distance")?;
             let f_stop = evaluator.input_float("f_stop")?;
             let sensor_resolution = evaluator.input_uint_vector2("sensor_resolution")?;
-            let camera_to_world = evaluator.input_matrix4("world_matrix")?;
             let enable_depth_of_field = evaluator.input_bool("enable_depth_of_field")?;
             let latlong = evaluator.input_bool("latlong")?;
+            let camera_to_world = evaluator.input_matrix4("world_matrix")?;
             evaluator.output_camera(
                 "out",
                 camera::Camera::new(
@@ -315,9 +315,9 @@ pub fn evaluate_output(
                     focal_distance,
                     f_stop,
                     sensor_resolution,
-                    camera_to_world,
                     enable_depth_of_field,
                     latlong,
+                    camera_to_world,
                 ),
             )
         }

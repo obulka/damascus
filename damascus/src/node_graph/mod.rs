@@ -121,9 +121,8 @@ impl NodeGraph {
         output_id: OutputId,
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        let input_data: InputData = self[self[output_id].node_id]
-            .evaluate(output_id, input_data_map)
-            .map_err(|error| NodeErrors::InputError(error))?;
+        let input_data: InputData =
+            self[self[output_id].node_id].evaluate(output_id, input_data_map)?;
 
         self.insert_to_cache(output_id, input_data.clone());
 

@@ -31,9 +31,9 @@ pub struct Camera {
     pub focal_distance: f32,
     pub f_stop: f32,
     pub sensor_resolution: UVec2,
-    pub camera_to_world: Mat4,
     pub enable_depth_of_field: bool,
     pub latlong: bool,
+    pub camera_to_world: Mat4,
 }
 
 impl Default for Camera {
@@ -46,9 +46,9 @@ impl Default for Camera {
             2.,
             16.,
             UVec2::new(1920, 1080),
+            false,
+            false,
             Mat4::IDENTITY,
-            false,
-            false,
         )
     }
 }
@@ -62,9 +62,9 @@ impl Camera {
         focal_distance: f32,
         f_stop: f32,
         sensor_resolution: UVec2,
-        camera_to_world: Mat4,
         enable_depth_of_field: bool,
         latlong: bool,
+        camera_to_world: Mat4,
     ) -> Self {
         Self {
             focal_length: focal_length,

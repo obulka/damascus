@@ -48,23 +48,16 @@ impl NodeInputData for AxisInputData {
     }
 
     fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
-        let input_axis: Mat4 = Self::Axis.get_data(data_map)?.try_to_mat4()?;
-
-        let translate: Vec3 = Self::Translate.get_data(data_map)?.try_to_vec3()?;
-
         let rotate: Vec3 =
             Self::Rotate.get_data(data_map)?.try_to_vec3()? * std::f32::consts::PI / 180.;
-
-        let uniform_scale: f32 = Self::UniformScale.get_data(data_map)?.try_to_float()?;
-
         let quaternion = Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
 
         Ok(InputData::Mat4(
-            input_axis
+            Self::Axis.get_data(data_map)?.try_to_mat4()?
                 * Mat4::from_scale_rotation_translation(
-                    Vec3::splat(uniform_scale),
+                    Vec3::splat(Self::UniformScale.get_data(data_map)?.try_to_float()?),
                     quaternion,
-                    translate,
+                    Self::Translate.get_data(data_map)?.try_to_vec3()?,
                 ),
         ))
     }

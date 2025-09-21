@@ -23,7 +23,7 @@ use crate::node_graph::{
     NodeGraph,
 };
 
-use super::{node_data::NodeData, NodeId};
+use super::{node_data::NodeData, NodeErrors, NodeId, NodeResult};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Node {
@@ -47,12 +47,12 @@ impl Node {
         &self,
         _output_id: OutputId,
         mut data_map: HashMap<String, InputData>,
-    ) -> InputResult<InputData> {
+    ) -> NodeResult<InputData> {
         match self.data {
             NodeData::Axis => AxisInputData::compute_output(&mut data_map),
-            // NodeData::Camera => {}
+            NodeData::Camera => CameraInputData::compute_output(&mut data_map),
             // NodeData::Grade => {}
-            // NodeData::Light => {}
+            NodeData::Light => LightInputData::compute_output(&mut data_map),
             // NodeData::Material => {}
             // NodeData::Primitive => {}
             // NodeData::RayMarcher => {}
@@ -60,5 +60,6 @@ impl Node {
             // NodeData::Texture => { }
             _ => Err(InputErrors::UnknownError),
         }
+        .map_err(|error| NodeErrors::InputError(error))
     }
 }

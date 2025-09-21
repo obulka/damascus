@@ -8,7 +8,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{geometry::primitives::Primitive, scene::Scene, Enumerator};
 
-use super::{InputData, NodeInputData};
+use super::{InputData, InputResult, NodeInputData};
 
 #[derive(
     Debug,
@@ -58,7 +58,6 @@ pub enum PrimitiveInputData {
     Scale,
     MinSquareRadius,
     FoldingLimit,
-    Axis,
     EdgeRadius,
     Repetition,
     NegativeRepetitions,
@@ -72,6 +71,7 @@ pub enum PrimitiveInputData {
     WallThickness,
     Elongate,
     Elongation,
+    Axis,
 }
 
 impl Enumerator for PrimitiveInputData {}
@@ -111,7 +111,6 @@ impl NodeInputData for PrimitiveInputData {
             Self::Scale => InputData::Float(-1.75),
             Self::MinSquareRadius => InputData::Float(0.001),
             Self::FoldingLimit => InputData::Float(0.8),
-            Self::Axis => InputData::Mat4(default_primitive.local_to_world),
             Self::EdgeRadius => InputData::Float(default_primitive.edge_radius),
             Self::Repetition => InputData::Enum(default_primitive.repetition.into()),
             Self::NegativeRepetitions => InputData::UVec3(default_primitive.negative_repetitions),
@@ -125,6 +124,7 @@ impl NodeInputData for PrimitiveInputData {
             Self::WallThickness => InputData::Float(default_primitive.wall_thickness),
             Self::Elongate => InputData::Bool(default_primitive.elongate),
             Self::Elongation => InputData::Vec3(default_primitive.elongation),
+            Self::Axis => InputData::Mat4(default_primitive.local_to_world),
         }
     }
 }

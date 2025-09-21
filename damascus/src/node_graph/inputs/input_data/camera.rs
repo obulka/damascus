@@ -3,11 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashMap;
+
+use glam::{Mat4, UVec2};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{camera::Camera, Enumerator};
+use crate::{camera::Camera, scene::Scene, Enumerator};
 
-use super::{InputData, NodeInputData};
+use super::{InputData, InputResult, NodeInputData};
 
 #[derive(
     Debug,
@@ -33,9 +36,9 @@ pub enum CameraInputData {
     NearPlane,
     FarPlane,
     SensorResolution,
-    Axis,
     EnableDepthOfField,
     Latlong,
+    Axis,
 }
 
 impl Enumerator for CameraInputData {}
@@ -55,6 +58,25 @@ impl NodeInputData for CameraInputData {
             Self::EnableDepthOfField => InputData::Bool(default_camera.enable_depth_of_field),
             Self::Latlong => InputData::Bool(default_camera.latlong),
         }
+    }
+
+    fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
+        Ok(InputData::Scene(
+            Scene::default().render_camera(Camera::new(
+                Self::FocalLength.get_data(data_map)?.try_to_float()?,
+                Self::HorizontalAperture
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::NearPlane.get_data(data_map)?.try_to_float()?,
+                Self::FarPlane.get_data(data_map)?.try_to_float()?,
+                Self::FocalDistance.get_data(data_map)?.try_to_float()?,
+                Self::FStop.get_data(data_map)?.try_to_float()?,
+                Self::SensorResolution.get_data(data_map)?.try_to_uvec2()?,
+                Self::EnableDepthOfField.get_data(data_map)?.try_to_bool()?,
+                Self::Latlong.get_data(data_map)?.try_to_bool()?,
+                Self::Axis.get_data(data_map)?.try_to_mat4()?,
+            )),
+        ))
     }
 }
 

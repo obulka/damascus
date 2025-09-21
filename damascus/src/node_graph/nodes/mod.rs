@@ -10,6 +10,8 @@ use strum::{EnumCount, EnumIter, EnumString};
 
 use crate::{Enumerator, Errors};
 
+use super::inputs::InputErrors;
+
 pub mod node;
 pub mod node_data;
 
@@ -31,9 +33,10 @@ pub type Nodes = SlotMap<NodeId, Node>;
     serde::Deserialize,
 )]
 pub enum NodeErrors {
-    NodeDoesNotContainInputError {
+    InputError(InputErrors),
+    InvalidData {
         node_id: NodeId,
-        input_name: String,
+        input_data: String,
     },
     NoOutputError(NodeId),
     #[default]
@@ -45,18 +48,19 @@ pub type NodeResult<T> = std::result::Result<T, NodeErrors>;
 impl fmt::Display for NodeErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            NodeErrors::NodeDoesNotContainInputError {
+            Self::InputError(error) => error.fmt(formatter),
+            Self::InvalidData {
                 node_id,
-                input_name,
+                input_data,
             } => write!(
                 formatter,
-                "{}: Node({:?}) does not contain an input named: {:?}",
-                self, node_id, input_name,
+                "{}: Node({:?}) should contain data for input {:?}",
+                self, node_id, input_data
             ),
-            NodeErrors::NoOutputError(node_id) => {
+            Self::NoOutputError(node_id) => {
                 write!(formatter, "{}: No output on Node({:?})", self, node_id)
             }
-            NodeErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
+            Self::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
         }
     }
 }

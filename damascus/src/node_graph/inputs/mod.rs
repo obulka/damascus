@@ -14,7 +14,7 @@ pub mod input;
 pub mod input_data;
 
 use input::Input;
-use input_data::InputData;
+use input_data::{InputData, NodeInputData};
 
 slotmap::new_key_type! { pub struct InputId; }
 
@@ -36,6 +36,8 @@ pub enum InputErrors {
         data: InputData,
         conversion_to: String,
     },
+    InputDoesNotExistError(String),
+    InputDataDoesNotExistError(String),
     #[default]
     UnknownError,
 }
@@ -45,7 +47,7 @@ pub type InputResult<T> = std::result::Result<T, InputErrors>;
 impl fmt::Display for InputErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            InputErrors::InputDowncastError {
+            Self::InputDowncastError {
                 data,
                 conversion_to,
             } => write!(
@@ -53,7 +55,15 @@ impl fmt::Display for InputErrors {
                 "{}: Invalid cast from input data of type: {:?} to: {:?}",
                 self, data, conversion_to,
             ),
-            InputErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
+            Self::InputDoesNotExistError(name) => {
+                write!(formatter, "{}: No input named: {:?}", self, name,)
+            }
+            Self::InputDataDoesNotExistError(name) => write!(
+                formatter,
+                "{}: No data received for an input named: {:?}",
+                self, name,
+            ),
+            Self::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
         }
     }
 }

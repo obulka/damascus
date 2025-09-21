@@ -3,6 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashMap;
+
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
@@ -15,15 +17,25 @@ use crate::{
 
 use super::{InputErrors, InputResult};
 
-pub mod axis;
-pub mod camera;
-pub mod grade;
-pub mod light;
-pub mod material;
-pub mod primitive;
-pub mod ray_marcher;
-pub mod scene;
-pub mod texture;
+mod axis;
+mod camera;
+mod grade;
+mod light;
+mod material;
+mod primitive;
+mod ray_marcher;
+mod scene;
+mod texture;
+
+pub use axis::AxisInputData;
+pub use camera::CameraInputData;
+pub use grade::GradeInputData;
+pub use light::LightInputData;
+pub use material::MaterialInputData;
+pub use primitive::PrimitiveInputData;
+pub use ray_marcher::RayMarcherInputData;
+pub use scene::SceneInputData;
+pub use texture::TextureInputData;
 
 #[derive(
     Debug,
@@ -252,5 +264,12 @@ pub trait NodeInputData: Enumerator + Eq {
         Self::iter().for_each(|input| {
             node_graph.add_input(node_id, &input.name(), input.default_data());
         });
+    }
+
+    fn get_data(&self, data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
+        let name: String = self.name();
+        data_map
+            .remove(&name)
+            .ok_or_else(|| InputErrors::InputDataDoesNotExistError(name))
     }
 }

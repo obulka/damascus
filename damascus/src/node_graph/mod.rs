@@ -26,60 +26,14 @@ use edges::Edges;
 use inputs::{
     input::Input,
     input_data::{
-        axis::AxisInputData, camera::CameraInputData, grade::GradeInputData, light::LightInputData,
-        material::MaterialInputData, primitive::PrimitiveInputData,
-        ray_marcher::RayMarcherInputData, scene::SceneInputData, texture::TextureInputData,
-        InputData, NodeInputData,
+        AxisInputData, CameraInputData, GradeInputData, InputData, LightInputData,
+        MaterialInputData, NodeInputData, PrimitiveInputData, RayMarcherInputData, SceneInputData,
+        TextureInputData,
     },
     InputErrors, InputId, Inputs,
 };
 use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
 use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
-
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
-pub enum NodeGraphErrors {
-    NodeError(NodeErrors),
-    InputError(InputErrors),
-    InvalidNodeData {
-        node_id: NodeId,
-        node_input_data: String,
-    },
-    #[default]
-    UnknownError,
-}
-
-pub type NodeGraphResult<T> = std::result::Result<T, NodeGraphErrors>;
-
-impl fmt::Display for NodeGraphErrors {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            NodeGraphErrors::NodeError(error) => error.fmt(formatter),
-            NodeGraphErrors::InputError(error) => error.fmt(formatter),
-            NodeGraphErrors::InvalidNodeData {
-                node_id,
-                node_input_data,
-            } => write!(
-                formatter,
-                "{}: Node({:?}) should contain data for input {:?}",
-                self, node_id, node_input_data
-            ),
-            NodeGraphErrors::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
-        }
-    }
-}
-
-impl Enumerator for NodeGraphErrors {}
-impl Errors for NodeGraphErrors {}
 
 pub type OutputCache = Cache<OutputId, InputData>;
 
@@ -165,91 +119,33 @@ impl NodeGraph {
     fn evaluate_node(
         &mut self,
         output_id: OutputId,
-        mut node_input_data: HashMap<String, InputData>,
-    ) -> NodeGraphResult<InputData> {
-        let node_id: NodeId = self[output_id].node_id;
-        match self[node_id].data {
-            NodeData::Axis => {
-                let input_axis: Mat4 = node_input_data
-                    .remove(&AxisInputData::Axis.to_string())
-                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
-                        node_id,
-                        node_input_data: AxisInputData::Axis.to_string(),
-                    })?
-                    .try_to_mat4()
-                    .map_err(|error| NodeGraphErrors::InputError(error))?;
+        input_data_map: HashMap<String, InputData>,
+    ) -> NodeResult<InputData> {
+        let input_data: InputData = self[self[output_id].node_id]
+            .evaluate(output_id, input_data_map)
+            .map_err(|error| NodeErrors::InputError(error))?;
 
-                let translate: Vec3 = node_input_data
-                    .remove(&AxisInputData::Translate.to_string())
-                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
-                        node_id,
-                        node_input_data: AxisInputData::Translate.to_string(),
-                    })?
-                    .try_to_vec3()
-                    .map_err(|error| NodeGraphErrors::InputError(error))?;
+        self.insert_to_cache(output_id, input_data.clone());
 
-                let rotate: Vec3 = node_input_data
-                    .remove(&AxisInputData::Rotate.to_string())
-                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
-                        node_id,
-                        node_input_data: AxisInputData::Rotate.to_string(),
-                    })?
-                    .try_to_vec3()
-                    .map_err(|error| NodeGraphErrors::InputError(error))?
-                    * std::f32::consts::PI
-                    / 180.;
-
-                let uniform_scale: f32 = node_input_data
-                    .remove(&AxisInputData::UniformScale.to_string())
-                    .ok_or_else(|| NodeGraphErrors::InvalidNodeData {
-                        node_id,
-                        node_input_data: AxisInputData::UniformScale.to_string(),
-                    })?
-                    .try_to_float()
-                    .map_err(|error| NodeGraphErrors::InputError(error))?;
-
-                let quaternion =
-                    Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
-
-                let input_data = InputData::Mat4(
-                    input_axis
-                        * glam::Mat4::from_scale_rotation_translation(
-                            glam::Vec3::splat(uniform_scale),
-                            quaternion,
-                            translate,
-                        ),
-                );
-                self.insert_to_cache(output_id, input_data.clone());
-                Ok(input_data)
-            }
-            // NodeData::Camera => {}
-            // NodeData::Grade => {}
-            // NodeData::Light => {}
-            // NodeData::Material => {}
-            // NodeData::Primitive => {}
-            // NodeData::RayMarcher => {}
-            // NodeData::Scene => {}
-            // NodeData::Texture => { }
-            _ => Err(NodeGraphErrors::UnknownError),
-        }
+        Ok(input_data)
     }
 
     // Evaluate the input value of a node
-    pub fn evaluate_output(&mut self, output_id: OutputId) -> NodeGraphResult<InputData> {
+    pub fn evaluate_output(&mut self, output_id: OutputId) -> NodeResult<InputData> {
         // The output depends on the data from each of the node's inputs
         // so iterate over the inputs and collect their data
         let input_ids: Vec<InputId> = self[self[output_id].node_id].input_ids.clone();
 
         // We will collect that input data in this map as we ascend the graph
-        let mut input_data_map = HashMap::<String, InputData>::new();
+        let mut all_input_data_for_node = HashMap::<String, InputData>::new();
 
         for input_id in input_ids.into_iter() {
             // Recursively retrieve the data for this input
-            let result: NodeGraphResult<InputData> = self.evaluate_input(input_id);
+            let result: NodeResult<InputData> = self.evaluate_input(input_id);
 
             if let Ok(input_data) = result {
                 // If the data was valid, store it for the node to process
-                input_data_map.insert(self[input_id].name.clone(), input_data);
+                all_input_data_for_node.insert(self[input_id].name.clone(), input_data);
                 continue;
             }
 
@@ -259,10 +155,10 @@ impl NodeGraph {
 
         // All input data for the node has been collected
         // so its time to process the data and start descending the graph
-        self.evaluate_node(output_id, input_data_map)
+        self.evaluate_node(output_id, all_input_data_for_node)
     }
 
-    pub fn evaluate_input(&mut self, input_id: InputId) -> NodeGraphResult<InputData> {
+    pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
         if let Some(output_id) = self.edges.parent(input_id) {
             if let Some(input_data) = self.cache.get(output_id) {
                 // Data was already cached, return it
@@ -304,52 +200,11 @@ impl NodeGraph {
             && !self.is_ancestor(output_node_id, input_node_id)
     }
 
-    pub fn add_node(&mut self, data: NodeData) -> NodeId {
-        let node_id: NodeId = self.nodes.insert_with_key(|node_id| Node {
-            id: node_id,
-            input_ids: vec![],
-            output_ids: vec![],
-            data: data,
-        });
-        match data {
-            NodeData::Axis => {
-                AxisInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Mat4);
-            }
-            NodeData::Camera => {
-                CameraInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::Grade => {
-                GradeInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::RenderPass);
-            }
-            NodeData::Light => {
-                LightInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::Material => {
-                MaterialInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::Primitive => {
-                PrimitiveInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::RayMarcher => {
-                RayMarcherInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::RenderPass);
-            }
-            NodeData::Scene => {
-                SceneInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::Scene);
-            }
-            NodeData::Texture => {
-                TextureInputData::add_to_node(self, node_id);
-                self.add_output(node_id, OutputData::RenderPass);
-            }
-        }
-
+    pub fn add_node(&mut self, node_data: NodeData) -> NodeId {
+        let node_id: NodeId = self
+            .nodes
+            .insert_with_key(|node_id| Node::new(node_id, node_data));
+        node_data.add_inputs_and_outputs_to_graph(self, node_id);
         node_id
     }
 
@@ -607,9 +462,8 @@ impl NodeGraph {
     pub fn node_input(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
         self.node_inputs(node_id)
             .find(|input| input.name == name)
-            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
-                node_id,
-                input_name: name.to_string(),
+            .ok_or_else(|| {
+                NodeErrors::InputError(InputErrors::InputDoesNotExistError(name.to_string()))
             })
     }
 
@@ -617,9 +471,8 @@ impl NodeGraph {
         self.node_inputs(node_id)
             .find(|input| input.name == name)
             .map(|input| input.id)
-            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
-                node_id,
-                input_name: name.to_string(),
+            .ok_or_else(|| {
+                NodeErrors::InputError(InputErrors::InputDoesNotExistError(name.to_string()))
             })
     }
 
@@ -631,9 +484,10 @@ impl NodeGraph {
         self.node_inputs(node_id)
             .find(|input| input.name == node_input_data.to_string())
             .map(|input| input.id)
-            .ok_or_else(|| NodeErrors::NodeDoesNotContainInputError {
-                node_id,
-                input_name: node_input_data.to_string(),
+            .ok_or_else(|| {
+                NodeErrors::InputError(InputErrors::InputDoesNotExistError(
+                    node_input_data.to_string(),
+                ))
             })
     }
 
@@ -742,7 +596,14 @@ impl_index_traits!(OutputId, Output, outputs);
 mod tests {
     use strum::{EnumCount, IntoEnumIterator};
 
-    use super::*;
+    use super::{
+        inputs::input_data::{
+            AxisInputData, CameraInputData, GradeInputData, InputData, LightInputData,
+            MaterialInputData, NodeInputData, PrimitiveInputData, RayMarcherInputData,
+            SceneInputData, TextureInputData,
+        },
+        *,
+    };
 
     #[test]
     fn test_node_creation() {

@@ -129,6 +129,11 @@ impl Scene {
     pub fn clear_lights(&mut self) {
         self.lights.clear();
     }
+
+    pub fn merge(&mut self, mut other: Self) {
+        self.primitives.append(&mut other.primitives);
+        self.lights.append(&mut other.lights);
+    }
 }
 
 impl DualDevice<GPUSceneParameters, Std430GPUSceneParameters> for Scene {

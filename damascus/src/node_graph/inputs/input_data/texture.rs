@@ -3,11 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashMap;
+
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{textures::Texture, Enumerator};
+use crate::{
+    render_passes::{texture::view::TextureViewer, RenderPass, RenderPasses},
+    textures::Texture,
+    Enumerator,
+};
 
-use super::{InputData, NodeInputData};
+use super::{InputData, InputResult, NodeInputData};
 
 #[derive(
     Debug,
@@ -37,5 +43,16 @@ impl NodeInputData for TextureInputData {
         match self {
             Self::Filepath => InputData::Filepath(default_texture.filepath),
         }
+    }
+
+    fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
+        Ok(InputData::RenderPass(RenderPasses::TextureViewer {
+            render_pass: TextureViewer::default()
+                .texture(Texture {
+                    layers: 1,
+                    filepath: Self::Filepath.get_data(data_map)?.try_to_filepath()?,
+                })
+                .finalized(),
+        }))
     }
 }

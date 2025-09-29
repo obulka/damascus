@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{any::type_name, collections::HashMap};
 
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
@@ -59,7 +59,7 @@ impl InputData {
             InputData::Bool(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "bool".to_string(),
+                conversion_to: type_name::<bool>().to_string(),
             }),
         }
     }
@@ -69,7 +69,7 @@ impl InputData {
             InputData::BVec3(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "BVec3".to_string(),
+                conversion_to: type_name::<BVec3>().to_string(),
             }),
         }
     }
@@ -79,7 +79,7 @@ impl InputData {
             InputData::Int(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "i32".to_string(),
+                conversion_to: type_name::<i32>().to_string(),
             }),
         }
     }
@@ -89,7 +89,7 @@ impl InputData {
             InputData::UInt(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "u32".to_string(),
+                conversion_to: type_name::<u32>().to_string(),
             }),
         }
     }
@@ -99,7 +99,7 @@ impl InputData {
             InputData::UVec2(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "UVec2".to_string(),
+                conversion_to: type_name::<UVec2>().to_string(),
             }),
         }
     }
@@ -109,7 +109,7 @@ impl InputData {
             InputData::UVec3(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "UVec3".to_string(),
+                conversion_to: type_name::<UVec3>().to_string(),
             }),
         }
     }
@@ -119,7 +119,7 @@ impl InputData {
             InputData::Enum(value) => Ok(value.as_enumerator()),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Enum".to_string(),
+                conversion_to: type_name::<E>().to_string(),
             }),
         }
     }
@@ -129,7 +129,7 @@ impl InputData {
             InputData::Filepath(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "String".to_string(),
+                conversion_to: type_name::<String>().to_string(),
             }),
         }
     }
@@ -139,7 +139,7 @@ impl InputData {
             InputData::Float(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "f32".to_string(),
+                conversion_to: type_name::<f32>().to_string(),
             }),
         }
     }
@@ -149,7 +149,7 @@ impl InputData {
             InputData::Vec2(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Vec2".to_string(),
+                conversion_to: type_name::<Vec2>().to_string(),
             }),
         }
     }
@@ -159,7 +159,7 @@ impl InputData {
             InputData::Vec3(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Vec3".to_string(),
+                conversion_to: type_name::<Vec3>().to_string(),
             }),
         }
     }
@@ -169,7 +169,7 @@ impl InputData {
             InputData::Vec4(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Vec4".to_string(),
+                conversion_to: type_name::<Vec4>().to_string(),
             }),
         }
     }
@@ -179,7 +179,7 @@ impl InputData {
             InputData::Mat3(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Mat3".to_string(),
+                conversion_to: type_name::<Mat3>().to_string(),
             }),
         }
     }
@@ -189,7 +189,7 @@ impl InputData {
             InputData::Mat4(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Mat4".to_string(),
+                conversion_to: type_name::<Mat4>().to_string(),
             }),
         }
     }
@@ -199,7 +199,7 @@ impl InputData {
             InputData::RenderPass(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "RenderPasses".to_string(),
+                conversion_to: type_name::<RenderPasses>().to_string(),
             }),
         }
     }
@@ -209,7 +209,7 @@ impl InputData {
             InputData::SceneGraph(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: "Scene".to_string(),
+                conversion_to: type_name::<Scene>().to_string(),
             }),
         }
     }
@@ -241,5 +241,28 @@ pub trait NodeInputData: Enumerator + Eq {
 
     fn compute_output(_data_map: &mut HashMap<String, InputData>) -> NodeResult<InputData> {
         Err(NodeErrors::UnknownError)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_errors() {
+        assert_eq!(
+            InputData::None.try_to_vec3(),
+            Err(NodeErrors::InputDowncastError {
+                data: InputData::None,
+                conversion_to: "glam::f32::vec3::Vec3".to_string(),
+            })
+        );
+        assert_eq!(
+            InputData::Vec3(Vec3::ONE).try_to_enum::<InputData>(),
+            Err(NodeErrors::InputDowncastError {
+                data: InputData::Vec3(Vec3::ONE),
+                conversion_to: "damascus::node_graph::inputs::input_data::InputData".to_string(),
+            })
+        );
     }
 }

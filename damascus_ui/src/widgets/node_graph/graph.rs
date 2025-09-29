@@ -325,16 +325,16 @@ pub fn evaluate_output(
             let mut evaluator = Evaluator::new(node_graph, node_id);
             let mut scene_lights = evaluator.input_light("lights")?;
             let local_to_world = evaluator.input_matrix4("world_matrix")?;
-            let light_type = evaluator.input_combo_box::<lights::Lights>("light_type")?;
+            let light_type = evaluator.input_combo_box::<lights::LightType>("light_type")?;
             let dimensional_data = match light_type {
-                lights::Lights::Directional => (local_to_world
+                lights::LightType::Directional => (local_to_world
                     * glam::Vec4::from((evaluator.input_vector3("direction")?, 1.)))
                 .xyz()
                 .normalize(),
-                lights::Lights::Point => (local_to_world
+                lights::LightType::Point => (local_to_world
                     * glam::Vec4::from((evaluator.input_vector3("position")?, 1.)))
                 .xyz(),
-                lights::Lights::AmbientOcclusion => {
+                lights::LightType::AmbientOcclusion => {
                     glam::Vec3::new(evaluator.input_uint("iterations")? as f32, 0., 0.)
                 }
                 _ => glam::Vec3::ZERO,

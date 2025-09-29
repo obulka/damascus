@@ -5,6 +5,7 @@
 
 use crevice::std430::AsStd430;
 use glam::{BVec3, Mat4, UVec3, Vec3, Vec4};
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{BlendType, Repetition, Transform};
@@ -12,6 +13,8 @@ use crate::{
     materials::{GPUMaterial, Material},
     DualDevice, Enumerator,
 };
+
+slotmap::new_key_type! { pub struct PrimitiveId; }
 
 #[derive(
     Debug,
@@ -164,3 +167,5 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
         }
     }
 }
+
+pub type Primitives = SlotMap<PrimitiveId, Primitive>;

@@ -33,17 +33,17 @@ impl NodeCallbacks for LightCallbacks {
                 if let Some(input_param) = graph.inputs.get(input_id) {
                     match input_param.value() {
                         NodeValueType::ComboBox { value } => match value.value().as_enumerator() {
-                            lights::Lights::Directional => {
+                            lights::LightType::Directional => {
                                 to_show.push("direction");
                                 to_hide.push("iterations");
                                 to_hide.push("position")
                             }
-                            lights::Lights::Point => {
+                            lights::LightType::Point => {
                                 to_hide.push("direction");
                                 to_hide.push("iterations");
                                 to_show.push("position");
                             }
-                            lights::Lights::AmbientOcclusion => {
+                            lights::LightType::AmbientOcclusion => {
                                 to_hide.push("direction");
                                 to_show.push("iterations");
                                 to_hide.push("position")

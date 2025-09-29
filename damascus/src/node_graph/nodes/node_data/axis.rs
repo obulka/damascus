@@ -3,9 +3,9 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, f32::consts::PI};
 
-use glam::{Mat4, Quat, Vec3};
+use glam::{EulerRot, Mat4, Quat, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
@@ -95,9 +95,8 @@ impl NodeOperation for AxisNode {
         output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        let rotate: Vec3 =
-            Self::Inputs::Rotate.get_data(data_map)?.try_to_vec3()? * std::f32::consts::PI / 180.;
-        let quaternion = Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+        let rotate: Vec3 = Self::Inputs::Rotate.get_data(data_map)?.try_to_vec3()? * PI / 180.;
+        let quaternion = Quat::from_euler(EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
 
         let axis: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?
             * Mat4::from_scale_rotation_translation(

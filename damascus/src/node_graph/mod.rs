@@ -3,19 +3,12 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{
-    collections::{HashMap, HashSet},
-    fmt,
-};
+use std::collections::{HashMap, HashSet};
 
-use glam::{Mat4, Quat, Vec3};
 use quick_cache::{
     unsync::{Cache, DefaultLifecycle},
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
 };
-use strum::{EnumCount, EnumIter, EnumString};
-
-use crate::{Enumerator, Errors};
 
 pub mod edges;
 pub mod inputs;
@@ -25,12 +18,8 @@ pub mod outputs;
 use edges::Edges;
 use inputs::{
     input::Input,
-    input_data::{
-        AxisInputData, CameraInputData, GradeInputData, InputData, LightInputData,
-        MaterialInputData, NodeInputData, PrimitiveInputData, RayMarcherInputData, SceneInputData,
-        TextureInputData,
-    },
-    InputErrors, InputId, Inputs,
+    input_data::{InputData, NodeInputData},
+    InputId, Inputs,
 };
 use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
 use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
@@ -122,7 +111,7 @@ impl NodeGraph {
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
         let input_data: InputData =
-            self[self[output_id].node_id].evaluate(output_id, input_data_map)?;
+            self[self[output_id].node_id].evaluate(&self[output_id].name, input_data_map)?;
 
         self.insert_to_cache(output_id, input_data.clone());
 
@@ -203,7 +192,7 @@ impl NodeGraph {
         let node_id: NodeId = self
             .nodes
             .insert_with_key(|node_id| Node::new(node_id, node_data));
-        node_data.add_inputs_and_outputs_to_graph(self, node_id);
+        node_data.add_to_node_graph(self, node_id);
         node_id
     }
 
@@ -242,10 +231,10 @@ impl NodeGraph {
         self.edges.disconnect_input(input_id);
     }
 
-    pub fn add_output(&mut self, node_id: NodeId, data: OutputData) -> OutputId {
+    pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
         let output_id = self
             .outputs
-            .insert_with_key(|output_id| Output::new(output_id, node_id, data));
+            .insert_with_key(|output_id| Output::new(output_id, node_id, name.to_string(), data));
         self[node_id].output_ids.push(output_id);
         output_id
     }
@@ -461,18 +450,14 @@ impl NodeGraph {
     pub fn node_input(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
         self.node_inputs(node_id)
             .find(|input| input.name == name)
-            .ok_or_else(|| {
-                NodeErrors::InputError(InputErrors::InputDoesNotExistError(name.to_string()))
-            })
+            .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
     }
 
     pub fn node_input_id_from_string(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
         self.node_inputs(node_id)
             .find(|input| input.name == name)
             .map(|input| input.id)
-            .ok_or_else(|| {
-                NodeErrors::InputError(InputErrors::InputDoesNotExistError(name.to_string()))
-            })
+            .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
     }
 
     pub fn node_input_id<I: NodeInputData>(
@@ -483,11 +468,7 @@ impl NodeGraph {
         self.node_inputs(node_id)
             .find(|input| input.name == node_input_data.to_string())
             .map(|input| input.id)
-            .ok_or_else(|| {
-                NodeErrors::InputError(InputErrors::InputDoesNotExistError(
-                    node_input_data.to_string(),
-                ))
-            })
+            .ok_or_else(|| NodeErrors::InputDoesNotExistError(node_input_data.to_string()))
     }
 
     pub fn node_first_output(&self, node_id: NodeId) -> Option<&Output> {
@@ -593,14 +574,12 @@ impl_index_traits!(OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {
+    use glam::{Mat4, Quat, Vec3};
     use strum::{EnumCount, IntoEnumIterator};
 
     use super::{
-        inputs::input_data::{
-            AxisInputData, CameraInputData, GradeInputData, InputData, LightInputData,
-            MaterialInputData, NodeInputData, PrimitiveInputData, RayMarcherInputData,
-            SceneInputData, TextureInputData,
-        },
+        inputs::input_data::InputData,
+        nodes::node_data::{AxisInputData, CameraInputData, PrimitiveInputData},
         *,
     };
 

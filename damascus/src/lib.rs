@@ -45,6 +45,25 @@ pub trait Enumerator:
     fn variant_matches(&self, other: &Self) -> bool {
         std::mem::discriminant(self) == std::mem::discriminant(other)
     }
+
+    fn variant_snake_case(&self) -> String {
+        let mut words = Vec::<String>::new();
+        let mut word = String::new();
+
+        for character in self.to_string().chars() {
+            if character.is_uppercase() && !word.is_empty() {
+                words.push(word.clone());
+                word.clear();
+            }
+            word.push_str(&character.to_lowercase().to_string());
+        }
+
+        if !word.is_empty() {
+            words.push(word);
+        }
+
+        words.join(" ")
+    }
 }
 
 #[derive(Clone, PartialEq, Debug, Default, serde::Serialize, serde::Deserialize)]

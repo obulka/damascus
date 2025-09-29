@@ -5,9 +5,17 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{materials::Material, render_passes::RenderPasses, Enumerator};
+use crate::{
+    materials::Material,
+    node_graph::{
+        inputs::input_data::{InputData, NodeInputData},
+        outputs::output_data::{NodeOutputData, OutputData},
+    },
+    render_passes::RenderPasses,
+    Enumerator,
+};
 
-use super::{InputData, NodeInputData};
+use super::NodeOperation;
 
 #[derive(
     Debug,
@@ -90,4 +98,41 @@ impl NodeInputData for MaterialInputData {
             Self::ScatteringColourTexture => InputData::RenderPass(RenderPasses::White),
         }
     }
+}
+
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum MaterialOutputData {
+    #[default]
+    SceneGraph,
+}
+
+impl Enumerator for MaterialOutputData {}
+
+impl NodeOutputData for MaterialOutputData {
+    fn default_data(&self) -> OutputData {
+        match self {
+            Self::SceneGraph => OutputData::SceneGraph,
+        }
+    }
+}
+
+pub struct MaterialNode;
+
+impl NodeOperation for MaterialNode {
+    type Inputs = MaterialInputData;
+    type Outputs = MaterialOutputData;
 }

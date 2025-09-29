@@ -181,232 +181,229 @@ impl NodeOperation for PrimitiveNode {
         output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        match output {
-            Self::Outputs::SceneGraph => {
-                let mut scene: Scene = Self::Inputs::Siblings.get_data(data_map)?.try_to_scene()?;
-                let mut descendants: Scene =
-                    Self::Inputs::Children.get_data(data_map)?.try_to_scene()?;
-                let _material: Scene = Self::Inputs::Material.get_data(data_map)?.try_to_scene()?;
-                let shape: Shapes = Self::Inputs::Shape.get_data(data_map)?.try_to_enum()?;
+        let mut scene: Scene = Self::Inputs::Siblings.get_data(data_map)?.try_to_scene()?;
+        let mut descendants: Scene = Self::Inputs::Children.get_data(data_map)?.try_to_scene()?;
+        let _material: Scene = Self::Inputs::Material.get_data(data_map)?.try_to_scene()?;
+        let shape: Shapes = Self::Inputs::Shape.get_data(data_map)?.try_to_enum()?;
 
-                let dimensional_data: Vec4 = match shape {
-                    Shapes::CappedCone | Shapes::RoundedCone => Vec4::new(
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::LowerRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::UpperRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::CappedTorus => Vec4::new(
-                        Self::Inputs::RingRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::TubeRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::CapAngle.get_data(data_map)?.try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::Capsule => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::NegativeHeight
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::PositiveHeight
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::Cone => Vec4::new(
-                        Self::Inputs::Angle.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::CutSphere => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::Cylinder => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::DeathStar => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::HollowRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::HollowHeight
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::Ellipsoid => {
-                        Vec4::from((Self::Inputs::Radii.get_data(data_map)?.try_to_vec3()?, 0.))
-                    }
-                    Shapes::HexagonalPrism => Vec4::new(
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::HollowSphere => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Thickness.get_data(data_map)?.try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::InfiniteCone => Vec4::new(
-                        Self::Inputs::Angle.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::InfiniteCylinder => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::Link => Vec4::new(
-                        Self::Inputs::RingRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::TubeRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::Mandelbox => Vec4::new(
-                        Self::Inputs::Scale.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
-                        Self::Inputs::MinSquareRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::FoldingLimit
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    ),
-                    Shapes::Mandelbulb => Vec4::new(
-                        Self::Inputs::Power.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
-                        Self::Inputs::MaxSquareRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::Octahedron => Vec4::new(
-                        Self::Inputs::RadialExtent
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::Plane => {
-                        Vec4::from((Self::Inputs::Normal.get_data(data_map)?.try_to_vec3()?, 0.))
-                    }
-                    Shapes::RectangularPrism => Vec4::new(
-                        Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
-                        0.,
-                    ),
-                    Shapes::RectangularPrismFrame => Vec4::new(
-                        Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Thickness.get_data(data_map)?.try_to_float()?,
-                    ),
-                    Shapes::Rhombus => Vec4::new(
-                        Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::CornerRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    ),
-                    Shapes::SolidAngle => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::SolidAngle
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::Sphere => Vec4::new(
-                        Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::Torus => Vec4::new(
-                        Self::Inputs::RingRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::TubeRadius
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                    Shapes::TriangularPrism => Vec4::new(
-                        Self::Inputs::Base.get_data(data_map)?.try_to_float()?,
-                        Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
-                        0.,
-                        0.,
-                    ),
-                };
-
-                let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-                for descendant in descendants.primitives.iter_mut() {
-                    descendant.local_to_world = local_to_world * descendant.local_to_world;
-                }
-
-                scene.primitives.push(Primitive {
-                    shape: shape,
-                    local_to_world: local_to_world,
-                    material: Material::default(), // TODO assign materials by id
-                    hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
-                    wall_thickness: Self::Inputs::WallThickness
-                        .get_data(data_map)?
-                        .try_to_float()?,
-                    edge_radius: Self::Inputs::EdgeRadius
-                        .get_data(data_map)?
-                        .try_to_float()?,
-                    mirror: Self::Inputs::Mirror.get_data(data_map)?.try_to_bvec3()?,
-                    elongate: Self::Inputs::Elongate.get_data(data_map)?.try_to_bool()?,
-                    elongation: Self::Inputs::Elongation.get_data(data_map)?.try_to_vec3()?,
-                    repetition: Self::Inputs::Repetition.get_data(data_map)?.try_to_enum()?,
-                    negative_repetitions: Self::Inputs::NegativeRepetitions
-                        .get_data(data_map)?
-                        .try_to_uvec3()?,
-                    positive_repetitions: Self::Inputs::PositiveRepetitions
-                        .get_data(data_map)?
-                        .try_to_uvec3()?,
-                    spacing: Self::Inputs::Spacing.get_data(data_map)?.try_to_vec3()?,
-                    blend_type: Self::Inputs::BlendType.get_data(data_map)?.try_to_enum()?,
-                    blend_strength: Self::Inputs::BlendStrength
-                        .get_data(data_map)?
-                        .try_to_float()?,
-                    bounding_volume: Self::Inputs::BoundingVolume
-                        .get_data(data_map)?
-                        .try_to_bool()?,
-                    num_descendants: descendants.primitives.len() as u32,
-                    dimensional_data: dimensional_data,
-                });
-                scene.merge(descendants);
-
-                Ok(InputData::SceneGraph(scene))
+        let dimensional_data: Vec4 = match shape {
+            Shapes::CappedCone | Shapes::RoundedCone => Vec4::new(
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::LowerRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::UpperRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+            ),
+            Shapes::CappedTorus => Vec4::new(
+                Self::Inputs::RingRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::TubeRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::CapAngle.get_data(data_map)?.try_to_float()?,
+                0.,
+            ),
+            Shapes::Capsule => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::NegativeHeight
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::PositiveHeight
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+            ),
+            Shapes::Cone => Vec4::new(
+                Self::Inputs::Angle.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::CutSphere => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::Cylinder => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::DeathStar => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::HollowRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::HollowHeight
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+            ),
+            Shapes::Ellipsoid => {
+                Vec4::from((Self::Inputs::Radii.get_data(data_map)?.try_to_vec3()?, 0.))
             }
+            Shapes::HexagonalPrism => Vec4::new(
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::HollowSphere => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Thickness.get_data(data_map)?.try_to_float()?,
+                0.,
+            ),
+            Shapes::InfiniteCone => Vec4::new(
+                Self::Inputs::Angle.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+                0.,
+            ),
+            Shapes::InfiniteCylinder => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+                0.,
+            ),
+            Shapes::Link => Vec4::new(
+                Self::Inputs::RingRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::TubeRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                0.,
+            ),
+            Shapes::Mandelbox => Vec4::new(
+                Self::Inputs::Scale.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
+                Self::Inputs::MinSquareRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::FoldingLimit
+                    .get_data(data_map)?
+                    .try_to_float()?,
+            ),
+            Shapes::Mandelbulb => Vec4::new(
+                Self::Inputs::Power.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
+                Self::Inputs::MaxSquareRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+            ),
+            Shapes::Octahedron => Vec4::new(
+                Self::Inputs::RadialExtent
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+                0.,
+                0.,
+            ),
+            Shapes::Plane => {
+                Vec4::from((Self::Inputs::Normal.get_data(data_map)?.try_to_vec3()?, 0.))
+            }
+            Shapes::RectangularPrism => Vec4::new(
+                Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
+                0.,
+            ),
+            Shapes::RectangularPrismFrame => Vec4::new(
+                Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Thickness.get_data(data_map)?.try_to_float()?,
+            ),
+            Shapes::Rhombus => Vec4::new(
+                Self::Inputs::Width.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::CornerRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+            ),
+            Shapes::SolidAngle => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::SolidAngle
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::Sphere => Vec4::new(
+                Self::Inputs::Radius.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+                0.,
+            ),
+            Shapes::Torus => Vec4::new(
+                Self::Inputs::RingRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                Self::Inputs::TubeRadius
+                    .get_data(data_map)?
+                    .try_to_float()?,
+                0.,
+                0.,
+            ),
+            Shapes::TriangularPrism => Vec4::new(
+                Self::Inputs::Base.get_data(data_map)?.try_to_float()?,
+                Self::Inputs::Depth.get_data(data_map)?.try_to_float()?,
+                0.,
+                0.,
+            ),
+        };
+
+        let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
+        for descendant in descendants.primitives.iter_mut() {
+            descendant.local_to_world = local_to_world * descendant.local_to_world;
+        }
+
+        scene.primitives.push(Primitive {
+            shape: shape,
+            local_to_world: local_to_world,
+            material: Material::default(), // TODO assign materials by id
+            hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
+            wall_thickness: Self::Inputs::WallThickness
+                .get_data(data_map)?
+                .try_to_float()?,
+            edge_radius: Self::Inputs::EdgeRadius
+                .get_data(data_map)?
+                .try_to_float()?,
+            mirror: Self::Inputs::Mirror.get_data(data_map)?.try_to_bvec3()?,
+            elongate: Self::Inputs::Elongate.get_data(data_map)?.try_to_bool()?,
+            elongation: Self::Inputs::Elongation.get_data(data_map)?.try_to_vec3()?,
+            repetition: Self::Inputs::Repetition.get_data(data_map)?.try_to_enum()?,
+            negative_repetitions: Self::Inputs::NegativeRepetitions
+                .get_data(data_map)?
+                .try_to_uvec3()?,
+            positive_repetitions: Self::Inputs::PositiveRepetitions
+                .get_data(data_map)?
+                .try_to_uvec3()?,
+            spacing: Self::Inputs::Spacing.get_data(data_map)?.try_to_vec3()?,
+            blend_type: Self::Inputs::BlendType.get_data(data_map)?.try_to_enum()?,
+            blend_strength: Self::Inputs::BlendStrength
+                .get_data(data_map)?
+                .try_to_float()?,
+            bounding_volume: Self::Inputs::BoundingVolume
+                .get_data(data_map)?
+                .try_to_bool()?,
+            num_descendants: descendants.primitives.len() as u32,
+            dimensional_data: dimensional_data,
+        });
+        scene.merge(descendants);
+
+        match output {
+            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene)),
         }
     }
 }

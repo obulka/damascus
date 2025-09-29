@@ -5,9 +5,17 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{render_passes::RenderPasses, textures::Grade, Enumerator};
+use crate::{
+    node_graph::{
+        inputs::input_data::{InputData, NodeInputData},
+        outputs::output_data::{NodeOutputData, OutputData},
+    },
+    render_passes::RenderPasses,
+    textures::Grade,
+    Enumerator,
+};
 
-use super::{InputData, NodeInputData};
+use super::NodeOperation;
 
 #[derive(
     Debug,
@@ -50,4 +58,41 @@ impl NodeInputData for GradeInputData {
             Self::Invert => InputData::Bool(default_grade.invert),
         }
     }
+}
+
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum GradeOutputData {
+    #[default]
+    GradedImage,
+}
+
+impl Enumerator for GradeOutputData {}
+
+impl NodeOutputData for GradeOutputData {
+    fn default_data(&self) -> OutputData {
+        match self {
+            Self::GradedImage => OutputData::RenderPass,
+        }
+    }
+}
+
+pub struct GradeNode;
+
+impl NodeOperation for GradeNode {
+    type Inputs = GradeInputData;
+    type Outputs = GradeOutputData;
 }

@@ -10,7 +10,7 @@ use strum::{EnumCount, EnumIter, EnumString};
 
 use crate::{Enumerator, Errors};
 
-use super::inputs::InputErrors;
+use super::inputs::input_data::InputData;
 
 pub mod node;
 pub mod node_data;
@@ -33,12 +33,18 @@ pub type Nodes = SlotMap<NodeId, Node>;
     serde::Deserialize,
 )]
 pub enum NodeErrors {
-    InputError(InputErrors),
+    InputDowncastError {
+        data: InputData,
+        conversion_to: String,
+    },
+    InputDoesNotExistError(String),
+    InputDataDoesNotExistError(String),
     InvalidData {
         node_id: NodeId,
         input_data: String,
     },
-    NoOutputError(NodeId),
+    ParseOutputError(String),
+    NotImplementedError,
     #[default]
     UnknownError,
 }
@@ -48,7 +54,22 @@ pub type NodeResult<T> = std::result::Result<T, NodeErrors>;
 impl fmt::Display for NodeErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::InputError(error) => error.fmt(formatter),
+            Self::InputDowncastError {
+                data,
+                conversion_to,
+            } => write!(
+                formatter,
+                "{}: Invalid cast from input data of type: {:?} to: {:?}",
+                self, data, conversion_to,
+            ),
+            Self::InputDoesNotExistError(name) => {
+                write!(formatter, "{}: No input named: {:?}", self, name,)
+            }
+            Self::InputDataDoesNotExistError(name) => write!(
+                formatter,
+                "{}: No data received for an input named: {:?}",
+                self, name,
+            ),
             Self::InvalidData {
                 node_id,
                 input_data,
@@ -57,10 +78,9 @@ impl fmt::Display for NodeErrors {
                 "{}: Node({:?}) should contain data for input {:?}",
                 self, node_id, input_data
             ),
-            Self::NoOutputError(node_id) => {
-                write!(formatter, "{}: No output on Node({:?})", self, node_id)
-            }
+            Self::ParseOutputError(error) => write!(formatter, "{}: {}", self, error),
             Self::UnknownError => write!(formatter, "{}: Skill issue tbh", self),
+            _ => write!(formatter, "{}", self),
         }
     }
 }

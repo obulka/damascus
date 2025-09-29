@@ -8,9 +8,16 @@ use std::collections::HashMap;
 use glam::{Mat4, Quat, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::Enumerator;
+use crate::{
+    node_graph::{
+        inputs::input_data::{InputData, NodeInputData},
+        nodes::NodeResult,
+        outputs::output_data::{NodeOutputData, OutputData},
+    },
+    Enumerator,
+};
 
-use super::{InputData, InputResult, NodeInputData};
+use super::NodeOperation;
 
 #[derive(
     Debug,
@@ -46,20 +53,70 @@ impl NodeInputData for AxisInputData {
             Self::UniformScale => InputData::Float(1.),
         }
     }
+}
 
-    fn compute_output(data_map: &mut HashMap<String, InputData>) -> InputResult<InputData> {
-        let rotate: Vec3 =
-            Self::Rotate.get_data(data_map)?.try_to_vec3()? * std::f32::consts::PI / 180.;
-        let quaternion = Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum AxisOutputData {
+    #[default]
+    Axis,
+}
 
-        Ok(InputData::Mat4(
-            Self::Axis.get_data(data_map)?.try_to_mat4()?
-                * Mat4::from_scale_rotation_translation(
-                    Vec3::splat(Self::UniformScale.get_data(data_map)?.try_to_float()?),
-                    quaternion,
-                    Self::Translate.get_data(data_map)?.try_to_vec3()?,
-                ),
-        ))
+impl Enumerator for AxisOutputData {}
+
+impl NodeOutputData for AxisOutputData {
+    fn default_data(&self) -> OutputData {
+        match self {
+            Self::Axis => OutputData::Mat4,
+        }
+    }
+}
+
+pub struct AxisNode;
+
+impl NodeOperation for AxisNode {
+    type Inputs = AxisInputData;
+    type Outputs = AxisOutputData;
+
+    fn evaluate(
+        output: Self::Outputs,
+        data_map: &mut HashMap<String, InputData>,
+    ) -> NodeResult<InputData> {
+        match output {
+            Self::Outputs::Axis => {
+                let rotate: Vec3 = Self::Inputs::Rotate.get_data(data_map)?.try_to_vec3()?
+                    * std::f32::consts::PI
+                    / 180.;
+                let quaternion =
+                    Quat::from_euler(glam::EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+
+                Ok(InputData::Mat4(
+                    Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?
+                        * Mat4::from_scale_rotation_translation(
+                            Vec3::splat(
+                                Self::Inputs::UniformScale
+                                    .get_data(data_map)?
+                                    .try_to_float()?,
+                            ),
+                            quaternion,
+                            Self::Inputs::Translate.get_data(data_map)?.try_to_vec3()?,
+                        ),
+                ))
+            }
+        }
     }
 }
 

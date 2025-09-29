@@ -5,9 +5,10 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use super::super::inputs::input_data::InputData;
-
-use crate::Enumerator;
+use crate::{
+    node_graph::{inputs::input_data::InputData, nodes::NodeId, NodeGraph},
+    Enumerator,
+};
 
 #[derive(
     Debug,
@@ -28,7 +29,7 @@ pub enum OutputData {
     Mat4,
     #[default]
     RenderPass,
-    Scene,
+    SceneGraph,
 }
 
 impl Enumerator for OutputData {}
@@ -38,8 +39,26 @@ impl OutputData {
         match input {
             InputData::Mat4(..) => *self == OutputData::Mat4,
             InputData::RenderPass(..) => *self == OutputData::RenderPass,
-            InputData::Scene(..) => *self == OutputData::Scene,
+            InputData::SceneGraph(..) => *self == OutputData::SceneGraph,
             _ => false,
         }
+    }
+}
+
+pub trait NodeOutputData: Enumerator + Eq {
+    fn default_data(&self) -> OutputData;
+
+    fn name(&self) -> String {
+        self.to_string()
+    }
+
+    fn label(&self) -> String {
+        self.variant_snake_case()
+    }
+
+    fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
+        Self::iter().for_each(|output| {
+            node_graph.add_output(node_id, &output.name(), output.default_data());
+        });
     }
 }

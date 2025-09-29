@@ -5,18 +5,20 @@
 
 use super::{super::nodes::NodeId, output_data::OutputData, OutputId};
 
-#[derive(Clone, Copy, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Output {
     pub id: OutputId,
     pub node_id: NodeId,
+    pub name: String,
     pub data: OutputData,
 }
 
 impl Output {
-    pub fn new(id: OutputId, node_id: NodeId, data: OutputData) -> Self {
+    pub fn new(id: OutputId, node_id: NodeId, name: String, data: OutputData) -> Self {
         Self {
             id: id,
             node_id: node_id,
+            name: name,
             data: data,
         }
     }

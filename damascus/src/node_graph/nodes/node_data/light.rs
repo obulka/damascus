@@ -112,53 +112,50 @@ impl NodeOperation for LightNode {
         output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
+        let mut scene: Scene = Self::Inputs::SceneGraph
+            .get_data(data_map)?
+            .try_to_scene()?;
+        let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
+        let light_type: Lights = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
+
+        let dimensional_data: Vec3 = match light_type {
+            Lights::Directional => (local_to_world
+                * Vec4::from((
+                    Self::Inputs::Direction.get_data(data_map)?.try_to_vec3()?,
+                    1.,
+                )))
+            .xyz()
+            .normalize(),
+            Lights::Point => (local_to_world
+                * Vec4::from((
+                    Self::Inputs::Position.get_data(data_map)?.try_to_vec3()?,
+                    1.,
+                )))
+            .xyz(),
+            Lights::AmbientOcclusion => Vec3::new(
+                Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
+                0.,
+                0.,
+            ),
+            _ => Vec3::ZERO,
+        };
+
+        scene.lights.push(Light {
+            light_type: light_type,
+            dimensional_data: dimensional_data,
+            intensity: Self::Inputs::Intensity.get_data(data_map)?.try_to_float()?,
+            falloff: Self::Inputs::Falloff.get_data(data_map)?.try_to_uint()?,
+            colour: Self::Inputs::Colour.get_data(data_map)?.try_to_vec3()?,
+            shadow_hardness: Self::Inputs::ShadowHardness
+                .get_data(data_map)?
+                .try_to_float()?,
+            soften_shadows: Self::Inputs::SoftenShadows
+                .get_data(data_map)?
+                .try_to_bool()?,
+        });
+
         match output {
-            Self::Outputs::SceneGraph => {
-                let mut scene: Scene = Self::Inputs::SceneGraph
-                    .get_data(data_map)?
-                    .try_to_scene()?;
-                let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-                let light_type: Lights =
-                    Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
-
-                let dimensional_data: Vec3 = match light_type {
-                    Lights::Directional => (local_to_world
-                        * Vec4::from((
-                            Self::Inputs::Direction.get_data(data_map)?.try_to_vec3()?,
-                            1.,
-                        )))
-                    .xyz()
-                    .normalize(),
-                    Lights::Point => (local_to_world
-                        * Vec4::from((
-                            Self::Inputs::Position.get_data(data_map)?.try_to_vec3()?,
-                            1.,
-                        )))
-                    .xyz(),
-                    Lights::AmbientOcclusion => Vec3::new(
-                        Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
-                        0.,
-                        0.,
-                    ),
-                    _ => Vec3::ZERO,
-                };
-
-                scene.lights.push(Light {
-                    light_type: light_type,
-                    dimensional_data: dimensional_data,
-                    intensity: Self::Inputs::Intensity.get_data(data_map)?.try_to_float()?,
-                    falloff: Self::Inputs::Falloff.get_data(data_map)?.try_to_uint()?,
-                    colour: Self::Inputs::Colour.get_data(data_map)?.try_to_vec3()?,
-                    shadow_hardness: Self::Inputs::ShadowHardness
-                        .get_data(data_map)?
-                        .try_to_float()?,
-                    soften_shadows: Self::Inputs::SoftenShadows
-                        .get_data(data_map)?
-                        .try_to_bool()?,
-                });
-
-                Ok(InputData::SceneGraph(scene))
-            }
+            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene)),
         }
     }
 }

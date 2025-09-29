@@ -17,7 +17,8 @@ pub mod lights;
 pub mod materials;
 pub mod node_graph;
 pub mod render_passes;
-pub mod scene;
+pub mod scene; // TODO remove this
+pub mod scene_graph;
 pub mod shaders;
 pub mod textures;
 
@@ -99,3 +100,36 @@ impl<E: Enumerator> From<E> for Enum {
 }
 
 pub trait Errors: Enumerator {}
+
+#[macro_export]
+macro_rules! impl_slot_map_indexing {
+    ($graph:ty, $id_type:ty, $output_type:ty, $arena:ident) => {
+        impl std::ops::Index<$id_type> for $graph {
+            type Output = $output_type;
+
+            fn index(&self, index: $id_type) -> &Self::Output {
+                self.$arena.get(index).unwrap_or_else(|| {
+                    panic!(
+                        "{} index error for {}[{:?}]",
+                        stringify!($id_type),
+                        stringify!($arena),
+                        index
+                    )
+                })
+            }
+        }
+
+        impl std::ops::IndexMut<$id_type> for $graph {
+            fn index_mut(&mut self, index: $id_type) -> &mut Self::Output {
+                self.$arena.get_mut(index).unwrap_or_else(|| {
+                    panic!(
+                        "{} index error for {}[{:?}]",
+                        stringify!($id_type),
+                        stringify!($arena),
+                        index
+                    )
+                })
+            }
+        }
+    };
+}

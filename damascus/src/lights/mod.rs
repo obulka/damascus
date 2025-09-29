@@ -5,9 +5,12 @@
 
 use crevice::std430::AsStd430;
 use glam::Vec3;
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{DualDevice, Enumerator};
+
+slotmap::new_key_type! { pub struct LightId; }
 
 #[derive(
     Debug,
@@ -22,7 +25,7 @@ use crate::{DualDevice, Enumerator};
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum Lights {
+pub enum LightType {
     Directional,
     Point,
     Ambient,
@@ -30,7 +33,7 @@ pub enum Lights {
     AmbientOcclusion,
 }
 
-impl Enumerator for Lights {}
+impl Enumerator for LightType {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -47,7 +50,7 @@ pub struct GPULight {
 #[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Light {
-    pub light_type: Lights,
+    pub light_type: LightType,
     pub dimensional_data: Vec3,
     pub intensity: f32,
     pub falloff: u32,
@@ -59,7 +62,7 @@ pub struct Light {
 impl Default for Light {
     fn default() -> Self {
         Self {
-            light_type: Lights::default(),
+            light_type: LightType::default(),
             dimensional_data: Vec3::X,
             intensity: 1.,
             falloff: 2,
@@ -85,3 +88,5 @@ impl DualDevice<GPULight, Std430GPULight> for Light {
         }
     }
 }
+
+pub type Lights = SlotMap<LightId, Light>;

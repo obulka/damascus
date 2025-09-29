@@ -10,6 +10,8 @@ use quick_cache::{
     DefaultHashBuilder, OptionsBuilder, UnitWeighter,
 };
 
+use crate::impl_slot_map_indexing;
+
 pub mod edges;
 pub mod inputs;
 pub mod nodes;
@@ -536,41 +538,9 @@ impl Default for NodeGraph {
     }
 }
 
-macro_rules! impl_index_traits {
-    ($id_type:ty, $output_type:ty, $arena:ident) => {
-        impl std::ops::Index<$id_type> for NodeGraph {
-            type Output = $output_type;
-
-            fn index(&self, index: $id_type) -> &Self::Output {
-                self.$arena.get(index).unwrap_or_else(|| {
-                    panic!(
-                        "{} index error for {}[{:?}]",
-                        stringify!($id_type),
-                        stringify!($arena),
-                        index
-                    )
-                })
-            }
-        }
-
-        impl std::ops::IndexMut<$id_type> for NodeGraph {
-            fn index_mut(&mut self, index: $id_type) -> &mut Self::Output {
-                self.$arena.get_mut(index).unwrap_or_else(|| {
-                    panic!(
-                        "{} index error for {}[{:?}]",
-                        stringify!($id_type),
-                        stringify!($arena),
-                        index
-                    )
-                })
-            }
-        }
-    };
-}
-
-impl_index_traits!(NodeId, Node, nodes);
-impl_index_traits!(InputId, Input, inputs);
-impl_index_traits!(OutputId, Output, outputs);
+impl_slot_map_indexing!(NodeGraph, NodeId, Node, nodes);
+impl_slot_map_indexing!(NodeGraph, InputId, Input, inputs);
+impl_slot_map_indexing!(NodeGraph, OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {

@@ -14,7 +14,7 @@ use crate::{
         primitives::{Primitive, Shapes},
         BlendType, Repetition,
     },
-    lights::{Light, Lights},
+    lights::{Light, LightType},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
     render_passes::ray_marcher::RayMarcherRenderData,
     textures::AOVs,
@@ -366,14 +366,14 @@ pub fn directives_for_light(light: &Light) -> HashSet<RayMarcherPreprocessorDire
     let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
 
     match light.light_type {
-        Lights::Directional => {
+        LightType::Directional => {
             preprocessor_directives
                 .insert(RayMarcherPreprocessorDirectives::EnableDirectionalLights);
         }
-        Lights::Point => {
+        LightType::Point => {
             preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnablePointLights);
         }
-        Lights::AmbientOcclusion => {
+        LightType::AmbientOcclusion => {
             preprocessor_directives
                 .insert(RayMarcherPreprocessorDirectives::EnableAmbientOcclusion);
         }

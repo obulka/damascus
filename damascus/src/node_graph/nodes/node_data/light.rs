@@ -9,7 +9,7 @@ use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    lights::{Light, Lights},
+    lights::{Light, LightType},
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
@@ -116,23 +116,23 @@ impl NodeOperation for LightNode {
             .get_data(data_map)?
             .try_to_scene()?;
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-        let light_type: Lights = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
+        let light_type: LightType = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
 
         let dimensional_data: Vec3 = match light_type {
-            Lights::Directional => (local_to_world
+            LightType::Directional => (local_to_world
                 * Vec4::from((
                     Self::Inputs::Direction.get_data(data_map)?.try_to_vec3()?,
                     1.,
                 )))
             .xyz()
             .normalize(),
-            Lights::Point => (local_to_world
+            LightType::Point => (local_to_world
                 * Vec4::from((
                     Self::Inputs::Position.get_data(data_map)?.try_to_vec3()?,
                     1.,
                 )))
             .xyz(),
-            Lights::AmbientOcclusion => Vec3::new(
+            LightType::AmbientOcclusion => Vec3::new(
                 Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
                 0.,
                 0.,

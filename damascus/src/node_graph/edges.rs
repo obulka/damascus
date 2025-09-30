@@ -5,15 +5,15 @@
 
 use std::collections::{HashMap, HashSet};
 
-use slotmap::SecondaryMap;
+use slotmap::SparseSecondaryMap;
 
 use super::{inputs::InputId, outputs::OutputId};
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Edges {
-    parents: SecondaryMap<InputId, OutputId>,
-    children: SecondaryMap<OutputId, HashSet<InputId>>,
+    parents: SparseSecondaryMap<InputId, OutputId>,
+    children: SparseSecondaryMap<OutputId, HashSet<InputId>>,
 }
 
 impl Edges {

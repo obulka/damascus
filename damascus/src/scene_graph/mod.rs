@@ -3,7 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashSet;
+
 use crevice::std430::AsStd430;
+use slotmap::SparseSecondaryMap;
 
 use super::{
     camera::{Camera, CameraId, Cameras},
@@ -29,6 +32,9 @@ pub struct SceneGraph {
     primitives: Primitives,
     lights: Lights,
     materials: Materials,
+    primitive_children: SparseSecondaryMap<PrimitiveId, HashSet<PrimitiveId>>,
+    primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
+    root_primitive: Option<PrimitiveId>,
     render_camera: Option<CameraId>,
     atmosphere: Option<MaterialId>,
 }
@@ -58,6 +64,14 @@ impl SceneGraph {
         self.materials = materials;
         self
     }
+
+    // pub fn children(&self, primitive_id: PrimitiveId) -> impl Iterator<Item = PrimitiveId> + '_ {
+    //     self[primitive_id]
+    //         .children_ids
+    //         .iter()
+    //         .filter_map(|child_id| self.primitive_children.get(*child_id))
+    //         .flat_map(|children_ids| children_ids.iter())
+    // }
 
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;

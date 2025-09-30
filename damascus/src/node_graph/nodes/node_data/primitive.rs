@@ -365,6 +365,7 @@ impl NodeOperation for PrimitiveNode {
 
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
         for descendant in descendants.primitives.iter_mut() {
+            // TODO .extend(descendants.cameras.iter_mut()).extend(descendants.lights.iter_mut())
             descendant.local_to_world = local_to_world * descendant.local_to_world;
         }
 

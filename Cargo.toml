@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "damascus",
-    "damascus_ui",
+    #"damascus_ui",
 ]
 
 resolver = "2"

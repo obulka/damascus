@@ -66,6 +66,7 @@ impl Enumerator for Shapes {}
 #[derive(Debug, Copy, Clone, AsStd430)]
 pub struct GPUPrimitive {
     pub id: u32,
+    pub material_id: u32,
     shape: u32,
     modifiers: u32,
     num_descendants: u32,
@@ -78,7 +79,6 @@ pub struct GPUPrimitive {
     dimensional_data: Vec4,
     elongation: Vec3,
     transform: Transform,
-    material: GPUMaterial,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -86,7 +86,6 @@ pub struct GPUPrimitive {
 pub struct Primitive {
     pub shape: Shapes,
     pub local_to_world: Mat4,
-    pub material: Material,
     pub edge_radius: f32,
     pub repetition: Repetition,
     pub negative_repetitions: UVec3,
@@ -109,7 +108,6 @@ impl Default for Primitive {
         Self {
             shape: Shapes::Sphere,
             local_to_world: Mat4::IDENTITY,
-            material: Material::default(),
             edge_radius: 0.,
             repetition: Repetition::None,
             negative_repetitions: UVec3::ZERO,
@@ -136,6 +134,7 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
         let (scale, quaternion, translation) = self.local_to_world.to_scale_rotation_translation();
         GPUPrimitive {
             id: 0,
+            material_id: 0,
             shape: self.shape as u32,
             modifiers: self.repetition as u32
                 | (self.elongate as u32) << 2
@@ -163,7 +162,6 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
                 inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),
                 uniform_scale: scale.x,
             },
-            material: self.material.to_gpu(),
         }
     }
 }

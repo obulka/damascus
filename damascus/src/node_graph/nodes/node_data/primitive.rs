@@ -372,7 +372,6 @@ impl NodeOperation for PrimitiveNode {
         scene.primitives.push(Primitive {
             shape: shape,
             local_to_world: local_to_world,
-            material: Material::default(), // TODO assign materials by id
             hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
             wall_thickness: Self::Inputs::WallThickness
                 .get_data(data_map)?

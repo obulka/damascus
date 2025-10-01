@@ -15,7 +15,7 @@ use super::{
 };
 
 use crate::{
-    scene::Scene,
+    scene_graph::SceneGraph,
     shaders::{
         ray_marcher::{
             all_directives_for_light, all_directives_for_material, all_directives_for_primitive,
@@ -83,7 +83,7 @@ pub struct GPURayMarcherRenderData {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcherRenderData {
-    pub scene: Scene,
+    pub scene_graph: SceneGraph,
     pub max_ray_steps: u32,
     pub max_bounces: u32,
     pub hit_tolerance: f32,
@@ -103,7 +103,7 @@ pub struct RayMarcherRenderData {
 impl Default for RayMarcherRenderData {
     fn default() -> Self {
         Self {
-            scene: Scene::default(),
+            scene_graph: SceneGraph::default(),
             max_ray_steps: 1000,
             max_bounces: 1,
             hit_tolerance: 0.0001,
@@ -226,8 +226,9 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_material());
         } else {
-            preprocessor_directives
-                .extend(directives_for_material(&self.render_data.scene.atmosphere));
+            for (_material_id, material) in self.render_data.scene_graph.materials().iter() {
+                preprocessor_directives.extend(directives_for_material(material));
+            }
         }
 
         if !self
@@ -236,31 +237,17 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_light());
         } else {
-            for light in &self.render_data.scene.lights {
-                preprocessor_directives.extend(directives_for_light(&light));
+            for (_light_id, light) in self.render_data.scene_graph.lights().iter() {
+                preprocessor_directives.extend(directives_for_light(light));
             }
         }
 
         if self
             .compilation_data
             .enable_dynamic_recompilation_for_primitives
-            || self
-                .compilation_data
-                .enable_dynamic_recompilation_for_materials
         {
-            for primitive in &self.render_data.scene.primitives {
-                if self
-                    .compilation_data
-                    .enable_dynamic_recompilation_for_materials
-                {
-                    preprocessor_directives.extend(directives_for_material(&primitive.material));
-                }
-                if self
-                    .compilation_data
-                    .enable_dynamic_recompilation_for_primitives
-                {
-                    preprocessor_directives.extend(directives_for_primitive(&primitive));
-                }
+            for (_primitive_id, primitive) in self.render_data.scene_graph.primitives().iter() {
+                preprocessor_directives.extend(directives_for_primitive(&primitive));
             }
         }
 
@@ -321,9 +308,9 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&RayMarcherConstructionData {
-            num_primitives: self.render_data.scene.primitives.len(),
-            num_lights: self.render_data.scene.lights.len(),
-            num_emissive_primitives: self.render_data.scene.num_emissive_primitives(),
+            num_primitives: self.render_data.scene_graph.primitives().len(),
+            num_lights: self.render_data.scene_graph.lights().len(),
+            num_emissive_primitives: self.render_data.scene_graph.num_emissive_primitives(),
         })
     }
 
@@ -343,7 +330,7 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene.as_std430()]).to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.scene_graph.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
@@ -353,7 +340,7 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene.render_camera.as_std430()])
+                data: bytemuck::cast_slice(&[self.render_data.scene_graph.render_camera()])
                     .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
@@ -365,21 +352,25 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
         vec![
             BufferDescriptor {
                 data: bytemuck::cast_slice(
-                    self.render_data.scene.create_gpu_primitives().as_slice(),
+                    self.render_data
+                        .scene_graph
+                        .create_gpu_primitives()
+                        .as_slice(),
                 )
                 .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(self.render_data.scene.create_gpu_lights().as_slice())
-                    .to_vec(),
+                data: bytemuck::cast_slice(
+                    self.render_data.scene_graph.create_gpu_lights().as_slice(),
+                )
+                .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene.atmosphere.as_std430()])
-                    .to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.scene_graph.atmosphere()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
@@ -426,8 +417,8 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 }
 
 impl RayMarcher {
-    pub fn scene(mut self, scene: Scene) -> Self {
-        self.render_data.scene = scene;
+    pub fn scene_graph(mut self, scene_graph: SceneGraph) -> Self {
+        self.render_data.scene_graph = scene_graph;
         self
     }
 

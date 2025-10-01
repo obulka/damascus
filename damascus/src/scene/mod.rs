@@ -74,11 +74,11 @@ impl Scene {
 
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
-        for primitive in self.primitives.iter() {
-            if primitive.material.scaled_emissive_colour().length() > 0. {
-                count += 1;
-            }
-        }
+        // for primitive in self.primitives.iter() {
+        //     if primitive.material.scaled_emissive_colour().length() > 0. {
+        //         count += 1;
+        //     }
+        // }
         count
     }
 
@@ -111,9 +111,9 @@ impl Scene {
     pub fn emissive_primitive_indices(&self) -> Vec<u32> {
         let mut emissive_indices = vec![];
         for (index, primitive) in self.primitives.iter().enumerate() {
-            if primitive.material.scaled_emissive_colour().length() == 0. {
-                continue;
-            }
+            // if primitive.material.scaled_emissive_colour().length() == 0. {
+            //     continue;
+            // }
             emissive_indices.push(index as u32);
         }
         if emissive_indices.is_empty() {

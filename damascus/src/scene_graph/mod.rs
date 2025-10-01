@@ -9,10 +9,10 @@ use crevice::std430::AsStd430;
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    camera::{Camera, CameraId, Cameras},
+    camera::{Camera, CameraId, Cameras, Std430GPUCamera},
     geometry::primitives::{Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
     lights::{Light, LightId, Lights, Std430GPULight},
-    materials::{Material, MaterialId, Materials},
+    materials::{Material, MaterialId, Materials, Std430GPUMaterial},
 };
 use crate::{impl_slot_map_indexing, DualDevice};
 
@@ -40,49 +40,63 @@ pub struct SceneGraph {
 }
 
 impl SceneGraph {
-    pub fn render_camera(mut self, render_camera: CameraId) -> Self {
+    pub fn render_camera(&self) -> Std430GPUCamera {
+        if let Some(render_camera_id) = self.render_camera {
+            return self[render_camera_id].as_std430();
+        }
+        Camera::default().as_std430()
+    }
+
+    pub fn atmosphere(&self) -> Std430GPUMaterial {
+        if let Some(atmosphere_id) = self.atmosphere {
+            return self[atmosphere_id].as_std430();
+        }
+        Material::default().as_std430()
+    }
+
+    pub fn set_render_camera(&mut self, render_camera: CameraId) {
         self.render_camera = Some(render_camera);
-        self
     }
 
-    pub fn atmosphere(mut self, atmosphere: MaterialId) -> Self {
+    pub fn set_atmosphere(&mut self, atmosphere: MaterialId) {
         self.atmosphere = Some(atmosphere);
-        self
     }
 
-    pub fn lights(mut self, lights: Lights) -> Self {
-        self.lights = lights;
-        self
+    pub fn cameras(&self) -> &Cameras {
+        &self.cameras
     }
 
-    pub fn primitives(mut self, primitives: Primitives) -> Self {
-        self.primitives = primitives;
-        self
+    pub fn lights(&self) -> &Lights {
+        &self.lights
     }
 
-    pub fn materials(mut self, materials: Materials) -> Self {
-        self.materials = materials;
-        self
+    pub fn primitives(&self) -> &Primitives {
+        &self.primitives
     }
 
-    // pub fn children(&self, primitive_id: PrimitiveId) -> impl Iterator<Item = PrimitiveId> + '_ {
-    //     self[primitive_id]
-    //         .children_ids
-    //         .iter()
-    //         .filter_map(|child_id| self.primitive_children.get(*child_id))
-    //         .flat_map(|children_ids| children_ids.iter())
-    // }
+    pub fn materials(&self) -> &Materials {
+        &self.materials
+    }
+
+    pub fn children_owned(&self, primitive_id: PrimitiveId) -> HashSet<PrimitiveId> {
+        let mut child_ids = HashSet::<PrimitiveId>::new();
+        if let Some(children) = self.children(primitive_id) {
+            child_ids = children.clone();
+        }
+        child_ids
+    }
+
+    pub fn children(&self, primitive_id: PrimitiveId) -> Option<&HashSet<PrimitiveId>> {
+        self.primitive_children.get(primitive_id)
+    }
 
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
-            if self[primitive_id]
-                .material
-                .scaled_emissive_colour()
-                .length()
-                > 0.
-            {
-                count += 1;
+            if let Some(material_id) = self.primitive_materials.get(primitive_id) {
+                if self[*material_id].scaled_emissive_colour().length() > 0. {
+                    count += 1;
+                }
             }
         }
         count

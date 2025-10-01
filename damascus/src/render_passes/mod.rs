@@ -15,7 +15,7 @@ use crate::{
     geometry::primitives::Primitive,
     lights::Light,
     materials::Material,
-    scene::Scene,
+    scene_graph::SceneGraph,
     shaders,
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
     Enumerator,
@@ -954,60 +954,9 @@ impl RenderPasses {
         }
     }
 
-    pub fn default_pass_for_camera(camera: Camera) -> Self {
+    pub fn default_pass_for_scene_graph(scene_graph: SceneGraph) -> Self {
         Self::RayMarcher {
-            render_pass: RayMarcher::default()
-                .scene(
-                    Scene::default()
-                        .render_camera(camera)
-                        .primitives(vec![Primitive::default()])
-                        .lights(vec![Light::default()]),
-                )
-                .finalized(),
-        }
-    }
-
-    pub fn default_pass_for_lights(lights: Vec<Light>) -> Self {
-        Self::RayMarcher {
-            render_pass: RayMarcher::default()
-                .scene(
-                    Scene::default()
-                        .render_camera(
-                            Camera::default().camera_to_world(Mat4::from_translation(Vec3::Z * 5.)),
-                        )
-                        .primitives(vec![Primitive::default()])
-                        .lights(lights),
-                )
-                .finalized(),
-        }
-    }
-
-    pub fn default_pass_for_primitives(primitives: Vec<Primitive>) -> Self {
-        Self::RayMarcher {
-            render_pass: RayMarcher::default()
-                .scene(
-                    Scene::default()
-                        .render_camera(
-                            Camera::default().camera_to_world(Mat4::from_translation(Vec3::Z * 5.)),
-                        )
-                        .primitives(primitives)
-                        .lights(vec![Light::default()]),
-                )
-                .finalized(),
-        }
-    }
-
-    pub fn default_pass_for_material(material: Material) -> Self {
-        Self::RayMarcher {
-            render_pass: RayMarcher::default()
-                .scene(Scene::default().atmosphere(material))
-                .finalized(),
-        }
-    }
-
-    pub fn default_pass_for_scene(scene: Scene) -> Self {
-        Self::RayMarcher {
-            render_pass: RayMarcher::default().scene(scene).finalized(),
+            render_pass: RayMarcher::default().scene_graph(scene_graph).finalized(),
         }
     }
 }

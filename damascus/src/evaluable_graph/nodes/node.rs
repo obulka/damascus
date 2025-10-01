@@ -22,16 +22,14 @@ use super::{
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Node {
-    pub id: NodeId,
     pub input_ids: Vec<InputId>,
     pub output_ids: Vec<OutputId>,
     pub data: NodeData,
 }
 
 impl Node {
-    pub fn new(id: NodeId, data: NodeData) -> Self {
+    pub fn new(data: NodeData) -> Self {
         Self {
-            id: id,
             input_ids: vec![],
             output_ids: vec![],
             data: data,
@@ -40,54 +38,54 @@ impl Node {
 
     pub fn evaluate(
         &self,
-        output_name: &str,
         mut data_map: HashMap<String, InputData>,
+        output_name: &str,
     ) -> NodeResult<InputData> {
         match self.data {
             NodeData::Axis => AxisNode::evaluate(
+                &mut data_map,
                 AxisOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Camera => CameraNode::evaluate(
+                &mut data_map,
                 CameraOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Grade => GradeNode::evaluate(
+                &mut data_map,
                 GradeOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Light => LightNode::evaluate(
+                &mut data_map,
                 LightOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Material => MaterialNode::evaluate(
+                &mut data_map,
                 MaterialOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Primitive => PrimitiveNode::evaluate(
+                &mut data_map,
                 PrimitiveOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::RayMarcher => RayMarcherNode::evaluate(
+                &mut data_map,
                 RayMarcherOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Scene => SceneNode::evaluate(
+                &mut data_map,
                 SceneOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
             NodeData::Texture => TextureNode::evaluate(
+                &mut data_map,
                 TextureOutputData::from_str(output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-                &mut data_map,
             ),
         }
     }

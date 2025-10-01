@@ -8,11 +8,11 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeId,
         outputs::output_data::NodeOutputData,
-        NodeGraph,
+        EvaluableGraph,
     },
     Enumerator,
 };
@@ -39,18 +39,18 @@ pub use ray_marcher::{RayMarcherInputData, RayMarcherNode, RayMarcherOutputData}
 pub use scene::{SceneInputData, SceneNode, SceneOutputData};
 pub use texture::{TextureInputData, TextureNode, TextureOutputData};
 
-pub trait NodeOperation {
+pub trait EvaluableNode {
     type Inputs: NodeInputData;
     type Outputs: NodeOutputData;
 
-    fn add_to_node_graph(node_graph: &mut NodeGraph, node_id: NodeId) {
-        Self::Inputs::add_to_node(node_graph, node_id);
-        Self::Outputs::add_to_node(node_graph, node_id);
+    fn add_to_graph(graph: &mut EvaluableGraph, node_id: NodeId) {
+        Self::Inputs::add_to_node(graph, node_id);
+        Self::Outputs::add_to_node(graph, node_id);
     }
 
     fn evaluate(
-        _output: Self::Outputs,
         _data_map: &mut HashMap<String, InputData>,
+        _output: Self::Outputs,
     ) -> NodeResult<InputData> {
         Err(NodeErrors::NotImplementedError)
     }
@@ -87,34 +87,34 @@ pub enum NodeData {
 impl Enumerator for NodeData {}
 
 impl NodeData {
-    pub fn add_to_node_graph(&self, node_graph: &mut NodeGraph, node_id: NodeId) {
+    pub fn add_to_graph(&self, graph: &mut EvaluableGraph, node_id: NodeId) {
         match self {
             Self::Axis => {
-                AxisNode::add_to_node_graph(node_graph, node_id);
+                AxisNode::add_to_graph(graph, node_id);
             }
             Self::Camera => {
-                CameraNode::add_to_node_graph(node_graph, node_id);
+                CameraNode::add_to_graph(graph, node_id);
             }
             Self::Grade => {
-                GradeNode::add_to_node_graph(node_graph, node_id);
+                GradeNode::add_to_graph(graph, node_id);
             }
             Self::Light => {
-                LightNode::add_to_node_graph(node_graph, node_id);
+                LightNode::add_to_graph(graph, node_id);
             }
             Self::Material => {
-                MaterialNode::add_to_node_graph(node_graph, node_id);
+                MaterialNode::add_to_graph(graph, node_id);
             }
             Self::Primitive => {
-                PrimitiveNode::add_to_node_graph(node_graph, node_id);
+                PrimitiveNode::add_to_graph(graph, node_id);
             }
             Self::RayMarcher => {
-                RayMarcherNode::add_to_node_graph(node_graph, node_id);
+                RayMarcherNode::add_to_graph(graph, node_id);
             }
             Self::Scene => {
-                SceneNode::add_to_node_graph(node_graph, node_id);
+                SceneNode::add_to_graph(graph, node_id);
             }
             Self::Texture => {
-                TextureNode::add_to_node_graph(node_graph, node_id);
+                TextureNode::add_to_graph(graph, node_id);
             }
         }
     }

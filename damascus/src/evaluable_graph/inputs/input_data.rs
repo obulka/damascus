@@ -14,7 +14,7 @@ use crate::{
         NodeGraph,
     },
     render_passes::RenderPasses,
-    scene::Scene,
+    scene_graph::SceneGraph,
     Enum, Enumerator,
 };
 
@@ -48,7 +48,7 @@ pub enum InputData {
     Mat3(Mat3),
     Mat4(Mat4),
     RenderPass(RenderPasses),
-    SceneGraph(Scene),
+    SceneGraph(SceneGraph),
 }
 
 impl Enumerator for InputData {}
@@ -204,12 +204,12 @@ impl InputData {
         }
     }
 
-    pub fn try_to_scene(self) -> NodeResult<Scene> {
+    pub fn try_to_scene_graph(self) -> NodeResult<SceneGraph> {
         match self {
             InputData::SceneGraph(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<Scene>().to_string(),
+                conversion_to: type_name::<SceneGraph>().to_string(),
             }),
         }
     }

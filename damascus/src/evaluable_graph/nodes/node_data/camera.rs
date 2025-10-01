@@ -14,7 +14,7 @@ use crate::{
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene::Scene,
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
@@ -106,12 +106,12 @@ impl NodeOperation for CameraNode {
     type Outputs = CameraOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(
-                Scene::default().render_camera(Camera::new(
+                SceneGraph::default().render_camera(Camera::new(
                     Self::Inputs::FocalLength
                         .get_data(data_map)?
                         .try_to_float()?,

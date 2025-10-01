@@ -24,13 +24,17 @@ use inputs::{
     InputId, Inputs,
 };
 use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
-use outputs::{output::Output, output_data::OutputData, OutputId, Outputs};
+use outputs::{
+    output::Output,
+    output_data::{NodeOutputData, OutputData},
+    OutputId, Outputs,
+};
 
 pub type OutputCache = Cache<OutputId, InputData>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct NodeGraph {
+pub struct EvaluableGraph {
     nodes: Nodes,
     inputs: Inputs,
     outputs: Outputs,
@@ -39,7 +43,7 @@ pub struct NodeGraph {
     cache: OutputCache,
 }
 
-impl NodeGraph {
+impl EvaluableGraph {
     pub fn new() -> Self {
         Self {
             nodes: Nodes::default(),
@@ -113,7 +117,7 @@ impl NodeGraph {
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
         let input_data: InputData =
-            self[self[output_id].node_id].evaluate(&self[output_id].name, input_data_map)?;
+            self[self[output_id].node_id].evaluate(input_data_map, &self[output_id].name)?;
 
         self.insert_to_cache(output_id, input_data.clone());
 
@@ -191,10 +195,8 @@ impl NodeGraph {
     }
 
     pub fn add_node(&mut self, node_data: NodeData) -> NodeId {
-        let node_id: NodeId = self
-            .nodes
-            .insert_with_key(|node_id| Node::new(node_id, node_data));
-        node_data.add_to_node_graph(self, node_id);
+        let node_id: NodeId = self.nodes.insert(Node::new(node_data));
+        node_data.add_to_graph(self, node_id);
         node_id
     }
 
@@ -221,7 +223,7 @@ impl NodeGraph {
     pub fn add_input(&mut self, node_id: NodeId, name: &str, data: InputData) -> InputId {
         let input_id = self
             .inputs
-            .insert_with_key(|input_id| Input::new(input_id, node_id, name.to_string(), data));
+            .insert(Input::new(node_id, name.to_string(), data));
         self[node_id].input_ids.push(input_id);
         input_id
     }
@@ -236,7 +238,7 @@ impl NodeGraph {
     pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
         let output_id = self
             .outputs
-            .insert_with_key(|output_id| Output::new(output_id, node_id, name.to_string(), data));
+            .insert(Output::new(node_id, name.to_string(), data));
         self[node_id].output_ids.push(output_id);
         output_id
     }
@@ -372,22 +374,16 @@ impl NodeGraph {
         let mut other_to_new_outputs = HashMap::<OutputId, OutputId>::new();
 
         for node_id in self.iter_nodes().collect::<HashSet<NodeId>>().into_iter() {
-            if let Some(mut other_node) = other.nodes.remove(node_id) {
+            if let Some(other_node) = other.nodes.remove(node_id) {
                 // Move the node to this node graph and update its id
-                let new_node_id: NodeId = self.nodes.insert_with_key(|new_node_id| {
-                    other_node.id = new_node_id;
-                    other_node
-                });
+                let new_node_id: NodeId = self.nodes.insert(other_node);
 
                 // Update the nodes inputs with new ids, and the new node's id
                 let mut new_inputs: Vec<InputId> = self[new_node_id].input_ids.clone();
                 for input_id in new_inputs.iter_mut() {
                     if let Some(mut input) = other.inputs.remove(*input_id) {
                         input.node_id = new_node_id;
-                        let new_id = self.inputs.insert_with_key(|new_id| {
-                            input.id = new_id;
-                            input
-                        });
+                        let new_id = self.inputs.insert(input);
                         if let Some(output_id) = other.edges.parent(*input_id) {
                             // Maintain a list of edges to duplicate
                             if let Some(inputs) = edges_to_recreate.get_mut(output_id) {
@@ -407,10 +403,7 @@ impl NodeGraph {
                 for output_id in new_outputs.iter_mut() {
                     if let Some(mut output) = other.outputs.remove(*output_id) {
                         output.node_id = new_node_id;
-                        let new_id = self.outputs.insert_with_key(|new_id| {
-                            output.id = new_id;
-                            output
-                        });
+                        let new_id = self.outputs.insert(output);
                         // Maintain a LUT of the original to new ids
                         other_to_new_outputs.insert(*output_id, new_id);
                         *output_id = new_id;
@@ -435,31 +428,46 @@ impl NodeGraph {
         other_to_new_node_ids
     }
 
-    pub fn node_inputs(&self, node_id: NodeId) -> impl Iterator<Item = &Input> {
+    pub fn node_inputs(&self, node_id: NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
         self[node_id]
             .input_ids
             .iter()
-            .map(|input_id| &self[*input_id])
+            .map(|input_id| (input_id, &self[*input_id]))
     }
 
-    pub fn node_outputs(&self, node_id: NodeId) -> impl Iterator<Item = &Output> {
+    pub fn node_outputs(&self, node_id: NodeId) -> impl Iterator<Item = (&OutputId, &Output)> {
         self[node_id]
             .output_ids
             .iter()
-            .map(|output_id| &self[*output_id])
+            .map(|output_id| (output_id, &self[*output_id]))
     }
 
-    pub fn node_input(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
+    pub fn node_input_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
         self.node_inputs(node_id)
-            .find(|input| input.name == name)
+            .find(|(_input_id, input)| input.name == name)
+            .map(|(_input_id, input)| input)
             .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
     }
 
-    pub fn node_input_id_from_string(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
+    pub fn node_input_id_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
         self.node_inputs(node_id)
-            .find(|input| input.name == name)
-            .map(|input| input.id)
+            .find(|(_input_id, input)| input.name == name)
+            .map(|(input_id, _input)| *input_id)
             .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
+    }
+
+    pub fn node_output_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<&Output> {
+        self.node_outputs(node_id)
+            .find(|(_output_id, output)| output.name == name)
+            .map(|(_output_id, output)| output)
+            .ok_or_else(|| NodeErrors::OutputDoesNotExistError(name.to_string()))
+    }
+
+    pub fn node_output_id_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<OutputId> {
+        self.node_outputs(node_id)
+            .find(|(_output_id, output)| output.name == name)
+            .map(|(output_id, _output)| *output_id)
+            .ok_or_else(|| NodeErrors::OutputDoesNotExistError(name.to_string()))
     }
 
     pub fn node_input_id<I: NodeInputData>(
@@ -468,13 +476,36 @@ impl NodeGraph {
         node_input_data: I,
     ) -> NodeResult<InputId> {
         self.node_inputs(node_id)
-            .find(|input| input.name == node_input_data.to_string())
-            .map(|input| input.id)
-            .ok_or_else(|| NodeErrors::InputDoesNotExistError(node_input_data.to_string()))
+            .find(|(_input_id, input)| input.name == node_input_data.name())
+            .map(|(input_id, _input)| *input_id)
+            .ok_or_else(|| NodeErrors::InputDoesNotExistError(node_input_data.name()))
+    }
+
+    pub fn node_output_id<O: NodeOutputData>(
+        &self,
+        node_id: NodeId,
+        node_output_data: O,
+    ) -> NodeResult<OutputId> {
+        self.node_outputs(node_id)
+            .find(|(_output_id, output)| output.name == node_output_data.name())
+            .map(|(output_id, _output)| *output_id)
+            .ok_or_else(|| NodeErrors::OutputDoesNotExistError(node_output_data.name()))
+    }
+
+    pub fn node_first_input(&self, node_id: NodeId) -> Option<&Input> {
+        self.node_inputs(node_id)
+            .map(|(_input_id, input)| input)
+            .next()
+    }
+
+    pub fn node_first_input_id(&self, node_id: NodeId) -> Option<&InputId> {
+        self[node_id].input_ids.iter().next()
     }
 
     pub fn node_first_output(&self, node_id: NodeId) -> Option<&Output> {
-        self.node_outputs(node_id).next()
+        self.node_outputs(node_id)
+            .map(|(_output_id, output)| output)
+            .next()
     }
 
     pub fn node_first_output_id(&self, node_id: NodeId) -> Option<&OutputId> {
@@ -532,15 +563,15 @@ impl NodeGraph {
     }
 }
 
-impl Default for NodeGraph {
+impl Default for EvaluableGraph {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl_slot_map_indexing!(NodeGraph, NodeId, Node, nodes);
-impl_slot_map_indexing!(NodeGraph, InputId, Input, inputs);
-impl_slot_map_indexing!(NodeGraph, OutputId, Output, outputs);
+impl_slot_map_indexing!(EvaluableGraph, NodeId, Node, nodes);
+impl_slot_map_indexing!(EvaluableGraph, InputId, Input, inputs);
+impl_slot_map_indexing!(EvaluableGraph, OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {
@@ -555,198 +586,198 @@ mod tests {
 
     #[test]
     fn test_node_creation() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
         let mut node_ids = HashSet::<NodeId>::new();
 
         for node_data in NodeData::iter() {
-            node_ids.insert(node_graph.add_node(node_data));
+            node_ids.insert(graph.add_node(node_data));
         }
 
-        assert_eq!(node_graph.node_count(), NodeData::COUNT);
-        assert_eq!(node_graph.edge_count(), 0);
+        assert_eq!(graph.node_count(), NodeData::COUNT);
+        assert_eq!(graph.edge_count(), 0);
         assert_eq!(
             node_ids,
-            node_graph.iter_nodes().collect::<HashSet<NodeId>>()
+            graph.iter_nodes().collect::<HashSet<NodeId>>()
         );
     }
 
     #[test]
     fn test_node_deletion() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
         for node_data in NodeData::iter() {
-            node_graph.add_node(node_data);
+            graph.add_node(node_data);
         }
 
-        for node_id in node_graph.iter_nodes().collect::<Vec<NodeId>>() {
-            let (_node, disconnections) = node_graph.remove_node(node_id);
+        for node_id in graph.iter_nodes().collect::<Vec<NodeId>>() {
+            let (_node, disconnections) = graph.remove_node(node_id);
             assert!(disconnections.is_empty());
         }
 
-        assert_eq!(node_graph.node_count(), 0);
-        assert_eq!(node_graph.edge_count(), 0);
+        assert_eq!(graph.node_count(), 0);
+        assert_eq!(graph.edge_count(), 0);
 
         for node_data in NodeData::iter() {
-            node_graph.add_node(node_data);
+            graph.add_node(node_data);
         }
 
-        assert_eq!(node_graph.node_count(), NodeData::COUNT);
+        assert_eq!(graph.node_count(), NodeData::COUNT);
 
-        node_graph.clear();
+        graph.clear();
 
-        assert_eq!(node_graph.node_count(), 0);
+        assert_eq!(graph.node_count(), 0);
     }
 
     #[test]
     fn test_node_edge_connection() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(node_graph.node_count(), 3);
-        assert_eq!(node_graph.edge_count(), 0);
+        assert_eq!(graph.node_count(), 3);
+        assert_eq!(graph.edge_count(), 0);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        assert_eq!(node_graph.edge_count(), 1);
+        assert_eq!(graph.edge_count(), 1);
         assert_eq!(
-            node_graph.children(primary_axis_id).next(),
+            graph.children(primary_axis_id).next(),
             Some(secondary_axis_id)
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        assert_eq!(node_graph.edge_count(), 2);
+        assert_eq!(graph.edge_count(), 2);
     }
 
     #[test]
     fn test_node_edge_connection_string() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(node_graph.node_count(), 3);
-        assert_eq!(node_graph.edge_count(), 0);
+        assert_eq!(graph.node_count(), 3);
+        assert_eq!(graph.edge_count(), 0);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
-                .node_input_id_from_string(secondary_axis_id, "Axis")
+            graph
+                .node_input_id_from_str(secondary_axis_id, "Axis")
                 .expect("Axis input should exist on Axis node"),
         );
 
-        assert_eq!(node_graph.edge_count(), 1);
+        assert_eq!(graph.edge_count(), 1);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
-                .node_input_id_from_string(camera_id, "Axis")
+            graph
+                .node_input_id_from_str(camera_id, "Axis")
                 .expect("Axis input should exist on Camera node"),
         );
 
-        assert_eq!(node_graph.edge_count(), 2);
+        assert_eq!(graph.edge_count(), 2);
     }
 
     #[test]
     fn test_node_edge_disconnection() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        assert_eq!(node_graph.edge_count(), 2);
+        assert_eq!(graph.edge_count(), 2);
 
-        node_graph.disconnect_node_input(secondary_axis_id, AxisInputData::Axis);
+        graph.disconnect_node_input(secondary_axis_id, AxisInputData::Axis);
 
-        assert_eq!(node_graph.edge_count(), 1);
+        assert_eq!(graph.edge_count(), 1);
 
-        node_graph.disconnect_node_input(camera_id, CameraInputData::Axis);
+        graph.disconnect_node_input(camera_id, CameraInputData::Axis);
 
-        assert_eq!(node_graph.edge_count(), 0);
+        assert_eq!(graph.edge_count(), 0);
     }
 
     #[test]
     fn test_node_edge_disconnection_on_node_removal() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
-        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive0_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         let primary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(primary_axis_id).unwrap();
+            *graph.node_first_output_id(primary_axis_id).unwrap();
 
         let secondary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
-        let secondary_axis_axis_input_id: InputId = node_graph
+            *graph.node_first_output_id(secondary_axis_id).unwrap();
+        let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
             .expect("Axis input should exist on Axis node");
 
-        let camera_axis_input_id: InputId = node_graph
+        let camera_axis_input_id: InputId = graph
             .node_input_id(camera_id, CameraInputData::Axis)
             .expect("Axis input should exist on Camera node");
 
-        let primitive_axis_input_id: InputId = node_graph
+        let primitive_axis_input_id: InputId = graph
             .node_input_id(primitive0_id, PrimitiveInputData::Axis)
             .expect("Axis input should exist on Primitive node");
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primitive0_id,
-            node_graph
+            graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
                 .expect("Siblings input should exist on Primitive node"),
         );
@@ -756,89 +787,89 @@ mod tests {
         expected_disconnections.insert(camera_axis_input_id, secondary_axis_output_id);
         expected_disconnections.insert(primitive_axis_input_id, secondary_axis_output_id);
 
-        let (_node, disconnections) = node_graph.remove_node(secondary_axis_id);
+        let (_node, disconnections) = graph.remove_node(secondary_axis_id);
         assert_eq!(disconnections, expected_disconnections);
     }
 
     #[test]
     fn test_valid_edge() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
         let primary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(primary_axis_id).unwrap();
-        let primary_axis_axis_input_id: InputId = node_graph
+            *graph.node_first_output_id(primary_axis_id).unwrap();
+        let primary_axis_axis_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Axis)
             .expect("Axis input should exist on Axis node");
 
         let secondary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
-        let secondary_axis_axis_input_id: InputId = node_graph
+            *graph.node_first_output_id(secondary_axis_id).unwrap();
+        let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
             .expect("Axis input should exist on Axis node");
 
-        let camera_output_id: OutputId = *node_graph.node_first_output_id(camera_id).unwrap();
+        let camera_output_id: OutputId = *graph.node_first_output_id(camera_id).unwrap();
 
-        assert!(node_graph.is_valid_edge(primary_axis_output_id, secondary_axis_axis_input_id));
-        assert!(!node_graph.is_valid_edge(primary_axis_output_id, primary_axis_axis_input_id));
-        assert!(node_graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
-        assert!(!node_graph.is_valid_edge(camera_output_id, primary_axis_axis_input_id));
+        assert!(graph.is_valid_edge(primary_axis_output_id, secondary_axis_axis_input_id));
+        assert!(!graph.is_valid_edge(primary_axis_output_id, primary_axis_axis_input_id));
+        assert!(graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
+        assert!(!graph.is_valid_edge(camera_output_id, primary_axis_axis_input_id));
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        assert!(!node_graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
+        assert!(!graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
     }
 
     #[test]
     fn test_node_ancestors() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
-        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive0_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primitive0_id,
-            node_graph
+            graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
                 .expect("Siblings input should exist on Primitive node"),
         );
@@ -847,69 +878,69 @@ mod tests {
         camera_ancestors.push(secondary_axis_id);
         camera_ancestors.push(primary_axis_id);
 
-        assert_eq!(node_graph.ancestors(camera_id), camera_ancestors);
+        assert_eq!(graph.ancestors(camera_id), camera_ancestors);
 
         let mut secondary_axis_ancestors = Vec::<NodeId>::new();
         secondary_axis_ancestors.push(primary_axis_id);
 
         assert_eq!(
-            node_graph.ancestors(secondary_axis_id),
+            graph.ancestors(secondary_axis_id),
             secondary_axis_ancestors
         );
 
-        assert!(node_graph.ancestors(primary_axis_id).is_empty());
+        assert!(graph.ancestors(primary_axis_id).is_empty());
 
         let mut primitive1_ancestors = Vec::<NodeId>::new();
         primitive1_ancestors.push(primitive0_id);
         primitive1_ancestors.push(secondary_axis_id);
         primitive1_ancestors.push(primary_axis_id);
 
-        assert_eq!(node_graph.ancestors(primitive1_id), primitive1_ancestors);
+        assert_eq!(graph.ancestors(primitive1_id), primitive1_ancestors);
     }
 
     #[test]
     fn test_node_descendants() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
-        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive0_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primitive0_id,
-            node_graph
+            graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
                 .expect("Siblings input should exist on Primitive node"),
         );
 
-        assert!(node_graph.descendants(camera_id).is_empty());
-        assert!(node_graph.descendants(primitive1_id).is_empty());
-        assert!(node_graph.descendants_output_ids(camera_id).is_empty());
-        assert!(node_graph.descendants_output_ids(primitive1_id).is_empty());
+        assert!(graph.descendants(camera_id).is_empty());
+        assert!(graph.descendants(primitive1_id).is_empty());
+        assert!(graph.descendants_output_ids(camera_id).is_empty());
+        assert!(graph.descendants_output_ids(primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -917,7 +948,7 @@ mod tests {
         secondary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graph
+            graph
                 .descendants(secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<NodeId>>(),
@@ -925,12 +956,12 @@ mod tests {
         );
 
         let mut secondary_axis_descendants_output_ids = HashSet::<OutputId>::new();
-        secondary_axis_descendants_output_ids.extend(node_graph[camera_id].output_ids.iter());
-        secondary_axis_descendants_output_ids.extend(node_graph[primitive0_id].output_ids.iter());
-        secondary_axis_descendants_output_ids.extend(node_graph[primitive1_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graph[camera_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graph[primitive0_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graph[primitive1_id].output_ids.iter());
 
         assert_eq!(
-            node_graph
+            graph
                 .descendants_output_ids(secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
@@ -944,7 +975,7 @@ mod tests {
         primary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graph
+            graph
                 .descendants(primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<NodeId>>(),
@@ -952,49 +983,49 @@ mod tests {
         );
 
         let mut primary_axis_descendants_output_ids = HashSet::<OutputId>::new();
-        primary_axis_descendants_output_ids.extend(node_graph[secondary_axis_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graph[camera_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graph[primitive0_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graph[primitive1_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graph[secondary_axis_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graph[camera_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graph[primitive0_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graph[primitive1_id].output_ids.iter());
 
         assert_eq!(
-            node_graph
+            graph
                 .descendants_output_ids(primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
             primary_axis_descendants_output_ids,
         );
 
-        assert_eq!(node_graph.descendants(primitive0_id), vec![primitive1_id],);
+        assert_eq!(graph.descendants(primitive0_id), vec![primitive1_id],);
 
         assert_eq!(
-            node_graph.descendants_output_ids(primitive0_id),
-            node_graph[primitive1_id].output_ids,
+            graph.descendants_output_ids(primitive0_id),
+            graph[primitive1_id].output_ids,
         );
         assert_eq!(
-            node_graph.descendants_output_ids(primitive0_id),
-            node_graph[primitive1_id].output_ids,
+            graph.descendants_output_ids(primitive0_id),
+            graph[primitive1_id].output_ids,
         );
     }
 
     #[test]
-    fn test_node_graph_merge() {
-        let mut node_graph = NodeGraph::new();
-        let mut node_graph1 = NodeGraph::new();
+    fn test_graph_merge() {
+        let mut graph = EvaluableGraph::new();
+        let mut graph1 = EvaluableGraph::new();
 
         let mut node_ids = HashSet::<NodeId>::new();
         let mut node_ids1 = HashSet::<NodeId>::new();
 
         for node_data in NodeData::iter() {
-            node_ids.insert(node_graph.add_node(node_data));
-            node_ids1.insert(node_graph1.add_node(node_data));
+            node_ids.insert(graph.add_node(node_data));
+            node_ids1.insert(graph1.add_node(node_data));
         }
 
-        let node_id_lut: HashMap<NodeId, NodeId> = node_graph.merge(&mut node_graph1);
+        let node_id_lut: HashMap<NodeId, NodeId> = graph.merge(&mut graph1);
 
-        assert_eq!(node_graph.node_count(), NodeData::COUNT * 2);
-        assert_eq!(node_graph.edge_count(), 0);
-        assert_eq!(node_graph1.nodes.len(), 0);
+        assert_eq!(graph.node_count(), NodeData::COUNT * 2);
+        assert_eq!(graph.edge_count(), 0);
+        assert_eq!(graph1.nodes.len(), 0);
         assert_eq!(
             node_ids1,
             node_id_lut
@@ -1005,13 +1036,13 @@ mod tests {
         node_ids.extend(node_id_lut.values());
         assert_eq!(
             node_ids,
-            node_graph.iter_nodes().collect::<HashSet<NodeId>>(),
+            graph.iter_nodes().collect::<HashSet<NodeId>>(),
         );
     }
 
     #[test]
-    fn test_node_graph_merge_edges() {
-        let mut node_graphs = vec![NodeGraph::new(), NodeGraph::new()];
+    fn test_graph_merge_edges() {
+        let mut graphs = vec![EvaluableGraph::new(), EvaluableGraph::new()];
 
         let mut primary_axis_ids = Vec::<NodeId>::new();
         let mut secondary_axis_ids = Vec::<NodeId>::new();
@@ -1019,37 +1050,37 @@ mod tests {
         let mut primitive0_ids = Vec::<NodeId>::new();
         let mut primitive1_ids = Vec::<NodeId>::new();
 
-        node_graphs.iter_mut().for_each(|node_graph| {
-            let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-            let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-            let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
-            let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
-            let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        graphs.iter_mut().for_each(|graph| {
+            let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+            let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+            let camera_id: NodeId = graph.add_node(NodeData::Camera);
+            let primitive0_id: NodeId = graph.add_node(NodeData::Primitive);
+            let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
-            node_graph.connect_node_to_input(
+            graph.connect_node_to_input(
                 primary_axis_id,
-                node_graph
+                graph
                     .node_input_id(secondary_axis_id, AxisInputData::Axis)
                     .expect("Axis input should exist on Axis node"),
             );
 
-            node_graph.connect_node_to_input(
+            graph.connect_node_to_input(
                 secondary_axis_id,
-                node_graph
+                graph
                     .node_input_id(camera_id, CameraInputData::Axis)
                     .expect("Axis input should exist on Camera node"),
             );
 
-            node_graph.connect_node_to_input(
+            graph.connect_node_to_input(
                 secondary_axis_id,
-                node_graph
+                graph
                     .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                     .expect("Axis input should exist on Primitive node"),
             );
 
-            node_graph.connect_node_to_input(
+            graph.connect_node_to_input(
                 primitive0_id,
-                node_graph
+                graph
                     .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
                     .expect("Siblings input should exist on Primitive node"),
             );
@@ -1061,11 +1092,11 @@ mod tests {
             primitive1_ids.push(primitive1_id);
         });
 
-        let mut node_graph: NodeGraph = node_graphs
+        let mut graph: EvaluableGraph = graphs
             .pop()
-            .expect("node_graphs vec has two node graphs");
+            .expect("graphs vec has two node graphs");
 
-        let node_id_lut: HashMap<NodeId, NodeId> = node_graphs[0].merge(&mut node_graph);
+        let node_id_lut: HashMap<NodeId, NodeId> = graphs[0].merge(&mut graph);
 
         let primary_axis_id: NodeId = *node_id_lut.get(&primary_axis_ids[1]).unwrap();
         let secondary_axis_id: NodeId = *node_id_lut.get(&secondary_axis_ids[1]).unwrap();
@@ -1073,10 +1104,10 @@ mod tests {
         let primitive0_id: NodeId = *node_id_lut.get(&primitive0_ids[1]).unwrap();
         let primitive1_id: NodeId = *node_id_lut.get(&primitive1_ids[1]).unwrap();
 
-        assert!(node_graphs[0].descendants(camera_id).is_empty());
-        assert!(node_graphs[0].descendants(primitive1_id).is_empty());
-        assert!(node_graphs[0].descendants_output_ids(camera_id).is_empty());
-        assert!(node_graphs[0]
+        assert!(graphs[0].descendants(camera_id).is_empty());
+        assert!(graphs[0].descendants(primitive1_id).is_empty());
+        assert!(graphs[0].descendants_output_ids(camera_id).is_empty());
+        assert!(graphs[0]
             .descendants_output_ids(primitive1_id)
             .is_empty());
 
@@ -1086,7 +1117,7 @@ mod tests {
         secondary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graphs[0]
+            graphs[0]
                 .descendants(secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<NodeId>>(),
@@ -1094,14 +1125,14 @@ mod tests {
         );
 
         let mut secondary_axis_descendants_output_ids = HashSet::<OutputId>::new();
-        secondary_axis_descendants_output_ids.extend(node_graphs[0][camera_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graphs[0][camera_id].output_ids.iter());
         secondary_axis_descendants_output_ids
-            .extend(node_graphs[0][primitive0_id].output_ids.iter());
+            .extend(graphs[0][primitive0_id].output_ids.iter());
         secondary_axis_descendants_output_ids
-            .extend(node_graphs[0][primitive1_id].output_ids.iter());
+            .extend(graphs[0][primitive1_id].output_ids.iter());
 
         assert_eq!(
-            node_graphs[0]
+            graphs[0]
                 .descendants_output_ids(secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
@@ -1115,7 +1146,7 @@ mod tests {
         primary_axis_descendants.insert(primitive1_id);
 
         assert_eq!(
-            node_graphs[0]
+            graphs[0]
                 .descendants(primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<NodeId>>(),
@@ -1124,13 +1155,13 @@ mod tests {
 
         let mut primary_axis_descendants_output_ids = HashSet::<OutputId>::new();
         primary_axis_descendants_output_ids
-            .extend(node_graphs[0][secondary_axis_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graphs[0][camera_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graphs[0][primitive0_id].output_ids.iter());
-        primary_axis_descendants_output_ids.extend(node_graphs[0][primitive1_id].output_ids.iter());
+            .extend(graphs[0][secondary_axis_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graphs[0][camera_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graphs[0][primitive0_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graphs[0][primitive1_id].output_ids.iter());
 
         assert_eq!(
-            node_graphs[0]
+            graphs[0]
                 .descendants_output_ids(primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
@@ -1138,50 +1169,50 @@ mod tests {
         );
 
         assert_eq!(
-            node_graphs[0].descendants(primitive0_id),
+            graphs[0].descendants(primitive0_id),
             vec![primitive1_id],
         );
         assert_eq!(
-            node_graphs[0].descendants_output_ids(primitive0_id),
-            node_graphs[0][primitive1_id].output_ids,
+            graphs[0].descendants_output_ids(primitive0_id),
+            graphs[0][primitive1_id].output_ids,
         );
     }
 
     #[test]
     fn test_new_from_nodes() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        let primitive0_id: NodeId = node_graph.add_node(NodeData::Primitive);
-        let primitive1_id: NodeId = node_graph.add_node(NodeData::Primitive);
+        let primitive0_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .expect("Axis input should exist on Camera node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             secondary_axis_id,
-            node_graph
+            graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
                 .expect("Axis input should exist on Primitive node"),
         );
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primitive0_id,
-            node_graph
+            graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
                 .expect("Siblings input should exist on Primitive node"),
         );
@@ -1190,61 +1221,61 @@ mod tests {
         node_ids.insert(primary_axis_id);
         node_ids.insert(secondary_axis_id);
 
-        let new_node_graph = node_graph.new_from_nodes(&node_ids);
+        let new_graph = graph.new_from_nodes(&node_ids);
 
         assert_eq!(
-            new_node_graph.iter_nodes().collect::<HashSet<NodeId>>(),
+            new_graph.iter_nodes().collect::<HashSet<NodeId>>(),
             node_ids,
         );
-        assert_eq!(new_node_graph.descendants(primary_axis_id).len(), 1);
+        assert_eq!(new_graph.descendants(primary_axis_id).len(), 1);
         assert_eq!(
-            new_node_graph.descendants(primary_axis_id).pop(),
+            new_graph.descendants(primary_axis_id).pop(),
             Some(secondary_axis_id)
         );
-        assert!(new_node_graph.node_output_is_connected(primary_axis_id));
-        assert!(!new_node_graph.node_output_is_connected(secondary_axis_id));
-        assert!(!new_node_graph.node_input_is_connected(primary_axis_id, AxisInputData::Axis));
-        assert!(new_node_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
+        assert!(new_graph.node_output_is_connected(primary_axis_id));
+        assert!(!new_graph.node_output_is_connected(secondary_axis_id));
+        assert!(!new_graph.node_input_is_connected(primary_axis_id, AxisInputData::Axis));
+        assert!(new_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
     }
 
     #[test]
     fn test_axis_evaluation() {
-        let mut node_graph = NodeGraph::new();
+        let mut graph = EvaluableGraph::new();
 
-        let primary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-        let secondary_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+        let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
 
-        node_graph.connect_node_to_input(
+        graph.connect_node_to_input(
             primary_axis_id,
-            node_graph
+            graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
 
-        let primary_axis_translate_input_id: InputId = node_graph
+        let primary_axis_translate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Translate)
             .expect("Translate input should exist on Axis node");
-        let primary_axis_rotate_input_id: InputId = node_graph
+        let primary_axis_rotate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Rotate)
             .expect("Translate input should exist on Axis node");
         let primary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(primary_axis_id).unwrap();
+            *graph.node_first_output_id(primary_axis_id).unwrap();
 
-        let secondary_axis_translate_input_id: InputId = node_graph
+        let secondary_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Translate)
             .expect("Translate input should exist on Axis node");
-        let secondary_axis_rotate_input_id: InputId = node_graph
+        let secondary_axis_rotate_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Rotate)
             .expect("Rotate input should exist on Axis node");
         let secondary_axis_output_id: OutputId =
-            *node_graph.node_first_output_id(secondary_axis_id).unwrap();
+            *graph.node_first_output_id(secondary_axis_id).unwrap();
 
         assert_eq!(
-            node_graph.evaluate_output(primary_axis_output_id),
+            graph.evaluate_output(primary_axis_output_id),
             Ok(InputData::Mat4(Mat4::IDENTITY))
         );
         assert_eq!(
-            node_graph.evaluate_output(secondary_axis_output_id),
+            graph.evaluate_output(secondary_axis_output_id),
             Ok(InputData::Mat4(Mat4::IDENTITY))
         );
 
@@ -1276,18 +1307,18 @@ mod tests {
             secondary_translation,
         );
 
-        node_graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
-        node_graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
+        graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
+        graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
 
-        node_graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
-        node_graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
+        graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
+        graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
 
         assert_eq!(
-            node_graph.evaluate_output(primary_axis_output_id),
+            graph.evaluate_output(primary_axis_output_id),
             Ok(InputData::Mat4(primary_matrix))
         );
         assert_eq!(
-            node_graph.evaluate_output(secondary_axis_output_id),
+            graph.evaluate_output(secondary_axis_output_id),
             Ok(InputData::Mat4(primary_matrix * secondary_matrix))
         );
     }

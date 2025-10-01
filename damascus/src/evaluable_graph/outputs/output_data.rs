@@ -6,7 +6,7 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{inputs::input_data::InputData, nodes::NodeId, NodeGraph},
+    graph::{inputs::input_data::InputData, nodes::NodeId, EvaluableGraph},
     Enumerator,
 };
 
@@ -56,9 +56,9 @@ pub trait NodeOutputData: Enumerator + Eq {
         self.variant_snake_case()
     }
 
-    fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
+    fn add_to_node(graph: &mut EvaluableGraph, node_id: NodeId) {
         Self::iter().for_each(|output| {
-            node_graph.add_output(node_id, &output.name(), output.default_data());
+            graph.add_output(node_id, &output.name(), output.default_data());
         });
     }
 }

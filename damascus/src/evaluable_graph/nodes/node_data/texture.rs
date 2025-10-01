@@ -88,8 +88,8 @@ impl NodeOperation for TextureNode {
     type Outputs = TextureOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::Texture => Ok(InputData::RenderPass(RenderPasses::TextureViewer {

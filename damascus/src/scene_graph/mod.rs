@@ -6,6 +6,7 @@
 use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
+use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
 
 use super::{
@@ -34,48 +35,72 @@ pub struct SceneGraph {
     materials: Materials,
     primitive_children: SparseSecondaryMap<PrimitiveId, HashSet<PrimitiveId>>,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    root_primitive: Option<PrimitiveId>,
-    render_camera: Option<CameraId>,
-    atmosphere: Option<MaterialId>,
+    root_primitive_id: Option<PrimitiveId>,
+    render_camera_id: Option<CameraId>,
+    atmosphere_id: Option<MaterialId>,
+}
+
+impl PartialEq for SceneGraph {
+    fn eq(&self, other: &Self) -> bool {
+        to_key_with_ordered_float(self) == to_key_with_ordered_float(other)
+    }
 }
 
 impl SceneGraph {
-    pub fn render_camera(&self) -> Std430GPUCamera {
-        if let Some(render_camera_id) = self.render_camera {
+    pub fn gpu_render_camera(&self) -> Std430GPUCamera {
+        if let Some(render_camera_id) = self.render_camera_id {
             return self[render_camera_id].as_std430();
         }
         Camera::default().as_std430()
     }
 
-    pub fn atmosphere(&self) -> Std430GPUMaterial {
-        if let Some(atmosphere_id) = self.atmosphere {
+    // TODO Could make this return an Option instead of a default
+    // and use that to trigger a preprocessor directive
+    pub fn gpu_atmosphere(&self) -> Std430GPUMaterial {
+        if let Some(atmosphere_id) = self.atmosphere_id {
             return self[atmosphere_id].as_std430();
         }
         Material::default().as_std430()
     }
 
-    pub fn set_render_camera(&mut self, render_camera: CameraId) {
-        self.render_camera = Some(render_camera);
+    pub fn render_camera(&self) -> Option<&Camera> {
+        if let Some(render_camera_id) = self.render_camera_id {
+            return Some(&self[render_camera_id]);
+        }
+        None
     }
 
-    pub fn set_atmosphere(&mut self, atmosphere: MaterialId) {
-        self.atmosphere = Some(atmosphere);
+    pub fn atmosphere(&self) -> Option<&Material> {
+        if let Some(atmosphere_id) = self.atmosphere_id {
+            return Some(&self[atmosphere_id]);
+        }
+        None
     }
 
-    pub fn cameras(&self) -> &Cameras {
-        &self.cameras
+    pub fn with_render_camera(mut self, render_camera: Camera) -> Self {
+        self.set_render_camera(render_camera);
+        self
     }
 
-    pub fn lights(&self) -> &Lights {
-        &self.lights
+    pub fn with_atmosphere(mut self, atmosphere: Material) -> Self {
+        self.set_atmosphere(atmosphere);
+        self
     }
 
-    pub fn primitives(&self) -> &Primitives {
-        &self.primitives
+    pub fn set_render_camera_id(&mut self, render_camera_id: CameraId) {
+        self.render_camera_id = Some(render_camera_id);
     }
 
-    pub fn materials(&self) -> &Materials {
-        &self.materials
+    pub fn set_atmosphere_id(&mut self, atmosphere_id: MaterialId) {
+        self.atmosphere_id = Some(atmosphere_id);
+    }
+
+    pub fn set_render_camera(&mut self, render_camera: Camera) {
+        self.render_camera_id = Some(self.add_camera(render_camera));
+    }
+
+    pub fn set_atmosphere(&mut self, atmosphere: Material) {
+        self.atmosphere_id = Some(self.add_material(atmosphere));
     }
 
     pub fn children_owned(&self, primitive_id: PrimitiveId) -> HashSet<PrimitiveId> {
@@ -152,6 +177,22 @@ impl SceneGraph {
 
     pub fn clear_lights(&mut self) {
         self.lights = Lights::default();
+    }
+
+    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
+        self.primitives.insert(primitive)
+    }
+
+    pub fn add_light(&mut self, light: Light) -> LightId {
+        self.lights.insert(light)
+    }
+
+    pub fn add_camera(&mut self, camera: Camera) -> CameraId {
+        self.cameras.insert(camera)
+    }
+
+    pub fn add_material(&mut self, material: Material) -> MaterialId {
+        self.materials.insert(material)
     }
 
     // pub fn merge(&mut self, mut other: Self) {

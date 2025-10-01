@@ -62,7 +62,7 @@ impl NodeInputData for RayMarcherInputData {
     fn default_data(&self) -> InputData {
         let default_ray_marcher = RayMarcherRenderData::default();
         match self {
-            Self::SceneGraph => InputData::SceneGraph(default_ray_marcher.scene),
+            Self::SceneGraph => InputData::SceneGraph(default_ray_marcher.scene_graph),
             Self::MaxRaySteps => InputData::UInt(default_ray_marcher.max_ray_steps),
             Self::MaxBounces => InputData::UInt(default_ray_marcher.max_bounces),
             Self::HitTolerance => InputData::Float(default_ray_marcher.hit_tolerance),
@@ -122,16 +122,16 @@ impl NodeOperation for RayMarcherNode {
     type Outputs = RayMarcherOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::SceneGraph => Ok(InputData::RenderPass(RenderPasses::RayMarcher {
                 render_pass: RayMarcher::default()
-                    .scene(
+                    .scene_graph(
                         Self::Inputs::SceneGraph
                             .get_data(data_map)?
-                            .try_to_scene()?,
+                            .try_to_scene_graph()?,
                     )
                     .max_ray_steps(
                         Self::Inputs::MaxRaySteps

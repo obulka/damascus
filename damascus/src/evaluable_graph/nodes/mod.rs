@@ -38,6 +38,7 @@ pub enum NodeErrors {
         conversion_to: String,
     },
     InputDoesNotExistError(String),
+    OutputDoesNotExistError(String),
     InputDataDoesNotExistError(String),
     InvalidData {
         node_id: NodeId,
@@ -63,7 +64,10 @@ impl fmt::Display for NodeErrors {
                 self, data, conversion_to,
             ),
             Self::InputDoesNotExistError(name) => {
-                write!(formatter, "{}: No input named: {:?}", self, name,)
+                write!(formatter, "{}: No input named: {:?}", self, name)
+            }
+            Self::OutputDoesNotExistError(name) => {
+                write!(formatter, "{}: No output named: {:?}", self, name)
             }
             Self::InputDataDoesNotExistError(name) => write!(
                 formatter,

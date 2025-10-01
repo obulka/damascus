@@ -15,7 +15,7 @@ use crate::{
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene::Scene,
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
@@ -57,7 +57,7 @@ impl NodeInputData for LightInputData {
     fn default_data(&self) -> InputData {
         let default_light = Light::default();
         match self {
-            Self::SceneGraph => InputData::SceneGraph(Scene::default()),
+            Self::SceneGraph => InputData::SceneGraph(SceneGraph::default()),
             Self::LightType => InputData::Enum(default_light.light_type.into()),
             Self::Direction => InputData::Vec3(Vec3::NEG_Y),
             Self::Position => InputData::Vec3(Vec3::Y),
@@ -109,12 +109,12 @@ impl NodeOperation for LightNode {
     type Outputs = LightOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene: Scene = Self::Inputs::SceneGraph
+        let mut scene_graph: SceneGraph = Self::Inputs::SceneGraph
             .get_data(data_map)?
-            .try_to_scene()?;
+            .try_to_scene_graph()?;
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
         let light_type: LightType = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
 
@@ -140,7 +140,7 @@ impl NodeOperation for LightNode {
             _ => Vec3::ZERO,
         };
 
-        scene.lights.push(Light {
+        scene_graph.add_light(Light {
             light_type: light_type,
             dimensional_data: dimensional_data,
             intensity: Self::Inputs::Intensity.get_data(data_map)?.try_to_float()?,
@@ -155,7 +155,7 @@ impl NodeOperation for LightNode {
         });
 
         match output {
-            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene)),
+            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene_graph)),
         }
     }
 }

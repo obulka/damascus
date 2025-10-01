@@ -12,6 +12,7 @@ use crevice::std430::AsStd430;
 use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
+pub mod evaluable_graph;
 pub mod geometry;
 pub mod lights;
 pub mod materials;

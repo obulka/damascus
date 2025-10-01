@@ -16,7 +16,7 @@ use crate::{
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene::Scene,
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
@@ -92,9 +92,9 @@ impl NodeInputData for PrimitiveInputData {
     fn default_data(&self) -> InputData {
         let default_primitive = Primitive::default();
         match self {
-            Self::Siblings => InputData::SceneGraph(Scene::default()),
-            Self::Children => InputData::SceneGraph(Scene::default()),
-            Self::Material => InputData::SceneGraph(Scene::default()),
+            Self::Siblings => InputData::SceneGraph(SceneGraph::default()),
+            Self::Children => InputData::SceneGraph(SceneGraph::default()),
+            Self::Material => InputData::SceneGraph(SceneGraph::default()),
             Self::Shape => InputData::Enum(default_primitive.shape.into()),
             Self::Radius => InputData::Float(0.5),
             Self::Radii => InputData::Vec3(Vec3::splat(0.5)),
@@ -178,12 +178,18 @@ impl NodeOperation for PrimitiveNode {
     type Outputs = PrimitiveOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene: Scene = Self::Inputs::Siblings.get_data(data_map)?.try_to_scene()?;
-        let mut descendants: Scene = Self::Inputs::Children.get_data(data_map)?.try_to_scene()?;
-        let _material: Scene = Self::Inputs::Material.get_data(data_map)?.try_to_scene()?;
+        let mut scene: SceneGraph = Self::Inputs::Siblings
+            .get_data(data_map)?
+            .try_to_scene_graph()?;
+        let mut descendants: SceneGraph = Self::Inputs::Children
+            .get_data(data_map)?
+            .try_to_scene_graph()?;
+        let _material: SceneGraph = Self::Inputs::Material
+            .get_data(data_map)?
+            .try_to_scene_graph()?;
         let shape: Shapes = Self::Inputs::Shape.get_data(data_map)?.try_to_enum()?;
 
         let dimensional_data: Vec4 = match shape {

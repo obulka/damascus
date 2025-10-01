@@ -3,20 +3,20 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{super::nodes::NodeId, output_data::OutputData, OutputId};
+use crate::node_graph::nodes::NodeId;
+
+use super::{input_data::InputData, InputId};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct Output {
-    pub id: OutputId,
+pub struct Input {
     pub node_id: NodeId,
     pub name: String,
-    pub data: OutputData,
+    pub data: InputData,
 }
 
-impl Output {
-    pub fn new(id: OutputId, node_id: NodeId, name: String, data: OutputData) -> Self {
+impl Input {
+    pub fn new(node_id: NodeId, name: String, data: InputData) -> Self {
         Self {
-            id: id,
             node_id: node_id,
             name: name,
             data: data,

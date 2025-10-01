@@ -92,8 +92,8 @@ impl NodeOperation for AxisNode {
     type Outputs = AxisOutputData;
 
     fn evaluate(
-        output: Self::Outputs,
         data_map: &mut HashMap<String, InputData>,
+        output: Self::Outputs,
     ) -> NodeResult<InputData> {
         let rotate: Vec3 = Self::Inputs::Rotate.get_data(data_map)?.try_to_vec3()? * PI / 180.;
         let quaternion = Quat::from_euler(EulerRot::XYZ, rotate.x, rotate.y, rotate.z);

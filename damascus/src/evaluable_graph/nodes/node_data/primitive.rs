@@ -9,18 +9,18 @@ use glam::{Mat4, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    geometry::primitives::{Primitive, Shapes},
-    materials::Material,
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
+    geometry::primitives::{Primitive, PrimitiveId, Shapes},
+    materials::Material,
     scene_graph::SceneGraph,
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -173,7 +173,7 @@ impl NodeOutputData for PrimitiveOutputData {
 
 pub struct PrimitiveNode;
 
-impl NodeOperation for PrimitiveNode {
+impl EvaluableNode for PrimitiveNode {
     type Inputs = PrimitiveInputData;
     type Outputs = PrimitiveOutputData;
 
@@ -181,7 +181,7 @@ impl NodeOperation for PrimitiveNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene: SceneGraph = Self::Inputs::Siblings
+        let mut scene_graph: SceneGraph = Self::Inputs::Siblings
             .get_data(data_map)?
             .try_to_scene_graph()?;
         let mut descendants: SceneGraph = Self::Inputs::Children
@@ -370,12 +370,12 @@ impl NodeOperation for PrimitiveNode {
         };
 
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-        for descendant in descendants.primitives.iter_mut() {
-            // TODO .extend(descendants.cameras.iter_mut()).extend(descendants.lights.iter_mut())
-            descendant.local_to_world = local_to_world * descendant.local_to_world;
-        }
+        // for descendant in descendants.primitives.iter_mut() {
+        //     // TODO .extend(descendants.cameras.iter_mut()).extend(descendants.lights.iter_mut())
+        //     descendant.local_to_world = local_to_world * descendant.local_to_world;
+        // }
 
-        scene.primitives.push(Primitive {
+        scene_graph.add_primitive(Primitive {
             shape: shape,
             local_to_world: local_to_world,
             hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
@@ -406,10 +406,10 @@ impl NodeOperation for PrimitiveNode {
             num_descendants: descendants.primitives.len() as u32,
             dimensional_data: dimensional_data,
         });
-        scene.merge(descendants);
+        scene_graph.merge(descendants);
 
         match output {
-            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene)),
+            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene_graph)),
         }
     }
 }

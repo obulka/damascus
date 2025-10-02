@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
@@ -20,7 +20,7 @@ use crate::{
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -117,7 +117,7 @@ impl NodeOutputData for RayMarcherOutputData {
 
 pub struct RayMarcherNode;
 
-impl NodeOperation for RayMarcherNode {
+impl EvaluableNode for RayMarcherNode {
     type Inputs = RayMarcherInputData;
     type Outputs = RayMarcherOutputData;
 

@@ -596,10 +596,7 @@ mod tests {
 
         assert_eq!(graph.node_count(), NodeData::COUNT);
         assert_eq!(graph.edge_count(), 0);
-        assert_eq!(
-            node_ids,
-            graph.iter_nodes().collect::<HashSet<NodeId>>()
-        );
+        assert_eq!(node_ids, graph.iter_nodes().collect::<HashSet<NodeId>>());
     }
 
     #[test]
@@ -883,10 +880,7 @@ mod tests {
         let mut secondary_axis_ancestors = Vec::<NodeId>::new();
         secondary_axis_ancestors.push(primary_axis_id);
 
-        assert_eq!(
-            graph.ancestors(secondary_axis_id),
-            secondary_axis_ancestors
-        );
+        assert_eq!(graph.ancestors(secondary_axis_id), secondary_axis_ancestors);
 
         assert!(graph.ancestors(primary_axis_id).is_empty());
 
@@ -1034,10 +1028,7 @@ mod tests {
                 .collect::<HashSet<NodeId>>(),
         );
         node_ids.extend(node_id_lut.values());
-        assert_eq!(
-            node_ids,
-            graph.iter_nodes().collect::<HashSet<NodeId>>(),
-        );
+        assert_eq!(node_ids, graph.iter_nodes().collect::<HashSet<NodeId>>(),);
     }
 
     #[test]
@@ -1092,9 +1083,7 @@ mod tests {
             primitive1_ids.push(primitive1_id);
         });
 
-        let mut graph: EvaluableGraph = graphs
-            .pop()
-            .expect("graphs vec has two node graphs");
+        let mut graph: EvaluableGraph = graphs.pop().expect("graphs vec has two node graphs");
 
         let node_id_lut: HashMap<NodeId, NodeId> = graphs[0].merge(&mut graph);
 
@@ -1107,9 +1096,7 @@ mod tests {
         assert!(graphs[0].descendants(camera_id).is_empty());
         assert!(graphs[0].descendants(primitive1_id).is_empty());
         assert!(graphs[0].descendants_output_ids(camera_id).is_empty());
-        assert!(graphs[0]
-            .descendants_output_ids(primitive1_id)
-            .is_empty());
+        assert!(graphs[0].descendants_output_ids(primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -1126,10 +1113,8 @@ mod tests {
 
         let mut secondary_axis_descendants_output_ids = HashSet::<OutputId>::new();
         secondary_axis_descendants_output_ids.extend(graphs[0][camera_id].output_ids.iter());
-        secondary_axis_descendants_output_ids
-            .extend(graphs[0][primitive0_id].output_ids.iter());
-        secondary_axis_descendants_output_ids
-            .extend(graphs[0][primitive1_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graphs[0][primitive0_id].output_ids.iter());
+        secondary_axis_descendants_output_ids.extend(graphs[0][primitive1_id].output_ids.iter());
 
         assert_eq!(
             graphs[0]
@@ -1154,8 +1139,7 @@ mod tests {
         );
 
         let mut primary_axis_descendants_output_ids = HashSet::<OutputId>::new();
-        primary_axis_descendants_output_ids
-            .extend(graphs[0][secondary_axis_id].output_ids.iter());
+        primary_axis_descendants_output_ids.extend(graphs[0][secondary_axis_id].output_ids.iter());
         primary_axis_descendants_output_ids.extend(graphs[0][camera_id].output_ids.iter());
         primary_axis_descendants_output_ids.extend(graphs[0][primitive0_id].output_ids.iter());
         primary_axis_descendants_output_ids.extend(graphs[0][primitive1_id].output_ids.iter());
@@ -1168,10 +1152,7 @@ mod tests {
             primary_axis_descendants_output_ids,
         );
 
-        assert_eq!(
-            graphs[0].descendants(primitive0_id),
-            vec![primitive1_id],
-        );
+        assert_eq!(graphs[0].descendants(primitive0_id), vec![primitive1_id],);
         assert_eq!(
             graphs[0].descendants_output_ids(primitive0_id),
             graphs[0][primitive1_id].output_ids,

@@ -5,11 +5,8 @@
 
 use crevice::std430::AsStd430;
 use glam::{Mat4, UVec2, Vec4};
-use slotmap::SlotMap;
 
 use crate::DualDevice;
-
-slotmap::new_key_type! { pub struct CameraId; }
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -185,5 +182,3 @@ impl DualDevice<GPUCamera, Std430GPUCamera> for Camera {
         }
     }
 }
-
-pub type Cameras = SlotMap<CameraId, Camera>;

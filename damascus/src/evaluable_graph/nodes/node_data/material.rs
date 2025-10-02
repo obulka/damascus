@@ -6,16 +6,16 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    materials::Material,
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
+    materials::Material,
     render_passes::RenderPasses,
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -132,7 +132,7 @@ impl NodeOutputData for MaterialOutputData {
 
 pub struct MaterialNode;
 
-impl NodeOperation for MaterialNode {
+impl EvaluableNode for MaterialNode {
     type Inputs = MaterialInputData;
     type Outputs = MaterialOutputData;
 }

@@ -9,7 +9,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     camera::Camera,
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
@@ -18,7 +18,7 @@ use crate::{
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -101,7 +101,7 @@ impl NodeOutputData for CameraOutputData {
 
 pub struct CameraNode;
 
-impl NodeOperation for CameraNode {
+impl EvaluableNode for CameraNode {
     type Inputs = CameraInputData;
     type Outputs = CameraOutputData;
 
@@ -111,7 +111,7 @@ impl NodeOperation for CameraNode {
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(
-                SceneGraph::default().render_camera(Camera::new(
+                SceneGraph::default().with_render_camera(Camera::new(
                     Self::Inputs::FocalLength
                         .get_data(data_map)?
                         .try_to_float()?,

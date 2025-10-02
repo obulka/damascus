@@ -6,15 +6,15 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene::Scene,
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -42,8 +42,8 @@ impl Enumerator for SceneInputData {}
 impl NodeInputData for SceneInputData {
     fn default_data(&self) -> InputData {
         match self {
-            Self::Scene0 => InputData::SceneGraph(Scene::default()),
-            Self::Scene1 => InputData::SceneGraph(Scene::default()),
+            Self::Scene0 => InputData::SceneGraph(SceneGraph::default()),
+            Self::Scene1 => InputData::SceneGraph(SceneGraph::default()),
         }
     }
 }
@@ -80,7 +80,7 @@ impl NodeOutputData for SceneOutputData {
 
 pub struct SceneNode;
 
-impl NodeOperation for SceneNode {
+impl EvaluableNode for SceneNode {
     type Inputs = SceneInputData;
     type Outputs = SceneOutputData;
 }

@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeId,
         outputs::output_data::NodeOutputData,

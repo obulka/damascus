@@ -6,7 +6,7 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
@@ -15,7 +15,7 @@ use crate::{
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -92,7 +92,7 @@ impl NodeOutputData for GradeOutputData {
 
 pub struct GradeNode;
 
-impl NodeOperation for GradeNode {
+impl EvaluableNode for GradeNode {
     type Inputs = GradeInputData;
     type Outputs = GradeOutputData;
 }

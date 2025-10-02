@@ -5,15 +5,15 @@
 
 use std::{collections::HashMap, str::FromStr};
 
-use crate::node_graph::{
+use crate::evaluable_graph::{
     inputs::{input_data::InputData, InputId},
     outputs::OutputId,
 };
 
 use super::{
     node_data::{
-        AxisNode, AxisOutputData, CameraNode, CameraOutputData, GradeNode, GradeOutputData,
-        LightNode, LightOutputData, MaterialNode, MaterialOutputData, NodeData, NodeOperation,
+        AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
+        GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData, NodeData,
         PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData, SceneNode,
         SceneOutputData, TextureNode, TextureOutputData,
     },

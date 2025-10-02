@@ -9,7 +9,7 @@ use glam::{EulerRot, Mat4, Quat, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
@@ -17,7 +17,7 @@ use crate::{
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -87,7 +87,7 @@ impl NodeOutputData for AxisOutputData {
 
 pub struct AxisNode;
 
-impl NodeOperation for AxisNode {
+impl EvaluableNode for AxisNode {
     type Inputs = AxisInputData;
     type Outputs = AxisOutputData;
 

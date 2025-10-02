@@ -9,9 +9,9 @@ use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         nodes::{NodeErrors, NodeId, NodeResult},
-        NodeGraph,
+        EvaluableGraph,
     },
     render_passes::RenderPasses,
     scene_graph::SceneGraph,
@@ -223,12 +223,12 @@ pub trait NodeInputData: Enumerator + Eq {
     }
 
     fn label(&self) -> String {
-        self.variant_snake_case()
+        self.variant_label()
     }
 
-    fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
+    fn add_to_node(graph: &mut EvaluableGraph, node_id: NodeId) {
         Self::iter().for_each(|input| {
-            node_graph.add_input(node_id, &input.name(), input.default_data());
+            graph.add_input(node_id, &input.name(), input.default_data());
         });
     }
 

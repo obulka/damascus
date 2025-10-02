@@ -16,9 +16,7 @@ pub mod evaluable_graph;
 pub mod geometry;
 pub mod lights;
 pub mod materials;
-pub mod node_graph;
 pub mod render_passes;
-pub mod scene; // TODO remove this
 pub mod scene_graph;
 pub mod shaders;
 pub mod textures;
@@ -48,7 +46,7 @@ pub trait Enumerator:
         std::mem::discriminant(self) == std::mem::discriminant(other)
     }
 
-    fn variant_snake_case(&self) -> String {
+    fn variant_split_words(&self) -> Vec<String> {
         let mut words = Vec::<String>::new();
         let mut word = String::new();
 
@@ -64,7 +62,15 @@ pub trait Enumerator:
             words.push(word);
         }
 
-        words.join(" ")
+        words
+    }
+
+    fn variant_snake_case(&self) -> String {
+        self.variant_split_words().join("_")
+    }
+
+    fn variant_label(&self) -> String {
+        self.variant_split_words().join(" ")
     }
 }
 

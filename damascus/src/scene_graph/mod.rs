@@ -10,12 +10,14 @@ use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    camera::{Camera, CameraId, Cameras, Std430GPUCamera},
-    geometry::primitives::{Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
-    lights::{Light, LightId, Lights, Std430GPULight},
-    materials::{Material, MaterialId, Materials, Std430GPUMaterial},
+    camera::{Camera, Std430GPUCamera},
+    evaluable_graph::nodes::NodeId,
+    geometry::primitives::{Primitive, Std430GPUPrimitive},
+    impl_slot_map_indexing,
+    lights::{Light, Std430GPULight},
+    materials::{Material, Std430GPUMaterial},
+    DualDevice,
 };
-use crate::{impl_slot_map_indexing, DualDevice};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -29,15 +31,15 @@ pub struct GPUSceneGraphParameters {
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct SceneGraph {
-    cameras: Cameras,
-    primitives: Primitives,
-    lights: Lights,
-    materials: Materials,
-    primitive_children: SparseSecondaryMap<PrimitiveId, HashSet<PrimitiveId>>,
-    primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    root_primitive_id: Option<PrimitiveId>,
-    render_camera_id: Option<CameraId>,
-    atmosphere_id: Option<MaterialId>,
+    cameras: SparseSecondaryMap<NodeId, Camera>,
+    primitives: SparseSecondaryMap<NodeId, Primitive>,
+    lights: SparseSecondaryMap<NodeId, Light>,
+    materials: SparseSecondaryMap<NodeId, Material>,
+    primitive_children: SparseSecondaryMap<NodeId, HashSet<NodeId>>,
+    primitive_materials: SparseSecondaryMap<NodeId, NodeId>,
+    root_primitive_id: Option<NodeId>,
+    render_camera_id: Option<NodeId>,
+    atmosphere_id: Option<NodeId>,
 }
 
 impl PartialEq for SceneGraph {
@@ -103,15 +105,15 @@ impl SceneGraph {
         self.atmosphere_id = Some(self.add_material(atmosphere));
     }
 
-    pub fn children_owned(&self, primitive_id: PrimitiveId) -> HashSet<PrimitiveId> {
-        let mut child_ids = HashSet::<PrimitiveId>::new();
+    pub fn children_owned(&self, primitive_id: NodeId) -> HashSet<NodeId> {
+        let mut child_ids = HashSet::<NodeId>::new();
         if let Some(children) = self.children(primitive_id) {
             child_ids = children.clone();
         }
         child_ids
     }
 
-    pub fn children(&self, primitive_id: PrimitiveId) -> Option<&HashSet<PrimitiveId>> {
+    pub fn children(&self, primitive_id: NodeId) -> Option<&HashSet<NodeId>> {
         self.primitive_children.get(primitive_id)
     }
 
@@ -179,19 +181,19 @@ impl SceneGraph {
         self.lights = Lights::default();
     }
 
-    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
+    pub fn add_primitive(&mut self, primitive: Primitive) -> NodeId {
         self.primitives.insert(primitive)
     }
 
-    pub fn add_light(&mut self, light: Light) -> LightId {
+    pub fn add_light(&mut self, light: Light) -> NodeId {
         self.lights.insert(light)
     }
 
-    pub fn add_camera(&mut self, camera: Camera) -> CameraId {
+    pub fn add_camera(&mut self, camera: Camera) -> NodeId {
         self.cameras.insert(camera)
     }
 
-    pub fn add_material(&mut self, material: Material) -> MaterialId {
+    pub fn add_material(&mut self, material: Material) -> NodeId {
         self.materials.insert(material)
     }
 
@@ -211,8 +213,3 @@ impl DualDevice<GPUSceneGraphParameters, Std430GPUSceneGraphParameters> for Scen
         }
     }
 }
-
-impl_slot_map_indexing!(SceneGraph, CameraId, Camera, cameras);
-impl_slot_map_indexing!(SceneGraph, PrimitiveId, Primitive, primitives);
-impl_slot_map_indexing!(SceneGraph, LightId, Light, lights);
-impl_slot_map_indexing!(SceneGraph, MaterialId, Material, materials);

@@ -9,17 +9,17 @@ use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    lights::{Light, LightType},
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
+    lights::{Light, LightType},
     scene_graph::SceneGraph,
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -104,7 +104,7 @@ impl NodeOutputData for LightOutputData {
 
 pub struct LightNode;
 
-impl NodeOperation for LightNode {
+impl EvaluableNode for LightNode {
     type Inputs = LightInputData;
     type Outputs = LightOutputData;
 

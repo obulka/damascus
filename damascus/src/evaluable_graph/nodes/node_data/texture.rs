@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{
+    evaluable_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
@@ -18,7 +18,7 @@ use crate::{
     Enumerator,
 };
 
-use super::NodeOperation;
+use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -83,7 +83,7 @@ impl NodeOutputData for TextureOutputData {
 
 pub struct TextureNode;
 
-impl NodeOperation for TextureNode {
+impl EvaluableNode for TextureNode {
     type Inputs = TextureInputData;
     type Outputs = TextureOutputData;
 

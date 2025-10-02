@@ -6,7 +6,7 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    graph::{inputs::input_data::InputData, nodes::NodeId, EvaluableGraph},
+    evaluable_graph::{inputs::input_data::InputData, nodes::NodeId, EvaluableGraph},
     Enumerator,
 };
 
@@ -53,7 +53,7 @@ pub trait NodeOutputData: Enumerator + Eq {
     }
 
     fn label(&self) -> String {
-        self.variant_snake_case()
+        self.variant_label()
     }
 
     fn add_to_node(graph: &mut EvaluableGraph, node_id: NodeId) {

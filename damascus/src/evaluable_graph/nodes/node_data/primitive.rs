@@ -14,7 +14,7 @@ use crate::{
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    geometry::primitives::{Primitive, PrimitiveId, Shapes},
+    geometry::primitives::{Primitive, Shapes},
     materials::Material,
     scene_graph::SceneGraph,
     Enumerator,

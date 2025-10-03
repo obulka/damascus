@@ -282,7 +282,6 @@ impl EvaluableGraph {
             .collect()
     }
 
-    /// Get all ancestor nodes of `node_id` without using recursion
     pub fn for_each_descendant<B, F>(&self, node_id: NodeId, closure: F) -> Vec<B>
     where
         F: Fn(NodeId) -> B,

@@ -5,9 +5,12 @@
 
 use crevice::std430::AsStd430;
 use glam::Vec3;
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{DualDevice, Enumerator};
+
+slotmap::new_key_type! { pub struct LightId; }
 
 #[derive(
     Debug,
@@ -85,3 +88,5 @@ impl DualDevice<GPULight, Std430GPULight> for Light {
         }
     }
 }
+
+pub type Lights = SlotMap<LightId, Light>;

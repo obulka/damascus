@@ -226,7 +226,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_material());
         } else {
-            for (_material_id, material) in self.render_data.scene_graph.materials().iter() {
+            for material in self.render_data.scene_graph.iter_materials() {
                 preprocessor_directives.extend(directives_for_material(material));
             }
         }
@@ -237,7 +237,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         {
             preprocessor_directives.extend(all_directives_for_light());
         } else {
-            for (_light_id, light) in self.render_data.scene_graph.lights().iter() {
+            for light in self.render_data.scene_graph.iter_lights() {
                 preprocessor_directives.extend(directives_for_light(light));
             }
         }
@@ -246,7 +246,7 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
             .compilation_data
             .enable_dynamic_recompilation_for_primitives
         {
-            for (_primitive_id, primitive) in self.render_data.scene_graph.primitives().iter() {
+            for primitive in self.render_data.scene_graph.iter_primitives() {
                 preprocessor_directives.extend(directives_for_primitive(&primitive));
             }
         }
@@ -308,8 +308,8 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&RayMarcherConstructionData {
-            num_primitives: self.render_data.scene_graph.primitives().len(),
-            num_lights: self.render_data.scene_graph.lights().len(),
+            num_primitives: self.render_data.scene_graph.num_primitives(),
+            num_lights: self.render_data.scene_graph.num_lights(),
             num_emissive_primitives: self.render_data.scene_graph.num_emissive_primitives(),
         })
     }

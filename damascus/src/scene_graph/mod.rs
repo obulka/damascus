@@ -10,12 +10,11 @@ use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    camera::{Camera, Std430GPUCamera},
-    evaluable_graph::nodes::NodeId,
-    geometry::primitives::{Primitive, Std430GPUPrimitive},
+    camera::{Camera, CameraId, Cameras, Std430GPUCamera},
+    geometry::primitives::{Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
     impl_slot_map_indexing,
-    lights::{Light, Std430GPULight},
-    materials::{Material, Std430GPUMaterial},
+    lights::{Light, LightId, Lights, Std430GPULight},
+    materials::{Material, MaterialId, Materials, Std430GPUMaterial},
     DualDevice,
 };
 
@@ -31,15 +30,15 @@ pub struct GPUSceneGraphParameters {
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct SceneGraph {
-    cameras: SparseSecondaryMap<NodeId, Camera>,
-    primitives: SparseSecondaryMap<NodeId, Primitive>,
-    lights: SparseSecondaryMap<NodeId, Light>,
-    materials: SparseSecondaryMap<NodeId, Material>,
-    primitive_children: SparseSecondaryMap<NodeId, HashSet<NodeId>>,
-    primitive_materials: SparseSecondaryMap<NodeId, NodeId>,
-    root_primitive_id: Option<NodeId>,
-    render_camera_id: Option<NodeId>,
-    atmosphere_id: Option<NodeId>,
+    cameras: Cameras,
+    primitives: Primitives,
+    lights: Lights,
+    materials: Materials,
+    primitive_children: SparseSecondaryMap<PrimitiveId, Vec<PrimitiveId>>,
+    primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
+    root_primitive_id: Option<PrimitiveId>,
+    render_camera_id: Option<CameraId>,
+    atmosphere_id: Option<MaterialId>,
 }
 
 impl PartialEq for SceneGraph {
@@ -97,6 +96,10 @@ impl SceneGraph {
         self.atmosphere_id = Some(atmosphere_id);
     }
 
+    pub fn set_root_primitive_id(&mut self, root_primitive_id: PrimitiveId) {
+        self.root_primitive_id = Some(root_primitive_id);
+    }
+
     pub fn set_render_camera(&mut self, render_camera: Camera) {
         self.render_camera_id = Some(self.add_camera(render_camera));
     }
@@ -105,15 +108,15 @@ impl SceneGraph {
         self.atmosphere_id = Some(self.add_material(atmosphere));
     }
 
-    pub fn children_owned(&self, primitive_id: NodeId) -> HashSet<NodeId> {
-        let mut child_ids = HashSet::<NodeId>::new();
+    pub fn cloned_children(&self, primitive_id: PrimitiveId) -> Vec<PrimitiveId> {
+        let mut child_ids = Vec::<PrimitiveId>::new();
         if let Some(children) = self.children(primitive_id) {
             child_ids = children.clone();
         }
         child_ids
     }
 
-    pub fn children(&self, primitive_id: NodeId) -> Option<&HashSet<NodeId>> {
+    pub fn children(&self, primitive_id: PrimitiveId) -> Option<&Vec<PrimitiveId>> {
         self.primitive_children.get(primitive_id)
     }
 
@@ -129,6 +132,7 @@ impl SceneGraph {
         count
     }
 
+    // TODO wrong order here
     pub fn create_gpu_primitives(&self) -> Vec<Std430GPUPrimitive> {
         let mut gpu_primitives: Vec<Std430GPUPrimitive> = self
             .primitives
@@ -181,20 +185,56 @@ impl SceneGraph {
         self.lights = Lights::default();
     }
 
-    pub fn add_primitive(&mut self, primitive: Primitive) -> NodeId {
+    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
         self.primitives.insert(primitive)
     }
 
-    pub fn add_light(&mut self, light: Light) -> NodeId {
+    pub fn add_light(&mut self, light: Light) -> LightId {
         self.lights.insert(light)
     }
 
-    pub fn add_camera(&mut self, camera: Camera) -> NodeId {
+    pub fn add_camera(&mut self, camera: Camera) -> CameraId {
         self.cameras.insert(camera)
     }
 
-    pub fn add_material(&mut self, material: Material) -> NodeId {
+    pub fn add_material(&mut self, material: Material) -> MaterialId {
         self.materials.insert(material)
+    }
+
+    pub fn num_primitives(&self) -> usize {
+        self.primitives.len()
+    }
+
+    pub fn num_lights(&self) -> usize {
+        self.lights.len()
+    }
+
+    pub fn num_cameras(&self) -> usize {
+        self.cameras.len()
+    }
+
+    pub fn num_materials(&self) -> usize {
+        self.materials.len()
+    }
+
+    pub fn iter_materials(&self) -> impl Iterator<Item = &Material> + '_ {
+        self.materials
+            .iter()
+            .map(|(_material_id, material)| material)
+    }
+
+    pub fn iter_cameras(&self) -> impl Iterator<Item = &Camera> + '_ {
+        self.cameras.iter().map(|(_camera_id, camera)| camera)
+    }
+
+    pub fn iter_primitives(&self) -> impl Iterator<Item = &Primitive> + '_ {
+        self.primitives
+            .iter()
+            .map(|(_primitive_id, primitive)| primitive)
+    }
+
+    pub fn iter_lights(&self) -> impl Iterator<Item = &Light> + '_ {
+        self.lights.iter().map(|(_light_id, light)| light)
     }
 
     // pub fn merge(&mut self, mut other: Self) {
@@ -213,3 +253,8 @@ impl DualDevice<GPUSceneGraphParameters, Std430GPUSceneGraphParameters> for Scen
         }
     }
 }
+
+impl_slot_map_indexing!(SceneGraph, CameraId, Camera, cameras);
+impl_slot_map_indexing!(SceneGraph, PrimitiveId, Primitive, primitives);
+impl_slot_map_indexing!(SceneGraph, LightId, Light, lights);
+impl_slot_map_indexing!(SceneGraph, MaterialId, Material, materials);

@@ -190,7 +190,7 @@ impl EvaluableGraph {
         input_node_id != output_node_id
             && self[output_id]
                 .data
-                .can_connect_to_input(&self[input_id].data)
+                .compatible_with_input(&self[input_id].data)
             && !self.is_ancestor(output_node_id, input_node_id)
     }
 

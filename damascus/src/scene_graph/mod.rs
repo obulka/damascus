@@ -8,6 +8,7 @@ use std::collections::HashSet;
 use crevice::std430::AsStd430;
 use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{
     camera::{Camera, CameraId, Cameras, Std430GPUCamera},
@@ -15,8 +16,31 @@ use super::{
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights, Std430GPULight},
     materials::{Material, MaterialId, Materials, Std430GPUMaterial},
-    DualDevice,
+    DualDevice, Enumerator,
 };
+
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum SceneGraphLocation {
+    #[default]
+    None,
+    MaterialId(MaterialId),
+    PrimitiveId(PrimitiveId),
+    LightId(LightId),
+    CameraId(CameraId),
+}
+
+impl Enumerator for SceneGraphLocation {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -78,6 +102,25 @@ impl SceneGraph {
         None
     }
 
+    pub fn root_primitive(&self) -> Option<&Primitive> {
+        if let Some(root_primitive_id) = self.root_primitive_id {
+            return Some(&self[root_primitive_id]);
+        }
+        None
+    }
+
+    pub fn render_camera_id(&self) -> Option<CameraId> {
+        self.render_camera_id
+    }
+
+    pub fn atmosphere_id(&self) -> Option<MaterialId> {
+        self.atmosphere_id
+    }
+
+    pub fn root_primitive_id(&self) -> Option<PrimitiveId> {
+        self.root_primitive_id
+    }
+
     pub fn with_render_camera(mut self, render_camera: Camera) -> Self {
         self.set_render_camera(render_camera);
         self
@@ -101,11 +144,18 @@ impl SceneGraph {
     }
 
     pub fn set_render_camera(&mut self, render_camera: Camera) {
-        self.render_camera_id = Some(self.add_camera(render_camera));
+        let render_camera_id: CameraId = self.add_camera(render_camera);
+        self.set_render_camera_id(render_camera_id);
     }
 
     pub fn set_atmosphere(&mut self, atmosphere: Material) {
-        self.atmosphere_id = Some(self.add_material(atmosphere));
+        let atmosphere_id: MaterialId = self.add_material(atmosphere);
+        self.set_atmosphere_id(atmosphere_id);
+    }
+
+    pub fn set_root_primitive(&mut self, root_primitive: Primitive) {
+        let root_primitive_id: PrimitiveId = self.add_primitive(root_primitive);
+        self.set_root_primitive_id(root_primitive_id);
     }
 
     pub fn cloned_children(&self, primitive_id: PrimitiveId) -> Vec<PrimitiveId> {

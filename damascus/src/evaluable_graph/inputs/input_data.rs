@@ -14,7 +14,7 @@ use crate::{
         EvaluableGraph,
     },
     render_passes::RenderPasses,
-    scene_graph::SceneGraph,
+    scene_graph::SceneGraphLocation,
     Enum, Enumerator,
 };
 
@@ -35,8 +35,6 @@ pub enum InputData {
     None,
     Bool(bool),
     BVec3(BVec3),
-    Enum(Enum),
-    Filepath(String),
     Int(i32),
     UInt(u32),
     UVec2(UVec2),
@@ -47,8 +45,10 @@ pub enum InputData {
     Vec4(Vec4),
     Mat3(Mat3),
     Mat4(Mat4),
+    Enum(Enum),
+    Filepath(String),
     RenderPass(RenderPasses),
-    SceneGraph(SceneGraph),
+    SceneGraphLocation(SceneGraphLocation),
 }
 
 impl Enumerator for InputData {}
@@ -204,12 +204,52 @@ impl InputData {
         }
     }
 
-    pub fn try_to_scene_graph(self) -> NodeResult<SceneGraph> {
+    pub fn try_to_scene_graph_location(self) -> NodeResult<SceneGraphLocation> {
         match self {
-            InputData::SceneGraph(value) => Ok(value),
+            InputData::SceneGraphLocation(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<SceneGraph>().to_string(),
+                conversion_to: type_name::<SceneGraphLocation>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_material_id(self) -> NodeResult<MaterialId> {
+        match self.try_to_scene_graph_location()? {
+            SceneGraphLocation::MaterialId(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self,
+                conversion_to: type_name::<MaterialId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_primitive_id(self) -> NodeResult<PrimitiveId> {
+        match self.try_to_scene_graph_location()? {
+            SceneGraphLocation::PrimitiveId(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self,
+                conversion_to: type_name::<PrimitiveId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_light_id(self) -> NodeResult<LightId> {
+        match self.try_to_scene_graph_location()? {
+            SceneGraphLocation::LightId(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self,
+                conversion_to: type_name::<LightId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_camera_id(self) -> NodeResult<CameraId> {
+        match self.try_to_scene_graph_location()? {
+            SceneGraphLocation::CameraId(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self,
+                conversion_to: type_name::<CameraId>().to_string(),
             }),
         }
     }

@@ -29,17 +29,17 @@ pub enum OutputData {
     Mat4,
     #[default]
     RenderPass,
-    SceneGraph,
+    SceneGraphLocation,
 }
 
 impl Enumerator for OutputData {}
 
 impl OutputData {
-    pub fn can_connect_to_input(&self, input: &InputData) -> bool {
+    pub fn compatible_with_input(&self, input: &InputData) -> bool {
         match input {
             InputData::Mat4(..) => *self == OutputData::Mat4,
             InputData::RenderPass(..) => *self == OutputData::RenderPass,
-            InputData::SceneGraph(..) => *self == OutputData::SceneGraph,
+            InputData::SceneGraphLocation(..) => *self == OutputData::SceneGraphLocation,
             _ => false,
         }
     }

@@ -9,11 +9,12 @@ use glam::{EulerRot, Mat4, Quat, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
@@ -92,6 +93,7 @@ impl EvaluableNode for AxisNode {
     type Outputs = AxisOutputData;
 
     fn evaluate(
+        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

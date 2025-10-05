@@ -5,19 +5,21 @@
 
 use std::{collections::HashMap, str::FromStr};
 
-use crate::evaluable_graph::{
-    inputs::{input_data::InputData, InputId},
-    outputs::OutputId,
-};
-
-use super::{
-    node_data::{
-        AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
-        GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData, NodeData,
-        PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData, SceneNode,
-        SceneOutputData, TextureNode, TextureOutputData,
+use crate::{
+    node_graph::{
+        inputs::{input_data::InputData, InputId},
+        nodes::{
+            node_data::{
+                AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
+                GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData,
+                NodeData, PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData,
+                SceneNode, SceneOutputData, TextureNode, TextureOutputData,
+            },
+            NodeErrors, NodeId, NodeResult,
+        },
+        outputs::OutputId,
     },
-    NodeErrors, NodeId, NodeResult,
+    scene_graph::SceneGraph,
 };
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -37,54 +39,64 @@ impl Node {
     }
 
     pub fn evaluate(
-        &self,
+        scene_graph: &mut SceneGraph,
+        node_data: NodeData,
         mut data_map: HashMap<String, InputData>,
-        output_name: &str,
+        output_name: String,
     ) -> NodeResult<InputData> {
-        match self.data {
+        match node_data {
             NodeData::Axis => AxisNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                AxisOutputData::from_str(output_name)
+                AxisOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Camera => CameraNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                CameraOutputData::from_str(output_name)
+                CameraOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Grade => GradeNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                GradeOutputData::from_str(output_name)
+                GradeOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Light => LightNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                LightOutputData::from_str(output_name)
+                LightOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Material => MaterialNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                MaterialOutputData::from_str(output_name)
+                MaterialOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Primitive => PrimitiveNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                PrimitiveOutputData::from_str(output_name)
+                PrimitiveOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::RayMarcher => RayMarcherNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                RayMarcherOutputData::from_str(output_name)
+                RayMarcherOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Scene => SceneNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                SceneOutputData::from_str(output_name)
+                SceneOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
             NodeData::Texture => TextureNode::evaluate(
+                scene_graph,
                 &mut data_map,
-                TextureOutputData::from_str(output_name)
+                TextureOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
         }

@@ -6,11 +6,11 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    materials::Material,
+    node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    materials::Material,
     render_passes::RenderPasses,
     Enumerator,
 };

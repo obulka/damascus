@@ -9,9 +9,13 @@ use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    camera::CameraId,
+    geometry::primitives::PrimitiveId,
+    lights::LightId,
+    materials::MaterialId,
+    node_graph::{
         nodes::{NodeErrors, NodeId, NodeResult},
-        EvaluableGraph,
+        NodeGraph,
     },
     render_passes::RenderPasses,
     scene_graph::SceneGraphLocation,
@@ -217,8 +221,8 @@ impl InputData {
     pub fn try_to_material_id(self) -> NodeResult<MaterialId> {
         match self.try_to_scene_graph_location()? {
             SceneGraphLocation::MaterialId(value) => Ok(value),
-            _ => Err(NodeErrors::InputDowncastError {
-                data: self,
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphLocation(value),
                 conversion_to: type_name::<MaterialId>().to_string(),
             }),
         }
@@ -227,8 +231,8 @@ impl InputData {
     pub fn try_to_primitive_id(self) -> NodeResult<PrimitiveId> {
         match self.try_to_scene_graph_location()? {
             SceneGraphLocation::PrimitiveId(value) => Ok(value),
-            _ => Err(NodeErrors::InputDowncastError {
-                data: self,
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphLocation(value),
                 conversion_to: type_name::<PrimitiveId>().to_string(),
             }),
         }
@@ -237,8 +241,8 @@ impl InputData {
     pub fn try_to_light_id(self) -> NodeResult<LightId> {
         match self.try_to_scene_graph_location()? {
             SceneGraphLocation::LightId(value) => Ok(value),
-            _ => Err(NodeErrors::InputDowncastError {
-                data: self,
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphLocation(value),
                 conversion_to: type_name::<LightId>().to_string(),
             }),
         }
@@ -247,8 +251,8 @@ impl InputData {
     pub fn try_to_camera_id(self) -> NodeResult<CameraId> {
         match self.try_to_scene_graph_location()? {
             SceneGraphLocation::CameraId(value) => Ok(value),
-            _ => Err(NodeErrors::InputDowncastError {
-                data: self,
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphLocation(value),
                 conversion_to: type_name::<CameraId>().to_string(),
             }),
         }
@@ -266,7 +270,7 @@ pub trait NodeInputData: Enumerator + Eq {
         self.variant_label()
     }
 
-    fn add_to_node(graph: &mut EvaluableGraph, node_id: NodeId) {
+    fn add_to_node(graph: &mut NodeGraph, node_id: NodeId) {
         Self::iter().for_each(|input| {
             graph.add_input(node_id, &input.name(), input.default_data());
         });

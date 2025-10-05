@@ -6,7 +6,7 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },

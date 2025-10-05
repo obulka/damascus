@@ -9,18 +9,16 @@ use glam::{Mat4, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
-        inputs::input_data::{InputData, NodeInputData},
-        nodes::NodeResult,
-        outputs::output_data::{NodeOutputData, OutputData},
-    },
     geometry::primitives::{Primitive, Shapes},
     materials::Material,
-    scene_graph::SceneGraph,
+    node_graph::{
+        inputs::input_data::{InputData, NodeInputData},
+        nodes::{node_data::EvaluableNode, NodeResult},
+        outputs::output_data::{NodeOutputData, OutputData},
+    },
+    scene_graph::{SceneGraph, SceneGraphLocation},
     Enumerator,
 };
-
-use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -178,6 +176,7 @@ impl EvaluableNode for PrimitiveNode {
     type Outputs = PrimitiveOutputData;
 
     fn evaluate(
+        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

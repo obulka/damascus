@@ -8,12 +8,13 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeId,
-        outputs::output_data::NodeOutputData,
-        EvaluableGraph,
+        outputs::output_data::{NodeOutputData, OutputData},
+        NodeGraph,
     },
+    scene_graph::SceneGraph,
     Enumerator,
 };
 
@@ -43,16 +44,26 @@ pub trait EvaluableNode {
     type Inputs: NodeInputData;
     type Outputs: NodeOutputData;
 
-    fn add_to_graph(graph: &mut EvaluableGraph, node_id: NodeId) {
+    fn add_to_graph(graph: &mut NodeGraph, node_id: NodeId) {
         Self::Inputs::add_to_node(graph, node_id);
         Self::Outputs::add_to_node(graph, node_id);
     }
 
     fn evaluate(
+        _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
         _output: Self::Outputs,
     ) -> NodeResult<InputData> {
         Err(NodeErrors::NotImplementedError)
+    }
+
+    fn output_compatible_with_input(output: &OutputData, input: &InputData) -> bool {
+        match input {
+            InputData::Mat4(..) => *output == OutputData::Mat4,
+            InputData::RenderPass(..) => *output == OutputData::RenderPass,
+            InputData::SceneGraphLocation(..) => *output == OutputData::SceneGraphLocation,
+            _ => false,
+        }
     }
 }
 
@@ -87,7 +98,7 @@ pub enum NodeData {
 impl Enumerator for NodeData {}
 
 impl NodeData {
-    pub fn add_to_graph(&self, graph: &mut EvaluableGraph, node_id: NodeId) {
+    pub fn add_to_graph(&self, graph: &mut NodeGraph, node_id: NodeId) {
         match self {
             Self::Axis => {
                 AxisNode::add_to_graph(graph, node_id);
@@ -116,6 +127,20 @@ impl NodeData {
             Self::Texture => {
                 TextureNode::add_to_graph(graph, node_id);
             }
+        }
+    }
+
+    pub fn output_compatible_with_input(&self, output: &OutputData, input: &InputData) -> bool {
+        match self {
+            Self::Axis => AxisNode::output_compatible_with_input(output, input),
+            Self::Camera => CameraNode::output_compatible_with_input(output, input),
+            Self::Grade => GradeNode::output_compatible_with_input(output, input),
+            Self::Light => LightNode::output_compatible_with_input(output, input),
+            Self::Material => MaterialNode::output_compatible_with_input(output, input),
+            Self::Primitive => PrimitiveNode::output_compatible_with_input(output, input),
+            Self::RayMarcher => RayMarcherNode::output_compatible_with_input(output, input),
+            Self::Scene => SceneNode::output_compatible_with_input(output, input),
+            Self::Texture => TextureNode::output_compatible_with_input(output, input),
         }
     }
 }

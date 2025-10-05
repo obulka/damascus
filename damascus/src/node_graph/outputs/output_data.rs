@@ -6,7 +6,7 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{inputs::input_data::InputData, nodes::NodeId, EvaluableGraph},
+    node_graph::{inputs::input_data::InputData, nodes::NodeId, NodeGraph},
     Enumerator,
 };
 
@@ -34,17 +34,6 @@ pub enum OutputData {
 
 impl Enumerator for OutputData {}
 
-impl OutputData {
-    pub fn compatible_with_input(&self, input: &InputData) -> bool {
-        match input {
-            InputData::Mat4(..) => *self == OutputData::Mat4,
-            InputData::RenderPass(..) => *self == OutputData::RenderPass,
-            InputData::SceneGraphLocation(..) => *self == OutputData::SceneGraphLocation,
-            _ => false,
-        }
-    }
-}
-
 pub trait NodeOutputData: Enumerator + Eq {
     fn default_data(&self) -> OutputData;
 
@@ -56,7 +45,7 @@ pub trait NodeOutputData: Enumerator + Eq {
         self.variant_label()
     }
 
-    fn add_to_node(graph: &mut EvaluableGraph, node_id: NodeId) {
+    fn add_to_node(graph: &mut NodeGraph, node_id: NodeId) {
         Self::iter().for_each(|output| {
             graph.add_output(node_id, &output.name(), output.default_data());
         });

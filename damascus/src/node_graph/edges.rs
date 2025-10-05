@@ -21,6 +21,11 @@ impl Edges {
         self.parents.len()
     }
 
+    pub fn clear(&mut self) {
+        self.children.clear();
+        self.parents.clear();
+    }
+
     pub fn parent_owned(&self, input_id: InputId) -> Option<OutputId> {
         self.parent(input_id).copied()
     }

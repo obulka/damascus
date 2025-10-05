@@ -8,17 +8,16 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    evaluable_graph::{
+    node_graph::{
         inputs::input_data::{InputData, NodeInputData},
-        nodes::NodeResult,
+        nodes::{node_data::EvaluableNode, NodeResult},
         outputs::output_data::{NodeOutputData, OutputData},
     },
     render_passes::{texture::view::TextureViewer, RenderPass, RenderPasses},
+    scene_graph::SceneGraph,
     textures::Texture,
     Enumerator,
 };
-
-use super::EvaluableNode;
 
 #[derive(
     Debug,
@@ -88,6 +87,7 @@ impl EvaluableNode for TextureNode {
     type Outputs = TextureOutputData;
 
     fn evaluate(
+        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

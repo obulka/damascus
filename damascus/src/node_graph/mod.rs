@@ -5,12 +5,9 @@
 
 use std::collections::{HashMap, HashSet};
 
-use quick_cache::{
-    unsync::{Cache, DefaultLifecycle},
-    DefaultHashBuilder, OptionsBuilder, UnitWeighter,
-};
+use slotmap::SparseSecondaryMap;
 
-use crate::impl_slot_map_indexing;
+use crate::{impl_slot_map_indexing, scene_graph::SceneGraph};
 
 pub mod edges;
 pub mod inputs;
@@ -30,36 +27,30 @@ use outputs::{
     OutputId, Outputs,
 };
 
-pub type OutputCache = Cache<OutputId, InputData>;
+pub type OutputCache = SparseSecondaryMap<OutputId, InputData>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct EvaluableGraph {
+pub struct NodeGraph {
     nodes: Nodes,
     inputs: Inputs,
     outputs: Outputs,
     edges: Edges,
     #[serde(skip)]
+    scene_graph: SceneGraph,
+    #[serde(skip)]
     cache: OutputCache,
 }
 
-impl EvaluableGraph {
+impl NodeGraph {
     pub fn new() -> Self {
         Self {
             nodes: Nodes::default(),
             inputs: Inputs::default(),
             outputs: Outputs::default(),
             edges: Edges::default(),
-            cache: OutputCache::with_options(
-                OptionsBuilder::new()
-                    .estimated_items_capacity(10000)
-                    .weight_capacity(10000)
-                    .build()
-                    .unwrap(),
-                UnitWeighter,
-                DefaultHashBuilder::default(),
-                DefaultLifecycle::default(),
-            ),
+            scene_graph: SceneGraph::default(),
+            cache: OutputCache::default(),
         }
     }
 
@@ -80,10 +71,10 @@ impl EvaluableGraph {
     }
 
     pub fn remove_output_from_cache(&mut self, output_id: &OutputId) {
-        self.cache.remove(output_id);
+        self.cache.remove(*output_id);
     }
 
-    pub fn remove_from_cache(&mut self, node_id: NodeId) {
+    pub fn remove_node_from_cache(&mut self, node_id: NodeId) {
         let node_output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
         self.descendants_output_ids(node_id)
             .iter()
@@ -93,8 +84,22 @@ impl EvaluableGraph {
             });
     }
 
-    pub fn insert_to_cache(&mut self, output_id: OutputId, input_data: InputData) {
+    pub fn insert_in_cache(&mut self, output_id: OutputId, input_data: InputData) {
         self.cache.insert(output_id, input_data);
+    }
+
+    pub fn free_cache(&mut self) {
+        self.cache = OutputCache::default();
+    }
+
+    pub fn free(&mut self) {
+        // Clearing a slotmap retains memory, reallocate to free it
+        self.free_cache();
+
+        self.nodes = Nodes::default();
+        self.inputs = Inputs::default();
+        self.outputs = Outputs::default();
+        self.edges = Edges::default();
     }
 
     pub fn clear_cache(&mut self) {
@@ -104,11 +109,10 @@ impl EvaluableGraph {
     pub fn clear(&mut self) {
         self.clear_cache();
 
-        // Clearing a slotmap retains memory, reallocate to free it
-        self.nodes = Nodes::default();
-        self.inputs = Inputs::default();
-        self.outputs = Outputs::default();
-        self.edges = Edges::default();
+        self.nodes.clear();
+        self.inputs.clear();
+        self.outputs.clear();
+        self.edges.clear();
     }
 
     fn evaluate_node(
@@ -116,10 +120,16 @@ impl EvaluableGraph {
         output_id: OutputId,
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        let input_data: InputData =
-            self[self[output_id].node_id].evaluate(input_data_map, &self[output_id].name)?;
+        let node_data: NodeData = self[self[output_id].node_id].data;
+        let output_name: String = self[output_id].name.clone();
+        let input_data: InputData = Node::evaluate(
+            &mut self.scene_graph,
+            node_data,
+            input_data_map,
+            output_name,
+        )?;
 
-        self.insert_to_cache(output_id, input_data.clone());
+        self.insert_in_cache(output_id, input_data.clone());
 
         Ok(input_data)
     }
@@ -154,7 +164,7 @@ impl EvaluableGraph {
 
     pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
         if let Some(output_id) = self.edges.parent(input_id) {
-            if let Some(input_data) = self.cache.get(output_id) {
+            if let Some(input_data) = self.cache.get(*output_id) {
                 // Data was already cached, return it
                 Ok((*input_data).clone())
             } else {
@@ -188,9 +198,9 @@ impl EvaluableGraph {
         let output_node_id: NodeId = self[output_id].node_id;
 
         input_node_id != output_node_id
-            && self[output_id]
+            && self[input_node_id]
                 .data
-                .compatible_with_input(&self[input_id].data)
+                .output_compatible_with_input(&self[output_id].data, &self[input_id].data)
             && !self.is_ancestor(output_node_id, input_node_id)
     }
 
@@ -562,15 +572,15 @@ impl EvaluableGraph {
     }
 }
 
-impl Default for EvaluableGraph {
+impl Default for NodeGraph {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl_slot_map_indexing!(EvaluableGraph, NodeId, Node, nodes);
-impl_slot_map_indexing!(EvaluableGraph, InputId, Input, inputs);
-impl_slot_map_indexing!(EvaluableGraph, OutputId, Output, outputs);
+impl_slot_map_indexing!(NodeGraph, NodeId, Node, nodes);
+impl_slot_map_indexing!(NodeGraph, InputId, Input, inputs);
+impl_slot_map_indexing!(NodeGraph, OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {
@@ -585,7 +595,7 @@ mod tests {
 
     #[test]
     fn test_node_creation() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let mut node_ids = HashSet::<NodeId>::new();
 
@@ -600,7 +610,7 @@ mod tests {
 
     #[test]
     fn test_node_deletion() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         for node_data in NodeData::iter() {
             graph.add_node(node_data);
@@ -627,7 +637,7 @@ mod tests {
 
     #[test]
     fn test_node_edge_connection() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -661,7 +671,7 @@ mod tests {
 
     #[test]
     fn test_node_edge_connection_string() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -691,7 +701,7 @@ mod tests {
 
     #[test]
     fn test_node_edge_disconnection() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -724,7 +734,7 @@ mod tests {
 
     #[test]
     fn test_node_edge_disconnection_on_node_removal() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -789,7 +799,7 @@ mod tests {
 
     #[test]
     fn test_valid_edge() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -833,7 +843,7 @@ mod tests {
 
     #[test]
     fn test_node_ancestors() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -893,7 +903,7 @@ mod tests {
 
     #[test]
     fn test_node_descendants() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -1003,8 +1013,8 @@ mod tests {
 
     #[test]
     fn test_graph_merge() {
-        let mut graph = EvaluableGraph::new();
-        let mut graph1 = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
+        let mut graph1 = NodeGraph::new();
 
         let mut node_ids = HashSet::<NodeId>::new();
         let mut node_ids1 = HashSet::<NodeId>::new();
@@ -1032,7 +1042,7 @@ mod tests {
 
     #[test]
     fn test_graph_merge_edges() {
-        let mut graphs = vec![EvaluableGraph::new(), EvaluableGraph::new()];
+        let mut graphs = vec![NodeGraph::new(), NodeGraph::new()];
 
         let mut primary_axis_ids = Vec::<NodeId>::new();
         let mut secondary_axis_ids = Vec::<NodeId>::new();
@@ -1082,7 +1092,7 @@ mod tests {
             primitive1_ids.push(primitive1_id);
         });
 
-        let mut graph: EvaluableGraph = graphs.pop().expect("graphs vec has two node graphs");
+        let mut graph: NodeGraph = graphs.pop().expect("graphs vec has two node graphs");
 
         let node_id_lut: HashMap<NodeId, NodeId> = graphs[0].merge(&mut graph);
 
@@ -1160,7 +1170,7 @@ mod tests {
 
     #[test]
     fn test_new_from_nodes() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -1220,7 +1230,7 @@ mod tests {
 
     #[test]
     fn test_axis_evaluation() {
-        let mut graph = EvaluableGraph::new();
+        let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crevice::std430::AsStd430;
 use serde_hashkey::to_key_with_ordered_float;
@@ -24,23 +24,77 @@ use super::{
     Display,
     Default,
     Clone,
+    Copy,
     EnumCount,
     EnumIter,
     EnumString,
+    Eq,
+    Hash,
     PartialEq,
+    PartialOrd,
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum SceneGraphLocation {
+pub enum SceneGraphId {
     #[default]
     None,
-    MaterialId(MaterialId),
-    PrimitiveId(PrimitiveId),
-    LightId(LightId),
-    CameraId(CameraId),
+    Camera(CameraId),
+    Light(LightId),
+    Material(MaterialId),
+    Primitive(PrimitiveId),
 }
 
-impl Enumerator for SceneGraphLocation {}
+impl Enumerator for SceneGraphId {}
+
+#[derive(
+    Debug,
+    Display,
+    Default,
+    Clone,
+    Copy,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    Eq,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum SceneGraphIdType {
+    #[default]
+    None,
+    Camera,
+    Light,
+    Material,
+    Primitive,
+}
+
+impl Enumerator for SceneGraphIdType {}
+
+impl From<SceneGraphId> for SceneGraphIdType {
+    fn from(scene_graph_location: SceneGraphId) -> Self {
+        match scene_graph_location {
+            SceneGraphId::None => Self::None,
+            SceneGraphId::Camera(..) => Self::Camera,
+            SceneGraphId::Light(..) => Self::Light,
+            SceneGraphId::Material(..) => Self::Material,
+            SceneGraphId::Primitive(..) => Self::Primitive,
+        }
+    }
+}
+
+impl SceneGraphIdType {
+    pub fn has_transform(&self) -> bool {
+        match self {
+            Self::None => false,
+            Self::Camera => true,
+            Self::Light => true,
+            Self::Material => false,
+            Self::Primitive => true,
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
@@ -51,16 +105,24 @@ pub struct GPUSceneGraphParameters {
     num_non_physical_lights: u32,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Default, Clone)]
+pub struct GPUScene {
+    pub primitives: Vec<Std430GPUPrimitive>,
+    pub lights: Vec<Std430GPULight>,
+    pub materials: Vec<Std430GPUMaterial>,
+    pub emissive_primitive_indices: Vec<u32>,
+}
+
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct SceneGraph {
     cameras: Cameras,
     primitives: Primitives,
     lights: Lights,
     materials: Materials,
-    primitive_children: SparseSecondaryMap<PrimitiveId, Vec<PrimitiveId>>,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    root_primitive_id: Option<PrimitiveId>,
+    children: HashMap<SceneGraphId, Vec<SceneGraphId>>,
+    root_ids: Vec<SceneGraphId>,
     render_camera_id: Option<CameraId>,
     atmosphere_id: Option<MaterialId>,
 }
@@ -102,23 +164,12 @@ impl SceneGraph {
         None
     }
 
-    pub fn root_primitive(&self) -> Option<&Primitive> {
-        if let Some(root_primitive_id) = self.root_primitive_id {
-            return Some(&self[root_primitive_id]);
-        }
-        None
-    }
-
     pub fn render_camera_id(&self) -> Option<CameraId> {
         self.render_camera_id
     }
 
     pub fn atmosphere_id(&self) -> Option<MaterialId> {
         self.atmosphere_id
-    }
-
-    pub fn root_primitive_id(&self) -> Option<PrimitiveId> {
-        self.root_primitive_id
     }
 
     pub fn with_render_camera(mut self, render_camera: Camera) -> Self {
@@ -139,10 +190,6 @@ impl SceneGraph {
         self.atmosphere_id = Some(atmosphere_id);
     }
 
-    pub fn set_root_primitive_id(&mut self, root_primitive_id: PrimitiveId) {
-        self.root_primitive_id = Some(root_primitive_id);
-    }
-
     pub fn set_render_camera(&mut self, render_camera: Camera) {
         let render_camera_id: CameraId = self.add_camera(render_camera);
         self.set_render_camera_id(render_camera_id);
@@ -153,21 +200,35 @@ impl SceneGraph {
         self.set_atmosphere_id(atmosphere_id);
     }
 
-    pub fn set_root_primitive(&mut self, root_primitive: Primitive) {
-        let root_primitive_id: PrimitiveId = self.add_primitive(root_primitive);
-        self.set_root_primitive_id(root_primitive_id);
+    pub fn add_primitive_to_root(&mut self, primitive: Primitive) -> PrimitiveId {
+        let root_primitive_id: PrimitiveId = self.add_primitive(primitive);
+        self.root_ids
+            .push(SceneGraphId::Primitive(root_primitive_id));
+        root_primitive_id
     }
 
-    pub fn cloned_children(&self, primitive_id: PrimitiveId) -> Vec<PrimitiveId> {
-        let mut child_ids = Vec::<PrimitiveId>::new();
-        if let Some(children) = self.children(primitive_id) {
+    pub fn add_light_to_root(&mut self, light: Light) -> LightId {
+        let root_light_id: LightId = self.add_light(light);
+        self.root_ids.push(SceneGraphId::Light(root_light_id));
+        root_light_id
+    }
+
+    pub fn add_camera_to_root(&mut self, camera: Camera) -> CameraId {
+        let root_camera_id: CameraId = self.add_camera(camera);
+        self.root_ids.push(SceneGraphId::Camera(root_camera_id));
+        root_camera_id
+    }
+
+    pub fn cloned_children(&self, id: &SceneGraphId) -> Vec<SceneGraphId> {
+        let mut child_ids = Vec::<SceneGraphId>::new();
+        if let Some(children) = self.children(id) {
             child_ids = children.clone();
         }
         child_ids
     }
 
-    pub fn children(&self, primitive_id: PrimitiveId) -> Option<&Vec<PrimitiveId>> {
-        self.primitive_children.get(primitive_id)
+    pub fn children(&self, id: &SceneGraphId) -> Option<&Vec<SceneGraphId>> {
+        self.children.get(id)
     }
 
     pub fn num_emissive_primitives(&self) -> usize {
@@ -182,57 +243,35 @@ impl SceneGraph {
         count
     }
 
-    // TODO wrong order here
-    pub fn create_gpu_primitives(&self) -> Vec<Std430GPUPrimitive> {
-        let mut gpu_primitives: Vec<Std430GPUPrimitive> = self
-            .primitives
-            .iter()
-            .map(|(_primitive_id, primitive)| *primitive)
-            .enumerate()
-            .map(|(index, primitive)| {
-                let mut gpu_primitive = primitive.to_gpu();
-                gpu_primitive.id = (index + 1) as u32;
-                gpu_primitive.as_std430()
-            })
-            .collect();
-        if gpu_primitives.is_empty() {
-            gpu_primitives.push(Primitive::default().as_std430());
+    pub fn create_gpu_scene(&self) -> GPUScene {
+        let mut gpu_scene = GPUScene::default();
+
+        for root_id in self.root_ids.iter() {
+            match root_id {
+                SceneGraphId::Camera(camera_id) => {}
+                SceneGraphId::Light(light_id) => {}
+                SceneGraphId::Primitive(primitive_id) => {
+                    if let Some(material_id) = self.primitive_materials.get(primitive_id) {}
+
+                    let mut gpu_primitive = primitive.to_gpu();
+                    gpu_primitive.id = (index + 1) as u32;
+                    gpu_primitive.as_std430()
+                }
+                _ => {}
+            }
         }
-        gpu_primitives
-    }
 
-    pub fn create_gpu_lights(&self) -> Vec<Std430GPULight> {
-        let mut gpu_lights: Vec<Std430GPULight> = self
-            .lights
-            .iter()
-            .map(|(_light_id, light)| light.as_std430())
-            .collect();
-        if gpu_lights.is_empty() {
-            gpu_lights.push(Light::default().as_std430());
+        if gpu_scene.primitives.is_empty() {
+            gpu_scene.primitives.push(Primitive::default().as_std430());
         }
-        gpu_lights
-    }
+        if gpu_scene.lights.is_empty() {
+            gpu_scene.lights.push(Light::default().as_std430());
+        }
+        if gpu_scene.materials.is_empty() {
+            gpu_scene.materials.push(Material::default().as_std430());
+        }
 
-    // pub fn emissive_primitive_indices(&self) -> Vec<u32> {
-    //     let mut emissive_indices = vec![];
-    //     for (index, primitive) in self.primitives.iter().enumerate() {
-    //         if primitive.material.scaled_emissive_colour().length() == 0. {
-    //             continue;
-    //         }
-    //         emissive_indices.push(index as u32);
-    //     }
-    //     if emissive_indices.is_empty() {
-    //         emissive_indices.push(0);
-    //     }
-    //     emissive_indices
-    // }
-
-    pub fn clear_primitives(&mut self) {
-        self.primitives = Primitives::default();
-    }
-
-    pub fn clear_lights(&mut self) {
-        self.lights = Lights::default();
+        gpu_scene
     }
 
     pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
@@ -286,11 +325,6 @@ impl SceneGraph {
     pub fn iter_lights(&self) -> impl Iterator<Item = &Light> + '_ {
         self.lights.iter().map(|(_light_id, light)| light)
     }
-
-    // pub fn merge(&mut self, mut other: Self) {
-    //     self.primitives.append(&mut other.primitives);
-    //     self.lights.append(&mut other.lights);
-    // }
 }
 
 impl DualDevice<GPUSceneGraphParameters, Std430GPUSceneGraphParameters> for SceneGraph {

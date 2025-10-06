@@ -18,7 +18,7 @@ use crate::{
         NodeGraph,
     },
     render_passes::RenderPasses,
-    scene_graph::SceneGraphLocation,
+    scene_graph::SceneGraphId,
     Enum, Enumerator,
 };
 
@@ -52,7 +52,7 @@ pub enum InputData {
     Enum(Enum),
     Filepath(String),
     RenderPass(RenderPasses),
-    SceneGraphLocation(SceneGraphLocation),
+    SceneGraphId(SceneGraphId),
 }
 
 impl Enumerator for InputData {}
@@ -208,51 +208,51 @@ impl InputData {
         }
     }
 
-    pub fn try_to_scene_graph_location(self) -> NodeResult<SceneGraphLocation> {
+    pub fn try_to_scene_graph_id(self) -> NodeResult<SceneGraphId> {
         match self {
-            InputData::SceneGraphLocation(value) => Ok(value),
+            InputData::SceneGraphId(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<SceneGraphLocation>().to_string(),
+                conversion_to: type_name::<SceneGraphId>().to_string(),
             }),
         }
     }
 
     pub fn try_to_material_id(self) -> NodeResult<MaterialId> {
-        match self.try_to_scene_graph_location()? {
-            SceneGraphLocation::MaterialId(value) => Ok(value),
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::Material(value) => Ok(value),
             value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphLocation(value),
+                data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<MaterialId>().to_string(),
             }),
         }
     }
 
     pub fn try_to_primitive_id(self) -> NodeResult<PrimitiveId> {
-        match self.try_to_scene_graph_location()? {
-            SceneGraphLocation::PrimitiveId(value) => Ok(value),
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::Primitive(value) => Ok(value),
             value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphLocation(value),
+                data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<PrimitiveId>().to_string(),
             }),
         }
     }
 
     pub fn try_to_light_id(self) -> NodeResult<LightId> {
-        match self.try_to_scene_graph_location()? {
-            SceneGraphLocation::LightId(value) => Ok(value),
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::Light(value) => Ok(value),
             value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphLocation(value),
+                data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<LightId>().to_string(),
             }),
         }
     }
 
     pub fn try_to_camera_id(self) -> NodeResult<CameraId> {
-        match self.try_to_scene_graph_location()? {
-            SceneGraphLocation::CameraId(value) => Ok(value),
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::Camera(value) => Ok(value),
             value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphLocation(value),
+                data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<CameraId>().to_string(),
             }),
         }

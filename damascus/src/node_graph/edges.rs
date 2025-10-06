@@ -34,7 +34,7 @@ impl Edges {
         self.parents.get(input_id)
     }
 
-    pub fn children_owned(&self, output_id: OutputId) -> HashSet<InputId> {
+    pub fn cloned_children(&self, output_id: OutputId) -> HashSet<InputId> {
         let mut child_ids = HashSet::<InputId>::new();
         if let Some(children) = self.children(output_id) {
             child_ids = children.clone();
@@ -66,7 +66,7 @@ impl Edges {
     }
 
     pub fn disconnect_output(&mut self, output_id: OutputId) -> HashSet<InputId> {
-        let children = self.children_owned(output_id);
+        let children = self.cloned_children(output_id);
         for input_id in children.iter() {
             self.disconnect_input(*input_id);
         }
@@ -113,7 +113,7 @@ impl Edges {
     ) -> HashMap<InputId, OutputId> {
         let mut disconnected = HashMap::<InputId, OutputId>::new();
         for output_id in output_ids {
-            for input_id in self.children_owned(*output_id).into_iter() {
+            for input_id in self.cloned_children(*output_id).into_iter() {
                 self.disconnect_input(input_id);
                 disconnected.insert(input_id, *output_id);
             }

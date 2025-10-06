@@ -9,13 +9,13 @@ use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    lights::{Light, LightType},
+    lights::{Light, LightId, LightType},
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene_graph::{SceneGraph, SceneGraphLocation},
+    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     Enumerator,
 };
 
@@ -38,7 +38,8 @@ use super::EvaluableNode;
 )]
 pub enum LightInputData {
     #[default]
-    SceneGraph,
+    Siblings,
+    Children,
     LightType,
     Direction,
     Position,
@@ -57,7 +58,7 @@ impl NodeInputData for LightInputData {
     fn default_data(&self) -> InputData {
         let default_light = Light::default();
         match self {
-            Self::SceneGraph => InputData::SceneGraph(SceneGraph::default()),
+            Self::Siblings | Self::Children => InputData::SceneGraphId(SceneGraphId::None),
             Self::LightType => InputData::Enum(default_light.light_type.into()),
             Self::Direction => InputData::Vec3(Vec3::NEG_Y),
             Self::Position => InputData::Vec3(Vec3::Y),
@@ -89,7 +90,7 @@ impl NodeInputData for LightInputData {
 )]
 pub enum LightOutputData {
     #[default]
-    SceneGraph,
+    Id,
 }
 
 impl Enumerator for LightOutputData {}
@@ -97,7 +98,7 @@ impl Enumerator for LightOutputData {}
 impl NodeOutputData for LightOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::SceneGraph => OutputData::SceneGraph,
+            Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Light),
         }
     }
 }
@@ -108,14 +109,29 @@ impl EvaluableNode for LightNode {
     type Inputs = LightInputData;
     type Outputs = LightOutputData;
 
+    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+        match input {
+            Self::Inputs::Siblings | Self::Inputs::Children => match *output {
+                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
+                _ => false,
+            },
+            Self::Inputs::Axis => *output == OutputData::Mat4,
+            _ => false,
+        }
+    }
+
     fn evaluate(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene_graph: SceneGraph = Self::Inputs::SceneGraph
+        let siblings_id: SceneGraphId = Self::Inputs::Siblings
             .get_data(data_map)?
-            .try_to_scene_graph()?;
+            .try_to_scene_graph_id()?;
+        let children_id: SceneGraphId = Self::Inputs::Children
+            .get_data(data_map)?
+            .try_to_scene_graph_id()?;
+
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
         let light_type: LightType = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
 
@@ -141,7 +157,7 @@ impl EvaluableNode for LightNode {
             _ => Vec3::ZERO,
         };
 
-        scene_graph.add_light(Light {
+        let light_id: LightId = scene_graph.add_light(Light {
             light_type: light_type,
             dimensional_data: dimensional_data,
             intensity: Self::Inputs::Intensity.get_data(data_map)?.try_to_float()?,

@@ -67,17 +67,17 @@ impl Enumerator for Shapes {}
 pub struct GPUPrimitive {
     pub id: u32,
     pub material_id: u32,
+    pub num_descendants: u32,
     shape: u32,
     modifiers: u32,
-    num_descendants: u32,
     negative_repetitions: Vec3,
     blend_strength: f32,
     positive_repetitions: Vec3,
     wall_thickness: f32,
     spacing: Vec3,
     edge_radius: f32,
-    dimensional_data: Vec4,
     elongation: Vec3,
+    dimensional_data: Vec4,
     transform: Transform,
 }
 
@@ -99,7 +99,6 @@ pub struct Primitive {
     pub elongate: bool,
     pub elongation: Vec3,
     pub bounding_volume: bool,
-    pub num_descendants: u32,
     pub dimensional_data: Vec4,
 }
 
@@ -121,7 +120,6 @@ impl Default for Primitive {
             elongate: false,
             elongation: Vec3::ZERO,
             bounding_volume: false,
-            num_descendants: 0,
             dimensional_data: 0.5 * Vec4::X,
         }
     }
@@ -134,7 +132,8 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
         let (scale, quaternion, translation) = self.local_to_world.to_scale_rotation_translation();
         GPUPrimitive {
             id: 0,
-            material_id: 0,
+            material_id: 0, // 0 will be a default material, modify this before sending to the gpu
+            num_descendants: 0,
             shape: self.shape as u32,
             modifiers: self.repetition as u32
                 | (self.elongate as u32) << 2
@@ -148,15 +147,14 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
                     0
                 }
                 | (self.bounding_volume as u32) << 9,
-            num_descendants: self.num_descendants,
             negative_repetitions: self.negative_repetitions.as_vec3(),
             blend_strength: self.blend_strength,
             positive_repetitions: self.positive_repetitions.as_vec3(),
             wall_thickness: self.wall_thickness,
             spacing: self.spacing,
             edge_radius: self.edge_radius,
-            dimensional_data: self.dimensional_data,
             elongation: self.elongation,
+            dimensional_data: self.dimensional_data,
             transform: Transform {
                 translation: translation,
                 inverse_rotation: glam::Mat3::from_quat(quaternion).inverse(),

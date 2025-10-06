@@ -7,6 +7,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     node_graph::{inputs::input_data::InputData, nodes::NodeId, NodeGraph},
+    scene_graph::SceneGraphIdType,
     Enumerator,
 };
 
@@ -26,10 +27,10 @@ use crate::{
     serde::Deserialize,
 )]
 pub enum OutputData {
-    Mat4,
     #[default]
+    Mat4,
     RenderPass,
-    SceneGraphLocation,
+    SceneGraphId(SceneGraphIdType),
 }
 
 impl Enumerator for OutputData {}

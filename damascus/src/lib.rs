@@ -5,8 +5,10 @@
 
 #![allow(long_running_const_eval)]
 
-use std::fmt::{Debug, Display};
-use std::str::FromStr;
+use std::{
+    fmt::{Debug, Display},
+    str::FromStr,
+};
 
 use crevice::std430::AsStd430;
 use strum::{EnumCount, IntoEnumIterator};

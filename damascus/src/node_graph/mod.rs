@@ -200,7 +200,7 @@ impl NodeGraph {
         input_node_id != output_node_id
             && self[input_node_id]
                 .data
-                .output_compatible_with_input(&self[output_id].data, &self[input_id].data)
+                .output_compatible_with_input(&self[output_id].data, &self[input_id].name)
             && !self.is_ancestor(output_node_id, input_node_id)
     }
 

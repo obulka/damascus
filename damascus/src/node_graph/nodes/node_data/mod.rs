@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
@@ -49,21 +49,31 @@ pub trait EvaluableNode {
         Self::Outputs::add_to_node(graph, node_id);
     }
 
+    fn output_compatible_with_named_input(output: &OutputData, input_name: &str) -> bool {
+        match Self::Inputs::from_str(input_name) {
+            Ok(input_variant) => Self::output_compatible_with_input(output, &input_variant),
+            _ => false,
+        }
+    }
+
+    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+        match input.default_data() {
+            InputData::Mat4(..) => *output == OutputData::Mat4,
+            InputData::RenderPass(..) => *output == OutputData::RenderPass,
+            InputData::SceneGraphId(..) => match *output {
+                OutputData::SceneGraphId(..) => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
     fn evaluate(
         _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
         _output: Self::Outputs,
     ) -> NodeResult<InputData> {
         Err(NodeErrors::NotImplementedError)
-    }
-
-    fn output_compatible_with_input(output: &OutputData, input: &InputData) -> bool {
-        match input {
-            InputData::Mat4(..) => *output == OutputData::Mat4,
-            InputData::RenderPass(..) => *output == OutputData::RenderPass,
-            InputData::SceneGraphLocation(..) => *output == OutputData::SceneGraphLocation,
-            _ => false,
-        }
     }
 }
 
@@ -130,17 +140,21 @@ impl NodeData {
         }
     }
 
-    pub fn output_compatible_with_input(&self, output: &OutputData, input: &InputData) -> bool {
+    pub fn output_compatible_with_input(&self, output: &OutputData, input_name: &str) -> bool {
         match self {
-            Self::Axis => AxisNode::output_compatible_with_input(output, input),
-            Self::Camera => CameraNode::output_compatible_with_input(output, input),
-            Self::Grade => GradeNode::output_compatible_with_input(output, input),
-            Self::Light => LightNode::output_compatible_with_input(output, input),
-            Self::Material => MaterialNode::output_compatible_with_input(output, input),
-            Self::Primitive => PrimitiveNode::output_compatible_with_input(output, input),
-            Self::RayMarcher => RayMarcherNode::output_compatible_with_input(output, input),
-            Self::Scene => SceneNode::output_compatible_with_input(output, input),
-            Self::Texture => TextureNode::output_compatible_with_input(output, input),
+            Self::Axis => AxisNode::output_compatible_with_named_input(output, input_name),
+            Self::Camera => CameraNode::output_compatible_with_named_input(output, input_name),
+            Self::Grade => GradeNode::output_compatible_with_named_input(output, input_name),
+            Self::Light => LightNode::output_compatible_with_named_input(output, input_name),
+            Self::Material => MaterialNode::output_compatible_with_named_input(output, input_name),
+            Self::Primitive => {
+                PrimitiveNode::output_compatible_with_named_input(output, input_name)
+            }
+            Self::RayMarcher => {
+                RayMarcherNode::output_compatible_with_named_input(output, input_name)
+            }
+            Self::Scene => SceneNode::output_compatible_with_named_input(output, input_name),
+            Self::Texture => TextureNode::output_compatible_with_named_input(output, input_name),
         }
     }
 }

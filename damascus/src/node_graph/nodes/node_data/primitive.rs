@@ -16,7 +16,7 @@ use crate::{
         nodes::{node_data::EvaluableNode, NodeResult},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene_graph::{SceneGraph, SceneGraphLocation},
+    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     Enumerator,
 };
 
@@ -90,9 +90,9 @@ impl NodeInputData for PrimitiveInputData {
     fn default_data(&self) -> InputData {
         let default_primitive = Primitive::default();
         match self {
-            Self::Siblings => InputData::SceneGraph(SceneGraph::default()),
-            Self::Children => InputData::SceneGraph(SceneGraph::default()),
-            Self::Material => InputData::SceneGraph(SceneGraph::default()),
+            Self::Siblings => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Children => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Material => InputData::SceneGraphId(SceneGraphId::None),
             Self::Shape => InputData::Enum(default_primitive.shape.into()),
             Self::Radius => InputData::Float(0.5),
             Self::Radii => InputData::Vec3(Vec3::splat(0.5)),
@@ -156,7 +156,7 @@ impl NodeInputData for PrimitiveInputData {
 )]
 pub enum PrimitiveOutputData {
     #[default]
-    SceneGraph,
+    Id,
 }
 
 impl Enumerator for PrimitiveOutputData {}
@@ -164,7 +164,7 @@ impl Enumerator for PrimitiveOutputData {}
 impl NodeOutputData for PrimitiveOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::SceneGraph => OutputData::SceneGraph,
+            Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Primitive),
         }
     }
 }
@@ -174,6 +174,20 @@ pub struct PrimitiveNode;
 impl EvaluableNode for PrimitiveNode {
     type Inputs = PrimitiveInputData;
     type Outputs = PrimitiveOutputData;
+
+    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+        match input {
+            Self::Inputs::Siblings | Self::Inputs::Children => match *output {
+                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
+                _ => false,
+            },
+            Self::Inputs::Material => {
+                *output == OutputData::SceneGraphId(SceneGraphIdType::Material)
+            }
+            Self::Inputs::Axis => *output == OutputData::Mat4,
+            _ => false,
+        }
+    }
 
     fn evaluate(
         scene_graph: &mut SceneGraph,

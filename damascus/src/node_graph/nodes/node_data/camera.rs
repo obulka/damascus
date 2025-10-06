@@ -14,7 +14,7 @@ use crate::{
         nodes::NodeResult,
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene_graph::{SceneGraph, SceneGraphLocation},
+    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     Enumerator,
 };
 
@@ -94,7 +94,7 @@ impl Enumerator for CameraOutputData {}
 impl NodeOutputData for CameraOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Id => OutputData::SceneGraphLocation,
+            Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Camera),
         }
     }
 }
@@ -111,7 +111,7 @@ impl EvaluableNode for CameraNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphLocation(SceneGraphLocation::CameraId(
+            Self::Outputs::Id => Ok(InputData::SceneGraphId(SceneGraphId::Camera(
                 scene_graph.add_camera(Camera::new(
                     Self::Inputs::FocalLength
                         .get_data(data_map)?

@@ -6,13 +6,14 @@
 use std::collections::{HashMap, HashSet};
 
 use crevice::std430::AsStd430;
+use glam::Mat4;
 use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{
     camera::{Camera, CameraId, Cameras, Std430GPUCamera},
-    geometry::primitives::{Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
+    geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights, Std430GPULight},
     materials::{Material, MaterialId, Materials, Std430GPUMaterial},
@@ -105,12 +106,23 @@ pub struct GPUSceneGraphParameters {
     num_non_physical_lights: u32,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct GPUScene {
     pub primitives: Vec<Std430GPUPrimitive>,
     pub lights: Vec<Std430GPULight>,
     pub materials: Vec<Std430GPUMaterial>,
     pub emissive_primitive_indices: Vec<u32>,
+}
+
+impl Default for GPUScene {
+    fn default() -> Self {
+        Self {
+            primitives: vec![],
+            lights: vec![],
+            materials: vec![Material::default().as_std430()],
+            emissive_primitive_indices: vec![],
+        }
+    }
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -243,22 +255,72 @@ impl SceneGraph {
         count
     }
 
+    /// Apply a closure to all descendants of `node_id` in depth first order
+    fn build_gpu_scene_from_location(
+        &self,
+        scene_graph_id: &SceneGraphId,
+        transform: &Mat4,
+        material_ids: &mut HashMap<MaterialId, u32>,
+        gpu_scene: &mut GPUScene,
+    ) {
+        if let Some(children) = self.children(scene_graph_id) {
+            for child_id in children.iter() {
+                match child_id {
+                    SceneGraphId::Camera(camera_id) => {}
+                    SceneGraphId::Light(light_id) => {}
+                    SceneGraphId::Primitive(primitive_id) => {
+                        let mut primitive: Primitive = self[*primitive_id];
+
+                        primitive.local_to_world *= transform;
+
+                        let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
+
+                        if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
+                            if !material_ids.contains_key(material_id) {
+                                gpu_scene.materials.push(self[*material_id].as_std430());
+
+                                let material_index = gpu_scene.materials.len() as u32;
+                                material_ids.insert(*material_id, material_index);
+
+                                gpu_primitive.material_id = material_index;
+                            } else if let Some(material_index) = material_ids.get(material_id) {
+                                gpu_primitive.material_id = *material_index;
+                            }
+                        }
+
+                        let num_primitives: usize = gpu_scene.primitives.len();
+                        gpu_primitive.id = num_primitives as u32 + 1;
+                        gpu_scene.primitives.push(gpu_primitive.as_std430());
+
+                        self.build_gpu_scene_from_location(
+                            child_id,
+                            &primitive.local_to_world,
+                            material_ids,
+                            gpu_scene,
+                        );
+
+                        gpu_primitive.num_descendants =
+                            gpu_scene.primitives.len() as u32 - gpu_primitive.id;
+
+                        gpu_scene.primitives[num_primitives] = gpu_primitive.as_std430();
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
     pub fn create_gpu_scene(&self) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
+        let mut material_ids = HashMap::<MaterialId, u32>::new();
 
         for root_id in self.root_ids.iter() {
-            match root_id {
-                SceneGraphId::Camera(camera_id) => {}
-                SceneGraphId::Light(light_id) => {}
-                SceneGraphId::Primitive(primitive_id) => {
-                    if let Some(material_id) = self.primitive_materials.get(primitive_id) {}
-
-                    let mut gpu_primitive = primitive.to_gpu();
-                    gpu_primitive.id = (index + 1) as u32;
-                    gpu_primitive.as_std430()
-                }
-                _ => {}
-            }
+            self.build_gpu_scene_from_location(
+                root_id,
+                &Mat4::IDENTITY,
+                &mut material_ids,
+                &mut gpu_scene,
+            );
         }
 
         if gpu_scene.primitives.is_empty() {
@@ -266,9 +328,6 @@ impl SceneGraph {
         }
         if gpu_scene.lights.is_empty() {
             gpu_scene.lights.push(Light::default().as_std430());
-        }
-        if gpu_scene.materials.is_empty() {
-            gpu_scene.materials.push(Material::default().as_std430());
         }
 
         gpu_scene
@@ -332,7 +391,7 @@ impl DualDevice<GPUSceneGraphParameters, Std430GPUSceneGraphParameters> for Scen
         GPUSceneGraphParameters {
             num_primitives: self.primitives.len() as u32,
             num_lights: (self.lights.len() + self.num_emissive_primitives()) as u32,
-            num_materials: self.materials.len() as u32,
+            num_materials: self.materials.len() as u32 + 1,
             num_non_physical_lights: self.lights.len() as u32,
         }
     }

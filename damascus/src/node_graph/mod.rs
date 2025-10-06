@@ -292,6 +292,7 @@ impl NodeGraph {
             .collect()
     }
 
+    /// Apply a closure to all descendants of `node_id` in breadth first order
     pub fn for_each_descendant<B, F>(&self, node_id: NodeId, closure: F) -> Vec<B>
     where
         F: Fn(NodeId) -> B,
@@ -326,12 +327,12 @@ impl NodeGraph {
         false
     }
 
-    /// Get all descendant nodes of `node_id` without using recursion
+    /// Get all descendant nodes of `node_id` in breadth first order
     pub fn descendants(&self, node_id: NodeId) -> Vec<NodeId> {
         self.for_each_descendant(node_id, |descendant_id| descendant_id)
     }
 
-    /// Get all ancestor nodes of `node_id` without using recursion
+    /// Apply a closure to all ancestors of `node_id` in breadth first order
     pub fn for_each_ancestor<B, F>(&self, node_id: NodeId, closure: F) -> Vec<B>
     where
         F: Fn(NodeId) -> B,
@@ -347,7 +348,7 @@ impl NodeGraph {
         result
     }
 
-    /// Get all ancestor nodes of `node_id` without using recursion
+    /// Get all ancestor nodes of `node_id` in breadth first order
     pub fn ancestors(&self, node_id: NodeId) -> Vec<NodeId> {
         self.for_each_ancestor(node_id, |ancestor_id| ancestor_id)
     }

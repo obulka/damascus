@@ -13,19 +13,19 @@ struct Transform {
 
 struct Primitive {
     id: u32,
+    material_id: u32,
+    num_descendants: u32,
     shape: u32,
     modifiers: u32,
-    num_descendants: u32,
     negative_repetitions: vec3f,
     blend_strength: f32,
     positive_repetitions: vec3f,
     wall_thickness: f32,
     spacing: vec3f,
     edge_radius: f32,
-    dimensional_data: vec4f,
     elongation: vec3f,
+    dimensional_data: vec4f,
     transform: Transform,
-    material: Material,
 }
 
 

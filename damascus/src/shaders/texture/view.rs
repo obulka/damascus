@@ -3,9 +3,9 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{EnumCount, EnumIter, EnumString};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::shaders::PreprocessorDirectives;
+use crate::{shaders::PreprocessorDirectives, Enumerator};
 
 pub const TEXTURE_VIEWER_VERTEX_SHADER: &str =
     include_str!("../wgsl/pipelines/texture/view/vertex_shader.wgsl");
@@ -14,16 +14,25 @@ pub const TEXTURE_VIEWER_FRAGMENT_SHADER: &str =
 
 #[derive(
     Debug,
+    Display,
+    Default,
     Clone,
-    Eq,
-    PartialEq,
-    Hash,
-    EnumString,
+    Copy,
     EnumCount,
     EnumIter,
+    EnumString,
+    Eq,
+    Hash,
+    PartialEq,
+    PartialOrd,
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum TextureViewerPreprocessorDirectives {}
+pub enum TextureViewerPreprocessorDirectives {
+    #[default]
+    None,
+}
+
+impl Enumerator for TextureViewerPreprocessorDirectives {}
 
 impl PreprocessorDirectives for TextureViewerPreprocessorDirectives {}

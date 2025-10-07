@@ -15,14 +15,13 @@ use super::{
 };
 
 use crate::{
-    scene_graph::SceneGraph,
+    scene_graph::GPUScene,
     shaders::{
         ray_marcher::{
-            all_directives_for_light, all_directives_for_material, all_directives_for_primitive,
-            all_directives_for_ray_marcher, directives_for_light, directives_for_material,
-            directives_for_primitive, directives_for_ray_marcher, RayMarcherPreprocessorDirectives,
-            RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
+            RayMarcherPreprocessorDirectives, RAY_MARCHER_FRAGMENT_SHADER,
+            RAY_MARCHER_VERTEX_SHADER,
         },
+        scene::ScenePreprocessorDirectives,
         ShaderSource,
     },
     textures::AOVs,
@@ -83,7 +82,8 @@ pub struct GPURayMarcherRenderData {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcherRenderData {
-    pub scene_graph: SceneGraph,
+    #[serde(skip)]
+    pub gpu_scene: GPUScene,
     pub max_ray_steps: u32,
     pub max_bounces: u32,
     pub hit_tolerance: f32,
@@ -103,7 +103,7 @@ pub struct RayMarcherRenderData {
 impl Default for RayMarcherRenderData {
     fn default() -> Self {
         Self {
-            scene_graph: SceneGraph::default(),
+            gpu_scene: GPUScene::default(),
             max_ray_steps: 1000,
             max_bounces: 1,
             hit_tolerance: 0.0001,
@@ -208,47 +208,86 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
             .compilation_data
             .enable_dynamic_recompilation_for_ray_marcher
         {
-            preprocessor_directives.extend(all_directives_for_ray_marcher());
+            preprocessor_directives
+                .extend(RayMarcherPreprocessorDirectives::all_directives_for_ray_marcher());
         } else {
-            preprocessor_directives.extend(directives_for_ray_marcher(&self.render_data));
+            preprocessor_directives.extend(
+                RayMarcherPreprocessorDirectives::directives_for_ray_marcher(&self.render_data),
+            );
         }
 
         if !self
             .compilation_data
             .enable_dynamic_recompilation_for_primitives
         {
-            preprocessor_directives.extend(all_directives_for_primitive());
+            preprocessor_directives.extend(
+                ScenePreprocessorDirectives::all_directives_for_primitive()
+                    .iter()
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         }
 
         if !self
             .compilation_data
             .enable_dynamic_recompilation_for_materials
         {
-            preprocessor_directives.extend(all_directives_for_material());
+            preprocessor_directives.extend(
+                ScenePreprocessorDirectives::all_directives_for_material()
+                    .iter()
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         } else {
-            for material in self.render_data.scene_graph.iter_materials() {
-                preprocessor_directives.extend(directives_for_material(material));
-            }
+            preprocessor_directives.extend(
+                self.render_data
+                    .gpu_scene
+                    .preprocessor_directives
+                    .intersection(&ScenePreprocessorDirectives::all_directives_for_material())
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         }
 
         if !self
             .compilation_data
             .enable_dynamic_recompilation_for_lights
         {
-            preprocessor_directives.extend(all_directives_for_light());
+            preprocessor_directives.extend(
+                ScenePreprocessorDirectives::all_directives_for_light()
+                    .iter()
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         } else {
-            for light in self.render_data.scene_graph.iter_lights() {
-                preprocessor_directives.extend(directives_for_light(light));
-            }
+            preprocessor_directives.extend(
+                self.render_data
+                    .gpu_scene
+                    .preprocessor_directives
+                    .intersection(&ScenePreprocessorDirectives::all_directives_for_light())
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         }
 
         if self
             .compilation_data
             .enable_dynamic_recompilation_for_primitives
         {
-            for primitive in self.render_data.scene_graph.iter_primitives() {
-                preprocessor_directives.extend(directives_for_primitive(&primitive));
-            }
+            preprocessor_directives.extend(
+                self.render_data
+                    .gpu_scene
+                    .preprocessor_directives
+                    .intersection(&ScenePreprocessorDirectives::all_directives_for_primitive())
+                    .map(|scene_directive| {
+                        RayMarcherPreprocessorDirectives::from(*scene_directive)
+                    }),
+            );
         }
 
         preprocessor_directives
@@ -308,9 +347,9 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&RayMarcherConstructionData {
-            num_primitives: self.render_data.scene_graph.num_primitives(),
-            num_lights: self.render_data.scene_graph.num_lights(),
-            num_emissive_primitives: self.render_data.scene_graph.num_emissive_primitives(),
+            num_primitives: self.render_data.gpu_scene.primitives.len(),
+            num_lights: self.render_data.gpu_scene.lights.len(),
+            num_emissive_primitives: self.render_data.gpu_scene.emissive_primitive_indices.len(),
         })
     }
 
@@ -330,7 +369,7 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene_graph.as_std430()]).to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.array_lengths]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
@@ -340,8 +379,7 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene_graph.gpu_render_camera()])
-                    .to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.render_camera]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
@@ -351,35 +389,26 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn storage_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
             BufferDescriptor {
-                data: bytemuck::cast_slice(
-                    self.render_data
-                        .scene_graph
-                        .create_gpu_primitives()
-                        .as_slice(),
-                )
-                .to_vec(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            BufferDescriptor {
-                data: bytemuck::cast_slice(
-                    self.render_data.scene_graph.create_gpu_lights().as_slice(),
-                )
-                .to_vec(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.scene_graph.gpu_atmosphere()])
+                data: bytemuck::cast_slice(self.render_data.gpu_scene.primitives.as_slice())
                     .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
+                data: bytemuck::cast_slice(self.render_data.gpu_scene.lights.as_slice()).to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.atmosphere]).to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
                 data: bytemuck::cast_slice(
                     self.render_data
-                        .scene_graph
-                        .emissive_primitive_indices()
+                        .gpu_scene
+                        .emissive_primitive_indices
                         .as_slice(),
                 )
                 .to_vec(),
@@ -418,8 +447,8 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
 }
 
 impl RayMarcher {
-    pub fn scene_graph(mut self, scene_graph: SceneGraph) -> Self {
-        self.render_data.scene_graph = scene_graph;
+    pub fn gpu_scene(mut self, gpu_scene: GPUScene) -> Self {
+        self.render_data.gpu_scene = gpu_scene;
         self
     }
 

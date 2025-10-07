@@ -11,12 +11,13 @@ use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SparseSecondaryMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use super::{
+use crate::{
     camera::{Camera, CameraId, Cameras, Std430GPUCamera},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights, Std430GPULight},
     materials::{Material, MaterialId, Materials, Std430GPUMaterial},
+    shaders::scene::ScenePreprocessorDirectives,
     DualDevice, Enumerator,
 };
 
@@ -99,7 +100,7 @@ impl SceneGraphIdType {
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430)]
-pub struct GPUSceneGraphParameters {
+pub struct GPUSceneArrayLengths {
     num_primitives: u32,
     num_lights: u32,
     num_materials: u32,
@@ -112,6 +113,10 @@ pub struct GPUScene {
     pub lights: Vec<Std430GPULight>,
     pub materials: Vec<Std430GPUMaterial>,
     pub emissive_primitive_indices: Vec<u32>,
+    pub atmosphere: Std430GPUMaterial,
+    pub render_camera: Std430GPUCamera,
+    pub array_lengths: Std430GPUSceneArrayLengths,
+    pub preprocessor_directives: HashSet<ScenePreprocessorDirectives>,
 }
 
 impl Default for GPUScene {
@@ -121,7 +126,57 @@ impl Default for GPUScene {
             lights: vec![],
             materials: vec![Material::default().as_std430()],
             emissive_primitive_indices: vec![],
+            atmosphere: Material::default().as_std430(),
+            render_camera: Camera::default().as_std430(),
+            array_lengths: GPUSceneArrayLengths {
+                num_primitives: 0,
+                num_lights: 0,
+                num_materials: 1,
+                num_non_physical_lights: 0,
+            }
+            .as_std430(),
+            preprocessor_directives: HashSet::<ScenePreprocessorDirectives>::new(),
         }
+    }
+}
+
+impl PartialEq for GPUScene {
+    fn eq(&self, other: &Self) -> bool {
+        self.atmosphere.as_bytes() == other.atmosphere.as_bytes()
+            && self.render_camera.as_bytes() == other.render_camera.as_bytes()
+            && self.array_lengths.as_bytes() == other.array_lengths.as_bytes()
+            && self.preprocessor_directives == other.preprocessor_directives
+            && self.emissive_primitive_indices == other.emissive_primitive_indices
+            && self
+                .primitives
+                .iter()
+                .map(|primitive| primitive.as_bytes())
+                .collect::<Vec<_>>()
+                == other
+                    .primitives
+                    .iter()
+                    .map(|primitive| primitive.as_bytes())
+                    .collect::<Vec<_>>()
+            && self
+                .lights
+                .iter()
+                .map(|light| light.as_bytes())
+                .collect::<Vec<_>>()
+                == other
+                    .lights
+                    .iter()
+                    .map(|light| light.as_bytes())
+                    .collect::<Vec<_>>()
+            && self
+                .materials
+                .iter()
+                .map(|material| material.as_bytes())
+                .collect::<Vec<_>>()
+                == other
+                    .materials
+                    .iter()
+                    .map(|material| material.as_bytes())
+                    .collect::<Vec<_>>()
     }
 }
 
@@ -261,6 +316,9 @@ impl SceneGraph {
         scene_graph_id: &SceneGraphId,
         transform: &Mat4,
         material_ids: &mut HashMap<MaterialId, u32>,
+        primitive_ids: &mut HashSet<PrimitiveId>,
+        light_ids: &mut HashSet<LightId>,
+        camera_ids: &mut HashSet<CameraId>,
         gpu_scene: &mut GPUScene,
     ) {
         if let Some(children) = self.children(scene_graph_id) {
@@ -269,6 +327,8 @@ impl SceneGraph {
                     SceneGraphId::Camera(camera_id) => {}
                     SceneGraphId::Light(light_id) => {}
                     SceneGraphId::Primitive(primitive_id) => {
+                        primitive_ids.insert(*primitive_id);
+
                         let mut primitive: Primitive = self[*primitive_id];
 
                         primitive.local_to_world *= transform;
@@ -296,6 +356,9 @@ impl SceneGraph {
                             child_id,
                             &primitive.local_to_world,
                             material_ids,
+                            primitive_ids,
+                            light_ids,
+                            camera_ids,
                             gpu_scene,
                         );
 
@@ -313,12 +376,19 @@ impl SceneGraph {
     pub fn create_gpu_scene(&self) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
         let mut material_ids = HashMap::<MaterialId, u32>::new();
+        let mut primitive_ids = HashSet::<PrimitiveId>::new();
+        let mut light_ids = HashSet::<LightId>::new();
+        let mut camera_ids = HashSet::<CameraId>::new();
 
         for root_id in self.root_ids.iter() {
+            // TODO root_id itself is not getting added
             self.build_gpu_scene_from_location(
                 root_id,
                 &Mat4::IDENTITY,
                 &mut material_ids,
+                &mut primitive_ids,
+                &mut light_ids,
+                &mut camera_ids,
                 &mut gpu_scene,
             );
         }
@@ -329,6 +399,17 @@ impl SceneGraph {
         if gpu_scene.lights.is_empty() {
             gpu_scene.lights.push(Light::default().as_std430());
         }
+
+        gpu_scene.atmosphere = self.gpu_atmosphere();
+        gpu_scene.render_camera = self.gpu_render_camera();
+        gpu_scene.array_lengths = self.as_std430();
+
+        gpu_scene.preprocessor_directives = self
+            .directives_for_primitives(&primitive_ids)
+            .into_iter()
+            .chain(self.directives_for_materials(&material_ids.keys().copied().collect()))
+            .chain(self.directives_for_lights(&light_ids))
+            .collect();
 
         gpu_scene
     }
@@ -384,11 +465,50 @@ impl SceneGraph {
     pub fn iter_lights(&self) -> impl Iterator<Item = &Light> + '_ {
         self.lights.iter().map(|(_light_id, light)| light)
     }
+
+    pub fn directives_for_primitives(
+        &self,
+        primitive_ids: &HashSet<PrimitiveId>,
+    ) -> HashSet<ScenePreprocessorDirectives> {
+        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
+        for primitive_id in primitive_ids.iter() {
+            directives.extend(ScenePreprocessorDirectives::directives_for_primitive(
+                &self[*primitive_id],
+            ));
+        }
+        directives
+    }
+
+    pub fn directives_for_materials(
+        &self,
+        material_ids: &HashSet<MaterialId>,
+    ) -> HashSet<ScenePreprocessorDirectives> {
+        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
+        for material_id in material_ids.iter() {
+            directives.extend(ScenePreprocessorDirectives::directives_for_material(
+                &self[*material_id],
+            ));
+        }
+        directives
+    }
+
+    pub fn directives_for_lights(
+        &self,
+        light_ids: &HashSet<LightId>,
+    ) -> HashSet<ScenePreprocessorDirectives> {
+        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
+        for light_id in light_ids.iter() {
+            directives.extend(ScenePreprocessorDirectives::directives_for_light(
+                &self[*light_id],
+            ));
+        }
+        directives
+    }
 }
 
-impl DualDevice<GPUSceneGraphParameters, Std430GPUSceneGraphParameters> for SceneGraph {
-    fn to_gpu(&self) -> GPUSceneGraphParameters {
-        GPUSceneGraphParameters {
+impl DualDevice<GPUSceneArrayLengths, Std430GPUSceneArrayLengths> for SceneGraph {
+    fn to_gpu(&self) -> GPUSceneArrayLengths {
+        GPUSceneArrayLengths {
             num_primitives: self.primitives.len() as u32,
             num_lights: (self.lights.len() + self.num_emissive_primitives()) as u32,
             num_materials: self.materials.len() as u32 + 1,

@@ -10,6 +10,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString, IntoEnumIterator};
 use crate::Enumerator;
 
 pub mod ray_marcher;
+pub mod scene;
 pub mod texture;
 
 #[derive(
@@ -84,16 +85,7 @@ impl Includes {
 }
 
 pub trait PreprocessorDirectives:
-    Clone
-    + Debug
-    + Eq
-    + PartialEq
-    + Hash
-    + FromStr
-    + EnumCount
-    + IntoEnumIterator
-    + serde::Serialize
-    + for<'a> serde::Deserialize<'a>
+    Enumerator + Clone + Debug + Eq + Hash + serde::Serialize + for<'a> serde::Deserialize<'a>
 {
 }
 
@@ -263,25 +255,28 @@ pub fn process_shader_source<Directives: PreprocessorDirectives>(
 mod tests {
     use super::*;
     use ray_marcher::*;
+    use scene::*;
 
     #[test]
     fn test_all_directives_covered() {
-        let mut preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives> =
-            all_directives_for_material();
-        preprocessor_directives.extend(all_directives_for_primitive());
-        preprocessor_directives.extend(all_directives_for_ray_marcher());
-        preprocessor_directives.extend(all_directives_for_light());
+        let mut scene_directives: HashSet<ScenePreprocessorDirectives> =
+            ScenePreprocessorDirectives::all_directives_for_material();
+        scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_primitive());
+        scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_light());
+
+        let ray_marcher_directives: HashSet<RayMarcherPreprocessorDirectives> =
+            RayMarcherPreprocessorDirectives::all_directives_for_ray_marcher();
+
         assert_eq!(
-            preprocessor_directives.len(),
-            RayMarcherPreprocessorDirectives::COUNT
+            ray_marcher_directives.len() + scene_directives.len(),
+            RayMarcherPreprocessorDirectives::COUNT + ScenePreprocessorDirectives::COUNT
         );
     }
 
     #[test]
     fn test_ifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
@@ -308,9 +303,8 @@ mod tests {
 
     #[test]
     fn test_else_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
             "keep;",
@@ -341,11 +335,9 @@ mod tests {
 
     #[test]
     fn test_elifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
+        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
@@ -383,8 +375,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives
-            .remove(&RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.remove(&ScenePreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -408,8 +399,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives
-            .remove(&RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
+        preprocessor_directives.remove(&ScenePreprocessorDirectives::EnableSpecularColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -423,11 +413,9 @@ mod tests {
 
     #[test]
     fn test_nested_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
-        preprocessor_directives
-            .insert(RayMarcherPreprocessorDirectives::EnableSpecularColourTexture);
+        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableSpecularColourTexture);
 
         let mut source = vec![
             "keep;",
@@ -479,8 +467,7 @@ mod tests {
             "#endif",
             "keep;",
         ];
-        preprocessor_directives
-            .remove(&RayMarcherPreprocessorDirectives::EnableDiffuseColourTexture);
+        preprocessor_directives.remove(&ScenePreprocessorDirectives::EnableDiffuseColourTexture);
         let result = preprocess_directives(
             source.into_iter().map(|line| line.to_string()).collect(),
             &preprocessor_directives,
@@ -554,7 +541,7 @@ mod tests {
             "}",
         ];
 
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
 
         let mut expected_result = vec![
             "fn transform_position(",
@@ -597,7 +584,7 @@ mod tests {
 
         assert_eq!(result_string, expected_result_string);
 
-        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableFiniteRepetition);
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableFiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",
@@ -648,7 +635,7 @@ mod tests {
 
         preprocessor_directives.clear();
 
-        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableInfiniteRepetition);
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableInfiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",
@@ -698,7 +685,7 @@ mod tests {
 
         assert_eq!(result_string, expected_result_string);
 
-        preprocessor_directives.insert(RayMarcherPreprocessorDirectives::EnableFiniteRepetition);
+        preprocessor_directives.insert(ScenePreprocessorDirectives::EnableFiniteRepetition);
 
         expected_result = vec![
             "fn transform_position(",

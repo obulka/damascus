@@ -256,7 +256,7 @@ impl SceneGraph {
     }
 
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order
-    fn build_gpu_scene_from_location(
+    fn build_gpu_scene_from_locations(
         &self,
         scene_graph_ids: &Vec<SceneGraphId>,
         transform: &Mat4,
@@ -313,7 +313,7 @@ impl SceneGraph {
                     gpu_scene.primitives.push(gpu_primitive);
 
                     if let Some(children) = self.children(scene_graph_id) {
-                        self.build_gpu_scene_from_location(
+                        self.build_gpu_scene_from_locations(
                             children,
                             &primitive.local_to_world,
                             material_ids,
@@ -339,7 +339,7 @@ impl SceneGraph {
         let mut light_ids = HashSet::<LightId>::new();
         let mut camera_ids = HashMap::<CameraId, usize>::new();
 
-        self.build_gpu_scene_from_location(
+        self.build_gpu_scene_from_locations(
             &self.root_ids,
             &Mat4::IDENTITY,
             &mut material_ids,

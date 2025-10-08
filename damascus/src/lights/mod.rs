@@ -4,11 +4,11 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
-use glam::Vec3;
+use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{DualDevice, Enumerator};
+use crate::{DualDevice, Enumerator, Transformable};
 
 slotmap::new_key_type! { pub struct LightId; }
 
@@ -70,6 +70,18 @@ impl Default for Light {
             shadow_hardness: 1.,
             soften_shadows: false,
         }
+    }
+}
+
+impl Transformable for Light {
+    fn transform(&mut self, local_to_world: &Mat4) {
+        self.dimensional_data = match self.light_type {
+            LightType::Directional => (local_to_world * Vec4::from((self.dimensional_data, 0.)))
+                .xyz()
+                .normalize(),
+            LightType::Point => (local_to_world * Vec4::from((self.dimensional_data, 1.))).xyz(),
+            _ => self.dimensional_data,
+        };
     }
 }
 

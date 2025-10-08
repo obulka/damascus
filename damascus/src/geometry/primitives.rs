@@ -11,7 +11,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 use super::{BlendType, Repetition, Transform};
 use crate::{
     materials::{GPUMaterial, Material},
-    DualDevice, Enumerator,
+    DualDevice, Enumerator, Transformable,
 };
 
 slotmap::new_key_type! { pub struct PrimitiveId; }
@@ -122,6 +122,12 @@ impl Default for Primitive {
             bounding_volume: false,
             dimensional_data: 0.5 * Vec4::X,
         }
+    }
+}
+
+impl Transformable for Primitive {
+    fn transform(&mut self, local_to_world: &Mat4) {
+        self.local_to_world *= local_to_world;
     }
 }
 

@@ -5,7 +5,7 @@
 
 use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
 
-use strum::{Display, EnumCount, EnumIter, EnumString, IntoEnumIterator};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::Enumerator;
 

@@ -11,6 +11,7 @@ use std::{
 };
 
 use crevice::std430::AsStd430;
+use glam::Mat4;
 use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
@@ -38,6 +39,10 @@ pub trait DualDevice<
     fn as_std430(&self) -> S {
         self.to_gpu().as_std430()
     }
+}
+
+pub trait Transformable {
+    fn transform(&mut self, local_to_world: &Mat4);
 }
 
 pub trait Enumerator:

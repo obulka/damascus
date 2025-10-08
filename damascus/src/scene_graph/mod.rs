@@ -18,7 +18,7 @@ use crate::{
     lights::{GPULight, Light, LightId, Lights},
     materials::{GPUMaterial, Material, MaterialId, Materials},
     shaders::scene::ScenePreprocessorDirectives,
-    DualDevice, Enumerator,
+    DualDevice, Enumerator, Transformable,
 };
 
 #[derive(
@@ -109,12 +109,13 @@ pub struct GPUSceneArrayLengths {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUScene {
+    pub cameras: Vec<GPUCamera>,
     pub primitives: Vec<GPUPrimitive>,
     pub lights: Vec<GPULight>,
     pub materials: Vec<GPUMaterial>,
     pub emissive_primitive_indices: Vec<u32>,
-    pub atmosphere: GPUMaterial,
-    pub render_camera: GPUCamera,
+    pub render_camera: usize,
+    pub atmosphere: usize,
     pub array_lengths: GPUSceneArrayLengths,
     pub preprocessor_directives: HashSet<ScenePreprocessorDirectives>,
 }
@@ -122,12 +123,13 @@ pub struct GPUScene {
 impl Default for GPUScene {
     fn default() -> Self {
         Self {
+            cameras: vec![Camera::default().to_gpu()],
             primitives: vec![],
             lights: vec![],
             materials: vec![Material::default().to_gpu()],
             emissive_primitive_indices: vec![],
-            atmosphere: Material::default().to_gpu(),
-            render_camera: Camera::default().to_gpu(),
+            render_camera: 0,
+            atmosphere: 0,
             array_lengths: GPUSceneArrayLengths {
                 num_primitives: 0,
                 num_lights: 0,
@@ -160,22 +162,6 @@ impl PartialEq for SceneGraph {
 }
 
 impl SceneGraph {
-    pub fn gpu_render_camera(&self) -> GPUCamera {
-        if let Some(render_camera_id) = self.render_camera_id {
-            return self[render_camera_id].to_gpu();
-        }
-        Camera::default().to_gpu()
-    }
-
-    // TODO Could make this return an Option instead of a default
-    // and use that to trigger a preprocessor directive
-    pub fn gpu_atmosphere(&self) -> GPUMaterial {
-        if let Some(atmosphere_id) = self.atmosphere_id {
-            return self[atmosphere_id].to_gpu();
-        }
-        Material::default().to_gpu()
-    }
-
     pub fn render_camera(&self) -> Option<&Camera> {
         if let Some(render_camera_id) = self.render_camera_id {
             return Some(&self[render_camera_id]);
@@ -269,51 +255,66 @@ impl SceneGraph {
         count
     }
 
-    /// Apply a closure to all descendants of `node_id` in depth first order
+    /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order
     fn build_gpu_scene_from_location(
         &self,
-        scene_graph_id: &SceneGraphId,
+        scene_graph_ids: &Vec<SceneGraphId>,
         transform: &Mat4,
-        material_ids: &mut HashMap<MaterialId, u32>,
+        material_ids: &mut HashMap<MaterialId, usize>,
         primitive_ids: &mut HashSet<PrimitiveId>,
         light_ids: &mut HashSet<LightId>,
-        camera_ids: &mut HashSet<CameraId>,
+        camera_ids: &mut HashMap<CameraId, usize>,
         gpu_scene: &mut GPUScene,
     ) {
-        if let Some(children) = self.children(scene_graph_id) {
-            for child_id in children.iter() {
-                match child_id {
-                    SceneGraphId::Camera(camera_id) => {}
-                    SceneGraphId::Light(light_id) => {}
-                    SceneGraphId::Primitive(primitive_id) => {
-                        primitive_ids.insert(*primitive_id);
+        for scene_graph_id in scene_graph_ids.iter() {
+            match scene_graph_id {
+                SceneGraphId::Camera(camera_id) => {
+                    if !camera_ids.contains_key(camera_id) {
+                        camera_ids.insert(*camera_id, gpu_scene.cameras.len());
+                    }
 
-                        let mut primitive: Primitive = self[*primitive_id];
+                    let mut camera: Camera = self[*camera_id];
+                    camera.transform(transform);
 
-                        primitive.local_to_world *= transform;
+                    gpu_scene.cameras.push(camera.to_gpu());
+                }
+                SceneGraphId::Light(light_id) => {
+                    light_ids.insert(*light_id);
 
-                        let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
+                    let mut light: Light = self[*light_id];
+                    light.transform(transform);
 
-                        if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
-                            if !material_ids.contains_key(material_id) {
-                                gpu_scene.materials.push(self[*material_id].to_gpu());
+                    gpu_scene.lights.push(light.to_gpu());
+                }
+                SceneGraphId::Primitive(primitive_id) => {
+                    primitive_ids.insert(*primitive_id);
 
-                                let material_index = gpu_scene.materials.len() as u32;
-                                material_ids.insert(*material_id, material_index);
+                    let mut primitive: Primitive = self[*primitive_id];
+                    primitive.transform(transform);
 
-                                gpu_primitive.material_id = material_index;
-                            } else if let Some(material_index) = material_ids.get(material_id) {
-                                gpu_primitive.material_id = *material_index;
-                            }
+                    let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
+
+                    if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
+                        if !material_ids.contains_key(material_id) {
+                            let material_index: usize = gpu_scene.materials.len();
+                            gpu_scene.materials.push(self[*material_id].to_gpu());
+
+                            material_ids.insert(*material_id, material_index);
+
+                            gpu_primitive.material_id = material_index as u32;
+                        } else if let Some(material_index) = material_ids.get(material_id) {
+                            gpu_primitive.material_id = *material_index as u32;
                         }
+                    }
 
-                        let num_primitives: usize = gpu_scene.primitives.len();
-                        let gpu_primitive_id: u32 = num_primitives as u32 + 1;
-                        gpu_primitive.id = gpu_primitive_id;
-                        gpu_scene.primitives.push(gpu_primitive);
+                    let num_primitives: usize = gpu_scene.primitives.len();
+                    let gpu_primitive_id: u32 = num_primitives as u32 + 1;
+                    gpu_primitive.id = gpu_primitive_id;
+                    gpu_scene.primitives.push(gpu_primitive);
 
+                    if let Some(children) = self.children(scene_graph_id) {
                         self.build_gpu_scene_from_location(
-                            child_id,
+                            children,
                             &primitive.local_to_world,
                             material_ids,
                             primitive_ids,
@@ -321,34 +322,49 @@ impl SceneGraph {
                             camera_ids,
                             gpu_scene,
                         );
-
-                        gpu_scene.primitives[num_primitives].num_descendants =
-                            gpu_scene.primitives.len() as u32 - gpu_primitive_id;
                     }
-                    _ => {}
+
+                    gpu_scene.primitives[num_primitives].num_descendants =
+                        gpu_scene.primitives.len() as u32 - gpu_primitive_id;
                 }
+                _ => {}
             }
         }
     }
 
     pub fn create_gpu_scene(&self) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
-        let mut material_ids = HashMap::<MaterialId, u32>::new();
+        let mut material_ids = HashMap::<MaterialId, usize>::new();
         let mut primitive_ids = HashSet::<PrimitiveId>::new();
         let mut light_ids = HashSet::<LightId>::new();
-        let mut camera_ids = HashSet::<CameraId>::new();
+        let mut camera_ids = HashMap::<CameraId, usize>::new();
 
-        for root_id in self.root_ids.iter() {
-            // TODO root_id itself is not getting added
-            self.build_gpu_scene_from_location(
-                root_id,
-                &Mat4::IDENTITY,
-                &mut material_ids,
-                &mut primitive_ids,
-                &mut light_ids,
-                &mut camera_ids,
-                &mut gpu_scene,
-            );
+        self.build_gpu_scene_from_location(
+            &self.root_ids,
+            &Mat4::IDENTITY,
+            &mut material_ids,
+            &mut primitive_ids,
+            &mut light_ids,
+            &mut camera_ids,
+            &mut gpu_scene,
+        );
+
+        if let Some(atmosphere_id) = self.atmosphere_id {
+            if !material_ids.contains_key(&atmosphere_id) {
+                gpu_scene.atmosphere = gpu_scene.materials.len();
+                gpu_scene.materials.push(self[atmosphere_id].to_gpu());
+            } else if let Some(atmosphere_index) = material_ids.get(&atmosphere_id) {
+                gpu_scene.atmosphere = *atmosphere_index;
+            }
+        }
+
+        if let Some(render_camera_id) = self.render_camera_id {
+            if !camera_ids.contains_key(&render_camera_id) {
+                gpu_scene.render_camera = gpu_scene.cameras.len();
+                gpu_scene.cameras.push(self[render_camera_id].to_gpu());
+            } else if let Some(render_camera_index) = camera_ids.get(&render_camera_id) {
+                gpu_scene.render_camera = *render_camera_index;
+            }
         }
 
         if gpu_scene.primitives.is_empty() {
@@ -357,9 +373,10 @@ impl SceneGraph {
         if gpu_scene.lights.is_empty() {
             gpu_scene.lights.push(Light::default().to_gpu());
         }
+        if gpu_scene.cameras.is_empty() {
+            gpu_scene.cameras.push(Camera::default().to_gpu());
+        }
 
-        gpu_scene.atmosphere = self.gpu_atmosphere();
-        gpu_scene.render_camera = self.gpu_render_camera();
         gpu_scene.array_lengths = self.to_gpu();
 
         gpu_scene.preprocessor_directives = self

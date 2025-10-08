@@ -379,8 +379,10 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.render_camera.as_std430()])
-                    .to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.cameras
+                    [self.render_data.gpu_scene.render_camera]
+                    .as_std430()])
+                .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
@@ -418,8 +420,10 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.atmosphere.as_std430()])
-                    .to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.materials
+                    [self.render_data.gpu_scene.atmosphere]
+                    .as_std430()])
+                .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },

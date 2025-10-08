@@ -7,7 +7,7 @@ use crevice::std430::AsStd430;
 use glam::{Mat4, UVec2, Vec4};
 use slotmap::SlotMap;
 
-use crate::DualDevice;
+use crate::{DualDevice, Transformable};
 
 slotmap::new_key_type! { pub struct CameraId; }
 
@@ -37,6 +37,12 @@ pub struct Camera {
     pub enable_depth_of_field: bool,
     pub latlong: bool,
     pub camera_to_world: Mat4,
+}
+
+impl Transformable for Camera {
+    fn transform(&mut self, local_to_world: &Mat4) {
+        self.camera_to_world *= local_to_world;
+    }
 }
 
 impl Default for Camera {

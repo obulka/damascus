@@ -12,7 +12,9 @@ pub mod primitives;
 use crate::Enumerator;
 
 #[repr(C)]
-#[derive(Debug, Default, Copy, Clone, AsStd430, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Default, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize,
+)]
 #[serde(default)]
 pub struct Transform {
     translation: Vec3,

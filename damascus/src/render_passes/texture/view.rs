@@ -45,7 +45,7 @@ impl Default for TextureViewerConstructionData {
 impl TextureViewerConstructionData {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewerRenderData {
     resolution: Vec2,
     frame: u32,
@@ -83,7 +83,7 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewer {
     pan: Vec2,
     zoom: f32,

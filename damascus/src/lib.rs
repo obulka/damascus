@@ -23,8 +23,15 @@ pub mod scene_graph;
 pub mod shaders;
 pub mod textures;
 
-pub trait DualDevice<G: Copy + Clone + AsStd430<Output = S>, S>:
-    Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
+pub trait DualDevice<
+    G: Copy
+        + Clone
+        + PartialEq
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + AsStd430<Output = S>,
+    S,
+>: Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
 {
     fn to_gpu(&self) -> G;
 

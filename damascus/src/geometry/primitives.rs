@@ -63,7 +63,7 @@ pub enum Shapes {
 impl Enumerator for Shapes {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUPrimitive {
     pub id: u32,
     pub material_id: u32,

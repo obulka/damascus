@@ -12,11 +12,11 @@ use slotmap::SparseSecondaryMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    camera::{Camera, CameraId, Cameras, Std430GPUCamera},
-    geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives, Std430GPUPrimitive},
+    camera::{Camera, CameraId, Cameras, GPUCamera},
+    geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     impl_slot_map_indexing,
-    lights::{Light, LightId, Lights, Std430GPULight},
-    materials::{Material, MaterialId, Materials, Std430GPUMaterial},
+    lights::{GPULight, Light, LightId, Lights},
+    materials::{GPUMaterial, Material, MaterialId, Materials},
     shaders::scene::ScenePreprocessorDirectives,
     DualDevice, Enumerator,
 };
@@ -99,7 +99,7 @@ impl SceneGraphIdType {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUSceneArrayLengths {
     num_primitives: u32,
     num_lights: u32,
@@ -107,15 +107,15 @@ pub struct GPUSceneArrayLengths {
     num_non_physical_lights: u32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUScene {
-    pub primitives: Vec<Std430GPUPrimitive>,
-    pub lights: Vec<Std430GPULight>,
-    pub materials: Vec<Std430GPUMaterial>,
+    pub primitives: Vec<GPUPrimitive>,
+    pub lights: Vec<GPULight>,
+    pub materials: Vec<GPUMaterial>,
     pub emissive_primitive_indices: Vec<u32>,
-    pub atmosphere: Std430GPUMaterial,
-    pub render_camera: Std430GPUCamera,
-    pub array_lengths: Std430GPUSceneArrayLengths,
+    pub atmosphere: GPUMaterial,
+    pub render_camera: GPUCamera,
+    pub array_lengths: GPUSceneArrayLengths,
     pub preprocessor_directives: HashSet<ScenePreprocessorDirectives>,
 }
 
@@ -124,59 +124,18 @@ impl Default for GPUScene {
         Self {
             primitives: vec![],
             lights: vec![],
-            materials: vec![Material::default().as_std430()],
+            materials: vec![Material::default().to_gpu()],
             emissive_primitive_indices: vec![],
-            atmosphere: Material::default().as_std430(),
-            render_camera: Camera::default().as_std430(),
+            atmosphere: Material::default().to_gpu(),
+            render_camera: Camera::default().to_gpu(),
             array_lengths: GPUSceneArrayLengths {
                 num_primitives: 0,
                 num_lights: 0,
                 num_materials: 1,
                 num_non_physical_lights: 0,
-            }
-            .as_std430(),
+            },
             preprocessor_directives: HashSet::<ScenePreprocessorDirectives>::new(),
         }
-    }
-}
-
-impl PartialEq for GPUScene {
-    fn eq(&self, other: &Self) -> bool {
-        self.atmosphere.as_bytes() == other.atmosphere.as_bytes()
-            && self.render_camera.as_bytes() == other.render_camera.as_bytes()
-            && self.array_lengths.as_bytes() == other.array_lengths.as_bytes()
-            && self.preprocessor_directives == other.preprocessor_directives
-            && self.emissive_primitive_indices == other.emissive_primitive_indices
-            && self
-                .primitives
-                .iter()
-                .map(|primitive| primitive.as_bytes())
-                .collect::<Vec<_>>()
-                == other
-                    .primitives
-                    .iter()
-                    .map(|primitive| primitive.as_bytes())
-                    .collect::<Vec<_>>()
-            && self
-                .lights
-                .iter()
-                .map(|light| light.as_bytes())
-                .collect::<Vec<_>>()
-                == other
-                    .lights
-                    .iter()
-                    .map(|light| light.as_bytes())
-                    .collect::<Vec<_>>()
-            && self
-                .materials
-                .iter()
-                .map(|material| material.as_bytes())
-                .collect::<Vec<_>>()
-                == other
-                    .materials
-                    .iter()
-                    .map(|material| material.as_bytes())
-                    .collect::<Vec<_>>()
     }
 }
 
@@ -201,20 +160,20 @@ impl PartialEq for SceneGraph {
 }
 
 impl SceneGraph {
-    pub fn gpu_render_camera(&self) -> Std430GPUCamera {
+    pub fn gpu_render_camera(&self) -> GPUCamera {
         if let Some(render_camera_id) = self.render_camera_id {
-            return self[render_camera_id].as_std430();
+            return self[render_camera_id].to_gpu();
         }
-        Camera::default().as_std430()
+        Camera::default().to_gpu()
     }
 
     // TODO Could make this return an Option instead of a default
     // and use that to trigger a preprocessor directive
-    pub fn gpu_atmosphere(&self) -> Std430GPUMaterial {
+    pub fn gpu_atmosphere(&self) -> GPUMaterial {
         if let Some(atmosphere_id) = self.atmosphere_id {
-            return self[atmosphere_id].as_std430();
+            return self[atmosphere_id].to_gpu();
         }
-        Material::default().as_std430()
+        Material::default().to_gpu()
     }
 
     pub fn render_camera(&self) -> Option<&Camera> {
@@ -337,7 +296,7 @@ impl SceneGraph {
 
                         if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
                             if !material_ids.contains_key(material_id) {
-                                gpu_scene.materials.push(self[*material_id].as_std430());
+                                gpu_scene.materials.push(self[*material_id].to_gpu());
 
                                 let material_index = gpu_scene.materials.len() as u32;
                                 material_ids.insert(*material_id, material_index);
@@ -349,8 +308,9 @@ impl SceneGraph {
                         }
 
                         let num_primitives: usize = gpu_scene.primitives.len();
-                        gpu_primitive.id = num_primitives as u32 + 1;
-                        gpu_scene.primitives.push(gpu_primitive.as_std430());
+                        let gpu_primitive_id: u32 = num_primitives as u32 + 1;
+                        gpu_primitive.id = gpu_primitive_id;
+                        gpu_scene.primitives.push(gpu_primitive);
 
                         self.build_gpu_scene_from_location(
                             child_id,
@@ -362,10 +322,8 @@ impl SceneGraph {
                             gpu_scene,
                         );
 
-                        gpu_primitive.num_descendants =
-                            gpu_scene.primitives.len() as u32 - gpu_primitive.id;
-
-                        gpu_scene.primitives[num_primitives] = gpu_primitive.as_std430();
+                        gpu_scene.primitives[num_primitives].num_descendants =
+                            gpu_scene.primitives.len() as u32 - gpu_primitive_id;
                     }
                     _ => {}
                 }
@@ -394,15 +352,15 @@ impl SceneGraph {
         }
 
         if gpu_scene.primitives.is_empty() {
-            gpu_scene.primitives.push(Primitive::default().as_std430());
+            gpu_scene.primitives.push(Primitive::default().to_gpu());
         }
         if gpu_scene.lights.is_empty() {
-            gpu_scene.lights.push(Light::default().as_std430());
+            gpu_scene.lights.push(Light::default().to_gpu());
         }
 
         gpu_scene.atmosphere = self.gpu_atmosphere();
         gpu_scene.render_camera = self.gpu_render_camera();
-        gpu_scene.array_lengths = self.as_std430();
+        gpu_scene.array_lengths = self.to_gpu();
 
         gpu_scene.preprocessor_directives = self
             .directives_for_primitives(&primitive_ids)

@@ -11,7 +11,7 @@ use super::{GPUProceduralTexture, ProceduralTexture};
 use crate::DualDevice;
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUMaterial {
     diffuse_colour: Vec3,
     specular_probability: f32,

@@ -37,7 +37,7 @@ pub enum AOVs {
 impl Enumerator for AOVs {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUGrade {
     black_point: f32,
     white_point: f32,
@@ -128,7 +128,7 @@ impl Default for Texture {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureVertex {
     uv_coordinate: glam::Vec2,
 }

@@ -15,7 +15,7 @@ use crate::{
     geometry::primitives::Primitive,
     lights::Light,
     materials::Material,
-    scene_graph::SceneGraph,
+    scene_graph::GPUScene,
     shaders,
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
     Enumerator,
@@ -954,9 +954,9 @@ impl RenderPasses {
         }
     }
 
-    pub fn default_pass_for_scene_graph(scene_graph: SceneGraph) -> Self {
+    pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
         Self::RayMarcher {
-            render_pass: RayMarcher::default().scene_graph(scene_graph).finalized(),
+            render_pass: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
         }
     }
 }

@@ -64,7 +64,7 @@ pub struct RayMarcherConstructionData {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPURayMarcherRenderData {
     max_ray_steps: u32,
     max_bounces: u32,
@@ -82,7 +82,6 @@ pub struct GPURayMarcherRenderData {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcherRenderData {
-    #[serde(skip)]
     pub gpu_scene: GPUScene,
     pub max_ray_steps: u32,
     pub max_bounces: u32,
@@ -163,7 +162,7 @@ impl DualDevice<GPURayMarcherRenderData, Std430GPURayMarcherRenderData> for RayM
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPURayMarcher {
     paths_rendered_per_pixel: u32,
     flags: u32,
@@ -369,7 +368,8 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.array_lengths]).to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.array_lengths.as_std430()])
+                    .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
@@ -379,7 +379,8 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
             BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.render_camera]).to_vec(),
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.render_camera.as_std430()])
+                    .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
@@ -389,18 +390,36 @@ impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn storage_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![
             BufferDescriptor {
-                data: bytemuck::cast_slice(self.render_data.gpu_scene.primitives.as_slice())
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
+                        .primitives
+                        .iter()
+                        .map(|primitive| primitive.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
+                        .lights
+                        .iter()
+                        .map(|light| light.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.atmosphere.as_std430()])
                     .to_vec(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            BufferDescriptor {
-                data: bytemuck::cast_slice(self.render_data.gpu_scene.lights.as_slice()).to_vec(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.atmosphere]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },

@@ -39,7 +39,7 @@ pub enum ProceduralTextureType {
 impl Enumerator for ProceduralTextureType {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUProceduralTexture {
     flags: u32,
     texture_type: u32,

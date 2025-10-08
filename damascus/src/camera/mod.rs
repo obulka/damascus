@@ -12,7 +12,7 @@ use crate::DualDevice;
 slotmap::new_key_type! { pub struct CameraId; }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUCamera {
     flags: u32,
     sensor_resolution: UVec2,

@@ -36,7 +36,7 @@ pub enum LightType {
 impl Enumerator for LightType {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPULight {
     light_type: u32,
     falloff: u32,

@@ -38,7 +38,7 @@ use crate::{
 )]
 pub enum RayMarcherInputData {
     #[default]
-    SceneGraph,
+    SceneRoot,
     MaxRaySteps,
     MaxBounces,
     HitTolerance,
@@ -61,7 +61,7 @@ impl NodeInputData for RayMarcherInputData {
     fn default_data(&self) -> InputData {
         let default_ray_marcher = RayMarcherRenderData::default();
         match self {
-            Self::SceneGraph => InputData::SceneGraph(default_ray_marcher.scene_graph),
+            Self::SceneRoot => InputData::SceneGraphId(SceneGraphId::None),
             Self::MaxRaySteps => InputData::UInt(default_ray_marcher.max_ray_steps),
             Self::MaxBounces => InputData::UInt(default_ray_marcher.max_bounces),
             Self::HitTolerance => InputData::Float(default_ray_marcher.hit_tolerance),
@@ -101,7 +101,7 @@ impl NodeInputData for RayMarcherInputData {
 )]
 pub enum RayMarcherOutputData {
     #[default]
-    SceneGraph,
+    Render,
 }
 
 impl Enumerator for RayMarcherOutputData {}
@@ -109,7 +109,7 @@ impl Enumerator for RayMarcherOutputData {}
 impl NodeOutputData for RayMarcherOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::SceneGraph => OutputData::SceneGraph,
+            Self::Render => OutputData::RenderPass,
         }
     }
 }
@@ -126,12 +126,14 @@ impl EvaluableNode for RayMarcherNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::SceneGraph => Ok(InputData::RenderPass(RenderPasses::RayMarcher {
+            Self::Outputs::Render => {
+                scene_graph
+                Ok(InputData::RenderPass(RenderPasses::RayMarcher {
                 render_pass: RayMarcher::default()
-                    .scene_graph(
-                        Self::Inputs::SceneGraph
+                    .gpu_scene(
+                        Self::Inputs::SceneRoot
                             .get_data(data_map)?
-                            .try_to_scene_graph()?,
+                            .try_to_scene_graph_id()?,
                     )
                     .max_ray_steps(
                         Self::Inputs::MaxRaySteps
@@ -193,6 +195,6 @@ impl EvaluableNode for RayMarcherNode {
                     .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
                     .finalized(),
             })),
-        }
+        }}
     }
 }

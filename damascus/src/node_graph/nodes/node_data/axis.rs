@@ -93,7 +93,6 @@ impl EvaluableNode for AxisNode {
     type Outputs = AxisOutputData;
 
     fn evaluate(
-        _scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

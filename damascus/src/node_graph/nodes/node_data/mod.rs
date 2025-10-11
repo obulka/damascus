@@ -60,7 +60,7 @@ pub trait EvaluableNode {
         match input.default_data() {
             InputData::Mat4(..) => *output == OutputData::Mat4,
             InputData::RenderPass(..) => *output == OutputData::RenderPass,
-            InputData::SceneGraphId(..) => match *output {
+            InputData::SceneGraph(..) => match *output {
                 OutputData::SceneGraphId(..) => true,
                 _ => false,
             },
@@ -69,7 +69,6 @@ pub trait EvaluableNode {
     }
 
     fn evaluate(
-        _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
         _output: Self::Outputs,
     ) -> NodeResult<InputData> {

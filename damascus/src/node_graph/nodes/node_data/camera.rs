@@ -106,7 +106,6 @@ impl EvaluableNode for CameraNode {
     type Outputs = CameraOutputData;
 
     fn evaluate(
-        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

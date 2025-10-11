@@ -121,7 +121,6 @@ impl EvaluableNode for LightNode {
     }
 
     fn evaluate(
-        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

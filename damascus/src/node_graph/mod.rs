@@ -2,9 +2,12 @@
 // All rights reserved.
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
-
 use std::collections::{HashMap, HashSet};
 
+use quick_cache::{
+    unsync::{Cache, DefaultLifecycle},
+    DefaultHashBuilder, OptionsBuilder, UnitWeighter,
+};
 use slotmap::SparseSecondaryMap;
 
 use crate::{impl_slot_map_indexing, scene_graph::SceneGraph};
@@ -27,7 +30,7 @@ use outputs::{
     OutputId, Outputs,
 };
 
-pub type OutputCache = SparseSecondaryMap<OutputId, InputData>;
+pub type OutputCache = Cache<OutputId, InputData>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -36,8 +39,6 @@ pub struct NodeGraph {
     inputs: Inputs,
     outputs: Outputs,
     edges: Edges,
-    #[serde(skip)]
-    scene_graph: SceneGraph,
     #[serde(skip)]
     cache: OutputCache,
 }
@@ -49,9 +50,21 @@ impl NodeGraph {
             inputs: Inputs::default(),
             outputs: Outputs::default(),
             edges: Edges::default(),
-            scene_graph: SceneGraph::default(),
-            cache: OutputCache::default(),
+            cache: NodeGraph::new_cache(),
         }
+    }
+
+    fn new_cache() -> OutputCache {
+        OutputCache::with_options(
+            OptionsBuilder::new()
+                .estimated_items_capacity(10000)
+                .weight_capacity(10000)
+                .build()
+                .unwrap(),
+            UnitWeighter,
+            DefaultHashBuilder::default(),
+            DefaultLifecycle::default(),
+        )
     }
 
     pub fn node_count(&self) -> usize {
@@ -71,7 +84,7 @@ impl NodeGraph {
     }
 
     pub fn remove_output_from_cache(&mut self, output_id: &OutputId) {
-        self.cache.remove(*output_id);
+        self.cache.remove(output_id);
     }
 
     pub fn remove_node_from_cache(&mut self, node_id: NodeId) {
@@ -89,7 +102,7 @@ impl NodeGraph {
     }
 
     pub fn free_cache(&mut self) {
-        self.cache = OutputCache::default();
+        self.cache = NodeGraph::new_cache();
     }
 
     pub fn free(&mut self) {
@@ -120,14 +133,8 @@ impl NodeGraph {
         output_id: OutputId,
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        let node_data: NodeData = self[self[output_id].node_id].data;
-        let output_name: String = self[output_id].name.clone();
-        let input_data: InputData = Node::evaluate(
-            &mut self.scene_graph,
-            node_data,
-            input_data_map,
-            output_name,
-        )?;
+        let input_data: InputData =
+            self[self[output_id].node_id].evaluate(input_data_map, &self[output_id].name)?;
 
         self.insert_in_cache(output_id, input_data.clone());
 
@@ -164,7 +171,7 @@ impl NodeGraph {
 
     pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
         if let Some(output_id) = self.edges.parent(input_id) {
-            if let Some(input_data) = self.cache.get(*output_id) {
+            if let Some(input_data) = self.cache.get(output_id) {
                 // Data was already cached, return it
                 Ok((*input_data).clone())
             } else {

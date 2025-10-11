@@ -18,7 +18,7 @@ use crate::{
         NodeGraph,
     },
     render_passes::RenderPasses,
-    scene_graph::SceneGraphId,
+    scene_graph::{SceneGraph, SceneGraphId},
     Enum, Enumerator,
 };
 
@@ -52,7 +52,7 @@ pub enum InputData {
     Enum(Enum),
     Filepath(String),
     RenderPass(RenderPasses),
-    SceneGraphId(SceneGraphId),
+    SceneGraph(SceneGraphId, SceneGraph),
 }
 
 impl Enumerator for InputData {}
@@ -208,52 +208,52 @@ impl InputData {
         }
     }
 
-    pub fn try_to_scene_graph_id(self) -> NodeResult<SceneGraphId> {
+    pub fn try_to_scene_graph(self) -> NodeResult<(SceneGraphId, SceneGraph)> {
         match self {
-            InputData::SceneGraphId(value) => Ok(value),
+            InputData::SceneGraph(scene_graph_id, scene_graph) => Ok((scene_graph_id, scene_graph)),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<SceneGraphId>().to_string(),
+                conversion_to: type_name::<(SceneGraphId, SceneGraph)>().to_string(),
             }),
         }
     }
 
-    pub fn try_to_material_id(self) -> NodeResult<MaterialId> {
-        match self.try_to_scene_graph_id()? {
-            SceneGraphId::Material(value) => Ok(value),
-            value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphId(value),
-                conversion_to: type_name::<MaterialId>().to_string(),
+    pub fn try_to_material(self) -> NodeResult<(MaterialId, SceneGraph)> {
+        match self.try_to_scene_graph()? {
+            (SceneGraphId::Material(material_id), scene_graph) => Ok((material_id, scene_graph)),
+            (scene_graph_id, scene_graph) => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraph(scene_graph_id, scene_graph),
+                conversion_to: type_name::<(MaterialId, SceneGraph)>().to_string(),
             }),
         }
     }
 
-    pub fn try_to_primitive_id(self) -> NodeResult<PrimitiveId> {
-        match self.try_to_scene_graph_id()? {
-            SceneGraphId::Primitive(value) => Ok(value),
-            value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphId(value),
-                conversion_to: type_name::<PrimitiveId>().to_string(),
+    pub fn try_to_primitive(self) -> NodeResult<(PrimitiveId, SceneGraph)> {
+        match self.try_to_scene_graph()? {
+            (SceneGraphId::Primitive(primitive_id), scene_graph) => Ok((primitive_id, scene_graph)),
+            (scene_graph_id, scene_graph) => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraph(scene_graph_id, scene_graph),
+                conversion_to: type_name::<(PrimitiveId, SceneGraph)>().to_string(),
             }),
         }
     }
 
-    pub fn try_to_light_id(self) -> NodeResult<LightId> {
-        match self.try_to_scene_graph_id()? {
-            SceneGraphId::Light(value) => Ok(value),
-            value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphId(value),
-                conversion_to: type_name::<LightId>().to_string(),
+    pub fn try_to_light(self) -> NodeResult<(LightId, SceneGraph)> {
+        match self.try_to_scene_graph()? {
+            (SceneGraphId::Light(light_id), scene_graph) => Ok((light_id, scene_graph)),
+            (scene_graph_id, scene_graph) => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraph(scene_graph_id, scene_graph),
+                conversion_to: type_name::<(LightId, SceneGraph)>().to_string(),
             }),
         }
     }
 
-    pub fn try_to_camera_id(self) -> NodeResult<CameraId> {
-        match self.try_to_scene_graph_id()? {
-            SceneGraphId::Camera(value) => Ok(value),
-            value => Err(NodeErrors::InputDowncastError {
-                data: InputData::SceneGraphId(value),
-                conversion_to: type_name::<CameraId>().to_string(),
+    pub fn try_to_camera(self) -> NodeResult<(CameraId, SceneGraph)> {
+        match self.try_to_scene_graph()? {
+            (SceneGraphId::Camera(camera_id), scene_graph) => Ok((camera_id, scene_graph)),
+            (scene_graph_id, scene_graph) => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraph(scene_graph_id, scene_graph),
+                conversion_to: type_name::<(CameraId, SceneGraph)>().to_string(),
             }),
         }
     }

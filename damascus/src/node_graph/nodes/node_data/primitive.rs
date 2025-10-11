@@ -90,9 +90,8 @@ impl NodeInputData for PrimitiveInputData {
     fn default_data(&self) -> InputData {
         let default_primitive = Primitive::default();
         match self {
-            Self::Siblings => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Children => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Material => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Children => InputData::SceneGraph(SceneGraphId::None, SceneGraph::default()),
+            Self::Material => InputData::SceneGraph(SceneGraphId::None, SceneGraph::default()),
             Self::Shape => InputData::Enum(default_primitive.shape.into()),
             Self::Radius => InputData::Float(0.5),
             Self::Radii => InputData::Vec3(Vec3::splat(0.5)),
@@ -156,7 +155,7 @@ impl NodeInputData for PrimitiveInputData {
 )]
 pub enum PrimitiveOutputData {
     #[default]
-    Id,
+    SceneGraph,
 }
 
 impl Enumerator for PrimitiveOutputData {}
@@ -164,7 +163,7 @@ impl Enumerator for PrimitiveOutputData {}
 impl NodeOutputData for PrimitiveOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Primitive),
+            Self::SceneGraph => OutputData::SceneGraphId(SceneGraphIdType::Primitive),
         }
     }
 }
@@ -190,19 +189,18 @@ impl EvaluableNode for PrimitiveNode {
     }
 
     fn evaluate(
-        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene_graph: SceneGraph = Self::Inputs::Siblings
+        let (siblings_id, scene_graph) = Self::Inputs::Siblings
             .get_data(data_map)?
-            .try_to_scene_graph()?;
-        let mut descendants: SceneGraph = Self::Inputs::Children
+            .try_to_primitive()?;
+        let (descendant_id, mut descendant_graph) = Self::Inputs::Children
             .get_data(data_map)?
-            .try_to_scene_graph()?;
+            .try_to_primitive()?;
         let _material: SceneGraph = Self::Inputs::Material
             .get_data(data_map)?
-            .try_to_scene_graph()?;
+            .try_to_material()?;
         let shape: Shapes = Self::Inputs::Shape.get_data(data_map)?.try_to_enum()?;
 
         let dimensional_data: Vec4 = match shape {

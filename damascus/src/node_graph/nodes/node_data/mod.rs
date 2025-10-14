@@ -68,6 +68,18 @@ pub trait EvaluableNode {
         }
     }
 
+    fn named_input_value_changed(graph: &mut NodeGraph, node_id: NodeId, input_name: &str) {
+        if let Ok(input_variant) = Self::Inputs::from_str(input_name) {
+            Self::input_value_changed(graph, node_id, &input_variant);
+        }
+    }
+
+    fn input_value_changed(_graph: &mut NodeGraph, _node_id: NodeId, _input: &Self::Inputs) {}
+
+    fn input_disconnected(_graph: &mut NodeGraph, _input_id: InputId, _output_id: OutputId) {}
+
+    fn input_connected(_graph: &mut NodeGraph, _input_id: InputId, _output_id: OutputId) {}
+
     fn evaluate(
         _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,

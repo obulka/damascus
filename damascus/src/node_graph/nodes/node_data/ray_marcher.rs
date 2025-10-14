@@ -17,7 +17,7 @@ use crate::{
         ray_marcher::{RayMarcher, RayMarcherRenderData},
         RenderPass, RenderPasses,
     },
-    scene_graph::SceneGraph,
+    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     Enumerator,
 };
 
@@ -38,7 +38,9 @@ use crate::{
 )]
 pub enum RayMarcherInputData {
     #[default]
+    RenderCamera,
     SceneRoot,
+    Atmosphere,
     MaxRaySteps,
     MaxBounces,
     HitTolerance,
@@ -61,7 +63,9 @@ impl NodeInputData for RayMarcherInputData {
     fn default_data(&self) -> InputData {
         let default_ray_marcher = RayMarcherRenderData::default();
         match self {
+            Self::RenderCamera => InputData::SceneGraphId(SceneGraphId::None),
             Self::SceneRoot => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Atmosphere => InputData::SceneGraphId(SceneGraphId::None),
             Self::MaxRaySteps => InputData::UInt(default_ray_marcher.max_ray_steps),
             Self::MaxBounces => InputData::UInt(default_ray_marcher.max_bounces),
             Self::HitTolerance => InputData::Float(default_ray_marcher.hit_tolerance),
@@ -120,15 +124,29 @@ impl EvaluableNode for RayMarcherNode {
     type Inputs = RayMarcherInputData;
     type Outputs = RayMarcherOutputData;
 
+    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+        match input {
+            Self::Inputs::RenderCamera => {
+                *output == OutputData::SceneGraphId(SceneGraphIdType::Camera)
+            }
+            Self::Inputs::SceneRoot => match *output {
+                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
+                _ => false,
+            },
+            Self::Inputs::Atmosphere => {
+                *output == OutputData::SceneGraphId(SceneGraphIdType::Material)
+            }
+            _ => false,
+        }
+    }
+
     fn evaluate(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Render => {
-                scene_graph
-                Ok(InputData::RenderPass(RenderPasses::RayMarcher {
+            Self::Outputs::Render => Ok(InputData::RenderPass(RenderPasses::RayMarcher {
                 render_pass: RayMarcher::default()
                     .gpu_scene(
                         Self::Inputs::SceneRoot
@@ -195,6 +213,6 @@ impl EvaluableNode for RayMarcherNode {
                     .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
                     .finalized(),
             })),
-        }}
+        }
     }
 }

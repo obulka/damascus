@@ -522,12 +522,17 @@ impl NodeGraph {
         self[node_id].output_ids.iter().next()
     }
 
+    pub fn connect_output_to_input(&mut self, output_id: OutputId, input_id: InputId) -> bool {
+        if !self.is_valid_edge(output_id, input_id) {
+            return false;
+        }
+        self.edges.connect(output_id, input_id);
+        true
+    }
+
     pub fn connect_node_to_input(&mut self, node_id: NodeId, input_id: InputId) -> bool {
         if let Some(output_id) = self.node_first_output_id(node_id) {
-            if self.is_valid_edge(*output_id, input_id) {
-                self.edges.connect(*output_id, input_id);
-                return true;
-            }
+            return self.connect_output_to_input(*output_id, input_id);
         }
         false
     }

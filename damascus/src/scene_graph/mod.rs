@@ -150,7 +150,6 @@ pub struct SceneGraph {
     materials: Materials,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
     children: HashMap<SceneGraphId, Vec<SceneGraphId>>,
-    root_ids: Vec<SceneGraphId>,
     render_camera_id: Option<CameraId>,
     atmosphere_id: Option<MaterialId>,
 }
@@ -202,33 +201,16 @@ impl SceneGraph {
         self.atmosphere_id = Some(atmosphere_id);
     }
 
-    pub fn set_render_camera(&mut self, render_camera: Camera) {
+    pub fn set_render_camera(&mut self, render_camera: Camera) -> CameraId {
         let render_camera_id: CameraId = self.add_camera(render_camera);
         self.set_render_camera_id(render_camera_id);
+        render_camera_id
     }
 
-    pub fn set_atmosphere(&mut self, atmosphere: Material) {
+    pub fn set_atmosphere(&mut self, atmosphere: Material) -> MaterialId {
         let atmosphere_id: MaterialId = self.add_material(atmosphere);
         self.set_atmosphere_id(atmosphere_id);
-    }
-
-    pub fn add_primitive_to_root(&mut self, primitive: Primitive) -> PrimitiveId {
-        let root_primitive_id: PrimitiveId = self.add_primitive(primitive);
-        self.root_ids
-            .push(SceneGraphId::Primitive(root_primitive_id));
-        root_primitive_id
-    }
-
-    pub fn add_light_to_root(&mut self, light: Light) -> LightId {
-        let root_light_id: LightId = self.add_light(light);
-        self.root_ids.push(SceneGraphId::Light(root_light_id));
-        root_light_id
-    }
-
-    pub fn add_camera_to_root(&mut self, camera: Camera) -> CameraId {
-        let root_camera_id: CameraId = self.add_camera(camera);
-        self.root_ids.push(SceneGraphId::Camera(root_camera_id));
-        root_camera_id
+        atmosphere_id
     }
 
     pub fn cloned_children(&self, id: &SceneGraphId) -> Vec<SceneGraphId> {
@@ -332,7 +314,7 @@ impl SceneGraph {
         }
     }
 
-    pub fn create_gpu_scene(&self) -> GPUScene {
+    pub fn create_gpu_scene(&self, root_ids: &Vec<SceneGraphId>) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
         let mut material_ids = HashMap::<MaterialId, usize>::new();
         let mut primitive_ids = HashSet::<PrimitiveId>::new();
@@ -340,7 +322,7 @@ impl SceneGraph {
         let mut camera_ids = HashMap::<CameraId, usize>::new();
 
         self.build_gpu_scene_from_locations(
-            &self.root_ids,
+            root_ids,
             &Mat4::IDENTITY,
             &mut material_ids,
             &mut primitive_ids,

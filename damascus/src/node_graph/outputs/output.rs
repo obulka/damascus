@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::{super::nodes::NodeId, output_data::OutputData, OutputId};
+use super::{super::nodes::NodeId, OutputId, output_data::OutputData};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Output {

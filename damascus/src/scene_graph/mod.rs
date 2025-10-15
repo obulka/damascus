@@ -12,13 +12,13 @@ use slotmap::SparseSecondaryMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    DualDevice, Enumerator, Transformable,
     camera::{Camera, CameraId, Cameras, GPUCamera},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     impl_slot_map_indexing,
     lights::{GPULight, Light, LightId, Lights},
     materials::{GPUMaterial, Material, MaterialId, Materials},
     shaders::scene::ScenePreprocessorDirectives,
-    DualDevice, Enumerator, Transformable,
 };
 
 #[derive(

@@ -6,26 +6,26 @@
 use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
-use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
 use super::{
-    resources::{BufferDescriptor, StorageTextureView},
     FrameCounter, RenderPass, RenderPassHashes,
+    resources::{BufferDescriptor, StorageTextureView},
 };
 
 use crate::{
+    DualDevice,
     scene_graph::GPUScene,
     shaders::{
+        ShaderSource,
         ray_marcher::{
-            RayMarcherPreprocessorDirectives, RAY_MARCHER_FRAGMENT_SHADER,
-            RAY_MARCHER_VERTEX_SHADER,
+            RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
+            RayMarcherPreprocessorDirectives,
         },
         scene::ScenePreprocessorDirectives,
-        ShaderSource,
     },
     textures::AOVs,
-    DualDevice,
 };
 
 pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this

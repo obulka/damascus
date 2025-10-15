@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     camera::Camera,
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
@@ -15,7 +16,6 @@ use crate::{
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
-    Enumerator,
 };
 
 use super::EvaluableNode;

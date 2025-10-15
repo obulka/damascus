@@ -6,12 +6,12 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::SceneGraph,
-    Enumerator,
 };
 
 use super::EvaluableNode;

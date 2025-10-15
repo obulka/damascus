@@ -6,9 +6,9 @@
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    node_graph::{inputs::input_data::InputData, nodes::NodeId, NodeGraph},
-    scene_graph::SceneGraphIdType,
     Enumerator,
+    node_graph::{NodeGraph, inputs::input_data::InputData, nodes::NodeId},
+    scene_graph::SceneGraphIdType,
 };
 
 #[derive(

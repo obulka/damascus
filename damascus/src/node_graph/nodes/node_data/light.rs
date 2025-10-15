@@ -9,6 +9,7 @@ use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     lights::{Light, LightId, LightType},
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
@@ -16,7 +17,6 @@ use crate::{
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
-    Enumerator,
 };
 
 use super::EvaluableNode;

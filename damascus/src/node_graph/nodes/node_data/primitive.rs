@@ -3,21 +3,21 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Range};
 
 use glam::{Mat4, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     geometry::primitives::{Primitive, Shapes},
     materials::Material,
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
-        nodes::{node_data::EvaluableNode, NodeResult},
+        nodes::{NodeResult, node_data::EvaluableNode},
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
-    Enumerator,
 };
 
 #[derive(
@@ -37,8 +37,7 @@ use crate::{
 )]
 pub enum PrimitiveInputData {
     #[default]
-    Siblings,
-    Children,
+    Child,
     Material,
     Shape,
     Radius,
@@ -90,8 +89,7 @@ impl NodeInputData for PrimitiveInputData {
     fn default_data(&self) -> InputData {
         let default_primitive = Primitive::default();
         match self {
-            Self::Siblings => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Children => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Child => InputData::SceneGraphId(SceneGraphId::None),
             Self::Material => InputData::SceneGraphId(SceneGraphId::None),
             Self::Shape => InputData::Enum(default_primitive.shape.into()),
             Self::Radius => InputData::Float(0.5),
@@ -177,7 +175,7 @@ impl EvaluableNode for PrimitiveNode {
 
     fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input {
-            Self::Inputs::Siblings | Self::Inputs::Children => match *output {
+            Self::Inputs::Child => match *output {
                 OutputData::SceneGraphId(location_type) => location_type.has_transform(),
                 _ => false,
             },
@@ -189,15 +187,20 @@ impl EvaluableNode for PrimitiveNode {
         }
     }
 
+    /// An iterable that visits all inputs which dynamically spawn other inputs
+    /// Returns the input and a range representing the minimum and maximum
+    /// number of inputs which should spawn if the maximum is less than or
+    /// equal to the minimum, then infinite inputs will be allowed to spawn
+    fn dynamic_inputs() -> impl Iterator<Item = (Self::Inputs, Range<usize>)> {
+        vec![(Self::Inputs::Child, 1..0)].into_iter()
+    }
+
     fn evaluate(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut scene_graph: SceneGraph = Self::Inputs::Siblings
-            .get_data(data_map)?
-            .try_to_scene_graph()?;
-        let mut descendants: SceneGraph = Self::Inputs::Children
+        let mut descendants: SceneGraph = Self::Inputs::Child
             .get_data(data_map)?
             .try_to_scene_graph()?;
         let _material: SceneGraph = Self::Inputs::Material

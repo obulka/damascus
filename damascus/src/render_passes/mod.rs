@@ -6,11 +6,12 @@
 use std::{borrow::Cow, fmt::Debug, ops::Range, time::SystemTime};
 
 use glam::{Mat4, Vec3};
-use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
+    Enumerator,
     camera::Camera,
     geometry::primitives::Primitive,
     lights::Light,
@@ -18,7 +19,6 @@ use crate::{
     scene_graph::GPUScene,
     shaders,
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
-    Enumerator,
 };
 
 pub mod ray_marcher;

@@ -7,15 +7,15 @@ use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     node_graph::{
-        inputs::{input_data::InputData, InputId},
+        inputs::{InputId, input_data::InputData},
         nodes::{
+            NodeErrors, NodeId, NodeResult,
             node_data::{
                 AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
                 GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData,
                 NodeData, PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData,
                 SceneNode, SceneOutputData, TextureNode, TextureOutputData,
             },
-            NodeErrors, NodeId, NodeResult,
         },
         outputs::OutputId,
     },

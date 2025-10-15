@@ -7,18 +7,18 @@ use std::{collections::HashSet, str::FromStr};
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use super::{scene::ScenePreprocessorDirectives, PreprocessorDirectives};
+use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
 use crate::{
+    Enumerator,
     geometry::{
-        primitives::{Primitive, Shapes},
         BlendType, Repetition,
+        primitives::{Primitive, Shapes},
     },
     lights::{Light, LightType},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
     render_passes::ray_marcher::RayMarcherRenderData,
     textures::AOVs,
-    Enumerator,
 };
 
 pub const RAY_MARCHER_VERTEX_SHADER: &str =

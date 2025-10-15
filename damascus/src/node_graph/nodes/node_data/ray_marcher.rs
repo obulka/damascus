@@ -8,17 +8,17 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
-        nodes::{node_data::EvaluableNode, NodeResult},
+        nodes::{NodeResult, node_data::EvaluableNode},
         outputs::output_data::{NodeOutputData, OutputData},
     },
     render_passes::{
-        ray_marcher::{RayMarcher, RayMarcherRenderData},
         RenderPass, RenderPasses,
+        ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
     scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
-    Enumerator,
 };
 
 #[derive(

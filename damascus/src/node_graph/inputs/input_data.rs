@@ -9,17 +9,17 @@ use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enum, Enumerator,
     camera::CameraId,
     geometry::primitives::PrimitiveId,
     lights::LightId,
     materials::MaterialId,
     node_graph::{
-        nodes::{NodeErrors, NodeId, NodeResult},
         NodeGraph,
+        nodes::{NodeErrors, NodeId, NodeResult},
     },
     render_passes::RenderPasses,
     scene_graph::SceneGraphId,
-    Enum, Enumerator,
 };
 
 #[derive(

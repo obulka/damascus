@@ -8,15 +8,15 @@ use std::collections::HashMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
+    Enumerator,
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
-        nodes::{node_data::EvaluableNode, NodeResult},
+        nodes::{NodeResult, node_data::EvaluableNode},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    render_passes::{texture::view::TextureViewer, RenderPass, RenderPasses},
+    render_passes::{RenderPass, RenderPasses, texture::view::TextureViewer},
     scene_graph::SceneGraph,
     textures::Texture,
-    Enumerator,
 };
 
 #[derive(

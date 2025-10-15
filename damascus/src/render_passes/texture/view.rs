@@ -8,23 +8,23 @@ use std::collections::HashSet;
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
-use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
 use crate::{
+    DualDevice,
     render_passes::{
-        resources::{BufferDescriptor, TextureView},
         FrameCounter, RenderPass, RenderPassHashes,
+        resources::{BufferDescriptor, TextureView},
     },
     shaders::{
-        texture::view::{
-            TextureViewerPreprocessorDirectives, TEXTURE_VIEWER_FRAGMENT_SHADER,
-            TEXTURE_VIEWER_VERTEX_SHADER,
-        },
         ShaderSource,
+        texture::view::{
+            TEXTURE_VIEWER_FRAGMENT_SHADER, TEXTURE_VIEWER_VERTEX_SHADER,
+            TextureViewerPreprocessorDirectives,
+        },
     },
     textures::{Grade, Texture},
-    DualDevice,
 };
 
 // A change in the data within this struct will trigger the pass to

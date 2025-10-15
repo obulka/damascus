@@ -10,13 +10,13 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 use super::PreprocessorDirectives;
 
 use crate::{
+    Enumerator,
     geometry::{
-        primitives::{Primitive, Shapes},
         BlendType, Repetition,
+        primitives::{Primitive, Shapes},
     },
     lights::{Light, LightType},
     materials::{Material, ProceduralTexture, ProceduralTextureType},
-    Enumerator,
 };
 
 #[derive(

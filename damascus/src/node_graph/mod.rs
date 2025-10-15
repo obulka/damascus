@@ -16,15 +16,15 @@ pub mod outputs;
 
 use edges::Edges;
 use inputs::{
+    InputId, Inputs,
     input::Input,
     input_data::{InputData, NodeInputData},
-    InputId, Inputs,
 };
-use nodes::{node::Node, node_data::NodeData, NodeErrors, NodeId, NodeResult, Nodes};
+use nodes::{NodeErrors, NodeId, NodeResult, Nodes, node::Node, node_data::NodeData};
 use outputs::{
+    OutputId, Outputs,
     output::Output,
     output_data::{NodeOutputData, OutputData},
-    OutputId, Outputs,
 };
 
 pub type OutputCache = SparseSecondaryMap<OutputId, InputData>;
@@ -235,6 +235,20 @@ impl NodeGraph {
             .inputs
             .insert(Input::new(node_id, name.to_string(), data));
         self[node_id].input_ids.push(input_id);
+        input_id
+    }
+
+    pub fn insert_input(
+        &mut self,
+        node_id: NodeId,
+        name: &str,
+        data: InputData,
+        index: usize,
+    ) -> InputId {
+        let input_id = self
+            .inputs
+            .insert(Input::new(node_id, name.to_string(), data));
+        self[node_id].input_ids.insert(index, input_id);
         input_id
     }
 

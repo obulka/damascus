@@ -8,8 +8,8 @@ use glam::{EulerRot, Mat3, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    textures::{GPUGrade, Grade},
     DualDevice, Enumerator,
+    textures::{GPUGrade, Grade},
 };
 
 #[derive(

@@ -5,7 +5,7 @@
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{shaders::PreprocessorDirectives, Enumerator};
+use crate::{Enumerator, shaders::PreprocessorDirectives};
 
 pub const TEXTURE_VIEWER_VERTEX_SHADER: &str =
     include_str!("../wgsl/pipelines/texture/view/vertex_shader.wgsl");

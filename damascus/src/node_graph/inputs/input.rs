@@ -5,7 +5,7 @@
 
 use crate::node_graph::nodes::NodeId;
 
-use super::{input_data::InputData, InputId};
+use super::{InputId, input_data::InputData};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Input {

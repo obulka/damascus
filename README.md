@@ -9,7 +9,7 @@ Damascus is a ray marcher/path tracer with a node-based gui, written entirely in
 This is very much still a work in progress, and future breaking changes are all but guaranteed.
 
 <img width="2012" height="2075" alt="Screenshot from 2025-08-18 08-58-20" src="https://github.com/user-attachments/assets/334c2f31-72a5-4634-acb5-97ce56b55c24" />
-The above image was created with a branch that will be merged to master... eventually...
+The above image was created with a branch that will be merged to main... eventually...
 <br /><br /><br />
 
 ![damascus](https://github.com/obulka/damascus/assets/21975584/9b8b2996-f842-4704-906e-4dba9c68208e)

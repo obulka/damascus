@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashMap, iter, ops::Range, str::FromStr};
+use std::{collections::HashMap, iter, str::FromStr};
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
@@ -50,67 +50,85 @@ pub trait EvaluableNode {
     type Inputs: NodeInputData;
     type Outputs: NodeOutputData;
 
-    /// An iterable that visits all inputs which dynamically spawn other inputs
-    /// Returns the input and a range representing the minimum and maximum
-    /// number of inputs which should spawn if the maximum is less than or
-    /// equal to the minimum, then infinite inputs will be allowed to spawn
-    fn dynamic_inputs() -> impl Iterator<Item = (Self::Inputs, Range<usize>)> {
-        iter::empty()
-    }
-
     fn add_to_graph(graph: &mut NodeGraph, node_id: NodeId) {
         Self::Inputs::add_to_node(graph, node_id);
         Self::Outputs::add_to_node(graph, node_id);
     }
 
-    fn dynamic_input_connected(graph: &mut NodeGraph, input_id: InputId, _output_id: OutputId) {
-        Self::dynamic_inputs().for_each(|(input, range)| {
+    /// An iterable that visits all inputs which dynamically spawn other inputs.
+    fn dynamic_inputs() -> impl Iterator<Item = Self::Inputs> {
+        iter::empty()
+    }
+
+    fn dynamic_input_connected(graph: &mut NodeGraph, input_id: InputId) {
+        for input in Self::dynamic_inputs() {
             let input_name: String = input.name();
             if let Some(input_number_as_str) = graph[input_id].name.strip_prefix(&input_name) {
-                let node_id: NodeId = graph[input_id].node_id;
-                let next_input_index: usize = graph[node_id]
-                    .input_ids
-                    .iter()
-                    .position(|&id| id == input_id)
-                    .unwrap()
-                    + 1;
-
-                let allow_infinite_inputs: bool = range.end <= range.start;
-
-                if input_number_as_str == "" {
-                    // The first child was connected
+                if input_number_as_str.is_empty() {
+                    // The dynamic input by this name was connected
+                    let node_id: NodeId = graph[input_id].node_id;
                     graph.insert_input(
                         node_id,
                         &format!("{input_name}1"),
                         input.default_data(),
-                        next_input_index,
+                        graph.input_index(node_id, input_id) + 1,
                     );
-                } else if let Ok(input_number) = input_number_as_str.parse::<usize>()
-                    && (allow_infinite_inputs || input_number + 1 < range.end)
-                {
+                } else if let Ok(input_number) = input_number_as_str.parse::<usize>() {
                     // Assume the highest number was connected because disconnected
                     // inputs inbetween will be collapsed
+                    let node_id: NodeId = graph[input_id].node_id;
                     let next_input_number: usize = input_number + 1;
                     graph.insert_input(
                         node_id,
                         &format!("{input_name}{next_input_number}"),
                         input.default_data(),
-                        next_input_index,
+                        graph.input_index(node_id, input_id) + 1,
                     );
                 }
             }
-        });
+        }
     }
 
-    // fn input_value_changed(_graph: &mut NodeGraph, _node_id: NodeId, _input: &Self::Inputs) {}
+    fn dynamic_input_disconnected(graph: &mut NodeGraph, input_id: InputId) {
+        for input in Self::dynamic_inputs() {
+            let input_name: String = input.name();
+            if let Some(input_number_as_str) = graph[input_id].name.strip_prefix(&input_name)
+                && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
+            {
+                graph.remove_input(input_id);
 
-    fn input_disconnected(_graph: &mut NodeGraph, _input_id: InputId, _output_id: OutputId) {}
-
-    fn input_connected(graph: &mut NodeGraph, input_id: InputId, output_id: OutputId) {
-        Self::dynamic_input_connected(graph, input_id, output_id);
+                let node_id: NodeId = graph[input_id].node_id;
+                for next_input_index in
+                    graph.input_index(node_id, input_id)..graph[node_id].input_ids.len()
+                {
+                    let next_input_id: InputId = graph[node_id].input_ids[next_input_index];
+                    if let Some(next_input_number_as_str) =
+                        graph[next_input_id].name.strip_prefix(&input_name)
+                        && let Ok(next_input_number) = next_input_number_as_str.parse::<usize>()
+                    {
+                        if next_input_number > 1 {
+                            let new_input_number: usize = next_input_number - 1;
+                            graph[next_input_id].name = format!("{input_name}{new_input_number}");
+                        } else {
+                            graph[next_input_id].name = input.name();
+                        }
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     fn output_compatible_with_named_input(output: &OutputData, input_name: &str) -> bool {
+        for input in Self::dynamic_inputs() {
+            if let Some(input_number_as_str) = input_name.strip_prefix(&input.name())
+                && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
+            {
+                return Self::output_compatible_with_input(output, &input);
+            }
+        }
+
         match Self::Inputs::from_str(input_name) {
             Ok(input_variant) => Self::output_compatible_with_input(output, &input_variant),
             _ => false,
@@ -128,12 +146,6 @@ pub trait EvaluableNode {
             _ => false,
         }
     }
-
-    // fn named_input_value_changed(graph: &mut NodeGraph, node_id: NodeId, input_name: &str) {
-    //     if let Ok(input_variant) = Self::Inputs::from_str(input_name) {
-    //         Self::input_value_changed(graph, node_id, &input_variant);
-    //     }
-    // }
 
     fn evaluate(
         _scene_graph: &mut SceneGraph,
@@ -175,6 +187,30 @@ pub enum NodeData {
 impl Enumerator for NodeData {}
 
 impl NodeData {
+    pub fn dynamic_input_connected(&self, graph: &mut NodeGraph, input_id: InputId) {
+        match self {
+            Self::Primitive => {
+                PrimitiveNode::dynamic_input_connected(graph, input_id);
+            }
+            Self::RayMarcher => {
+                RayMarcherNode::dynamic_input_connected(graph, input_id);
+            }
+            _ => {}
+        }
+    }
+
+    pub fn dynamic_input_disconnected(&self, graph: &mut NodeGraph, input_id: InputId) {
+        match self {
+            Self::Primitive => {
+                PrimitiveNode::dynamic_input_disconnected(graph, input_id);
+            }
+            Self::RayMarcher => {
+                RayMarcherNode::dynamic_input_disconnected(graph, input_id);
+            }
+            _ => {}
+        }
+    }
+
     pub fn add_to_graph(&self, graph: &mut NodeGraph, node_id: NodeId) {
         match self {
             Self::Axis => {

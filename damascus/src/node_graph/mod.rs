@@ -88,22 +88,9 @@ impl NodeGraph {
         self.cache.insert(output_id, input_data);
     }
 
-    pub fn free_cache(&mut self) {
-        self.cache = OutputCache::default();
-    }
-
-    pub fn free(&mut self) {
-        // Clearing a slotmap retains memory, reallocate to free it
-        self.free_cache();
-
-        self.nodes = Nodes::default();
-        self.inputs = Inputs::default();
-        self.outputs = Outputs::default();
-        self.edges = Edges::default();
-    }
-
     pub fn clear_cache(&mut self) {
         self.cache.clear();
+        self.scene_graph.clear();
     }
 
     pub fn clear(&mut self) {
@@ -179,6 +166,8 @@ impl NodeGraph {
 
     pub fn new_from_nodes(&self, node_ids: &HashSet<NodeId>) -> Self {
         let mut new_graph: Self = self.clone();
+
+        new_graph.clear_cache();
 
         for node_id in self.iter_nodes() {
             if node_ids.contains(&node_id) {
@@ -452,6 +441,14 @@ impl NodeGraph {
         other_to_new_node_ids
     }
 
+    pub fn input_index(&self, node_id: NodeId, input_id: InputId) -> usize {
+        self[node_id]
+            .input_ids
+            .iter()
+            .position(|&id| id == input_id)
+            .unwrap()
+    }
+
     pub fn node_inputs(&self, node_id: NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
         self[node_id]
             .input_ids
@@ -541,6 +538,8 @@ impl NodeGraph {
             return false;
         }
         self.edges.connect(output_id, input_id);
+        let node_data: NodeData = self[self[input_id].node_id].data;
+        node_data.dynamic_input_connected(self, input_id);
         true
     }
 
@@ -551,15 +550,31 @@ impl NodeGraph {
         false
     }
 
+    pub fn disconnect_named_node_input(
+        &mut self,
+        node_id: NodeId,
+        input_name: &str,
+    ) -> Option<OutputId> {
+        match self.node_input_id_from_str(node_id, input_name) {
+            Ok(input_id) => {
+                if let Some(output_id) = self.edges.disconnect_input(input_id) {
+                    let node_data: NodeData = self[self[input_id].node_id].data;
+                    node_data.dynamic_input_disconnected(self, input_id);
+                    Some(output_id)
+                } else {
+                    None
+                }
+            }
+            Err(_) => None,
+        }
+    }
+
     pub fn disconnect_node_input<I: NodeInputData>(
         &mut self,
         node_id: NodeId,
         node_input_data: I,
     ) -> Option<OutputId> {
-        match self.node_input_id(node_id, node_input_data) {
-            Ok(input_id) => self.edges.disconnect_input(input_id),
-            Err(_) => None,
-        }
+        self.disconnect_named_node_input(node_id, &node_input_data.name())
     }
 
     pub fn input_is_connected(&self, input_id: InputId) -> bool {

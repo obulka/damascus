@@ -3,15 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashMap, ops::Range};
+use std::collections::HashMap;
 
 use glam::{Mat4, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    geometry::primitives::{Primitive, Shapes},
-    materials::Material,
+    geometry::primitives::{Primitive, PrimitiveId, Shapes},
+    materials::{Material, MaterialId},
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::{NodeResult, node_data::EvaluableNode},
@@ -173,6 +173,10 @@ impl EvaluableNode for PrimitiveNode {
     type Inputs = PrimitiveInputData;
     type Outputs = PrimitiveOutputData;
 
+    fn dynamic_inputs() -> impl Iterator<Item = Self::Inputs> {
+        vec![Self::Inputs::Child].into_iter()
+    }
+
     fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input {
             Self::Inputs::Child => match *output {
@@ -187,27 +191,12 @@ impl EvaluableNode for PrimitiveNode {
         }
     }
 
-    /// An iterable that visits all inputs which dynamically spawn other inputs
-    /// Returns the input and a range representing the minimum and maximum
-    /// number of inputs which should spawn if the maximum is less than or
-    /// equal to the minimum, then infinite inputs will be allowed to spawn
-    fn dynamic_inputs() -> impl Iterator<Item = (Self::Inputs, Range<usize>)> {
-        vec![(Self::Inputs::Child, 1..0)].into_iter()
-    }
-
     fn evaluate(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let mut descendants: SceneGraph = Self::Inputs::Child
-            .get_data(data_map)?
-            .try_to_scene_graph()?;
-        let _material: SceneGraph = Self::Inputs::Material
-            .get_data(data_map)?
-            .try_to_scene_graph()?;
         let shape: Shapes = Self::Inputs::Shape.get_data(data_map)?.try_to_enum()?;
-
         let dimensional_data: Vec4 = match shape {
             Shapes::CappedCone | Shapes::RoundedCone => Vec4::new(
                 Self::Inputs::Height.get_data(data_map)?.try_to_float()?,
@@ -385,25 +374,12 @@ impl EvaluableNode for PrimitiveNode {
             ),
         };
 
-        let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-        // for descendant in descendants.primitives.iter_mut() {
-        //     // TODO .extend(descendants.cameras.iter_mut()).extend(descendants.lights.iter_mut())
-        //     descendant.local_to_world = local_to_world * descendant.local_to_world;
-        // }
-
-        scene_graph.add_primitive(Primitive {
+        let primitive_id: PrimitiveId = scene_graph.add_primitive(Primitive {
             shape: shape,
-            local_to_world: local_to_world,
-            hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
-            wall_thickness: Self::Inputs::WallThickness
-                .get_data(data_map)?
-                .try_to_float()?,
+            local_to_world: Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?,
             edge_radius: Self::Inputs::EdgeRadius
                 .get_data(data_map)?
                 .try_to_float()?,
-            mirror: Self::Inputs::Mirror.get_data(data_map)?.try_to_bvec3()?,
-            elongate: Self::Inputs::Elongate.get_data(data_map)?.try_to_bool()?,
-            elongation: Self::Inputs::Elongation.get_data(data_map)?.try_to_vec3()?,
             repetition: Self::Inputs::Repetition.get_data(data_map)?.try_to_enum()?,
             negative_repetitions: Self::Inputs::NegativeRepetitions
                 .get_data(data_map)?
@@ -416,16 +392,51 @@ impl EvaluableNode for PrimitiveNode {
             blend_strength: Self::Inputs::BlendStrength
                 .get_data(data_map)?
                 .try_to_float()?,
+            mirror: Self::Inputs::Mirror.get_data(data_map)?.try_to_bvec3()?,
+            hollow: Self::Inputs::Hollow.get_data(data_map)?.try_to_bool()?,
+            wall_thickness: Self::Inputs::WallThickness
+                .get_data(data_map)?
+                .try_to_float()?,
+            elongate: Self::Inputs::Elongate.get_data(data_map)?.try_to_bool()?,
+            elongation: Self::Inputs::Elongation.get_data(data_map)?.try_to_vec3()?,
             bounding_volume: Self::Inputs::BoundingVolume
                 .get_data(data_map)?
                 .try_to_bool()?,
-            num_descendants: descendants.primitives.len() as u32,
             dimensional_data: dimensional_data,
         });
-        scene_graph.merge(descendants);
+        let scene_graph_id = SceneGraphId::Primitive(primitive_id);
+
+        if let Ok(material_id) = Self::Inputs::Material
+            .get_data(data_map)?
+            .try_to_material_id()
+        {
+            scene_graph.set_material(primitive_id, material_id);
+        }
+
+        let child_id: SceneGraphId = Self::Inputs::Child
+            .get_data(data_map)?
+            .try_to_scene_graph_id()?;
+
+        if child_id != SceneGraphId::None {
+            scene_graph.add_child(scene_graph_id, child_id);
+        }
+
+        let mut input_number: usize = 1;
+        while let Some(next_child_input_data) =
+            data_map.remove(&format!("{}{}", Self::Inputs::Child.name(), input_number))
+        {
+            let next_child_id: SceneGraphId = next_child_input_data.try_to_scene_graph_id()?;
+            if next_child_id == SceneGraphId::None {
+                break;
+            }
+
+            scene_graph.add_child(scene_graph_id, next_child_id);
+
+            input_number += 1;
+        }
 
         match output {
-            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene_graph)),
+            Self::Outputs::Id => Ok(InputData::SceneGraphId(scene_graph_id)),
         }
     }
 }

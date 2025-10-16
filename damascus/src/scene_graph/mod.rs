@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use crevice::std430::AsStd430;
 use glam::Mat4;
@@ -32,6 +32,7 @@ use crate::{
     EnumString,
     Eq,
     Hash,
+    Ord,
     PartialEq,
     PartialOrd,
     serde::Serialize,
@@ -149,7 +150,7 @@ pub struct SceneGraph {
     lights: Lights,
     materials: Materials,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    children: HashMap<SceneGraphId, Vec<SceneGraphId>>,
+    children: HashMap<SceneGraphId, BTreeSet<SceneGraphId>>,
     render_camera_id: Option<CameraId>,
     atmosphere_id: Option<MaterialId>,
 }
@@ -213,16 +214,22 @@ impl SceneGraph {
         atmosphere_id
     }
 
-    pub fn cloned_children(&self, id: &SceneGraphId) -> Vec<SceneGraphId> {
-        let mut child_ids = Vec::<SceneGraphId>::new();
-        if let Some(children) = self.children(id) {
-            child_ids = children.clone();
-        }
-        child_ids
+    pub fn children(&self, parent_id: SceneGraphId) -> Option<&BTreeSet<SceneGraphId>> {
+        self.children.get(&parent_id)
     }
 
-    pub fn children(&self, id: &SceneGraphId) -> Option<&Vec<SceneGraphId>> {
-        self.children.get(id)
+    pub fn add_child(&mut self, parent_id: SceneGraphId, child_id: SceneGraphId) {
+        if let Some(children) = self.children.get_mut(&parent_id) {
+            children.insert(child_id);
+        } else {
+            let mut children = BTreeSet::<SceneGraphId>::new();
+            children.insert(child_id);
+            self.children.insert(parent_id, children);
+        }
+    }
+
+    pub fn set_material(&mut self, primitive_id: PrimitiveId, material_id: MaterialId) {
+        self.primitive_materials.insert(primitive_id, material_id);
     }
 
     pub fn num_emissive_primitives(&self) -> usize {
@@ -240,7 +247,7 @@ impl SceneGraph {
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order
     fn build_gpu_scene_from_locations(
         &self,
-        scene_graph_ids: &Vec<SceneGraphId>,
+        scene_graph_ids: &BTreeSet<SceneGraphId>,
         transform: &Mat4,
         material_ids: &mut HashMap<MaterialId, usize>,
         primitive_ids: &mut HashSet<PrimitiveId>,
@@ -294,7 +301,7 @@ impl SceneGraph {
                     gpu_primitive.id = gpu_primitive_id;
                     gpu_scene.primitives.push(gpu_primitive);
 
-                    if let Some(children) = self.children(scene_graph_id) {
+                    if let Some(children) = self.children(*scene_graph_id) {
                         self.build_gpu_scene_from_locations(
                             children,
                             &primitive.local_to_world,
@@ -314,7 +321,7 @@ impl SceneGraph {
         }
     }
 
-    pub fn create_gpu_scene(&self, root_ids: &Vec<SceneGraphId>) -> GPUScene {
+    pub fn create_gpu_scene(&self, root_ids: &BTreeSet<SceneGraphId>) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
         let mut material_ids = HashMap::<MaterialId, usize>::new();
         let mut primitive_ids = HashSet::<PrimitiveId>::new();
@@ -369,6 +376,17 @@ impl SceneGraph {
             .collect();
 
         gpu_scene
+    }
+
+    pub fn clear(&mut self) {
+        self.cameras.clear();
+        self.primitives.clear();
+        self.lights.clear();
+        self.materials.clear();
+        self.primitive_materials.clear();
+        self.children.clear();
+        self.render_camera_id = None;
+        self.atmosphere_id = None;
     }
 
     pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {

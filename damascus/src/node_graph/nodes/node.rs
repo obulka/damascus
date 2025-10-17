@@ -9,7 +9,7 @@ use crate::{
     node_graph::{
         inputs::{InputId, input_data::InputData},
         nodes::{
-            NodeErrors, NodeId, NodeResult,
+            NodeErrors, NodeResult,
             node_data::{
                 AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
                 GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData,

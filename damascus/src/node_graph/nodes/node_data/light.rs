@@ -38,8 +38,7 @@ use super::EvaluableNode;
 )]
 pub enum LightInputData {
     #[default]
-    Siblings,
-    Children,
+    Child,
     LightType,
     Direction,
     Position,
@@ -58,7 +57,7 @@ impl NodeInputData for LightInputData {
     fn default_data(&self) -> InputData {
         let default_light = Light::default();
         match self {
-            Self::Siblings | Self::Children => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Child => InputData::SceneGraphId(SceneGraphId::None),
             Self::LightType => InputData::Enum(default_light.light_type.into()),
             Self::Direction => InputData::Vec3(Vec3::NEG_Y),
             Self::Position => InputData::Vec3(Vec3::Y),
@@ -109,9 +108,13 @@ impl EvaluableNode for LightNode {
     type Inputs = LightInputData;
     type Outputs = LightOutputData;
 
-    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn dynamic_inputs() -> impl Iterator<Item = Self::Inputs> {
+        vec![Self::Inputs::Child].into_iter()
+    }
+
+    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input {
-            Self::Inputs::Siblings | Self::Inputs::Children => match *output {
+            Self::Inputs::Child => match *output {
                 OutputData::SceneGraphId(location_type) => location_type.has_transform(),
                 _ => false,
             },
@@ -125,13 +128,6 @@ impl EvaluableNode for LightNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let siblings_id: SceneGraphId = Self::Inputs::Siblings
-            .get_data(data_map)?
-            .try_to_scene_graph_id()?;
-        let children_id: SceneGraphId = Self::Inputs::Children
-            .get_data(data_map)?
-            .try_to_scene_graph_id()?;
-
         let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
         let light_type: LightType = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
 
@@ -170,9 +166,17 @@ impl EvaluableNode for LightNode {
                 .get_data(data_map)?
                 .try_to_bool()?,
         });
+        let scene_graph_id = SceneGraphId::Light(light_id);
+
+        Self::add_dynamic_children_to_scene_graph(
+            scene_graph,
+            data_map,
+            scene_graph_id,
+            Self::Inputs::Child,
+        );
 
         match output {
-            Self::Outputs::SceneGraph => Ok(InputData::SceneGraph(scene_graph)),
+            Self::Outputs::Id => Ok(InputData::SceneGraphId(scene_graph_id)),
         }
     }
 }

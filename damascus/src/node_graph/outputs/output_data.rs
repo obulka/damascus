@@ -7,7 +7,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    node_graph::{NodeGraph, inputs::input_data::InputData, nodes::NodeId},
+    node_graph::{NodeGraph, nodes::NodeId},
     scene_graph::SceneGraphIdType,
 };
 

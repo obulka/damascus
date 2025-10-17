@@ -16,12 +16,9 @@ use crate::{
             input_data::{InputData, NodeInputData},
         },
         nodes::NodeId,
-        outputs::{
-            OutputId,
-            output_data::{NodeOutputData, OutputData},
-        },
+        outputs::output_data::{NodeOutputData, OutputData},
     },
-    scene_graph::SceneGraph,
+    scene_graph::{SceneGraph, SceneGraphId},
 };
 
 use super::{NodeErrors, NodeResult};
@@ -50,9 +47,9 @@ pub trait EvaluableNode {
     type Inputs: NodeInputData;
     type Outputs: NodeOutputData;
 
-    fn add_to_graph(graph: &mut NodeGraph, node_id: NodeId) {
-        Self::Inputs::add_to_node(graph, node_id);
-        Self::Outputs::add_to_node(graph, node_id);
+    fn add_to_node_graph(node_graph: &mut NodeGraph, node_id: NodeId) {
+        Self::Inputs::add_to_node(node_graph, node_id);
+        Self::Outputs::add_to_node(node_graph, node_id);
     }
 
     /// An iterable that visits all inputs which dynamically spawn other inputs.
@@ -60,57 +57,58 @@ pub trait EvaluableNode {
         iter::empty()
     }
 
-    fn dynamic_input_connected(graph: &mut NodeGraph, input_id: InputId) {
+    fn dynamic_input_connected(node_graph: &mut NodeGraph, input_id: InputId) {
         for input in Self::dynamic_inputs() {
             let input_name: String = input.name();
-            if let Some(input_number_as_str) = graph[input_id].name.strip_prefix(&input_name) {
+            if let Some(input_number_as_str) = node_graph[input_id].name.strip_prefix(&input_name) {
                 if input_number_as_str.is_empty() {
                     // The dynamic input by this name was connected
-                    let node_id: NodeId = graph[input_id].node_id;
-                    graph.insert_input(
+                    let node_id: NodeId = node_graph[input_id].node_id;
+                    node_graph.insert_input(
                         node_id,
                         &format!("{input_name}1"),
                         input.default_data(),
-                        graph.input_index(node_id, input_id) + 1,
+                        node_graph.input_index(node_id, input_id) + 1,
                     );
                 } else if let Ok(input_number) = input_number_as_str.parse::<usize>() {
                     // Assume the highest number was connected because disconnected
                     // inputs inbetween will be collapsed
-                    let node_id: NodeId = graph[input_id].node_id;
+                    let node_id: NodeId = node_graph[input_id].node_id;
                     let next_input_number: usize = input_number + 1;
-                    graph.insert_input(
+                    node_graph.insert_input(
                         node_id,
                         &format!("{input_name}{next_input_number}"),
                         input.default_data(),
-                        graph.input_index(node_id, input_id) + 1,
+                        node_graph.input_index(node_id, input_id) + 1,
                     );
                 }
             }
         }
     }
 
-    fn dynamic_input_disconnected(graph: &mut NodeGraph, input_id: InputId) {
+    fn dynamic_input_disconnected(node_graph: &mut NodeGraph, input_id: InputId) {
         for input in Self::dynamic_inputs() {
             let input_name: String = input.name();
-            if let Some(input_number_as_str) = graph[input_id].name.strip_prefix(&input_name)
+            if let Some(input_number_as_str) = node_graph[input_id].name.strip_prefix(&input_name)
                 && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
             {
-                graph.remove_input(input_id);
+                node_graph.remove_input(input_id);
 
-                let node_id: NodeId = graph[input_id].node_id;
+                let node_id: NodeId = node_graph[input_id].node_id;
                 for next_input_index in
-                    graph.input_index(node_id, input_id)..graph[node_id].input_ids.len()
+                    node_graph.input_index(node_id, input_id)..node_graph[node_id].input_ids.len()
                 {
-                    let next_input_id: InputId = graph[node_id].input_ids[next_input_index];
+                    let next_input_id: InputId = node_graph[node_id].input_ids[next_input_index];
                     if let Some(next_input_number_as_str) =
-                        graph[next_input_id].name.strip_prefix(&input_name)
+                        node_graph[next_input_id].name.strip_prefix(&input_name)
                         && let Ok(next_input_number) = next_input_number_as_str.parse::<usize>()
                     {
                         if next_input_number > 1 {
                             let new_input_number: usize = next_input_number - 1;
-                            graph[next_input_id].name = format!("{input_name}{new_input_number}");
+                            node_graph[next_input_id].name =
+                                format!("{input_name}{new_input_number}");
                         } else {
-                            graph[next_input_id].name = input.name();
+                            node_graph[next_input_id].name = input.name();
                         }
                     } else {
                         break;
@@ -120,22 +118,46 @@ pub trait EvaluableNode {
         }
     }
 
-    fn output_compatible_with_named_input(output: &OutputData, input_name: &str) -> bool {
+    fn add_dynamic_children_to_scene_graph(
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        parent_id: SceneGraphId,
+        child_input: Self::Inputs,
+    ) {
+        let child_input_base_name: String = child_input.name();
+        let mut child_input_name: String = child_input_base_name.clone();
+        let mut input_number: usize = 0;
+        while let Some(child_input_data) = data_map.remove(&child_input_name) {
+            if let Ok(child_id) = child_input_data.try_to_scene_graph_id() {
+                if child_id == SceneGraphId::None {
+                    return;
+                }
+                scene_graph.add_child(parent_id, child_id);
+            } else {
+                return;
+            }
+
+            input_number += 1;
+            child_input_name = format!("{}{}", child_input_base_name, input_number);
+        }
+    }
+
+    fn output_is_compatible_with_named_input(output: &OutputData, input_name: &str) -> bool {
         for input in Self::dynamic_inputs() {
             if let Some(input_number_as_str) = input_name.strip_prefix(&input.name())
                 && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
             {
-                return Self::output_compatible_with_input(output, &input);
+                return Self::output_is_compatible_with_input(output, &input);
             }
         }
 
         match Self::Inputs::from_str(input_name) {
-            Ok(input_variant) => Self::output_compatible_with_input(output, &input_variant),
+            Ok(input_variant) => Self::output_is_compatible_with_input(output, &input_variant),
             _ => false,
         }
     }
 
-    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input.default_data() {
             InputData::Mat4(..) => *output == OutputData::Mat4,
             InputData::RenderPass(..) => *output == OutputData::RenderPass,
@@ -187,77 +209,79 @@ pub enum NodeData {
 impl Enumerator for NodeData {}
 
 impl NodeData {
-    pub fn dynamic_input_connected(&self, graph: &mut NodeGraph, input_id: InputId) {
+    pub fn dynamic_input_connected(&self, node_graph: &mut NodeGraph, input_id: InputId) {
         match self {
             Self::Primitive => {
-                PrimitiveNode::dynamic_input_connected(graph, input_id);
+                PrimitiveNode::dynamic_input_connected(node_graph, input_id);
             }
             Self::RayMarcher => {
-                RayMarcherNode::dynamic_input_connected(graph, input_id);
+                RayMarcherNode::dynamic_input_connected(node_graph, input_id);
             }
             _ => {}
         }
     }
 
-    pub fn dynamic_input_disconnected(&self, graph: &mut NodeGraph, input_id: InputId) {
+    pub fn dynamic_input_disconnected(&self, node_graph: &mut NodeGraph, input_id: InputId) {
         match self {
             Self::Primitive => {
-                PrimitiveNode::dynamic_input_disconnected(graph, input_id);
+                PrimitiveNode::dynamic_input_disconnected(node_graph, input_id);
             }
             Self::RayMarcher => {
-                RayMarcherNode::dynamic_input_disconnected(graph, input_id);
+                RayMarcherNode::dynamic_input_disconnected(node_graph, input_id);
             }
             _ => {}
         }
     }
 
-    pub fn add_to_graph(&self, graph: &mut NodeGraph, node_id: NodeId) {
+    pub fn add_to_node_graph(&self, node_graph: &mut NodeGraph, node_id: NodeId) {
         match self {
             Self::Axis => {
-                AxisNode::add_to_graph(graph, node_id);
+                AxisNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Camera => {
-                CameraNode::add_to_graph(graph, node_id);
+                CameraNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Grade => {
-                GradeNode::add_to_graph(graph, node_id);
+                GradeNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Light => {
-                LightNode::add_to_graph(graph, node_id);
+                LightNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Material => {
-                MaterialNode::add_to_graph(graph, node_id);
+                MaterialNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Primitive => {
-                PrimitiveNode::add_to_graph(graph, node_id);
+                PrimitiveNode::add_to_node_graph(node_graph, node_id);
             }
             Self::RayMarcher => {
-                RayMarcherNode::add_to_graph(graph, node_id);
+                RayMarcherNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Scene => {
-                SceneNode::add_to_graph(graph, node_id);
+                SceneNode::add_to_node_graph(node_graph, node_id);
             }
             Self::Texture => {
-                TextureNode::add_to_graph(graph, node_id);
+                TextureNode::add_to_node_graph(node_graph, node_id);
             }
         }
     }
 
     pub fn output_compatible_with_input(&self, output: &OutputData, input_name: &str) -> bool {
         match self {
-            Self::Axis => AxisNode::output_compatible_with_named_input(output, input_name),
-            Self::Camera => CameraNode::output_compatible_with_named_input(output, input_name),
-            Self::Grade => GradeNode::output_compatible_with_named_input(output, input_name),
-            Self::Light => LightNode::output_compatible_with_named_input(output, input_name),
-            Self::Material => MaterialNode::output_compatible_with_named_input(output, input_name),
+            Self::Axis => AxisNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Camera => CameraNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Grade => GradeNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Light => LightNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Material => {
+                MaterialNode::output_is_compatible_with_named_input(output, input_name)
+            }
             Self::Primitive => {
-                PrimitiveNode::output_compatible_with_named_input(output, input_name)
+                PrimitiveNode::output_is_compatible_with_named_input(output, input_name)
             }
             Self::RayMarcher => {
-                RayMarcherNode::output_compatible_with_named_input(output, input_name)
+                RayMarcherNode::output_is_compatible_with_named_input(output, input_name)
             }
-            Self::Scene => SceneNode::output_compatible_with_named_input(output, input_name),
-            Self::Texture => TextureNode::output_compatible_with_named_input(output, input_name),
+            Self::Scene => SceneNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Texture => TextureNode::output_is_compatible_with_named_input(output, input_name),
         }
     }
 }

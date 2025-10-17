@@ -18,7 +18,7 @@ use crate::{
         RenderPass, RenderPasses,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
-    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
+    scene_graph::{GPUScene, SceneGraph, SceneGraphId, SceneGraphIdType},
 };
 
 #[derive(
@@ -38,9 +38,7 @@ use crate::{
 )]
 pub enum RayMarcherInputData {
     #[default]
-    RenderCamera,
     SceneRoot,
-    Atmosphere,
     MaxRaySteps,
     MaxBounces,
     HitTolerance,
@@ -63,9 +61,7 @@ impl NodeInputData for RayMarcherInputData {
     fn default_data(&self) -> InputData {
         let default_ray_marcher = RayMarcherRenderData::default();
         match self {
-            Self::RenderCamera => InputData::SceneGraphId(SceneGraphId::None),
             Self::SceneRoot => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Atmosphere => InputData::SceneGraphId(SceneGraphId::None),
             Self::MaxRaySteps => InputData::UInt(default_ray_marcher.max_ray_steps),
             Self::MaxBounces => InputData::UInt(default_ray_marcher.max_bounces),
             Self::HitTolerance => InputData::Float(default_ray_marcher.hit_tolerance),
@@ -124,18 +120,9 @@ impl EvaluableNode for RayMarcherNode {
     type Inputs = RayMarcherInputData;
     type Outputs = RayMarcherOutputData;
 
-    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input {
-            Self::Inputs::RenderCamera => {
-                *output == OutputData::SceneGraphId(SceneGraphIdType::Camera)
-            }
-            Self::Inputs::SceneRoot => match *output {
-                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
-                _ => false,
-            },
-            Self::Inputs::Atmosphere => {
-                *output == OutputData::SceneGraphId(SceneGraphIdType::Material)
-            }
+            Self::Inputs::SceneRoot => *output == OutputData::SceneGraphId(SceneGraphIdType::Root),
             _ => false,
         }
     }
@@ -149,9 +136,13 @@ impl EvaluableNode for RayMarcherNode {
             Self::Outputs::Render => Ok(InputData::RenderPass(RenderPasses::RayMarcher {
                 render_pass: RayMarcher::default()
                     .gpu_scene(
-                        Self::Inputs::SceneRoot
-                            .get_data(data_map)?
-                            .try_to_scene_graph_id()?,
+                        if let Ok(root_id) =
+                            Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
+                        {
+                            scene_graph.create_gpu_scene(root_id)
+                        } else {
+                            GPUScene::default()
+                        },
                     )
                     .max_ray_steps(
                         Self::Inputs::MaxRaySteps

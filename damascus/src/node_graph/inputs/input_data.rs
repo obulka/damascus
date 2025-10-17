@@ -19,7 +19,7 @@ use crate::{
         nodes::{NodeErrors, NodeId, NodeResult},
     },
     render_passes::RenderPasses,
-    scene_graph::SceneGraphId,
+    scene_graph::{RootId, SceneGraphId},
 };
 
 #[derive(
@@ -254,6 +254,16 @@ impl InputData {
             value => Err(NodeErrors::InputDowncastError {
                 data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<CameraId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_root_id(self) -> NodeResult<RootId> {
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::Root(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(value),
+                conversion_to: type_name::<RootId>().to_string(),
             }),
         }
     }

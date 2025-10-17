@@ -195,7 +195,7 @@ impl NodeGraph {
 
     pub fn add_node(&mut self, node_data: NodeData) -> NodeId {
         let node_id: NodeId = self.nodes.insert(Node::new(node_data));
-        node_data.add_to_graph(self, node_id);
+        node_data.add_to_node_graph(self, node_id);
         node_id
     }
 

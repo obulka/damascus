@@ -5,13 +5,12 @@
 
 use std::collections::HashMap;
 
-use glam::{Mat4, Vec3, Vec4};
+use glam::{Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
     geometry::primitives::{Primitive, PrimitiveId, Shapes},
-    materials::{Material, MaterialId},
     node_graph::{
         inputs::input_data::{InputData, NodeInputData},
         nodes::{NodeResult, node_data::EvaluableNode},
@@ -177,7 +176,7 @@ impl EvaluableNode for PrimitiveNode {
         vec![Self::Inputs::Child].into_iter()
     }
 
-    fn output_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input {
             Self::Inputs::Child => match *output {
                 OutputData::SceneGraphId(location_type) => location_type.has_transform(),
@@ -413,27 +412,12 @@ impl EvaluableNode for PrimitiveNode {
             scene_graph.set_material(primitive_id, material_id);
         }
 
-        let child_id: SceneGraphId = Self::Inputs::Child
-            .get_data(data_map)?
-            .try_to_scene_graph_id()?;
-
-        if child_id != SceneGraphId::None {
-            scene_graph.add_child(scene_graph_id, child_id);
-        }
-
-        let mut input_number: usize = 1;
-        while let Some(next_child_input_data) =
-            data_map.remove(&format!("{}{}", Self::Inputs::Child.name(), input_number))
-        {
-            let next_child_id: SceneGraphId = next_child_input_data.try_to_scene_graph_id()?;
-            if next_child_id == SceneGraphId::None {
-                break;
-            }
-
-            scene_graph.add_child(scene_graph_id, next_child_id);
-
-            input_number += 1;
-        }
+        Self::add_dynamic_children_to_scene_graph(
+            scene_graph,
+            data_map,
+            scene_graph_id,
+            Self::Inputs::Child,
+        );
 
         match output {
             Self::Outputs::Id => Ok(InputData::SceneGraphId(scene_graph_id)),

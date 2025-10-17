@@ -3,23 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, str::FromStr};
+use std::collections::HashSet;
 
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
-use crate::{
-    Enumerator,
-    geometry::{
-        BlendType, Repetition,
-        primitives::{Primitive, Shapes},
-    },
-    lights::{Light, LightType},
-    materials::{Material, ProceduralTexture, ProceduralTextureType},
-    render_passes::ray_marcher::RayMarcherRenderData,
-    textures::AOVs,
-};
+use crate::{Enumerator, render_passes::ray_marcher::RayMarcherRenderData, textures::AOVs};
 
 pub const RAY_MARCHER_VERTEX_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/vertex_shader.wgsl");

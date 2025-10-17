@@ -9,10 +9,7 @@ use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{BlendType, Repetition, Transform};
-use crate::{
-    DualDevice, Enumerator, Transformable,
-    materials::{GPUMaterial, Material},
-};
+use crate::{DualDevice, Enumerator, Transformable};
 
 slotmap::new_key_type! { pub struct PrimitiveId; }
 

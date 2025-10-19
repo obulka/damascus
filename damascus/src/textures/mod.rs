@@ -9,6 +9,8 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{DualDevice, Enumerator};
 
+pub mod generators;
+
 #[derive(
     Debug,
     Default,

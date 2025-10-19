@@ -10,7 +10,7 @@ use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_
 use wgpu;
 
 use super::{
-    FrameCounter, RenderPass, RenderPassHashes,
+    FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
     resources::{BufferDescriptor, StorageTextureView},
 };
 
@@ -174,7 +174,7 @@ pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
     pub subframe_counter: FrameCounter,
-    hashes: RenderPassHashes,
+    hashes: GPUTextureGeneratorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
@@ -184,7 +184,7 @@ impl Default for RayMarcher {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
             subframe_counter: FrameCounter::default(),
-            hashes: RenderPassHashes::default(),
+            hashes: GPUTextureGeneratorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
     }
@@ -323,16 +323,16 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 }
 
-impl RenderPass<RayMarcherPreprocessorDirectives> for RayMarcher {
+impl GPUTextureGenerator<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn label(&self) -> String {
         "ray marcher".to_owned()
     }
 
-    fn hashes(&self) -> &RenderPassHashes {
+    fn hashes(&self) -> &GPUTextureGeneratorHashes {
         &self.hashes
     }
 
-    fn hashes_mut(&mut self) -> &mut RenderPassHashes {
+    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes {
         &mut self.hashes
     }
 

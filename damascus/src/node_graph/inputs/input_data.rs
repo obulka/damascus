@@ -18,8 +18,8 @@ use crate::{
         NodeGraph,
         nodes::{NodeErrors, NodeId, NodeResult},
     },
-    render_passes::RenderPasses,
     scene_graph::{RootId, SceneGraphId},
+    textures::generators::TextureGenerators,
 };
 
 #[derive(
@@ -51,7 +51,7 @@ pub enum InputData {
     Mat4(Mat4),
     Enum(Enum),
     Filepath(String),
-    RenderPass(RenderPasses),
+    TextureGenerator(TextureGenerators),
     SceneGraphId(SceneGraphId),
 }
 
@@ -198,12 +198,12 @@ impl InputData {
         }
     }
 
-    pub fn try_to_render_pass(self) -> NodeResult<RenderPasses> {
+    pub fn try_to_texture_generator(self) -> NodeResult<TextureGenerators> {
         match self {
-            InputData::RenderPass(value) => Ok(value),
+            InputData::TextureGenerator(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<RenderPasses>().to_string(),
+                conversion_to: type_name::<TextureGenerators>().to_string(),
             }),
         }
     }

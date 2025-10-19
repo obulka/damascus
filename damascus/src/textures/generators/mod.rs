@@ -16,17 +16,17 @@ use crate::{
     textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
 };
 
+pub mod generator;
 pub mod ray_marcher;
 pub mod resources;
-pub mod texture;
 
+use generator::view::TextureViewer;
 use ray_marcher::RayMarcher;
 use resources::{
     BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
     RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
     TextureViewBindGroup,
 };
-use texture::view::TextureViewer;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -112,13 +112,13 @@ impl FrameCounter {
 
 #[derive(Debug, Clone, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct RenderPassHashes {
+pub struct GPUTextureGeneratorHashes {
     pub reset: Key<OrderedFloatPolicy>,
     pub recompile: Key<OrderedFloatPolicy>,
     pub reconstruct: Key<OrderedFloatPolicy>,
 }
 
-impl Default for RenderPassHashes {
+impl Default for GPUTextureGeneratorHashes {
     fn default() -> Self {
         Self {
             reset: Key::<OrderedFloatPolicy>::Unit,
@@ -128,7 +128,7 @@ impl Default for RenderPassHashes {
     }
 }
 
-impl PartialEq for RenderPassHashes {
+impl PartialEq for GPUTextureGeneratorHashes {
     fn eq(&self, other: &Self) -> bool {
         self.reset == other.reset
             && self.recompile == other.recompile
@@ -136,7 +136,7 @@ impl PartialEq for RenderPassHashes {
     }
 }
 
-pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
+pub trait GPUTextureGenerator<Directives: shaders::PreprocessorDirectives>:
     Debug
     + Default
     + Clone
@@ -154,18 +154,18 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
 
     // fn output(&self) -> TextureView;
 
-    fn hashes(&self) -> &RenderPassHashes;
+    fn hashes(&self) -> &GPUTextureGeneratorHashes;
 
-    fn hashes_mut(&mut self) -> &mut RenderPassHashes;
+    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes;
 
     fn frame_counter(&self) -> &FrameCounter;
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter;
 
     fn new() -> Self {
-        let mut render_pass = Self::default();
-        render_pass.update_hashes();
-        render_pass
+        let mut texture_generator = Self::default();
+        texture_generator.update_hashes();
+        texture_generator
     }
 
     fn finalized(mut self) -> Self {
@@ -817,47 +817,55 @@ pub trait RenderPass<Directives: shaders::PreprocessorDirectives>:
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum RenderPasses {
+pub enum TextureGenerators {
     #[default]
     Black,
-    White,
+    Checkerboard,
+    Constant,
+    Grade,
+    FBMNoise,
+    TurbulenceNoise,
+    // VoronoiNoise,
     RayMarcher {
-        render_pass: RayMarcher,
+        texture_generator: RayMarcher,
     },
     TextureViewer {
-        render_pass: TextureViewer,
+        texture_generator: TextureViewer,
     },
+    White,
 }
 
-impl Enumerator for RenderPasses {}
+impl Enumerator for TextureGenerators {}
 
-impl RenderPasses {
+impl TextureGenerators {
     pub fn new() -> Self {
         Self::TextureViewer {
-            render_pass: TextureViewer::new(),
+            texture_generator: TextureViewer::new(),
         }
     }
 
     pub fn reset(&mut self) {
         match self {
-            Self::RayMarcher { render_pass } => render_pass.reset(),
-            Self::TextureViewer { render_pass } => render_pass.reset(),
+            Self::RayMarcher { texture_generator } => texture_generator.reset(),
+            Self::TextureViewer { texture_generator } => texture_generator.reset(),
             _ => {}
         }
     }
 
     pub fn frame_counter(&self) -> Option<&FrameCounter> {
         match self {
-            Self::RayMarcher { render_pass } => Some(render_pass.frame_counter()),
-            Self::TextureViewer { render_pass } => Some(render_pass.frame_counter()),
+            Self::RayMarcher { texture_generator } => Some(texture_generator.frame_counter()),
+            Self::TextureViewer { texture_generator } => Some(texture_generator.frame_counter()),
             _ => None,
         }
     }
 
     pub fn frame_counter_mut(&mut self) -> Option<&mut FrameCounter> {
         match self {
-            Self::RayMarcher { render_pass } => Some(render_pass.frame_counter_mut()),
-            Self::TextureViewer { render_pass } => Some(render_pass.frame_counter_mut()),
+            Self::RayMarcher { texture_generator } => Some(texture_generator.frame_counter_mut()),
+            Self::TextureViewer { texture_generator } => {
+                Some(texture_generator.frame_counter_mut())
+            }
             _ => None,
         }
     }
@@ -868,11 +876,11 @@ impl RenderPasses {
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         match self {
-            Self::RayMarcher { render_pass } => {
-                Some(render_pass.render_resource(device, target_state))
+            Self::RayMarcher { texture_generator } => {
+                Some(texture_generator.render_resource(device, target_state))
             }
-            Self::TextureViewer { render_pass } => {
-                Some(render_pass.render_resource(device, target_state))
+            Self::TextureViewer { texture_generator } => {
+                Some(texture_generator.render_resource(device, target_state))
             }
             _ => None,
         }
@@ -886,8 +894,8 @@ impl RenderPasses {
     ) -> BufferData {
         self.update_if_hash_changed(device, target_state, render_resource);
         match self {
-            Self::RayMarcher { render_pass } => render_pass.buffer_data(),
-            Self::TextureViewer { render_pass } => render_pass.buffer_data(),
+            Self::RayMarcher { texture_generator } => texture_generator.buffer_data(),
+            Self::TextureViewer { texture_generator } => texture_generator.buffer_data(),
             _ => BufferData::default(),
         }
     }
@@ -899,13 +907,13 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { render_pass } => render_pass
+            Self::RayMarcher { texture_generator } => texture_generator
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
                     render_resource,
                 ),
-            Self::TextureViewer { render_pass } => render_pass
+            Self::TextureViewer { texture_generator } => texture_generator
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
@@ -922,11 +930,11 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) {
         match self {
-            Self::RayMarcher { render_pass } => {
-                render_pass.recompile_shader(device, target_state, render_resource)
+            Self::RayMarcher { texture_generator } => {
+                texture_generator.recompile_shader(device, target_state, render_resource)
             }
-            Self::TextureViewer { render_pass } => {
-                render_pass.recompile_shader(device, target_state, render_resource)
+            Self::TextureViewer { texture_generator } => {
+                texture_generator.recompile_shader(device, target_state, render_resource)
             }
             _ => {}
         }
@@ -939,11 +947,11 @@ impl RenderPasses {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { render_pass } => {
-                render_pass.update_if_hash_changed(device, target_state, render_resource)
+            Self::RayMarcher { texture_generator } => {
+                texture_generator.update_if_hash_changed(device, target_state, render_resource)
             }
-            Self::TextureViewer { render_pass } => {
-                render_pass.update_if_hash_changed(device, target_state, render_resource)
+            Self::TextureViewer { texture_generator } => {
+                texture_generator.update_if_hash_changed(device, target_state, render_resource)
             }
             _ => false,
         }
@@ -951,7 +959,7 @@ impl RenderPasses {
 
     pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
         Self::RayMarcher {
-            render_pass: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
+            texture_generator: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
         }
     }
 }

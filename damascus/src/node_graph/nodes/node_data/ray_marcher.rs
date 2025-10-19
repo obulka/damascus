@@ -14,11 +14,11 @@ use crate::{
         nodes::{NodeResult, node_data::EvaluableNode},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    render_passes::{
-        RenderPass, RenderPasses,
+    scene_graph::{GPUScene, SceneGraph, SceneGraphId, SceneGraphIdType},
+    textures::generators::{
+        GPUTextureGenerator, TextureGenerators,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
-    scene_graph::{GPUScene, SceneGraph, SceneGraphId, SceneGraphIdType},
 };
 
 #[derive(
@@ -109,7 +109,7 @@ impl Enumerator for RayMarcherOutputData {}
 impl NodeOutputData for RayMarcherOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Render => OutputData::RenderPass,
+            Self::Render => OutputData::TextureGenerator,
         }
     }
 }
@@ -133,77 +133,79 @@ impl EvaluableNode for RayMarcherNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Render => Ok(InputData::RenderPass(RenderPasses::RayMarcher {
-                render_pass: RayMarcher::default()
-                    .gpu_scene(
-                        if let Ok(root_id) =
-                            Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
-                        {
-                            scene_graph.create_gpu_scene(root_id)
-                        } else {
-                            GPUScene::default()
-                        },
-                    )
-                    .max_ray_steps(
-                        Self::Inputs::MaxRaySteps
-                            .get_data(data_map)?
-                            .try_to_uint()?,
-                    )
-                    .max_bounces(Self::Inputs::MaxBounces.get_data(data_map)?.try_to_uint()?)
-                    .hit_tolerance(
-                        Self::Inputs::HitTolerance
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    )
-                    .shadow_bias(
-                        Self::Inputs::ShadowBias
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    )
-                    .max_brightness(
-                        Self::Inputs::MaxBrightness
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    )
-                    .seed(Self::Inputs::Seed.get_data(data_map)?.try_to_uint()?)
-                    .dynamic_level_of_detail(
-                        Self::Inputs::DynamicLevelOfDetail
-                            .get_data(data_map)?
-                            .try_to_bool()?,
-                    )
-                    .equiangular_samples(
-                        Self::Inputs::EquiangularSamples
-                            .get_data(data_map)?
-                            .try_to_uint()?,
-                    )
-                    .max_light_sampling_bounces(
-                        Self::Inputs::MaxLightSamplingBounces
-                            .get_data(data_map)?
-                            .try_to_uint()?,
-                    )
-                    .light_sampling(
-                        Self::Inputs::LightSampling
-                            .get_data(data_map)?
-                            .try_to_bool()?,
-                    )
-                    .sample_atmosphere(
-                        Self::Inputs::SampleAtmosphere
-                            .get_data(data_map)?
-                            .try_to_bool()?,
-                    )
-                    .light_sampling_bias(
-                        Self::Inputs::LightSamplingBias
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                    )
-                    .secondary_sampling(
-                        Self::Inputs::SecondarySampling
-                            .get_data(data_map)?
-                            .try_to_bool()?,
-                    )
-                    .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
-                    .finalized(),
-            })),
+            Self::Outputs::Render => {
+                Ok(InputData::TextureGenerator(TextureGenerators::RayMarcher {
+                    texture_generator: RayMarcher::default()
+                        .gpu_scene(
+                            if let Ok(root_id) =
+                                Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
+                            {
+                                scene_graph.create_gpu_scene(root_id)
+                            } else {
+                                GPUScene::default()
+                            },
+                        )
+                        .max_ray_steps(
+                            Self::Inputs::MaxRaySteps
+                                .get_data(data_map)?
+                                .try_to_uint()?,
+                        )
+                        .max_bounces(Self::Inputs::MaxBounces.get_data(data_map)?.try_to_uint()?)
+                        .hit_tolerance(
+                            Self::Inputs::HitTolerance
+                                .get_data(data_map)?
+                                .try_to_float()?,
+                        )
+                        .shadow_bias(
+                            Self::Inputs::ShadowBias
+                                .get_data(data_map)?
+                                .try_to_float()?,
+                        )
+                        .max_brightness(
+                            Self::Inputs::MaxBrightness
+                                .get_data(data_map)?
+                                .try_to_float()?,
+                        )
+                        .seed(Self::Inputs::Seed.get_data(data_map)?.try_to_uint()?)
+                        .dynamic_level_of_detail(
+                            Self::Inputs::DynamicLevelOfDetail
+                                .get_data(data_map)?
+                                .try_to_bool()?,
+                        )
+                        .equiangular_samples(
+                            Self::Inputs::EquiangularSamples
+                                .get_data(data_map)?
+                                .try_to_uint()?,
+                        )
+                        .max_light_sampling_bounces(
+                            Self::Inputs::MaxLightSamplingBounces
+                                .get_data(data_map)?
+                                .try_to_uint()?,
+                        )
+                        .light_sampling(
+                            Self::Inputs::LightSampling
+                                .get_data(data_map)?
+                                .try_to_bool()?,
+                        )
+                        .sample_atmosphere(
+                            Self::Inputs::SampleAtmosphere
+                                .get_data(data_map)?
+                                .try_to_bool()?,
+                        )
+                        .light_sampling_bias(
+                            Self::Inputs::LightSamplingBias
+                                .get_data(data_map)?
+                                .try_to_float()?,
+                        )
+                        .secondary_sampling(
+                            Self::Inputs::SecondarySampling
+                                .get_data(data_map)?
+                                .try_to_bool()?,
+                        )
+                        .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
+                        .finalized(),
+                }))
+            }
         }
     }
 }

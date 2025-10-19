@@ -19,7 +19,6 @@ pub mod geometry;
 pub mod lights;
 pub mod materials;
 pub mod node_graph;
-pub mod render_passes;
 pub mod scene_graph;
 pub mod shaders;
 pub mod textures;

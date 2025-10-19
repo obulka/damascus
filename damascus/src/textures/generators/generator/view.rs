@@ -8,29 +8,30 @@ use std::collections::HashSet;
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
-use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
-use super::{
-    resources::{BufferDescriptor, TextureView},
-    FrameCounter, RenderPass, RenderPassHashes,
-};
-
 use crate::{
-    shaders::{
-        texture_viewer::{
-            TextureViewerPreprocessorDirectives, TEXTURE_VIEWER_FRAGMENT_SHADER,
-            TEXTURE_VIEWER_VERTEX_SHADER,
-        },
-        ShaderSource,
-    },
-    textures::{Grade, Texture},
     DualDevice,
+    shaders::{
+        ShaderSource,
+        texture::view::{
+            TEXTURE_VIEWER_FRAGMENT_SHADER, TEXTURE_VIEWER_VERTEX_SHADER,
+            TextureViewerPreprocessorDirectives,
+        },
+    },
+    textures::{
+        Grade, Texture,
+        generators::{
+            FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
+            resources::{BufferDescriptor, TextureView},
+        },
+    },
 };
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
     pub texture: Texture,
 }
@@ -46,14 +47,14 @@ impl Default for TextureViewerConstructionData {
 impl TextureViewerConstructionData {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewerRenderData {
     resolution: Vec2,
     frame: u32,
     flags: u32,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewerRenderData {
     pub resolution: UVec2,
@@ -84,14 +85,14 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewer {
     pan: Vec2,
     zoom: f32,
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewer {
     pub render_data: TextureViewerRenderData,
@@ -100,7 +101,7 @@ pub struct TextureViewer {
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
-    hashes: RenderPassHashes,
+    hashes: GPUTextureGeneratorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
@@ -113,7 +114,7 @@ impl Default for TextureViewer {
             zoom: 1.0,
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
-            hashes: RenderPassHashes::default(),
+            hashes: GPUTextureGeneratorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
     }
@@ -147,16 +148,16 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
     }
 }
 
-impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
+impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn label(&self) -> String {
         "texture viewer".to_owned()
     }
 
-    fn hashes(&self) -> &RenderPassHashes {
+    fn hashes(&self) -> &GPUTextureGeneratorHashes {
         &self.hashes
     }
 
-    fn hashes_mut(&mut self) -> &mut RenderPassHashes {
+    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes {
         &mut self.hashes
     }
 
@@ -203,13 +204,12 @@ impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
             }
         }
 
-        let size = wgpu::Extent3d {
-            width: width,
-            height: height,
-            depth_or_array_layers: self.construction_data.texture.layers,
-        };
         let texture_descriptor = wgpu::TextureDescriptor {
-            size: size,
+            size: wgpu::Extent3d {
+                width: width,
+                height: height,
+                depth_or_array_layers: self.construction_data.texture.layers,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -218,7 +218,7 @@ impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("compositor texture"),
+            label: Some("texture view"),
             view_formats: &[],
         };
         let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
@@ -229,7 +229,6 @@ impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
             texture_data: texture_data,
             visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             view_dimension: wgpu::TextureViewDimension::D2,
-            size: size,
         }]
     }
 }

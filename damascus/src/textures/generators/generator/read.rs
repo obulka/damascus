@@ -13,7 +13,7 @@ use wgpu;
 
 use super::{
     resources::{BufferDescriptor, TextureView},
-    FrameCounter, RenderPass, RenderPassHashes,
+    FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
 };
 
 use crate::{
@@ -100,7 +100,7 @@ pub struct TextureViewer {
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
-    hashes: RenderPassHashes,
+    hashes: GPUTextureGeneratorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
@@ -113,7 +113,7 @@ impl Default for TextureViewer {
             zoom: 1.0,
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
-            hashes: RenderPassHashes::default(),
+            hashes: GPUTextureGeneratorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
     }
@@ -147,16 +147,16 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
     }
 }
 
-impl RenderPass<TextureViewerPreprocessorDirectives> for TextureViewer {
+impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn label(&self) -> String {
         "texture viewer".to_owned()
     }
 
-    fn hashes(&self) -> &RenderPassHashes {
+    fn hashes(&self) -> &GPUTextureGeneratorHashes {
         &self.hashes
     }
 
-    fn hashes_mut(&mut self) -> &mut RenderPassHashes {
+    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes {
         &mut self.hashes
     }
 

@@ -14,9 +14,11 @@ use crate::{
         nodes::{NodeResult, node_data::EvaluableNode},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    render_passes::{RenderPass, RenderPasses, texture::view::TextureViewer},
     scene_graph::SceneGraph,
-    textures::Texture,
+    textures::{
+        Texture,
+        generators::{GPUTextureGenerator, TextureGenerators, generator::view::TextureViewer},
+    },
 };
 
 #[derive(
@@ -75,7 +77,7 @@ impl Enumerator for TextureOutputData {}
 impl NodeOutputData for TextureOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Texture => OutputData::RenderPass,
+            Self::Texture => OutputData::TextureGenerator,
         }
     }
 }
@@ -92,16 +94,18 @@ impl EvaluableNode for TextureNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Texture => Ok(InputData::RenderPass(RenderPasses::TextureViewer {
-                render_pass: TextureViewer::default()
-                    .texture(Texture {
-                        layers: 1,
-                        filepath: Self::Inputs::Filepath
-                            .get_data(data_map)?
-                            .try_to_filepath()?,
-                    })
-                    .finalized(),
-            })),
+            Self::Outputs::Texture => Ok(InputData::TextureGenerator(
+                TextureGenerators::TextureViewer {
+                    texture_generator: TextureViewer::default()
+                        .texture(Texture {
+                            layers: 1,
+                            filepath: Self::Inputs::Filepath
+                                .get_data(data_map)?
+                                .try_to_filepath()?,
+                        })
+                        .finalized(),
+                },
+            )),
         }
     }
 }

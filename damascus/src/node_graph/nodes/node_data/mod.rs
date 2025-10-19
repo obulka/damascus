@@ -160,7 +160,7 @@ pub trait EvaluableNode {
     fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input.default_data() {
             InputData::Mat4(..) => *output == OutputData::Mat4,
-            InputData::RenderPass(..) => *output == OutputData::RenderPass,
+            InputData::TextureGenerator(..) => *output == OutputData::TextureGenerator,
             InputData::SceneGraphId(..) => match *output {
                 OutputData::SceneGraphId(..) => true,
                 _ => false,

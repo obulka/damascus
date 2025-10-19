@@ -9,7 +9,10 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
-use crate::{Enumerator, render_passes::ray_marcher::RayMarcherRenderData, textures::AOVs};
+use crate::{
+    Enumerator,
+    textures::{AOVs, generators::ray_marcher::RayMarcherRenderData},
+};
 
 pub const RAY_MARCHER_VERTEX_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/vertex_shader.wgsl");

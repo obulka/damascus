@@ -29,7 +29,7 @@ use crate::{
 pub enum OutputData {
     #[default]
     Mat4,
-    RenderPass,
+    TextureGenerator,
     SceneGraphId(SceneGraphIdType),
 }
 
@@ -46,9 +46,9 @@ pub trait NodeOutputData: Enumerator + Eq {
         self.variant_label()
     }
 
-    fn add_to_node(graph: &mut NodeGraph, node_id: NodeId) {
+    fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
         Self::iter().for_each(|output| {
-            graph.add_output(node_id, &output.name(), output.default_data());
+            node_graph.add_output(node_id, &output.name(), output.default_data());
         });
     }
 }

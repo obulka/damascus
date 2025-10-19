@@ -9,7 +9,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     DualDevice, Enumerator,
-    textures::{GPUGrade, Grade},
+    textures::processors::grade::{GPUGrade, Grade},
 };
 
 #[derive(

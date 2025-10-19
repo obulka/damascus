@@ -8,37 +8,39 @@ use std::collections::HashSet;
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
 use image::{ImageReader, Rgba32FImage};
-use serde_hashkey::{to_key_with_ordered_float, Error, Key, OrderedFloatPolicy, Result};
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
-use super::{
-    resources::{BufferDescriptor, TextureView},
-    FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
-};
-
 use crate::{
-    shaders::{
-        texture_viewer::{
-            TextureViewerPreprocessorDirectives, TEXTURE_VIEWER_FRAGMENT_SHADER,
-            TEXTURE_VIEWER_VERTEX_SHADER,
-        },
-        ShaderSource,
-    },
-    textures::{Grade, Texture},
     DualDevice,
+    shaders::{
+        ShaderSource,
+        texture::view::{
+            TEXTURE_VIEWER_FRAGMENT_SHADER, TEXTURE_VIEWER_VERTEX_SHADER,
+            TextureViewerPreprocessorDirectives,
+        },
+    },
+    textures::{
+        generators::{
+            FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
+            read::TextureRead,
+            resources::{BufferDescriptor, TextureView},
+        },
+        processors::grade::Grade,
+    },
 };
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
-    pub texture: Texture,
+    pub texture: TextureRead, // TODO generalize, not always a read
 }
 
 impl Default for TextureViewerConstructionData {
     fn default() -> Self {
         Self {
-            texture: Texture::default(),
+            texture: TextureRead::default(),
         }
     }
 }
@@ -46,14 +48,14 @@ impl Default for TextureViewerConstructionData {
 impl TextureViewerConstructionData {}
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewerRenderData {
     resolution: Vec2,
     frame: u32,
     flags: u32,
 }
 
-#[derive(Debug, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewerRenderData {
     pub resolution: UVec2,
@@ -84,14 +86,14 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone, AsStd430)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUTextureViewer {
     pan: Vec2,
     zoom: f32,
     flags: u32,
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewer {
     pub render_data: TextureViewerRenderData,
@@ -203,13 +205,12 @@ impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer 
             }
         }
 
-        let size = wgpu::Extent3d {
-            width: width,
-            height: height,
-            depth_or_array_layers: self.construction_data.texture.layers,
-        };
         let texture_descriptor = wgpu::TextureDescriptor {
-            size: size,
+            size: wgpu::Extent3d {
+                width: width,
+                height: height,
+                depth_or_array_layers: self.construction_data.texture.layers,
+            },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -218,7 +219,7 @@ impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer 
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::RENDER_ATTACHMENT
                 | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("compositor texture"),
+            label: Some("texture view"),
             view_formats: &[],
         };
         let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
@@ -229,13 +230,12 @@ impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer 
             texture_data: texture_data,
             visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             view_dimension: wgpu::TextureViewDimension::D2,
-            size: size,
         }]
     }
 }
 
 impl TextureViewer {
-    pub fn texture(mut self, texture: Texture) -> Self {
+    pub fn texture(mut self, texture: TextureRead) -> Self {
         self.construction_data.texture = texture;
         self
     }

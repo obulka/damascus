@@ -14,7 +14,7 @@ use crate::{
                 AxisNode, AxisOutputData, CameraNode, CameraOutputData, EvaluableNode, GradeNode,
                 GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData,
                 NodeData, PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData,
-                SceneNode, SceneOutputData, TextureNode, TextureOutputData,
+                SceneNode, SceneOutputData, TextureReadNode, TextureReadOutputData,
             },
         },
         outputs::OutputId,
@@ -93,10 +93,10 @@ impl Node {
                 SceneOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Texture => TextureNode::evaluate(
+            NodeData::TextureRead => TextureReadNode::evaluate(
                 scene_graph,
                 &mut data_map,
-                TextureOutputData::from_str(&output_name)
+                TextureReadOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
         }

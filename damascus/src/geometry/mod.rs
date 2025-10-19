@@ -8,6 +8,7 @@ use glam::{Mat3, Vec3};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 pub mod primitives;
+pub mod vertex;
 
 use crate::Enumerator;
 

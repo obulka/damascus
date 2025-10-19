@@ -9,24 +9,20 @@ use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_
 use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
-use crate::{
-    Enumerator,
-    scene_graph::GPUScene,
-    shaders,
-    textures::{texture_corner_indices_2d, texture_corner_vertices_2d},
-};
+use crate::{Enumerator, geometry::vertex::Vertex, scene_graph::GPUScene, shaders};
 
-pub mod generator;
 pub mod ray_marcher;
+pub mod read;
 pub mod resources;
+pub mod view;
 
-use generator::view::TextureViewer;
 use ray_marcher::RayMarcher;
 use resources::{
     BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
     RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
     TextureViewBindGroup,
 };
+use view::TextureViewer;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -308,7 +304,7 @@ pub trait GPUTextureGenerator<Directives: shaders::PreprocessorDirectives>:
 
     fn index_buffer_data(&self) -> BufferDescriptor {
         BufferDescriptor {
-            data: bytemuck::cast_slice(texture_corner_indices_2d().as_slice()).to_vec(),
+            data: bytemuck::cast_slice(Vertex::quad_corner_indices_2d().as_slice()).to_vec(),
             usage: wgpu::BufferUsages::INDEX,
             visibility: wgpu::ShaderStages::NONE,
         }
@@ -324,7 +320,7 @@ pub trait GPUTextureGenerator<Directives: shaders::PreprocessorDirectives>:
 
     fn vertex_buffer_data(&self) -> Vec<BufferDescriptor> {
         vec![BufferDescriptor {
-            data: bytemuck::cast_slice(texture_corner_vertices_2d().as_slice()).to_vec(),
+            data: bytemuck::cast_slice(Vertex::quad_corner_vertices_2d().as_slice()).to_vec(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
             visibility: wgpu::ShaderStages::VERTEX,
         }]

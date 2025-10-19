@@ -11,7 +11,7 @@ use crate::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    textures::{Grade, generators::TextureGenerators},
+    textures::{generators::TextureGenerators, processors::grade::Grade},
 };
 
 use super::EvaluableNode;

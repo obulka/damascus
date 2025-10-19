@@ -15,9 +15,8 @@ use crate::{
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::SceneGraph,
-    textures::{
-        Texture,
-        generators::{GPUTextureGenerator, TextureGenerators, generator::view::TextureViewer},
+    textures::generators::{
+        GPUTextureGenerator, TextureGenerators, read::TextureRead, view::TextureViewer,
     },
 };
 
@@ -36,16 +35,16 @@ use crate::{
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum TextureInputData {
+pub enum TextureReadInputData {
     #[default]
     Filepath,
 }
 
-impl Enumerator for TextureInputData {}
+impl Enumerator for TextureReadInputData {}
 
-impl NodeInputData for TextureInputData {
+impl NodeInputData for TextureReadInputData {
     fn default_data(&self) -> InputData {
-        let default_texture = Texture::default();
+        let default_texture = TextureRead::default();
         match self {
             Self::Filepath => InputData::Filepath(default_texture.filepath),
         }
@@ -67,14 +66,14 @@ impl NodeInputData for TextureInputData {
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum TextureOutputData {
+pub enum TextureReadOutputData {
     #[default]
     Texture,
 }
 
-impl Enumerator for TextureOutputData {}
+impl Enumerator for TextureReadOutputData {}
 
-impl NodeOutputData for TextureOutputData {
+impl NodeOutputData for TextureReadOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Texture => OutputData::TextureGenerator,
@@ -82,11 +81,11 @@ impl NodeOutputData for TextureOutputData {
     }
 }
 
-pub struct TextureNode;
+pub struct TextureReadNode;
 
-impl EvaluableNode for TextureNode {
-    type Inputs = TextureInputData;
-    type Outputs = TextureOutputData;
+impl EvaluableNode for TextureReadNode {
+    type Inputs = TextureReadInputData;
+    type Outputs = TextureReadOutputData;
 
     fn evaluate(
         scene_graph: &mut SceneGraph,
@@ -97,7 +96,7 @@ impl EvaluableNode for TextureNode {
             Self::Outputs::Texture => Ok(InputData::TextureGenerator(
                 TextureGenerators::TextureViewer {
                     texture_generator: TextureViewer::default()
-                        .texture(Texture {
+                        .texture(TextureRead {
                             layers: 1,
                             filepath: Self::Inputs::Filepath
                                 .get_data(data_map)?

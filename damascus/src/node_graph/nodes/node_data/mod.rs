@@ -31,7 +31,7 @@ mod material;
 mod primitive;
 mod ray_marcher;
 mod scene;
-mod texture;
+mod texture_read;
 
 pub use axis::{AxisInputData, AxisNode, AxisOutputData};
 pub use camera::{CameraInputData, CameraNode, CameraOutputData};
@@ -41,7 +41,7 @@ pub use material::{MaterialInputData, MaterialNode, MaterialOutputData};
 pub use primitive::{PrimitiveInputData, PrimitiveNode, PrimitiveOutputData};
 pub use ray_marcher::{RayMarcherInputData, RayMarcherNode, RayMarcherOutputData};
 pub use scene::{SceneInputData, SceneNode, SceneOutputData};
-pub use texture::{TextureInputData, TextureNode, TextureOutputData};
+pub use texture_read::{TextureReadInputData, TextureReadNode, TextureReadOutputData};
 
 pub trait EvaluableNode {
     type Inputs: NodeInputData;
@@ -203,7 +203,7 @@ pub enum NodeData {
     RayMarcher,
     Scene,
     #[default]
-    Texture,
+    TextureRead,
 }
 
 impl Enumerator for NodeData {}
@@ -259,8 +259,8 @@ impl NodeData {
             Self::Scene => {
                 SceneNode::add_to_node_graph(node_graph, node_id);
             }
-            Self::Texture => {
-                TextureNode::add_to_node_graph(node_graph, node_id);
+            Self::TextureRead => {
+                TextureReadNode::add_to_node_graph(node_graph, node_id);
             }
         }
     }
@@ -281,7 +281,9 @@ impl NodeData {
                 RayMarcherNode::output_is_compatible_with_named_input(output, input_name)
             }
             Self::Scene => SceneNode::output_is_compatible_with_named_input(output, input_name),
-            Self::Texture => TextureNode::output_is_compatible_with_named_input(output, input_name),
+            Self::TextureRead => {
+                TextureReadNode::output_is_compatible_with_named_input(output, input_name)
+            }
         }
     }
 }

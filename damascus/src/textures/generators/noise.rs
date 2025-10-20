@@ -4,80 +4,97 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
+use glam::{EulerRot, Mat3, Vec3, Vec4};
+use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::DualDevice;
+use crate::{
+    DualDevice, Enumerator,
+};
+
+#[derive(
+    Debug,
+    Default,
+    Display,
+    Copy,
+    Clone,
+    EnumCount,
+    EnumIter,
+    EnumString,
+    PartialEq,
+    PartialOrd,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+pub enum NoiseType {
+    #[default]
+    None,
+    FBMNoise,
+    TurbulenceNoise,
+    // VoronoiNoise,
+}
+
+impl Enumerator for NoiseType {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct GPUGrade {
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
-    gain: f32,
-    gamma: f32,
+pub struct GPUNoise {
     flags: u32,
+    noise_type: u32,
+    octaves: u32,
+    lacunarity: f32,
+    scale: Vec4,
+    low_frequency_scale: Vec4,
+    high_frequency_scale: Vec4,
+    low_frequency_translation: Vec4,
+    high_frequency_translation: Vec4,
+    amplitude_gain: f32,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct Grade {
-    pub black_point: f32,
-    pub white_point: f32,
-    pub lift: f32,
-    pub gain: f32,
-    pub gamma: f32,
-    pub invert: bool,
+pub struct Noise {
+    pub noise_type: NoiseType,
+    pub octaves: u32,
+    pub lacunarity: f32,
+    pub amplitude_gain: f32,
+    pub scale: Vec4,
+    pub low_frequency_scale: Vec4,
+    pub high_frequency_scale: Vec4,
+    pub low_frequency_translation: Vec4,
+    pub high_frequency_translation: Vec4,
 }
 
-impl Default for Grade {
+impl Default for Noise {
     fn default() -> Self {
         Self {
-            black_point: 0.,
-            white_point: 1.,
-            lift: 0.,
-            gain: 1.,
-            gamma: 1.,
-            invert: false,
+            noise_type: NoiseType::None,
+            octaves: 10,
+            lacunarity: 2.,
+            amplitude_gain: 0.75,
+            scale: Vec4::ONE,
+            low_frequency_scale: Vec4::ONE,
+            high_frequency_scale: Vec4::ONE,
+            low_frequency_translation: Vec4::ZERO,
+            high_frequency_translation: Vec4::ZERO,
         }
     }
 }
 
-impl Grade {
-    pub fn black_point(mut self, black_point: f32) -> Self {
-        self.black_point = black_point;
-        self
-    }
+impl Noise {}
 
-    pub fn white_point(mut self, white_point: f32) -> Self {
-        self.white_point = white_point;
-        self
-    }
-
-    pub fn lift(mut self, lift: f32) -> Self {
-        self.lift = lift;
-        self
-    }
-
-    pub fn gain(mut self, gain: f32) -> Self {
-        self.gain = gain;
-        self
-    }
-
-    pub fn gamma(mut self, gamma: f32) -> Self {
-        self.gamma = gamma;
-        self
-    }
-}
-
-impl DualDevice<GPUGrade, Std430GPUGrade> for Grade {
-    fn to_gpu(&self) -> GPUGrade {
-        GPUGrade {
-            black_point: self.black_point,
-            white_point: self.white_point,
-            lift: self.lift,
-            gain: self.gain,
-            gamma: 1. / self.gamma,
-            flags: self.invert as u32,
+impl DualDevice<GPUNoise, Std430GPUNoise> for Noise {
+    fn to_gpu(&self) -> GPUNoise {
+        GPUNoise {
+            flags: 0,
+            noise_type: self.noise_type as u32,
+            octaves: self.octaves.max(1),
+            lacunarity: self.lacunarity,
+            amplitude_gain: self.amplitude_gain,
+            scale: self.scale,
+            low_frequency_scale: self.low_frequency_scale,
+            high_frequency_scale: self.high_frequency_scale,
+            low_frequency_translation: self.low_frequency_translation,
+            high_frequency_translation: self.high_frequency_translation,
         }
     }
 }

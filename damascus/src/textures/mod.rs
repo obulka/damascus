@@ -9,10 +9,7 @@ use crevice::std430::{self, AsStd430};
 use glam::{EulerRot, Mat3, UVec2, Vec3, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{
-    DualDevice, Enumerator,
-    textures::processors::grade::{GPUGrade, Grade},
-};
+use crate::{DualDevice, Enumerator};
 
 pub mod generators;
 pub mod processors;
@@ -64,6 +61,7 @@ pub enum TextureType {
     Grade,
     Checkerboard,
     Noise,
+    Sample,
 }
 
 impl Enumerator for TextureType {}

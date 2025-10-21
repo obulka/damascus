@@ -22,6 +22,7 @@ pub mod materials;
 pub mod node_graph;
 pub mod scene_graph;
 pub mod textures;
+pub mod time;
 
 pub trait DualDevice<
     G: Copy

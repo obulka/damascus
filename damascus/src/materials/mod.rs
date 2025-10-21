@@ -7,10 +7,7 @@ use crevice::std430::AsStd430;
 use glam::{UVec2, Vec3};
 use slotmap::SlotMap;
 
-use crate::{
-    DualDevice,
-    textures::{GPUTexture, Texture},
-};
+use crate::{DualDevice, textures::Texture};
 
 slotmap::new_key_type! { pub struct MaterialId; }
 

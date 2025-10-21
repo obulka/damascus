@@ -10,6 +10,7 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 use crate::Enumerator;
 
 pub mod ray_marcher;
+pub mod resources;
 pub mod scene;
 pub mod texture;
 

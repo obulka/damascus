@@ -147,7 +147,7 @@ fn rotate_translate_position(
 
 
 /**
- * Mirror/elongate/repeate primitive at a position.
+ * Mirror/elongate/repeat primitive at a position.
  *
  * @arg position: The location the ray originates from.
  * @arg primitive: The primitive which determines the transformation.

@@ -9,19 +9,25 @@ use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_
 use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
-use crate::{Enumerator, geometry::vertex::Vertex, scene_graph::GPUScene, shaders};
+use crate::{
+    Enumerator,
+    geometry::vertex::Vertex,
+    gpu::{
+        PreprocessorDirectives, ShaderSource,
+        resources::{
+            BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
+            RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
+            TextureViewBindGroup,
+        },
+        scene::GPUScene,
+    },
+};
 
 pub mod ray_marcher;
 pub mod read;
-pub mod resources;
 pub mod view;
 
 use ray_marcher::RayMarcher;
-use resources::{
-    BindGroups, BindingResource, Buffer, BufferBindGroup, BufferData, BufferDescriptor,
-    RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
-    TextureViewBindGroup,
-};
 use view::TextureViewer;
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -132,13 +138,13 @@ impl PartialEq for GPUTextureGeneratorHashes {
     }
 }
 
-pub trait GPUTextureGenerator<Directives: shaders::PreprocessorDirectives>:
+pub trait GPUTextureGenerator<Directives: PreprocessorDirectives>:
     Debug
     + Default
     + Clone
     + serde::Serialize
     + for<'a> serde::Deserialize<'a>
-    + shaders::ShaderSource<Directives>
+    + ShaderSource<Directives>
 {
     // fn num_inputs(&self) -> u32 {
     //     self.inputs().len()

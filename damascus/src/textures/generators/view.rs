@@ -13,8 +13,9 @@ use wgpu;
 
 use crate::{
     DualDevice,
-    shaders::{
+    gpu::{
         ShaderSource,
+        resources::{BufferDescriptor, TextureView},
         texture::view::{
             TEXTURE_VIEWER_FRAGMENT_SHADER, TEXTURE_VIEWER_VERTEX_SHADER,
             TextureViewerPreprocessorDirectives,
@@ -22,9 +23,7 @@ use crate::{
     },
     textures::{
         generators::{
-            FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
-            read::TextureRead,
-            resources::{BufferDescriptor, TextureView},
+            FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes, read::TextureRead,
         },
         processors::grade::Grade,
     },

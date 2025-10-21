@@ -16,11 +16,11 @@ use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
 pub mod geometry;
+pub mod gpu;
 pub mod lights;
 pub mod materials;
 pub mod node_graph;
 pub mod scene_graph;
-pub mod shaders;
 pub mod textures;
 
 pub trait DualDevice<

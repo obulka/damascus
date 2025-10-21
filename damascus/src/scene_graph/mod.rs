@@ -14,15 +14,13 @@ use crate::{
     DualDevice, Enumerator, Transformable,
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
+    gpu::scene::{
+        GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives, Std430GPUSceneArrayLengths,
+    },
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
-    shaders::scene::ScenePreprocessorDirectives,
 };
-
-mod gpu_scene;
-
-pub use gpu_scene::{GPUScene, GPUSceneArrayLengths, Std430GPUSceneArrayLengths};
 
 slotmap::new_key_type! { pub struct RootId; }
 

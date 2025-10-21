@@ -5,19 +5,65 @@
 
 use std::{collections::HashSet, str::FromStr};
 
+use crevice::std430::AsStd430;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::PreprocessorDirectives;
 
 use crate::{
-    Enumerator,
+    DualDevice, Enumerator,
+    camera::{Camera, GPUCamera},
     geometry::{
         BlendType, Repetition,
-        primitives::{Primitive, Shapes},
+        primitives::{GPUPrimitive, Primitive, Shapes},
     },
-    lights::{Light, LightType},
-    materials::{Material, ProceduralTexture, ProceduralTextureType},
+    lights::{GPULight, Light, LightType},
+    materials::{GPUMaterial, Material},
+    textures::{Texture, TextureType},
 };
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GPUSceneArrayLengths {
+    num_primitives: u32,
+    num_lights: u32,
+    num_materials: u32,
+    num_non_physical_lights: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GPUScene {
+    pub cameras: Vec<GPUCamera>,
+    pub primitives: Vec<GPUPrimitive>,
+    pub lights: Vec<GPULight>,
+    pub materials: Vec<GPUMaterial>,
+    pub emissive_primitive_indices: Vec<u32>,
+    pub render_camera: usize,
+    pub atmosphere: usize,
+    pub array_lengths: GPUSceneArrayLengths,
+    pub preprocessor_directives: HashSet<ScenePreprocessorDirectives>,
+}
+
+impl Default for GPUScene {
+    fn default() -> Self {
+        Self {
+            cameras: vec![Camera::default().to_gpu()],
+            primitives: vec![],
+            lights: vec![],
+            materials: vec![Material::default().to_gpu()],
+            emissive_primitive_indices: vec![],
+            render_camera: 0,
+            atmosphere: 0,
+            array_lengths: GPUSceneArrayLengths {
+                num_primitives: 0,
+                num_lights: 0,
+                num_materials: 1,
+                num_non_physical_lights: 0,
+            },
+            preprocessor_directives: HashSet::<ScenePreprocessorDirectives>::new(),
+        }
+    }
+}
 
 #[derive(
     Debug,
@@ -216,17 +262,15 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_procedural_texture(
-        procedural_texture: &ProceduralTexture,
-    ) -> HashSet<Self> {
+    pub fn directives_for_texture(texture: &Texture) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if procedural_texture.texture_type == ProceduralTextureType::Grade {
+        if texture.texture_type == TextureType::Grade {
             preprocessor_directives.insert(Self::EnableGrade);
-        } else if procedural_texture.texture_type == ProceduralTextureType::Checkerboard {
+        } else if texture.texture_type == TextureType::Checkerboard {
             preprocessor_directives.insert(Self::EnableCheckerboard);
-        } else if procedural_texture.texture_type == ProceduralTextureType::FBMNoise
-            || procedural_texture.texture_type == ProceduralTextureType::TurbulenceNoise
+        } else if texture.texture_type == TextureType::FBMNoise
+            || texture.texture_type == TextureType::TurbulenceNoise
         {
             preprocessor_directives.insert(Self::EnableNoise);
         }
@@ -237,63 +281,63 @@ impl ScenePreprocessorDirectives {
     pub fn directives_for_material(material: &Material) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if material.diffuse_colour_texture.texture_type > ProceduralTextureType::None {
+        if material.diffuse_colour_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableDiffuseColourTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.diffuse_colour_texture,
             ));
         }
-        if material.specular_probability_texture.texture_type > ProceduralTextureType::None {
+        if material.specular_probability_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableSpecularProbabilityTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_probability_texture,
             ));
         }
-        if material.specular_roughness_texture.texture_type > ProceduralTextureType::None {
+        if material.specular_roughness_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableSpecularRoughnessTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_roughness_texture,
             ));
         }
-        if material.specular_colour_texture.texture_type > ProceduralTextureType::None {
+        if material.specular_colour_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableSpecularColourTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_colour_texture,
             ));
         }
-        if material.transmissive_probability_texture.texture_type > ProceduralTextureType::None {
+        if material.transmissive_probability_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableTransmissiveProbabilityTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_probability_texture,
             ));
         }
-        if material.transmissive_roughness_texture.texture_type > ProceduralTextureType::None {
+        if material.transmissive_roughness_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableTransmissiveRoughnessTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_roughness_texture,
             ));
         }
-        if material.transmissive_colour_texture.texture_type > ProceduralTextureType::None {
+        if material.transmissive_colour_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableExtinctionColourTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_colour_texture,
             ));
         }
-        if material.emissive_colour_texture.texture_type > ProceduralTextureType::None {
+        if material.emissive_colour_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableEmissiveColourTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.emissive_colour_texture,
             ));
         }
-        if material.refractive_index_texture.texture_type > ProceduralTextureType::None {
+        if material.refractive_index_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableRefractiveIndexTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.refractive_index_texture,
             ));
         }
-        if material.scattering_colour_texture.texture_type > ProceduralTextureType::None {
+        if material.scattering_colour_texture.texture_type > TextureType::None {
             preprocessor_directives.insert(Self::EnableScatteringColourTexture);
-            preprocessor_directives.extend(Self::directives_for_procedural_texture(
+            preprocessor_directives.extend(Self::directives_for_texture(
                 &material.scattering_colour_texture,
             ));
         }

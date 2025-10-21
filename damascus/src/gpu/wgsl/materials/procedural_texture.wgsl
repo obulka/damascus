@@ -234,14 +234,14 @@ fn octave_noise(
     var scale: vec4f;
 
     for (var octave=0u; octave < texture.octaves; octave++) {
-        var octave_fraction = f32(octave) / f32(texture.octaves);
+        var normalized_octave = f32(octave) / f32(texture.octaves);
         scale = (
-            (texture.high_frequency_scale * octave_fraction)
-            + (texture.low_frequency_scale * (1. - octave_fraction))
+            (texture.high_frequency_scale * normalized_octave)
+            + (texture.low_frequency_scale * (1. - normalized_octave))
         );
         translation = (
-            (texture.high_frequency_translation * octave_fraction)
-            + (texture.low_frequency_translation * (1. - octave_fraction))
+            (texture.high_frequency_translation * normalized_octave)
+            + (texture.low_frequency_translation * (1. - normalized_octave))
         );
 
         var simplex_noise: f32 = amplitude * perlin_simplex_noise(

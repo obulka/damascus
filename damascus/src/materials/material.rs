@@ -4,11 +4,12 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
-use glam::Vec3;
+use glam::{UVec2, Vec3};
 
-use super::{GPUProceduralTexture, ProceduralTexture};
-
-use crate::DualDevice;
+use crate::{
+    DualDevice,
+    textures::{GPUTexture, Texture},
+};
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -23,72 +24,72 @@ pub struct GPUMaterial {
     transmissive_roughness: f32,
     scattering_colour: Vec3,
     refractive_index: f32,
-    diffuse_colour_texture: GPUProceduralTexture,
-    specular_probability_texture: GPUProceduralTexture,
-    specular_roughness_texture: GPUProceduralTexture,
-    specular_colour_texture: GPUProceduralTexture,
-    transmissive_probability_texture: GPUProceduralTexture,
-    transmissive_roughness_texture: GPUProceduralTexture,
-    extinction_colour_texture: GPUProceduralTexture,
-    emissive_colour_texture: GPUProceduralTexture,
-    refractive_index_texture: GPUProceduralTexture,
-    scattering_colour_texture: GPUProceduralTexture,
+    pub diffuse_colour_texture: UVec2,
+    pub specular_probability_texture: UVec2,
+    pub specular_roughness_texture: UVec2,
+    pub specular_colour_texture: UVec2,
+    pub transmissive_probability_texture: UVec2,
+    pub transmissive_roughness_texture: UVec2,
+    pub extinction_colour_texture: UVec2,
+    pub emissive_colour_texture: UVec2,
+    pub refractive_index_texture: UVec2,
+    pub scattering_colour_texture: UVec2,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Material {
     pub diffuse_colour: Vec3,
-    pub diffuse_colour_texture: ProceduralTexture,
+    pub diffuse_colour_texture: Texture,
     pub specular_probability: f32,
-    pub specular_probability_texture: ProceduralTexture,
+    pub specular_probability_texture: Texture,
     pub specular_roughness: f32,
-    pub specular_roughness_texture: ProceduralTexture,
+    pub specular_roughness_texture: Texture,
     pub specular_colour: Vec3,
-    pub specular_colour_texture: ProceduralTexture,
+    pub specular_colour_texture: Texture,
     pub transmissive_probability: f32,
-    pub transmissive_probability_texture: ProceduralTexture,
+    pub transmissive_probability_texture: Texture,
     pub transmissive_roughness: f32,
-    pub transmissive_roughness_texture: ProceduralTexture,
+    pub transmissive_roughness_texture: Texture,
     pub extinction_coefficient: f32,
     pub transmissive_colour: Vec3,
-    pub transmissive_colour_texture: ProceduralTexture,
+    pub transmissive_colour_texture: Texture,
     pub emissive_intensity: f32,
     pub emissive_colour: Vec3,
-    pub emissive_colour_texture: ProceduralTexture,
+    pub emissive_colour_texture: Texture,
     pub refractive_index: f32,
-    pub refractive_index_texture: ProceduralTexture,
+    pub refractive_index_texture: Texture,
     pub scattering_coefficient: f32,
     pub scattering_colour: Vec3,
-    pub scattering_colour_texture: ProceduralTexture,
+    pub scattering_colour_texture: Texture,
 }
 
 impl Default for Material {
     fn default() -> Self {
         Material {
             diffuse_colour: Vec3::ONE,
-            diffuse_colour_texture: ProceduralTexture::default(),
+            diffuse_colour_texture: Texture::default(),
             specular_probability: 0.,
-            specular_probability_texture: ProceduralTexture::default(),
+            specular_probability_texture: Texture::default(),
             specular_roughness: 0.,
-            specular_roughness_texture: ProceduralTexture::default(),
+            specular_roughness_texture: Texture::default(),
             specular_colour: Vec3::ONE,
-            specular_colour_texture: ProceduralTexture::default(),
+            specular_colour_texture: Texture::default(),
             transmissive_probability: 0.,
-            transmissive_probability_texture: ProceduralTexture::default(),
+            transmissive_probability_texture: Texture::default(),
             transmissive_roughness: 0.,
-            transmissive_roughness_texture: ProceduralTexture::default(),
+            transmissive_roughness_texture: Texture::default(),
             extinction_coefficient: 0.,
             transmissive_colour: Vec3::ONE,
-            transmissive_colour_texture: ProceduralTexture::default(),
+            transmissive_colour_texture: Texture::default(),
             emissive_intensity: 0.,
             emissive_colour: Vec3::ONE,
-            emissive_colour_texture: ProceduralTexture::default(),
+            emissive_colour_texture: Texture::default(),
             refractive_index: 1.3,
-            refractive_index_texture: ProceduralTexture::default(),
+            refractive_index_texture: Texture::default(),
             scattering_coefficient: 0.,
             scattering_colour: Vec3::ONE,
-            scattering_colour_texture: ProceduralTexture::default(),
+            scattering_colour_texture: Texture::default(),
         }
     }
 }

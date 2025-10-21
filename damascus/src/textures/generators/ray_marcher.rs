@@ -9,21 +9,18 @@ use crevice::std430::AsStd430;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
-use super::{
-    FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes,
-    resources::{BufferDescriptor, StorageTextureView},
-};
+use super::{FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes};
 
 use crate::{
     DualDevice,
-    scene_graph::GPUScene,
-    shaders::{
+    gpu::{
         ShaderSource,
         ray_marcher::{
             RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
             RayMarcherPreprocessorDirectives,
         },
-        scene::ScenePreprocessorDirectives,
+        resources::{BufferDescriptor, StorageTextureView},
+        scene::{GPUScene, ScenePreprocessorDirectives},
     },
     textures::AOVs,
 };

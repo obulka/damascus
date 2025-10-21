@@ -14,6 +14,8 @@ use crate::{DualDevice, Enumerator};
 pub mod generators;
 pub mod processors;
 
+slotmap::new_key_type! { pub struct TextureId; }
+
 #[derive(
     Debug,
     Default,
@@ -61,7 +63,7 @@ pub enum TextureType {
     Grade,
     Checkerboard,
     Noise,
-    Sample,
+    Sampled,
 }
 
 impl Enumerator for TextureType {}

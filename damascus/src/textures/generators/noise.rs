@@ -27,7 +27,6 @@ use crate::{
 )]
 pub enum NoiseType {
     #[default]
-    None,
     FBMNoise,
     TurbulenceNoise,
     // VoronoiNoise,
@@ -38,16 +37,16 @@ impl Enumerator for NoiseType {}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUNoise {
-    flags: u32,
     noise_type: u32,
     octaves: u32,
     lacunarity: f32,
+    amplitude_gain: f32,
     scale: Vec4,
     low_frequency_scale: Vec4,
     high_frequency_scale: Vec4,
     low_frequency_translation: Vec4,
     high_frequency_translation: Vec4,
-    amplitude_gain: f32,
+    flags: u32,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -67,7 +66,7 @@ pub struct Noise {
 impl Default for Noise {
     fn default() -> Self {
         Self {
-            noise_type: NoiseType::None,
+            noise_type: NoiseType::default(),
             octaves: 10,
             lacunarity: 2.,
             amplitude_gain: 0.75,
@@ -85,7 +84,6 @@ impl Noise {}
 impl DualDevice<GPUNoise, Std430GPUNoise> for Noise {
     fn to_gpu(&self) -> GPUNoise {
         GPUNoise {
-            flags: 0,
             noise_type: self.noise_type as u32,
             octaves: self.octaves.max(1),
             lacunarity: self.lacunarity,
@@ -95,6 +93,7 @@ impl DualDevice<GPUNoise, Std430GPUNoise> for Noise {
             high_frequency_scale: self.high_frequency_scale,
             low_frequency_translation: self.low_frequency_translation,
             high_frequency_translation: self.high_frequency_translation,
+            flags: 0,
         }
     }
 }

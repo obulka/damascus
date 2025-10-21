@@ -265,14 +265,17 @@ impl ScenePreprocessorDirectives {
     pub fn directives_for_texture(texture: &Texture) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if texture.texture_type == TextureType::Grade {
-            preprocessor_directives.insert(Self::EnableGrade);
-        } else if texture.texture_type == TextureType::Checkerboard {
-            preprocessor_directives.insert(Self::EnableCheckerboard);
-        } else if texture.texture_type == TextureType::FBMNoise
-            || texture.texture_type == TextureType::TurbulenceNoise
-        {
-            preprocessor_directives.insert(Self::EnableNoise);
+        match texture.texture_type {
+            TextureType::Grade => {
+                preprocessor_directives.insert(Self::EnableGrade);
+            }
+            TextureType::Checkerboard => {
+                preprocessor_directives.insert(Self::EnableCheckerboard);
+            }
+            TextureType::Noise => {
+                preprocessor_directives.insert(Self::EnableNoise);
+            }
+            _ => {}
         }
 
         preprocessor_directives

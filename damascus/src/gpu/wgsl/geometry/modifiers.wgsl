@@ -15,7 +15,7 @@ const SUBTRACTION: u32 = 128u;
 const INTERSECTION: u32 = 256u;
 const BLEND_TYPE_MASK: u32 = 384u;
 const BOUNDING_VOLUME: u32 = 512u;
-
+const ENABLE_TRAP_COLOUR: u32 = 1024u;
 
 /**
  * Finitely repeat an object in the positive quadrant.
@@ -293,30 +293,23 @@ fn texture_primitive(
 #endif
 }
 
+#ifdef EnableTrapColour
 
 fn apply_trap_colour(
     trap_colour: vec3f,
     primitive: ptr<function, Primitive>,
 ) {
-#ifdef EnableTrapColour
-    (*primitive).material.diffuse_colour = trap_texture(
-        trap_colour,
-        (*primitive).material.diffuse_colour,
-        (*primitive).material.diffuse_colour_texture,
-    );
-    (*primitive).material.specular_colour = trap_texture(
-        trap_colour,
-        (*primitive).material.specular_colour,
-        (*primitive).material.specular_colour_texture,
-    );
-    (*primitive).material.emissive_colour = trap_texture(
-        trap_colour,
-        (*primitive).material.emissive_colour,
-        (*primitive).material.emissive_colour_texture,
-    );
-#endif
+    // TODO this has not been tested vs select
+    if !bool((*primitive).modifiers & ENABLE_TRAP_COLOUR) {
+        return;
+    }
+
+    (*primitive).material.diffuse_colour *= trap_colour;
+    (*primitive).material.specular_colour *= trap_colour;
+    (*primitive).material.emissive_colour *= trap_colour;
 }
 
+#endif
 
 /**
  * Compute the min distance from a point to a geometric object.
@@ -463,7 +456,9 @@ fn distance_to_transformed_primitive(
                 (*primitive).dimensional_data.w,
                 &trap_colour,
             );
+#ifdef EnableTrapColour
             apply_trap_colour(trap_colour, primitive);
+#endif
         }
 #endif
 #ifdef EnableMandelbulb
@@ -476,7 +471,9 @@ fn distance_to_transformed_primitive(
                 (*primitive).dimensional_data.z,
                 &trap_colour,
             );
+#ifdef EnableTrapColour
             apply_trap_colour(trap_colour, primitive);
+endif
         }
 #endif
 #ifdef EnableOctahedron

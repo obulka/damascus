@@ -31,12 +31,12 @@ pub mod texture;
 pub enum Includes {
     AOVs,
     Camera,
-    TextureViewerConstants,
-    TextureViewerRenderParameters,
-    Material,
+    Grade,
     Lights,
+    Material,
     #[default]
     Math,
+    Noise,
     Normals,
     Primitive,
     PrimitiveModifiers,
@@ -48,6 +48,8 @@ pub enum Includes {
     RayMarcherRenderParameters,
     SceneSDFs,
     Texture,
+    TextureViewerConstants,
+    TextureViewerRenderParameters,
 }
 
 impl Enumerator for Includes {}
@@ -57,20 +59,16 @@ impl Includes {
         match *self {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
-            Self::TextureViewerConstants => {
-                include_str!("./wgsl/pipelines/texture/view/constants.wgsl")
-            }
-            Self::TextureViewerRenderParameters => {
-                include_str!("./wgsl/pipelines/texture/view/render_parameters.wgsl")
-            }
+            Self::Grade => include_str!("./wgsl/textures/processors/grade.wgsl"),
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
             Self::Math => include_str!("./wgsl/utils/math.wgsl"),
+            Self::Noise => include_str!("./wgsl/textures/generators/noise.wgsl"),
             Self::Normals => include_str!("./wgsl/geometry/normals.wgsl"),
             Self::Primitive => include_str!("./wgsl/geometry/primitive.wgsl"),
             Self::PrimitiveModifiers => include_str!("./wgsl/geometry/modifiers.wgsl"),
             Self::PrimitiveSDFs => include_str!("./wgsl/geometry/primitive_sdfs.wgsl"),
-            Self::ProceduralTexture => include_str!("./wgsl/materials/procedural_texture.wgsl"),
+            Self::ProceduralTexture => include_str!("./wgsl/textures/procedural_texture.wgsl"),
             Self::Random => include_str!("./wgsl/utils/random.wgsl"),
             Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
             Self::RayMarcherConstants => {
@@ -81,6 +79,12 @@ impl Includes {
             }
             Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
             Self::Texture => include_str!("./wgsl/textures/texture.wgsl"),
+            Self::TextureViewerConstants => {
+                include_str!("./wgsl/pipelines/texture/view/constants.wgsl")
+            }
+            Self::TextureViewerRenderParameters => {
+                include_str!("./wgsl/pipelines/texture/view/render_parameters.wgsl")
+            }
         }
     }
 }

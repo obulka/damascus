@@ -40,6 +40,7 @@ pub enum GradeInputData {
     Gain,
     Gamma,
     Invert,
+    Transform,
 }
 
 impl Enumerator for GradeInputData {}
@@ -55,6 +56,7 @@ impl NodeInputData for GradeInputData {
             Self::Gain => InputData::Float(default_grade.gain),
             Self::Gamma => InputData::Float(default_grade.gamma),
             Self::Invert => InputData::Bool(default_grade.invert),
+            Self::Transform => InputData::Mat4(default_grade.transform),
         }
     }
 }

@@ -1,27 +1,19 @@
-// Copyright (c) 2024, Owen Bulka
-// All rights reserved.
-// This source code is licensed under the BSD-style license found in the
-// LICENSE file in the root directory of this source tree.
+const FBM_NOISE: u32 = 0u;
+const TURBULENCE_NOISE: u32 = 1u;
 
 
-const NONE: u32 = 0u;
-const GRADE: u32 = 1u;
-const CHECKER_BOARD: u32 = 2u;
-const FBM_NOISE: u32 = 3u;
-const TURBULENCE_NOISE: u32 = 4u;
-
-const USE_TRAP_COLOUR: u32 = 1u;
-
-const RGB_TO_YIQ: mat3x3f = mat3x3f(
-    vec3f(0.299, 0.596, 0.211),
-    vec3f(0.587, -0.274, -0.523),
-    vec3f(0.114, -0.321, 0.311),
-);
-const YIQ_TO_RGB: mat3x3f = mat3x3f(
-    vec3f(1., 1., 1.),
-    vec3f(0.956, -0.272, -1.107),
-    vec3f(0.621, -0.647, 1.705),
-);
+struct GPUNoise {
+    noise_type: u32,
+    octaves: u32,
+    lacunarity: f32,
+    amplitude_gain: f32,
+    scale: vec4f,
+    low_frequency_scale: vec4f,
+    high_frequency_scale: vec4f,
+    low_frequency_translation: vec4f,
+    high_frequency_translation: vec4f,
+    flags: u32,
+}
 
 
 #ifdef EnableNoise
@@ -223,8 +215,7 @@ fn perlin_simplex_noise(seed: vec4f) -> f32 {
  */
 fn octave_noise(
     seed: vec4f,
-    texture: ProceduralTexture,
-    turbulence: bool,
+    noise: Noise,
 ) -> f32 {
     var output: f32 = 0.;
     var frequency: f32 = texture.lacunarity;
@@ -232,6 +223,7 @@ fn octave_noise(
     var max_amplitude: f32 = 0.;
     var translation: vec4f;
     var scale: vec4f;
+    var turbulence = bool(noise.noise_type & TURBULENCE_NOISE);
 
     for (var octave=0u; octave < texture.octaves; octave++) {
         var normalized_octave = f32(octave) / f32(texture.octaves);
@@ -257,135 +249,3 @@ fn octave_noise(
     return abs(output / max_amplitude);
 }
 #endif
-
-
-struct ProceduralTexture {
-    flags: u32,
-    texture_type: u32,
-    octaves: u32,
-    lacunarity: f32,
-    scale: vec4f,
-    low_frequency_scale: vec4f,
-    high_frequency_scale: vec4f,
-    low_frequency_translation: vec4f,
-    high_frequency_translation: vec4f,
-    hue_rotation: mat3x3f,
-    amplitude_gain: f32,
-    grade: Grade,
-}
-
-
-fn trap_texture(
-    trap_colour: vec3f,
-    current_colour: vec3f,
-    texture: ProceduralTexture,
-) -> vec3f {
-    if !bool(texture.flags & USE_TRAP_COLOUR) {
-        return current_colour;
-    }
-    return abs(YIQ_TO_RGB * (
-        texture.hue_rotation * (
-            RGB_TO_YIQ * (trap_colour * current_colour)
-        )
-    ));
-}
-
-
-#ifdef EnableCheckerboard
-fn checkerboard(seed: vec4f) -> f32 {
-    var normalized_seed: vec3f = normalize(seed.xyz);
-    var spherical_seed = vec2(
-        atan2(normalized_seed.x, normalized_seed.z),
-        acos(normalized_seed.y),
-    ) * seed.w;
-    var square_signal: vec2f = sign(fract(spherical_seed * 0.5) - 0.5);
-    return 0.5 - 0.25 * square_signal.x * square_signal.y;
-}
-#endif
-
-
-fn procedurally_texture_f32(
-    seed: vec4f,
-    colour: f32,
-    texture: ProceduralTexture,
-) -> f32 {
-    switch texture.texture_type {
-        case NONE, default {
-            return colour;
-        }
-#ifdef EnableGrade
-        case GRADE {
-            return grade_f32(colour, texture.grade);
-        }
-#endif
-#ifdef EnableCheckerboard
-        case CHECKER_BOARD {
-            return colour * grade_f32(checkerboard(seed / texture.scale), texture.grade);
-        }
-#endif
-// Simply having this case slows things down, so allow it to be compiled out
-#ifdef EnableNoise
-        case FBM_NOISE, TURBULENCE_NOISE {
-            // FBM Noise
-            return colour * grade_f32(
-                octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
-                texture.grade,
-            );
-        }
-#endif
-    }
-}
-
-
-fn procedurally_texture_vec3f(
-    seed: vec4f,
-    colour: vec3f,
-    texture: ProceduralTexture,
-) -> vec3f {
-    switch texture.texture_type {
-        case NONE, default {
-            return colour;
-        }
-#ifdef EnableGrade
-        case GRADE {
-            return grade_vec3(colour, texture.grade);
-        }
-#endif
-#ifdef EnableCheckerboard
-        case CHECKER_BOARD {
-            return colour * vec3(grade_f32(checkerboard(seed / texture.scale), texture.grade));
-        }
-#endif
-// Simply having this case slows things down, so allow it to be compiled out
-#ifdef EnableNoise
-        case FBM_NOISE, TURBULENCE_NOISE {
-            return colour * vec3(grade_f32(
-                octave_noise(seed, texture, texture.texture_type == TURBULENCE_NOISE),
-                texture.grade,
-            ));
-        }
-#endif
-    }
-}
-
-
-fn sample_equiangular(
-    distance_since_last_bounce: f32,
-    ray: ptr<function, Ray>,
-    nested_dielectrics: ptr<function, NestedDielectrics>,
-) {
-    // Get the material properties of the dielectric the ray is currently in
-    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-
-    // If equiangular sampling is disabled or the dielectric does not scatter
-    // light, compute the extinction and exit early
-    if (
-        _render_parameters.equiangular_samples == 0u
-        || element_sum_vec3f(current_dielectric.scattering_colour) == 0.
-    ) {
-        (*ray).throughput *= exp(
-            -current_dielectric.extinction_colour * distance_since_last_bounce,
-        );
-        return;
-    }
-}

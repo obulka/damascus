@@ -3,9 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const INVERT: u32 = 1u;
-
 
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(

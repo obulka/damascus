@@ -14,6 +14,7 @@
 #include Random
 #include PrimitiveSDFs
 #include Texture
+#include Checkerboard
 #include Grade
 #include Noise
 #include ProceduralTexture

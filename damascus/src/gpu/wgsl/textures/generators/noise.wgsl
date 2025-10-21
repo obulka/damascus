@@ -1,8 +1,14 @@
+// Copyright (c) 2024, Owen Bulka
+// All rights reserved.
+// This source code is licensed under the BSD-style license found in the
+// LICENSE file in the root directory of this source tree.
+
+
 const FBM_NOISE: u32 = 0u;
 const TURBULENCE_NOISE: u32 = 1u;
 
 
-struct GPUNoise {
+struct Noise {
     noise_type: u32,
     octaves: u32,
     lacunarity: f32,
@@ -13,6 +19,7 @@ struct GPUNoise {
     low_frequency_translation: vec4f,
     high_frequency_translation: vec4f,
     flags: u32,
+    inverse_transform: mat4x4f,
 }
 
 

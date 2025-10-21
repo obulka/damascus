@@ -6,7 +6,7 @@
 
 const NONE: u32 = 0u;
 const GRADE: u32 = 1u;
-const CHECKER_BOARD: u32 = 2u;
+const CHECKERBOARD: u32 = 2u;
 const NOISE: u32 = 2u;
 
 const RGB_TO_YIQ: mat3x3f = mat3x3f(
@@ -31,6 +31,18 @@ const YIQA_TO_RGBA: mat4x4f = mat4x4f(
     vec4f(0.621, -0.647, 1.705, 0.0),
     vec4f(0.0, 0.0, 0.0, 1.0),
 );
+
+
+@group(STORAGE_BIND_GROUP) @binding(CHECKERBOARD_BINDING)
+var<storage, read> _checkerboards: array<Checkerboard>;
+
+
+@group(STORAGE_BIND_GROUP) @binding(NOISE_BINDING)
+var<storage, read> _noises: array<Noise>;
+
+
+@group(STORAGE_BIND_GROUP) @binding(GRADE_BINDING)
+var<storage, read> _grades: array<Grade>;
 
 
 fn transform_colour3f(
@@ -77,7 +89,7 @@ fn procedurally_texture_f32(
         }
 #endif
 #ifdef EnableCheckerboard
-        case CHECKER_BOARD {
+        case CHECKERBOARD {
             return colour * checkerboard(_checkerboards[texture_type_and_index.y].inverse_transform * seed);
         }
 #endif
@@ -107,7 +119,7 @@ fn procedurally_texture_vec3f(
         }
 #endif
 #ifdef EnableCheckerboard
-        case CHECKER_BOARD {
+        case CHECKERBOARD {
             return colour * vec3(
                 checkerboard(_checkerboards[texture_type_and_index.y].inverse_transform * seed),
             );

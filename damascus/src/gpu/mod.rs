@@ -31,6 +31,7 @@ pub mod texture;
 pub enum Includes {
     AOVs,
     Camera,
+    Checkerboard,
     Grade,
     Lights,
     Material,
@@ -59,6 +60,7 @@ impl Includes {
         match *self {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
+            Self::Checkerboard => include_str!("./wgsl/textures/generators/checkerboard.wgsl"),
             Self::Grade => include_str!("./wgsl/textures/processors/grade.wgsl"),
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),

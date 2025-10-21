@@ -21,6 +21,9 @@ const PRIMITIVES_BINDING: u32 = 0u;
 const LIGHTS_BINDING: u32 = 1u;
 const ATMOSPHERE_BINDING: u32 = 2u;
 const EMISSIVE_INDICES_BINDING: u32 = 3u;
+const CHECKERBOARD_BINDING: u32 = 4u;
+const NOISE_BINDING: u32 = 5u;
+const GRADE_BINDING: u32 = 6u;
 
 // Interstage variable locations
 const VERTEX_UV_LOCATION: u32 = 0u;

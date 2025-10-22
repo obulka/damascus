@@ -20,6 +20,7 @@ use crate::{
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
+    textures::{Texture, TextureId, Textures},
 };
 
 slotmap::new_key_type! { pub struct RootId; }
@@ -49,6 +50,7 @@ pub enum SceneGraphId {
     Material(MaterialId),
     Primitive(PrimitiveId),
     Root(RootId),
+    Texture(TextureId),
 }
 
 impl Enumerator for SceneGraphId {}
@@ -76,6 +78,7 @@ pub enum SceneGraphIdType {
     Material,
     Primitive,
     Root,
+    Texture,
 }
 
 impl Enumerator for SceneGraphIdType {}
@@ -89,6 +92,7 @@ impl From<SceneGraphId> for SceneGraphIdType {
             SceneGraphId::Material(..) => Self::Material,
             SceneGraphId::Primitive(..) => Self::Primitive,
             SceneGraphId::Root(..) => Self::Root,
+            SceneGraphId::Texture(..) => Self::Texture,
         }
     }
 }
@@ -102,6 +106,7 @@ impl SceneGraphIdType {
             Self::Material => false,
             Self::Primitive => true,
             Self::Root => true,
+            Self::Texture => false,
         }
     }
 }
@@ -130,6 +135,7 @@ pub struct SceneGraph {
     lights: Lights,
     materials: Materials,
     roots: Roots,
+    textures: Textures,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
     children: HashMap<SceneGraphId, BTreeSet<SceneGraphId>>,
 }
@@ -147,6 +153,7 @@ impl SceneGraph {
         self.lights.clear();
         self.materials.clear();
         self.roots.clear();
+        self.textures.clear();
         self.primitive_materials.clear();
         self.children.clear();
     }
@@ -171,6 +178,10 @@ impl SceneGraph {
         self.roots.insert(root)
     }
 
+    pub fn add_texture(&mut self, texture: Texture) -> TextureId {
+        self.textures.insert(texture)
+    }
+
     pub fn num_cameras(&self) -> usize {
         self.cameras.len()
     }
@@ -189,6 +200,10 @@ impl SceneGraph {
 
     pub fn num_roots(&self) -> usize {
         self.roots.len()
+    }
+
+    pub fn num_textures(&self) -> usize {
+        self.textures.len()
     }
 
     pub fn iter_cameras(&self) -> impl Iterator<Item = &Camera> + '_ {
@@ -213,6 +228,14 @@ impl SceneGraph {
 
     pub fn iter_roots(&self) -> impl Iterator<Item = &Root> + '_ {
         self.roots.iter().map(|(_root_id, root)| root)
+    }
+
+    pub fn iter_textures(&self) -> impl Iterator<Item = &Texture> + '_ {
+        self.textures.iter().map(|(_texture_id, texture)| texture)
+    }
+
+    pub fn has_children(&self, parent_id: SceneGraphId) -> bool {
+        self.children.contains_key(&parent_id)
     }
 
     pub fn children(&self, parent_id: SceneGraphId) -> Option<&BTreeSet<SceneGraphId>> {
@@ -243,45 +266,6 @@ impl SceneGraph {
             }
         }
         count
-    }
-
-    pub fn directives_for_primitives(
-        &self,
-        primitive_ids: &HashSet<PrimitiveId>,
-    ) -> HashSet<ScenePreprocessorDirectives> {
-        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
-        for primitive_id in primitive_ids.iter() {
-            directives.extend(ScenePreprocessorDirectives::directives_for_primitive(
-                &self[*primitive_id],
-            ));
-        }
-        directives
-    }
-
-    pub fn directives_for_materials(
-        &self,
-        material_ids: &HashSet<MaterialId>,
-    ) -> HashSet<ScenePreprocessorDirectives> {
-        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
-        for material_id in material_ids.iter() {
-            directives.extend(ScenePreprocessorDirectives::directives_for_material(
-                &self[*material_id],
-            ));
-        }
-        directives
-    }
-
-    pub fn directives_for_lights(
-        &self,
-        light_ids: &HashSet<LightId>,
-    ) -> HashSet<ScenePreprocessorDirectives> {
-        let mut directives = HashSet::<ScenePreprocessorDirectives>::new();
-        for light_id in light_ids.iter() {
-            directives.extend(ScenePreprocessorDirectives::directives_for_light(
-                &self[*light_id],
-            ));
-        }
-        directives
     }
 
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order
@@ -325,6 +309,10 @@ impl SceneGraph {
                     let mut light: Light = self[*light_id];
                     light.transform(transform);
 
+                    gpu_scene
+                        .preprocessor_directives
+                        .extend(ScenePreprocessorDirectives::directives_for_light(&light));
+
                     gpu_scene.lights.push(light.to_gpu());
 
                     if let Some(children) = self.children(*scene_graph_id) {
@@ -345,13 +333,21 @@ impl SceneGraph {
                     let mut primitive: Primitive = self[*primitive_id];
                     primitive.transform(transform);
 
+                    gpu_scene.preprocessor_directives.extend(
+                        ScenePreprocessorDirectives::directives_for_primitive(&primitive),
+                    );
+
                     let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
 
                     if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
                         if !material_ids.contains_key(material_id) {
-                            let material_index: usize = gpu_scene.materials.len();
-                            gpu_scene.materials.push(self[*material_id].to_gpu());
+                            let material: Material = self[*material_id];
+                            gpu_scene.preprocessor_directives.extend(
+                                ScenePreprocessorDirectives::directives_for_material(&material),
+                            );
+                            gpu_scene.materials.push(material.to_gpu());
 
+                            let material_index: usize = gpu_scene.materials.len();
                             material_ids.insert(*material_id, material_index);
 
                             gpu_primitive.material_id = material_index as u32;
@@ -366,6 +362,9 @@ impl SceneGraph {
                     gpu_scene.primitives.push(gpu_primitive);
 
                     if let Some(children) = self.children(*scene_graph_id) {
+                        gpu_scene
+                            .preprocessor_directives
+                            .insert(ScenePreprocessorDirectives::EnableChildInteractions);
                         self.build_gpu_scene_from_locations(
                             children,
                             &primitive.local_to_world,
@@ -446,13 +445,6 @@ impl SceneGraph {
         }
 
         gpu_scene.array_lengths = self.to_gpu();
-
-        gpu_scene.preprocessor_directives = self
-            .directives_for_primitives(&primitive_ids)
-            .into_iter()
-            .chain(self.directives_for_materials(&material_ids.keys().copied().collect()))
-            .chain(self.directives_for_lights(&light_ids))
-            .collect();
 
         gpu_scene
     }

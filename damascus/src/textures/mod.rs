@@ -7,6 +7,7 @@ use std::f32::consts::PI;
 
 use crevice::std430::{self, AsStd430};
 use glam::{EulerRot, Mat3, UVec2, Vec3, Vec4};
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{DualDevice, Enumerator};
@@ -113,3 +114,5 @@ impl DualDevice<UVec2, std430::UVec2> for Texture {
         UVec2::new(self.texture_type as u32, 0)
     }
 }
+
+pub type Textures = SlotMap<TextureId, Texture>;

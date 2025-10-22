@@ -214,11 +214,7 @@ impl ScenePreprocessorDirectives {
     pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if primitive.num_descendants > 0
-            && (primitive.blend_type > BlendType::Union || primitive.blend_strength > 0.)
-        {
-            preprocessor_directives.insert(Self::EnableChildInteractions);
-
+        if primitive.blend_type > BlendType::Union || primitive.blend_strength > 0. {
             match primitive.blend_type {
                 BlendType::Subtraction => {
                     preprocessor_directives.insert(Self::EnablePrimitiveBlendSubtraction);

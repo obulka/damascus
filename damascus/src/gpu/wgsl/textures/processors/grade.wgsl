@@ -5,6 +5,7 @@
 
 const INVERT: u32 = 1u;
 
+
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(
         pow(

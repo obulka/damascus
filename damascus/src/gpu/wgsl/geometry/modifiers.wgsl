@@ -40,8 +40,8 @@ const ENABLE_TRAP_COLOUR: u32 = 1024u;
 //     );
 // }
 
-
 #ifdef EnableFiniteRepetition
+
 /**
  * Finitely repeat an object in the positive quadrant.
  *
@@ -71,10 +71,11 @@ fn mirrored_finite_repetition(
         ),
     );
 }
+
 #endif
 
-
 #ifdef EnableInfiniteRepetition
+
 /**
  * Infinitely repeat an object, mirroring with every repetition. By
  * mirroring we remove the constraint that the object must be symmetric
@@ -102,8 +103,8 @@ fn mirrored_infinite_repetition(
         ),
     );
 }
-#endif
 
+#endif
 
 /**
  * Modify the distance a ray has travelled, resulting in various

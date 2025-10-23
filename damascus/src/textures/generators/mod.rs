@@ -744,9 +744,7 @@ pub enum TextureGenerators {
     Checkerboard,
     Constant,
     Grade,
-    FBMNoise,
-    TurbulenceNoise,
-    // VoronoiNoise,
+    Noise,
     RayMarcher {
         texture_generator: RayMarcher,
     },

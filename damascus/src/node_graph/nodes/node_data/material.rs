@@ -125,7 +125,7 @@ impl NodeInputData for MaterialInputData {
 )]
 pub enum MaterialOutputData {
     #[default]
-    SceneGraph,
+    Id,
 }
 
 impl Enumerator for MaterialOutputData {}
@@ -133,7 +133,7 @@ impl Enumerator for MaterialOutputData {}
 impl NodeOutputData for MaterialOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::SceneGraph => OutputData::SceneGraph,
+            Self::Id => OutputData::SceneGraphId,
         }
     }
 }

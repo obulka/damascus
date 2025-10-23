@@ -96,6 +96,7 @@ pub struct Primitive {
     pub elongate: bool,
     pub elongation: Vec3,
     pub bounding_volume: bool,
+    pub enable_trap_colour: bool,
     pub dimensional_data: Vec4,
 }
 
@@ -117,6 +118,7 @@ impl Default for Primitive {
             elongate: false,
             elongation: Vec3::ZERO,
             bounding_volume: false,
+            enable_trap_colour: true,
             dimensional_data: 0.5 * Vec4::X,
         }
     }
@@ -149,7 +151,8 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
                 } else {
                     0
                 }
-                | (self.bounding_volume as u32) << 9,
+                | (self.bounding_volume as u32) << 9
+                | (self.enable_trap_colour as u32) << 10,
             negative_repetitions: self.negative_repetitions.as_vec3(),
             blend_strength: self.blend_strength,
             positive_repetitions: self.positive_repetitions.as_vec3(),

@@ -19,7 +19,7 @@ use crate::{
     },
     lights::{GPULight, Light, LightType},
     materials::{GPUMaterial, Material},
-    textures::{Texture, TextureType},
+    textures::Texture,
 };
 
 #[repr(C)]
@@ -226,6 +226,10 @@ impl ScenePreprocessorDirectives {
             }
         }
 
+        if primitive.enable_trap_colour {
+            preprocessor_directives.insert(Self::EnableTrapColour);
+        }
+
         match primitive.repetition {
             Repetition::Finite => {
                 preprocessor_directives.insert(Self::EnableFiniteRepetition);
@@ -261,14 +265,14 @@ impl ScenePreprocessorDirectives {
     pub fn directives_for_texture(texture: &Texture) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        match texture.texture_type {
-            TextureType::Grade => {
+        match texture {
+            Texture::Grade => {
                 preprocessor_directives.insert(Self::EnableGrade);
             }
-            TextureType::Checkerboard => {
+            Texture::Checkerboard => {
                 preprocessor_directives.insert(Self::EnableCheckerboard);
             }
-            TextureType::Noise => {
+            Texture::Noise => {
                 preprocessor_directives.insert(Self::EnableNoise);
             }
             _ => {}
@@ -280,61 +284,61 @@ impl ScenePreprocessorDirectives {
     pub fn directives_for_material(material: &Material) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if material.diffuse_colour_texture.texture_type > TextureType::None {
+        if material.diffuse_colour_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableDiffuseColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.diffuse_colour_texture,
             ));
         }
-        if material.specular_probability_texture.texture_type > TextureType::None {
+        if material.specular_probability_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableSpecularProbabilityTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_probability_texture,
             ));
         }
-        if material.specular_roughness_texture.texture_type > TextureType::None {
+        if material.specular_roughness_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableSpecularRoughnessTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_roughness_texture,
             ));
         }
-        if material.specular_colour_texture.texture_type > TextureType::None {
+        if material.specular_colour_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableSpecularColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.specular_colour_texture,
             ));
         }
-        if material.transmissive_probability_texture.texture_type > TextureType::None {
+        if material.transmissive_probability_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableTransmissiveProbabilityTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_probability_texture,
             ));
         }
-        if material.transmissive_roughness_texture.texture_type > TextureType::None {
+        if material.transmissive_roughness_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableTransmissiveRoughnessTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_roughness_texture,
             ));
         }
-        if material.transmissive_colour_texture.texture_type > TextureType::None {
+        if material.transmissive_colour_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableExtinctionColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.transmissive_colour_texture,
             ));
         }
-        if material.emissive_colour_texture.texture_type > TextureType::None {
+        if material.emissive_colour_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableEmissiveColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.emissive_colour_texture,
             ));
         }
-        if material.refractive_index_texture.texture_type > TextureType::None {
+        if material.refractive_index_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableRefractiveIndexTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.refractive_index_texture,
             ));
         }
-        if material.scattering_colour_texture.texture_type > TextureType::None {
+        if material.scattering_colour_texture > Texture::None {
             preprocessor_directives.insert(Self::EnableScatteringColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture(
                 &material.scattering_colour_texture,
@@ -346,13 +350,6 @@ impl ScenePreprocessorDirectives {
             preprocessor_directives.insert(Self::EnableTransmissiveMaterials);
         } else if material.specular_probability > 0. {
             preprocessor_directives.insert(Self::EnableSpecularMaterials);
-        }
-
-        if material.diffuse_colour_texture.use_trap_colour
-            || material.specular_colour_texture.use_trap_colour
-            || material.emissive_colour_texture.use_trap_colour
-        {
-            preprocessor_directives.insert(Self::EnableTrapColour);
         }
 
         if material.is_emissive() {

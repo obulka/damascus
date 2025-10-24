@@ -15,8 +15,8 @@ use crate::{
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::SceneGraph,
-    textures::generators::{
-        GPUTextureGenerator, TextureGenerators, read::TextureRead, view::TextureViewer,
+    textures::evaluators::{
+        GPUTextureEvaluator, TextureEvaluator, read::TextureRead, view::TextureViewer,
     },
 };
 
@@ -76,7 +76,7 @@ impl Enumerator for TextureReadOutputData {}
 impl NodeOutputData for TextureReadOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Texture => OutputData::TextureGenerator,
+            Self::Texture => OutputData::TextureEvaluator,
         }
     }
 }
@@ -93,9 +93,9 @@ impl EvaluableNode for TextureReadNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Texture => Ok(InputData::TextureGenerator(
-                TextureGenerators::TextureViewer {
-                    texture_generator: TextureViewer::default()
+            Self::Outputs::Texture => Ok(InputData::TextureEvaluator(
+                TextureEvaluator::TextureViewer {
+                    texture_evaluator: TextureViewer::default()
                         .texture(TextureRead {
                             layers: 1,
                             filepath: Self::Inputs::Filepath

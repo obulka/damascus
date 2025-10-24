@@ -9,8 +9,6 @@ use crevice::std430::AsStd430;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
-use super::{FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes};
-
 use crate::{
     DualDevice,
     gpu::{
@@ -22,7 +20,11 @@ use crate::{
         resources::{BufferDescriptor, StorageTextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
-    textures::AOVs,
+    textures::{
+        AOVs,
+        evaluators::{GPUTextureEvaluator, GPUTextureEvaluatorHashes},
+    },
+    time::FrameCounter,
 };
 
 pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
@@ -171,7 +173,7 @@ pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
     pub subframe_counter: FrameCounter,
-    hashes: GPUTextureGeneratorHashes,
+    hashes: GPUTextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
@@ -181,7 +183,7 @@ impl Default for RayMarcher {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
             subframe_counter: FrameCounter::default(),
-            hashes: GPUTextureGeneratorHashes::default(),
+            hashes: GPUTextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
     }
@@ -320,16 +322,16 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 }
 
-impl GPUTextureGenerator<RayMarcherPreprocessorDirectives> for RayMarcher {
+impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
     fn label(&self) -> String {
         "ray marcher".to_owned()
     }
 
-    fn hashes(&self) -> &GPUTextureGeneratorHashes {
+    fn hashes(&self) -> &GPUTextureEvaluatorHashes {
         &self.hashes
     }
 
-    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes {
+    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes {
         &mut self.hashes
     }
 

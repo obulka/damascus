@@ -16,8 +16,8 @@ use crate::{
         outputs::output_data::{NodeOutputData, OutputData},
     },
     scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
-    textures::generators::{
-        GPUTextureGenerator, TextureGenerators,
+    textures::evaluators::{
+        GPUTextureEvaluator, TextureEvaluator,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
 };
@@ -110,7 +110,7 @@ impl Enumerator for RayMarcherOutputData {}
 impl NodeOutputData for RayMarcherOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Render => OutputData::TextureGenerator,
+            Self::Render => OutputData::TextureEvaluator,
         }
     }
 }
@@ -135,8 +135,8 @@ impl EvaluableNode for RayMarcherNode {
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::Render => {
-                Ok(InputData::TextureGenerator(TextureGenerators::RayMarcher {
-                    texture_generator: RayMarcher::default()
+                Ok(InputData::TextureEvaluator(TextureEvaluator::RayMarcher {
+                    texture_evaluator: RayMarcher::default()
                         .gpu_scene(
                             if let Ok(root_id) =
                                 Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()

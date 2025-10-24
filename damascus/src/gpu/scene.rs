@@ -19,16 +19,17 @@ use crate::{
     },
     lights::{GPULight, Light, LightType},
     materials::{GPUMaterial, Material},
-    textures::Texture,
+    scene_graph::SceneGraph,
+    textures::evaluators::TextureEvaluator,
 };
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUSceneArrayLengths {
-    num_primitives: u32,
-    num_lights: u32,
-    num_materials: u32,
-    num_non_physical_lights: u32,
+    pub num_primitives: u32,
+    pub num_lights: u32,
+    pub num_materials: u32,
+    pub num_non_physical_lights: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -155,7 +156,6 @@ impl ScenePreprocessorDirectives {
             Self::EnableEmissiveColourTexture,
             Self::EnableExtinctionColourTexture,
             Self::EnableRefractiveIndexTexture,
-            Self::EnableTrapColour,
             Self::EnableGrade,
             Self::EnableCheckerboard,
             Self::EnableNoise,
@@ -199,6 +199,7 @@ impl ScenePreprocessorDirectives {
             Self::EnableMirroring,
             Self::EnableHollowing,
             Self::EnablePhysicalLights,
+            Self::EnableTrapColour,
         ])
     }
 
@@ -208,6 +209,14 @@ impl ScenePreprocessorDirectives {
             Self::EnablePointLights,
             Self::EnableAmbientOcclusion,
             Self::EnableSoftShadows,
+        ])
+    }
+
+    pub fn all_directives_for_texture_evaluator() -> HashSet<Self> {
+        HashSet::<Self>::from([
+            Self::EnableGrade,
+            Self::EnableCheckerboard,
+            Self::EnableNoise,
         ])
     }
 
@@ -262,17 +271,17 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_texture(texture: &Texture) -> HashSet<Self> {
+    pub fn directives_for_texture_evaluator(texture_evaluator: &TextureEvaluator) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        match texture {
-            Texture::Grade => {
+        match texture_evaluator {
+            TextureEvaluator::Grade => {
                 preprocessor_directives.insert(Self::EnableGrade);
             }
-            Texture::Checkerboard => {
+            TextureEvaluator::Checkerboard => {
                 preprocessor_directives.insert(Self::EnableCheckerboard);
             }
-            Texture::Noise => {
+            TextureEvaluator::Noise => {
                 preprocessor_directives.insert(Self::EnableNoise);
             }
             _ => {}
@@ -281,67 +290,87 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_material(material: &Material) -> HashSet<Self> {
+    pub fn directives_for_material(material: &Material, scene_graph: &SceneGraph) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
-        if material.diffuse_colour_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.diffuse_colour_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableDiffuseColourTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.diffuse_colour_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.specular_probability_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.specular_probability_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableSpecularProbabilityTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.specular_probability_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.specular_roughness_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.specular_roughness_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableSpecularRoughnessTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.specular_roughness_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.specular_colour_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.specular_colour_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableSpecularColourTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.specular_colour_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.transmissive_probability_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.transmissive_probability_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableTransmissiveProbabilityTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.transmissive_probability_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.transmissive_roughness_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.transmissive_roughness_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableTransmissiveRoughnessTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.transmissive_roughness_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.transmissive_colour_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.transmissive_colour_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableExtinctionColourTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.transmissive_colour_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.emissive_colour_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.emissive_colour_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableEmissiveColourTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.emissive_colour_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.refractive_index_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.refractive_index_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableRefractiveIndexTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.refractive_index_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
-        if material.scattering_colour_texture > Texture::None {
+        if let Some(texture_evaluator_id) = material.scattering_colour_texture_id
+            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+        {
             preprocessor_directives.insert(Self::EnableScatteringColourTexture);
-            preprocessor_directives.extend(Self::directives_for_texture(
-                &material.scattering_colour_texture,
+            preprocessor_directives.extend(Self::directives_for_texture_evaluator(
+                &scene_graph[texture_evaluator_id],
             ));
         }
 

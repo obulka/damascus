@@ -5,9 +5,12 @@
 
 
 const NONE: u32 = 0u;
-const GRADE: u32 = 1u;
-const CHECKERBOARD: u32 = 2u;
-const NOISE: u32 = 2u;
+const WHITE: u32 = 1u;
+const BLACK: u32 = 2u;
+const CHECKERBOARD: u32 = 3u;
+const CONSTANT: u32 = 4u;
+const GRADE: u32 = 5u;
+const NOISE: u32 = 6u;
 
 const RGB_TO_YIQ: mat3x3f = mat3x3f(
     vec3f(0.299, 0.596, 0.211),

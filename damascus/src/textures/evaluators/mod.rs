@@ -5,12 +5,15 @@
 
 use std::{borrow::Cow, fmt::Debug, ops::Range};
 
+use crevice::std430;
+use glam::UVec2;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
-    Enumerator,
+    DualDevice, Enumerator,
     geometry::vertex::Vertex,
     gpu::{
         PreprocessorDirectives, ShaderSource,
@@ -24,6 +27,7 @@ use crate::{
     time::FrameCounter,
 };
 
+pub mod grade;
 pub mod ray_marcher;
 pub mod read;
 pub mod view;
@@ -31,15 +35,17 @@ pub mod view;
 use ray_marcher::RayMarcher;
 use view::TextureViewer;
 
+slotmap::new_key_type! { pub struct TextureEvaluatorId; }
+
 #[derive(Debug, Clone, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct GPUTextureGeneratorHashes {
+pub struct GPUTextureEvaluatorHashes {
     pub reset: Key<OrderedFloatPolicy>,
     pub recompile: Key<OrderedFloatPolicy>,
     pub reconstruct: Key<OrderedFloatPolicy>,
 }
 
-impl Default for GPUTextureGeneratorHashes {
+impl Default for GPUTextureEvaluatorHashes {
     fn default() -> Self {
         Self {
             reset: Key::<OrderedFloatPolicy>::Unit,
@@ -49,7 +55,7 @@ impl Default for GPUTextureGeneratorHashes {
     }
 }
 
-impl PartialEq for GPUTextureGeneratorHashes {
+impl PartialEq for GPUTextureEvaluatorHashes {
     fn eq(&self, other: &Self) -> bool {
         self.reset == other.reset
             && self.recompile == other.recompile
@@ -57,7 +63,7 @@ impl PartialEq for GPUTextureGeneratorHashes {
     }
 }
 
-pub trait GPUTextureGenerator<Directives: PreprocessorDirectives>:
+pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     Debug
     + Default
     + Clone
@@ -75,18 +81,18 @@ pub trait GPUTextureGenerator<Directives: PreprocessorDirectives>:
 
     // fn output(&self) -> TextureView;
 
-    fn hashes(&self) -> &GPUTextureGeneratorHashes;
+    fn hashes(&self) -> &GPUTextureEvaluatorHashes;
 
-    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes;
+    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes;
 
     fn frame_counter(&self) -> &FrameCounter;
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter;
 
     fn new() -> Self {
-        let mut texture_generator = Self::default();
-        texture_generator.update_hashes();
-        texture_generator
+        let mut texture_evaluator = Self::default();
+        texture_evaluator.update_hashes();
+        texture_evaluator
     }
 
     fn finalized(mut self) -> Self {
@@ -738,52 +744,69 @@ pub trait GPUTextureGenerator<Directives: PreprocessorDirectives>:
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum TextureGenerators {
+pub enum TextureEvaluator {
     #[default]
+    White,
     Black,
     Checkerboard,
     Constant,
     Grade,
     Noise,
     RayMarcher {
-        texture_generator: RayMarcher,
+        texture_evaluator: RayMarcher,
     },
     TextureViewer {
-        texture_generator: TextureViewer,
+        texture_evaluator: TextureViewer,
     },
-    White,
 }
 
-impl Enumerator for TextureGenerators {}
+impl Enumerator for TextureEvaluator {}
 
-impl TextureGenerators {
+impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
+    fn to_gpu(&self) -> UVec2 {
+        UVec2::new(
+            match self {
+                Self::White => 1,
+                Self::Black => 2,
+                Self::Checkerboard => 3,
+                Self::Constant => 4,
+                Self::Grade => 5,
+                Self::Noise => 6,
+                _ => 0,
+            },
+            0,
+        )
+    }
+}
+
+impl TextureEvaluator {
     pub fn new() -> Self {
         Self::TextureViewer {
-            texture_generator: TextureViewer::new(),
+            texture_evaluator: TextureViewer::new(),
         }
     }
 
     pub fn reset(&mut self) {
         match self {
-            Self::RayMarcher { texture_generator } => texture_generator.reset(),
-            Self::TextureViewer { texture_generator } => texture_generator.reset(),
+            Self::RayMarcher { texture_evaluator } => texture_evaluator.reset(),
+            Self::TextureViewer { texture_evaluator } => texture_evaluator.reset(),
             _ => {}
         }
     }
 
     pub fn frame_counter(&self) -> Option<&FrameCounter> {
         match self {
-            Self::RayMarcher { texture_generator } => Some(texture_generator.frame_counter()),
-            Self::TextureViewer { texture_generator } => Some(texture_generator.frame_counter()),
+            Self::RayMarcher { texture_evaluator } => Some(texture_evaluator.frame_counter()),
+            Self::TextureViewer { texture_evaluator } => Some(texture_evaluator.frame_counter()),
             _ => None,
         }
     }
 
     pub fn frame_counter_mut(&mut self) -> Option<&mut FrameCounter> {
         match self {
-            Self::RayMarcher { texture_generator } => Some(texture_generator.frame_counter_mut()),
-            Self::TextureViewer { texture_generator } => {
-                Some(texture_generator.frame_counter_mut())
+            Self::RayMarcher { texture_evaluator } => Some(texture_evaluator.frame_counter_mut()),
+            Self::TextureViewer { texture_evaluator } => {
+                Some(texture_evaluator.frame_counter_mut())
             }
             _ => None,
         }
@@ -795,11 +818,11 @@ impl TextureGenerators {
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         match self {
-            Self::RayMarcher { texture_generator } => {
-                Some(texture_generator.render_resource(device, target_state))
+            Self::RayMarcher { texture_evaluator } => {
+                Some(texture_evaluator.render_resource(device, target_state))
             }
-            Self::TextureViewer { texture_generator } => {
-                Some(texture_generator.render_resource(device, target_state))
+            Self::TextureViewer { texture_evaluator } => {
+                Some(texture_evaluator.render_resource(device, target_state))
             }
             _ => None,
         }
@@ -813,8 +836,8 @@ impl TextureGenerators {
     ) -> BufferData {
         self.update_if_hash_changed(device, target_state, render_resource);
         match self {
-            Self::RayMarcher { texture_generator } => texture_generator.buffer_data(),
-            Self::TextureViewer { texture_generator } => texture_generator.buffer_data(),
+            Self::RayMarcher { texture_evaluator } => texture_evaluator.buffer_data(),
+            Self::TextureViewer { texture_evaluator } => texture_evaluator.buffer_data(),
             _ => BufferData::default(),
         }
     }
@@ -826,13 +849,13 @@ impl TextureGenerators {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { texture_generator } => texture_generator
+            Self::RayMarcher { texture_evaluator } => texture_evaluator
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
                     render_resource,
                 ),
-            Self::TextureViewer { texture_generator } => texture_generator
+            Self::TextureViewer { texture_evaluator } => texture_evaluator
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
@@ -849,11 +872,11 @@ impl TextureGenerators {
         render_resource: &mut RenderResource,
     ) {
         match self {
-            Self::RayMarcher { texture_generator } => {
-                texture_generator.recompile_shader(device, target_state, render_resource)
+            Self::RayMarcher { texture_evaluator } => {
+                texture_evaluator.recompile_shader(device, target_state, render_resource)
             }
-            Self::TextureViewer { texture_generator } => {
-                texture_generator.recompile_shader(device, target_state, render_resource)
+            Self::TextureViewer { texture_evaluator } => {
+                texture_evaluator.recompile_shader(device, target_state, render_resource)
             }
             _ => {}
         }
@@ -866,11 +889,11 @@ impl TextureGenerators {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { texture_generator } => {
-                texture_generator.update_if_hash_changed(device, target_state, render_resource)
+            Self::RayMarcher { texture_evaluator } => {
+                texture_evaluator.update_if_hash_changed(device, target_state, render_resource)
             }
-            Self::TextureViewer { texture_generator } => {
-                texture_generator.update_if_hash_changed(device, target_state, render_resource)
+            Self::TextureViewer { texture_evaluator } => {
+                texture_evaluator.update_if_hash_changed(device, target_state, render_resource)
             }
             _ => false,
         }
@@ -878,7 +901,9 @@ impl TextureGenerators {
 
     pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
         Self::RayMarcher {
-            texture_generator: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
+            texture_evaluator: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
         }
     }
 }
+
+pub type TextureEvaluators = SlotMap<TextureEvaluatorId, TextureEvaluator>;

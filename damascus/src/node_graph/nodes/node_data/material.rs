@@ -12,7 +12,8 @@ use crate::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    textures::generators::TextureGenerators,
+    scene_graph::SceneGraphIdType,
+    textures::evaluators::TextureEvaluator,
 };
 
 use super::EvaluableNode;
@@ -66,44 +67,42 @@ impl NodeInputData for MaterialInputData {
         let default_material = Material::default();
         match self {
             Self::DiffuseColour => InputData::Vec3(default_material.diffuse_colour),
-            Self::DiffuseColourTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::DiffuseColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::SpecularProbability => InputData::Float(default_material.specular_probability),
             Self::SpecularProbabilityTexture => {
-                InputData::TextureGenerator(TextureGenerators::White)
+                InputData::TextureEvaluator(TextureEvaluator::White)
             }
             Self::SpecularRoughness => InputData::Float(default_material.specular_roughness),
-            Self::SpecularRoughnessTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::SpecularRoughnessTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::SpecularColour => InputData::Vec3(default_material.specular_colour),
-            Self::SpecularColourTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::SpecularColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::TransmissiveProbability => {
                 InputData::Float(default_material.transmissive_probability)
             }
             Self::TransmissiveProbabilityTexture => {
-                InputData::TextureGenerator(TextureGenerators::White)
+                InputData::TextureEvaluator(TextureEvaluator::White)
             }
             Self::TransmissiveRoughness => {
                 InputData::Float(default_material.transmissive_roughness)
             }
             Self::TransmissiveRoughnessTexture => {
-                InputData::TextureGenerator(TextureGenerators::White)
+                InputData::TextureEvaluator(TextureEvaluator::White)
             }
             Self::ExtinctionCoefficient => {
                 InputData::Float(default_material.extinction_coefficient)
             }
             Self::TransmissiveColour => InputData::Vec3(default_material.transmissive_colour),
-            Self::TransmissiveColourTexture => {
-                InputData::TextureGenerator(TextureGenerators::White)
-            }
+            Self::TransmissiveColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::EmissiveIntensity => InputData::Float(default_material.emissive_intensity),
             Self::EmissiveColour => InputData::Vec3(default_material.emissive_colour),
-            Self::EmissiveColourTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::EmissiveColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::RefractiveIndex => InputData::Float(default_material.refractive_index),
-            Self::RefractiveIndexTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::RefractiveIndexTexture => InputData::TextureEvaluator(TextureEvaluator::White),
             Self::ScatteringCoefficient => {
                 InputData::Float(default_material.scattering_coefficient)
             }
             Self::ScatteringColour => InputData::Vec3(default_material.scattering_colour),
-            Self::ScatteringColourTexture => InputData::TextureGenerator(TextureGenerators::White),
+            Self::ScatteringColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
         }
     }
 }
@@ -133,7 +132,7 @@ impl Enumerator for MaterialOutputData {}
 impl NodeOutputData for MaterialOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Id => OutputData::SceneGraphId,
+            Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Material),
         }
     }
 }

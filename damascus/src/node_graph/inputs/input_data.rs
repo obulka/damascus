@@ -19,7 +19,7 @@ use crate::{
         nodes::{NodeErrors, NodeId, NodeResult},
     },
     scene_graph::{RootId, SceneGraphId},
-    textures::generators::TextureGenerators,
+    textures::evaluators::TextureEvaluator,
 };
 
 #[derive(
@@ -51,7 +51,7 @@ pub enum InputData {
     Mat4(Mat4),
     Enum(Enum),
     Filepath(String),
-    TextureGenerator(TextureGenerators),
+    TextureEvaluator(TextureEvaluator),
     SceneGraphId(SceneGraphId),
 }
 
@@ -198,12 +198,12 @@ impl InputData {
         }
     }
 
-    pub fn try_to_texture_generator(self) -> NodeResult<TextureGenerators> {
+    pub fn try_to_texture_generator(self) -> NodeResult<TextureEvaluator> {
         match self {
-            InputData::TextureGenerator(value) => Ok(value),
+            InputData::TextureEvaluator(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<TextureGenerators>().to_string(),
+                conversion_to: type_name::<TextureEvaluator>().to_string(),
             }),
         }
     }

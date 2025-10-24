@@ -11,7 +11,7 @@ use crate::{
         inputs::input_data::{InputData, NodeInputData},
         outputs::output_data::{NodeOutputData, OutputData},
     },
-    textures::{generators::TextureGenerators, processors::grade::Grade},
+    textures::evaluators::{TextureEvaluator, grade::Grade},
 };
 
 use super::EvaluableNode;
@@ -49,7 +49,7 @@ impl NodeInputData for GradeInputData {
     fn default_data(&self) -> InputData {
         let default_grade = Grade::default();
         match self {
-            Self::Texture => InputData::TextureGenerator(TextureGenerators::Black),
+            Self::Texture => InputData::TextureEvaluator(TextureEvaluator::Black),
             Self::BlackPoint => InputData::Float(default_grade.black_point),
             Self::WhitePoint => InputData::Float(default_grade.white_point),
             Self::Lift => InputData::Float(default_grade.lift),
@@ -86,7 +86,7 @@ impl Enumerator for GradeOutputData {}
 impl NodeOutputData for GradeOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::GradedImage => OutputData::TextureGenerator,
+            Self::GradedImage => OutputData::TextureEvaluator,
         }
     }
 }

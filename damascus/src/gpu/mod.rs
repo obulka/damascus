@@ -270,13 +270,15 @@ mod tests {
             ScenePreprocessorDirectives::all_directives_for_material();
         scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_primitive());
         scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_light());
+        scene_directives
+            .extend(ScenePreprocessorDirectives::all_directives_for_texture_evaluator());
 
         let ray_marcher_directives: HashSet<RayMarcherPreprocessorDirectives> =
             RayMarcherPreprocessorDirectives::all_directives_for_ray_marcher();
 
         assert_eq!(
             ray_marcher_directives.len() + scene_directives.len(),
-            RayMarcherPreprocessorDirectives::COUNT + ScenePreprocessorDirectives::COUNT
+            RayMarcherPreprocessorDirectives::COUNT - 1 + ScenePreprocessorDirectives::COUNT
         );
     }
 

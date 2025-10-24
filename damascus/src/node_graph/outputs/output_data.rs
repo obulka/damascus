@@ -29,7 +29,7 @@ use crate::{
 pub enum OutputData {
     #[default]
     Mat4,
-    TextureGenerator,
+    TextureEvaluator,
     SceneGraphId(SceneGraphIdType),
 }
 

@@ -11,7 +11,7 @@ use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
 use crate::{
     Enumerator,
-    textures::{AOVs, generators::ray_marcher::RayMarcherRenderData},
+    textures::{AOVs, evaluators::ray_marcher::RayMarcherRenderData},
 };
 
 pub const RAY_MARCHER_VERTEX_SHADER: &str =

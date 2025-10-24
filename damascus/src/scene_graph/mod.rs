@@ -20,7 +20,7 @@ use crate::{
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
-    textures::{Texture, TextureId, Textures},
+    textures::evaluators::{TextureEvaluator, TextureEvaluatorId, TextureEvaluators},
 };
 
 slotmap::new_key_type! { pub struct RootId; }
@@ -50,7 +50,7 @@ pub enum SceneGraphId {
     Material(MaterialId),
     Primitive(PrimitiveId),
     Root(RootId),
-    Texture(TextureId),
+    TextureEvaluator(TextureEvaluatorId),
 }
 
 impl Enumerator for SceneGraphId {}
@@ -78,7 +78,7 @@ pub enum SceneGraphIdType {
     Material,
     Primitive,
     Root,
-    Texture,
+    TextureEvaluator,
 }
 
 impl Enumerator for SceneGraphIdType {}
@@ -92,7 +92,7 @@ impl From<SceneGraphId> for SceneGraphIdType {
             SceneGraphId::Material(..) => Self::Material,
             SceneGraphId::Primitive(..) => Self::Primitive,
             SceneGraphId::Root(..) => Self::Root,
-            SceneGraphId::Texture(..) => Self::Texture,
+            SceneGraphId::TextureEvaluator(..) => Self::TextureEvaluator,
         }
     }
 }
@@ -106,7 +106,7 @@ impl SceneGraphIdType {
             Self::Material => false,
             Self::Primitive => true,
             Self::Root => true,
-            Self::Texture => false,
+            Self::TextureEvaluator => false,
         }
     }
 }
@@ -135,7 +135,7 @@ pub struct SceneGraph {
     lights: Lights,
     materials: Materials,
     roots: Roots,
-    textures: Textures,
+    texture_evaluators: TextureEvaluators,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
     children: HashMap<SceneGraphId, BTreeSet<SceneGraphId>>,
 }
@@ -153,7 +153,7 @@ impl SceneGraph {
         self.lights.clear();
         self.materials.clear();
         self.roots.clear();
-        self.textures.clear();
+        self.texture_evaluators.clear();
         self.primitive_materials.clear();
         self.children.clear();
     }
@@ -178,8 +178,8 @@ impl SceneGraph {
         self.roots.insert(root)
     }
 
-    pub fn add_texture(&mut self, texture: Texture) -> TextureId {
-        self.textures.insert(texture)
+    pub fn add_texture(&mut self, texture: TextureEvaluator) -> TextureEvaluatorId {
+        self.texture_evaluators.insert(texture)
     }
 
     pub fn num_cameras(&self) -> usize {
@@ -202,8 +202,8 @@ impl SceneGraph {
         self.roots.len()
     }
 
-    pub fn num_textures(&self) -> usize {
-        self.textures.len()
+    pub fn num_texture_evaluators(&self) -> usize {
+        self.texture_evaluators.len()
     }
 
     pub fn iter_cameras(&self) -> impl Iterator<Item = &Camera> + '_ {
@@ -230,8 +230,10 @@ impl SceneGraph {
         self.roots.iter().map(|(_root_id, root)| root)
     }
 
-    pub fn iter_textures(&self) -> impl Iterator<Item = &Texture> + '_ {
-        self.textures.iter().map(|(_texture_id, texture)| texture)
+    pub fn iter_texture_evaluators(&self) -> impl Iterator<Item = &TextureEvaluator> + '_ {
+        self.texture_evaluators
+            .iter()
+            .map(|(_texture_id, texture)| texture)
     }
 
     pub fn has_children(&self, parent_id: SceneGraphId) -> bool {
@@ -343,7 +345,9 @@ impl SceneGraph {
                         if !material_ids.contains_key(material_id) {
                             let material: Material = self[*material_id];
                             gpu_scene.preprocessor_directives.extend(
-                                ScenePreprocessorDirectives::directives_for_material(&material),
+                                ScenePreprocessorDirectives::directives_for_material(
+                                    &material, &self,
+                                ),
                             );
                             gpu_scene.materials.push(material.to_gpu());
 
@@ -466,3 +470,9 @@ impl_slot_map_indexing!(SceneGraph, PrimitiveId, Primitive, primitives);
 impl_slot_map_indexing!(SceneGraph, LightId, Light, lights);
 impl_slot_map_indexing!(SceneGraph, MaterialId, Material, materials);
 impl_slot_map_indexing!(SceneGraph, RootId, Root, roots);
+impl_slot_map_indexing!(
+    SceneGraph,
+    TextureEvaluatorId,
+    TextureEvaluator,
+    texture_evaluators
+);

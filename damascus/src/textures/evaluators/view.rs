@@ -21,11 +21,9 @@ use crate::{
             TextureViewerPreprocessorDirectives,
         },
     },
-    textures::{
-        generators::{
-            FrameCounter, GPUTextureGenerator, GPUTextureGeneratorHashes, read::TextureRead,
-        },
-        processors::grade::Grade,
+    textures::evaluators::{
+        FrameCounter, GPUTextureEvaluator, GPUTextureEvaluatorHashes, grade::Grade,
+        read::TextureRead,
     },
 };
 
@@ -101,7 +99,7 @@ pub struct TextureViewer {
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
-    hashes: GPUTextureGeneratorHashes,
+    hashes: GPUTextureEvaluatorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
@@ -114,7 +112,7 @@ impl Default for TextureViewer {
             zoom: 1.0,
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
-            hashes: GPUTextureGeneratorHashes::default(),
+            hashes: GPUTextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
     }
@@ -148,16 +146,16 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
     }
 }
 
-impl GPUTextureGenerator<TextureViewerPreprocessorDirectives> for TextureViewer {
+impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn label(&self) -> String {
         "texture viewer".to_owned()
     }
 
-    fn hashes(&self) -> &GPUTextureGeneratorHashes {
+    fn hashes(&self) -> &GPUTextureEvaluatorHashes {
         &self.hashes
     }
 
-    fn hashes_mut(&mut self) -> &mut GPUTextureGeneratorHashes {
+    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes {
         &mut self.hashes
     }
 

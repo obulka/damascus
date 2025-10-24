@@ -819,8 +819,8 @@ mod tests {
         graph.connect_node_to_input(
             primitive0_id,
             graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
-                .expect("Siblings input should exist on Primitive node"),
+                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                .expect("Child input should exist on Primitive node"),
         );
 
         let mut expected_disconnections = HashMap::<InputId, OutputId>::new();
@@ -911,8 +911,8 @@ mod tests {
         graph.connect_node_to_input(
             primitive0_id,
             graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
-                .expect("Siblings input should exist on Primitive node"),
+                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                .expect("Child input should exist on Primitive node"),
         );
 
         let mut camera_ancestors = Vec::<NodeId>::new();
@@ -971,8 +971,8 @@ mod tests {
         graph.connect_node_to_input(
             primitive0_id,
             graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
-                .expect("Siblings input should exist on Primitive node"),
+                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                .expect("Child input should exist on Primitive node"),
         );
 
         assert!(graph.descendants(camera_id).is_empty());
@@ -1116,8 +1116,8 @@ mod tests {
             graph.connect_node_to_input(
                 primitive0_id,
                 graph
-                    .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
-                    .expect("Siblings input should exist on Primitive node"),
+                    .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                    .expect("Child input should exist on Primitive node"),
             );
 
             primary_axis_ids.push(primary_axis_id);
@@ -1238,8 +1238,8 @@ mod tests {
         graph.connect_node_to_input(
             primitive0_id,
             graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Siblings)
-                .expect("Siblings input should exist on Primitive node"),
+                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                .expect("Child input should exist on Primitive node"),
         );
 
         let mut node_ids = HashSet::<NodeId>::new();

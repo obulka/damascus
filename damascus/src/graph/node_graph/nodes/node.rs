@@ -5,7 +5,7 @@
 
 use std::{collections::HashMap, str::FromStr};
 
-use crate::{
+use crate::graph::{
     node_graph::{
         inputs::{InputId, input_data::InputData},
         nodes::{

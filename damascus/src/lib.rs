@@ -17,10 +17,9 @@ use strum::{EnumCount, IntoEnumIterator};
 pub mod camera;
 pub mod geometry;
 pub mod gpu;
+pub mod graph;
 pub mod lights;
 pub mod materials;
-pub mod node_graph;
-pub mod scene_graph;
 pub mod textures;
 pub mod time;
 

@@ -9,16 +9,18 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    node_graph::{
-        NodeGraph,
-        inputs::{
-            InputId,
-            input_data::{InputData, NodeInputData},
+    graph::{
+        node_graph::{
+            NodeGraph,
+            inputs::{
+                InputId,
+                input_data::{InputData, NodeInputData},
+            },
+            nodes::NodeId,
+            outputs::output_data::{NodeOutputData, OutputData},
         },
-        nodes::NodeId,
-        outputs::output_data::{NodeOutputData, OutputData},
+        scene_graph::{SceneGraph, SceneGraphId},
     },
-    scene_graph::{SceneGraph, SceneGraphId},
 };
 
 use super::{NodeErrors, NodeResult};

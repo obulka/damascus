@@ -7,12 +7,14 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    materials::Material,
-    node_graph::{
-        inputs::input_data::{InputData, NodeInputData},
-        outputs::output_data::{NodeOutputData, OutputData},
+    graph::{
+        node_graph::{
+            inputs::input_data::{InputData, NodeInputData},
+            outputs::output_data::{NodeOutputData, OutputData},
+        },
+        scene_graph::SceneGraphIdType,
     },
-    scene_graph::SceneGraphIdType,
+    materials::Material,
     textures::evaluators::TextureEvaluator,
 };
 

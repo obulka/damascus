@@ -7,8 +7,10 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    node_graph::{NodeGraph, nodes::NodeId},
-    scene_graph::SceneGraphIdType,
+    graph::{
+        node_graph::{NodeGraph, nodes::NodeId},
+        scene_graph::SceneGraphIdType,
+    },
 };
 
 #[derive(

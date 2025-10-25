@@ -17,6 +17,7 @@ use crate::{
     gpu::scene::{
         GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives, Std430GPUSceneArrayLengths,
     },
+    graph::edges::BidirectionalSingleParentEdges,
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
@@ -127,6 +128,8 @@ impl Transformable for Root {
 
 pub type Roots = SlotMap<RootId, Root>;
 
+pub type Edges = BidirectionalSingleParentEdges<SceneGraphId, SceneGraphId>;
+
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct SceneGraph {
@@ -137,7 +140,7 @@ pub struct SceneGraph {
     roots: Roots,
     texture_evaluators: TextureEvaluators,
     primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    children: HashMap<SceneGraphId, BTreeSet<SceneGraphId>>,
+    edges: Edges,
 }
 
 impl PartialEq for SceneGraph {
@@ -155,7 +158,7 @@ impl SceneGraph {
         self.roots.clear();
         self.texture_evaluators.clear();
         self.primitive_materials.clear();
-        self.children.clear();
+        self.edges.clear();
     }
 
     pub fn add_camera(&mut self, camera: Camera) -> CameraId {
@@ -237,21 +240,15 @@ impl SceneGraph {
     }
 
     pub fn has_children(&self, parent_id: SceneGraphId) -> bool {
-        self.children.contains_key(&parent_id)
+        self.edges.has_children(parent_id)
     }
 
     pub fn children(&self, parent_id: SceneGraphId) -> Option<&BTreeSet<SceneGraphId>> {
-        self.children.get(&parent_id)
+        self.edges.children(parent_id)
     }
 
     pub fn add_child(&mut self, parent_id: SceneGraphId, child_id: SceneGraphId) {
-        if let Some(children) = self.children.get_mut(&parent_id) {
-            children.insert(child_id);
-        } else {
-            let mut children = BTreeSet::<SceneGraphId>::new();
-            children.insert(child_id);
-            self.children.insert(parent_id, children);
-        }
+        self.edges.connect(parent_id, child_id);
     }
 
     pub fn set_material(&mut self, primitive_id: PrimitiveId, material_id: MaterialId) {
@@ -268,6 +265,28 @@ impl SceneGraph {
             }
         }
         count
+    }
+
+    pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
+        match scene_graph_id {
+            SceneGraphId::Camera(camera_id) => {
+                if let Some(camera) = self.cameras.remove(camera_id) {}
+            }
+            SceneGraphId::Light(light_id) => if let Some(light) = self.lights.remove(light_id) {},
+            SceneGraphId::Primitive(primitive_id) => {
+                if let Some(primitive) = self.primitives.remove(primitive_id) {}
+            }
+            SceneGraphId::Material(material_id) => {
+                if let Some(material) = self.materials.remove(material_id) {}
+            }
+            SceneGraphId::Root(root_id) => if let Some(root) = self.roots.remove(root_id) {},
+            SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
+                if let Some(texture_evaluator) =
+                    self.texture_evaluators.remove(texture_evaluator_id)
+                {}
+            }
+            SceneGraphId::None => {}
+        }
     }
 
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order

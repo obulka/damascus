@@ -12,13 +12,15 @@ use crate::{
     Enum, Enumerator,
     camera::CameraId,
     geometry::primitives::PrimitiveId,
+    graph::{
+        node_graph::{
+            NodeGraph,
+            nodes::{NodeErrors, NodeId, NodeResult},
+        },
+        scene_graph::{RootId, SceneGraphId},
+    },
     lights::LightId,
     materials::MaterialId,
-    node_graph::{
-        NodeGraph,
-        nodes::{NodeErrors, NodeId, NodeResult},
-    },
-    scene_graph::{RootId, SceneGraphId},
     textures::evaluators::TextureEvaluator,
 };
 
@@ -315,7 +317,8 @@ mod tests {
             InputData::Vec3(Vec3::ONE).try_to_enum::<InputData>(),
             Err(NodeErrors::InputDowncastError {
                 data: InputData::Vec3(Vec3::ONE),
-                conversion_to: "damascus::node_graph::inputs::input_data::InputData".to_string(),
+                conversion_to: "damascus::graph::node_graph::inputs::input_data::InputData"
+                    .to_string(),
             })
         );
     }

@@ -7,14 +7,13 @@ use std::collections::{HashMap, HashSet};
 
 use slotmap::SparseSecondaryMap;
 
-use crate::{impl_slot_map_indexing, scene_graph::SceneGraph};
+use super::{edges::BidirectionalSingleParentEdges, scene_graph::SceneGraph};
+use crate::impl_slot_map_indexing;
 
-pub mod edges;
 pub mod inputs;
 pub mod nodes;
 pub mod outputs;
 
-use edges::Edges;
 use inputs::{
     InputId, Inputs,
     input::Input,
@@ -28,6 +27,7 @@ use outputs::{
 };
 
 pub type OutputCache = SparseSecondaryMap<OutputId, InputData>;
+pub type Edges = BidirectionalSingleParentEdges<OutputId, InputId>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -70,8 +70,8 @@ impl NodeGraph {
         self.outputs.len()
     }
 
-    pub fn remove_output_from_cache(&mut self, output_id: &OutputId) {
-        self.cache.remove(*output_id);
+    pub fn remove_output_from_cache(&mut self, output_id: &OutputId) -> Option<InputData> {
+        self.cache.remove(*output_id)
     }
 
     pub fn remove_node_from_cache(&mut self, node_id: NodeId) {
@@ -80,7 +80,14 @@ impl NodeGraph {
             .iter()
             .chain(node_output_ids.iter())
             .for_each(|output_id| {
-                self.remove_output_from_cache(output_id);
+                if let Some(input_data) = self.remove_output_from_cache(output_id) {
+                    match input_data {
+                        InputData::SceneGraphId(scene_graph_id) => {
+                            self.scene_graph.remove(scene_graph_id)
+                        }
+                        _ => {}
+                    }
+                }
             });
     }
 
@@ -175,7 +182,7 @@ impl NodeGraph {
             }
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
             for (input_id, _output_id) in disconnected_edges.iter() {
-                new_graph.edges.disconnect_input(*input_id);
+                new_graph.edges.disconnect_child(*input_id);
             }
         }
 
@@ -205,8 +212,8 @@ impl NodeGraph {
         let input_ids: Vec<InputId> = self[node_id].input_ids.clone();
         let output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
 
-        disconnected_edges.extend(self.edges.disconnect_inputs(input_ids.iter()));
-        disconnected_edges.extend(self.edges.disconnect_outputs(output_ids.iter()));
+        disconnected_edges.extend(self.edges.disconnect_children(input_ids.iter()));
+        disconnected_edges.extend(self.edges.disconnect_parents(output_ids.iter()));
 
         for input in input_ids.iter() {
             self.inputs.remove(*input);
@@ -245,7 +252,7 @@ impl NodeGraph {
         let node_id = self[input_id].node_id;
         self[node_id].input_ids.retain(|id| *id != input_id);
         self.inputs.remove(input_id);
-        self.edges.disconnect_input(input_id);
+        self.edges.disconnect_child(input_id);
     }
 
     pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
@@ -260,7 +267,7 @@ impl NodeGraph {
         let node_id = self[output_id].node_id;
         self[node_id].output_ids.retain(|id| *id != output_id);
         self.outputs.remove(output_id);
-        self.edges.disconnect_output(output_id);
+        self.edges.disconnect_parent(output_id);
     }
 
     pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
@@ -557,7 +564,7 @@ impl NodeGraph {
     ) -> Option<OutputId> {
         match self.node_input_id_from_str(node_id, input_name) {
             Ok(input_id) => {
-                if let Some(output_id) = self.edges.disconnect_input(input_id) {
+                if let Some(output_id) = self.edges.disconnect_child(input_id) {
                     let node_data: NodeData = self[self[input_id].node_id].data;
                     node_data.dynamic_input_disconnected(self, input_id);
                     Some(output_id)

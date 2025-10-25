@@ -17,9 +17,9 @@ use crate::{
         BlendType, Repetition,
         primitives::{GPUPrimitive, Primitive, Shapes},
     },
+    graph::scene_graph::SceneGraph,
     lights::{GPULight, Light, LightType},
     materials::{GPUMaterial, Material},
-    scene_graph::SceneGraph,
     textures::evaluators::TextureEvaluator,
 };
 

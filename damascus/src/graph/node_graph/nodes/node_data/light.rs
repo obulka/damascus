@@ -10,13 +10,15 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    lights::{Light, LightId, LightType},
-    node_graph::{
-        inputs::input_data::{InputData, NodeInputData},
-        nodes::NodeResult,
-        outputs::output_data::{NodeOutputData, OutputData},
+    graph::{
+        node_graph::{
+            inputs::input_data::{InputData, NodeInputData},
+            nodes::NodeResult,
+            outputs::output_data::{NodeOutputData, OutputData},
+        },
+        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
+    lights::{Light, LightId, LightType},
 };
 
 use super::EvaluableNode;

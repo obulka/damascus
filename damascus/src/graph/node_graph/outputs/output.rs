@@ -3,19 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::node_graph::nodes::NodeId;
-
-use super::input_data::InputData;
+use crate::graph::node_graph::{nodes::NodeId, outputs::output_data::OutputData};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct Input {
+pub struct Output {
     pub node_id: NodeId,
     pub name: String,
-    pub data: InputData,
+    pub data: OutputData,
 }
 
-impl Input {
-    pub fn new(node_id: NodeId, name: String, data: InputData) -> Self {
+impl Output {
+    pub fn new(node_id: NodeId, name: String, data: OutputData) -> Self {
         Self {
             node_id: node_id,
             name: name,

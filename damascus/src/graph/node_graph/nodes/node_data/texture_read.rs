@@ -9,12 +9,14 @@ use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
     Enumerator,
-    node_graph::{
-        inputs::input_data::{InputData, NodeInputData},
-        nodes::{NodeResult, node_data::EvaluableNode},
-        outputs::output_data::{NodeOutputData, OutputData},
+    graph::{
+        node_graph::{
+            inputs::input_data::{InputData, NodeInputData},
+            nodes::{NodeResult, node_data::EvaluableNode},
+            outputs::output_data::{NodeOutputData, OutputData},
+        },
+        scene_graph::SceneGraph,
     },
-    scene_graph::SceneGraph,
     textures::evaluators::{
         GPUTextureEvaluator, TextureEvaluator, read::TextureRead, view::TextureViewer,
     },

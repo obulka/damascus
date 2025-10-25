@@ -118,14 +118,10 @@ impl<ParentId: Ord + Copy + Hash + 'static, ChildId: Ord + Copy + Hash + 'static
             .map(|(parent, children)| (*parent, children))
     }
 
-    pub fn disconnect_parents<'a, 'b>(
-        &'b mut self,
-        parent_ids: impl Iterator<Item = ParentId> + 'a + 'b,
-    ) -> impl Iterator<Item = (ParentId, ChildId)> + 'b
-    where
-        ParentId: 'a,
-        ChildId: 'a,
-    {
+    pub fn disconnect_parents(
+        &mut self,
+        parent_ids: impl Iterator<Item = ParentId>,
+    ) -> impl Iterator<Item = (ParentId, ChildId)> + '_ {
         self.disconnect_children(
             parent_ids
                 .filter_map(|parent_id| self.children(parent_id))
@@ -136,14 +132,10 @@ impl<ParentId: Ord + Copy + Hash + 'static, ChildId: Ord + Copy + Hash + 'static
         )
     }
 
-    pub fn disconnect_children<'a, 'b>(
-        &'b mut self,
-        child_ids: impl Iterator<Item = ChildId> + 'a + 'b,
-    ) -> impl Iterator<Item = (ParentId, ChildId)> + 'b
-    where
-        ParentId: 'a,
-        ChildId: 'a,
-    {
+    pub fn disconnect_children<'a>(
+        &'a mut self,
+        child_ids: impl Iterator<Item = ChildId> + 'a,
+    ) -> impl Iterator<Item = (ParentId, ChildId)> + 'a {
         child_ids.filter_map(|child_id| {
             if let Some(parent_id) = self.disconnect_child(child_id) {
                 Some((parent_id, child_id))

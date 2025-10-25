@@ -162,6 +162,33 @@ impl SceneGraph {
         self.edges.clear();
     }
 
+    pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
+        self.edges.disconnect_parent(scene_graph_id);
+        match scene_graph_id {
+            SceneGraphId::Camera(camera_id) => {
+                self.cameras.remove(camera_id);
+            }
+            SceneGraphId::Light(light_id) => {
+                self.lights.remove(light_id);
+            }
+            SceneGraphId::Primitive(primitive_id) => {
+                self.material_primitives.disconnect_child(primitive_id);
+                self.primitives.remove(primitive_id);
+            }
+            SceneGraphId::Material(material_id) => {
+                self.material_primitives.disconnect_parent(material_id);
+                self.materials.remove(material_id);
+            }
+            SceneGraphId::Root(root_id) => {
+                self.roots.remove(root_id);
+            }
+            SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
+                self.texture_evaluators.remove(texture_evaluator_id);
+            }
+            SceneGraphId::None => {}
+        }
+    }
+
     pub fn add_camera(&mut self, camera: Camera) -> CameraId {
         self.cameras.insert(camera)
     }
@@ -266,33 +293,6 @@ impl SceneGraph {
             }
         }
         count
-    }
-
-    pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
-        self.edges.disconnect_parent(scene_graph_id);
-        match scene_graph_id {
-            SceneGraphId::Camera(camera_id) => {
-                self.cameras.remove(camera_id);
-            }
-            SceneGraphId::Light(light_id) => {
-                self.lights.remove(light_id);
-            }
-            SceneGraphId::Primitive(primitive_id) => {
-                self.material_primitives.disconnect_child(primitive_id);
-                self.primitives.remove(primitive_id);
-            }
-            SceneGraphId::Material(material_id) => {
-                self.material_primitives.disconnect_parent(material_id);
-                self.materials.remove(material_id);
-            }
-            SceneGraphId::Root(root_id) => {
-                self.roots.remove(root_id);
-            }
-            SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
-                self.texture_evaluators.remove(texture_evaluator_id);
-            }
-            SceneGraphId::None => {}
-        }
     }
 
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order

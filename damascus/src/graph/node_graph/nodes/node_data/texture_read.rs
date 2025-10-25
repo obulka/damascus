@@ -90,7 +90,7 @@ impl EvaluableNode for TextureReadNode {
     type Outputs = TextureReadOutputData;
 
     fn evaluate(
-        scene_graph: &mut SceneGraph,
+        _scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {

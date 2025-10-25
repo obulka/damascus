@@ -269,22 +269,27 @@ impl SceneGraph {
     }
 
     pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
+        self.edges.disconnect_parent(scene_graph_id);
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
-                if let Some(camera) = self.cameras.remove(camera_id) {}
+                self.cameras.remove(camera_id);
             }
-            SceneGraphId::Light(light_id) => if let Some(light) = self.lights.remove(light_id) {},
+            SceneGraphId::Light(light_id) => {
+                self.lights.remove(light_id);
+            }
             SceneGraphId::Primitive(primitive_id) => {
-                if let Some(primitive) = self.primitives.remove(primitive_id) {}
+                self.material_primitives.disconnect_child(primitive_id);
+                self.primitives.remove(primitive_id);
             }
             SceneGraphId::Material(material_id) => {
-                if let Some(material) = self.materials.remove(material_id) {}
+                self.material_primitives.disconnect_parent(material_id);
+                self.materials.remove(material_id);
             }
-            SceneGraphId::Root(root_id) => if let Some(root) = self.roots.remove(root_id) {},
+            SceneGraphId::Root(root_id) => {
+                self.roots.remove(root_id);
+            }
             SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
-                if let Some(texture_evaluator) =
-                    self.texture_evaluators.remove(texture_evaluator_id)
-                {}
+                self.texture_evaluators.remove(texture_evaluator_id);
             }
             SceneGraphId::None => {}
         }

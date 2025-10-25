@@ -141,7 +141,7 @@ pub struct SceneGraph {
     roots: Roots,
     texture_evaluators: TextureEvaluators,
     material_primitives: MaterialPrimitives,
-    edges: TransformHierarchy,
+    transform_hierarchy: TransformHierarchy,
 }
 
 impl PartialEq for SceneGraph {
@@ -159,11 +159,11 @@ impl SceneGraph {
         self.roots.clear();
         self.texture_evaluators.clear();
         self.material_primitives.clear();
-        self.edges.clear();
+        self.transform_hierarchy.clear();
     }
 
     pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
-        self.edges.disconnect_parent(scene_graph_id);
+        self.transform_hierarchy.disconnect_parent(scene_graph_id);
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
                 self.cameras.remove(camera_id);
@@ -268,15 +268,15 @@ impl SceneGraph {
     }
 
     pub fn has_children(&self, parent_id: SceneGraphId) -> bool {
-        self.edges.has_children(parent_id)
+        self.transform_hierarchy.has_children(parent_id)
     }
 
     pub fn children(&self, parent_id: SceneGraphId) -> Option<&BTreeSet<SceneGraphId>> {
-        self.edges.children(parent_id)
+        self.transform_hierarchy.children(parent_id)
     }
 
     pub fn add_child(&mut self, parent_id: SceneGraphId, child_id: SceneGraphId) {
-        self.edges.connect(parent_id, child_id);
+        self.transform_hierarchy.connect(parent_id, child_id);
     }
 
     pub fn set_material(&mut self, primitive_id: PrimitiveId, material_id: MaterialId) {

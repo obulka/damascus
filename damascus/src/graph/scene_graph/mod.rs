@@ -209,7 +209,7 @@ impl SceneGraph {
         self.roots.insert(root)
     }
 
-    pub fn add_texture(&mut self, texture: TextureEvaluator) -> TextureEvaluatorId {
+    pub fn add_texture_evaluator(&mut self, texture: TextureEvaluator) -> TextureEvaluatorId {
         self.texture_evaluators.insert(texture)
     }
 
@@ -501,3 +501,30 @@ impl_slot_map_indexing!(
     TextureEvaluator,
     texture_evaluators
 );
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_creation() {
+        let mut graph = SceneGraph::default();
+
+        graph.add_camera(Camera::default());
+        graph.add_primitive(Primitive::default());
+        graph.add_light(Light::default());
+        graph.add_material(Material::default());
+        graph.add_root(Root::default());
+        graph.add_texture_evaluator(TextureEvaluator::default());
+
+        assert_eq!(graph.num_cameras(), 1);
+        assert_eq!(graph.num_primitives(), 1);
+        assert_eq!(graph.num_lights(), 1);
+        assert_eq!(graph.num_materials(), 1);
+        assert_eq!(graph.num_roots(), 1);
+        assert_eq!(graph.num_texture_evaluators(), 1);
+
+        graph.add_camera(Camera::default());
+        assert_eq!(graph.num_cameras(), 2);
+    }
+}

@@ -181,7 +181,7 @@ impl NodeGraph {
                 continue;
             }
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
-            for (input_id, _output_id) in disconnected_edges.iter() {
+            for (_output_id, input_id) in disconnected_edges.iter() {
                 new_graph.edges.disconnect_child(*input_id);
             }
         }
@@ -206,14 +206,11 @@ impl NodeGraph {
         node_id
     }
 
-    pub fn remove_node(&mut self, node_id: NodeId) -> (Node, HashMap<InputId, OutputId>) {
-        let mut disconnected_edges = HashMap::<InputId, OutputId>::new();
+    pub fn remove_node(&mut self, node_id: NodeId) -> (Node, HashMap<OutputId, InputId>) {
+        let mut disconnected_edges = HashMap::<OutputId, InputId>::new();
 
         let input_ids: Vec<InputId> = self[node_id].input_ids.clone();
         let output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
-
-        disconnected_edges.extend(self.edges.disconnect_children(input_ids.iter()));
-        disconnected_edges.extend(self.edges.disconnect_parents(output_ids.iter()));
 
         for input in input_ids.iter() {
             self.inputs.remove(*input);
@@ -221,6 +218,9 @@ impl NodeGraph {
         for output in output_ids.iter() {
             self.outputs.remove(*output);
         }
+
+        disconnected_edges.extend(self.edges.disconnect_children(input_ids.into_iter()));
+        disconnected_edges.extend(self.edges.disconnect_parents(output_ids.into_iter()));
         let removed_node = self.nodes.remove(node_id).expect("Node must exist.");
 
         (removed_node, disconnected_edges)
@@ -830,10 +830,10 @@ mod tests {
                 .expect("Child input should exist on Primitive node"),
         );
 
-        let mut expected_disconnections = HashMap::<InputId, OutputId>::new();
-        expected_disconnections.insert(secondary_axis_axis_input_id, primary_axis_output_id);
-        expected_disconnections.insert(camera_axis_input_id, secondary_axis_output_id);
-        expected_disconnections.insert(primitive_axis_input_id, secondary_axis_output_id);
+        let mut expected_disconnections = HashMap::<OutputId, InputId>::new();
+        expected_disconnections.insert(primary_axis_output_id, secondary_axis_axis_input_id);
+        expected_disconnections.insert(secondary_axis_output_id, camera_axis_input_id);
+        expected_disconnections.insert(secondary_axis_output_id, primitive_axis_input_id);
 
         let (_node, disconnections) = graph.remove_node(secondary_axis_id);
         assert_eq!(disconnections, expected_disconnections);

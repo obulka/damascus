@@ -5,7 +5,7 @@
 
 use std::{
     cmp::Ord,
-    collections::{BTreeMap, BTreeSet, HashMap},
+    collections::{BTreeSet, HashMap},
     hash::Hash,
 };
 
@@ -20,7 +20,7 @@ where
     children: HashMap<ParentId, BTreeSet<ChildId>>,
 }
 
-impl<ParentId: Ord + Copy + Hash, ChildId: Ord + Copy + Hash>
+impl<ParentId: Ord + Copy + Hash + 'static, ChildId: Ord + Copy + Hash + 'static>
     BidirectionalSingleParentEdges<ParentId, ChildId>
 {
     pub fn len(&self) -> usize {
@@ -70,9 +70,10 @@ impl<ParentId: Ord + Copy + Hash, ChildId: Ord + Copy + Hash>
             if all_children_removed {
                 self.children.remove(&parent_id);
             }
-            return Some(parent_id);
+            Some(parent_id)
+        } else {
+            None
         }
-        None
     }
 
     pub fn disconnect_parent(&mut self, parent_id: ParentId) -> BTreeSet<ChildId> {
@@ -107,8 +108,8 @@ impl<ParentId: Ord + Copy + Hash, ChildId: Ord + Copy + Hash>
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (ChildId, ParentId)> + '_ {
-        self.parents.iter().map(|(child, parent)| (*child, *parent))
+    pub fn iter(&self) -> impl Iterator<Item = (ParentId, ChildId)> + '_ {
+        self.parents.iter().map(|(child, parent)| (*parent, *child))
     }
 
     pub fn iter_children(&self) -> impl Iterator<Item = (ParentId, &BTreeSet<ChildId>)> + '_ {
@@ -117,38 +118,38 @@ impl<ParentId: Ord + Copy + Hash, ChildId: Ord + Copy + Hash>
             .map(|(parent, children)| (*parent, children))
     }
 
-    pub fn disconnect_parents<'a>(
-        &mut self,
-        parent_ids: impl Iterator<Item = &'a ParentId> + 'a,
-    ) -> BTreeMap<ChildId, ParentId>
+    pub fn disconnect_parents<'a, 'b>(
+        &'b mut self,
+        parent_ids: impl Iterator<Item = ParentId> + 'a + 'b,
+    ) -> impl Iterator<Item = (ParentId, ChildId)> + 'b
     where
         ParentId: 'a,
         ChildId: 'a,
     {
-        let mut disconnected = BTreeMap::<ChildId, ParentId>::new();
-        for parent_id in parent_ids {
-            for child_id in self.cloned_children(*parent_id).into_iter() {
-                self.disconnect_child(child_id);
-                disconnected.insert(child_id, *parent_id);
-            }
-        }
-        disconnected
+        self.disconnect_children(
+            parent_ids
+                .filter_map(|parent_id| self.children(parent_id))
+                .flatten()
+                .copied()
+                .collect::<BTreeSet<ChildId>>()
+                .into_iter(),
+        )
     }
 
-    pub fn disconnect_children<'a>(
-        &mut self,
-        child_ids: impl Iterator<Item = &'a ChildId> + 'a,
-    ) -> BTreeMap<ChildId, ParentId>
+    pub fn disconnect_children<'a, 'b>(
+        &'b mut self,
+        child_ids: impl Iterator<Item = ChildId> + 'a + 'b,
+    ) -> impl Iterator<Item = (ParentId, ChildId)> + 'b
     where
         ParentId: 'a,
         ChildId: 'a,
     {
-        let mut disconnected = BTreeMap::<ChildId, ParentId>::new();
-        for child_id in child_ids {
-            if let Some(parent_id) = self.disconnect_child(*child_id) {
-                disconnected.insert(*child_id, parent_id);
+        child_ids.filter_map(|child_id| {
+            if let Some(parent_id) = self.disconnect_child(child_id) {
+                Some((parent_id, child_id))
+            } else {
+                None
             }
-        }
-        disconnected
+        })
     }
 }

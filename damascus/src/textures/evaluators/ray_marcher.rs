@@ -385,6 +385,14 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.materials
+                    [self.render_data.gpu_scene.atmosphere]
+                    .as_std430()])
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
         ]
     }
 
@@ -414,14 +422,6 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
                         .collect::<Vec<_>>()
                         .as_slice(),
                 )
-                .to_vec(),
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-            },
-            BufferDescriptor {
-                data: bytemuck::cast_slice(&[self.render_data.gpu_scene.materials
-                    [self.render_data.gpu_scene.atmosphere]
-                    .as_std430()])
                 .to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,

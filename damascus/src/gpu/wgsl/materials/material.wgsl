@@ -46,9 +46,8 @@ struct NestedDielectrics {
 }
 
 
-// TODO this could be uniform but can't get the alignment right
-@group(STORAGE_BIND_GROUP) @binding(ATMOSPHERE_BINDING)
-var<storage, read> _atmosphere: Material;
+@group(UNIFORM_BIND_GROUP) @binding(ATMOSPHERE_BINDING)
+var<uniform> _atmosphere: Material;
 
 
 fn dielectric_from_atmosphere() -> Dielectric {

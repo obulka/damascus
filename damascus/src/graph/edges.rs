@@ -20,7 +20,7 @@ where
     children: HashMap<ParentId, BTreeSet<ChildId>>,
 }
 
-impl<ParentId: Ord + Copy + Hash + 'static, ChildId: Ord + Copy + Hash + 'static>
+impl<ParentId: Ord + Copy + Hash, ChildId: Ord + Copy + Hash>
     BidirectionalSingleParentEdges<ParentId, ChildId>
 {
     pub fn len(&self) -> usize {

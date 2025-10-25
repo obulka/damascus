@@ -7,7 +7,7 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 
 use glam::Mat4;
 use serde_hashkey::to_key_with_ordered_float;
-use slotmap::{SlotMap, SparseSecondaryMap};
+use slotmap::SlotMap;
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
@@ -128,7 +128,8 @@ impl Transformable for Root {
 
 pub type Roots = SlotMap<RootId, Root>;
 
-pub type Edges = BidirectionalSingleParentEdges<SceneGraphId, SceneGraphId>;
+pub type TransformHierarchy = BidirectionalSingleParentEdges<SceneGraphId, SceneGraphId>;
+pub type MaterialPrimitives = BidirectionalSingleParentEdges<MaterialId, PrimitiveId>;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -139,8 +140,8 @@ pub struct SceneGraph {
     materials: Materials,
     roots: Roots,
     texture_evaluators: TextureEvaluators,
-    primitive_materials: SparseSecondaryMap<PrimitiveId, MaterialId>,
-    edges: Edges,
+    material_primitives: MaterialPrimitives,
+    edges: TransformHierarchy,
 }
 
 impl PartialEq for SceneGraph {
@@ -157,7 +158,7 @@ impl SceneGraph {
         self.materials.clear();
         self.roots.clear();
         self.texture_evaluators.clear();
-        self.primitive_materials.clear();
+        self.material_primitives.clear();
         self.edges.clear();
     }
 
@@ -252,13 +253,13 @@ impl SceneGraph {
     }
 
     pub fn set_material(&mut self, primitive_id: PrimitiveId, material_id: MaterialId) {
-        self.primitive_materials.insert(primitive_id, material_id);
+        self.material_primitives.connect(material_id, primitive_id);
     }
 
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
-            if let Some(material_id) = self.primitive_materials.get(primitive_id) {
+            if let Some(material_id) = self.material_primitives.parent(primitive_id) {
                 if self[*material_id].scaled_emissive_colour().length() > 0. {
                     count += 1;
                 }
@@ -360,7 +361,7 @@ impl SceneGraph {
 
                     let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
 
-                    if let Some(material_id) = self.primitive_materials.get(*primitive_id) {
+                    if let Some(material_id) = self.material_primitives.parent(*primitive_id) {
                         if !material_ids.contains_key(material_id) {
                             let material: Material = self[*material_id];
                             gpu_scene.preprocessor_directives.extend(

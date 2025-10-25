@@ -9,8 +9,6 @@ use std::{
     hash::Hash,
 };
 
-use slotmap::SparseSecondaryMap;
-
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct BidirectionalSingleParentEdges<ParentId, ChildId>

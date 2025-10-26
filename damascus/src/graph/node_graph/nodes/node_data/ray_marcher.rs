@@ -143,7 +143,7 @@ impl EvaluableNode for RayMarcherNode {
                             if let Ok(root_id) =
                                 Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
                             {
-                                scene_graph.create_gpu_scene(root_id)
+                                scene_graph.as_gpu_scene(root_id)
                             } else {
                                 GPUScene::default()
                             },

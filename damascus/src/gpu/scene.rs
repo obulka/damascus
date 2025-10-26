@@ -66,6 +66,18 @@ impl Default for GPUScene {
     }
 }
 
+impl GPUScene {
+    pub fn num_emissive_primitives(&self) -> usize {
+        let mut count = 0;
+        for primitive in self.primitives.iter() {
+            if self.materials[primitive.material_id as usize].is_emissive() {
+                count += 1;
+            }
+        }
+        count
+    }
+}
+
 #[derive(
     Debug,
     Display,

@@ -38,13 +38,13 @@ impl Enumerator for LightType {}
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPULight {
-    light_type: u32,
-    falloff: u32,
-    soften_shadows: u32,
-    dimensional_data: Vec3,
-    intensity: f32,
-    colour: Vec3,
-    shadow_hardness: f32,
+    pub light_type: u32,
+    pub falloff: u32,
+    pub soften_shadows: u32,
+    pub dimensional_data: Vec3,
+    pub intensity: f32,
+    pub colour: Vec3,
+    pub shadow_hardness: f32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]

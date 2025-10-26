@@ -18,9 +18,9 @@ use crate::Enumerator;
 )]
 #[serde(default)]
 pub struct Transform {
-    translation: Vec3,
-    uniform_scale: f32,
-    inverse_rotation: Mat3,
+    pub translation: Vec3,
+    pub uniform_scale: f32,
+    pub inverse_rotation: Mat3,
 }
 
 #[derive(

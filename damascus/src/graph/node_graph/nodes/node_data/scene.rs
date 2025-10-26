@@ -120,17 +120,23 @@ impl EvaluableNode for SceneNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         let root_id: RootId = scene_graph.add_root(Root {
-            atmosphere_id: Self::Inputs::Atmosphere
-                .get_data(data_map)?
-                .try_to_material_id()
-                .ok(),
-            render_camera_id: Self::Inputs::Atmosphere
-                .get_data(data_map)?
-                .try_to_camera_id()
-                .ok(),
             local_to_world: Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?,
         });
         let scene_graph_id = SceneGraphId::Root(root_id);
+
+        if let Ok(atmosphere_id) = Self::Inputs::Atmosphere
+            .get_data(data_map)?
+            .try_to_material_id()
+        {
+            scene_graph.set_atmosphere(root_id, atmosphere_id);
+        }
+
+        if let Ok(render_camera_id) = Self::Inputs::RenderCamera
+            .get_data(data_map)?
+            .try_to_camera_id()
+        {
+            scene_graph.set_render_camera(root_id, render_camera_id);
+        }
 
         Self::add_dynamic_children_to_scene_graph(
             scene_graph,

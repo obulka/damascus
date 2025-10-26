@@ -38,7 +38,11 @@ fn early_exit_aovs(
         }
         case CRYPTOMATTE_AOV {
             // Cryptomatte
-            (*ray).colour = random_vec3f(f32(primitive_id) * vec3(1., 2., 3.));
+            var seed = Seed(
+                primitive_id + 1u,
+                2891336453u,
+            );
+            (*ray).colour = random_vec3f(&seed);
         }
         default {}
     }

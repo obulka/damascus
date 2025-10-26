@@ -17,16 +17,16 @@ slotmap::new_key_type! { pub struct MaterialId; }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUMaterial {
-    diffuse_colour: Vec3,
-    specular_probability: f32,
-    specular_colour: Vec3,
-    specular_roughness: f32,
-    extinction_colour: Vec3,
-    transmissive_probability: f32,
-    emissive_colour: Vec3,
-    transmissive_roughness: f32,
-    scattering_colour: Vec3,
-    refractive_index: f32,
+    pub diffuse_colour: Vec3,
+    pub specular_probability: f32,
+    pub specular_colour: Vec3,
+    pub specular_roughness: f32,
+    pub extinction_colour: Vec3,
+    pub transmissive_probability: f32,
+    pub emissive_colour: Vec3,
+    pub transmissive_roughness: f32,
+    pub scattering_colour: Vec3,
+    pub refractive_index: f32,
     pub diffuse_colour_texture: UVec2,
     pub specular_probability_texture: UVec2,
     pub specular_roughness_texture: UVec2,
@@ -37,6 +37,12 @@ pub struct GPUMaterial {
     pub emissive_colour_texture: UVec2,
     pub refractive_index_texture: UVec2,
     pub scattering_colour_texture: UVec2,
+}
+
+impl GPUMaterial {
+    pub fn is_emissive(&self) -> bool {
+        self.emissive_colour.length_squared() > 0.
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -104,6 +110,66 @@ impl Material {
 
     pub fn is_emissive(&self) -> bool {
         self.scaled_emissive_colour().length_squared() > 0.
+    }
+
+    pub fn diffuse_colour(mut self, diffuse_colour: Vec3) -> Self {
+        self.diffuse_colour = diffuse_colour;
+        self
+    }
+
+    pub fn specular_probability(mut self, specular_probability: f32) -> Self {
+        self.specular_probability = specular_probability;
+        self
+    }
+
+    pub fn specular_roughness(mut self, specular_roughness: f32) -> Self {
+        self.specular_roughness = specular_roughness;
+        self
+    }
+
+    pub fn specular_colour(mut self, specular_colour: Vec3) -> Self {
+        self.specular_colour = specular_colour;
+        self
+    }
+
+    pub fn transmissive_probability(mut self, transmissive_probability: f32) -> Self {
+        self.transmissive_probability = transmissive_probability;
+        self
+    }
+
+    pub fn transmissive_roughness(mut self, transmissive_roughness: f32) -> Self {
+        self.transmissive_roughness = transmissive_roughness;
+        self
+    }
+
+    pub fn extinction_coefficient(mut self, extinction_coefficient: f32) -> Self {
+        self.extinction_coefficient = extinction_coefficient;
+        self
+    }
+
+    pub fn emissive_intensity(mut self, emissive_intensity: f32) -> Self {
+        self.emissive_intensity = emissive_intensity;
+        self
+    }
+
+    pub fn emissive_colour(mut self, emissive_colour: Vec3) -> Self {
+        self.emissive_colour = emissive_colour;
+        self
+    }
+
+    pub fn refractive_index(mut self, refractive_index: f32) -> Self {
+        self.refractive_index = refractive_index;
+        self
+    }
+
+    pub fn scattering_coefficient(mut self, scattering_coefficient: f32) -> Self {
+        self.scattering_coefficient = scattering_coefficient;
+        self
+    }
+
+    pub fn scattering_colour(mut self, scattering_colour: Vec3) -> Self {
+        self.scattering_colour = scattering_colour;
+        self
     }
 }
 

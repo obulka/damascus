@@ -14,14 +14,14 @@ slotmap::new_key_type! { pub struct CameraId; }
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUCamera {
-    flags: u32,
-    sensor_resolution: UVec2,
-    aperture: f32,
-    focal_distance: f32,
-    camera_to_world: Mat4,
-    world_to_camera: Mat4,
-    screen_to_camera: Mat4,
-    camera_to_screen: Mat4,
+    pub flags: u32,
+    pub sensor_resolution: UVec2,
+    pub aperture: f32,
+    pub focal_distance: f32,
+    pub camera_to_world: Mat4,
+    pub world_to_camera: Mat4,
+    pub screen_to_camera: Mat4,
+    pub camera_to_screen: Mat4,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]

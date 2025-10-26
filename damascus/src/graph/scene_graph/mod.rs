@@ -14,10 +14,8 @@ use crate::{
     DualDevice, Enumerator, Transformable,
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
-    gpu::scene::{
-        GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives, Std430GPUSceneArrayLengths,
-    },
-    graph::edges::BidirectionalSingleParentEdges,
+    gpu::scene::{GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives},
+    graph::edges::{BidirectionalMultiParentEdges, BidirectionalSingleParentEdges},
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
@@ -55,6 +53,42 @@ pub enum SceneGraphId {
 }
 
 impl Enumerator for SceneGraphId {}
+
+impl From<MaterialId> for SceneGraphId {
+    fn from(material_id: MaterialId) -> Self {
+        Self::Material(material_id)
+    }
+}
+
+impl From<CameraId> for SceneGraphId {
+    fn from(camera_id: CameraId) -> Self {
+        Self::Camera(camera_id)
+    }
+}
+
+impl From<LightId> for SceneGraphId {
+    fn from(light_id: LightId) -> Self {
+        Self::Light(light_id)
+    }
+}
+
+impl From<PrimitiveId> for SceneGraphId {
+    fn from(primitive_id: PrimitiveId) -> Self {
+        Self::Primitive(primitive_id)
+    }
+}
+
+impl From<RootId> for SceneGraphId {
+    fn from(root_id: RootId) -> Self {
+        Self::Root(root_id)
+    }
+}
+
+impl From<TextureEvaluatorId> for SceneGraphId {
+    fn from(texture_evaluator_id: TextureEvaluatorId) -> Self {
+        Self::TextureEvaluator(texture_evaluator_id)
+    }
+}
 
 #[derive(
     Debug,
@@ -115,8 +149,6 @@ impl SceneGraphIdType {
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Root {
-    pub atmosphere_id: Option<MaterialId>,
-    pub render_camera_id: Option<CameraId>,
     pub local_to_world: Mat4,
 }
 
@@ -128,8 +160,10 @@ impl Transformable for Root {
 
 pub type Roots = SlotMap<RootId, Root>;
 
-pub type TransformHierarchy = BidirectionalSingleParentEdges<SceneGraphId, SceneGraphId>;
+pub type TransformHierarchy = BidirectionalMultiParentEdges<SceneGraphId, SceneGraphId>;
 pub type MaterialPrimitives = BidirectionalSingleParentEdges<MaterialId, PrimitiveId>;
+pub type RenderCameras = BidirectionalSingleParentEdges<CameraId, RootId>;
+pub type Atmospheres = BidirectionalSingleParentEdges<MaterialId, RootId>;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -142,6 +176,8 @@ pub struct SceneGraph {
     texture_evaluators: TextureEvaluators,
     material_primitives: MaterialPrimitives,
     transform_hierarchy: TransformHierarchy,
+    render_cameras: RenderCameras,
+    atmospheres: Atmospheres,
 }
 
 impl PartialEq for SceneGraph {
@@ -160,12 +196,16 @@ impl SceneGraph {
         self.texture_evaluators.clear();
         self.material_primitives.clear();
         self.transform_hierarchy.clear();
+        self.render_cameras.clear();
+        self.atmospheres.clear();
     }
 
     pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
-        self.transform_hierarchy.disconnect_parent(scene_graph_id);
+        // self.transform_hierarchy.disconnect_parents(scene_graph_id);
+        // self.transform_hierarchy.disconnect_children(scene_graph_id);
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
+                self.render_cameras.disconnect_parent(camera_id);
                 self.cameras.remove(camera_id);
             }
             SceneGraphId::Light(light_id) => {
@@ -177,9 +217,12 @@ impl SceneGraph {
             }
             SceneGraphId::Material(material_id) => {
                 self.material_primitives.disconnect_parent(material_id);
+                self.atmospheres.disconnect_parent(material_id);
                 self.materials.remove(material_id);
             }
             SceneGraphId::Root(root_id) => {
+                self.render_cameras.disconnect_child(root_id);
+                self.atmospheres.disconnect_child(root_id);
                 self.roots.remove(root_id);
             }
             SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
@@ -283,11 +326,19 @@ impl SceneGraph {
         self.material_primitives.connect(material_id, primitive_id);
     }
 
+    pub fn set_atmosphere(&mut self, root_id: RootId, atmosphere_id: MaterialId) {
+        self.atmospheres.connect(atmosphere_id, root_id);
+    }
+
+    pub fn set_render_camera(&mut self, root_id: RootId, render_camera_id: CameraId) {
+        self.render_cameras.connect(render_camera_id, root_id);
+    }
+
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
             if let Some(material_id) = self.material_primitives.parent(primitive_id) {
-                if self[*material_id].scaled_emissive_colour().length() > 0. {
+                if self[*material_id].is_emissive() {
                     count += 1;
                 }
             }
@@ -309,12 +360,10 @@ impl SceneGraph {
         for scene_graph_id in scene_graph_ids.iter() {
             match scene_graph_id {
                 SceneGraphId::Camera(camera_id) => {
-                    if !camera_ids.contains_key(camera_id) {
-                        camera_ids.insert(*camera_id, gpu_scene.cameras.len());
-                    }
-
                     let mut camera: Camera = self[*camera_id];
                     camera.transform(transform);
+
+                    camera_ids.insert(*camera_id, gpu_scene.cameras.len());
 
                     gpu_scene.cameras.push(camera.to_gpu());
 
@@ -331,16 +380,15 @@ impl SceneGraph {
                     }
                 }
                 SceneGraphId::Light(light_id) => {
-                    light_ids.insert(*light_id);
-
                     let mut light: Light = self[*light_id];
                     light.transform(transform);
-
-                    gpu_scene
-                        .preprocessor_directives
-                        .extend(ScenePreprocessorDirectives::directives_for_light(&light));
-
                     gpu_scene.lights.push(light.to_gpu());
+
+                    if light_ids.insert(*light_id) {
+                        gpu_scene
+                            .preprocessor_directives
+                            .extend(ScenePreprocessorDirectives::directives_for_light(&light));
+                    }
 
                     if let Some(children) = self.children(*scene_graph_id) {
                         self.build_gpu_scene_from_locations(
@@ -355,16 +403,16 @@ impl SceneGraph {
                     }
                 }
                 SceneGraphId::Primitive(primitive_id) => {
-                    primitive_ids.insert(*primitive_id);
-
                     let mut primitive: Primitive = self[*primitive_id];
                     primitive.transform(transform);
 
-                    gpu_scene.preprocessor_directives.extend(
-                        ScenePreprocessorDirectives::directives_for_primitive(&primitive),
-                    );
-
                     let mut gpu_primitive: GPUPrimitive = primitive.to_gpu();
+
+                    if primitive_ids.insert(*primitive_id) {
+                        gpu_scene.preprocessor_directives.extend(
+                            ScenePreprocessorDirectives::directives_for_primitive(&primitive),
+                        );
+                    }
 
                     if let Some(material_id) = self.material_primitives.parent(*primitive_id) {
                         if !material_ids.contains_key(material_id) {
@@ -374,9 +422,11 @@ impl SceneGraph {
                                     &material, &self,
                                 ),
                             );
-                            gpu_scene.materials.push(material.to_gpu());
 
                             let material_index: usize = gpu_scene.materials.len();
+
+                            gpu_scene.materials.push(material.to_gpu());
+
                             material_ids.insert(*material_id, material_index);
 
                             gpu_primitive.material_id = material_index as u32;
@@ -426,7 +476,7 @@ impl SceneGraph {
         }
     }
 
-    pub fn create_gpu_scene(&self, root_id: RootId) -> GPUScene {
+    pub fn as_gpu_scene(&self, root_id: RootId) -> GPUScene {
         let mut gpu_scene = GPUScene::default();
         let mut material_ids = HashMap::<MaterialId, usize>::new();
         let mut primitive_ids = HashSet::<PrimitiveId>::new();
@@ -445,20 +495,23 @@ impl SceneGraph {
             );
         }
 
-        if let Some(atmosphere_id) = self[root_id].atmosphere_id {
-            if !material_ids.contains_key(&atmosphere_id) {
+        if let Some(atmosphere_id) = self.atmospheres.parent(root_id) {
+            if !material_ids.contains_key(atmosphere_id) {
                 gpu_scene.atmosphere = gpu_scene.materials.len();
-                gpu_scene.materials.push(self[atmosphere_id].to_gpu());
-            } else if let Some(atmosphere_index) = material_ids.get(&atmosphere_id) {
+                gpu_scene.materials.push(self[*atmosphere_id].to_gpu());
+            } else if let Some(atmosphere_index) = material_ids.get(atmosphere_id) {
                 gpu_scene.atmosphere = *atmosphere_index;
             }
         }
 
-        if let Some(render_camera_id) = self[root_id].render_camera_id {
-            if !camera_ids.contains_key(&render_camera_id) {
+        if let Some(render_camera_id) = self.render_cameras.parent(root_id) {
+            if !camera_ids.contains_key(render_camera_id) {
                 gpu_scene.render_camera = gpu_scene.cameras.len();
-                gpu_scene.cameras.push(self[render_camera_id].to_gpu());
-            } else if let Some(render_camera_index) = camera_ids.get(&render_camera_id) {
+                gpu_scene.cameras.push(self[*render_camera_id].to_gpu());
+            } else if let Some(render_camera_index) = camera_ids.get(render_camera_id) {
+                // TODO the same camera could be at multiple places in the hierarchy
+                // this refers to the last added but should be specifiable in order
+                // to pick up either transform
                 gpu_scene.render_camera = *render_camera_index;
             }
         }
@@ -473,20 +526,15 @@ impl SceneGraph {
             gpu_scene.cameras.push(Camera::default().to_gpu());
         }
 
-        gpu_scene.array_lengths = self.to_gpu();
+        let num_lights = gpu_scene.lights.len() as u32;
+        gpu_scene.array_lengths = GPUSceneArrayLengths {
+            num_primitives: gpu_scene.primitives.len() as u32,
+            num_lights: num_lights + gpu_scene.num_emissive_primitives() as u32,
+            num_materials: gpu_scene.materials.len() as u32,
+            num_non_physical_lights: num_lights,
+        };
 
         gpu_scene
-    }
-}
-
-impl DualDevice<GPUSceneArrayLengths, Std430GPUSceneArrayLengths> for SceneGraph {
-    fn to_gpu(&self) -> GPUSceneArrayLengths {
-        GPUSceneArrayLengths {
-            num_primitives: self.primitives.len() as u32,
-            num_lights: (self.lights.len() + self.num_emissive_primitives()) as u32,
-            num_materials: self.materials.len() as u32 + 1,
-            num_non_physical_lights: self.lights.len() as u32,
-        }
     }
 }
 
@@ -526,5 +574,125 @@ mod tests {
 
         graph.add_camera(Camera::default());
         assert_eq!(graph.num_cameras(), 2);
+    }
+
+    #[test]
+    fn test_children() {
+        let mut graph = SceneGraph::default();
+
+        // -------------------------------------------------------------
+        // /root
+
+        let root_id = graph.add_root(Root::default());
+
+        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(gpu_scene.materials.len(), 1);
+        assert_eq!(gpu_scene.primitives.len(), 1);
+        assert_eq!(gpu_scene.lights.len(), 1);
+        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 0);
+
+        // -------------------------------------------------------------
+        // /root
+
+        let camera_id = graph.add_camera(Camera::default());
+        let primitive0_id = graph.add_primitive(Primitive::default());
+        let primitive1_id = graph.add_primitive(Primitive::default());
+        let light_id = graph.add_light(Light::default());
+        let material0_id = graph.add_material(Material::default().specular_probability(1.));
+        let material1_id = graph.add_material(Material::default());
+
+        assert_eq!(graph[material0_id].specular_probability, 1.);
+        assert_eq!(graph[material1_id].specular_probability, 0.);
+
+        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(gpu_scene.materials.len(), 1);
+        assert_eq!(gpu_scene.primitives.len(), 1);
+        assert_eq!(gpu_scene.lights.len(), 1);
+        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 0);
+
+        // -------------------------------------------------------------
+        // /root/primitive0/primitive1/material1
+        //      |          /light/camera
+        //      |          /material0
+        //      /primitive1/material1
+
+        graph.add_child(root_id.into(), primitive0_id.into());
+        graph.add_child(root_id.into(), primitive1_id.into());
+        graph.add_child(primitive0_id.into(), primitive1_id.into());
+        graph.add_child(primitive0_id.into(), light_id.into());
+        graph.add_child(light_id.into(), camera_id.into());
+
+        graph.set_material(primitive0_id, material0_id);
+        graph.set_material(primitive1_id, material1_id);
+
+        assert_eq!(graph.children(root_id.into()).unwrap().len(), 2);
+
+        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(gpu_scene.primitives[0].num_descendants, 1);
+        assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
+        assert_eq!(gpu_scene.materials.len(), 3);
+        assert_eq!(gpu_scene.primitives.len(), 3);
+
+        // -------------------------------------------------------------
+        // /root/primitive0/primitive1/material1
+        //      |          /light/camera
+        //      |          /material0
+        //      |          /primitive2
+        //      /primitive1/material1
+
+        let primitive2_id = graph.add_primitive(Primitive::default());
+        graph.add_child(primitive0_id.into(), primitive2_id.into());
+
+        gpu_scene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(gpu_scene.primitives[0].num_descendants, 2);
+        assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
+
+        // -------------------------------------------------------------
+        // /root/primitive0/primitive1/material1
+        //                            /primitive3
+        //      |          /light/camera
+        //      |          /material0
+        //      |          /primitive2
+        //      /primitive1/material1
+        //                 /primitive3
+
+        let primitive3_id = graph.add_primitive(Primitive::default());
+        graph.add_child(primitive1_id.into(), primitive3_id.into());
+
+        gpu_scene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(gpu_scene.primitives[0].num_descendants, 3);
+        assert_eq!(gpu_scene.primitives[1].num_descendants, 1);
+
+        // -------------------------------------------------------------
+
+        assert_eq!(gpu_scene.atmosphere, 0);
+        assert_eq!(gpu_scene.render_camera, 0);
+
+        // -------------------------------------------------------------
+        // /root/primitive0/primitive1/material1
+        //                            /primitive3
+        //      |          /light/camera
+        //      |          /material0
+        //      |          /primitive2
+        //      /primitive1/material1
+        //      |          /primitive3
+        //      /material0
+        //      /camera
+
+        graph.set_atmosphere(root_id, material0_id);
+        graph.set_render_camera(root_id, camera_id);
+
+        gpu_scene = graph.as_gpu_scene(root_id);
+
+        assert_eq!(
+            gpu_scene.materials[gpu_scene.atmosphere].specular_probability,
+            1.
+        );
+        assert_eq!(gpu_scene.render_camera, 1);
     }
 }

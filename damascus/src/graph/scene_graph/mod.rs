@@ -201,8 +201,8 @@ impl SceneGraph {
     }
 
     pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
-        // self.transform_hierarchy.disconnect_parents(scene_graph_id);
-        // self.transform_hierarchy.disconnect_children(scene_graph_id);
+        self.transform_hierarchy.disconnect_parent(scene_graph_id);
+        self.transform_hierarchy.disconnect_child(scene_graph_id);
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
                 self.render_cameras.disconnect_parent(camera_id);

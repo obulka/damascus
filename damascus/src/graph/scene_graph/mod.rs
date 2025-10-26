@@ -556,36 +556,36 @@ mod tests {
 
     #[test]
     fn test_creation() {
-        let mut graph = SceneGraph::default();
+        let mut scene_graph = SceneGraph::default();
 
-        graph.add_camera(Camera::default());
-        graph.add_primitive(Primitive::default());
-        graph.add_light(Light::default());
-        graph.add_material(Material::default());
-        graph.add_root(Root::default());
-        graph.add_texture_evaluator(TextureEvaluator::default());
+        scene_graph.add_camera(Camera::default());
+        scene_graph.add_primitive(Primitive::default());
+        scene_graph.add_light(Light::default());
+        scene_graph.add_material(Material::default());
+        scene_graph.add_root(Root::default());
+        scene_graph.add_texture_evaluator(TextureEvaluator::default());
 
-        assert_eq!(graph.num_cameras(), 1);
-        assert_eq!(graph.num_primitives(), 1);
-        assert_eq!(graph.num_lights(), 1);
-        assert_eq!(graph.num_materials(), 1);
-        assert_eq!(graph.num_roots(), 1);
-        assert_eq!(graph.num_texture_evaluators(), 1);
+        assert_eq!(scene_graph.num_cameras(), 1);
+        assert_eq!(scene_graph.num_primitives(), 1);
+        assert_eq!(scene_graph.num_lights(), 1);
+        assert_eq!(scene_graph.num_materials(), 1);
+        assert_eq!(scene_graph.num_roots(), 1);
+        assert_eq!(scene_graph.num_texture_evaluators(), 1);
 
-        graph.add_camera(Camera::default());
-        assert_eq!(graph.num_cameras(), 2);
+        scene_graph.add_camera(Camera::default());
+        assert_eq!(scene_graph.num_cameras(), 2);
     }
 
     #[test]
     fn test_children() {
-        let mut graph = SceneGraph::default();
+        let mut scene_graph = SceneGraph::default();
 
         // -------------------------------------------------------------
         // /root
 
-        let root_id = graph.add_root(Root::default());
+        let root_id = scene_graph.add_root(Root::default());
 
-        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+        let mut gpu_scene: GPUScene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.materials.len(), 1);
         assert_eq!(gpu_scene.primitives.len(), 1);
@@ -595,17 +595,17 @@ mod tests {
         // -------------------------------------------------------------
         // /root
 
-        let camera_id = graph.add_camera(Camera::default());
-        let primitive0_id = graph.add_primitive(Primitive::default());
-        let primitive1_id = graph.add_primitive(Primitive::default());
-        let light_id = graph.add_light(Light::default());
-        let material0_id = graph.add_material(Material::default().specular_probability(1.));
-        let material1_id = graph.add_material(Material::default());
+        let camera_id = scene_graph.add_camera(Camera::default());
+        let primitive0_id = scene_graph.add_primitive(Primitive::default());
+        let primitive1_id = scene_graph.add_primitive(Primitive::default());
+        let light_id = scene_graph.add_light(Light::default());
+        let material0_id = scene_graph.add_material(Material::default().specular_probability(1.));
+        let material1_id = scene_graph.add_material(Material::default());
 
-        assert_eq!(graph[material0_id].specular_probability, 1.);
-        assert_eq!(graph[material1_id].specular_probability, 0.);
+        assert_eq!(scene_graph[material0_id].specular_probability, 1.);
+        assert_eq!(scene_graph[material1_id].specular_probability, 0.);
 
-        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+        let mut gpu_scene: GPUScene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.materials.len(), 1);
         assert_eq!(gpu_scene.primitives.len(), 1);
@@ -618,18 +618,18 @@ mod tests {
         //      |          /material0
         //      /primitive1/material1
 
-        graph.add_child(root_id.into(), primitive0_id.into());
-        graph.add_child(root_id.into(), primitive1_id.into());
-        graph.add_child(primitive0_id.into(), primitive1_id.into());
-        graph.add_child(primitive0_id.into(), light_id.into());
-        graph.add_child(light_id.into(), camera_id.into());
+        scene_graph.add_child(root_id.into(), primitive0_id.into());
+        scene_graph.add_child(root_id.into(), primitive1_id.into());
+        scene_graph.add_child(primitive0_id.into(), primitive1_id.into());
+        scene_graph.add_child(primitive0_id.into(), light_id.into());
+        scene_graph.add_child(light_id.into(), camera_id.into());
 
-        graph.set_material(primitive0_id, material0_id);
-        graph.set_material(primitive1_id, material1_id);
+        scene_graph.set_material(primitive0_id, material0_id);
+        scene_graph.set_material(primitive1_id, material1_id);
 
-        assert_eq!(graph.children(root_id.into()).unwrap().len(), 2);
+        assert_eq!(scene_graph.children(root_id.into()).unwrap().len(), 2);
 
-        let mut gpu_scene: GPUScene = graph.as_gpu_scene(root_id);
+        let mut gpu_scene: GPUScene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.primitives[0].num_descendants, 1);
         assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
@@ -643,27 +643,27 @@ mod tests {
         //      |          /primitive2
         //      /primitive1/material1
 
-        let primitive2_id = graph.add_primitive(Primitive::default());
-        graph.add_child(primitive0_id.into(), primitive2_id.into());
+        let primitive2_id = scene_graph.add_primitive(Primitive::default());
+        scene_graph.add_child(primitive0_id.into(), primitive2_id.into());
 
-        gpu_scene = graph.as_gpu_scene(root_id);
+        gpu_scene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.primitives[0].num_descendants, 2);
         assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
 
         // -------------------------------------------------------------
         // /root/primitive0/primitive1/material1
-        //                            /primitive3
+        //      |          |          /primitive3
         //      |          /light/camera
         //      |          /material0
         //      |          /primitive2
         //      /primitive1/material1
         //                 /primitive3
 
-        let primitive3_id = graph.add_primitive(Primitive::default());
-        graph.add_child(primitive1_id.into(), primitive3_id.into());
+        let primitive3_id = scene_graph.add_primitive(Primitive::default());
+        scene_graph.add_child(primitive1_id.into(), primitive3_id.into());
 
-        gpu_scene = graph.as_gpu_scene(root_id);
+        gpu_scene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.primitives[0].num_descendants, 3);
         assert_eq!(gpu_scene.primitives[1].num_descendants, 1);
@@ -675,7 +675,7 @@ mod tests {
 
         // -------------------------------------------------------------
         // /root/primitive0/primitive1/material1
-        //                            /primitive3
+        //      |          |          /primitive3
         //      |          /light/camera
         //      |          /material0
         //      |          /primitive2
@@ -684,10 +684,10 @@ mod tests {
         //      /material0
         //      /camera
 
-        graph.set_atmosphere(root_id, material0_id);
-        graph.set_render_camera(root_id, camera_id);
+        scene_graph.set_atmosphere(root_id, material0_id);
+        scene_graph.set_render_camera(root_id, camera_id);
 
-        gpu_scene = graph.as_gpu_scene(root_id);
+        gpu_scene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(
             gpu_scene.materials[gpu_scene.atmosphere].specular_probability,

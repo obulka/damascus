@@ -387,7 +387,7 @@ impl SceneGraph {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
             if let Some(material_id) = self.material_primitives.parent(primitive_id) {
-                if self[*material_id].is_emissive() {
+                if self[material_id].is_emissive() {
                     count += 1;
                 }
             }
@@ -464,8 +464,8 @@ impl SceneGraph {
                     }
 
                     if let Some(material_id) = self.material_primitives.parent(*primitive_id) {
-                        if !material_ids.contains_key(material_id) {
-                            let material: Material = self[*material_id];
+                        if !material_ids.contains_key(&material_id) {
+                            let material: Material = self[material_id];
                             gpu_scene.preprocessor_directives.extend(
                                 ScenePreprocessorDirectives::directives_for_material(
                                     &material, &self,
@@ -476,10 +476,10 @@ impl SceneGraph {
 
                             gpu_scene.materials.push(material.to_gpu());
 
-                            material_ids.insert(*material_id, material_index);
+                            material_ids.insert(material_id, material_index);
 
                             gpu_primitive.material_id = material_index as u32;
-                        } else if let Some(material_index) = material_ids.get(material_id) {
+                        } else if let Some(material_index) = material_ids.get(&material_id) {
                             gpu_primitive.material_id = *material_index as u32;
                         }
                     }
@@ -545,19 +545,19 @@ impl SceneGraph {
         }
 
         if let Some(atmosphere_id) = self.atmospheres.parent(root_id) {
-            if !material_ids.contains_key(atmosphere_id) {
+            if !material_ids.contains_key(&atmosphere_id) {
                 gpu_scene.atmosphere = gpu_scene.materials.len();
-                gpu_scene.materials.push(self[*atmosphere_id].to_gpu());
-            } else if let Some(atmosphere_index) = material_ids.get(atmosphere_id) {
+                gpu_scene.materials.push(self[atmosphere_id].to_gpu());
+            } else if let Some(atmosphere_index) = material_ids.get(&atmosphere_id) {
                 gpu_scene.atmosphere = *atmosphere_index;
             }
         }
 
         if let Some(render_camera_id) = self.render_cameras.parent(root_id) {
-            if !camera_ids.contains_key(render_camera_id) {
+            if !camera_ids.contains_key(&render_camera_id) {
                 gpu_scene.render_camera = gpu_scene.cameras.len();
-                gpu_scene.cameras.push(self[*render_camera_id].to_gpu());
-            } else if let Some(render_camera_index) = camera_ids.get(render_camera_id) {
+                gpu_scene.cameras.push(self[render_camera_id].to_gpu());
+            } else if let Some(render_camera_index) = camera_ids.get(&render_camera_id) {
                 // TODO the same camera could be at multiple places in the hierarchy
                 // this refers to the last added but should be specifiable in order
                 // to pick up either transform

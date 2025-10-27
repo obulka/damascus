@@ -168,14 +168,14 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
     fn connect(&mut self, parent: Parent, child: Child) -> bool {
         if let Some(current_parent) = self.parent(child) {
             // The child already has a parent
-            if *current_parent == parent {
+            if current_parent == parent {
                 // The current parent is the new parent, so we do not
                 // need to do anything
                 return false;
             }
 
             // Disconnect the child from its current parent
-            self.disconnect(*current_parent, child);
+            self.disconnect(current_parent, child);
         }
 
         // Create a new connection
@@ -203,8 +203,18 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord>
         }
     }
 
-    pub fn parent(&self, child: Child) -> Option<&Parent> {
-        self.parents.get(&child)
+    pub fn parent(&self, child: Child) -> Option<Parent> {
+        self.parents.get(&child).copied()
+    }
+
+    pub fn disconnect_parent_of_child(&mut self, child: Child) -> Option<(Parent, Child)> {
+        if let Some(parent) = self.parents.get(&child).copied()
+            && self.disconnect(parent, child)
+        {
+            Some((parent, child))
+        } else {
+            None
+        }
     }
 }
 
@@ -251,12 +261,26 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
 
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool {
         let mut disconnected = false;
+        let mut all_children_removed = false;
         if let Some(children) = self.children.get_mut(&parent) {
             disconnected |= children.remove(&child);
+            all_children_removed = children.is_empty();
         }
+
+        if all_children_removed {
+            self.children.remove(&parent);
+        }
+
+        let mut all_parents_removed = false;
         if let Some(parents) = self.parents.get_mut(&child) {
             disconnected |= parents.remove(&parent);
+            all_parents_removed = parents.is_empty();
         }
+
+        if all_parents_removed {
+            self.parents.remove(&child);
+        }
+
         disconnected
     }
 
@@ -343,20 +367,20 @@ mod tests {
         assert_eq!(vec![1, 7], edges.children_of_parent(0));
         assert_eq!(vec![2, 5], edges.children_of_parent(1));
         assert_eq!(vec![3, 4], edges.children_of_parent(2));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(3));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(4));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
         assert_eq!(vec![6], edges.children_of_parent(5));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(6));
+        assert!(edges.children_of_parent(6).is_empty());
         assert_eq!(vec![8, 10], edges.children_of_parent(7));
         assert_eq!(vec![9], edges.children_of_parent(8));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(9));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(10));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
         assert_eq!(vec![12, 14], edges.children_of_parent(11));
         assert_eq!(vec![13], edges.children_of_parent(12));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(13));
-        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(14));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
 
-        assert_eq!(Vec::<u32>::new(), edges.parents_of_child(0));
+        assert!(edges.parents_of_child(0).is_empty());
         assert_eq!(vec![0], edges.parents_of_child(1));
         assert_eq!(vec![1], edges.parents_of_child(2));
         assert_eq!(vec![2], edges.parents_of_child(3));
@@ -367,9 +391,671 @@ mod tests {
         assert_eq!(vec![7], edges.parents_of_child(8));
         assert_eq!(vec![8], edges.parents_of_child(9));
         assert_eq!(vec![7], edges.parents_of_child(10));
-        assert_eq!(Vec::<u32>::new(), edges.parents_of_child(11));
+        assert!(edges.parents_of_child(11).is_empty());
         assert_eq!(vec![11], edges.parents_of_child(12));
         assert_eq!(vec![12], edges.parents_of_child(13));
         assert_eq!(vec![11], edges.parents_of_child(14));
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert_eq!(1, edges.parent(2).unwrap());
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert_eq!(1, edges.parent(5).unwrap());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert_eq!(7, edges.parent(8).unwrap());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert_eq!(7, edges.parent(10).unwrap());
+        assert!(edges.parent(11).is_none());
+        assert_eq!(11, edges.parent(12).unwrap());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert_eq!(11, edges.parent(14).unwrap());
+
+        // /0/1/5/6
+        // | /7/8/9
+        // | | /10
+        // /11/2/3
+        // |  /12/13
+        // |  | /4
+        // |  /14
+
+        assert!(edges.connect(11, 2));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![2, 12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert_eq!(11, edges.parent(2).unwrap());
+        assert_eq!(vec![11], edges.parents_of_child(2));
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert_eq!(1, edges.parent(5).unwrap());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert_eq!(7, edges.parent(8).unwrap());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert_eq!(7, edges.parent(10).unwrap());
+        assert!(edges.parent(11).is_none());
+        assert_eq!(11, edges.parent(12).unwrap());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert_eq!(11, edges.parent(14).unwrap());
+
+        // /0/1/5/6
+        // | /7/8/9
+        // | | /10
+        // /2/3
+        // | /4
+        // /11/12/13
+        // |  /14
+
+        assert!(edges.disconnect(11, 2));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert!(edges.parent(2).is_none());
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert_eq!(1, edges.parent(5).unwrap());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert_eq!(7, edges.parent(8).unwrap());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert_eq!(7, edges.parent(10).unwrap());
+        assert!(edges.parent(11).is_none());
+        assert_eq!(11, edges.parent(12).unwrap());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert_eq!(11, edges.parent(14).unwrap());
+
+        // /0/1/5/6
+        // | /7/8/9
+        // | | /10
+        // /2/3
+        // | /4
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(11, 12), (11, 14)],
+            edges.disconnect_children_of_parent(11).collect::<Vec<_>>()
+        );
+
+        assert!(edges.children_of_parent(11).is_empty());
+        assert!(edges.parent(11).is_none());
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert!(edges.parent(2).is_none());
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert_eq!(1, edges.parent(5).unwrap());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert_eq!(7, edges.parent(8).unwrap());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert_eq!(7, edges.parent(10).unwrap());
+        assert!(edges.parent(11).is_none());
+        assert!(edges.parent(12).is_none());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert!(edges.parent(14).is_none());
+
+        // /0/1/5/6
+        // | /7/10
+        // /2/3
+        // | /4
+        // /8/9
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!((7, 8), edges.disconnect_parent_of_child(8).unwrap());
+
+        assert!(edges.children_of_parent(11).is_empty());
+        assert!(edges.parent(11).is_none());
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert!(edges.parent(2).is_none());
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert_eq!(1, edges.parent(5).unwrap());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert!(edges.parent(8).is_none());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert_eq!(7, edges.parent(10).unwrap());
+        assert!(edges.parent(11).is_none());
+        assert!(edges.parent(12).is_none());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert!(edges.parent(14).is_none());
+
+        // /0/1
+        // | /7
+        // /2/3
+        // | /4
+        // /5/6
+        // /10
+        // /8/9
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(1, 5), (7, 10)],
+            edges
+                .disconnect_parents_of_children(vec![5, 10].into_iter())
+                .collect::<Vec<_>>()
+        );
+
+        assert!(edges.children_of_parent(11).is_empty());
+        assert!(edges.parent(11).is_none());
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert!(edges.children_of_parent(1).is_empty());
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert!(edges.children_of_parent(7).is_empty());
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert!(edges.parent(2).is_none());
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(2, edges.parent(3).unwrap());
+        assert_eq!(2, edges.parent(4).unwrap());
+        assert!(edges.parent(5).is_none());
+        assert_eq!(5, edges.parent(6).unwrap());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert!(edges.parent(8).is_none());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert!(edges.parent(10).is_none());
+        assert!(edges.parent(11).is_none());
+        assert!(edges.parent(12).is_none());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert!(edges.parent(14).is_none());
+
+        // /0/1
+        // | /7
+        // /2
+        // /3
+        // /4
+        // /5
+        // /6
+        // /10
+        // /8/9
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(2, 3), (2, 4), (5, 6)],
+            edges
+                .disconnect_children_of_parents(vec![2, 5].into_iter())
+                .collect::<Vec<_>>()
+        );
+
+        assert!(edges.children_of_parent(11).is_empty());
+        assert!(edges.parent(11).is_none());
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert!(edges.children_of_parent(1).is_empty());
+        assert!(edges.children_of_parent(2).is_empty());
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert!(edges.children_of_parent(5).is_empty());
+        assert!(edges.children_of_parent(6).is_empty());
+        assert!(edges.children_of_parent(7).is_empty());
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parent(0).is_none());
+        assert_eq!(0, edges.parent(1).unwrap());
+        assert!(edges.parent(2).is_none());
+        assert!(edges.parents_of_child(2).is_empty());
+        assert!(edges.parent(3).is_none());
+        assert!(edges.parent(4).is_none());
+        assert!(edges.parent(5).is_none());
+        assert!(edges.parent(6).is_none());
+        assert_eq!(0, edges.parent(7).unwrap());
+        assert!(edges.parent(8).is_none());
+        assert_eq!(8, edges.parent(9).unwrap());
+        assert!(edges.parent(10).is_none());
+        assert!(edges.parent(11).is_none());
+        assert!(edges.parent(12).is_none());
+        assert_eq!(12, edges.parent(13).unwrap());
+        assert!(edges.parent(14).is_none());
+    }
+
+    #[test]
+    fn test_multi_parent_bidirected_edges() {
+        let mut edges = MultiParentBidirectedEdges::<u32, u32>::new();
+
+        assert_eq!(edges.num_parents(), 0);
+        assert_eq!(edges.num_children(), 0);
+
+        assert!(!edges.disconnect(1, 5));
+
+        assert!(edges.connect(1, 5));
+
+        assert!(!edges.connect(1, 5));
+
+        assert_eq!(edges.num_parents(), 1);
+        assert_eq!(edges.num_children(), 1);
+
+        assert!(edges.disconnect(1, 5));
+
+        assert_eq!(edges.num_parents(), 0);
+        assert_eq!(edges.num_children(), 0);
+
+        // /0/1/2/3
+        // | | | /4
+        // | | /5/6
+        // | /7/8/9
+        // | | /10
+        // /11/12/13
+        // |  /14
+
+        assert!(edges.connect(0, 1));
+        assert!(edges.connect(1, 2));
+        assert!(edges.connect(2, 3));
+        assert!(edges.connect(2, 4));
+        assert!(edges.connect(1, 5));
+        assert!(edges.connect(5, 6));
+        assert!(edges.connect(0, 7));
+        assert!(edges.connect(7, 8));
+        assert!(edges.connect(7, 10));
+        assert!(edges.connect(8, 9));
+        assert!(edges.connect(11, 12));
+        assert!(edges.connect(11, 14));
+        assert!(edges.connect(12, 13));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![2, 5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert_eq!(vec![1], edges.parents_of_child(2));
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert!(edges.parents_of_child(11).is_empty());
+        assert_eq!(vec![11], edges.parents_of_child(12));
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert_eq!(vec![11], edges.parents_of_child(14));
+
+        // /0/1/2/3
+        // | | | /4
+        // | | /5/6
+        // | /7/8/9
+        // | | /10
+        // /11/2/3
+        // |  | /4
+        // |  /12/13
+        // |  /14
+
+        assert!(edges.connect(11, 2));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![2, 5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![2, 12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert_eq!(vec![1, 11], edges.parents_of_child(2));
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert!(edges.parents_of_child(11).is_empty());
+        assert_eq!(vec![11], edges.parents_of_child(12));
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert_eq!(vec![11], edges.parents_of_child(14));
+
+        // /0/1/2/3
+        // | | | /4
+        // | | /5/6
+        // | /7/8/9
+        // | | /10
+        // /11/12/13
+        // |  /14
+
+        assert!(edges.disconnect(11, 2));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![2, 5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert_eq!(vec![1], edges.parents_of_child(2));
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert!(edges.parents_of_child(11).is_empty());
+        assert_eq!(vec![11], edges.parents_of_child(12));
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert_eq!(vec![11], edges.parents_of_child(14));
+
+        // /0/1/2/3
+        // | | | /4
+        // | | /5/6
+        // | /7/8/9
+        // | | /10
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(11, 12), (11, 14)],
+            edges.disconnect_children_of_parent(11).collect::<Vec<_>>()
+        );
+
+        assert!(edges.children_of_parent(11).is_empty());
+        assert!(edges.parents_of_child(11).is_empty());
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![2, 5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert_eq!(vec![1], edges.parents_of_child(2));
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert!(edges.parents_of_child(11).is_empty());
+        assert!(edges.parents_of_child(12).is_empty());
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert!(edges.parents_of_child(14).is_empty());
+
+        // /0/1/5/6
+        // | /7/8/9
+        // | | /10
+        // /2/3
+        // | /4
+        // /11
+        // /12/13
+        // /14
+
+        assert!(edges.connect(11, 2));
+        assert_eq!(
+            vec![(1, 2), (11, 2)],
+            edges.disconnect_parents_of_child(2).collect::<Vec<_>>()
+        );
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert!(edges.children_of_parent(11).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert!(edges.parents_of_child(11).is_empty());
+        assert!(edges.parents_of_child(12).is_empty());
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert!(edges.parents_of_child(14).is_empty());
+
+        // /0/1
+        // | /7/8/9
+        // /2/3
+        // | /4
+        // /5/6
+        // /10
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(1, 5), (7, 10)],
+            edges
+                .disconnect_parents_of_children(vec![5, 10].into_iter())
+                .collect::<Vec<_>>()
+        );
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert!(edges.children_of_parent(1).is_empty());
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert!(edges.children_of_parent(11).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert!(edges.parents_of_child(2).is_empty());
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert!(edges.parents_of_child(5).is_empty());
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert!(edges.parents_of_child(10).is_empty());
+        assert!(edges.parents_of_child(11).is_empty());
+        assert!(edges.parents_of_child(12).is_empty());
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert!(edges.parents_of_child(14).is_empty());
+
+        // /0/1
+        // | /7/8/9
+        // /2
+        // /3
+        // /4
+        // /5
+        // /6
+        // /10
+        // /11
+        // /12/13
+        // /14
+
+        assert_eq!(
+            vec![(2, 3), (2, 4), (5, 6)],
+            edges
+                .disconnect_children_of_parents(vec![2, 5].into_iter())
+                .collect::<Vec<_>>()
+        );
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert!(edges.children_of_parent(1).is_empty());
+        assert!(edges.children_of_parent(2).is_empty());
+        assert!(edges.children_of_parent(3).is_empty());
+        assert!(edges.children_of_parent(4).is_empty());
+        assert!(edges.children_of_parent(5).is_empty());
+        assert!(edges.children_of_parent(6).is_empty());
+        assert_eq!(vec![8], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert!(edges.children_of_parent(9).is_empty());
+        assert!(edges.children_of_parent(10).is_empty());
+        assert!(edges.children_of_parent(11).is_empty());
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert!(edges.children_of_parent(13).is_empty());
+        assert!(edges.children_of_parent(14).is_empty());
+
+        assert!(edges.parents_of_child(0).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert!(edges.parents_of_child(2).is_empty());
+        assert!(edges.parents_of_child(3).is_empty());
+        assert!(edges.parents_of_child(4).is_empty());
+        assert!(edges.parents_of_child(5).is_empty());
+        assert!(edges.parents_of_child(6).is_empty());
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert!(edges.parents_of_child(10).is_empty());
+        assert!(edges.parents_of_child(11).is_empty());
+        assert!(edges.parents_of_child(12).is_empty());
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert!(edges.parents_of_child(14).is_empty());
     }
 }

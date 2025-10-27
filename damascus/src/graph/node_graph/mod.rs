@@ -164,11 +164,11 @@ impl NodeGraph {
 
     pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
         if let Some(output_id) = self.edges.parent(input_id) {
-            if let Some(input_data) = self.cache.get(*output_id) {
+            if let Some(input_data) = self.cache.get(output_id) {
                 // Data was already cached, return it
                 Ok((*input_data).clone())
             } else {
-                self.evaluate_output(*output_id)
+                self.evaluate_output(output_id)
             }
         } else {
             // Input is not connected
@@ -302,7 +302,7 @@ impl NodeGraph {
             .input_ids
             .iter()
             .flat_map(|input_id| self.edges.parent(*input_id))
-            .map(|output_id| self[*output_id].node_id)
+            .map(|output_id| self[output_id].node_id)
     }
 
     pub fn iter_nodes(&self) -> impl Iterator<Item = NodeId> + '_ {
@@ -425,12 +425,12 @@ impl NodeGraph {
                         let new_id = self.inputs.insert(input);
                         if let Some(output_id) = other.edges.parent(*input_id) {
                             // Maintain a list of edges to duplicate
-                            if let Some(inputs) = edges_to_recreate.get_mut(output_id) {
+                            if let Some(inputs) = edges_to_recreate.get_mut(&output_id) {
                                 inputs.insert(new_id);
                             } else {
                                 let mut inputs = HashSet::<InputId>::new();
                                 inputs.insert(new_id);
-                                edges_to_recreate.insert(*output_id, inputs);
+                                edges_to_recreate.insert(output_id, inputs);
                             }
                         }
                         *input_id = new_id;

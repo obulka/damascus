@@ -15,7 +15,9 @@ use crate::{
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     gpu::scene::{GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives},
-    graph::edges::{BidirectionalMultiParentEdges, BidirectionalSingleParentEdges},
+    graph::edges::{
+        BidirectionalEdge, BidirectionalMultiParentEdges, BidirectionalSingleParentEdges,
+    },
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
@@ -200,29 +202,59 @@ impl SceneGraph {
         self.atmospheres.clear();
     }
 
-    pub fn remove(&mut self, scene_graph_id: SceneGraphId) {
-        self.transform_hierarchy.disconnect_parent(scene_graph_id);
-        self.transform_hierarchy.disconnect_child(scene_graph_id);
+    pub fn remove(
+        &mut self,
+        scene_graph_id: SceneGraphId,
+    ) -> BTreeSet<(SceneGraphId, SceneGraphId)> {
+        let mut disconnected_edges: BTreeSet<(SceneGraphId, SceneGraphId)> = self
+            .transform_hierarchy
+            .disconnect_parent(scene_graph_id)
+            .collect();
+        disconnected_edges.extend(self.transform_hierarchy.disconnect_child(scene_graph_id));
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
-                self.render_cameras.disconnect_parent(camera_id);
+                disconnected_edges.extend(
+                    self.render_cameras
+                        .disconnect_parent(camera_id)
+                        .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
+                );
                 self.cameras.remove(camera_id);
             }
             SceneGraphId::Light(light_id) => {
                 self.lights.remove(light_id);
             }
             SceneGraphId::Primitive(primitive_id) => {
-                self.material_primitives.disconnect_child(primitive_id);
+                disconnected_edges.extend(
+                    self.material_primitives.disconnect_child(primitive_id).map(
+                        |(material_id, primitive_id)| (material_id.into(), primitive_id.into()),
+                    ),
+                );
                 self.primitives.remove(primitive_id);
             }
             SceneGraphId::Material(material_id) => {
-                self.material_primitives.disconnect_parent(material_id);
-                self.atmospheres.disconnect_parent(material_id);
+                disconnected_edges.extend(
+                    self.material_primitives.disconnect_parent(material_id).map(
+                        |(material_id, primitive_id)| (material_id.into(), primitive_id.into()),
+                    ),
+                );
+                disconnected_edges.extend(
+                    self.atmospheres
+                        .disconnect_parent(material_id)
+                        .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
+                );
                 self.materials.remove(material_id);
             }
             SceneGraphId::Root(root_id) => {
-                self.render_cameras.disconnect_child(root_id);
-                self.atmospheres.disconnect_child(root_id);
+                disconnected_edges.extend(
+                    self.render_cameras
+                        .disconnect_child(root_id)
+                        .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
+                );
+                disconnected_edges.extend(
+                    self.atmospheres
+                        .disconnect_child(root_id)
+                        .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
+                );
                 self.roots.remove(root_id);
             }
             SceneGraphId::TextureEvaluator(texture_evaluator_id) => {
@@ -230,6 +262,7 @@ impl SceneGraph {
             }
             SceneGraphId::None => {}
         }
+        disconnected_edges
     }
 
     pub fn add_camera(&mut self, camera: Camera) -> CameraId {
@@ -310,12 +343,23 @@ impl SceneGraph {
             .map(|(_texture_id, texture)| texture)
     }
 
-    pub fn has_children(&self, parent_id: SceneGraphId) -> bool {
-        self.transform_hierarchy.has_children(parent_id)
-    }
-
-    pub fn children(&self, parent_id: SceneGraphId) -> Option<&BTreeSet<SceneGraphId>> {
-        self.transform_hierarchy.children(parent_id)
+    pub fn children(&self, parent_id: SceneGraphId) -> Option<BTreeSet<SceneGraphId>> {
+        if self
+            .transform_hierarchy
+            .children(parent_id)
+            .peekable()
+            .peek()
+            .is_some()
+        {
+            Some(
+                self.transform_hierarchy
+                    .children(parent_id)
+                    .copied()
+                    .collect(),
+            )
+        } else {
+            None
+        }
     }
 
     pub fn add_child(&mut self, parent_id: SceneGraphId, child_id: SceneGraphId) {
@@ -369,7 +413,7 @@ impl SceneGraph {
 
                     if let Some(children) = self.children(*scene_graph_id) {
                         self.build_gpu_scene_from_locations(
-                            children,
+                            &children,
                             &camera.camera_to_world,
                             material_ids,
                             primitive_ids,
@@ -392,7 +436,7 @@ impl SceneGraph {
 
                     if let Some(children) = self.children(*scene_graph_id) {
                         self.build_gpu_scene_from_locations(
-                            children,
+                            &children,
                             transform,
                             material_ids,
                             primitive_ids,
@@ -445,7 +489,7 @@ impl SceneGraph {
                             .preprocessor_directives
                             .insert(ScenePreprocessorDirectives::EnableChildInteractions);
                         self.build_gpu_scene_from_locations(
-                            children,
+                            &children,
                             &primitive.local_to_world,
                             material_ids,
                             primitive_ids,
@@ -461,7 +505,7 @@ impl SceneGraph {
                 SceneGraphId::Root(root_id) => {
                     if let Some(children) = self.children(*scene_graph_id) {
                         self.build_gpu_scene_from_locations(
-                            children,
+                            &children,
                             &(self[*root_id].local_to_world * transform),
                             material_ids,
                             primitive_ids,
@@ -485,7 +529,7 @@ impl SceneGraph {
 
         if let Some(children) = self.children(SceneGraphId::Root(root_id)) {
             self.build_gpu_scene_from_locations(
-                children,
+                &children,
                 &self[root_id].local_to_world,
                 &mut material_ids,
                 &mut primitive_ids,
@@ -605,7 +649,7 @@ mod tests {
         assert_eq!(scene_graph[material0_id].specular_probability, 1.);
         assert_eq!(scene_graph[material1_id].specular_probability, 0.);
 
-        let mut gpu_scene: GPUScene = scene_graph.as_gpu_scene(root_id);
+        gpu_scene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.materials.len(), 1);
         assert_eq!(gpu_scene.primitives.len(), 1);
@@ -629,7 +673,7 @@ mod tests {
 
         assert_eq!(scene_graph.children(root_id.into()).unwrap().len(), 2);
 
-        let mut gpu_scene: GPUScene = scene_graph.as_gpu_scene(root_id);
+        gpu_scene = scene_graph.as_gpu_scene(root_id);
 
         assert_eq!(gpu_scene.primitives[0].num_descendants, 1);
         assert_eq!(gpu_scene.primitives[1].num_descendants, 0);

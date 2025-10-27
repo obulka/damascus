@@ -7,7 +7,10 @@ use std::collections::{HashMap, HashSet};
 
 use slotmap::SparseSecondaryMap;
 
-use super::{edges::BidirectionalSingleParentEdges, scene_graph::SceneGraph};
+use super::{
+    edges::{BidirectionalEdge, BidirectionalSingleParentEdges},
+    scene_graph::SceneGraph,
+};
 use crate::impl_slot_map_indexing;
 
 pub mod inputs;
@@ -59,7 +62,7 @@ impl NodeGraph {
     }
 
     pub fn edge_count(&self) -> usize {
-        self.edges.len()
+        self.edges.num_parents()
     }
 
     pub fn input_count(&self) -> usize {
@@ -71,7 +74,17 @@ impl NodeGraph {
     }
 
     pub fn remove_output_from_cache(&mut self, output_id: &OutputId) -> Option<InputData> {
-        self.cache.remove(*output_id)
+        if let Some(input_data) = self.cache.remove(*output_id) {
+            match input_data {
+                InputData::SceneGraphId(scene_graph_id) => {
+                    self.scene_graph.remove(scene_graph_id);
+                }
+                _ => {}
+            }
+            Some(input_data)
+        } else {
+            None
+        }
     }
 
     pub fn remove_node_from_cache(&mut self, node_id: NodeId) {
@@ -80,14 +93,7 @@ impl NodeGraph {
             .iter()
             .chain(node_output_ids.iter())
             .for_each(|output_id| {
-                if let Some(input_data) = self.remove_output_from_cache(output_id) {
-                    match input_data {
-                        InputData::SceneGraphId(scene_graph_id) => {
-                            self.scene_graph.remove(scene_graph_id)
-                        }
-                        _ => {}
-                    }
-                }
+                self.remove_output_from_cache(output_id);
             });
     }
 
@@ -181,9 +187,14 @@ impl NodeGraph {
                 continue;
             }
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
-            for (_output_id, input_id) in disconnected_edges.iter() {
-                new_graph.edges.disconnect_child(*input_id);
-            }
+            let _ = new_graph
+                .edges
+                .disconnect_children(
+                    disconnected_edges
+                        .iter()
+                        .map(|(_output_id, input_id)| *input_id),
+                )
+                .collect::<Vec<_>>();
         }
 
         new_graph
@@ -248,11 +259,11 @@ impl NodeGraph {
         input_id
     }
 
-    pub fn remove_input(&mut self, input_id: InputId) {
+    pub fn remove_input(&mut self, input_id: InputId) -> Vec<(OutputId, InputId)> {
         let node_id = self[input_id].node_id;
         self[node_id].input_ids.retain(|id| *id != input_id);
         self.inputs.remove(input_id);
-        self.edges.disconnect_child(input_id);
+        self.edges.disconnect_child(input_id).collect()
     }
 
     pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
@@ -263,26 +274,26 @@ impl NodeGraph {
         output_id
     }
 
-    pub fn remove_output(&mut self, output_id: OutputId) {
+    pub fn remove_output(&mut self, output_id: OutputId) -> Vec<(OutputId, InputId)> {
         let node_id = self[output_id].node_id;
         self[node_id].output_ids.retain(|id| *id != output_id);
         self.outputs.remove(output_id);
-        self.edges.disconnect_parent(output_id);
+        self.edges.disconnect_parent(output_id).collect()
     }
 
     pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         self[node_id]
             .output_ids
             .iter()
-            .filter_map(|output_id| self.edges.children(*output_id))
-            .flat_map(|input_ids| input_ids.iter().map(|input_id| self[*input_id].node_id))
+            .flat_map(|output_id| self.edges.children(*output_id))
+            .map(|input_id| self[*input_id].node_id)
     }
 
     pub fn parents(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
         self[node_id]
             .input_ids
             .iter()
-            .filter_map(|input_id| self.edges.parent(*input_id))
+            .flat_map(|input_id| self.edges.parent(*input_id))
             .map(|output_id| self[*output_id].node_id)
     }
 
@@ -557,22 +568,23 @@ impl NodeGraph {
         false
     }
 
-    pub fn disconnect_named_node_input(
-        &mut self,
+    pub fn disconnect_named_node_input<'a>(
+        &'a mut self,
         node_id: NodeId,
-        input_name: &str,
-    ) -> Option<OutputId> {
-        match self.node_input_id_from_str(node_id, input_name) {
-            Ok(input_id) => {
-                if let Some(output_id) = self.edges.disconnect_child(input_id) {
-                    let node_data: NodeData = self[self[input_id].node_id].data;
-                    node_data.dynamic_input_disconnected(self, input_id);
-                    Some(output_id)
-                } else {
-                    None
-                }
-            }
-            Err(_) => None,
+        input_name: &'a str,
+    ) -> Option<(OutputId, InputId)> {
+        if let Some((output_id, input_id)) = self
+            .node_input_id_from_str(node_id, input_name)
+            .ok()
+            .into_iter()
+            .flat_map(|input_id| self.edges.disconnect_child(input_id).collect::<Vec<_>>())
+            .next()
+        {
+            let node_data: NodeData = self[self[input_id].node_id].data;
+            node_data.dynamic_input_disconnected(self, input_id);
+            Some((output_id, input_id))
+        } else {
+            None
         }
     }
 
@@ -580,7 +592,7 @@ impl NodeGraph {
         &mut self,
         node_id: NodeId,
         node_input_data: I,
-    ) -> Option<OutputId> {
+    ) -> Option<(OutputId, InputId)> {
         self.disconnect_named_node_input(node_id, &node_input_data.name())
     }
 
@@ -600,10 +612,7 @@ impl NodeGraph {
     }
 
     pub fn output_is_connected(&self, output_id: OutputId) -> bool {
-        if let Some(children) = self.edges.children(output_id) {
-            return !children.is_empty();
-        }
-        false
+        self.edges.children(output_id).peekable().peek().is_some()
     }
 
     pub fn node_output_is_connected(&self, node_id: NodeId) -> bool {

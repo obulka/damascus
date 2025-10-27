@@ -26,6 +26,14 @@ where
     where
         Child: 'a;
 
+    fn parents_of_child(&self, child: Child) -> Vec<Parent> {
+        self.parents(child).copied().collect()
+    }
+
+    fn children_of_parent(&self, parent: Parent) -> Vec<Child> {
+        self.children(parent).copied().collect()
+    }
+
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool;
     fn connect(&mut self, parent: Parent, child: Child) -> bool;
 
@@ -188,6 +196,13 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
 impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord>
     SingleParentBidirectedEdges<Parent, Child>
 {
+    pub fn new() -> Self {
+        Self {
+            parents: HashMap::<Child, Parent>::new(),
+            children: HashMap::<Parent, BTreeSet<Child>>::new(),
+        }
+    }
+
     pub fn parent(&self, child: Child) -> Option<&Parent> {
         self.parents.get(&child)
     }
@@ -264,5 +279,97 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
         }
 
         connected
+    }
+}
+
+impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord>
+    MultiParentBidirectedEdges<Parent, Child>
+{
+    pub fn new() -> Self {
+        Self {
+            parents: HashMap::<Child, BTreeSet<Parent>>::new(),
+            children: HashMap::<Parent, BTreeSet<Child>>::new(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_single_parent_bidirected_edges() {
+        let mut edges = SingleParentBidirectedEdges::<u32, u32>::new();
+
+        assert_eq!(edges.num_parents(), 0);
+        assert_eq!(edges.num_children(), 0);
+
+        assert!(!edges.disconnect(1, 5));
+
+        assert!(edges.connect(1, 5));
+
+        assert!(!edges.connect(1, 5));
+
+        assert_eq!(edges.num_parents(), 1);
+        assert_eq!(edges.num_children(), 1);
+
+        assert!(edges.disconnect(1, 5));
+
+        assert_eq!(edges.num_parents(), 0);
+        assert_eq!(edges.num_children(), 0);
+
+        // /0/1/2/3
+        // | | | /4
+        // | | /5/6
+        // | /7/8/9
+        // | | /10
+        // /11/12/13
+        // |  /14
+
+        assert!(edges.connect(0, 1));
+        assert!(edges.connect(1, 2));
+        assert!(edges.connect(2, 3));
+        assert!(edges.connect(2, 4));
+        assert!(edges.connect(1, 5));
+        assert!(edges.connect(5, 6));
+        assert!(edges.connect(0, 7));
+        assert!(edges.connect(7, 8));
+        assert!(edges.connect(7, 10));
+        assert!(edges.connect(8, 9));
+        assert!(edges.connect(11, 12));
+        assert!(edges.connect(11, 14));
+        assert!(edges.connect(12, 13));
+
+        assert_eq!(vec![1, 7], edges.children_of_parent(0));
+        assert_eq!(vec![2, 5], edges.children_of_parent(1));
+        assert_eq!(vec![3, 4], edges.children_of_parent(2));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(3));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(4));
+        assert_eq!(vec![6], edges.children_of_parent(5));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(6));
+        assert_eq!(vec![8, 10], edges.children_of_parent(7));
+        assert_eq!(vec![9], edges.children_of_parent(8));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(9));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(10));
+        assert_eq!(vec![12, 14], edges.children_of_parent(11));
+        assert_eq!(vec![13], edges.children_of_parent(12));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(13));
+        assert_eq!(Vec::<u32>::new(), edges.children_of_parent(14));
+
+        assert_eq!(Vec::<u32>::new(), edges.parents_of_child(0));
+        assert_eq!(vec![0], edges.parents_of_child(1));
+        assert_eq!(vec![1], edges.parents_of_child(2));
+        assert_eq!(vec![2], edges.parents_of_child(3));
+        assert_eq!(vec![2], edges.parents_of_child(4));
+        assert_eq!(vec![1], edges.parents_of_child(5));
+        assert_eq!(vec![5], edges.parents_of_child(6));
+        assert_eq!(vec![0], edges.parents_of_child(7));
+        assert_eq!(vec![7], edges.parents_of_child(8));
+        assert_eq!(vec![8], edges.parents_of_child(9));
+        assert_eq!(vec![7], edges.parents_of_child(10));
+        assert_eq!(Vec::<u32>::new(), edges.parents_of_child(11));
+        assert_eq!(vec![11], edges.parents_of_child(12));
+        assert_eq!(vec![12], edges.parents_of_child(13));
+        assert_eq!(vec![11], edges.parents_of_child(14));
     }
 }

@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    edges::{BidirectionalEdge, BidirectionalSingleParentEdges},
+    edges::{BidirectedEdges, SingleParentBidirectedEdges},
     scene_graph::SceneGraph,
 };
 use crate::impl_slot_map_indexing;
@@ -30,7 +30,7 @@ use outputs::{
 };
 
 pub type OutputCache = SparseSecondaryMap<OutputId, InputData>;
-pub type Edges = BidirectionalSingleParentEdges<OutputId, InputId>;
+pub type Edges = SingleParentBidirectedEdges<OutputId, InputId>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -189,7 +189,7 @@ impl NodeGraph {
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
             let _ = new_graph
                 .edges
-                .disconnect_children(
+                .disconnect_parents_of_children(
                     disconnected_edges
                         .iter()
                         .map(|(_output_id, input_id)| *input_id),
@@ -230,8 +230,14 @@ impl NodeGraph {
             self.outputs.remove(*output);
         }
 
-        disconnected_edges.extend(self.edges.disconnect_children(input_ids.into_iter()));
-        disconnected_edges.extend(self.edges.disconnect_parents(output_ids.into_iter()));
+        disconnected_edges.extend(
+            self.edges
+                .disconnect_parents_of_children(input_ids.into_iter()),
+        );
+        disconnected_edges.extend(
+            self.edges
+                .disconnect_children_of_parents(output_ids.into_iter()),
+        );
         let removed_node = self.nodes.remove(node_id).expect("Node must exist.");
 
         (removed_node, disconnected_edges)
@@ -263,7 +269,7 @@ impl NodeGraph {
         let node_id = self[input_id].node_id;
         self[node_id].input_ids.retain(|id| *id != input_id);
         self.inputs.remove(input_id);
-        self.edges.disconnect_child(input_id).collect()
+        self.edges.disconnect_parents_of_child(input_id).collect()
     }
 
     pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
@@ -278,7 +284,9 @@ impl NodeGraph {
         let node_id = self[output_id].node_id;
         self[node_id].output_ids.retain(|id| *id != output_id);
         self.outputs.remove(output_id);
-        self.edges.disconnect_parent(output_id).collect()
+        self.edges
+            .disconnect_children_of_parent(output_id)
+            .collect()
     }
 
     pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
@@ -577,7 +585,11 @@ impl NodeGraph {
             .node_input_id_from_str(node_id, input_name)
             .ok()
             .into_iter()
-            .flat_map(|input_id| self.edges.disconnect_child(input_id).collect::<Vec<_>>())
+            .flat_map(|input_id| {
+                self.edges
+                    .disconnect_parents_of_child(input_id)
+                    .collect::<Vec<_>>()
+            })
             .next()
         {
             let node_data: NodeData = self[self[input_id].node_id].data;

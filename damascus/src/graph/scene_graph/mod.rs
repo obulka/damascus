@@ -15,9 +15,7 @@ use crate::{
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     gpu::scene::{GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives},
-    graph::edges::{
-        BidirectionalEdge, BidirectionalMultiParentEdges, BidirectionalSingleParentEdges,
-    },
+    graph::edges::{BidirectedEdges, MultiParentBidirectedEdges, SingleParentBidirectedEdges},
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
@@ -162,10 +160,10 @@ impl Transformable for Root {
 
 pub type Roots = SlotMap<RootId, Root>;
 
-pub type TransformHierarchy = BidirectionalMultiParentEdges<SceneGraphId, SceneGraphId>;
-pub type MaterialPrimitives = BidirectionalSingleParentEdges<MaterialId, PrimitiveId>;
-pub type RenderCameras = BidirectionalSingleParentEdges<CameraId, RootId>;
-pub type Atmospheres = BidirectionalSingleParentEdges<MaterialId, RootId>;
+pub type TransformHierarchy = MultiParentBidirectedEdges<SceneGraphId, SceneGraphId>;
+pub type MaterialPrimitives = SingleParentBidirectedEdges<MaterialId, PrimitiveId>;
+pub type RenderCameras = SingleParentBidirectedEdges<CameraId, RootId>;
+pub type Atmospheres = SingleParentBidirectedEdges<MaterialId, RootId>;
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -208,14 +206,17 @@ impl SceneGraph {
     ) -> BTreeSet<(SceneGraphId, SceneGraphId)> {
         let mut disconnected_edges: BTreeSet<(SceneGraphId, SceneGraphId)> = self
             .transform_hierarchy
-            .disconnect_parent(scene_graph_id)
+            .disconnect_children_of_parent(scene_graph_id)
             .collect();
-        disconnected_edges.extend(self.transform_hierarchy.disconnect_child(scene_graph_id));
+        disconnected_edges.extend(
+            self.transform_hierarchy
+                .disconnect_parents_of_child(scene_graph_id),
+        );
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
                 disconnected_edges.extend(
                     self.render_cameras
-                        .disconnect_parent(camera_id)
+                        .disconnect_children_of_parent(camera_id)
                         .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
                 );
                 self.cameras.remove(camera_id);
@@ -225,21 +226,25 @@ impl SceneGraph {
             }
             SceneGraphId::Primitive(primitive_id) => {
                 disconnected_edges.extend(
-                    self.material_primitives.disconnect_child(primitive_id).map(
-                        |(material_id, primitive_id)| (material_id.into(), primitive_id.into()),
-                    ),
+                    self.material_primitives
+                        .disconnect_parents_of_child(primitive_id)
+                        .map(|(material_id, primitive_id)| {
+                            (material_id.into(), primitive_id.into())
+                        }),
                 );
                 self.primitives.remove(primitive_id);
             }
             SceneGraphId::Material(material_id) => {
                 disconnected_edges.extend(
-                    self.material_primitives.disconnect_parent(material_id).map(
-                        |(material_id, primitive_id)| (material_id.into(), primitive_id.into()),
-                    ),
+                    self.material_primitives
+                        .disconnect_children_of_parent(material_id)
+                        .map(|(material_id, primitive_id)| {
+                            (material_id.into(), primitive_id.into())
+                        }),
                 );
                 disconnected_edges.extend(
                     self.atmospheres
-                        .disconnect_parent(material_id)
+                        .disconnect_children_of_parent(material_id)
                         .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
                 );
                 self.materials.remove(material_id);
@@ -247,12 +252,12 @@ impl SceneGraph {
             SceneGraphId::Root(root_id) => {
                 disconnected_edges.extend(
                     self.render_cameras
-                        .disconnect_child(root_id)
+                        .disconnect_parents_of_child(root_id)
                         .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
                 );
                 disconnected_edges.extend(
                     self.atmospheres
-                        .disconnect_child(root_id)
+                        .disconnect_parents_of_child(root_id)
                         .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
                 );
                 self.roots.remove(root_id);

@@ -9,10 +9,10 @@ use std::{
     hash::Hash,
 };
 
-pub trait BidirectionalEdge<Parent, Child>
+pub trait BidirectedEdges<Parent, Child>
 where
-    Parent: Ord + Copy + Hash,
-    Child: Ord + Copy + Hash,
+    Parent: Clone + Hash + Ord,
+    Child: Clone + Hash + Ord,
 {
     fn num_parents(&self) -> usize;
     fn num_children(&self) -> usize;
@@ -26,32 +26,25 @@ where
     where
         Child: 'a;
 
-    fn disconnect_child<'a>(
+    fn disconnect(&mut self, parent: Parent, child: Child) -> bool;
+    fn connect(&mut self, parent: Parent, child: Child);
+
+    fn disconnect_parents_of_child<'a>(
         &'a mut self,
         child: Child,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
     where
         Parent: 'a,
         Child: 'a;
-    fn disconnect_parent<'a>(
+    fn disconnect_children_of_parent<'a>(
         &'a mut self,
         parent: Parent,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
     where
         Parent: 'a,
-        Child: 'a,
-    {
-        self.children(parent)
-            .copied()
-            .collect::<Vec<_>>()
-            .into_iter()
-            .flat_map(move |child| self.disconnect_child(child).collect::<Vec<_>>())
-    }
+        Child: 'a;
 
-    fn disconnect(&mut self, parent: Parent, child: Child) -> bool;
-    fn connect(&mut self, parent: Parent, child: Child);
-
-    fn disconnect_parents<'a>(
+    fn disconnect_children_of_parents<'a>(
         &'a mut self,
         parents: impl Iterator<Item = Parent> + 'a,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -59,10 +52,13 @@ where
         Parent: 'a,
         Child: 'a,
     {
-        parents.flat_map(|parent| self.disconnect_parent(parent).collect::<Vec<_>>())
+        parents.flat_map(|parent| {
+            self.disconnect_children_of_parent(parent)
+                .collect::<Vec<_>>()
+        })
     }
 
-    fn disconnect_children<'a>(
+    fn disconnect_parents_of_children<'a>(
         &'a mut self,
         children: impl Iterator<Item = Child> + 'a,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -70,23 +66,23 @@ where
         Parent: 'a,
         Child: 'a,
     {
-        children.flat_map(|child| self.disconnect_child(child).collect::<Vec<_>>())
+        children.flat_map(|child| self.disconnect_parents_of_child(child).collect::<Vec<_>>())
     }
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct BidirectionalSingleParentEdges<Parent, Child>
+pub struct SingleParentBidirectedEdges<Parent, Child>
 where
-    Parent: Ord + Copy + Hash,
-    Child: Ord + Copy + Hash,
+    Parent: Copy + Hash + Ord,
+    Child: Copy + Hash + Ord,
 {
     parents: HashMap<Child, Parent>,
     children: HashMap<Parent, BTreeSet<Child>>,
 }
 
-impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Parent, Child>
-    for BidirectionalSingleParentEdges<Parent, Child>
+impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent, Child>
+    for SingleParentBidirectedEdges<Parent, Child>
 {
     fn num_parents(&self) -> usize {
         self.parents.len()
@@ -115,7 +111,7 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
         self.children.get(&parent).into_iter().flatten().into_iter()
     }
 
-    fn disconnect_child<'a>(
+    fn disconnect_parents_of_child<'a>(
         &'a mut self,
         child: Child,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -137,7 +133,7 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
         })
     }
 
-    fn disconnect_parent<'a>(
+    fn disconnect_children_of_parent<'a>(
         &'a mut self,
         parent: Parent,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -145,11 +141,12 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
         Parent: 'a,
         Child: 'a,
     {
+        // Since children can only have this one parent, we can reuse `disconnect_child`
         self.children(parent)
-            .copied()
+            .cloned()
             .collect::<Vec<_>>()
             .into_iter()
-            .flat_map(move |child| self.disconnect_child(child).collect::<Vec<_>>())
+            .flat_map(move |child| self.disconnect_parents_of_child(child).collect::<Vec<_>>())
     }
 
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool {
@@ -191,37 +188,27 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
     }
 }
 
-impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash>
-    BidirectionalSingleParentEdges<Parent, Child>
+impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord>
+    SingleParentBidirectedEdges<Parent, Child>
 {
     pub fn parent(&self, child: Child) -> Option<&Parent> {
         self.parents.get(&child)
-    }
-
-    pub fn iter_parents(&self) -> impl Iterator<Item = (Parent, Child)> + '_ {
-        self.parents.iter().map(|(child, parent)| (*parent, *child))
-    }
-
-    pub fn iter_children(&self) -> impl Iterator<Item = (Parent, &BTreeSet<Child>)> + '_ {
-        self.children
-            .iter()
-            .map(|(parent, children)| (*parent, children))
     }
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct BidirectionalMultiParentEdges<Parent, Child>
+pub struct MultiParentBidirectedEdges<Parent, Child>
 where
-    Parent: Ord + Copy + Hash,
-    Child: Ord + Copy + Hash,
+    Parent: Copy + Hash + Ord,
+    Child: Copy + Hash + Ord,
 {
     parents: HashMap<Child, BTreeSet<Parent>>,
     children: HashMap<Parent, BTreeSet<Child>>,
 }
 
-impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Parent, Child>
-    for BidirectionalMultiParentEdges<Parent, Child>
+impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent, Child>
+    for MultiParentBidirectedEdges<Parent, Child>
 {
     fn num_parents(&self) -> usize {
         self.parents.len()
@@ -250,7 +237,7 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
         self.children.get(&parent).into_iter().flatten().into_iter()
     }
 
-    fn disconnect_child<'a>(
+    fn disconnect_parents_of_child<'a>(
         &'a mut self,
         child: Child,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -276,7 +263,7 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
             })
     }
 
-    fn disconnect_parent<'a>(
+    fn disconnect_children_of_parent<'a>(
         &'a mut self,
         parent: Parent,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
@@ -329,19 +316,5 @@ impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash> BidirectionalEdge<Pare
             parents.insert(parent);
             self.parents.insert(child, parents);
         }
-    }
-}
-
-impl<Parent: Ord + Copy + Hash, Child: Ord + Copy + Hash>
-    BidirectionalMultiParentEdges<Parent, Child>
-{
-    pub fn iter_parents(&self) -> impl Iterator<Item = (&BTreeSet<Parent>, Child)> + '_ {
-        self.parents.iter().map(|(child, parent)| (parent, *child))
-    }
-
-    pub fn iter_children(&self) -> impl Iterator<Item = (Parent, &BTreeSet<Child>)> + '_ {
-        self.children
-            .iter()
-            .map(|(parent, children)| (*parent, children))
     }
 }

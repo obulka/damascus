@@ -11,8 +11,8 @@ use std::{
 
 pub trait BidirectedEdges<Parent, Child>
 where
-    Parent: Clone + Hash + Ord,
-    Child: Clone + Hash + Ord,
+    Parent: Copy,
+    Child: Copy,
 {
     fn num_parents(&self) -> usize;
     fn num_children(&self) -> usize;
@@ -27,7 +27,7 @@ where
         Child: 'a;
 
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool;
-    fn connect(&mut self, parent: Parent, child: Child);
+    fn connect(&mut self, parent: Parent, child: Child) -> bool;
 
     fn disconnect_parents_of_child<'a>(
         &'a mut self,
@@ -35,14 +35,41 @@ where
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
     where
         Parent: 'a,
-        Child: 'a;
+        Child: 'a,
+    {
+        self.parents(child)
+            .copied()
+            .collect::<Vec<_>>()
+            .into_iter()
+            .filter_map(move |parent| {
+                if self.disconnect(parent, child) {
+                    Some((parent, child))
+                } else {
+                    None
+                }
+            })
+    }
+
     fn disconnect_children_of_parent<'a>(
         &'a mut self,
         parent: Parent,
     ) -> impl Iterator<Item = (Parent, Child)> + 'a
     where
         Parent: 'a,
-        Child: 'a;
+        Child: 'a,
+    {
+        self.children(parent)
+            .copied()
+            .collect::<Vec<_>>()
+            .into_iter()
+            .filter_map(move |child| {
+                if self.disconnect(parent, child) {
+                    Some((parent, child))
+                } else {
+                    None
+                }
+            })
+    }
 
     fn disconnect_children_of_parents<'a>(
         &'a mut self,
@@ -93,8 +120,8 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
     }
 
     fn clear(&mut self) {
-        self.children.clear();
         self.parents.clear();
+        self.children.clear();
     }
 
     fn parents<'a>(&'a self, child: Child) -> impl Iterator<Item = &'a Parent> + 'a
@@ -111,44 +138,6 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
         self.children.get(&parent).into_iter().flatten().into_iter()
     }
 
-    fn disconnect_parents_of_child<'a>(
-        &'a mut self,
-        child: Child,
-    ) -> impl Iterator<Item = (Parent, Child)> + 'a
-    where
-        Parent: 'a,
-        Child: 'a,
-    {
-        self.parents.remove(&child).into_iter().map(move |parent| {
-            let mut all_children_removed = false;
-            if let Some(children) = self.children.get_mut(&parent) {
-                children.remove(&child);
-                all_children_removed = children.len() == 0;
-            }
-            if all_children_removed {
-                self.children.remove(&parent);
-            }
-
-            (parent, child)
-        })
-    }
-
-    fn disconnect_children_of_parent<'a>(
-        &'a mut self,
-        parent: Parent,
-    ) -> impl Iterator<Item = (Parent, Child)> + 'a
-    where
-        Parent: 'a,
-        Child: 'a,
-    {
-        // Since children can only have this one parent, we can reuse `disconnect_child`
-        self.children(parent)
-            .cloned()
-            .collect::<Vec<_>>()
-            .into_iter()
-            .flat_map(move |child| self.disconnect_parents_of_child(child).collect::<Vec<_>>())
-    }
-
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool {
         let mut disconnected = false;
         if let Some(current_parent) = self.parents.get(&child)
@@ -156,28 +145,34 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
         {
             disconnected = self.parents.remove(&child).is_some();
 
+            let mut all_children_removed = false;
             if let Some(children) = self.children.get_mut(&parent) {
                 disconnected |= children.remove(&child);
+                all_children_removed = children.is_empty();
+            }
+            if all_children_removed {
+                self.children.remove(&parent);
             }
         }
         disconnected
     }
 
-    fn connect(&mut self, parent: Parent, child: Child) {
-        if let Some(current_parent) = self.parent(child).copied() {
-            if current_parent == parent {
-                return;
+    fn connect(&mut self, parent: Parent, child: Child) -> bool {
+        if let Some(current_parent) = self.parent(child) {
+            // The child already has a parent
+            if *current_parent == parent {
+                // The current parent is the new parent, so we do not
+                // need to do anything
+                return false;
             }
-            let mut all_children_removed = false;
-            if let Some(children) = self.children.get_mut(&current_parent) {
-                children.remove(&child);
-                all_children_removed = children.len() == 0;
-            }
-            if all_children_removed {
-                self.children.remove(&current_parent);
-            }
+
+            // Disconnect the child from its current parent
+            self.disconnect(*current_parent, child);
         }
+
+        // Create a new connection
         self.parents.insert(child, parent);
+
         if let Some(children) = self.children.get_mut(&parent) {
             children.insert(child);
         } else {
@@ -185,6 +180,8 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
             children.insert(child);
             self.children.insert(parent, children);
         }
+
+        true
     }
 }
 
@@ -237,58 +234,6 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
         self.children.get(&parent).into_iter().flatten().into_iter()
     }
 
-    fn disconnect_parents_of_child<'a>(
-        &'a mut self,
-        child: Child,
-    ) -> impl Iterator<Item = (Parent, Child)> + 'a
-    where
-        Parent: 'a,
-        Child: 'a,
-    {
-        self.parents
-            .remove(&child)
-            .into_iter()
-            .flatten()
-            .map(move |parent| {
-                let mut all_children_removed = false;
-                if let Some(children) = self.children.get_mut(&parent) {
-                    children.remove(&child);
-                    all_children_removed = children.len() == 0;
-                }
-                if all_children_removed {
-                    self.children.remove(&parent);
-                }
-
-                (parent, child)
-            })
-    }
-
-    fn disconnect_children_of_parent<'a>(
-        &'a mut self,
-        parent: Parent,
-    ) -> impl Iterator<Item = (Parent, Child)> + 'a
-    where
-        Parent: 'a,
-        Child: 'a,
-    {
-        self.children
-            .remove(&parent)
-            .into_iter()
-            .flatten()
-            .map(move |child| {
-                let mut all_parents_removed = false;
-                if let Some(parents) = self.parents.get_mut(&child) {
-                    parents.remove(&parent);
-                    all_parents_removed = parents.len() == 0;
-                }
-                if all_parents_removed {
-                    self.parents.remove(&child);
-                }
-
-                (parent, child)
-            })
-    }
-
     fn disconnect(&mut self, parent: Parent, child: Child) -> bool {
         let mut disconnected = false;
         if let Some(children) = self.children.get_mut(&parent) {
@@ -300,21 +245,24 @@ impl<Parent: Copy + Hash + Ord, Child: Copy + Hash + Ord> BidirectedEdges<Parent
         disconnected
     }
 
-    fn connect(&mut self, parent: Parent, child: Child) {
+    fn connect(&mut self, parent: Parent, child: Child) -> bool {
+        let mut connected = false;
         if let Some(children) = self.children.get_mut(&parent) {
-            children.insert(child);
+            connected |= children.insert(child);
         } else {
             let mut children = BTreeSet::<Child>::new();
-            children.insert(child);
+            connected |= children.insert(child);
             self.children.insert(parent, children);
         }
 
         if let Some(parents) = self.parents.get_mut(&child) {
-            parents.insert(parent);
+            connected |= parents.insert(parent);
         } else {
             let mut parents = BTreeSet::<Parent>::new();
-            parents.insert(parent);
+            connected |= parents.insert(parent);
             self.parents.insert(child, parents);
         }
+
+        connected
     }
 }

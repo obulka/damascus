@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 use slotmap::SparseSecondaryMap;
 
 use super::{
+    BidirectedGraph,
     edges::{BidirectedEdges, SingleParentBidirectedEdges},
     scene_graph::SceneGraph,
 };
@@ -43,6 +44,41 @@ pub struct NodeGraph {
     scene_graph: SceneGraph,
     #[serde(skip)]
     cache: OutputCache,
+}
+
+impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
+    fn edges(&self) -> &Edges {
+        &self.edges
+    }
+    fn edges_mut(&mut self) -> &mut Edges {
+        &mut self.edges
+    }
+
+    fn iter_children<'a>(&'a self, node_id: NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
+    where
+        NodeId: 'a,
+    {
+        self[node_id]
+            .output_ids
+            .iter()
+            .flat_map(|output_id| self.edges.iter_children(output_id))
+            .map(|input_id| &self[*input_id].node_id)
+    }
+
+    fn iter_parents<'a>(&'a self, node_id: NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
+    where
+        NodeId: 'a,
+    {
+        self[node_id]
+            .input_ids
+            .iter()
+            .flat_map(|input_id| self.edges.parent(input_id))
+            .map(|output_id| &self[*output_id].node_id)
+    }
+
+    fn iter(&self) -> impl Iterator<Item = NodeId> + '_ {
+        self.nodes.keys()
+    }
 }
 
 impl NodeGraph {
@@ -163,12 +199,12 @@ impl NodeGraph {
     }
 
     pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
-        if let Some(output_id) = self.edges.parent(input_id) {
-            if let Some(input_data) = self.cache.get(output_id) {
+        if let Some(output_id) = self.edges.parent(&input_id) {
+            if let Some(input_data) = self.cache.get(*output_id) {
                 // Data was already cached, return it
                 Ok((*input_data).clone())
             } else {
-                self.evaluate_output(output_id)
+                self.evaluate_output(*output_id)
             }
         } else {
             // Input is not connected
@@ -182,19 +218,14 @@ impl NodeGraph {
 
         new_graph.clear_cache();
 
-        for node_id in self.iter_nodes() {
+        for node_id in self.iter() {
             if node_ids.contains(&node_id) {
                 continue;
             }
             let (_node, disconnected_edges) = new_graph.remove_node(node_id);
-            let _ = new_graph
-                .edges
-                .disconnect_parents_of_children(
-                    disconnected_edges
-                        .iter()
-                        .map(|(_output_id, input_id)| *input_id),
-                )
-                .collect::<Vec<_>>();
+            disconnected_edges.iter().for_each(|(output_id, input_id)| {
+                new_graph.edges.disconnect(output_id, input_id);
+            })
         }
 
         new_graph
@@ -232,11 +263,13 @@ impl NodeGraph {
 
         disconnected_edges.extend(
             self.edges
-                .disconnect_parents_of_children(input_ids.into_iter()),
+                .disconnect_parents_of_children(input_ids.iter())
+                .map(|(output_id, input_id)| (output_id, *input_id)),
         );
         disconnected_edges.extend(
             self.edges
-                .disconnect_children_of_parents(output_ids.into_iter()),
+                .disconnect_children_of_parents(output_ids.iter())
+                .map(|(output_id, input_id)| (*output_id, input_id)),
         );
         let removed_node = self.nodes.remove(node_id).expect("Node must exist.");
 
@@ -265,11 +298,11 @@ impl NodeGraph {
         input_id
     }
 
-    pub fn remove_input(&mut self, input_id: InputId) -> Vec<(OutputId, InputId)> {
+    pub fn remove_input(&mut self, input_id: InputId) -> Vec<OutputId> {
         let node_id = self[input_id].node_id;
         self[node_id].input_ids.retain(|id| *id != input_id);
         self.inputs.remove(input_id);
-        self.edges.disconnect_parents_of_child(input_id).collect()
+        self.edges.disconnect_parents_of_child(&input_id).collect()
     }
 
     pub fn add_output(&mut self, node_id: NodeId, name: &str, data: OutputData) -> OutputId {
@@ -285,28 +318,9 @@ impl NodeGraph {
         self[node_id].output_ids.retain(|id| *id != output_id);
         self.outputs.remove(output_id);
         self.edges
-            .disconnect_children_of_parent(output_id)
+            .disconnect_children_of_parent(&output_id)
+            .map(|input_id| (output_id, input_id))
             .collect()
-    }
-
-    pub fn children(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
-        self[node_id]
-            .output_ids
-            .iter()
-            .flat_map(|output_id| self.edges.children(*output_id))
-            .map(|input_id| self[*input_id].node_id)
-    }
-
-    pub fn parents(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> + '_ {
-        self[node_id]
-            .input_ids
-            .iter()
-            .flat_map(|input_id| self.edges.parent(*input_id))
-            .map(|output_id| self[output_id].node_id)
-    }
-
-    pub fn iter_nodes(&self) -> impl Iterator<Item = NodeId> + '_ {
-        self.nodes.keys()
     }
 
     pub fn descendants_output_ids(&self, node_id: NodeId) -> Vec<OutputId> {
@@ -321,86 +335,6 @@ impl NodeGraph {
             .collect()
     }
 
-    /// Apply a closure to all descendants of `node_id` in breadth first order
-    pub fn for_each_descendant<B, F>(&self, node_id: NodeId, closure: F) -> Vec<B>
-    where
-        F: Fn(NodeId) -> B,
-    {
-        let mut result: Vec<B> = vec![];
-        let mut nodes_to_search: Vec<NodeId> = vec![node_id];
-        while let Some(search_node_id) = nodes_to_search.pop() {
-            result.extend(self.children(search_node_id).map(|descendant_id| {
-                nodes_to_search.push(descendant_id);
-                closure(descendant_id)
-            }));
-        }
-        result
-    }
-
-    /// Check if a node is an ancestor of another
-    pub fn is_descendant(&self, node_id: NodeId, potential_descendant_id: NodeId) -> bool {
-        // Nodes are not their own descendant
-        if node_id == potential_descendant_id {
-            return false;
-        }
-
-        let mut nodes_to_search: Vec<NodeId> = vec![node_id];
-        while let Some(search_node_id) = nodes_to_search.pop() {
-            for descendant_id in self.children(search_node_id) {
-                if descendant_id == potential_descendant_id {
-                    return true;
-                }
-                nodes_to_search.push(descendant_id);
-            }
-        }
-        false
-    }
-
-    /// Get all descendant nodes of `node_id` in breadth first order
-    pub fn descendants(&self, node_id: NodeId) -> Vec<NodeId> {
-        self.for_each_descendant(node_id, |descendant_id| descendant_id)
-    }
-
-    /// Apply a closure to all ancestors of `node_id` in breadth first order
-    pub fn for_each_ancestor<B, F>(&self, node_id: NodeId, closure: F) -> Vec<B>
-    where
-        F: Fn(NodeId) -> B,
-    {
-        let mut result: Vec<B> = vec![];
-        let mut nodes_to_search: Vec<NodeId> = vec![node_id];
-        while let Some(search_node_id) = nodes_to_search.pop() {
-            result.extend(self.parents(search_node_id).map(|ancestor_id| {
-                nodes_to_search.push(ancestor_id);
-                closure(ancestor_id)
-            }));
-        }
-        result
-    }
-
-    /// Get all ancestor nodes of `node_id` in breadth first order
-    pub fn ancestors(&self, node_id: NodeId) -> Vec<NodeId> {
-        self.for_each_ancestor(node_id, |ancestor_id| ancestor_id)
-    }
-
-    /// Check if a node is an ancestor of another
-    pub fn is_ancestor(&self, node_id: NodeId, potential_ancestor_id: NodeId) -> bool {
-        // Nodes are not their own ancestor
-        if node_id == potential_ancestor_id {
-            return false;
-        }
-
-        let mut nodes_to_search: Vec<NodeId> = vec![node_id];
-        while let Some(search_node_id) = nodes_to_search.pop() {
-            for ancestor_id in self.parents(search_node_id) {
-                if ancestor_id == potential_ancestor_id {
-                    return true;
-                }
-                nodes_to_search.push(ancestor_id);
-            }
-        }
-        false
-    }
-
     /// Merge two node graphs together
     ///
     /// All nodes and edges will be moved into this graph without cloning,
@@ -412,7 +346,7 @@ impl NodeGraph {
         let mut edges_to_recreate = HashMap::<OutputId, HashSet<InputId>>::new();
         let mut other_to_new_outputs = HashMap::<OutputId, OutputId>::new();
 
-        for node_id in self.iter_nodes().collect::<HashSet<NodeId>>().into_iter() {
+        for node_id in self.iter().collect::<HashSet<NodeId>>().into_iter() {
             if let Some(other_node) = other.nodes.remove(node_id) {
                 // Move the node to this node graph and update its id
                 let new_node_id: NodeId = self.nodes.insert(other_node);
@@ -423,14 +357,14 @@ impl NodeGraph {
                     if let Some(mut input) = other.inputs.remove(*input_id) {
                         input.node_id = new_node_id;
                         let new_id = self.inputs.insert(input);
-                        if let Some(output_id) = other.edges.parent(*input_id) {
+                        if let Some(output_id) = other.edges.parent(input_id) {
                             // Maintain a list of edges to duplicate
-                            if let Some(inputs) = edges_to_recreate.get_mut(&output_id) {
+                            if let Some(inputs) = edges_to_recreate.get_mut(output_id) {
                                 inputs.insert(new_id);
                             } else {
                                 let mut inputs = HashSet::<InputId>::new();
                                 inputs.insert(new_id);
-                                edges_to_recreate.insert(output_id, inputs);
+                                edges_to_recreate.insert(*output_id, inputs);
                             }
                         }
                         *input_id = new_id;
@@ -584,10 +518,11 @@ impl NodeGraph {
         if let Some((output_id, input_id)) = self
             .node_input_id_from_str(node_id, input_name)
             .ok()
-            .into_iter()
+            .iter()
             .flat_map(|input_id| {
                 self.edges
                     .disconnect_parents_of_child(input_id)
+                    .map(|output_id| (output_id, *input_id))
                     .collect::<Vec<_>>()
             })
             .next()
@@ -609,7 +544,7 @@ impl NodeGraph {
     }
 
     pub fn input_is_connected(&self, input_id: InputId) -> bool {
-        self.edges.parent(input_id).is_some()
+        self.edges.parent(&input_id).is_some()
     }
 
     pub fn node_input_is_connected<I: NodeInputData>(
@@ -624,7 +559,7 @@ impl NodeGraph {
     }
 
     pub fn output_is_connected(&self, output_id: OutputId) -> bool {
-        self.edges.children(output_id).peekable().peek().is_some()
+        self.edges.has_child(&output_id)
     }
 
     pub fn node_output_is_connected(&self, node_id: NodeId) -> bool {
@@ -668,7 +603,7 @@ mod tests {
 
         assert_eq!(graph.node_count(), NodeData::COUNT);
         assert_eq!(graph.edge_count(), 0);
-        assert_eq!(node_ids, graph.iter_nodes().collect::<HashSet<NodeId>>());
+        assert_eq!(node_ids, graph.iter().collect::<HashSet<NodeId>>());
     }
 
     #[test]
@@ -679,7 +614,7 @@ mod tests {
             graph.add_node(node_data);
         }
 
-        for node_id in graph.iter_nodes().collect::<Vec<NodeId>>() {
+        for node_id in graph.iter().collect::<Vec<NodeId>>() {
             let (_node, disconnections) = graph.remove_node(node_id);
             assert!(disconnections.is_empty());
         }
@@ -718,8 +653,8 @@ mod tests {
 
         assert_eq!(graph.edge_count(), 1);
         assert_eq!(
-            graph.children(primary_axis_id).next(),
-            Some(secondary_axis_id)
+            graph.iter_children(primary_axis_id).next(),
+            Some(secondary_axis_id).as_ref()
         );
 
         graph.connect_node_to_input(
@@ -1100,7 +1035,7 @@ mod tests {
                 .collect::<HashSet<NodeId>>(),
         );
         node_ids.extend(node_id_lut.values());
-        assert_eq!(node_ids, graph.iter_nodes().collect::<HashSet<NodeId>>(),);
+        assert_eq!(node_ids, graph.iter().collect::<HashSet<NodeId>>(),);
     }
 
     #[test]
@@ -1276,10 +1211,7 @@ mod tests {
 
         let new_graph = graph.new_from_nodes(&node_ids);
 
-        assert_eq!(
-            new_graph.iter_nodes().collect::<HashSet<NodeId>>(),
-            node_ids,
-        );
+        assert_eq!(new_graph.iter().collect::<HashSet<NodeId>>(), node_ids,);
         assert_eq!(new_graph.descendants(primary_axis_id).len(), 1);
         assert_eq!(
             new_graph.descendants(primary_axis_id).pop(),

@@ -206,18 +206,20 @@ impl SceneGraph {
     ) -> BTreeSet<(SceneGraphId, SceneGraphId)> {
         let mut disconnected_edges: BTreeSet<(SceneGraphId, SceneGraphId)> = self
             .transform_hierarchy
-            .disconnect_children_of_parent(scene_graph_id)
+            .disconnect_children_of_parent(&scene_graph_id)
+            .map(|child_id| (scene_graph_id, child_id))
             .collect();
         disconnected_edges.extend(
             self.transform_hierarchy
-                .disconnect_parents_of_child(scene_graph_id),
+                .disconnect_parents_of_child(&scene_graph_id)
+                .map(|parent_id| (parent_id, scene_graph_id)),
         );
         match scene_graph_id {
             SceneGraphId::Camera(camera_id) => {
                 disconnected_edges.extend(
                     self.render_cameras
-                        .disconnect_children_of_parent(camera_id)
-                        .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
+                        .disconnect_children_of_parent(&camera_id)
+                        .map(|root_id| (camera_id.into(), root_id.into())),
                 );
                 self.cameras.remove(camera_id);
             }
@@ -227,38 +229,34 @@ impl SceneGraph {
             SceneGraphId::Primitive(primitive_id) => {
                 disconnected_edges.extend(
                     self.material_primitives
-                        .disconnect_parents_of_child(primitive_id)
-                        .map(|(material_id, primitive_id)| {
-                            (material_id.into(), primitive_id.into())
-                        }),
+                        .disconnect_parents_of_child(&primitive_id)
+                        .map(|material_id| (material_id.into(), primitive_id.into())),
                 );
                 self.primitives.remove(primitive_id);
             }
             SceneGraphId::Material(material_id) => {
                 disconnected_edges.extend(
                     self.material_primitives
-                        .disconnect_children_of_parent(material_id)
-                        .map(|(material_id, primitive_id)| {
-                            (material_id.into(), primitive_id.into())
-                        }),
+                        .disconnect_children_of_parent(&material_id)
+                        .map(|primitive_id| (material_id.into(), primitive_id.into())),
                 );
                 disconnected_edges.extend(
                     self.atmospheres
-                        .disconnect_children_of_parent(material_id)
-                        .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
+                        .disconnect_children_of_parent(&material_id)
+                        .map(|root_id| (material_id.into(), root_id.into())),
                 );
                 self.materials.remove(material_id);
             }
             SceneGraphId::Root(root_id) => {
                 disconnected_edges.extend(
                     self.render_cameras
-                        .disconnect_parents_of_child(root_id)
-                        .map(|(camera_id, root_id)| (camera_id.into(), root_id.into())),
+                        .disconnect_parents_of_child(&root_id)
+                        .map(|camera_id| (camera_id.into(), root_id.into())),
                 );
                 disconnected_edges.extend(
                     self.atmospheres
-                        .disconnect_parents_of_child(root_id)
-                        .map(|(material_id, root_id)| (material_id.into(), root_id.into())),
+                        .disconnect_parents_of_child(&root_id)
+                        .map(|material_id| (material_id.into(), root_id.into())),
                 );
                 self.roots.remove(root_id);
             }
@@ -348,17 +346,11 @@ impl SceneGraph {
             .map(|(_texture_id, texture)| texture)
     }
 
-    pub fn children(&self, parent_id: SceneGraphId) -> Option<BTreeSet<SceneGraphId>> {
-        if self
-            .transform_hierarchy
-            .children(parent_id)
-            .peekable()
-            .peek()
-            .is_some()
-        {
+    pub fn children(&self, parent_id: &SceneGraphId) -> Option<BTreeSet<SceneGraphId>> {
+        if self.transform_hierarchy.has_child(parent_id) {
             Some(
                 self.transform_hierarchy
-                    .children(parent_id)
+                    .iter_children(parent_id)
                     .copied()
                     .collect(),
             )
@@ -386,8 +378,8 @@ impl SceneGraph {
     pub fn num_emissive_primitives(&self) -> usize {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
-            if let Some(material_id) = self.material_primitives.parent(primitive_id) {
-                if self[material_id].is_emissive() {
+            if let Some(material_id) = self.material_primitives.parent(&primitive_id) {
+                if self[*material_id].is_emissive() {
                     count += 1;
                 }
             }
@@ -416,7 +408,7 @@ impl SceneGraph {
 
                     gpu_scene.cameras.push(camera.to_gpu());
 
-                    if let Some(children) = self.children(*scene_graph_id) {
+                    if let Some(children) = self.children(scene_graph_id) {
                         self.build_gpu_scene_from_locations(
                             &children,
                             &camera.camera_to_world,
@@ -439,7 +431,7 @@ impl SceneGraph {
                             .extend(ScenePreprocessorDirectives::directives_for_light(&light));
                     }
 
-                    if let Some(children) = self.children(*scene_graph_id) {
+                    if let Some(children) = self.children(scene_graph_id) {
                         self.build_gpu_scene_from_locations(
                             &children,
                             transform,
@@ -463,9 +455,9 @@ impl SceneGraph {
                         );
                     }
 
-                    if let Some(material_id) = self.material_primitives.parent(*primitive_id) {
-                        if !material_ids.contains_key(&material_id) {
-                            let material: Material = self[material_id];
+                    if let Some(material_id) = self.material_primitives.parent(primitive_id) {
+                        if !material_ids.contains_key(material_id) {
+                            let material: Material = self[*material_id];
                             gpu_scene.preprocessor_directives.extend(
                                 ScenePreprocessorDirectives::directives_for_material(
                                     &material, &self,
@@ -476,10 +468,10 @@ impl SceneGraph {
 
                             gpu_scene.materials.push(material.to_gpu());
 
-                            material_ids.insert(material_id, material_index);
+                            material_ids.insert(*material_id, material_index);
 
                             gpu_primitive.material_id = material_index as u32;
-                        } else if let Some(material_index) = material_ids.get(&material_id) {
+                        } else if let Some(material_index) = material_ids.get(material_id) {
                             gpu_primitive.material_id = *material_index as u32;
                         }
                     }
@@ -489,7 +481,7 @@ impl SceneGraph {
                     gpu_primitive.id = gpu_primitive_id;
                     gpu_scene.primitives.push(gpu_primitive);
 
-                    if let Some(children) = self.children(*scene_graph_id) {
+                    if let Some(children) = self.children(scene_graph_id) {
                         gpu_scene
                             .preprocessor_directives
                             .insert(ScenePreprocessorDirectives::EnableChildInteractions);
@@ -508,7 +500,7 @@ impl SceneGraph {
                         gpu_scene.primitives.len() as u32 - gpu_primitive_id;
                 }
                 SceneGraphId::Root(root_id) => {
-                    if let Some(children) = self.children(*scene_graph_id) {
+                    if let Some(children) = self.children(scene_graph_id) {
                         self.build_gpu_scene_from_locations(
                             &children,
                             &(self[*root_id].local_to_world * transform),
@@ -532,7 +524,7 @@ impl SceneGraph {
         let mut light_ids = HashSet::<LightId>::new();
         let mut camera_ids = HashMap::<CameraId, usize>::new();
 
-        if let Some(children) = self.children(SceneGraphId::Root(root_id)) {
+        if let Some(children) = self.children(&SceneGraphId::Root(root_id)) {
             self.build_gpu_scene_from_locations(
                 &children,
                 &self[root_id].local_to_world,
@@ -544,20 +536,20 @@ impl SceneGraph {
             );
         }
 
-        if let Some(atmosphere_id) = self.atmospheres.parent(root_id) {
-            if !material_ids.contains_key(&atmosphere_id) {
+        if let Some(atmosphere_id) = self.atmospheres.parent(&root_id) {
+            if !material_ids.contains_key(atmosphere_id) {
                 gpu_scene.atmosphere = gpu_scene.materials.len();
-                gpu_scene.materials.push(self[atmosphere_id].to_gpu());
-            } else if let Some(atmosphere_index) = material_ids.get(&atmosphere_id) {
+                gpu_scene.materials.push(self[*atmosphere_id].to_gpu());
+            } else if let Some(atmosphere_index) = material_ids.get(atmosphere_id) {
                 gpu_scene.atmosphere = *atmosphere_index;
             }
         }
 
-        if let Some(render_camera_id) = self.render_cameras.parent(root_id) {
-            if !camera_ids.contains_key(&render_camera_id) {
+        if let Some(render_camera_id) = self.render_cameras.parent(&root_id) {
+            if !camera_ids.contains_key(render_camera_id) {
                 gpu_scene.render_camera = gpu_scene.cameras.len();
-                gpu_scene.cameras.push(self[render_camera_id].to_gpu());
-            } else if let Some(render_camera_index) = camera_ids.get(&render_camera_id) {
+                gpu_scene.cameras.push(self[*render_camera_id].to_gpu());
+            } else if let Some(render_camera_index) = camera_ids.get(render_camera_id) {
                 // TODO the same camera could be at multiple places in the hierarchy
                 // this refers to the last added but should be specifiable in order
                 // to pick up either transform
@@ -676,7 +668,7 @@ mod tests {
         scene_graph.set_material(primitive0_id, material0_id);
         scene_graph.set_material(primitive1_id, material1_id);
 
-        assert_eq!(scene_graph.children(root_id.into()).unwrap().len(), 2);
+        assert_eq!(scene_graph.children(&root_id.into()).unwrap().len(), 2);
 
         gpu_scene = scene_graph.as_gpu_scene(root_id);
 

@@ -190,7 +190,7 @@ impl PartialEq for SceneGraph {
 }
 
 impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphId> for SceneGraph {
-    fn node_count(&self) -> usize {
+    fn family_count(&self) -> usize {
         self.transform_hierarchy.parent_count()
     }
 

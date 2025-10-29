@@ -55,7 +55,7 @@ impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
     //     &mut self.edges
     // }
 
-    fn node_count(&self) -> usize {
+    fn family_count(&self) -> usize {
         self.nodes.len()
     }
 
@@ -602,7 +602,7 @@ mod tests {
             node_ids.insert(graph.add_node(node_data));
         }
 
-        assert_eq!(graph.node_count(), NodeData::COUNT);
+        assert_eq!(graph.family_count(), NodeData::COUNT);
         assert_eq!(graph.edge_count(), 0);
         assert_eq!(node_ids, graph.iter().collect::<HashSet<NodeId>>());
     }
@@ -620,18 +620,18 @@ mod tests {
             assert!(disconnections.is_empty());
         }
 
-        assert_eq!(graph.node_count(), 0);
+        assert_eq!(graph.family_count(), 0);
         assert_eq!(graph.edge_count(), 0);
 
         for node_data in NodeData::iter() {
             graph.add_node(node_data);
         }
 
-        assert_eq!(graph.node_count(), NodeData::COUNT);
+        assert_eq!(graph.family_count(), NodeData::COUNT);
 
         graph.clear();
 
-        assert_eq!(graph.node_count(), 0);
+        assert_eq!(graph.family_count(), 0);
     }
 
     #[test]
@@ -642,7 +642,7 @@ mod tests {
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(graph.node_count(), 3);
+        assert_eq!(graph.family_count(), 3);
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
@@ -676,7 +676,7 @@ mod tests {
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(graph.node_count(), 3);
+        assert_eq!(graph.family_count(), 3);
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
@@ -1030,7 +1030,7 @@ mod tests {
 
         let node_id_lut: HashMap<NodeId, NodeId> = graph.merge(&mut graph1);
 
-        assert_eq!(graph.node_count(), NodeData::COUNT * 2);
+        assert_eq!(graph.family_count(), NodeData::COUNT * 2);
         assert_eq!(graph.edge_count(), 0);
         assert_eq!(graph1.nodes.len(), 0);
         assert_eq!(

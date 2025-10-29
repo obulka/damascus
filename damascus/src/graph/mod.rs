@@ -9,9 +9,9 @@ pub mod scene_graph;
 
 use edges::BidirectedEdges;
 
-pub trait BidirectedGraph<Node, Edges, Parent, Child>
+pub trait BidirectedGraph<Family, Edges, Parent, Child>
 where
-    Node: Clone + PartialEq,
+    Family: Clone + PartialEq,
     Edges: BidirectedEdges<Parent, Child>,
     Parent: Clone,
     Child: Clone,
@@ -19,115 +19,115 @@ where
     // fn edges(&self) -> &Edges;
     // fn edges_mut(&mut self) -> &mut Edges;
 
-    fn node_count(&self) -> usize;
+    fn family_count(&self) -> usize;
 
     fn clear(&mut self);
 
-    // fn iter_node_children<'a>(&'a self, node: Node) -> impl Iterator<Item = &'a Child> + 'a
+    // fn iter_family_children<'a>(&'a self, family: Family) -> impl Iterator<Item = &'a Child> + 'a
     // where
-    //     Node: 'a;
-    // fn iter_node_parents<'a>(&'a self, node: Node) -> impl Iterator<Item = &'a Parent> + 'a
+    //     Family: 'a;
+    // fn iter_family_parents<'a>(&'a self, family: Family) -> impl Iterator<Item = &'a Parent> + 'a
     // where
-    //     Node: 'a;
+    //     Family: 'a;
 
-    fn iter_children<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a
+    fn iter_children<'a>(&'a self, family: &'a Family) -> impl Iterator<Item = &'a Family> + 'a
     where
-        Node: 'a;
-    fn iter_parents<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a
+        Family: 'a;
+    fn iter_parents<'a>(&'a self, family: &'a Family) -> impl Iterator<Item = &'a Family> + 'a
     where
-        Node: 'a;
+        Family: 'a;
     // {
     //     self
-    //         .iter_node_parents()
+    //         .iter_family_parents()
     //         .flat_map(|parent| self.edges().iter_children(parent))
-    //         .map(|input_id| &self[*input_id].node_id)
+    //         .map(|input_id| &self[*input_id].family_id)
     // }
 
-    fn has_child(&self, node: &Node) -> bool {
-        self.iter_children(node).peekable().peek().is_some()
+    fn has_child(&self, family: &Family) -> bool {
+        self.iter_children(family).peekable().peek().is_some()
     }
 
-    fn has_parent(&self, node: &Node) -> bool {
-        self.iter_parents(node).peekable().peek().is_some()
+    fn has_parent(&self, family: &Family) -> bool {
+        self.iter_parents(family).peekable().peek().is_some()
     }
 
     /// Apply a closure to all descendants of `parent` in breadth first order
     // and collect the return values
-    fn for_each_descendant<'a, B, F>(&'a self, node: &'a Node, closure: F) -> Vec<B>
+    fn for_each_descendant<'a, B, F>(&'a self, family: &'a Family, closure: F) -> Vec<B>
     where
-        F: Fn(&'a Node) -> B,
+        F: Fn(&'a Family) -> B,
     {
         let mut result: Vec<B> = vec![];
-        let mut nodes_to_search: Vec<&Node> = vec![node];
-        while let Some(node) = nodes_to_search.pop() {
-            result.extend(self.iter_children(node).map(|descendant| {
-                nodes_to_search.push(descendant);
+        let mut families_to_search: Vec<&Family> = vec![family];
+        while let Some(family) = families_to_search.pop() {
+            result.extend(self.iter_children(family).map(|descendant| {
+                families_to_search.push(descendant);
                 closure(descendant)
             }));
         }
         result
     }
 
-    /// Check if a node is an ancestor of another
-    fn is_descendant(&self, node: &Node, potential_descendant: &Node) -> bool {
-        // Nodes are not their own descendant
-        if node == potential_descendant {
+    /// Check if a family contains an ancestor of another
+    fn is_descendant(&self, family: &Family, potential_descendant: &Family) -> bool {
+        // Familys are not their own descendant
+        if family == potential_descendant {
             return false;
         }
 
-        let mut nodes_to_search: Vec<&Node> = vec![node];
-        while let Some(search_node) = nodes_to_search.pop() {
-            for descendant in self.iter_children(search_node) {
+        let mut families_to_search: Vec<&Family> = vec![family];
+        while let Some(search_family) = families_to_search.pop() {
+            for descendant in self.iter_children(search_family) {
                 if *descendant == *potential_descendant {
                     return true;
                 }
-                nodes_to_search.push(descendant);
+                families_to_search.push(descendant);
             }
         }
         false
     }
 
-    /// Get all descendant nodes of `node` in breadth first order
-    fn descendants<'a>(&'a self, node: &'a Node) -> Vec<&'a Node> {
-        self.for_each_descendant(node, |descendant| descendant)
+    /// Get all descendant families of `family` in breadth first order
+    fn descendants<'a>(&'a self, family: &'a Family) -> Vec<&'a Family> {
+        self.for_each_descendant(family, |descendant| descendant)
     }
 
-    /// Apply a closure to all ancestors of `node` in breadth first order
+    /// Apply a closure to all ancestors of `family` in breadth first order
     // and collect the return values
-    fn for_each_ancestor<'a, B, F>(&'a self, node: &'a Node, closure: F) -> Vec<B>
+    fn for_each_ancestor<'a, B, F>(&'a self, family: &'a Family, closure: F) -> Vec<B>
     where
-        F: Fn(&'a Node) -> B,
+        F: Fn(&'a Family) -> B,
     {
         let mut result: Vec<B> = vec![];
-        let mut nodes_to_search: Vec<&'a Node> = vec![node];
-        while let Some(search_node) = nodes_to_search.pop() {
-            result.extend(self.iter_parents(search_node).map(|ancestor| {
-                nodes_to_search.push(ancestor);
+        let mut families_to_search: Vec<&'a Family> = vec![family];
+        while let Some(search_family) = families_to_search.pop() {
+            result.extend(self.iter_parents(search_family).map(|ancestor| {
+                families_to_search.push(ancestor);
                 closure(ancestor)
             }));
         }
         result
     }
 
-    /// Get all ancestor nodes of `node` in breadth first order
-    fn ancestors<'a>(&'a self, node: &'a Node) -> Vec<&'a Node> {
-        self.for_each_ancestor(node, |ancestor| ancestor)
+    /// Get all ancestor families of `family` in breadth first order
+    fn ancestors<'a>(&'a self, family: &'a Family) -> Vec<&'a Family> {
+        self.for_each_ancestor(family, |ancestor| ancestor)
     }
 
-    /// Check if a node is an ancestor of another
-    fn is_ancestor(&self, node: &Node, potential_ancestor: &Node) -> bool {
-        // Nodes are not their own ancestor
-        if node == potential_ancestor {
+    /// Check if a family is an ancestor of another
+    fn is_ancestor(&self, family: &Family, potential_ancestor: &Family) -> bool {
+        // Familys are not their own ancestor
+        if family == potential_ancestor {
             return false;
         }
 
-        let mut nodes_to_search: Vec<&Node> = vec![node];
-        while let Some(search_node) = nodes_to_search.pop() {
-            for ancestor in self.iter_parents(search_node) {
+        let mut families_to_search: Vec<&Family> = vec![family];
+        while let Some(search_family) = families_to_search.pop() {
+            for ancestor in self.iter_parents(search_family) {
                 if *ancestor == *potential_ancestor {
                     return true;
                 }
-                nodes_to_search.push(ancestor);
+                families_to_search.push(ancestor);
             }
         }
         false

@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    BidirectedGraph,
+    BidirectedGraph, EvaluableGraph,
     edges::{BidirectedEdges, SingleParentBidirectedEdges},
     scene_graph::SceneGraph,
 };
@@ -47,15 +47,11 @@ pub struct NodeGraph {
 }
 
 impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
-    // fn edges(&self) -> &Edges {
-    //     &self.edges
-    // }
+    fn edges(&self) -> &Edges {
+        &self.edges
+    }
 
-    // fn edges_mut(&mut self) -> &mut Edges {
-    //     &mut self.edges
-    // }
-
-    fn family_count(&self) -> usize {
+    fn node_count(&self) -> usize {
         self.nodes.len()
     }
 
@@ -72,22 +68,40 @@ impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
     where
         NodeId: 'a,
     {
-        self[*node_id]
-            .output_ids
-            .iter()
-            .flat_map(|output_id| self.edges.iter_children(output_id))
-            .map(|input_id| &self[*input_id].node_id)
+        <Self as EvaluableGraph<NodeId, InputId, OutputId>>::iter_children(self, node_id)
     }
 
     fn iter_parents<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
     where
         NodeId: 'a,
     {
-        self[*node_id]
-            .input_ids
-            .iter()
-            .flat_map(|input_id| self.edges.parent(input_id))
-            .map(|output_id| &self[*output_id].node_id)
+        <Self as EvaluableGraph<NodeId, InputId, OutputId>>::iter_parents(self, node_id)
+    }
+}
+
+impl EvaluableGraph<NodeId, InputId, OutputId> for NodeGraph {
+    fn node_for_input<'a>(&'a self, input_id: &'a InputId) -> &'a NodeId {
+        &self[*input_id].node_id
+    }
+
+    fn node_for_output<'a>(&'a self, output_id: &'a OutputId) -> &'a NodeId {
+        &self[*output_id].node_id
+    }
+
+    fn iter_inputs<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a InputId> + 'a
+    where
+        NodeId: 'a,
+        InputId: 'a,
+    {
+        self[*node_id].input_ids.iter()
+    }
+
+    fn iter_outputs<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a OutputId> + 'a
+    where
+        NodeId: 'a,
+        OutputId: 'a,
+    {
+        self[*node_id].output_ids.iter()
     }
 }
 
@@ -602,7 +616,7 @@ mod tests {
             node_ids.insert(graph.add_node(node_data));
         }
 
-        assert_eq!(graph.family_count(), NodeData::COUNT);
+        assert_eq!(graph.node_count(), NodeData::COUNT);
         assert_eq!(graph.edge_count(), 0);
         assert_eq!(node_ids, graph.iter().collect::<HashSet<NodeId>>());
     }
@@ -620,18 +634,18 @@ mod tests {
             assert!(disconnections.is_empty());
         }
 
-        assert_eq!(graph.family_count(), 0);
+        assert_eq!(graph.node_count(), 0);
         assert_eq!(graph.edge_count(), 0);
 
         for node_data in NodeData::iter() {
             graph.add_node(node_data);
         }
 
-        assert_eq!(graph.family_count(), NodeData::COUNT);
+        assert_eq!(graph.node_count(), NodeData::COUNT);
 
         graph.clear();
 
-        assert_eq!(graph.family_count(), 0);
+        assert_eq!(graph.node_count(), 0);
     }
 
     #[test]
@@ -642,7 +656,7 @@ mod tests {
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(graph.family_count(), 3);
+        assert_eq!(graph.node_count(), 3);
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
@@ -654,7 +668,7 @@ mod tests {
 
         assert_eq!(graph.edge_count(), 1);
         assert_eq!(
-            graph.iter_children(&primary_axis_id).next(),
+            EvaluableGraph::iter_children(&graph, &primary_axis_id).next(),
             Some(secondary_axis_id).as_ref()
         );
 
@@ -676,7 +690,7 @@ mod tests {
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
-        assert_eq!(graph.family_count(), 3);
+        assert_eq!(graph.node_count(), 3);
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
@@ -1030,7 +1044,7 @@ mod tests {
 
         let node_id_lut: HashMap<NodeId, NodeId> = graph.merge(&mut graph1);
 
-        assert_eq!(graph.family_count(), NodeData::COUNT * 2);
+        assert_eq!(graph.node_count(), NodeData::COUNT * 2);
         assert_eq!(graph.edge_count(), 0);
         assert_eq!(graph1.nodes.len(), 0);
         assert_eq!(

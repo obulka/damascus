@@ -15,7 +15,10 @@ use crate::{
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     gpu::scene::{GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives},
-    graph::edges::{BidirectedEdges, MultiParentBidirectedEdges, SingleParentBidirectedEdges},
+    graph::{
+        BidirectedGraph,
+        edges::{BidirectedEdges, MultiParentBidirectedEdges, SingleParentBidirectedEdges},
+    },
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
@@ -186,8 +189,12 @@ impl PartialEq for SceneGraph {
     }
 }
 
-impl SceneGraph {
-    pub fn clear(&mut self) {
+impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphId> for SceneGraph {
+    fn node_count(&self) -> usize {
+        self.transform_hierarchy.parent_count()
+    }
+
+    fn clear(&mut self) {
         self.cameras.clear();
         self.primitives.clear();
         self.lights.clear();
@@ -200,6 +207,31 @@ impl SceneGraph {
         self.atmospheres.clear();
     }
 
+    // fn iter(&self) -> impl Iterator<Item = Node> + '_ {
+    //     self.transform_hierarchy.iter_parents()
+    // }
+
+    fn iter_children<'a>(
+        &'a self,
+        scene_graph_id: &'a SceneGraphId,
+    ) -> impl Iterator<Item = &'a SceneGraphId> + 'a
+    where
+        SceneGraphId: 'a,
+    {
+        self.transform_hierarchy.iter_children(scene_graph_id)
+    }
+    fn iter_parents<'a>(
+        &'a self,
+        scene_graph_id: &'a SceneGraphId,
+    ) -> impl Iterator<Item = &'a SceneGraphId> + 'a
+    where
+        SceneGraphId: 'a,
+    {
+        self.transform_hierarchy.iter_parents(scene_graph_id)
+    }
+}
+
+impl SceneGraph {
     pub fn remove(
         &mut self,
         scene_graph_id: SceneGraphId,

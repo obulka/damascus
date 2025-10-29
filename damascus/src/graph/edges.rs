@@ -9,13 +9,23 @@ use std::{
     hash::Hash,
 };
 
+/// The following data structures allow the connection of two
+/// pieces of data forming a hierarchical relationship while
+/// maintaining efficient traversal in both directions, up or down
+/// the hierarchy. Each edge can be thought of as single arrow from
+/// the parent -> the child, but with this data structure we maintain
+/// the single directedness of that connection while supporting
+/// traversal from child -> parent. This allows acyclic conditions to
+/// be enforced (or not) while still being able to search in both
+/// directions.
+
 pub trait BidirectedEdges<Parent, Child>
 where
     Parent: Clone,
     Child: Clone,
 {
-    fn num_parents(&self) -> usize;
-    fn num_children(&self) -> usize;
+    fn parent_count(&self) -> usize;
+    fn child_count(&self) -> usize;
 
     fn clear(&mut self);
 
@@ -126,11 +136,11 @@ where
 impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Parent, Child>
     for SingleParentBidirectedEdges<Parent, Child>
 {
-    fn num_parents(&self) -> usize {
+    fn parent_count(&self) -> usize {
         self.parents.len()
     }
 
-    fn num_children(&self) -> usize {
+    fn child_count(&self) -> usize {
         self.children.len()
     }
 
@@ -241,11 +251,11 @@ where
 impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Parent, Child>
     for MultiParentBidirectedEdges<Parent, Child>
 {
-    fn num_parents(&self) -> usize {
+    fn parent_count(&self) -> usize {
         self.parents.len()
     }
 
-    fn num_children(&self) -> usize {
+    fn child_count(&self) -> usize {
         self.children.len()
     }
 
@@ -336,8 +346,8 @@ mod tests {
     fn test_single_parent_bidirected_edges() {
         let mut edges = SingleParentBidirectedEdges::<u32, u32>::new();
 
-        assert_eq!(edges.num_parents(), 0);
-        assert_eq!(edges.num_children(), 0);
+        assert_eq!(edges.parent_count(), 0);
+        assert_eq!(edges.child_count(), 0);
 
         assert!(!edges.disconnect(&1, &5));
 
@@ -345,13 +355,13 @@ mod tests {
 
         assert!(!edges.connect(1, 5));
 
-        assert_eq!(edges.num_parents(), 1);
-        assert_eq!(edges.num_children(), 1);
+        assert_eq!(edges.parent_count(), 1);
+        assert_eq!(edges.child_count(), 1);
 
         assert!(edges.disconnect(&1, &5));
 
-        assert_eq!(edges.num_parents(), 0);
-        assert_eq!(edges.num_children(), 0);
+        assert_eq!(edges.parent_count(), 0);
+        assert_eq!(edges.child_count(), 0);
 
         // /0/1/2/3
         // | | | /4
@@ -921,8 +931,8 @@ mod tests {
     fn test_multi_parent_bidirected_edges() {
         let mut edges = MultiParentBidirectedEdges::<u32, u32>::new();
 
-        assert_eq!(edges.num_parents(), 0);
-        assert_eq!(edges.num_children(), 0);
+        assert_eq!(edges.parent_count(), 0);
+        assert_eq!(edges.child_count(), 0);
 
         assert!(!edges.disconnect(&1, &5));
 
@@ -930,13 +940,13 @@ mod tests {
 
         assert!(!edges.connect(1, 5));
 
-        assert_eq!(edges.num_parents(), 1);
-        assert_eq!(edges.num_children(), 1);
+        assert_eq!(edges.parent_count(), 1);
+        assert_eq!(edges.child_count(), 1);
 
         assert!(edges.disconnect(&1, &5));
 
-        assert_eq!(edges.num_parents(), 0);
-        assert_eq!(edges.num_children(), 0);
+        assert_eq!(edges.parent_count(), 0);
+        assert_eq!(edges.child_count(), 0);
 
         // /0/1/2/3
         // | | | /4

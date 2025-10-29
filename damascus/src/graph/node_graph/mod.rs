@@ -47,37 +47,47 @@ pub struct NodeGraph {
 }
 
 impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
-    fn edges(&self) -> &Edges {
-        &self.edges
-    }
-    fn edges_mut(&mut self) -> &mut Edges {
-        &mut self.edges
+    // fn edges(&self) -> &Edges {
+    //     &self.edges
+    // }
+
+    // fn edges_mut(&mut self) -> &mut Edges {
+    //     &mut self.edges
+    // }
+
+    fn node_count(&self) -> usize {
+        self.nodes.len()
     }
 
-    fn iter_children<'a>(&'a self, node_id: NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
+    fn clear(&mut self) {
+        self.clear_cache();
+
+        self.nodes.clear();
+        self.inputs.clear();
+        self.outputs.clear();
+        self.edges.clear();
+    }
+
+    fn iter_children<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
     where
         NodeId: 'a,
     {
-        self[node_id]
+        self[*node_id]
             .output_ids
             .iter()
             .flat_map(|output_id| self.edges.iter_children(output_id))
             .map(|input_id| &self[*input_id].node_id)
     }
 
-    fn iter_parents<'a>(&'a self, node_id: NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
+    fn iter_parents<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
     where
         NodeId: 'a,
     {
-        self[node_id]
+        self[*node_id]
             .input_ids
             .iter()
             .flat_map(|input_id| self.edges.parent(input_id))
             .map(|output_id| &self[*output_id].node_id)
-    }
-
-    fn iter(&self) -> impl Iterator<Item = NodeId> + '_ {
-        self.nodes.keys()
     }
 }
 
@@ -93,12 +103,12 @@ impl NodeGraph {
         }
     }
 
-    pub fn node_count(&self) -> usize {
-        self.nodes.len()
+    pub fn iter(&self) -> impl Iterator<Item = NodeId> + '_ {
+        self.nodes.keys()
     }
 
     pub fn edge_count(&self) -> usize {
-        self.edges.num_parents()
+        self.edges.parent_count()
     }
 
     pub fn input_count(&self) -> usize {
@@ -140,15 +150,6 @@ impl NodeGraph {
     pub fn clear_cache(&mut self) {
         self.cache.clear();
         self.scene_graph.clear();
-    }
-
-    pub fn clear(&mut self) {
-        self.clear_cache();
-
-        self.nodes.clear();
-        self.inputs.clear();
-        self.outputs.clear();
-        self.edges.clear();
     }
 
     fn evaluate_node(
@@ -239,7 +240,7 @@ impl NodeGraph {
             && self[input_node_id]
                 .data
                 .output_compatible_with_input(&self[output_id].data, &self[input_id].name)
-            && !self.is_ancestor(output_node_id, input_node_id)
+            && !self.is_ancestor(&output_node_id, &input_node_id)
     }
 
     pub fn add_node(&mut self, node_data: NodeData) -> NodeId {
@@ -324,10 +325,10 @@ impl NodeGraph {
     }
 
     pub fn descendants_output_ids(&self, node_id: NodeId) -> Vec<OutputId> {
-        self.descendants(node_id)
+        self.descendants(&node_id)
             .iter()
             .flat_map(|descendant_id| {
-                self[*descendant_id]
+                self[**descendant_id]
                     .output_ids
                     .iter()
                     .map(|output_id| *output_id)
@@ -653,7 +654,7 @@ mod tests {
 
         assert_eq!(graph.edge_count(), 1);
         assert_eq!(
-            graph.iter_children(primary_axis_id).next(),
+            graph.iter_children(&primary_axis_id).next(),
             Some(secondary_axis_id).as_ref()
         );
 
@@ -878,25 +879,28 @@ mod tests {
                 .expect("Child input should exist on Primitive node"),
         );
 
-        let mut camera_ancestors = Vec::<NodeId>::new();
-        camera_ancestors.push(secondary_axis_id);
-        camera_ancestors.push(primary_axis_id);
+        let mut camera_ancestors = Vec::<&NodeId>::new();
+        camera_ancestors.push(&secondary_axis_id);
+        camera_ancestors.push(&primary_axis_id);
 
-        assert_eq!(graph.ancestors(camera_id), camera_ancestors);
+        assert_eq!(graph.ancestors(&camera_id), camera_ancestors);
 
-        let mut secondary_axis_ancestors = Vec::<NodeId>::new();
-        secondary_axis_ancestors.push(primary_axis_id);
+        let mut secondary_axis_ancestors = Vec::<&NodeId>::new();
+        secondary_axis_ancestors.push(&primary_axis_id);
 
-        assert_eq!(graph.ancestors(secondary_axis_id), secondary_axis_ancestors);
+        assert_eq!(
+            graph.ancestors(&secondary_axis_id),
+            secondary_axis_ancestors
+        );
 
-        assert!(graph.ancestors(primary_axis_id).is_empty());
+        assert!(graph.ancestors(&primary_axis_id).is_empty());
 
-        let mut primitive1_ancestors = Vec::<NodeId>::new();
-        primitive1_ancestors.push(primitive0_id);
-        primitive1_ancestors.push(secondary_axis_id);
-        primitive1_ancestors.push(primary_axis_id);
+        let mut primitive1_ancestors = Vec::<&NodeId>::new();
+        primitive1_ancestors.push(&primitive0_id);
+        primitive1_ancestors.push(&secondary_axis_id);
+        primitive1_ancestors.push(&primary_axis_id);
 
-        assert_eq!(graph.ancestors(primitive1_id), primitive1_ancestors);
+        assert_eq!(graph.ancestors(&primitive1_id), primitive1_ancestors);
     }
 
     #[test]
@@ -938,8 +942,8 @@ mod tests {
                 .expect("Child input should exist on Primitive node"),
         );
 
-        assert!(graph.descendants(camera_id).is_empty());
-        assert!(graph.descendants(primitive1_id).is_empty());
+        assert!(graph.descendants(&camera_id).is_empty());
+        assert!(graph.descendants(&primitive1_id).is_empty());
         assert!(graph.descendants_output_ids(camera_id).is_empty());
         assert!(graph.descendants_output_ids(primitive1_id).is_empty());
 
@@ -950,8 +954,9 @@ mod tests {
 
         assert_eq!(
             graph
-                .descendants(secondary_axis_id)
+                .descendants(&secondary_axis_id)
                 .into_iter()
+                .copied()
                 .collect::<HashSet<NodeId>>(),
             secondary_axis_descendants,
         );
@@ -977,8 +982,9 @@ mod tests {
 
         assert_eq!(
             graph
-                .descendants(primary_axis_id)
+                .descendants(&primary_axis_id)
                 .into_iter()
+                .copied()
                 .collect::<HashSet<NodeId>>(),
             primary_axis_descendants,
         );
@@ -997,7 +1003,7 @@ mod tests {
             primary_axis_descendants_output_ids,
         );
 
-        assert_eq!(graph.descendants(primitive0_id), vec![primitive1_id],);
+        assert_eq!(graph.descendants(&primitive0_id), vec![&primitive1_id],);
 
         assert_eq!(
             graph.descendants_output_ids(primitive0_id),
@@ -1100,8 +1106,8 @@ mod tests {
         let primitive0_id: NodeId = *node_id_lut.get(&primitive0_ids[1]).unwrap();
         let primitive1_id: NodeId = *node_id_lut.get(&primitive1_ids[1]).unwrap();
 
-        assert!(graphs[0].descendants(camera_id).is_empty());
-        assert!(graphs[0].descendants(primitive1_id).is_empty());
+        assert!(graphs[0].descendants(&camera_id).is_empty());
+        assert!(graphs[0].descendants(&primitive1_id).is_empty());
         assert!(graphs[0].descendants_output_ids(camera_id).is_empty());
         assert!(graphs[0].descendants_output_ids(primitive1_id).is_empty());
 
@@ -1112,8 +1118,9 @@ mod tests {
 
         assert_eq!(
             graphs[0]
-                .descendants(secondary_axis_id)
+                .descendants(&secondary_axis_id)
                 .into_iter()
+                .copied()
                 .collect::<HashSet<NodeId>>(),
             secondary_axis_descendants,
         );
@@ -1139,8 +1146,9 @@ mod tests {
 
         assert_eq!(
             graphs[0]
-                .descendants(primary_axis_id)
+                .descendants(&primary_axis_id)
                 .into_iter()
+                .copied()
                 .collect::<HashSet<NodeId>>(),
             primary_axis_descendants,
         );
@@ -1159,7 +1167,7 @@ mod tests {
             primary_axis_descendants_output_ids,
         );
 
-        assert_eq!(graphs[0].descendants(primitive0_id), vec![primitive1_id],);
+        assert_eq!(graphs[0].descendants(&primitive0_id), vec![&primitive1_id],);
         assert_eq!(
             graphs[0].descendants_output_ids(primitive0_id),
             graphs[0][primitive1_id].output_ids,
@@ -1212,10 +1220,10 @@ mod tests {
         let new_graph = graph.new_from_nodes(&node_ids);
 
         assert_eq!(new_graph.iter().collect::<HashSet<NodeId>>(), node_ids,);
-        assert_eq!(new_graph.descendants(primary_axis_id).len(), 1);
+        assert_eq!(new_graph.descendants(&primary_axis_id).len(), 1);
         assert_eq!(
-            new_graph.descendants(primary_axis_id).pop(),
-            Some(secondary_axis_id)
+            new_graph.descendants(&primary_axis_id).pop(),
+            Some(&secondary_axis_id)
         );
         assert!(new_graph.node_output_is_connected(primary_axis_id));
         assert!(!new_graph.node_output_is_connected(secondary_axis_id));

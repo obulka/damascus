@@ -64,7 +64,7 @@ impl Enumerator for Shapes {}
 pub struct GPUPrimitive {
     pub id: u32,
     pub material_id: u32,
-    pub num_descendants: u32,
+    pub descendant_count: u32,
     pub shape: u32,
     pub modifiers: u32,
     pub negative_repetitions: Vec3,
@@ -138,7 +138,7 @@ impl DualDevice<GPUPrimitive, Std430GPUPrimitive> for Primitive {
         GPUPrimitive {
             id: 0,
             material_id: 0, // 0 will be a default material, modify this before sending to the gpu
-            num_descendants: 0,
+            descendant_count: 0,
             shape: self.shape as u32,
             modifiers: self.repetition as u32
                 | (self.elongate as u32) << 2

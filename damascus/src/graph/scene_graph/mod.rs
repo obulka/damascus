@@ -207,10 +207,6 @@ impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphI
         self.atmospheres.clear();
     }
 
-    // fn iter(&self) -> impl Iterator<Item = Node> + '_ {
-    //     self.transform_hierarchy.iter_parents()
-    // }
-
     fn iter_children<'a>(
         &'a self,
         scene_graph_id: &'a SceneGraphId,
@@ -220,6 +216,7 @@ impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphI
     {
         self.transform_hierarchy.iter_children(scene_graph_id)
     }
+
     fn iter_parents<'a>(
         &'a self,
         scene_graph_id: &'a SceneGraphId,
@@ -324,27 +321,27 @@ impl SceneGraph {
         self.texture_evaluators.insert(texture)
     }
 
-    pub fn num_cameras(&self) -> usize {
+    pub fn camera_count(&self) -> usize {
         self.cameras.len()
     }
 
-    pub fn num_primitives(&self) -> usize {
+    pub fn primitive_count(&self) -> usize {
         self.primitives.len()
     }
 
-    pub fn num_lights(&self) -> usize {
+    pub fn light_count(&self) -> usize {
         self.lights.len()
     }
 
-    pub fn num_materials(&self) -> usize {
+    pub fn material_count(&self) -> usize {
         self.materials.len()
     }
 
-    pub fn num_roots(&self) -> usize {
+    pub fn root_count(&self) -> usize {
         self.roots.len()
     }
 
-    pub fn num_texture_evaluators(&self) -> usize {
+    pub fn texture_evaluator_count(&self) -> usize {
         self.texture_evaluators.len()
     }
 
@@ -378,19 +375,6 @@ impl SceneGraph {
             .map(|(_texture_id, texture)| texture)
     }
 
-    pub fn children(&self, parent_id: &SceneGraphId) -> Option<BTreeSet<SceneGraphId>> {
-        if self.transform_hierarchy.has_child(parent_id) {
-            Some(
-                self.transform_hierarchy
-                    .iter_children(parent_id)
-                    .copied()
-                    .collect(),
-            )
-        } else {
-            None
-        }
-    }
-
     pub fn add_child(&mut self, parent_id: SceneGraphId, child_id: SceneGraphId) {
         self.transform_hierarchy.connect(parent_id, child_id);
     }
@@ -407,7 +391,7 @@ impl SceneGraph {
         self.render_cameras.connect(render_camera_id, root_id);
     }
 
-    pub fn num_emissive_primitives(&self) -> usize {
+    pub fn emissive_primitive_count(&self) -> usize {
         let mut count = 0;
         for primitive_id in self.primitives.keys() {
             if let Some(material_id) = self.material_primitives.parent(&primitive_id) {
@@ -420,17 +404,17 @@ impl SceneGraph {
     }
 
     /// Add all descendants of `scene_graph_ids` to the gpu_scene in depth first order
-    fn build_gpu_scene_from_locations(
-        &self,
-        scene_graph_ids: &BTreeSet<SceneGraphId>,
-        transform: &Mat4,
-        material_ids: &mut HashMap<MaterialId, usize>,
-        primitive_ids: &mut HashSet<PrimitiveId>,
-        light_ids: &mut HashSet<LightId>,
-        camera_ids: &mut HashMap<CameraId, usize>,
-        gpu_scene: &mut GPUScene,
+    fn build_gpu_scene_from_locations<'a>(
+        &'a self,
+        scene_graph_ids: impl Iterator<Item = &'a SceneGraphId>,
+        transform: &'a Mat4,
+        material_ids: &'a mut HashMap<MaterialId, usize>,
+        primitive_ids: &'a mut HashSet<PrimitiveId>,
+        light_ids: &'a mut HashSet<LightId>,
+        camera_ids: &'a mut HashMap<CameraId, usize>,
+        gpu_scene: &'a mut GPUScene,
     ) {
-        for scene_graph_id in scene_graph_ids.iter() {
+        for scene_graph_id in scene_graph_ids {
             match scene_graph_id {
                 SceneGraphId::Camera(camera_id) => {
                     let mut camera: Camera = self[*camera_id];
@@ -440,17 +424,15 @@ impl SceneGraph {
 
                     gpu_scene.cameras.push(camera.to_gpu());
 
-                    if let Some(children) = self.children(scene_graph_id) {
-                        self.build_gpu_scene_from_locations(
-                            &children,
-                            &camera.camera_to_world,
-                            material_ids,
-                            primitive_ids,
-                            light_ids,
-                            camera_ids,
-                            gpu_scene,
-                        );
-                    }
+                    self.build_gpu_scene_from_locations(
+                        self.iter_children(scene_graph_id),
+                        &camera.camera_to_world,
+                        material_ids,
+                        primitive_ids,
+                        light_ids,
+                        camera_ids,
+                        gpu_scene,
+                    );
                 }
                 SceneGraphId::Light(light_id) => {
                     let mut light: Light = self[*light_id];
@@ -463,17 +445,15 @@ impl SceneGraph {
                             .extend(ScenePreprocessorDirectives::directives_for_light(&light));
                     }
 
-                    if let Some(children) = self.children(scene_graph_id) {
-                        self.build_gpu_scene_from_locations(
-                            &children,
-                            transform,
-                            material_ids,
-                            primitive_ids,
-                            light_ids,
-                            camera_ids,
-                            gpu_scene,
-                        );
-                    }
+                    self.build_gpu_scene_from_locations(
+                        self.iter_children(scene_graph_id),
+                        transform,
+                        material_ids,
+                        primitive_ids,
+                        light_ids,
+                        camera_ids,
+                        gpu_scene,
+                    );
                 }
                 SceneGraphId::Primitive(primitive_id) => {
                     let mut primitive: Primitive = self[*primitive_id];
@@ -508,17 +488,17 @@ impl SceneGraph {
                         }
                     }
 
-                    let num_primitives: usize = gpu_scene.primitives.len();
-                    let gpu_primitive_id: u32 = num_primitives as u32 + 1;
+                    let primitive_count: usize = gpu_scene.primitives.len();
+                    let gpu_primitive_id: u32 = primitive_count as u32 + 1;
                     gpu_primitive.id = gpu_primitive_id;
                     gpu_scene.primitives.push(gpu_primitive);
 
-                    if let Some(children) = self.children(scene_graph_id) {
+                    if self.has_child(scene_graph_id) {
                         gpu_scene
                             .preprocessor_directives
                             .insert(ScenePreprocessorDirectives::EnableChildInteractions);
                         self.build_gpu_scene_from_locations(
-                            &children,
+                            self.iter_children(scene_graph_id),
                             &primitive.local_to_world,
                             material_ids,
                             primitive_ids,
@@ -528,21 +508,19 @@ impl SceneGraph {
                         );
                     }
 
-                    gpu_scene.primitives[num_primitives].num_descendants =
+                    gpu_scene.primitives[primitive_count].descendant_count =
                         gpu_scene.primitives.len() as u32 - gpu_primitive_id;
                 }
                 SceneGraphId::Root(root_id) => {
-                    if let Some(children) = self.children(scene_graph_id) {
-                        self.build_gpu_scene_from_locations(
-                            &children,
-                            &(self[*root_id].local_to_world * transform),
-                            material_ids,
-                            primitive_ids,
-                            light_ids,
-                            camera_ids,
-                            gpu_scene,
-                        );
-                    }
+                    self.build_gpu_scene_from_locations(
+                        self.iter_children(scene_graph_id),
+                        &(self[*root_id].local_to_world * transform),
+                        material_ids,
+                        primitive_ids,
+                        light_ids,
+                        camera_ids,
+                        gpu_scene,
+                    );
                 }
                 _ => {}
             }
@@ -556,17 +534,15 @@ impl SceneGraph {
         let mut light_ids = HashSet::<LightId>::new();
         let mut camera_ids = HashMap::<CameraId, usize>::new();
 
-        if let Some(children) = self.children(&SceneGraphId::Root(root_id)) {
-            self.build_gpu_scene_from_locations(
-                &children,
-                &self[root_id].local_to_world,
-                &mut material_ids,
-                &mut primitive_ids,
-                &mut light_ids,
-                &mut camera_ids,
-                &mut gpu_scene,
-            );
-        }
+        self.build_gpu_scene_from_locations(
+            self.iter_children(&SceneGraphId::Root(root_id)),
+            &self[root_id].local_to_world,
+            &mut material_ids,
+            &mut primitive_ids,
+            &mut light_ids,
+            &mut camera_ids,
+            &mut gpu_scene,
+        );
 
         if let Some(atmosphere_id) = self.atmospheres.parent(&root_id) {
             if !material_ids.contains_key(atmosphere_id) {
@@ -599,12 +575,12 @@ impl SceneGraph {
             gpu_scene.cameras.push(Camera::default().to_gpu());
         }
 
-        let num_lights = gpu_scene.lights.len() as u32;
+        let light_count = gpu_scene.lights.len() as u32;
         gpu_scene.array_lengths = GPUSceneArrayLengths {
-            num_primitives: gpu_scene.primitives.len() as u32,
-            num_lights: num_lights + gpu_scene.num_emissive_primitives() as u32,
-            num_materials: gpu_scene.materials.len() as u32,
-            num_non_physical_lights: num_lights,
+            primitive_count: gpu_scene.primitives.len() as u32,
+            light_count: light_count + gpu_scene.emissive_primitive_count() as u32,
+            material_count: gpu_scene.materials.len() as u32,
+            non_physical_light_count: light_count,
         };
 
         gpu_scene
@@ -638,15 +614,15 @@ mod tests {
         scene_graph.add_root(Root::default());
         scene_graph.add_texture_evaluator(TextureEvaluator::default());
 
-        assert_eq!(scene_graph.num_cameras(), 1);
-        assert_eq!(scene_graph.num_primitives(), 1);
-        assert_eq!(scene_graph.num_lights(), 1);
-        assert_eq!(scene_graph.num_materials(), 1);
-        assert_eq!(scene_graph.num_roots(), 1);
-        assert_eq!(scene_graph.num_texture_evaluators(), 1);
+        assert_eq!(scene_graph.camera_count(), 1);
+        assert_eq!(scene_graph.primitive_count(), 1);
+        assert_eq!(scene_graph.light_count(), 1);
+        assert_eq!(scene_graph.material_count(), 1);
+        assert_eq!(scene_graph.root_count(), 1);
+        assert_eq!(scene_graph.texture_evaluator_count(), 1);
 
         scene_graph.add_camera(Camera::default());
-        assert_eq!(scene_graph.num_cameras(), 2);
+        assert_eq!(scene_graph.camera_count(), 2);
     }
 
     #[test]
@@ -700,12 +676,12 @@ mod tests {
         scene_graph.set_material(primitive0_id, material0_id);
         scene_graph.set_material(primitive1_id, material1_id);
 
-        assert_eq!(scene_graph.children(&root_id.into()).unwrap().len(), 2);
+        assert_eq!(scene_graph.iter_children(&root_id.into()).count(), 2);
 
         gpu_scene = scene_graph.as_gpu_scene(root_id);
 
-        assert_eq!(gpu_scene.primitives[0].num_descendants, 1);
-        assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
+        assert_eq!(gpu_scene.primitives[0].descendant_count, 1);
+        assert_eq!(gpu_scene.primitives[1].descendant_count, 0);
         assert_eq!(gpu_scene.materials.len(), 3);
         assert_eq!(gpu_scene.primitives.len(), 3);
 
@@ -721,8 +697,8 @@ mod tests {
 
         gpu_scene = scene_graph.as_gpu_scene(root_id);
 
-        assert_eq!(gpu_scene.primitives[0].num_descendants, 2);
-        assert_eq!(gpu_scene.primitives[1].num_descendants, 0);
+        assert_eq!(gpu_scene.primitives[0].descendant_count, 2);
+        assert_eq!(gpu_scene.primitives[1].descendant_count, 0);
 
         // -------------------------------------------------------------
         // /root/primitive0/primitive1/material1
@@ -738,8 +714,8 @@ mod tests {
 
         gpu_scene = scene_graph.as_gpu_scene(root_id);
 
-        assert_eq!(gpu_scene.primitives[0].num_descendants, 3);
-        assert_eq!(gpu_scene.primitives[1].num_descendants, 1);
+        assert_eq!(gpu_scene.primitives[0].descendant_count, 3);
+        assert_eq!(gpu_scene.primitives[1].descendant_count, 1);
 
         // -------------------------------------------------------------
 

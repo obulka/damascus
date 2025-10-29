@@ -26,10 +26,10 @@ use crate::{
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GPUSceneArrayLengths {
-    pub num_primitives: u32,
-    pub num_lights: u32,
-    pub num_materials: u32,
-    pub num_non_physical_lights: u32,
+    pub primitive_count: u32,
+    pub light_count: u32,
+    pub material_count: u32,
+    pub non_physical_light_count: u32,
 }
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -56,10 +56,10 @@ impl Default for GPUScene {
             render_camera: 0,
             atmosphere: 0,
             array_lengths: GPUSceneArrayLengths {
-                num_primitives: 0,
-                num_lights: 0,
-                num_materials: 1,
-                num_non_physical_lights: 0,
+                primitive_count: 0,
+                light_count: 0,
+                material_count: 1,
+                non_physical_light_count: 0,
             },
             preprocessor_directives: HashSet::<ScenePreprocessorDirectives>::new(),
         }
@@ -67,7 +67,7 @@ impl Default for GPUScene {
 }
 
 impl GPUScene {
-    pub fn num_emissive_primitives(&self) -> usize {
+    pub fn emissive_primitive_count(&self) -> usize {
         let mut count = 0;
         for primitive in self.primitives.iter() {
             if self.materials[primitive.material_id as usize].is_emissive() {

@@ -30,8 +30,6 @@ where
     // where
     //     Node: 'a;
 
-    // fn iter(&self) -> impl Iterator<Item = Node> + '_;
-
     fn iter_children<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a
     where
         Node: 'a;
@@ -44,6 +42,14 @@ where
     //         .flat_map(|parent| self.edges().iter_children(parent))
     //         .map(|input_id| &self[*input_id].node_id)
     // }
+
+    fn has_child(&self, node: &Node) -> bool {
+        self.iter_children(node).peekable().peek().is_some()
+    }
+
+    fn has_parent(&self, node: &Node) -> bool {
+        self.iter_parents(node).peekable().peek().is_some()
+    }
 
     /// Apply a closure to all descendants of `parent` in breadth first order
     // and collect the return values

@@ -8,7 +8,7 @@ use std::collections::{HashMap, HashSet};
 use slotmap::SparseSecondaryMap;
 
 use super::{
-    BidirectedGraph, EvaluableGraph,
+    BidirectedGraph,
     edges::{BidirectedEdges, SingleParentBidirectedEdges},
     scene_graph::SceneGraph,
 };
@@ -68,40 +68,22 @@ impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
     where
         NodeId: 'a,
     {
-        <Self as EvaluableGraph<NodeId, InputId, OutputId>>::iter_children(self, node_id)
+        self[*node_id]
+            .output_ids
+            .iter()
+            .flat_map(|output_id| self.edges().iter_children(output_id))
+            .map(|input_id| &self[*input_id].node_id)
     }
 
     fn iter_parents<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a NodeId> + 'a
     where
         NodeId: 'a,
     {
-        <Self as EvaluableGraph<NodeId, InputId, OutputId>>::iter_parents(self, node_id)
-    }
-}
-
-impl EvaluableGraph<NodeId, InputId, OutputId> for NodeGraph {
-    fn node_for_input<'a>(&'a self, input_id: &'a InputId) -> &'a NodeId {
-        &self[*input_id].node_id
-    }
-
-    fn node_for_output<'a>(&'a self, output_id: &'a OutputId) -> &'a NodeId {
-        &self[*output_id].node_id
-    }
-
-    fn iter_inputs<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a InputId> + 'a
-    where
-        NodeId: 'a,
-        InputId: 'a,
-    {
-        self[*node_id].input_ids.iter()
-    }
-
-    fn iter_outputs<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a OutputId> + 'a
-    where
-        NodeId: 'a,
-        OutputId: 'a,
-    {
-        self[*node_id].output_ids.iter()
+        self[*node_id]
+            .input_ids
+            .iter()
+            .flat_map(|input_id| self.edges().iter_parents(input_id))
+            .map(|output_id| &self[*output_id].node_id)
     }
 }
 
@@ -668,7 +650,7 @@ mod tests {
 
         assert_eq!(graph.edge_count(), 1);
         assert_eq!(
-            EvaluableGraph::iter_children(&graph, &primary_axis_id).next(),
+            graph.iter_children(&primary_axis_id).next(),
             Some(secondary_axis_id).as_ref()
         );
 

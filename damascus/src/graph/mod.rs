@@ -3,13 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{cmp::Ord, hash::Hash};
-
 pub mod edges;
 pub mod node_graph;
 pub mod scene_graph;
 
-use edges::{BidirectedEdges, SingleParentBidirectedEdges};
+use edges::BidirectedEdges;
 
 pub trait BidirectedGraph<Node, Edges, Parent, Child>
 where
@@ -119,47 +117,5 @@ where
             }
         }
         false
-    }
-}
-
-pub trait EvaluableGraph<Node, Input, Output>:
-    BidirectedGraph<Node, SingleParentBidirectedEdges<Output, Input>, Output, Input>
-where
-    Node: PartialEq,
-    Input: Clone + Hash + Ord,
-    Output: Clone + Hash + Ord,
-{
-    fn node_for_input<'a>(&'a self, input: &'a Input) -> &'a Node;
-    fn node_for_output<'a>(&'a self, output: &'a Output) -> &'a Node;
-
-    fn iter_inputs<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Input> + 'a
-    where
-        Node: 'a,
-        Input: 'a;
-    fn iter_outputs<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Output> + 'a
-    where
-        Node: 'a,
-        Output: 'a;
-
-    fn iter_children<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a
-    where
-        Node: 'a,
-        Input: 'a,
-        Output: 'a,
-    {
-        self.iter_outputs(node)
-            .flat_map(|output| self.edges().iter_children(output))
-            .map(|input| self.node_for_input(input))
-    }
-
-    fn iter_parents<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a
-    where
-        Node: 'a,
-        Input: 'a,
-        Output: 'a,
-    {
-        self.iter_inputs(node)
-            .flat_map(|input| self.edges().iter_parents(input))
-            .map(|output| self.node_for_output(output))
     }
 }

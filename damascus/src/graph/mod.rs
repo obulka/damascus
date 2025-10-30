@@ -125,7 +125,7 @@ where
 pub trait EvaluableGraph<Node, Input, Output>:
     BidirectedGraph<Node, SingleParentBidirectedEdges<Output, Input>, Output, Input>
 where
-    Node: Clone + Hash + Ord + PartialEq,
+    Node: PartialEq,
     Input: Clone + Hash + Ord,
     Output: Clone + Hash + Ord,
 {

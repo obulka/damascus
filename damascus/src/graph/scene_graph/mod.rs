@@ -189,13 +189,9 @@ impl PartialEq for SceneGraph {
     }
 }
 
-impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphId> for SceneGraph {
-    fn edges(&self) -> &TransformHierarchy {
-        &self.transform_hierarchy
-    }
-
+impl BidirectedGraph<SceneGraphId> for SceneGraph {
     fn node_count(&self) -> usize {
-        self.edges().parent_count()
+        self.transform_hierarchy.parent_count()
     }
 
     fn clear(&mut self) {
@@ -218,7 +214,7 @@ impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphI
     where
         SceneGraphId: 'a,
     {
-        self.edges().iter_children(scene_graph_id)
+        self.transform_hierarchy.iter_children(scene_graph_id)
     }
 
     fn iter_parents<'a>(
@@ -228,7 +224,7 @@ impl BidirectedGraph<SceneGraphId, TransformHierarchy, SceneGraphId, SceneGraphI
     where
         SceneGraphId: 'a,
     {
-        self.edges().iter_parents(scene_graph_id)
+        self.transform_hierarchy.iter_parents(scene_graph_id)
     }
 }
 

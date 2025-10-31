@@ -7,17 +7,10 @@ pub mod edges;
 pub mod node_graph;
 pub mod scene_graph;
 
-use edges::BidirectedEdges;
-
-pub trait BidirectedGraph<Node, Edges, Parent, Child>
+pub trait BidirectedGraph<Node>
 where
     Node: PartialEq,
-    Edges: BidirectedEdges<Parent, Child>,
-    Parent: Clone,
-    Child: Clone,
 {
-    fn edges(&self) -> &Edges;
-
     fn node_count(&self) -> usize;
 
     fn clear(&mut self);

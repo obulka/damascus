@@ -46,11 +46,7 @@ pub struct NodeGraph {
     cache: OutputCache,
 }
 
-impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
-    fn edges(&self) -> &Edges {
-        &self.edges
-    }
-
+impl BidirectedGraph<NodeId> for NodeGraph {
     fn node_count(&self) -> usize {
         self.nodes.len()
     }
@@ -71,7 +67,7 @@ impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
         self[*node_id]
             .output_ids
             .iter()
-            .flat_map(|output_id| self.edges().iter_children(output_id))
+            .flat_map(|output_id| self.edges.iter_children(output_id))
             .map(|input_id| &self[*input_id].node_id)
     }
 
@@ -82,7 +78,7 @@ impl BidirectedGraph<NodeId, Edges, OutputId, InputId> for NodeGraph {
         self[*node_id]
             .input_ids
             .iter()
-            .flat_map(|input_id| self.edges().iter_parents(input_id))
+            .flat_map(|input_id| self.edges.iter_parents(input_id))
             .map(|output_id| &self[*output_id].node_id)
     }
 }

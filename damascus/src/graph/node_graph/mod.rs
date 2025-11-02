@@ -1230,12 +1230,20 @@ mod tests {
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_axis_id: NodeId = graph.add_node(NodeData::Axis);
 
+        assert!(!graph.is_descendant(&primary_axis_id, &secondary_axis_id));
+        assert!(!graph.is_ancestor(&primary_axis_id, &secondary_axis_id));
+
         graph.connect_node_to_input(
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
                 .expect("Axis input should exist on Axis node"),
         );
+
+        assert!(graph.is_descendant(&primary_axis_id, &secondary_axis_id));
+        assert!(!graph.is_ancestor(&primary_axis_id, &secondary_axis_id));
+        assert!(graph.is_ancestor(&secondary_axis_id, &primary_axis_id));
+        assert!(!graph.is_descendant(&secondary_axis_id, &primary_axis_id));
 
         let primary_axis_translate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Translate)

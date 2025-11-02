@@ -21,13 +21,16 @@ use std::{
 
 pub trait BidirectedEdges<Parent, Child>
 where
-    Parent: Clone,
-    Child: Clone,
+    Parent: Clone + PartialEq,
+    Child: Clone + PartialEq,
 {
     fn parent_count(&self) -> usize;
     fn child_count(&self) -> usize;
 
     fn clear(&mut self);
+
+    fn disconnect(&mut self, parent: &Parent, child: &Child) -> bool;
+    fn connect(&mut self, parent: Parent, child: Child) -> bool;
 
     fn iter_parents<'a>(&'a self, child: &'a Child) -> impl Iterator<Item = &'a Parent> + 'a
     where
@@ -38,6 +41,20 @@ where
         Parent: 'a,
         Child: 'a;
 
+    fn is_parent_of_child(&self, child: &Child, potential_parent: &Parent) -> bool {
+        self.iter_parents(child)
+            .any(|parent| parent == potential_parent)
+    }
+
+    fn is_child_of_parent(&self, parent: &Parent, potential_child: &Child) -> bool {
+        self.iter_children(parent)
+            .any(|child| child == potential_child)
+    }
+
+    fn is_connected(&self, parent: &Parent, child: &Child) -> bool {
+        self.is_parent_of_child(child, parent) || self.is_child_of_parent(parent, child)
+    }
+
     fn has_parent(&self, child: &Child) -> bool {
         self.iter_parents(child).peekable().peek().is_some()
     }
@@ -45,9 +62,6 @@ where
     fn has_child(&self, parent: &Parent) -> bool {
         self.iter_children(parent).peekable().peek().is_some()
     }
-
-    fn disconnect(&mut self, parent: &Parent, child: &Child) -> bool;
-    fn connect(&mut self, parent: Parent, child: Child) -> bool;
 
     fn disconnect_parents_of_child<'a>(
         &'a mut self,
@@ -165,6 +179,22 @@ impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Pare
         self.children.get(parent).into_iter().flatten().into_iter()
     }
 
+    fn is_parent_of_child(&self, child: &Child, potential_parent: &Parent) -> bool {
+        if let Some(parent) = self.parents.get(child) {
+            parent == potential_parent
+        } else {
+            false
+        }
+    }
+
+    fn is_child_of_parent(&self, parent: &Parent, potential_child: &Child) -> bool {
+        if let Some(children) = self.children.get(parent) {
+            children.contains(potential_child)
+        } else {
+            false
+        }
+    }
+
     fn disconnect(&mut self, parent: &Parent, child: &Child) -> bool {
         let mut disconnected = false;
         if let Some(current_parent) = self.parents.get(child)
@@ -280,6 +310,22 @@ impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Pare
         self.children.get(parent).into_iter().flatten().into_iter()
     }
 
+    fn is_parent_of_child(&self, child: &Child, potential_parent: &Parent) -> bool {
+        if let Some(parents) = self.parents.get(child) {
+            parents.contains(potential_parent)
+        } else {
+            false
+        }
+    }
+
+    fn is_child_of_parent(&self, parent: &Parent, potential_child: &Child) -> bool {
+        if let Some(children) = self.children.get(parent) {
+            children.contains(potential_child)
+        } else {
+            false
+        }
+    }
+
     fn disconnect(&mut self, parent: &Parent, child: &Child) -> bool {
         let mut disconnected = false;
         let mut all_children_removed = false;
@@ -384,6 +430,14 @@ mod tests {
         assert!(edges.connect(11, 12));
         assert!(edges.connect(11, 14));
         assert!(edges.connect(12, 13));
+
+        assert!(edges.is_parent_of_child(&10, &7));
+        assert!(edges.is_child_of_parent(&7, &10));
+        assert!(edges.is_parent_of_child(&1, &0));
+        assert!(edges.is_child_of_parent(&0, &7));
+        assert!(edges.is_connected(&7, &10));
+        assert!(edges.is_connected(&0, &1));
+        assert!(edges.is_connected(&0, &7));
 
         assert_eq!(
             vec![1, 7],
@@ -969,6 +1023,14 @@ mod tests {
         assert!(edges.connect(11, 12));
         assert!(edges.connect(11, 14));
         assert!(edges.connect(12, 13));
+
+        assert!(edges.is_parent_of_child(&10, &7));
+        assert!(edges.is_child_of_parent(&7, &10));
+        assert!(edges.is_parent_of_child(&1, &0));
+        assert!(edges.is_child_of_parent(&0, &7));
+        assert!(edges.is_connected(&7, &10));
+        assert!(edges.is_connected(&0, &1));
+        assert!(edges.is_connected(&0, &7));
 
         assert_eq!(
             vec![1, 7],

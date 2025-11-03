@@ -21,7 +21,7 @@ use crate::{
     },
     lights::LightId,
     materials::MaterialId,
-    textures::evaluators::TextureEvaluator,
+    textures::evaluators::{TextureEvaluator, TextureEvaluatorId},
 };
 
 #[derive(
@@ -200,7 +200,7 @@ impl InputData {
         }
     }
 
-    pub fn try_to_texture_generator(self) -> NodeResult<TextureEvaluator> {
+    pub fn try_to_texture_evaluator(self) -> NodeResult<TextureEvaluator> {
         match self {
             InputData::TextureEvaluator(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
@@ -266,6 +266,16 @@ impl InputData {
             value => Err(NodeErrors::InputDowncastError {
                 data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<RootId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn try_to_texture_evaluator_id(self) -> NodeResult<TextureEvaluatorId> {
+        match self.try_to_scene_graph_id()? {
+            SceneGraphId::TextureEvaluator(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(value),
+                conversion_to: type_name::<TextureEvaluatorId>().to_string(),
             }),
         }
     }

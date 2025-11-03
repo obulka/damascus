@@ -32,6 +32,7 @@ pub mod ray_marcher;
 pub mod read;
 pub mod view;
 
+use grade::Grade;
 use ray_marcher::RayMarcher;
 use view::TextureViewer;
 
@@ -750,14 +751,10 @@ pub enum TextureEvaluator {
     Black,
     Checkerboard,
     Constant,
-    Grade,
+    Grade(Grade),
     Noise,
-    RayMarcher {
-        texture_evaluator: RayMarcher,
-    },
-    TextureViewer {
-        texture_evaluator: TextureViewer,
-    },
+    RayMarcher(RayMarcher),
+    TextureViewer(TextureViewer),
 }
 
 impl Enumerator for TextureEvaluator {}
@@ -770,7 +767,7 @@ impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
                 Self::Black => 2,
                 Self::Checkerboard => 3,
                 Self::Constant => 4,
-                Self::Grade => 5,
+                Self::Grade(_) => 5,
                 Self::Noise => 6,
                 _ => 0,
             },
@@ -781,33 +778,29 @@ impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
 
 impl TextureEvaluator {
     pub fn new() -> Self {
-        Self::TextureViewer {
-            texture_evaluator: TextureViewer::new(),
-        }
+        Self::TextureViewer(TextureViewer::new())
     }
 
     pub fn reset(&mut self) {
         match self {
-            Self::RayMarcher { texture_evaluator } => texture_evaluator.reset(),
-            Self::TextureViewer { texture_evaluator } => texture_evaluator.reset(),
+            Self::RayMarcher(ray_marcher) => ray_marcher.reset(),
+            Self::TextureViewer(texture_viewer) => texture_viewer.reset(),
             _ => {}
         }
     }
 
     pub fn frame_counter(&self) -> Option<&FrameCounter> {
         match self {
-            Self::RayMarcher { texture_evaluator } => Some(texture_evaluator.frame_counter()),
-            Self::TextureViewer { texture_evaluator } => Some(texture_evaluator.frame_counter()),
+            Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter()),
+            Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter()),
             _ => None,
         }
     }
 
     pub fn frame_counter_mut(&mut self) -> Option<&mut FrameCounter> {
         match self {
-            Self::RayMarcher { texture_evaluator } => Some(texture_evaluator.frame_counter_mut()),
-            Self::TextureViewer { texture_evaluator } => {
-                Some(texture_evaluator.frame_counter_mut())
-            }
+            Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter_mut()),
+            Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter_mut()),
             _ => None,
         }
     }
@@ -818,11 +811,11 @@ impl TextureEvaluator {
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         match self {
-            Self::RayMarcher { texture_evaluator } => {
-                Some(texture_evaluator.render_resource(device, target_state))
+            Self::RayMarcher(ray_marcher) => {
+                Some(ray_marcher.render_resource(device, target_state))
             }
-            Self::TextureViewer { texture_evaluator } => {
-                Some(texture_evaluator.render_resource(device, target_state))
+            Self::TextureViewer(texture_viewer) => {
+                Some(texture_viewer.render_resource(device, target_state))
             }
             _ => None,
         }
@@ -836,8 +829,8 @@ impl TextureEvaluator {
     ) -> BufferData {
         self.update_if_hash_changed(device, target_state, render_resource);
         match self {
-            Self::RayMarcher { texture_evaluator } => texture_evaluator.buffer_data(),
-            Self::TextureViewer { texture_evaluator } => texture_evaluator.buffer_data(),
+            Self::RayMarcher(ray_marcher) => ray_marcher.buffer_data(),
+            Self::TextureViewer(texture_viewer) => texture_viewer.buffer_data(),
             _ => BufferData::default(),
         }
     }
@@ -849,13 +842,13 @@ impl TextureEvaluator {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { texture_evaluator } => texture_evaluator
+            Self::RayMarcher(ray_marcher) => ray_marcher
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
                     render_resource,
                 ),
-            Self::TextureViewer { texture_evaluator } => texture_evaluator
+            Self::TextureViewer(texture_viewer) => texture_viewer
                 .recompile_if_preprocessor_directives_changed(
                     device,
                     target_state,
@@ -872,11 +865,11 @@ impl TextureEvaluator {
         render_resource: &mut RenderResource,
     ) {
         match self {
-            Self::RayMarcher { texture_evaluator } => {
-                texture_evaluator.recompile_shader(device, target_state, render_resource)
+            Self::RayMarcher(ray_marcher) => {
+                ray_marcher.recompile_shader(device, target_state, render_resource)
             }
-            Self::TextureViewer { texture_evaluator } => {
-                texture_evaluator.recompile_shader(device, target_state, render_resource)
+            Self::TextureViewer(texture_viewer) => {
+                texture_viewer.recompile_shader(device, target_state, render_resource)
             }
             _ => {}
         }
@@ -889,20 +882,18 @@ impl TextureEvaluator {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
-            Self::RayMarcher { texture_evaluator } => {
-                texture_evaluator.update_if_hash_changed(device, target_state, render_resource)
+            Self::RayMarcher(ray_marcher) => {
+                ray_marcher.update_if_hash_changed(device, target_state, render_resource)
             }
-            Self::TextureViewer { texture_evaluator } => {
-                texture_evaluator.update_if_hash_changed(device, target_state, render_resource)
+            Self::TextureViewer(texture_viewer) => {
+                texture_viewer.update_if_hash_changed(device, target_state, render_resource)
             }
             _ => false,
         }
     }
 
     pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
-        Self::RayMarcher {
-            texture_evaluator: RayMarcher::default().gpu_scene(gpu_scene).finalized(),
-        }
+        Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene).finalized())
     }
 }
 

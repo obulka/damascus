@@ -96,8 +96,8 @@ impl EvaluableNode for TextureReadNode {
     ) -> NodeResult<InputData> {
         match output {
             Self::Outputs::Texture => Ok(InputData::TextureEvaluator(
-                TextureEvaluator::TextureViewer {
-                    texture_evaluator: TextureViewer::default()
+                TextureEvaluator::TextureViewer(
+                    TextureViewer::default()
                         .texture(TextureRead {
                             layers: 1,
                             filepath: Self::Inputs::Filepath
@@ -105,7 +105,7 @@ impl EvaluableNode for TextureReadNode {
                                 .try_to_filepath()?,
                         })
                         .finalized(),
-                },
+                ),
             )),
         }
     }

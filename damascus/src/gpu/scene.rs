@@ -287,7 +287,7 @@ impl ScenePreprocessorDirectives {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
         match texture_evaluator {
-            TextureEvaluator::Grade => {
+            TextureEvaluator::Grade(_) => {
                 preprocessor_directives.insert(Self::EnableGrade);
             }
             TextureEvaluator::Checkerboard => {

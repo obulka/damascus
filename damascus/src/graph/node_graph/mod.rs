@@ -95,6 +95,10 @@ impl NodeGraph {
         }
     }
 
+    pub fn scene_graph(&self) -> &SceneGraph {
+        &self.scene_graph
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = NodeId> + '_ {
         self.nodes.keys()
     }
@@ -586,6 +590,11 @@ mod tests {
         *,
     };
 
+    use crate::{
+        gpu::resources::{BufferData, RenderResources},
+        textures::evaluators::TextureEvaluator,
+    };
+
     #[test]
     fn test_node_creation() {
         let mut graph = NodeGraph::new();
@@ -643,7 +652,7 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 1);
@@ -656,7 +665,7 @@ mod tests {
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 2);
@@ -677,16 +686,14 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id_from_str(secondary_axis_id, "Axis")
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 1);
 
         graph.connect_node_to_input(
             secondary_axis_id,
-            graph
-                .node_input_id_from_str(camera_id, "Axis")
-                .expect("Axis input should exist on Camera node"),
+            graph.node_input_id_from_str(camera_id, "Axis").unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 2);
@@ -704,14 +711,14 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 2);
@@ -743,42 +750,42 @@ mod tests {
             *graph.node_first_output_id(secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
-            .expect("Axis input should exist on Axis node");
+            .unwrap();
 
         let camera_axis_input_id: InputId = graph
             .node_input_id(camera_id, CameraInputData::Axis)
-            .expect("Axis input should exist on Camera node");
+            .unwrap();
 
         let primitive_axis_input_id: InputId = graph
             .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-            .expect("Axis input should exist on Primitive node");
+            .unwrap();
 
         graph.connect_node_to_input(
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-                .expect("Axis input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive0_id,
             graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Child)
-                .expect("Child input should exist on Primitive node"),
+                .unwrap(),
         );
 
         let mut expected_disconnections = HashMap::<OutputId, InputId>::new();
@@ -802,13 +809,13 @@ mod tests {
             *graph.node_first_output_id(primary_axis_id).unwrap();
         let primary_axis_axis_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Axis)
-            .expect("Axis input should exist on Axis node");
+            .unwrap();
 
         let secondary_axis_output_id: OutputId =
             *graph.node_first_output_id(secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
-            .expect("Axis input should exist on Axis node");
+            .unwrap();
 
         let camera_output_id: OutputId = *graph.node_first_output_id(camera_id).unwrap();
 
@@ -821,14 +828,14 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         assert!(!graph.is_valid_edge(secondary_axis_output_id, primary_axis_axis_input_id));
@@ -849,28 +856,28 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-                .expect("Axis input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive0_id,
             graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Child)
-                .expect("Child input should exist on Primitive node"),
+                .unwrap(),
         );
 
         let mut camera_ancestors = Vec::<&NodeId>::new();
@@ -912,28 +919,28 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-                .expect("Axis input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive0_id,
             graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Child)
-                .expect("Child input should exist on Primitive node"),
+                .unwrap(),
         );
 
         assert!(graph.descendants(&camera_id).is_empty());
@@ -1059,28 +1066,28 @@ mod tests {
                 primary_axis_id,
                 graph
                     .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                    .expect("Axis input should exist on Axis node"),
+                    .unwrap(),
             );
 
             graph.connect_node_to_input(
                 secondary_axis_id,
                 graph
                     .node_input_id(camera_id, CameraInputData::Axis)
-                    .expect("Axis input should exist on Camera node"),
+                    .unwrap(),
             );
 
             graph.connect_node_to_input(
                 secondary_axis_id,
                 graph
                     .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-                    .expect("Axis input should exist on Primitive node"),
+                    .unwrap(),
             );
 
             graph.connect_node_to_input(
                 primitive0_id,
                 graph
                     .node_input_id(primitive1_id, PrimitiveInputData::Child)
-                    .expect("Child input should exist on Primitive node"),
+                    .unwrap(),
             );
 
             primary_axis_ids.push(primary_axis_id);
@@ -1090,7 +1097,7 @@ mod tests {
             primitive1_ids.push(primitive1_id);
         });
 
-        let mut graph: NodeGraph = graphs.pop().expect("graphs vec has two node graphs");
+        let mut graph: NodeGraph = graphs.pop().unwrap();
 
         let node_id_lut: HashMap<NodeId, NodeId> = graphs[0].merge(&mut graph);
 
@@ -1183,28 +1190,28 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_axis_id,
             graph
                 .node_input_id(primitive0_id, PrimitiveInputData::Axis)
-                .expect("Axis input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive0_id,
             graph
                 .node_input_id(primitive1_id, PrimitiveInputData::Child)
-                .expect("Child input should exist on Primitive node"),
+                .unwrap(),
         );
 
         let mut node_ids = HashSet::<NodeId>::new();
@@ -1239,7 +1246,7 @@ mod tests {
             primary_axis_id,
             graph
                 .node_input_id(secondary_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         assert!(graph.is_descendant(&primary_axis_id, &secondary_axis_id));
@@ -1249,19 +1256,19 @@ mod tests {
 
         let primary_axis_translate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Translate)
-            .expect("Translate input should exist on Axis node");
+            .unwrap();
         let primary_axis_rotate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Rotate)
-            .expect("Rotate input should exist on Axis node");
+            .unwrap();
         let primary_axis_output_id: OutputId =
             *graph.node_first_output_id(primary_axis_id).unwrap();
 
         let secondary_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Translate)
-            .expect("Translate input should exist on Axis node");
+            .unwrap();
         let secondary_axis_rotate_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Rotate)
-            .expect("Rotate input should exist on Axis node");
+            .unwrap();
         let secondary_axis_output_id: OutputId =
             *graph.node_first_output_id(secondary_axis_id).unwrap();
 
@@ -1340,75 +1347,99 @@ mod tests {
             primary_camera_axis_id,
             graph
                 .node_input_id(secondary_camera_axis_id, AxisInputData::Axis)
-                .expect("Axis input should exist on Axis node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             secondary_camera_axis_id,
             graph
                 .node_input_id(camera_id, CameraInputData::Axis)
-                .expect("Axis input should exist on Camera node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive_axis_id,
             graph
                 .node_input_id(primitive_id, PrimitiveInputData::Axis)
-                .expect("Axis input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive_material_id,
             graph
                 .node_input_id(primitive_id, PrimitiveInputData::Material)
-                .expect("Material input should exist on Primitive node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             camera_id,
             graph
                 .node_input_id(scene_id, SceneInputData::Scene)
-                .expect("Scene input should exist on Scene node"),
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
             camera_id,
-            graph
-                .node_input_id_from_str(scene_id, "Scene1")
-                .expect("Scene1 is a dynamically created input"),
+            graph.node_input_id_from_str(scene_id, "Scene1").unwrap(),
         );
 
         graph.connect_node_to_input(
             primitive_id,
-            graph
-                .node_input_id_from_str(scene_id, "Scene2")
-                .expect("Scene2 is a dynamically created input"),
+            graph.node_input_id_from_str(scene_id, "Scene2").unwrap(),
         );
 
         graph.connect_node_to_input(
             light_id,
-            graph
-                .node_input_id_from_str(scene_id, "Scene3")
-                .expect("Scene3 is a dynamically created input"),
+            graph.node_input_id_from_str(scene_id, "Scene3").unwrap(),
         );
 
         graph.connect_node_to_input(
             scene_id,
             graph
                 .node_input_id(ray_marcher_id, RayMarcherInputData::SceneRoot)
-                .expect("SceneRoot input should exist on RayMarcher node"),
+                .unwrap(),
         );
 
         let secondary_camera_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
-            .expect("Translate input should exist on Axis node");
+            .unwrap();
         graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
 
         let ray_marcher_output_id: OutputId = *graph.node_first_output_id(ray_marcher_id).unwrap();
 
         if let Ok(input_data) = graph.evaluate_output(ray_marcher_output_id)
-            && let Ok(_texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
+            && let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
         {
+            match &graph.scene_graph()[texture_evaluator_id] {
+                TextureEvaluator::RayMarcher(_ray_marcher) => {}
+                _ => assert!(false),
+            }
+
+            // let device: wgpu::Device = ??
+            // let target_state: wgpu::ColorTargetState = ??
+            // let queue: wgpu::Queue = ??
+            // let mut encoder: wgpu::CommandEncoder = ??
+
+            // let render_resource: RenderResource = graph.scene_graph()[texture_evaluator_id]
+            //     .render_resource(&device, target_state)
+            //     .unwrap();
+            // let buffer_data: BufferData = graph.scene_graph()[texture_evaluator_id].buffer_data(
+            //     &device,
+            //     target_state,
+            //     render_resource,
+            // );
+
+            // TODO need mutable access to tick the counter
+            // if let Some(frame_counter) =
+            //     graph.scene_graph()[texture_evaluator_id].frame_counter_mut()
+            // {
+            //     frame_counter.tick();
+            // }
+
+            // render_resource.write_bind_groups(queue, buffer_data);
+
+            // render_resource
+            //     .paint(&mut encoder.begin_render_pass(&wgpu::RenderPassDescriptor::default()));
         } else {
             assert!(false);
         }

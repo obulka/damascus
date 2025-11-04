@@ -437,6 +437,48 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
                 visibility: wgpu::ShaderStages::FRAGMENT,
             },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
+                        .checkerboards
+                        .iter()
+                        .map(|checkerboard| checkerboard.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
+                        .noises
+                        .iter()
+                        .map(|noise| noise.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
+                        .grades
+                        .iter()
+                        .map(|grade| grade.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
         ]
     }
 

@@ -22,7 +22,10 @@ use crate::{
     impl_slot_map_indexing,
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
-    textures::evaluators::{TextureEvaluator, TextureEvaluatorId, TextureEvaluators},
+    textures::evaluators::{
+        TextureEvaluator, TextureEvaluatorId, TextureEvaluators, checkerboard::Checkerboard,
+        grade::Grade, noise::Noise,
+    },
 };
 
 slotmap::new_key_type! { pub struct RootId; }
@@ -573,6 +576,17 @@ impl SceneGraph {
         }
         if gpu_scene.cameras.is_empty() {
             gpu_scene.cameras.push(Camera::default().to_gpu());
+        }
+        if gpu_scene.checkerboards.is_empty() {
+            gpu_scene
+                .checkerboards
+                .push(Checkerboard::default().to_gpu());
+        }
+        if gpu_scene.noises.is_empty() {
+            gpu_scene.noises.push(Noise::default().to_gpu());
+        }
+        if gpu_scene.grades.is_empty() {
+            gpu_scene.grades.push(Grade::default().to_gpu());
         }
 
         let light_count = gpu_scene.lights.len() as u32;

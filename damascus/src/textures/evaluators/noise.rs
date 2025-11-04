@@ -4,12 +4,10 @@
 // LICENSE file in the root directory of this source tree.
 
 use crevice::std430::AsStd430;
-use glam::{EulerRot, Mat3, Vec3, Vec4};
+use glam::{Mat4, Vec4};
 use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{
-    DualDevice, Enumerator,
-};
+use crate::{DualDevice, Enumerator};
 
 #[derive(
     Debug,
@@ -47,6 +45,7 @@ pub struct GPUNoise {
     low_frequency_translation: Vec4,
     high_frequency_translation: Vec4,
     flags: u32,
+    inverse_transform: Mat4,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -61,6 +60,7 @@ pub struct Noise {
     pub high_frequency_scale: Vec4,
     pub low_frequency_translation: Vec4,
     pub high_frequency_translation: Vec4,
+    pub transform: Mat4,
 }
 
 impl Default for Noise {
@@ -75,6 +75,7 @@ impl Default for Noise {
             high_frequency_scale: Vec4::ONE,
             low_frequency_translation: Vec4::ZERO,
             high_frequency_translation: Vec4::ZERO,
+            transform: Mat4::IDENTITY,
         }
     }
 }
@@ -94,6 +95,7 @@ impl DualDevice<GPUNoise, Std430GPUNoise> for Noise {
             low_frequency_translation: self.low_frequency_translation,
             high_frequency_translation: self.high_frequency_translation,
             flags: 0,
+            inverse_transform: self.transform.inverse(),
         }
     }
 }

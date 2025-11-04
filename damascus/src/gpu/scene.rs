@@ -20,7 +20,9 @@ use crate::{
     graph::scene_graph::SceneGraph,
     lights::{GPULight, Light, LightType},
     materials::{GPUMaterial, Material},
-    textures::evaluators::TextureEvaluator,
+    textures::evaluators::{
+        TextureEvaluator, checkerboard::GPUCheckerboard, grade::GPUGrade, noise::GPUNoise,
+    },
 };
 
 #[repr(C)]
@@ -38,6 +40,9 @@ pub struct GPUScene {
     pub primitives: Vec<GPUPrimitive>,
     pub lights: Vec<GPULight>,
     pub materials: Vec<GPUMaterial>,
+    pub checkerboards: Vec<GPUCheckerboard>,
+    pub noises: Vec<GPUNoise>,
+    pub grades: Vec<GPUGrade>,
     pub emissive_primitive_indices: Vec<u32>,
     pub render_camera: usize,
     pub atmosphere: usize,
@@ -52,6 +57,9 @@ impl Default for GPUScene {
             primitives: vec![],
             lights: vec![],
             materials: vec![Material::default().to_gpu()],
+            checkerboards: vec![],
+            noises: vec![],
+            grades: vec![],
             emissive_primitive_indices: vec![],
             render_camera: 0,
             atmosphere: 0,
@@ -290,10 +298,10 @@ impl ScenePreprocessorDirectives {
             TextureEvaluator::Grade(_) => {
                 preprocessor_directives.insert(Self::EnableGrade);
             }
-            TextureEvaluator::Checkerboard => {
+            TextureEvaluator::Checkerboard(_) => {
                 preprocessor_directives.insert(Self::EnableCheckerboard);
             }
-            TextureEvaluator::Noise => {
+            TextureEvaluator::Noise(_) => {
                 preprocessor_directives.insert(Self::EnableNoise);
             }
             _ => {}

@@ -27,12 +27,16 @@ use crate::{
     time::FrameCounter,
 };
 
+pub mod checkerboard;
 pub mod grade;
+pub mod noise;
 pub mod ray_marcher;
 pub mod read;
 pub mod view;
 
+use checkerboard::Checkerboard;
 use grade::Grade;
+use noise::Noise;
 use ray_marcher::RayMarcher;
 use view::TextureViewer;
 
@@ -749,10 +753,10 @@ pub enum TextureEvaluator {
     #[default]
     White,
     Black,
-    Checkerboard,
+    Checkerboard(Checkerboard),
     Constant,
     Grade(Grade),
-    Noise,
+    Noise(Noise),
     RayMarcher(RayMarcher),
     TextureViewer(TextureViewer),
 }
@@ -765,10 +769,10 @@ impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
             match self {
                 Self::White => 1,
                 Self::Black => 2,
-                Self::Checkerboard => 3,
+                Self::Checkerboard(_) => 3,
                 Self::Constant => 4,
                 Self::Grade(_) => 5,
-                Self::Noise => 6,
+                Self::Noise(_) => 6,
                 _ => 0,
             },
             0,

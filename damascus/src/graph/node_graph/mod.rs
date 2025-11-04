@@ -1416,6 +1416,7 @@ mod tests {
             }
 
             // let device: wgpu::Device = ??
+            // ColorTargetState { format: Bgra8Unorm, blend: None, write_mask: ColorWrites(15) }
             // let target_state: wgpu::ColorTargetState = ??
             // let queue: wgpu::Queue = ??
             // let mut encoder: wgpu::CommandEncoder = ??

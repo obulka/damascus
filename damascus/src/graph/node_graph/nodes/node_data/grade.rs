@@ -15,7 +15,7 @@ use crate::{
             nodes::NodeResult,
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
     textures::evaluators::{TextureEvaluator, grade::Grade},
 };
@@ -55,7 +55,7 @@ impl NodeInputData for GradeInputData {
     fn default_data(&self) -> InputData {
         let default_grade = Grade::default();
         match self {
-            Self::Texture => InputData::TextureEvaluator(TextureEvaluator::Black),
+            Self::Texture => InputData::SceneGraphId(SceneGraphId::None),
             Self::BlackPoint => InputData::Float(default_grade.black_point),
             Self::WhitePoint => InputData::Float(default_grade.white_point),
             Self::Lift => InputData::Float(default_grade.lift),
@@ -92,7 +92,7 @@ impl Enumerator for GradeOutputData {}
 impl NodeOutputData for GradeOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Grade => OutputData::TextureEvaluator,
+            Self::Grade => OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator),
         }
     }
 }

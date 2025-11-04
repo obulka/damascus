@@ -15,7 +15,7 @@ use crate::{
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::SceneGraph,
+        scene_graph::{SceneGraph, SceneGraphIdType},
     },
     textures::evaluators::{
         GPUTextureEvaluator, TextureEvaluator, read::TextureRead, view::TextureViewer,
@@ -78,7 +78,7 @@ impl Enumerator for TextureReadOutputData {}
 impl NodeOutputData for TextureReadOutputData {
     fn default_data(&self) -> OutputData {
         match self {
-            Self::Texture => OutputData::TextureEvaluator,
+            Self::Texture => OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator),
         }
     }
 }
@@ -90,22 +90,24 @@ impl EvaluableNode for TextureReadNode {
     type Outputs = TextureReadOutputData;
 
     fn evaluate(
-        _scene_graph: &mut SceneGraph,
+        scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Texture => Ok(InputData::TextureEvaluator(
-                TextureEvaluator::TextureViewer(
-                    TextureViewer::default()
-                        .texture(TextureRead {
-                            layers: 1,
-                            filepath: Self::Inputs::Filepath
-                                .get_data(data_map)?
-                                .try_to_filepath()?,
-                        })
-                        .finalized(),
-                ),
+            Self::Outputs::Texture => Ok(InputData::SceneGraphId(
+                scene_graph
+                    .add_texture_evaluator(TextureEvaluator::TextureViewer(
+                        TextureViewer::default()
+                            .texture(TextureRead {
+                                layers: 1,
+                                filepath: Self::Inputs::Filepath
+                                    .get_data(data_map)?
+                                    .try_to_filepath()?,
+                            })
+                            .finalized(),
+                    ))
+                    .into(),
             )),
         }
     }

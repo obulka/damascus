@@ -31,7 +31,6 @@ use crate::{
 pub enum OutputData {
     #[default]
     Mat4,
-    TextureEvaluator,
     SceneGraphId(SceneGraphIdType),
 }
 

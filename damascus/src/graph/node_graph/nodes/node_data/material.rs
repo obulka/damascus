@@ -18,7 +18,6 @@ use crate::{
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
     materials::{Material, MaterialId},
-    textures::evaluators::TextureEvaluator,
 };
 
 use super::EvaluableNode;
@@ -72,42 +71,36 @@ impl NodeInputData for MaterialInputData {
         let default_material = Material::default();
         match self {
             Self::DiffuseColour => InputData::Vec3(default_material.diffuse_colour),
-            Self::DiffuseColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::DiffuseColourTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::SpecularProbability => InputData::Float(default_material.specular_probability),
-            Self::SpecularProbabilityTexture => {
-                InputData::TextureEvaluator(TextureEvaluator::White)
-            }
+            Self::SpecularProbabilityTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::SpecularRoughness => InputData::Float(default_material.specular_roughness),
-            Self::SpecularRoughnessTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::SpecularRoughnessTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::SpecularColour => InputData::Vec3(default_material.specular_colour),
-            Self::SpecularColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::SpecularColourTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::TransmissiveProbability => {
                 InputData::Float(default_material.transmissive_probability)
             }
-            Self::TransmissiveProbabilityTexture => {
-                InputData::TextureEvaluator(TextureEvaluator::White)
-            }
+            Self::TransmissiveProbabilityTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::TransmissiveRoughness => {
                 InputData::Float(default_material.transmissive_roughness)
             }
-            Self::TransmissiveRoughnessTexture => {
-                InputData::TextureEvaluator(TextureEvaluator::White)
-            }
+            Self::TransmissiveRoughnessTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::ExtinctionCoefficient => {
                 InputData::Float(default_material.extinction_coefficient)
             }
             Self::TransmissiveColour => InputData::Vec3(default_material.transmissive_colour),
-            Self::TransmissiveColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::TransmissiveColourTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::EmissiveIntensity => InputData::Float(default_material.emissive_intensity),
             Self::EmissiveColour => InputData::Vec3(default_material.emissive_colour),
-            Self::EmissiveColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::EmissiveColourTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::RefractiveIndex => InputData::Float(default_material.refractive_index),
-            Self::RefractiveIndexTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::RefractiveIndexTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::ScatteringCoefficient => {
                 InputData::Float(default_material.scattering_coefficient)
             }
             Self::ScatteringColour => InputData::Vec3(default_material.scattering_colour),
-            Self::ScatteringColourTexture => InputData::TextureEvaluator(TextureEvaluator::White),
+            Self::ScatteringColourTexture => InputData::SceneGraphId(SceneGraphId::None),
         }
     }
 }
@@ -175,92 +168,82 @@ impl EvaluableNode for MaterialNode {
             diffuse_colour: Self::Inputs::DiffuseColour
                 .get_data(data_map)?
                 .try_to_vec3()?,
-            diffuse_colour_texture_id: Some(
-                Self::Inputs::DiffuseColourTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            diffuse_colour_texture_id: Self::Inputs::DiffuseColourTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             specular_probability: Self::Inputs::SpecularProbability
                 .get_data(data_map)?
                 .try_to_float()?,
-            specular_probability_texture_id: Some(
-                Self::Inputs::SpecularProbabilityTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            specular_probability_texture_id: Self::Inputs::SpecularProbabilityTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             specular_roughness: Self::Inputs::SpecularRoughness
                 .get_data(data_map)?
                 .try_to_float()?,
-            specular_roughness_texture_id: Some(
-                Self::Inputs::SpecularRoughnessTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            specular_roughness_texture_id: Self::Inputs::SpecularRoughnessTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             specular_colour: Self::Inputs::SpecularColour
                 .get_data(data_map)?
                 .try_to_vec3()?,
-            specular_colour_texture_id: Some(
-                Self::Inputs::SpecularColourTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            specular_colour_texture_id: Self::Inputs::SpecularColourTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             transmissive_probability: Self::Inputs::TransmissiveProbability
                 .get_data(data_map)?
                 .try_to_float()?,
-            transmissive_probability_texture_id: Some(
-                Self::Inputs::TransmissiveProbabilityTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            transmissive_probability_texture_id: Self::Inputs::TransmissiveProbabilityTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             transmissive_roughness: Self::Inputs::TransmissiveRoughness
                 .get_data(data_map)?
                 .try_to_float()?,
-            transmissive_roughness_texture_id: Some(
-                Self::Inputs::TransmissiveRoughnessTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            transmissive_roughness_texture_id: Self::Inputs::TransmissiveRoughnessTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             extinction_coefficient: Self::Inputs::ExtinctionCoefficient
                 .get_data(data_map)?
                 .try_to_float()?,
             transmissive_colour: Self::Inputs::TransmissiveColour
                 .get_data(data_map)?
                 .try_to_vec3()?,
-            transmissive_colour_texture_id: Some(
-                Self::Inputs::TransmissiveColourTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            transmissive_colour_texture_id: Self::Inputs::TransmissiveColourTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             emissive_intensity: Self::Inputs::EmissiveIntensity
                 .get_data(data_map)?
                 .try_to_float()?,
             emissive_colour: Self::Inputs::EmissiveColour
                 .get_data(data_map)?
                 .try_to_vec3()?,
-            emissive_colour_texture_id: Some(
-                Self::Inputs::EmissiveColourTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            emissive_colour_texture_id: Self::Inputs::EmissiveColourTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             refractive_index: Self::Inputs::RefractiveIndex
                 .get_data(data_map)?
                 .try_to_float()?,
-            refractive_index_texture_id: Some(
-                Self::Inputs::RefractiveIndexTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            refractive_index_texture_id: Self::Inputs::RefractiveIndexTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
             scattering_coefficient: Self::Inputs::ScatteringCoefficient
                 .get_data(data_map)?
                 .try_to_float()?,
             scattering_colour: Self::Inputs::ScatteringColour
                 .get_data(data_map)?
                 .try_to_vec3()?,
-            scattering_colour_texture_id: Some(
-                Self::Inputs::ScatteringColourTexture
-                    .get_data(data_map)?
-                    .try_to_texture_evaluator_id()?,
-            ),
+            scattering_colour_texture_id: Self::Inputs::ScatteringColourTexture
+                .get_data(data_map)?
+                .try_to_texture_evaluator_id()
+                .ok(),
         });
         let scene_graph_id = SceneGraphId::Material(material_id);
 

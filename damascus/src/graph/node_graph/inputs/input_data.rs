@@ -21,7 +21,7 @@ use crate::{
     },
     lights::LightId,
     materials::MaterialId,
-    textures::evaluators::{TextureEvaluator, TextureEvaluatorId},
+    textures::evaluators::TextureEvaluatorId,
 };
 
 #[derive(
@@ -53,7 +53,6 @@ pub enum InputData {
     Mat4(Mat4),
     Enum(Enum),
     Filepath(String),
-    TextureEvaluator(TextureEvaluator),
     SceneGraphId(SceneGraphId),
 }
 
@@ -196,16 +195,6 @@ impl InputData {
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
                 conversion_to: type_name::<Mat4>().to_string(),
-            }),
-        }
-    }
-
-    pub fn try_to_texture_evaluator(self) -> NodeResult<TextureEvaluator> {
-        match self {
-            InputData::TextureEvaluator(value) => Ok(value),
-            _ => Err(NodeErrors::InputDowncastError {
-                data: self,
-                conversion_to: type_name::<TextureEvaluator>().to_string(),
             }),
         }
     }

@@ -580,7 +580,9 @@ mod tests {
 
     use super::{
         inputs::input_data::InputData,
-        nodes::node_data::{AxisInputData, CameraInputData, PrimitiveInputData},
+        nodes::node_data::{
+            AxisInputData, CameraInputData, PrimitiveInputData, RayMarcherInputData, SceneInputData,
+        },
         *,
     };
 
@@ -1250,7 +1252,7 @@ mod tests {
             .expect("Translate input should exist on Axis node");
         let primary_axis_rotate_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Rotate)
-            .expect("Translate input should exist on Axis node");
+            .expect("Rotate input should exist on Axis node");
         let primary_axis_output_id: OutputId =
             *graph.node_first_output_id(primary_axis_id).unwrap();
 
@@ -1314,5 +1316,101 @@ mod tests {
             graph.evaluate_output(secondary_axis_output_id),
             Ok(InputData::Mat4(primary_matrix * secondary_matrix))
         );
+    }
+
+    #[test]
+    fn test_ray_marcher() {
+        let mut graph = NodeGraph::new();
+
+        let primary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let secondary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let camera_id: NodeId = graph.add_node(NodeData::Camera);
+
+        let primitive_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let primitive_material_id: NodeId = graph.add_node(NodeData::Material);
+
+        let light_id: NodeId = graph.add_node(NodeData::Light);
+
+        let scene_id: NodeId = graph.add_node(NodeData::Scene);
+
+        let ray_marcher_id: NodeId = graph.add_node(NodeData::RayMarcher);
+
+        graph.connect_node_to_input(
+            primary_camera_axis_id,
+            graph
+                .node_input_id(secondary_camera_axis_id, AxisInputData::Axis)
+                .expect("Axis input should exist on Axis node"),
+        );
+
+        graph.connect_node_to_input(
+            secondary_camera_axis_id,
+            graph
+                .node_input_id(camera_id, CameraInputData::Axis)
+                .expect("Axis input should exist on Camera node"),
+        );
+
+        graph.connect_node_to_input(
+            primitive_axis_id,
+            graph
+                .node_input_id(primitive_id, PrimitiveInputData::Axis)
+                .expect("Axis input should exist on Primitive node"),
+        );
+
+        graph.connect_node_to_input(
+            primitive_material_id,
+            graph
+                .node_input_id(primitive_id, PrimitiveInputData::Material)
+                .expect("Material input should exist on Primitive node"),
+        );
+
+        graph.connect_node_to_input(
+            camera_id,
+            graph
+                .node_input_id(scene_id, SceneInputData::Scene)
+                .expect("Scene input should exist on Scene node"),
+        );
+
+        graph.connect_node_to_input(
+            camera_id,
+            graph
+                .node_input_id_from_str(scene_id, "Scene1")
+                .expect("Scene1 is a dynamically created input"),
+        );
+
+        graph.connect_node_to_input(
+            primitive_id,
+            graph
+                .node_input_id_from_str(scene_id, "Scene2")
+                .expect("Scene2 is a dynamically created input"),
+        );
+
+        graph.connect_node_to_input(
+            light_id,
+            graph
+                .node_input_id_from_str(scene_id, "Scene3")
+                .expect("Scene3 is a dynamically created input"),
+        );
+
+        graph.connect_node_to_input(
+            scene_id,
+            graph
+                .node_input_id(ray_marcher_id, RayMarcherInputData::SceneRoot)
+                .expect("SceneRoot input should exist on RayMarcher node"),
+        );
+
+        let secondary_camera_axis_translate_input_id: InputId = graph
+            .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
+            .expect("Translate input should exist on Axis node");
+        graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
+
+        let ray_marcher_output_id: OutputId = *graph.node_first_output_id(ray_marcher_id).unwrap();
+
+        if let Ok(input_data) = graph.evaluate_output(ray_marcher_output_id)
+            && let Ok(_texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
+        {
+        } else {
+            assert!(false);
+        }
     }
 }

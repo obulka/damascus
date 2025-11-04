@@ -162,7 +162,6 @@ pub trait EvaluableNode {
     fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
         match input.default_data() {
             InputData::Mat4(..) => *output == OutputData::Mat4,
-            InputData::TextureEvaluator(..) => *output == OutputData::TextureEvaluator,
             InputData::SceneGraphId(..) => match *output {
                 OutputData::SceneGraphId(..) => true,
                 _ => false,
@@ -213,11 +212,17 @@ impl Enumerator for NodeData {}
 impl NodeData {
     pub fn dynamic_input_connected(&self, node_graph: &mut NodeGraph, input_id: InputId) {
         match self {
+            Self::Light => {
+                LightNode::dynamic_input_connected(node_graph, input_id);
+            }
             Self::Primitive => {
                 PrimitiveNode::dynamic_input_connected(node_graph, input_id);
             }
             Self::RayMarcher => {
                 RayMarcherNode::dynamic_input_connected(node_graph, input_id);
+            }
+            Self::Scene => {
+                SceneNode::dynamic_input_connected(node_graph, input_id);
             }
             _ => {}
         }
@@ -225,11 +230,17 @@ impl NodeData {
 
     pub fn dynamic_input_disconnected(&self, node_graph: &mut NodeGraph, input_id: InputId) {
         match self {
+            Self::Light => {
+                LightNode::dynamic_input_disconnected(node_graph, input_id);
+            }
             Self::Primitive => {
                 PrimitiveNode::dynamic_input_disconnected(node_graph, input_id);
             }
             Self::RayMarcher => {
                 RayMarcherNode::dynamic_input_disconnected(node_graph, input_id);
+            }
+            Self::Scene => {
+                SceneNode::dynamic_input_disconnected(node_graph, input_id);
             }
             _ => {}
         }

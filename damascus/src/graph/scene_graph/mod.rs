@@ -588,6 +588,9 @@ impl SceneGraph {
         if gpu_scene.grades.is_empty() {
             gpu_scene.grades.push(Grade::default().to_gpu());
         }
+        if gpu_scene.emissive_primitive_indices.is_empty() {
+            gpu_scene.emissive_primitive_indices.push(0);
+        }
 
         let light_count = gpu_scene.lights.len() as u32;
         gpu_scene.array_lengths = GPUSceneArrayLengths {
@@ -653,7 +656,7 @@ mod tests {
         assert_eq!(gpu_scene.materials.len(), 1);
         assert_eq!(gpu_scene.primitives.len(), 1);
         assert_eq!(gpu_scene.lights.len(), 1);
-        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 0);
+        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 1);
 
         // -------------------------------------------------------------
         // /root
@@ -673,7 +676,7 @@ mod tests {
         assert_eq!(gpu_scene.materials.len(), 1);
         assert_eq!(gpu_scene.primitives.len(), 1);
         assert_eq!(gpu_scene.lights.len(), 1);
-        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 0);
+        assert_eq!(gpu_scene.emissive_primitive_indices.len(), 1);
 
         // -------------------------------------------------------------
         // /root/primitive0/primitive1/material1

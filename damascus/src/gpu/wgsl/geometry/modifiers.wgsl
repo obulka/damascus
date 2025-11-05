@@ -474,7 +474,7 @@ fn distance_to_transformed_primitive(
             );
 #ifdef EnableTrapColour
             apply_trap_colour(trap_colour, primitive);
-endif
+#endif
         }
 #endif
 #ifdef EnableOctahedron

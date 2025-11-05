@@ -284,7 +284,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         target_state: wgpu::ColorTargetState,
         bind_groups: &BindGroups,
     ) -> wgpu::RenderPipeline {
-        println!("{:?}", target_state);
+        println!("{:?}", self.fragment_shader());
         let pipeline_layout: wgpu::PipelineLayout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some(&(self.label() + " pipeline layout")),

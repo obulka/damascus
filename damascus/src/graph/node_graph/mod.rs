@@ -99,6 +99,10 @@ impl NodeGraph {
         &self.scene_graph
     }
 
+    pub fn scene_graph_mut(&mut self) -> &mut SceneGraph {
+        &mut self.scene_graph
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = NodeId> + '_ {
         self.nodes.keys()
     }
@@ -581,6 +585,7 @@ impl_slot_map_indexing!(NodeGraph, OutputId, Output, outputs);
 mod tests {
     use glam::{Mat4, Quat, Vec3};
     use strum::{EnumCount, IntoEnumIterator};
+    use wgpu;
 
     use super::{
         inputs::input_data::InputData,
@@ -591,7 +596,7 @@ mod tests {
     };
 
     use crate::{
-        gpu::resources::{BufferData, RenderResources},
+        gpu::resources::{BufferData, RenderResource},
         textures::evaluators::TextureEvaluator,
     };
 
@@ -1325,8 +1330,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_ray_marcher() {
+    #[async_std::test]
+    async fn test_ray_marcher() {
         let mut graph = NodeGraph::new();
 
         let primary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -1415,20 +1420,75 @@ mod tests {
                 _ => assert!(false),
             }
 
-            // let device: wgpu::Device = ??
-            // ColorTargetState { format: Bgra8Unorm, blend: None, write_mask: ColorWrites(15) }
-            // let target_state: wgpu::ColorTargetState = ??
-            // let queue: wgpu::Queue = ??
-            // let mut encoder: wgpu::CommandEncoder = ??
+            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+                backends: wgpu::Backends::PRIMARY,
+                ..Default::default()
+            });
+            let adapter = instance
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::HighPerformance,
+                    compatible_surface: None,
+                    ..Default::default()
+                })
+                .await
+                .unwrap();
+            let (device, queue) = adapter
+                .request_device(&wgpu::DeviceDescriptor {
+                    label: Some("wgpu device"),
+                    required_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+                    memory_hints: wgpu::MemoryHints::Performance,
+                    ..Default::default()
+                })
+                .await
+                .unwrap();
+            let mut encoder: wgpu::CommandEncoder =
+                device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
-            // let render_resource: RenderResource = graph.scene_graph()[texture_evaluator_id]
-            //     .render_resource(&device, target_state)
-            //     .unwrap();
-            // let buffer_data: BufferData = graph.scene_graph()[texture_evaluator_id].buffer_data(
-            //     &device,
-            //     target_state,
-            //     render_resource,
-            // );
+            let texture_size = 256u32;
+
+            let texture_desc = wgpu::TextureDescriptor {
+                label: None,
+                size: wgpu::Extent3d {
+                    width: texture_size,
+                    height: texture_size,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            };
+            let texture = device.create_texture(&texture_desc);
+            let texture_view = texture.create_view(&Default::default());
+
+            // ColorTargetState { format: Bgra8Unorm, blend: None, write_mask: ColorWrites(15) }
+            let target_state = wgpu::ColorTargetState {
+                format: texture_desc.format,
+                blend: None,
+                write_mask: wgpu::ColorWrites::ALL,
+            };
+
+            let u32_size = std::mem::size_of::<u32>() as u32;
+
+            let output_buffer_size =
+                (u32_size * texture_size * texture_size) as wgpu::BufferAddress;
+            let output_buffer_desc = wgpu::BufferDescriptor {
+                size: output_buffer_size,
+                usage: wgpu::BufferUsages::COPY_DST
+                    // this tells wpgu that we want to read this buffer from the cpu
+                    | wgpu::BufferUsages::MAP_READ,
+                label: None,
+                mapped_at_creation: false,
+            };
+            let output_buffer = device.create_buffer(&output_buffer_desc);
+
+            let mut render_resource: RenderResource = graph.scene_graph_mut()[texture_evaluator_id]
+                .render_resource(&device, target_state.clone())
+                .unwrap();
+            let buffer_data: BufferData = graph.scene_graph_mut()[texture_evaluator_id]
+                .buffer_data(&device, target_state, &mut render_resource);
 
             // TODO need mutable access to tick the counter
             // if let Some(frame_counter) =
@@ -1437,10 +1497,49 @@ mod tests {
             //     frame_counter.tick();
             // }
 
-            // render_resource.write_bind_groups(queue, buffer_data);
+            render_resource.write_bind_groups(&queue, &buffer_data);
 
-            // render_resource
-            //     .paint(&mut encoder.begin_render_pass(&wgpu::RenderPassDescriptor::default()));
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &texture_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.1,
+                            g: 0.2,
+                            b: 0.3,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            };
+
+            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+
+            encoder.copy_texture_to_buffer(
+                wgpu::TexelCopyTextureInfo {
+                    aspect: wgpu::TextureAspect::All,
+                    texture: &texture,
+                    mip_level: 0,
+                    origin: wgpu::Origin3d::ZERO,
+                },
+                wgpu::TexelCopyBufferInfo {
+                    buffer: &output_buffer,
+                    layout: wgpu::TexelCopyBufferLayout {
+                        offset: 0,
+                        bytes_per_row: Some(u32_size * texture_size),
+                        rows_per_image: Some(texture_size),
+                    },
+                },
+                texture_desc.size,
+            );
+
+            queue.submit(Some(encoder.finish()));
         } else {
             assert!(false);
         }

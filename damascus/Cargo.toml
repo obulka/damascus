@@ -18,3 +18,4 @@ wgpu = { version = "25.0" }
 
 [dev-dependencies]
 async-std = { version = "1.13", features = ["attributes"] }
+futures-intrusive = { version = "0.5" }

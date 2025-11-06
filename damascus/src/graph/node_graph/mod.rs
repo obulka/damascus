@@ -583,19 +583,14 @@ impl_slot_map_indexing!(NodeGraph, OutputId, Output, outputs);
 
 #[cfg(test)]
 mod tests {
-    use glam::{Mat4, Quat, Vec3};
+    use glam::*;
     use strum::{EnumCount, IntoEnumIterator};
     use wgpu;
 
-    use super::{
-        inputs::input_data::InputData,
-        nodes::node_data::{
-            AxisInputData, CameraInputData, PrimitiveInputData, RayMarcherInputData, SceneInputData,
-        },
-        *,
-    };
+    use super::{inputs::input_data::InputData, nodes::node_data::*, *};
 
     use crate::{
+        geometry::primitives::Shapes,
         gpu::resources::{BufferData, RenderResource},
         textures::evaluators::TextureEvaluator,
     };
@@ -1377,25 +1372,22 @@ mod tests {
         );
 
         graph.connect_node_to_input(
-            camera_id,
+            primitive_id,
             graph
                 .node_input_id(scene_id, SceneInputData::Scene)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            camera_id,
+            light_id,
             graph.node_input_id_from_str(scene_id, "Scene1").unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive_id,
-            graph.node_input_id_from_str(scene_id, "Scene2").unwrap(),
-        );
-
-        graph.connect_node_to_input(
-            light_id,
-            graph.node_input_id_from_str(scene_id, "Scene3").unwrap(),
+            camera_id,
+            graph
+                .node_input_id(scene_id, SceneInputData::RenderCamera)
+                .unwrap(),
         );
 
         graph.connect_node_to_input(
@@ -1405,10 +1397,34 @@ mod tests {
                 .unwrap(),
         );
 
+        let texture_width = 2048u32;
+        let texture_height = 1024u32;
+
+        let sensor_resolution_input_id: InputId = graph
+            .node_input_id(camera_id, CameraInputData::SensorResolution)
+            .unwrap();
+        graph[sensor_resolution_input_id].data =
+            InputData::UVec2(UVec2::new(texture_width, texture_height));
+
         let secondary_camera_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
             .unwrap();
         graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
+
+        let diffuse_colour_input_id: InputId = graph
+            .node_input_id(primitive_material_id, MaterialInputData::DiffuseColour)
+            .unwrap();
+        graph[diffuse_colour_input_id].data = InputData::Vec3(Vec3::new(0.1, 0.1, 1.));
+
+        let shape_input_id: InputId = graph
+            .node_input_id(primitive_id, PrimitiveInputData::Shape)
+            .unwrap();
+        graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
+
+        // let light_colour_input_id: InputId = graph
+        //     .node_input_id(light_id, LightInputData::Colour)
+        //     .unwrap();
+        // graph[light_colour_input_id].data = InputData::Vec3(Vec3::new(1., 0.9, 0.8));
 
         let ray_marcher_output_id: OutputId = *graph.node_first_output_id(ray_marcher_id).unwrap();
 
@@ -1416,7 +1432,27 @@ mod tests {
             && let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
         {
             match &graph.scene_graph()[texture_evaluator_id] {
-                TextureEvaluator::RayMarcher(_ray_marcher) => {}
+                TextureEvaluator::RayMarcher(ray_marcher) => {
+                    assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
+                    assert_eq!(ray_marcher.render_data.gpu_scene.render_camera, 1);
+                    assert_eq!(
+                        ray_marcher.render_data.gpu_scene.cameras
+                            [ray_marcher.render_data.gpu_scene.render_camera]
+                            .camera_to_world,
+                        glam::Mat4::from_translation(Vec3::Z * 10.),
+                    );
+
+                    assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 2);
+                    assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 1);
+                    assert_eq!(
+                        ray_marcher.render_data.gpu_scene.primitives[0].material_id,
+                        1,
+                    );
+                    assert_eq!(
+                        ray_marcher.render_data.gpu_scene.materials[1].diffuse_colour,
+                        Vec3::new(0.1, 0.1, 1.),
+                    );
+                }
                 _ => assert!(false),
             }
 
@@ -1444,13 +1480,11 @@ mod tests {
             let mut encoder: wgpu::CommandEncoder =
                 device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
-            let texture_size = 256u32;
-
             let texture_desc = wgpu::TextureDescriptor {
                 label: None,
                 size: wgpu::Extent3d {
-                    width: texture_size,
-                    height: texture_size,
+                    width: texture_width,
+                    height: texture_height,
                     depth_or_array_layers: 1,
                 },
                 mip_level_count: 1,
@@ -1473,7 +1507,7 @@ mod tests {
             let u32_size = std::mem::size_of::<u32>() as u32;
 
             let output_buffer_size =
-                (u32_size * texture_size * texture_size) as wgpu::BufferAddress;
+                (u32_size * texture_width * texture_height) as wgpu::BufferAddress;
             let output_buffer_desc = wgpu::BufferDescriptor {
                 size: output_buffer_size,
                 usage: wgpu::BufferUsages::COPY_DST
@@ -1532,14 +1566,49 @@ mod tests {
                     buffer: &output_buffer,
                     layout: wgpu::TexelCopyBufferLayout {
                         offset: 0,
-                        bytes_per_row: Some(u32_size * texture_size),
-                        rows_per_image: Some(texture_size),
+                        bytes_per_row: Some(u32_size * texture_width),
+                        rows_per_image: Some(texture_height),
                     },
                 },
                 texture_desc.size,
             );
 
             queue.submit(Some(encoder.finish()));
+
+            // We need to scope the mapping variables so that we can
+            // unmap the buffer
+            {
+                let buffer_slice = output_buffer.slice(..);
+
+                // NOTE: We have to create the mapping THEN device.poll() before await
+                // the future. Otherwise the application will freeze.
+                let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+                buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                    tx.send(result).unwrap();
+                });
+                match device.poll(
+                    wgpu::PollType::Wait, // {
+                                          //     submission_index: None,
+                                          //     timeout: Some(core::time::Duration::new(5, 0)),
+                                          // }
+                ) {
+                    Err(error) => {
+                        println!("{:?}", error);
+                        assert!(false);
+                    }
+                    _ => {}
+                };
+                rx.receive().await.unwrap().unwrap();
+
+                let data = buffer_slice.get_mapped_range();
+
+                use image::{ImageBuffer, Rgba};
+                let buffer =
+                    ImageBuffer::<Rgba<u8>, _>::from_raw(texture_width, texture_height, data)
+                        .unwrap();
+                buffer.save("image.png").unwrap();
+            }
+            output_buffer.unmap();
         } else {
             assert!(false);
         }

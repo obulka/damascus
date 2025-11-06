@@ -3,9 +3,12 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    fmt::{Display, Formatter, Result},
+};
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use strum::{EnumCount, EnumIter, EnumString};
 
 use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
@@ -21,7 +24,6 @@ pub const RAY_MARCHER_FRAGMENT_SHADER: &str =
 
 #[derive(
     Debug,
-    Display,
     Default,
     Clone,
     Copy,
@@ -40,6 +42,19 @@ pub enum RayMarcherPreprocessorDirectives {
     EnableAOVs,
     EnableLightSampling,
     SceneDirective(ScenePreprocessorDirectives),
+}
+
+impl Display for RayMarcherPreprocessorDirectives {
+    fn fmt(&self, formatter: &mut Formatter) -> Result {
+        match self {
+            Self::SceneDirective(scene_directive) => {
+                write!(formatter, "{:?}", scene_directive)
+            }
+            _ => {
+                write!(formatter, "{:?}", self)
+            }
+        }
+    }
 }
 
 impl Enumerator for RayMarcherPreprocessorDirectives {}

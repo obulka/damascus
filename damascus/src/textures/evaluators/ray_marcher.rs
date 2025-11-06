@@ -441,6 +441,20 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
                 data: bytemuck::cast_slice(
                     self.render_data
                         .gpu_scene
+                        .materials
+                        .iter()
+                        .map(|material| material.as_std430())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                )
+                .to_vec(),
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::STORAGE,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+            },
+            BufferDescriptor {
+                data: bytemuck::cast_slice(
+                    self.render_data
+                        .gpu_scene
                         .checkerboards
                         .iter()
                         .map(|checkerboard| checkerboard.as_std430())

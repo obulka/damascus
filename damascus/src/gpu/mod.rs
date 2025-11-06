@@ -32,6 +32,7 @@ pub enum Includes {
     AOVs,
     Camera,
     Checkerboard,
+    Colour,
     Grade,
     Lights,
     Material,
@@ -61,6 +62,7 @@ impl Includes {
             Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
             Self::Checkerboard => include_str!("./wgsl/textures/generators/checkerboard.wgsl"),
+            Self::Colour => include_str!("./wgsl/utils/colour.wgsl"),
             Self::Grade => include_str!("./wgsl/textures/processors/grade.wgsl"),
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
@@ -151,6 +153,10 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
 ) -> Vec<String> {
     // Handle ifdef preprocessor macro
     let mut branch_stack = Vec::<(bool, bool)>::new();
+    let directives = preprocessor_directives
+        .iter()
+        .map(|directive| directive.to_string())
+        .collect::<HashSet<String>>();
     shader_source
         .into_iter()
         .filter(|line| {
@@ -170,13 +176,9 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                         // If we are currently in a branch and have taken it
                         // and we hit another branch decide whether or not to
                         // take it, push it to the stack and carry on
-                        if let Ok(ifdef_directive) =
-                            Directives::from_str(line.trim().trim_start_matches("#ifdef").trim())
-                        {
-                            let take_branch: bool =
-                                preprocessor_directives.contains(&ifdef_directive);
-                            branch_stack.push((take_branch, take_branch));
-                        }
+                        let take_branch: bool =
+                            directives.contains(line.trim().trim_start_matches("#ifdef").trim());
+                        branch_stack.push((take_branch, take_branch))
                     } else {
                         // If we are not in the current branch we want
                         // to skip further directives until the next endif
@@ -188,13 +190,9 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                         // If we are in a branch and hit an else ifdef, and
                         // we have not yet taken a branch of the current
                         // conditional, check if we want to take this branch
-                        if let Ok(else_ifdef_directive) =
-                            Directives::from_str(line.trim().trim_start_matches("#elifdef").trim())
-                        {
-                            *current_branch_taken =
-                                preprocessor_directives.contains(&else_ifdef_directive);
-                            *branch_taken |= *current_branch_taken;
-                        }
+                        *current_branch_taken =
+                            directives.contains(line.trim().trim_start_matches("#elifdef").trim());
+                        *branch_taken |= *current_branch_taken;
                     } else if *current_branch_taken {
                         *current_branch_taken = false;
                     }
@@ -215,12 +213,9 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
                 // If we are not currently in a branch and we hit a branch
                 // decide whether or not to take the branch, push it to the
                 // stack and carry on
-                if let Ok(ifdef_directive) =
-                    Directives::from_str(line.trim().trim_start_matches("#ifdef").trim())
-                {
-                    let take_branch: bool = preprocessor_directives.contains(&ifdef_directive);
-                    branch_stack.push((take_branch, take_branch));
-                }
+                let take_branch: bool =
+                    directives.contains(line.trim().trim_start_matches("#ifdef").trim());
+                branch_stack.push((take_branch, take_branch));
 
                 return false;
             }

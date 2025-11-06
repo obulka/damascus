@@ -11,6 +11,7 @@
 #include RayMarcherConstants
 #include Ray
 #include Math
+#include Colour
 #include Random
 #include PrimitiveSDFs
 #include Texture
@@ -93,7 +94,7 @@ fn material_interaction(
     }
 
     (*ray).colour += multiple_importance_sample(
-        (*primitive).material.emissive_colour,
+        _materials[(*primitive).material_id].emissive_colour,
         (*ray).throughput,
         previous_material_pdf,
         sample_lights_pdf(f32(_scene_parameters.num_lights)),
@@ -103,7 +104,7 @@ fn material_interaction(
     (*ray).throughput = select(
         (*ray).throughput * material_brdf * material_geometry_factor / material_pdf,
         vec3f(0.),
-        length((*primitive).material.emissive_colour) > 1.,
+        length(_materials[(*primitive).material_id].emissive_colour) > 1.,
     );
 
     return material_pdf;

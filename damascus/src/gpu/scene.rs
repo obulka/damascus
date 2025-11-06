@@ -56,7 +56,7 @@ impl Default for GPUScene {
             cameras: vec![Camera::default().to_gpu()],
             primitives: vec![],
             lights: vec![],
-            materials: vec![Material::default().to_gpu()],
+            materials: vec![Material::default().diffuse_colour(glam::Vec3::X).to_gpu()],
             checkerboards: vec![],
             noises: vec![],
             grades: vec![],

@@ -433,7 +433,7 @@ fn sample_physical_light(
                 1. - sqrt(saturate_f32(1. - radius * radius / distance_to_light))
             );
 
-            return nearest_primitive.material.emissive_colour;
+            return _materials[nearest_primitive.material_id].emissive_colour;
         }
 
         position += light_direction * step_distance;

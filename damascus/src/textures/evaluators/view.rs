@@ -222,7 +222,6 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
         let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
         let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
         vec![TextureView {
-            texture: texture,
             texture_view: texture_view,
             texture_data: texture_data,
             visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,

@@ -26,9 +26,6 @@ impl BindingResource for Buffer {
 
 #[derive(Debug, Clone)]
 pub struct TextureView {
-    // TODO Can get rid of texture field in wgpu v26
-    // as it provides self.texture_view.texture()
-    pub texture: wgpu::Texture,
     pub texture_view: wgpu::TextureView,
     pub texture_data: Rgba32FImage,
     pub visibility: wgpu::ShaderStages,
@@ -83,7 +80,7 @@ impl TextureViewBindGroup {
         for texture_view in self.texture_views.iter() {
             queue.write_texture(
                 wgpu::TexelCopyTextureInfo {
-                    texture: &texture_view.texture,
+                    texture: &texture_view.texture_view.texture(),
                     mip_level: 0,
                     origin: wgpu::Origin3d::ZERO,
                     aspect: wgpu::TextureAspect::All,
@@ -94,7 +91,7 @@ impl TextureViewBindGroup {
                     bytes_per_row: Some(16 * texture_view.texture_data.width()),
                     rows_per_image: Some(texture_view.texture_data.height()),
                 },
-                texture_view.texture.size(),
+                texture_view.texture_view.texture().size(),
             );
         }
     }

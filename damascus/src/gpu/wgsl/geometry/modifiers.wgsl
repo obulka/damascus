@@ -231,67 +231,83 @@ fn transform_position(
 fn texture_primitive(
     position: vec3f,
     primitive: ptr<function, Primitive>,
-) {
-//     var procedural_texture_seed = vec4(
-//         position,
-//         length((*primitive).dimensional_data),
-//     );
-// #ifdef EnableDiffuseColourTexture
-//     _materials[(*primitive).material_id].diffuse_colour = procedurally_texture_vec3f(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].diffuse_colour,
-//         _materials[(*primitive).material_id].diffuse_colour_texture,
-//     );
-// #endif
-// #ifdef EnableSpecularProbabilityTexture
-//     _materials[(*primitive).material_id].specular_probability = procedurally_texture_f32(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].specular_probability,
-//         _materials[(*primitive).material_id].specular_probability_texture,
-//     );
-// #endif
-// #ifdef EnableSpecularRoughnessTexture
-//     _materials[(*primitive).material_id].specular_roughness = procedurally_texture_f32(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].specular_roughness,
-//         _materials[(*primitive).material_id].specular_roughness_texture,
-//     );
-// #endif
-// #ifdef EnableSpecularColourTexture
-//     _materials[(*primitive).material_id].specular_colour = procedurally_texture_vec3f(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].specular_colour,
-//         _materials[(*primitive).material_id].specular_colour_texture,
-//     );
-// #endif
-// #ifdef EnableTransmissiveProbabilityTexture
-//     _materials[(*primitive).material_id].transmissive_probability = procedurally_texture_f32(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].transmissive_probability,
-//         _materials[(*primitive).material_id].transmissive_probability_texture,
-//     );
-// #endif
-// #ifdef EnableTransmissiveRoughnessTexture
-//     _materials[(*primitive).material_id].transmissive_roughness = procedurally_texture_f32(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].transmissive_roughness,
-//         _materials[(*primitive).material_id].transmissive_roughness_texture,
-//     );
-// #endif
-// #ifdef EnableEmissiveColourTexture
-//     _materials[(*primitive).material_id].emissive_colour = procedurally_texture_vec3f(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].emissive_colour,
-//         _materials[(*primitive).material_id].emissive_colour_texture,
-//     );
-// #endif
-// #ifdef EnableRefractiveIndexTexture
-//     _materials[(*primitive).material_id].refractive_index = procedurally_texture_f32(
-//         procedural_texture_seed,
-//         _materials[(*primitive).material_id].refractive_index,
-//         _materials[(*primitive).material_id].refractive_index_texture,
-//     );
-// #endif
+) -> MaterialSample {
+    var procedural_texture_seed = vec4(
+        position,
+        length((*primitive).dimensional_data),
+    );
+
+    var material_sample = MaterialSample(
+        _materials[(*primitive).material_id].diffuse_colour,
+        _materials[(*primitive).material_id].specular_probability,
+        _materials[(*primitive).material_id].specular_colour,
+        _materials[(*primitive).material_id].specular_roughness,
+        _materials[(*primitive).material_id].extinction_colour,
+        _materials[(*primitive).material_id].transmissive_probability,
+        _materials[(*primitive).material_id].emissive_colour,
+        _materials[(*primitive).material_id].transmissive_roughness,
+        _materials[(*primitive).material_id].scattering_colour,
+        _materials[(*primitive).material_id].refractive_index,
+    );
+
+#ifdef EnableDiffuseColourTexture
+    material_sample.diffuse_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        material_sample.diffuse_colour,
+        _materials[(*primitive).material_id].diffuse_colour_texture,
+    );
+#endif
+#ifdef EnableSpecularProbabilityTexture
+    material_sample.specular_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        material_sample.specular_probability,
+        _materials[(*primitive).material_id].specular_probability_texture,
+    );
+#endif
+#ifdef EnableSpecularRoughnessTexture
+    material_sample.specular_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        material_sample.specular_roughness,
+        _materials[(*primitive).material_id].specular_roughness_texture,
+    );
+#endif
+#ifdef EnableSpecularColourTexture
+    material_sample.specular_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        material_sample.specular_colour,
+        _materials[(*primitive).material_id].specular_colour_texture,
+    );
+#endif
+#ifdef EnableTransmissiveProbabilityTexture
+    material_sample.transmissive_probability = procedurally_texture_f32(
+        procedural_texture_seed,
+        material_sample.transmissive_probability,
+        _materials[(*primitive).material_id].transmissive_probability_texture,
+    );
+#endif
+#ifdef EnableTransmissiveRoughnessTexture
+    material_sample.transmissive_roughness = procedurally_texture_f32(
+        procedural_texture_seed,
+        material_sample.transmissive_roughness,
+        _materials[(*primitive).material_id].transmissive_roughness_texture,
+    );
+#endif
+#ifdef EnableEmissiveColourTexture
+    material_sample.emissive_colour = procedurally_texture_vec3f(
+        procedural_texture_seed,
+        material_sample.emissive_colour,
+        _materials[(*primitive).material_id].emissive_colour_texture,
+    );
+#endif
+#ifdef EnableRefractiveIndexTexture
+    material_sample.refractive_index = procedurally_texture_f32(
+        procedural_texture_seed,
+        material_sample.refractive_index,
+        _materials[(*primitive).material_id].refractive_index_texture,
+    );
+#endif
+
+    return material_sample;
 }
 
 #ifdef EnableTrapColour
@@ -586,9 +602,10 @@ fn distance_to_transformed_primitive(
 fn distance_to_textured_primitive(
     position: vec3f,
     primitive: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
 ) -> f32 {
     var transformed_position: vec3f = rotate_translate_position(position, primitive);
-    texture_primitive(transformed_position, primitive);
+    *material = texture_primitive(transformed_position, primitive);
     transformed_position = transform_position(
         transformed_position,
         primitive,
@@ -632,74 +649,62 @@ fn distance_to_primitive(
 }
 
 
-fn mix_primitives(
-    primitive_0: ptr<function, Primitive>,
-    primitive_1: ptr<function, Primitive>,
+fn mix_material_samples(
+    material_0: ptr<function, MaterialSample>,
+    material_1: ptr<function, MaterialSample>,
     smoothing: f32,
 ) {
-    // _materials[(*primitive_0).material_id].diffuse_colour = mix(
-    //     _materials[(*primitive_0).material_id].diffuse_colour,
-    //     _materials[(*primitive_1).material_id].diffuse_colour,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].specular_probability = mix(
-    //     _materials[(*primitive_0).material_id].specular_probability,
-    //     _materials[(*primitive_1).material_id].specular_probability,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].specular_roughness = mix(
-    //     _materials[(*primitive_0).material_id].specular_roughness,
-    //     _materials[(*primitive_1).material_id].specular_roughness,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].specular_colour = mix(
-    //     _materials[(*primitive_0).material_id].specular_colour,
-    //     _materials[(*primitive_1).material_id].specular_colour,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].transmissive_probability = mix(
-    //     _materials[(*primitive_0).material_id].transmissive_probability,
-    //     _materials[(*primitive_1).material_id].transmissive_probability,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].transmissive_roughness = mix(
-    //     _materials[(*primitive_0).material_id].transmissive_roughness,
-    //     _materials[(*primitive_1).material_id].transmissive_roughness,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].extinction_colour = mix(
-    //     _materials[(*primitive_0).material_id].extinction_colour,
-    //     _materials[(*primitive_1).material_id].extinction_colour,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].emissive_colour = mix(
-    //     _materials[(*primitive_0).material_id].emissive_colour,
-    //     _materials[(*primitive_1).material_id].emissive_colour,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].refractive_index = mix(
-    //     _materials[(*primitive_0).material_id].refractive_index,
-    //     _materials[(*primitive_1).material_id].refractive_index,
-    //     smoothing,
-    // );
-    // _materials[(*primitive_0).material_id].scattering_colour = mix(
-    //     _materials[(*primitive_0).material_id].scattering_colour,
-    //     _materials[(*primitive_1).material_id].scattering_colour,
-    //     smoothing,
-    // );
-    var choice: bool = smoothing > 0.5;
-    (*primitive_0).id = select(
-        (*primitive_0).id,
-        (*primitive_1).id,
-        choice,
+    material_0.diffuse_colour = mix(
+        material_0.diffuse_colour,
+        material_1.diffuse_colour,
+        smoothing,
     );
-    (*primitive_1).id = (*primitive_0).id;
-    (*primitive_0).material_id = select(
-        (*primitive_0).material_id,
-        (*primitive_1).material_id,
-        choice,
+    material_0.specular_probability = mix(
+        material_0.specular_probability,
+        material_1.specular_probability,
+        smoothing,
     );
-    (*primitive_1).material_id = (*primitive_0).material_id;
+    material_0.specular_roughness = mix(
+        material_0.specular_roughness,
+        material_1.specular_roughness,
+        smoothing,
+    );
+    material_0.specular_colour = mix(
+        material_0.specular_colour,
+        material_1.specular_colour,
+        smoothing,
+    );
+    material_0.transmissive_probability = mix(
+        material_0.transmissive_probability,
+        material_1.transmissive_probability,
+        smoothing,
+    );
+    material_0.transmissive_roughness = mix(
+        material_0.transmissive_roughness,
+        material_1.transmissive_roughness,
+        smoothing,
+    );
+    material_0.extinction_colour = mix(
+        material_0.extinction_colour,
+        material_1.extinction_colour,
+        smoothing,
+    );
+    material_0.emissive_colour = mix(
+        material_0.emissive_colour,
+        material_1.emissive_colour,
+        smoothing,
+    );
+    material_0.refractive_index = mix(
+        material_0.refractive_index,
+        material_1.refractive_index,
+        smoothing,
+    );
+    material_0.scattering_colour = mix(
+        material_0.scattering_colour,
+        material_1.scattering_colour,
+        smoothing,
+    );
+    *material_1 = *material_0;
 }
 
 
@@ -708,56 +713,6 @@ fn select_primitive(
     primitive_1: ptr<function, Primitive>,
     choice: bool,
 ) {
-    // _materials[(*primitive_0).material_id].diffuse_colour = select(
-    //     _materials[(*primitive_0).material_id].diffuse_colour,
-    //     _materials[(*primitive_1).material_id].diffuse_colour,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].specular_probability = select(
-    //     _materials[(*primitive_0).material_id].specular_probability,
-    //     _materials[(*primitive_1).material_id].specular_probability,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].specular_roughness = select(
-    //     _materials[(*primitive_0).material_id].specular_roughness,
-    //     _materials[(*primitive_1).material_id].specular_roughness,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].specular_colour = select(
-    //     _materials[(*primitive_0).material_id].specular_colour,
-    //     _materials[(*primitive_1).material_id].specular_colour,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].transmissive_probability = select(
-    //     _materials[(*primitive_0).material_id].transmissive_probability,
-    //     _materials[(*primitive_1).material_id].transmissive_probability,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].transmissive_roughness = select(
-    //     _materials[(*primitive_0).material_id].transmissive_roughness,
-    //     _materials[(*primitive_1).material_id].transmissive_roughness,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].extinction_colour = select(
-    //     _materials[(*primitive_0).material_id].extinction_colour,
-    //     _materials[(*primitive_1).material_id].extinction_colour,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].emissive_colour = select(
-    //     _materials[(*primitive_0).material_id].emissive_colour,
-    //     _materials[(*primitive_1).material_id].emissive_colour,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].refractive_index = select(
-    //     _materials[(*primitive_0).material_id].refractive_index,
-    //     _materials[(*primitive_1).material_id].refractive_index,
-    //     choice,
-    // );
-    // _materials[(*primitive_0).material_id].scattering_colour = select(
-    //     _materials[(*primitive_0).material_id].scattering_colour,
-    //     _materials[(*primitive_1).material_id].scattering_colour,
-    //     choice,
-    // );
     (*primitive_0).id = select(
         (*primitive_0).id,
         (*primitive_1).id,
@@ -772,12 +727,76 @@ fn select_primitive(
     (*primitive_1).material_id = (*primitive_0).material_id;
 }
 
+
+fn select_material_sample(
+    material_0: ptr<function, MaterialSample>,
+    material_1: ptr<function, MaterialSample>,
+    choice: bool,
+) {
+    material_0.diffuse_colour = select(
+        material_0.diffuse_colour,
+        material_1.diffuse_colour,
+        choice,
+    );
+    material_0.specular_probability = select(
+        material_0.specular_probability,
+        material_1.specular_probability,
+        choice,
+    );
+    material_0.specular_roughness = select(
+        material_0.specular_roughness,
+        material_1.specular_roughness,
+        choice,
+    );
+    material_0.specular_colour = select(
+        material_0.specular_colour,
+        material_1.specular_colour,
+        choice,
+    );
+    material_0.transmissive_probability = select(
+        material_0.transmissive_probability,
+        material_1.transmissive_probability,
+        choice,
+    );
+    material_0.transmissive_roughness = select(
+        material_0.transmissive_roughness,
+        material_1.transmissive_roughness,
+        choice,
+    );
+    material_0.extinction_colour = select(
+        material_0.extinction_colour,
+        material_1.extinction_colour,
+        choice,
+    );
+    material_0.emissive_colour = select(
+        material_0.emissive_colour,
+        material_1.emissive_colour,
+        choice,
+    );
+    material_0.refractive_index = select(
+        material_0.refractive_index,
+        material_1.refractive_index,
+        choice,
+    );
+    material_0.scattering_colour = select(
+        material_0.scattering_colour,
+        material_1.scattering_colour,
+        choice,
+    );
+}
+
+
 fn blend_primitives(
     distance_to_parent: f32,
     distance_to_child: f32,
     parent: ptr<function, Primitive>,
     child: ptr<function, Primitive>,
+    parent_material: ptr<function, MaterialSample>,
+    child_material: ptr<function, MaterialSample>,
 ) -> f32 {
+    // TODO test if we can change this to blend_material_samples
+    // and then just call this and blend_distances together
+    // without losing performance
     switch (*parent).modifiers & BLEND_TYPE_MASK {
 #ifdef EnablePrimitiveBlendSubtraction
         case SUBTRACTION {
@@ -787,7 +806,7 @@ fn blend_primitives(
                 * (distance_to_parent + distance_to_child)
                 / (*parent).blend_strength
             );
-            mix_primitives(parent, child, smoothing);
+            mix_material_samples(parent_material, child_material, smoothing);
             return mix(
                 distance_to_parent,
                 -distance_to_child,
@@ -803,7 +822,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_primitives(child, parent, smoothing);
+            mix_material_samples(child_material, parent_material, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,
@@ -819,7 +838,7 @@ fn blend_primitives(
                 * (distance_to_child - distance_to_parent)
                 / (*parent).blend_strength
             );
-            mix_primitives(child, parent, smoothing);
+            mix_material_samples(child_material, parent_material, smoothing);
             return mix(
                 distance_to_child,
                 distance_to_parent,

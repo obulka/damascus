@@ -57,6 +57,7 @@ fn material_interaction(
     previous_material_pdf: f32,
     ray: ptr<function, Ray>,
     primitive: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
 ) -> f32 {
     (*ray).origin = intersection_position;
@@ -74,6 +75,7 @@ fn material_interaction(
         surface_normal,
         offset,
         primitive,
+        material,
         nested_dielectrics,
         ray,
         &material_brdf,
@@ -94,7 +96,7 @@ fn material_interaction(
     }
 
     (*ray).colour += multiple_importance_sample(
-        _materials[(*primitive).material_id].emissive_colour,
+        material.emissive_colour,
         (*ray).throughput,
         previous_material_pdf,
         sample_lights_pdf(f32(_scene_parameters.num_lights)),
@@ -104,7 +106,7 @@ fn material_interaction(
     (*ray).throughput = select(
         (*ray).throughput * material_brdf * material_geometry_factor / material_pdf,
         vec3f(0.),
-        length(_materials[(*primitive).material_id].emissive_colour) > 1.,
+        length(material.emissive_colour) > 1.,
     );
 
     return material_pdf;
@@ -187,10 +189,12 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
             );
 
             var nearest_primitive: Primitive;
+            var material_sample: MaterialSample;
             find_nearest_primitive(
                 position_on_ray,
                 pixel_footprint,
                 &nearest_primitive,
+                &material_sample,
             );
 
 #ifdef EnableAOVs
@@ -216,6 +220,7 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
                 previous_material_pdf,
                 ray,
                 &nearest_primitive,
+                &material_sample,
                 &nested_dielectrics,
             );
 

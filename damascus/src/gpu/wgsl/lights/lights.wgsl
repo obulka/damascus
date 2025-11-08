@@ -416,10 +416,12 @@ fn sample_physical_light(
 
         if step_distance < pixel_footprint {
             var nearest_primitive: Primitive;
+            var nearest_material: MaterialSample;
             find_nearest_primitive(
                 position,
                 pixel_footprint,
                 &nearest_primitive,
+                &nearest_material,
             );
             *light_geometry_factor /=  max(
                 distance_travelled * distance_travelled,
@@ -433,7 +435,7 @@ fn sample_physical_light(
                 1. - sqrt(saturate_f32(1. - radius * radius / distance_to_light))
             );
 
-            return _materials[nearest_primitive.material_id].emissive_colour;
+            return nearest_material.emissive_colour;
         }
 
         position += light_direction * step_distance;

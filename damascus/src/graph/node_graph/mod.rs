@@ -1333,15 +1333,25 @@ mod tests {
         let secondary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
+        let light_id: NodeId = graph.add_node(NodeData::Light);
+
         let primitive_id: NodeId = graph.add_node(NodeData::Primitive);
         let primitive_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let primitive_material_id: NodeId = graph.add_node(NodeData::Material);
 
-        let light_id: NodeId = graph.add_node(NodeData::Light);
+        let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive1_axis_id: NodeId = graph.add_node(NodeData::Axis);
+        let primitive1_material_id: NodeId = graph.add_node(NodeData::Material);
+
+        let primitive2_id: NodeId = graph.add_node(NodeData::Primitive);
+        let primitive2_axis_id: NodeId = graph.add_node(NodeData::Axis);
 
         let scene_id: NodeId = graph.add_node(NodeData::Scene);
 
         let ray_marcher_id: NodeId = graph.add_node(NodeData::RayMarcher);
+
+        // Connect camera to scene
+        // /raymarcher/scene/camera/secondary_axis/primary_axis
 
         graph.connect_node_to_input(
             primary_camera_axis_id,
@@ -1356,6 +1366,34 @@ mod tests {
                 .node_input_id(camera_id, CameraInputData::Axis)
                 .unwrap(),
         );
+
+        graph.connect_node_to_input(
+            camera_id,
+            graph
+                .node_input_id(scene_id, SceneInputData::RenderCamera)
+                .unwrap(),
+        );
+
+        // Connect light to scene
+        // /raymarcher/scene/camera/secondary_axis/primary_axis
+        // |          |     /light
+
+        graph.connect_node_to_input(
+            light_id,
+            graph
+                .node_input_id(scene_id, SceneInputData::Scene)
+                .unwrap(),
+        );
+
+        // Connect primitives to scene
+        // /raymarcher/scene/camera/secondary_axis/primary_axis
+        // |          |     /light
+        // |          |     /primitive/axis
+        // |          |     |         /material
+        // |          |     |         /primitive2/axis2
+        // |          |     |                    /material1
+        // |          |     /primitive1/axis1
+        // |          |     |          /material1
 
         graph.connect_node_to_input(
             primitive_axis_id,
@@ -1373,22 +1411,50 @@ mod tests {
 
         graph.connect_node_to_input(
             primitive_id,
-            graph
-                .node_input_id(scene_id, SceneInputData::Scene)
-                .unwrap(),
-        );
-
-        graph.connect_node_to_input(
-            light_id,
             graph.node_input_id_from_str(scene_id, "Scene1").unwrap(),
         );
 
         graph.connect_node_to_input(
-            camera_id,
+            primitive1_axis_id,
             graph
-                .node_input_id(scene_id, SceneInputData::RenderCamera)
+                .node_input_id(primitive1_id, PrimitiveInputData::Axis)
                 .unwrap(),
         );
+
+        graph.connect_node_to_input(
+            primitive1_material_id,
+            graph
+                .node_input_id(primitive1_id, PrimitiveInputData::Material)
+                .unwrap(),
+        );
+
+        graph.connect_node_to_input(
+            primitive1_id,
+            graph.node_input_id_from_str(scene_id, "Scene2").unwrap(),
+        );
+
+        graph.connect_node_to_input(
+            primitive2_axis_id,
+            graph
+                .node_input_id(primitive2_id, PrimitiveInputData::Axis)
+                .unwrap(),
+        );
+
+        graph.connect_node_to_input(
+            primitive1_material_id,
+            graph
+                .node_input_id(primitive2_id, PrimitiveInputData::Material)
+                .unwrap(),
+        );
+
+        graph.connect_node_to_input(
+            primitive2_id,
+            graph
+                .node_input_id(primitive_id, PrimitiveInputData::Child)
+                .unwrap(),
+        );
+
+        // Connect scene to ray marcher
 
         graph.connect_node_to_input(
             scene_id,
@@ -1399,6 +1465,8 @@ mod tests {
 
         let texture_width = 2048u32;
         let texture_height = 1024u32;
+
+        // Modify camera data
 
         let sensor_resolution_input_id: InputId = graph
             .node_input_id(camera_id, CameraInputData::SensorResolution)
@@ -1411,6 +1479,20 @@ mod tests {
             .unwrap();
         graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
 
+        let secondary_camera_axis_translate_input_id: InputId = graph
+            .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
+            .unwrap();
+        graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
+
+        // Modify light data
+
+        let light_colour_input_id: InputId = graph
+            .node_input_id(light_id, LightInputData::Colour)
+            .unwrap();
+        graph[light_colour_input_id].data = InputData::Vec3(Vec3::new(1., 0.1, 0.1));
+
+        // Modify primitive data
+
         let diffuse_colour_input_id: InputId = graph
             .node_input_id(primitive_material_id, MaterialInputData::DiffuseColour)
             .unwrap();
@@ -1421,10 +1503,22 @@ mod tests {
             .unwrap();
         graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
 
-        // let light_colour_input_id: InputId = graph
-        //     .node_input_id(light_id, LightInputData::Colour)
-        //     .unwrap();
-        // graph[light_colour_input_id].data = InputData::Vec3(Vec3::new(1., 0.9, 0.8));
+        let blend_strength_input_id: InputId = graph
+            .node_input_id(primitive_id, PrimitiveInputData::BlendStrength)
+            .unwrap();
+        graph[blend_strength_input_id].data = InputData::Float(0.5);
+
+        let primitive1_axis_translate_input_id: InputId = graph
+            .node_input_id(primitive1_axis_id, AxisInputData::Translate)
+            .unwrap();
+        graph[primitive1_axis_translate_input_id].data = InputData::Vec3(Vec3::X);
+
+        let primitive2_axis_translate_input_id: InputId = graph
+            .node_input_id(primitive2_axis_id, AxisInputData::Translate)
+            .unwrap();
+        graph[primitive2_axis_translate_input_id].data = InputData::Vec3(Vec3::X * -1.);
+
+        // Modify ray marcher data
 
         let ray_marcher_output_id: OutputId = *graph.node_first_output_id(ray_marcher_id).unwrap();
 
@@ -1442,8 +1536,8 @@ mod tests {
                         glam::Mat4::from_translation(Vec3::Z * 10.),
                     );
 
-                    assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 2);
-                    assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 1);
+                    assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 3);
+                    assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 3);
                     assert_eq!(
                         ray_marcher.render_data.gpu_scene.primitives[0].material_id,
                         1,

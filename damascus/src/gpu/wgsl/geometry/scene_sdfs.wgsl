@@ -9,9 +9,14 @@ fn find_nearest_descendant(
     hit_tolerance: f32,
     earliest_ancestor_index: u32,
     family: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
 ) -> f32 {
     // Get the distance to the topmost primitive
-    var distance_to_family: f32 = distance_to_textured_primitive(position, family);
+    var distance_to_family: f32 = distance_to_textured_primitive(
+        position,
+        family,
+        material,
+    );
 
 #ifdef EnableChildInteractions
     // Check if the topmost primmitive is a bounding volume
@@ -56,6 +61,7 @@ fn find_nearest_descendant(
 
     // Create a primitive to re-use as our child
     var child: Primitive;
+    var child_material: MaterialSample;
 
     // Process all immediate children breadth first
     // Then step into children and process all grandchildren breadth first
@@ -79,7 +85,7 @@ fn find_nearest_descendant(
             // Get the next parent and apply the current blended material
             *family = _primitives[current_parent_index];
             (*family).id = child.id;
-            (*family).material = child.material;
+            *material = child_material;
 
             // Update the child index to point to the first child of the
             // new parent
@@ -94,7 +100,11 @@ fn find_nearest_descendant(
         // Get and process the child, blending the material and distance
         // in the chosen manner
         child = _primitives[child_index];
-        var distance_to_child: f32 = distance_to_textured_primitive(position, &child);
+        var distance_to_child: f32 = distance_to_textured_primitive(
+            position,
+            &child,
+            &child_material,
+        );
 
         var child_is_bounding_volume: bool = bool(child.modifiers & BOUNDING_VOLUME);
         var out_of_childs_boundary: bool = (
@@ -130,6 +140,7 @@ fn find_nearest_descendant(
                 child_closest,
             );
             select_primitive(family, &child, child_closest);
+            select_material_sample(material, &child_material, child_closest);
         } else if !child_is_bounding_volume {
             // Otherwise, as long as the child isn't a bounding volume,
             // we can perform the normal blending operation
@@ -138,6 +149,8 @@ fn find_nearest_descendant(
                 distance_to_child,
                 family,
                 &child,
+                material,
+                &child_material,
             );
         }
 
@@ -162,9 +175,11 @@ fn find_nearest_primitive(
     position: vec3f,
     pixel_footprint: f32,
     closest_primitive: ptr<function, Primitive>,
+    closest_material: ptr<function, MaterialSample>,
 ) {
     var distance_to_scene: f32 = MAX_F32;
     var primitive: Primitive;
+    var material: MaterialSample;
     var primitives_processed = 0u;
     var hit_tolerance: f32 = _render_parameters.hit_tolerance + pixel_footprint;
     while primitives_processed < _scene_parameters.num_primitives {
@@ -176,6 +191,7 @@ fn find_nearest_primitive(
             hit_tolerance,
             primitives_processed,
             &primitive,
+            &material,
         );
 
         var primitive_is_new_closest: bool = (
@@ -189,6 +205,11 @@ fn find_nearest_primitive(
         select_primitive(
             closest_primitive,
             &primitive,
+            primitive_is_new_closest,
+        );
+        select_material_sample(
+            closest_material,
+            &material,
             primitive_is_new_closest,
         );
 

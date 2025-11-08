@@ -32,6 +32,20 @@ struct Material {
 }
 
 
+struct MaterialSample {
+    diffuse_colour: vec3f,
+    specular_probability: f32,
+    specular_colour: vec3f,
+    specular_roughness: f32,
+    extinction_colour: vec3f,
+    transmissive_probability: f32,
+    emissive_colour: vec3f,
+    transmissive_roughness: f32,
+    scattering_colour: vec3f,
+    refractive_index: f32,
+}
+
+
 struct Dielectric {
     id: u32,
     refractive_index: f32,
@@ -64,12 +78,15 @@ fn dielectric_from_atmosphere() -> Dielectric {
 }
 
 
-fn dielectric_from_primitive(primitive: ptr<function, Primitive>) -> Dielectric {
+fn dielectric_from_primitive(
+    primitive: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
+) -> Dielectric {
     return Dielectric(
         (*primitive).id,
-        _materials[(*primitive).material_id].refractive_index,
-        _materials[(*primitive).material_id].extinction_colour,
-        _materials[(*primitive).material_id].scattering_colour,
+        material.refractive_index,
+        material.extinction_colour,
+        material.scattering_colour,
     );
 }
 
@@ -175,6 +192,7 @@ fn sample_material(
     surface_normal: vec3f,
     offset: f32,
     primitive: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
     nested_dielectrics: ptr<function, NestedDielectrics>,
     ray: ptr<function, Ray>,
     material_brdf: ptr<function, vec3f>,
@@ -186,9 +204,10 @@ fn sample_material(
     );
 
 #ifdef EnableSpecularMaterials
-    var specular_probability: f32 = _materials[(*primitive).material_id].specular_probability;
-    var transmissive_probability: f32 = _materials[(*primitive).material_id].transmissive_probability;
-    var diffuse_probability: f32 =  1. - specular_probability - transmissive_probability;
+    var specular_probability: f32 = material.specular_probability;
+    var transmissive_probability: f32 = material.transmissive_probability;
+    var diffuse_probability: f32 =
+        1. - specular_probability - transmissive_probability;
 
     var incident_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
     var is_exiting: bool = is_exiting_primitive(primitive, &incident_dielectric);
@@ -197,7 +216,7 @@ fn sample_material(
     if is_exiting {
         refracted_dielectric = peek_previous_dielectric(nested_dielectrics);
     } else {
-        refracted_dielectric = dielectric_from_primitive(primitive);
+        refracted_dielectric = dielectric_from_primitive(primitive, material);
     }
 
     // Compute reflectivity for fresnel
@@ -222,10 +241,10 @@ fn sample_material(
         transmissive_probability,
         (
             transmissive_probability * (1. - specular_probability)
-            / (1. - _materials[(*primitive).material_id].specular_probability)
+            / (1. - material.specular_probability)
         ),
         (specular_probability > 0. || transmissive_probability > 0.)
-        && _materials[(*primitive).material_id].specular_probability < 1.,
+        && material.specular_probability < 1.,
     );
 
     // Interact with material according to the adjusted probabilities
@@ -233,7 +252,7 @@ fn sample_material(
 #endif
 #ifdef EnableTransmissiveMaterials
     if (
-        _materials[(*primitive).material_id].transmissive_probability > 0.
+        material.transmissive_probability > 0.
         && transmissive_probability > 0.
         && rng <= transmissive_probability
     ) {
@@ -257,7 +276,7 @@ fn sample_material(
             (*ray).direction = normalize(mix(
                 ideal_refracted_direction,
                 -diffuse_direction,
-                _materials[(*primitive).material_id].transmissive_roughness, // Assume roughness squared by CPU
+                material.transmissive_roughness, // Assume roughness squared by CPU
             ));
 
             // Offset the point so that it doesn't get trapped on the surface.
@@ -297,13 +316,13 @@ fn sample_material(
         (*ray).direction = normalize(mix(
             ideal_specular_direction,
             diffuse_direction,
-            _materials[(*primitive).material_id].specular_roughness, // Assume roughness squared by CPU
+            material.specular_roughness, // Assume roughness squared by CPU
         ));
 
         // Offset the point so that it doesn't get trapped on the surface.
         (*ray).origin += offset * surface_normal;
 
-        *material_brdf = _materials[(*primitive).material_id].specular_colour;
+        *material_brdf = material.specular_colour;
         *light_sampling_pdf = 0.;
 
         return (
@@ -320,7 +339,7 @@ fn sample_material(
     // Offset the point so that it doesn't get trapped on the surface.
     (*ray).origin += offset * surface_normal;
 
-    *material_brdf = _materials[(*primitive).material_id].diffuse_colour;
+    *material_brdf = material.diffuse_colour;
 
 #ifdef EnableSpecularMaterials
     var probability_over_pi = (1. - specular_probability - transmissive_probability) / PI;

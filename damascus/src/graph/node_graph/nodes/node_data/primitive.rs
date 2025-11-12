@@ -68,7 +68,7 @@ pub enum PrimitiveInputData {
     Scale,
     MinSquareRadius,
     FoldingLimit,
-    EnableTrapColour,
+    EnableOrbitTrapColour,
     EdgeRadius,
     Repetition,
     NegativeRepetitions,
@@ -121,7 +121,9 @@ impl NodeInputData for PrimitiveInputData {
             Self::Scale => InputData::Float(-1.75),
             Self::MinSquareRadius => InputData::Float(0.001),
             Self::FoldingLimit => InputData::Float(0.8),
-            Self::EnableTrapColour => InputData::Bool(default_primitive.enable_trap_colour),
+            Self::EnableOrbitTrapColour => {
+                InputData::Bool(default_primitive.enable_orbit_trap_colour)
+            }
             Self::EdgeRadius => InputData::Float(default_primitive.edge_radius),
             Self::Repetition => InputData::Enum(default_primitive.repetition.into()),
             Self::NegativeRepetitions => InputData::UVec3(default_primitive.negative_repetitions),
@@ -405,7 +407,7 @@ impl EvaluableNode for PrimitiveNode {
             bounding_volume: Self::Inputs::BoundingVolume
                 .get_data(data_map)?
                 .try_to_bool()?,
-            enable_trap_colour: Self::Inputs::EnableTrapColour
+            enable_orbit_trap_colour: Self::Inputs::EnableOrbitTrapColour
                 .get_data(data_map)?
                 .try_to_bool()?,
             dimensional_data: dimensional_data,

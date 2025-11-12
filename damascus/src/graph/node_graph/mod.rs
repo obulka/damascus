@@ -1501,12 +1501,17 @@ mod tests {
         let shape_input_id: InputId = graph
             .node_input_id(primitive_id, PrimitiveInputData::Shape)
             .unwrap();
-        graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
+        graph[shape_input_id].data = InputData::Enum(Shapes::Mandelbox.into());
 
         let blend_strength_input_id: InputId = graph
             .node_input_id(primitive_id, PrimitiveInputData::BlendStrength)
             .unwrap();
         graph[blend_strength_input_id].data = InputData::Float(0.5);
+
+        let enable_orbit_trap_colour_input_id: InputId = graph
+            .node_input_id(primitive_id, PrimitiveInputData::EnableOrbitTrapColour)
+            .unwrap();
+        graph[enable_orbit_trap_colour_input_id].data = InputData::Bool(true);
 
         let primitive1_axis_translate_input_id: InputId = graph
             .node_input_id(primitive1_axis_id, AxisInputData::Translate)

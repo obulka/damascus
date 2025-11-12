@@ -114,7 +114,7 @@ pub enum ScenePreprocessorDirectives {
     EnableEmissiveColourTexture,
     EnableExtinctionColourTexture,
     EnableRefractiveIndexTexture,
-    EnableTrapColour,
+    EnableOrbitTrapColour,
     EnableGrade,
     EnableCheckerboard,
     EnableNoise,
@@ -219,7 +219,7 @@ impl ScenePreprocessorDirectives {
             Self::EnableMirroring,
             Self::EnableHollowing,
             Self::EnablePhysicalLights,
-            Self::EnableTrapColour,
+            Self::EnableOrbitTrapColour,
         ])
     }
 
@@ -255,8 +255,10 @@ impl ScenePreprocessorDirectives {
             }
         }
 
-        if primitive.enable_trap_colour {
-            preprocessor_directives.insert(Self::EnableTrapColour);
+        if primitive.enable_orbit_trap_colour
+            && (primitive.shape == Shapes::Mandelbox || primitive.shape == Shapes::Mandelbulb)
+        {
+            preprocessor_directives.insert(Self::EnableOrbitTrapColour);
         }
 
         match primitive.repetition {

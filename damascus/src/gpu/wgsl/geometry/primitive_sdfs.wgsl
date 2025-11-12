@@ -836,18 +836,23 @@ fn distance_to_mandelbulb(
     power: f32,
     iterations: u32,
     max_square_radius: f32,
-    trap_colour: ptr<function, vec3f>,
+#ifdef EnableOrbitTrapColour
+    orbit_trap_colour: ptr<function, vec3f>,
+#endif
 ) -> f32 {
     var current_position: vec3f = position;
     var radius_squared: f32 = dot2_vec3f(current_position);
 
     var abs_position: vec3f = abs(current_position);
-    *trap_colour = abs_position;
 
-    var dradius: f32 = 1.;
+#ifdef EnableOrbitTrapColour
+    *orbit_trap_colour = abs_position;
+#endif
+
+    var radius: f32 = 1.;
     var iteration: u32 = 0u;
     loop {
-        dradius = power * pow(radius_squared, (power - 1.) / 2.) * dradius + 1.;
+        radius = power * pow(radius_squared, (power - 1.) / 2.) * radius + 1.;
 
         var current_radius: f32 = length(current_position);
         var theta: f32 = power * acos(current_position.z / current_radius);
@@ -860,7 +865,10 @@ fn distance_to_mandelbulb(
         );
 
         abs_position = abs(current_position);
-        *trap_colour = min(*trap_colour, abs_position);
+
+#ifdef EnableOrbitTrapColour
+        *orbit_trap_colour = min(*orbit_trap_colour, abs_position);
+#endif
 
         radius_squared = dot2_vec3f(current_position);
 
@@ -870,9 +878,11 @@ fn distance_to_mandelbulb(
         }
     }
 
-    *trap_colour = saturate_vec3f(*trap_colour);
+#ifdef EnableOrbitTrapColour
+    *orbit_trap_colour = saturate_vec3f(*orbit_trap_colour);
+#endif
 
-    return 0.25 * log(radius_squared) * sqrt(radius_squared) / dradius;
+    return 0.25 * log(radius_squared) * sqrt(radius_squared) / radius;
 }
 
 
@@ -909,7 +919,9 @@ fn distance_to_mandelbox(
     iterations: i32,
     min_square_radius: f32,
     folding_limit: f32,
-    trap_colour: ptr<function, vec3f>,
+#ifdef EnableOrbitTrapColour
+    orbit_trap_colour: ptr<function, vec3f>,
+#endif
 ) -> f32 {
     var scale_vector = vec4(scale, scale, scale, abs(scale)) / min_square_radius;
     var initial_position = vec4(position, 1.);
@@ -929,10 +941,13 @@ fn distance_to_mandelbox(
         );
 
         current_position = scale_vector * current_position + initial_position;
-        *trap_colour = min(*trap_colour, abs(current_position.xyz));
+#ifdef EnableOrbitTrapColour
+        *orbit_trap_colour = min(*orbit_trap_colour, abs(current_position.xyz));
+#endif
     }
-
-    *trap_colour = saturate_vec3f(*trap_colour);
+#ifdef EnableOrbitTrapColour
+    *orbit_trap_colour = saturate_vec3f(*orbit_trap_colour);
+#endif
 
     return (
         length(current_position.xyz - abs(scale - 1.)) / current_position.w

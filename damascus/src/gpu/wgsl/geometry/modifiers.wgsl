@@ -15,7 +15,7 @@ const SUBTRACTION: u32 = 128u;
 const INTERSECTION: u32 = 256u;
 const BLEND_TYPE_MASK: u32 = 384u;
 const BOUNDING_VOLUME: u32 = 512u;
-const ENABLE_TRAP_COLOUR: u32 = 1024u;
+const ENABLE_ORBIT_TRAP_COLOUR: u32 = 1024u;
 
 /**
  * Finitely repeat an object in the positive quadrant.
@@ -310,21 +310,25 @@ fn texture_primitive(
     return material_sample;
 }
 
-#ifdef EnableTrapColour
+#ifdef EnableOrbitTrapColour
 
-fn apply_trap_colour(
-    trap_colour: vec3f,
+fn apply_orbit_trap_colour(
+    orbit_trap_colour: vec3f,
     primitive: ptr<function, Primitive>,
+    material: ptr<function, MaterialSample>,
 ) {
     // TODO this has not been tested vs select
-    if !bool((*primitive).modifiers & ENABLE_TRAP_COLOUR) {
+    if (
+        !bool((*primitive).modifiers & ENABLE_ORBIT_TRAP_COLOUR)
+        || (*primitive).shape != MANDELBOX
+        && (*primitive).shape != MANDELBULB
+    ) {
         return;
     }
 
-    // TODO cant modify materials directly
-    // _materials[(*primitive).material_id].diffuse_colour *= trap_colour;
-    // _materials[(*primitive).material_id].specular_colour *= trap_colour;
-    // _materials[(*primitive).material_id].emissive_colour *= trap_colour;
+    material.diffuse_colour *= orbit_trap_colour;
+    material.specular_colour *= orbit_trap_colour;
+    material.emissive_colour *= orbit_trap_colour;
 }
 
 #endif
@@ -340,6 +344,9 @@ fn apply_trap_colour(
 fn distance_to_transformed_primitive(
     position: vec3f,
     primitive: ptr<function, Primitive>,
+#ifdef EnableOrbitTrapColour
+    orbit_trap_colour: ptr<function, vec3f>,
+#endif
 ) -> f32 {
     var distance: f32;
     switch (*primitive).shape {
@@ -465,33 +472,29 @@ fn distance_to_transformed_primitive(
 #endif
 #ifdef EnableMandelbox
         case MANDELBOX {
-            var trap_colour = vec3(1.);
             distance = distance_to_mandelbox(
                 position,
                 (*primitive).dimensional_data.x,
                 i32((*primitive).dimensional_data.y),
                 (*primitive).dimensional_data.z,
                 (*primitive).dimensional_data.w,
-                &trap_colour,
-            );
-#ifdef EnableTrapColour
-            apply_trap_colour(trap_colour, primitive);
+#ifdef EnableOrbitTrapColour
+                orbit_trap_colour,
 #endif
+            );
         }
 #endif
 #ifdef EnableMandelbulb
         case MANDELBULB {
-            var trap_colour = vec3(1.);
             distance = distance_to_mandelbulb(
                 position,
                 (*primitive).dimensional_data.x,
                 u32((*primitive).dimensional_data.y),
                 (*primitive).dimensional_data.z,
-                &trap_colour,
-            );
-#ifdef EnableTrapColour
-            apply_trap_colour(trap_colour, primitive);
+#ifdef EnableOrbitTrapColour
+                orbit_trap_colour,
 #endif
+            );
         }
 #endif
 #ifdef EnableOctahedron
@@ -611,10 +614,20 @@ fn distance_to_textured_primitive(
         primitive,
     ) / (*primitive).transform.uniform_scale;
 
+#ifdef EnableOrbitTrapColour
+    var orbit_trap_colour = vec3(1.);
+#endif
     var distance: f32 = distance_to_transformed_primitive(
         transformed_position,
         primitive,
+#ifdef EnableOrbitTrapColour
+        &orbit_trap_colour,
+#endif
     );
+
+#ifdef EnableOrbitTrapColour
+    apply_orbit_trap_colour(orbit_trap_colour, primitive, material);
+#endif
 
     return modify_distance(distance * (*primitive).transform.uniform_scale, primitive);
 }
@@ -640,9 +653,15 @@ fn distance_to_primitive(
         primitive,
     ) / (*primitive).transform.uniform_scale;
 
+#ifdef EnableOrbitTrapColour
+    var orbit_trap_colour = vec3(1.);
+#endif
     var distance: f32 = distance_to_transformed_primitive(
         transformed_position,
         primitive,
+#ifdef EnableOrbitTrapColour
+        &orbit_trap_colour,
+#endif
     );
 
     return modify_distance(distance * (*primitive).transform.uniform_scale, primitive);

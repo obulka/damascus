@@ -1501,7 +1501,7 @@ mod tests {
         let shape_input_id: InputId = graph
             .node_input_id(primitive_id, PrimitiveInputData::Shape)
             .unwrap();
-        graph[shape_input_id].data = InputData::Enum(Shapes::Mandelbox.into());
+        graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
 
         let blend_strength_input_id: InputId = graph
             .node_input_id(primitive_id, PrimitiveInputData::BlendStrength)
@@ -1530,6 +1530,8 @@ mod tests {
         if let Ok(input_data) = graph.evaluate_output(ray_marcher_output_id)
             && let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
         {
+            // The node graph has produced the data needed to render a ray marching pass
+            // test that it was built correctly, then render it on the gpu
             match &graph.scene_graph()[texture_evaluator_id] {
                 TextureEvaluator::RayMarcher(ray_marcher) => {
                     assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
@@ -1555,6 +1557,8 @@ mod tests {
                 _ => assert!(false),
             }
 
+            // Get a device, encoder, and queue
+
             let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
                 backends: wgpu::Backends::PRIMARY,
                 ..Default::default()
@@ -1579,6 +1583,8 @@ mod tests {
             let mut encoder: wgpu::CommandEncoder =
                 device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
+            // Create a texture to render to
+
             let texture_desc = wgpu::TextureDescriptor {
                 label: None,
                 size: wgpu::Extent3d {
@@ -1589,33 +1595,21 @@ mod tests {
                 mip_level_count: 1,
                 sample_count: 1,
                 dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                format: wgpu::TextureFormat::Rgba32Float,
                 usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
                 view_formats: &[],
             };
             let texture = device.create_texture(&texture_desc);
             let texture_view = texture.create_view(&Default::default());
 
-            // ColorTargetState { format: Bgra8Unorm, blend: None, write_mask: ColorWrites(15) }
             let target_state = wgpu::ColorTargetState {
                 format: texture_desc.format,
                 blend: None,
                 write_mask: wgpu::ColorWrites::ALL,
             };
 
-            let u32_size = std::mem::size_of::<u32>() as u32;
-
-            let output_buffer_size =
-                (u32_size * texture_width * texture_height) as wgpu::BufferAddress;
-            let output_buffer_desc = wgpu::BufferDescriptor {
-                size: output_buffer_size,
-                usage: wgpu::BufferUsages::COPY_DST
-                    // this tells wpgu that we want to read this buffer from the cpu
-                    | wgpu::BufferUsages::MAP_READ,
-                label: None,
-                mapped_at_creation: false,
-            };
-            let output_buffer = device.create_buffer(&output_buffer_desc);
+            // Get all the data for the scene/render parameters in the form
+            // of buffers that we can send to the gpu
 
             let mut render_resource: RenderResource = graph.scene_graph_mut()[texture_evaluator_id]
                 .render_resource(&device, target_state.clone())
@@ -1623,14 +1617,17 @@ mod tests {
             let buffer_data: BufferData = graph.scene_graph_mut()[texture_evaluator_id]
                 .buffer_data(&device, target_state, &mut render_resource);
 
-            // TODO need mutable access to tick the counter
-            // if let Some(frame_counter) =
-            //     graph.scene_graph()[texture_evaluator_id].frame_counter_mut()
-            // {
-            //     frame_counter.tick();
-            // }
+            if let Some(frame_counter) =
+                graph.scene_graph_mut()[texture_evaluator_id].frame_counter_mut()
+            {
+                frame_counter.tick();
+            }
+
+            // Write that data to the bind groups
 
             render_resource.write_bind_groups(&queue, &buffer_data);
+
+            // Set up a render pass and paint to it
 
             let render_pass_desc = wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -1640,10 +1637,10 @@ mod tests {
                     resolve_target: None,
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
+                            r: 0.,
+                            g: 0.,
+                            b: 0.,
+                            a: 1.,
                         }),
                         store: wgpu::StoreOp::Store,
                     },
@@ -1654,6 +1651,27 @@ mod tests {
             };
 
             render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+
+            // ---------------------------------------------------------
+            // TODO test a grade pass here on the result then generalize
+            // all of this
+            // ---------------------------------------------------------
+
+            // Create a buffer that we can copy the render to
+
+            let rgba_f32_size = std::mem::size_of::<f32>() as u32 * 4;
+
+            let output_buffer_size =
+                (rgba_f32_size * texture_width * texture_height) as wgpu::BufferAddress;
+            let output_buffer_desc = wgpu::BufferDescriptor {
+                size: output_buffer_size,
+                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                label: Some("Rendered Image Buffer"),
+                mapped_at_creation: false,
+            };
+            let output_buffer: wgpu::Buffer = device.create_buffer(&output_buffer_desc);
+
+            // Copy the render to the buffer
 
             encoder.copy_texture_to_buffer(
                 wgpu::TexelCopyTextureInfo {
@@ -1666,7 +1684,7 @@ mod tests {
                     buffer: &output_buffer,
                     layout: wgpu::TexelCopyBufferLayout {
                         offset: 0,
-                        bytes_per_row: Some(u32_size * texture_width),
+                        bytes_per_row: Some(rgba_f32_size * texture_width),
                         rows_per_image: Some(texture_height),
                     },
                 },
@@ -1675,17 +1693,16 @@ mod tests {
 
             queue.submit(Some(encoder.finish()));
 
-            // We need to scope the mapping variables so that we can
-            // unmap the buffer
             {
-                let buffer_slice = output_buffer.slice(..);
+                // Wait for the buffer to be populated with the rendered data
 
-                // NOTE: We have to create the mapping THEN device.poll() before await
-                // the future. Otherwise the application will freeze.
-                let (tx, rx) = futures_intrusive::channel::shared::oneshot_channel();
+                let (transmitter, receiver) = futures_intrusive::channel::shared::oneshot_channel();
+
+                let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
                 buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                    tx.send(result).unwrap();
+                    transmitter.send(result).unwrap();
                 });
+
                 match device.poll(wgpu::PollType::Wait {
                     submission_index: None,
                     timeout: Some(core::time::Duration::new(5, 0)),
@@ -1696,16 +1713,24 @@ mod tests {
                     }
                     _ => {}
                 };
-                rx.receive().await.unwrap().unwrap();
 
+                receiver.receive().await.unwrap().unwrap();
+
+                // Get a read-only view into the buffer
                 let data = buffer_slice.get_mapped_range();
 
-                use image::{ImageBuffer, Rgba};
-                let buffer =
-                    ImageBuffer::<Rgba<u8>, _>::from_raw(texture_width, texture_height, data)
-                        .unwrap();
-                buffer.save("image.png").unwrap();
+                // Cast the buffer data into an image and save it to disk
+
+                let buffer = image::Rgba32FImage::from_raw(
+                    texture_width,
+                    texture_height,
+                    bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+                )
+                .unwrap();
+                buffer.save("image.exr").unwrap();
             }
+
+            // Release the buffer back to the GPU
             output_buffer.unmap();
         } else {
             assert!(false);

@@ -92,7 +92,7 @@ fn ray_miss_aovs(
                 nested_dielectrics,
             );
 #ifdef EnableEmissiveColourTexture
-            (*ray).colour += (*ray).throughput * procedurally_texture_vec3f(
+            (*ray).colour += (*ray).throughput * evaluate_vec3f(
                 vec4((*ray).direction, 8.27447),
                 _atmosphere.emissive_colour,
                 _atmosphere.emissive_colour_texture,

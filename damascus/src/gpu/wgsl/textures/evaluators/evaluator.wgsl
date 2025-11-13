@@ -24,21 +24,8 @@ var<storage, read> _noises: array<Noise>;
 @group(STORAGE_BIND_GROUP) @binding(GRADE_BINDING)
 var<storage, read> _grades: array<Grade>;
 
-#ifdef EnableCheckerboard
 
-fn checkerboard(seed: vec4f) -> f32 {
-    var normalized_seed: vec3f = normalize(seed.xyz);
-    var spherical_seed = vec2(
-        atan2(normalized_seed.x, normalized_seed.z),
-        acos(normalized_seed.y),
-    ) * seed.w;
-    var square_signal: vec2f = sign(fract(spherical_seed * 0.5) - 0.5);
-    return 0.5 - 0.25 * square_signal.x * square_signal.y;
-}
-
-#endif
-
-fn procedurally_texture_f32(
+fn evaluate_texture_f32(
     seed: vec4f,
     colour: f32,
     texture_type_and_index: vec2u,
@@ -68,7 +55,7 @@ fn procedurally_texture_f32(
 }
 
 
-fn procedurally_texture_vec3f(
+fn evaluate_texture_vec3f(
     seed: vec4f,
     colour: vec3f,
     texture_type_and_index: vec2u,
@@ -96,27 +83,5 @@ fn procedurally_texture_vec3f(
             return colour * vec3(octave_noise(noise.inverse_transform * seed, noise));
         }
 #endif
-    }
-}
-
-
-fn sample_equiangular(
-    distance_since_last_bounce: f32,
-    ray: ptr<function, Ray>,
-    nested_dielectrics: ptr<function, NestedDielectrics>,
-) {
-    // Get the material properties of the dielectric the ray is currently in
-    var current_dielectric: Dielectric = peek_dielectric(nested_dielectrics);
-
-    // If equiangular sampling is disabled or the dielectric does not scatter
-    // light, compute the extinction and exit early
-    if (
-        _render_parameters.equiangular_samples == 0u
-        || element_sum_vec3f(current_dielectric.scattering_colour) == 0.
-    ) {
-        (*ray).throughput *= exp(
-            -current_dielectric.extinction_colour * distance_since_last_bounce,
-        );
-        return;
     }
 }

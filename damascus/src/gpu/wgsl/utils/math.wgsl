@@ -257,6 +257,6 @@ fn spherical_unit_vector_to_cartesion(angles: vec2f) -> vec3f {
 fn uv_coordinate_to_angles(uv_coordinate: vec2f) -> vec2f {
     return vec2(
         (uv_coordinate.x + 1.) * PI,
-        (1. - uv_coordinate.y) * PI / 2.,
+        (1. - uv_coordinate.y) * PI * 0.5,
     );
 }

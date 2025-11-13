@@ -150,7 +150,7 @@ fn distance_to_hollow_sphere(
     cut_height: f32,
     thickness: f32,
 ) -> f32 {
-    var half_thickness: f32 = thickness / 2.;
+    var half_thickness: f32 = thickness * 0.5;
 
     var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
@@ -275,7 +275,7 @@ fn distance_to_rectangular_prism(
     depth: f32,
 ) -> f32 {
     // Only look at positive quadrant, using symmetry
-    var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
+    var prism_to_position = abs(position) - vec3(width, height, depth) * 0.5;
     // Clamp the components that are inside the prism to the surface
     // before getting the distance
     return signed_length_vec3f(prism_to_position);
@@ -300,7 +300,7 @@ fn distance_to_rectangular_prism_frame(
     depth: f32,
     thickness: f32,
 ) -> f32 {
-    var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
+    var prism_to_position = abs(position) - vec3(width, height, depth) * 0.5;
     var inner_reflected: vec3f = abs(prism_to_position + thickness) - thickness;
 
     return min(
@@ -333,7 +333,7 @@ fn distance_to_rhombus(
     corner_radius: f32,
 ) -> f32 {
     var abs_position: vec3f = abs(position);
-    var half_width_height = vec2(width, height) / 2.;
+    var half_width_height = vec2(width, height) * 0.5;
 
     var s: vec2f = half_width_height * (half_width_height - 2. * abs_position.xy);
     var f: f32 = clamp((s.x - s.y) / dot2_vec2f(half_width_height), -1., 1.);
@@ -349,7 +349,7 @@ fn distance_to_rhombus(
         ) - corner_radius,
         // Closest point along z-axis only depends on the thickness of
         // the extrusion
-        abs_position.z - depth / 2.
+        abs_position.z - depth * 0.5
     );
 
     return signed_length_vec2f(rhombus_to_position);
@@ -365,7 +365,7 @@ fn distance_to_rhombus(
  * @returns: The minimum distance from the point to the shape.
  */
 fn distance_to_triangular_prism(position: vec3f, base: f32, depth: f32) -> f32 {
-    // 0.28867513459f = tan(PI / 6.) / 2., converts base length
+    // 0.28867513459f = tan(PI / 6.) * 0.5, converts base length
     // to the min distance from centroid to edge of triangle
 
     // 0.86602540378f = cos(PI / 6.) = base / height
@@ -397,7 +397,7 @@ fn distance_to_cylinder(
 ) -> f32 {
     // Cylindrical coordinates (r, h), ignoring the angle due to symmetry
     var cylindrical_position: vec2f = abs(cartesian_to_cylindrical(position));
-    var cylinder_to_position = cylindrical_position - vec2(radius, height / 2.);
+    var cylinder_to_position = cylindrical_position - vec2(radius, height * 0.5);
 
     return signed_length_vec2f(cylinder_to_position);
 }
@@ -555,7 +555,7 @@ fn distance_to_capped_cone(
     lower_radius: f32,
     upper_radius: f32,
 ) -> f32 {
-    var half_height: f32 = height / 2.;
+    var half_height: f32 = height * 0.5;
     var cylindrical_position: vec2f = cartesian_to_cylindrical(position);
 
     // The 'corners' are the apparent corners when the shape is
@@ -699,7 +699,7 @@ fn distance_to_link(
     tube_radius: f32,
     height: f32,
 ) -> f32 {
-    var height_difference: f32 = abs(position.y) - height / 2.;
+    var height_difference: f32 = abs(position.y) - height * 0.5;
 
     var distance_in_xy_plane: f32 = distance_to_circle(
         vec2(position.x, positive_part_f32(height_difference)),
@@ -725,7 +725,7 @@ fn distance_to_link(
 fn distance_to_hexagonal_prism(position: vec3f, height: f32, depth: f32) -> f32 {
     // precomputed -cos(-PI / 6.), -sin(-PI / 6.), -tan(-PI / 6.)
     var cos_sin_tan = vec3(-0.86602540378, 0.5, 0.57735026919);
-    var half_height: f32 = height / 2.;
+    var half_height: f32 = height * 0.5;
 
     var abs_position: vec3f = abs(position);
     abs_position += vec3(
@@ -746,7 +746,7 @@ fn distance_to_hexagonal_prism(position: vec3f, height: f32, depth: f32) -> f32 
                 half_height,
             ),
         ),
-        abs_position.z - depth / 2.,
+        abs_position.z - depth * 0.5,
     );
 
     // Return the positive distance if we are outside, negative if we are inside
@@ -826,7 +826,7 @@ fn distance_to_mandelbulb(
     var radius: f32 = 1.;
     var iteration: u32 = 0u;
     loop {
-        radius = power * pow(radius_squared, (power - 1.) / 2.) * radius + 1.;
+        radius = power * pow(radius_squared, (power - 1.) * 0.5) * radius + 1.;
 
         var current_radius: f32 = length(current_position);
         var theta: f32 = power * acos(current_position.z / current_radius);

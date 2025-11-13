@@ -179,7 +179,7 @@ fn saturate_vec4f(value: vec4f) -> vec4f {
  *
  * @returns: The signed length of the vector.
  */
-fn sdf_length_vec2f(vector_: vec2f) -> f32 {
+fn signed_length_vec2f(vector_: vec2f) -> f32 {
     return (
         length(positive_part_vec2f(vector_))
         - negative_part_f32(max_component_vec2f(vector_))
@@ -194,7 +194,7 @@ fn sdf_length_vec2f(vector_: vec2f) -> f32 {
  *
  * @returns: The signed length of the vector.
  */
-fn sdf_length_vec3f(vector_: vec3f) -> f32 {
+fn signed_length_vec3f(vector_: vec3f) -> f32 {
     return (
         length(positive_part_vec3f(vector_))
         - negative_part_f32(max_component_vec3f(vector_))

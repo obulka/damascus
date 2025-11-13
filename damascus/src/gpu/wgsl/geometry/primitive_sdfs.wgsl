@@ -278,7 +278,7 @@ fn distance_to_rectangular_prism(
     var prism_to_position = abs(position) - vec3(width, height, depth) / 2.;
     // Clamp the components that are inside the prism to the surface
     // before getting the distance
-    return sdf_length_vec3f(prism_to_position);
+    return signed_length_vec3f(prism_to_position);
 }
 
 /**
@@ -304,10 +304,10 @@ fn distance_to_rectangular_prism_frame(
     var inner_reflected: vec3f = abs(prism_to_position + thickness) - thickness;
 
     return min(
-        sdf_length_vec3f(vec3(prism_to_position.x, inner_reflected.yz)),
+        signed_length_vec3f(vec3(prism_to_position.x, inner_reflected.yz)),
         min(
-            sdf_length_vec3f(vec3(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
-            sdf_length_vec3f(vec3(inner_reflected.xy, prism_to_position.z)),
+            signed_length_vec3f(vec3(inner_reflected.x, prism_to_position.y, inner_reflected.z)),
+            signed_length_vec3f(vec3(inner_reflected.xy, prism_to_position.z)),
         ),
     );
 }
@@ -352,7 +352,7 @@ fn distance_to_rhombus(
         abs_position.z - depth / 2.
     );
 
-    return sdf_length_vec2f(rhombus_to_position);
+    return signed_length_vec2f(rhombus_to_position);
 }
 
 /**
@@ -399,7 +399,7 @@ fn distance_to_cylinder(
     var cylindrical_position: vec2f = abs(cartesian_to_cylindrical(position));
     var cylinder_to_position = cylindrical_position - vec2(radius, height / 2.);
 
-    return sdf_length_vec2f(cylinder_to_position);
+    return signed_length_vec2f(cylinder_to_position);
 }
 
 /**
@@ -750,7 +750,7 @@ fn distance_to_hexagonal_prism(position: vec3f, height: f32, depth: f32) -> f32 
     );
 
     // Return the positive distance if we are outside, negative if we are inside
-    return sdf_length_vec2f(radial_and_z_distance);
+    return signed_length_vec2f(radial_and_z_distance);
 }
 
 /**

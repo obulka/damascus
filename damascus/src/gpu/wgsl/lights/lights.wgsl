@@ -8,7 +8,6 @@ const POINT: u32 = 1u;
 const AMBIENT: u32 = 2u;
 const AMBIENT_OCCLUSION: u32 = 3u;
 
-
 struct Light {
     light_type: u32,
     falloff: u32,
@@ -19,10 +18,8 @@ struct Light {
     shadow_hardness: f32,
 }
 
-
 @group(STORAGE_BIND_GROUP) @binding(LIGHTS_BINDING)
 var<storage, read> _lights: array<Light>;
-
 
 /**
  * Perform multiple importance sampling by combining probability
@@ -44,7 +41,6 @@ fn multiple_importance_sample(
     return emittance * throughput * balance_heuristic(pdf_0, pdf_1);
 }
 
-
 /**
  * Get the probability distribution function for the lights in the
  * scene.
@@ -58,7 +54,6 @@ fn multiple_importance_sample(
 fn sample_lights_pdf(num_lights: f32) -> f32 {
     return 1. / num_lights;
 }
-
 
 /**
  * Get the probability distribution function for equi-angular sampling.
@@ -111,7 +106,6 @@ fn sample_equiangular_pdf(
     return 1.;
 }
 
-
 /**
  * Get the direction, distance, and intensity of a light.
  *
@@ -124,7 +118,6 @@ fn sample_equiangular_pdf(
 fn light_intensity(light: ptr<function, Light>, distance_to_light: f32) -> f32 {
     return (*light).intensity / power_of_u32(distance_to_light, (*light).falloff);
 }
-
 
 /**
  * Compute the ambient occlusion.
@@ -162,7 +155,6 @@ fn sample_ambient_occlusion(
         * saturate_f32(1. - 1.5 * occlusion)          // occlusion term
     );
 }
-
 
 /**
  * Compute a soft shadow value.
@@ -221,7 +213,6 @@ fn sample_soft_shadow(
     return shadow_intensity * shadow_intensity * (3. - 2. * shadow_intensity);
 }
 
-
 /**
  * Compute a shadow value.
  *
@@ -262,7 +253,6 @@ fn sample_shadow(
 
     return 1.;
 }
-
 
 /**
  * Perform direct illumination light sampling on a chosen artificial
@@ -366,7 +356,6 @@ fn sample_non_physical_light(
     }
 }
 
-
 fn sample_physical_light(
     seed: ptr<function, Seed>,
     light_index: u32,
@@ -446,7 +435,6 @@ fn sample_physical_light(
 
     return vec3f();
 }
-
 
 /**
  * Perform direct illumination light sampling.

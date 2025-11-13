@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const NONE: u32 = 0u;
 const WHITE: u32 = 1u;
 const BLACK: u32 = 2u;
@@ -12,18 +11,14 @@ const CONSTANT: u32 = 4u;
 const GRADE: u32 = 5u;
 const NOISE: u32 = 6u;
 
-
 @group(STORAGE_BIND_GROUP) @binding(CHECKERBOARD_BINDING)
 var<storage, read> _checkerboards: array<Checkerboard>;
-
 
 @group(STORAGE_BIND_GROUP) @binding(NOISE_BINDING)
 var<storage, read> _noises: array<Noise>;
 
-
 @group(STORAGE_BIND_GROUP) @binding(GRADE_BINDING)
 var<storage, read> _grades: array<Grade>;
-
 
 fn evaluate_texture_f32(
     seed: vec4f,
@@ -53,7 +48,6 @@ fn evaluate_texture_f32(
 #endif
     }
 }
-
 
 fn evaluate_texture_vec3f(
     seed: vec4f,

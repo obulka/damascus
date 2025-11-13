@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const BEAUTY_AOV: u32 = 0u;
 const WORLD_POSITION_AOV: u32 = 1u;
 const LOCAL_POSITION_AOV: u32 = 2u;
@@ -11,7 +10,6 @@ const SURFACE_NORMAL_AOV: u32 = 3u;
 const DEPTH_AOV: u32 = 4u;
 const CRYPTOMATTE_AOV: u32 = 5u;
 const STATS_AOV: u32 = 6u;
-
 
 #ifdef EnableAOVs
 fn early_exit_aovs(
@@ -48,7 +46,6 @@ fn early_exit_aovs(
     }
 }
 
-
 fn final_aovs(
     aov_type: u32,
     bounces: u32,
@@ -70,7 +67,6 @@ fn final_aovs(
     }
 }
 #endif
-
 
 fn ray_miss_aovs(
     aov_type: u32,

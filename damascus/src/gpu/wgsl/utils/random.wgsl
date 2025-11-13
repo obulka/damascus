@@ -8,7 +8,6 @@ struct Seed {
     increment: u32,
 }
 
-
 /**
  * Update the underlying hash state on the seed and
  * return the next hash.
@@ -32,7 +31,6 @@ fn next_hash(seed: ptr<function, Seed>) -> u32
     return (xor_shifted >> 22u) ^ xor_shifted;
 }
 
-
 /**
  * Get a random value on the interval [0, 1].
  *
@@ -45,7 +43,6 @@ fn random_f32(seed: ptr<function, Seed>) -> f32
     return f32(next_hash(seed)) / 4294967295.0; // 2^32 - 1
 }
 
-
 /**
  * Get a random value on the interval [0, 1].
  *
@@ -57,7 +54,6 @@ fn random_vec2f(seed: ptr<function, Seed>) -> vec2f {
     return vec2(random_f32(seed), random_f32(seed));
 }
 
-
 /**
  * Get a random value on the interval [0, 1].
  *
@@ -68,7 +64,6 @@ fn random_vec2f(seed: ptr<function, Seed>) -> vec2f {
 fn random_vec3f(seed: ptr<function, Seed>) -> vec3f {
     return vec3(random_f32(seed), random_f32(seed), random_f32(seed));
 }
-
 
 /**
  * Create a random unit vector in the hemisphere aligned along the
@@ -99,7 +94,6 @@ fn cosine_direction_in_hemisphere(seed: ptr<function, Seed>, axis: vec3f) -> vec
     );
 }
 
-
 /**
  * Create a random point that lies within the unit circle.
  *
@@ -110,7 +104,6 @@ fn cosine_direction_in_hemisphere(seed: ptr<function, Seed>, axis: vec3f) -> vec
 fn uniform_point_in_unit_circle(seed: ptr<function, Seed>) -> vec2f {
     return vec2f(sqrt(random_f32(seed)), TWO_PI * random_f32(seed));
 }
-
 
 /**
  * Create a random point that lies within the unit circle.

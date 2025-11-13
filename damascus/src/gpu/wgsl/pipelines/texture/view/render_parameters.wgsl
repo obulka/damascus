@@ -3,9 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 // ------- Flag bit masks --------
-
 
 struct RenderParameters {
     resolution: vec2f, // Resolution of the entire view area, not the image or its display size
@@ -13,13 +11,11 @@ struct RenderParameters {
     flags: u32,
 }
 
-
 struct RenderState {
     pan: vec2f,
     zoom: f32,
     flags: u32,
 }
-
 
 // Global render settings
 @group(UNIFORM_BIND_GROUP) @binding(RENDER_PARAMETERS_BINDING)

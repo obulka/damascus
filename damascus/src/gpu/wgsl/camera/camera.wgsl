@@ -3,10 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const ENABLE_DEPTH_OF_FIELD: u32 = 1u;
 const LATLONG: u32 = 2u;
-
 
 struct Camera {
     flags: u32,
@@ -19,10 +17,8 @@ struct Camera {
     camera_to_screen: mat4x4f,
 }
 
-
 @group(UNIFORM_BIND_GROUP) @binding(RENDER_CAMERA_BINDING)
 var<uniform> _render_camera: Camera;
-
 
 fn world_to_camera_space(world_position: vec3f) -> vec3f {
     return (
@@ -30,7 +26,6 @@ fn world_to_camera_space(world_position: vec3f) -> vec3f {
         * vec4(world_position, 1.)
     ).xyz;
 }
-
 
 /**
  * Get the right direction of the render camera.
@@ -45,7 +40,6 @@ fn render_camera_right() -> vec3f {
     );
 }
 
-
 /**
  * Get the up direction of the render camera.
  *
@@ -58,7 +52,6 @@ fn render_camera_up() -> vec3f {
         _render_camera.camera_to_world[1][2],
     );
 }
-
 
 /**
  * Get the forward direction of the render camera.
@@ -73,7 +66,6 @@ fn render_camera_forward() -> vec3f {
     );
 }
 
-
 /**
  * Get the position of the render camera.
  *
@@ -87,7 +79,6 @@ fn render_camera_position() -> vec3f {
     );
 }
 
-
 /**
  * Get the near plane of the render camera.
  *
@@ -100,7 +91,6 @@ fn render_camera_near_plane() -> f32 {
     );
 }
 
-
 /**
  * Get the far plane of the render camera.
  *
@@ -112,7 +102,6 @@ fn render_camera_far_plane() -> f32 {
         / (_render_camera.camera_to_screen[2][2] + 1.)
     );
 }
-
 
 /**
  * Get the distance between the near and far plane of
@@ -130,7 +119,6 @@ fn render_camera_far_to_near_plane() -> f32 {
         )
     );
 }
-
 
 /**
  * Get the rotation of the render camera.
@@ -150,7 +138,6 @@ fn render_camera_rotation() -> mat3x3f {
     rotation_matrix[2][2] = _render_camera.camera_to_world[2][2];
     return rotation_matrix;
 }
-
 
 /**
  * Create a ray out of the camera. It will be either a standard ray,

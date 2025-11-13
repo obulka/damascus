@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 fn find_nearest_descendant(
     position: vec3f,
     hit_tolerance: f32,
@@ -170,7 +169,6 @@ fn find_nearest_descendant(
     return distance_to_family;
 }
 
-
 fn find_nearest_primitive(
     position: vec3f,
     pixel_footprint: f32,
@@ -229,7 +227,6 @@ fn find_nearest_primitive(
     (*closest_primitive).dimensional_data = unmodified_closest_primitive.dimensional_data;
     (*closest_primitive).transform = unmodified_closest_primitive.transform;
 }
-
 
 fn distance_to_descendants(
     position: vec3f,
@@ -373,7 +370,6 @@ fn distance_to_descendants(
 
     return distance_to_family;
 }
-
 
 fn signed_distance_to_scene(
     position: vec3f,

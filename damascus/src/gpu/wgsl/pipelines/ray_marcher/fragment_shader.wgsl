@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 //
 // Ray Marching shader
 //
@@ -28,7 +27,6 @@
 #include Lights
 #include Camera
 #include AOVs
-
 
 /**
  * Handle the interaction between a ray and the surface of a material.
@@ -111,7 +109,6 @@ fn material_interaction(
 
     return material_pdf;
 }
-
 
 /**
  * March a path through the scene.
@@ -273,16 +270,13 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
     );
 }
 
-
 @group(STORAGE_TEXTURE_BIND_GROUP) @binding(PROGRESSIVE_RENDERING_TEXTURE_BINDING)
 var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
-
 
 struct FragmentInput {
     @location(TEXTURE_UV_LOCATION) uv_coordinate: vec4f,
     @builtin(position) frag_coordinate: vec4f, // pixel centers
 }
-
 
 @fragment
 fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {

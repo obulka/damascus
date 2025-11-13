@@ -8,12 +8,10 @@
 #include Texture
 #include TextureViewerRenderParameters
 
-
 struct VertexInput {
     @builtin(vertex_index) vertex_index: u32,
     @builtin(instance_index) instance_index: u32,
 }
-
 
 struct VertexOutput {
     // Pass the pixel indices to the fragment shader
@@ -22,15 +20,12 @@ struct VertexOutput {
     @builtin(position) ndc_coordinate: vec4f,
 }
 
-
 struct VertexData {
     uv_coordinate: vec2f,
 }
 
-
 @group(VERTEX_BIND_GROUP) @binding(VERTEX_DATA_BINDING)
 var<storage, read> _vertex_data: array<VertexData>;
-
 
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {

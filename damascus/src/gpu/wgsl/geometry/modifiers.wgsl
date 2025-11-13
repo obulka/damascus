@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const FINITE_REPETITION: u32 = 1u;
 const INFINITE_REPETITION: u32 = 2u;
 const ELONGATE: u32 = 4u;
@@ -127,7 +126,6 @@ fn modify_distance(distance: f32, primitive: ptr<function, Primitive>) -> f32 {
 #endif
 }
 
-
 /**
  * Transform and rotate a position.
  *
@@ -145,7 +143,6 @@ fn rotate_translate_position(
         * (position - (*primitive).transform.translation)
     );
 }
-
 
 /**
  * Mirror/elongate/repeat primitive at a position.
@@ -220,7 +217,6 @@ fn transform_position(
     return transformed_position;
 #endif
 }
-
 
 /**
  * Modify the material of a primitive using its procedural textures.
@@ -593,7 +589,6 @@ fn distance_to_transformed_primitive(
     return distance;
 }
 
-
 /**
  * Compute the min distance from a point to a geometric object.
  *
@@ -632,7 +627,6 @@ fn distance_to_textured_primitive(
     return modify_distance(distance * (*primitive).transform.uniform_scale, primitive);
 }
 
-
 /**
  * Compute the min distance from a point to a geometric object.
  *
@@ -666,7 +660,6 @@ fn distance_to_primitive(
 
     return modify_distance(distance * (*primitive).transform.uniform_scale, primitive);
 }
-
 
 fn mix_material_samples(
     material_0: ptr<function, MaterialSample>,
@@ -726,7 +719,6 @@ fn mix_material_samples(
     *material_1 = *material_0;
 }
 
-
 fn select_primitive(
     primitive_0: ptr<function, Primitive>,
     primitive_1: ptr<function, Primitive>,
@@ -745,7 +737,6 @@ fn select_primitive(
     );
     (*primitive_1).material_id = (*primitive_0).material_id;
 }
-
 
 fn select_material_sample(
     material_0: ptr<function, MaterialSample>,
@@ -803,7 +794,6 @@ fn select_material_sample(
         choice,
     );
 }
-
 
 fn blend_primitives(
     distance_to_parent: f32,
@@ -866,7 +856,6 @@ fn blend_primitives(
         }
     }
 }
-
 
 fn blend_distances(
     distance_to_parent: f32,

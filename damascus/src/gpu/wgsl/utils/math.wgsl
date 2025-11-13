@@ -3,22 +3,18 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const PI: f32 = 3.141592653589793;
 const TWO_PI: f32 = 6.28318530718;
 const MAX_F32: f32 = 3.40282346638528859812e+38f;
-
 
 // wish we could overload functions
 fn max_component_vec2f(vector_: vec2f) -> f32 {
     return max(vector_.x, vector_.y);
 }
 
-
 fn max_component_vec3f(vector_: vec3f) -> f32 {
     return max(vector_.x, max(vector_.y, vector_.z));
 }
-
 
 /**
  * The positive part of the vector. Ie. any negative values will be 0.
@@ -31,7 +27,6 @@ fn positive_part_f32(value: f32) -> f32 {
     return max(value, 0.);
 }
 
-
 /**
  * The positive part of the vector. Ie. any negative values will be 0.
  *
@@ -43,7 +38,6 @@ fn positive_part_vec2f(value: vec2f) -> vec2f {
     return max(value, vec2(0.));
 }
 
-
 /**
  * The positive part of the vector. Ie. any negative values will be 0.
  *
@@ -54,7 +48,6 @@ fn positive_part_vec2f(value: vec2f) -> vec2f {
 fn positive_part_vec3f(value: vec3f) -> vec3f {
     return max(value, vec3(0.));
 }
-
 
 /**
  * The negative part of the vector. Ie. any positive values will be 0,
@@ -68,7 +61,6 @@ fn negative_part_f32(value: f32) -> f32 {
     return -min(value, 0.);
 }
 
-
 /**
  * Sum the components of a vector.
  *
@@ -79,7 +71,6 @@ fn negative_part_f32(value: f32) -> f32 {
 fn element_sum_vec3f(vector_: vec3f) -> f32 {
     return vector_.x + vector_.y + vector_.z;
 }
-
 
 /**
  * Sum the components of a vector.
@@ -92,7 +83,6 @@ fn element_sum_vec4f(vector_: vec4f) -> f32 {
     return vector_.x + vector_.y + vector_.z + vector_.w;
 }
 
-
 /**
  * Convert a cartesion vector to cylindrical, without worrying about
  * the angle.
@@ -102,7 +92,6 @@ fn element_sum_vec4f(vector_: vec4f) -> f32 {
 fn cartesian_to_cylindrical(coordinates: vec3f) -> vec2f {
     return vec2(length(coordinates.xz), coordinates.y);
 }
-
 
 /**
  * Dot product of a vector with itself.
@@ -115,7 +104,6 @@ fn dot2_vec2f(vector_: vec2f) -> f32 {
     return dot(vector_, vector_);
 }
 
-
 /**
  * Dot product of a vector with itself.
  *
@@ -126,7 +114,6 @@ fn dot2_vec2f(vector_: vec2f) -> f32 {
 fn dot2_vec3f(vector_: vec3f) -> f32 {
     return dot(vector_, vector_);
 }
-
 
 /**
  * Get the length of the shorter of two vectors.
@@ -142,7 +129,6 @@ fn min_length_vec2f(vector_0: vec2f, vector_1: vec2f) -> f32 {
     return sqrt(min(dot2_vec2f(vector_0), dot2_vec2f(vector_1)));
 }
 
-
 /**
  * Saturate a value ie. clamp between 0 and 1
  *
@@ -156,7 +142,6 @@ fn min_length_vec2f(vector_0: vec2f, vector_1: vec2f) -> f32 {
 fn saturate_f32(value: f32) -> f32 {
     return clamp(value, 0., 1.);
 }
-
 
 /**
  * Saturate a value ie. clamp between 0 and 1
@@ -172,7 +157,6 @@ fn saturate_vec3f(value: vec3f) -> vec3f {
     return clamp(value, vec3(0.), vec3(1.));
 }
 
-
 /**
  * Saturate a value ie. clamp between 0 and 1
  *
@@ -186,7 +170,6 @@ fn saturate_vec3f(value: vec3f) -> vec3f {
 fn saturate_vec4f(value: vec4f) -> vec4f {
     return clamp(value, vec4(0.), vec4(1.));
 }
-
 
 /**
  * Compute the signed distance along a vector
@@ -203,7 +186,6 @@ fn sdf_length_vec2f(vector_: vec2f) -> f32 {
     );
 }
 
-
 /**
  * Compute the signed distance along a vector
  *
@@ -219,7 +201,6 @@ fn sdf_length_vec3f(vector_: vec3f) -> f32 {
     );
 }
 
-
 /**
  * Combine two PDFs in an optimal manner.
  *
@@ -231,7 +212,6 @@ fn sdf_length_vec3f(vector_: vec3f) -> f32 {
 fn balance_heuristic(pdf_0: f32, pdf_1: f32) -> f32 {
     return pdf_0 / (pdf_0 + pdf_1);
 }
-
 
 fn power_of_u32(base: f32, exponent: u32) -> f32 {
     var base_: f32 = base;
@@ -251,7 +231,6 @@ fn power_of_u32(base: f32, exponent: u32) -> f32 {
     return result;
 }
 
-
 /**
  * Convert a spherical unit vector (unit radius) to cartesion.
  *
@@ -267,7 +246,6 @@ fn spherical_unit_vector_to_cartesion(angles: vec2f) -> vec3f {
         sin(angles.x) * sin_phi,
     );
 }
-
 
 /**
  * Convert the uv coordinate in a latlong image to angles.

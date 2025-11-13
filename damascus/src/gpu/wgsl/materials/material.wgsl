@@ -3,10 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 // Increasing OR decreasing this number seems to negatively affect performance
 const NESTED_DIELECTRIC_DEPTH: u32 = 7u;
-
 
 struct Material {
     diffuse_colour: vec3f,
@@ -31,7 +29,6 @@ struct Material {
     scattering_colour_texture: vec2u,
 }
 
-
 struct MaterialSample {
     diffuse_colour: vec3f,
     specular_probability: f32,
@@ -45,7 +42,6 @@ struct MaterialSample {
     refractive_index: f32,
 }
 
-
 struct Dielectric {
     id: u32,
     refractive_index: f32,
@@ -53,20 +49,16 @@ struct Dielectric {
     scattering_colour: vec3f,
 }
 
-
 struct NestedDielectrics {
     current_depth: u32,
     nested_dielectrics: array<Dielectric, NESTED_DIELECTRIC_DEPTH>,
 }
 
-
 @group(STORAGE_BIND_GROUP) @binding(MATERIALS_BINDING)
 var<storage, read> _materials: array<Material>;
 
-
 @group(UNIFORM_BIND_GROUP) @binding(ATMOSPHERE_BINDING)
 var<uniform> _atmosphere: Material;
-
 
 fn dielectric_from_atmosphere() -> Dielectric {
     return Dielectric(
@@ -76,7 +68,6 @@ fn dielectric_from_atmosphere() -> Dielectric {
         _atmosphere.scattering_colour,
     );
 }
-
 
 fn dielectric_from_primitive(
     primitive: ptr<function, Primitive>,
@@ -90,7 +81,6 @@ fn dielectric_from_primitive(
     );
 }
 
-
 fn push_dielectric(
     dielectric: Dielectric,
     nested_dielectrics: ptr<function, NestedDielectrics>,
@@ -102,11 +92,9 @@ fn push_dielectric(
     );
 }
 
-
 fn peek_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth - 1u];
 }
-
 
 fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
     (*nested_dielectrics).current_depth = select(
@@ -117,11 +105,9 @@ fn pop_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Diele
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth];
 }
 
-
 fn peek_previous_dielectric(nested_dielectrics: ptr<function, NestedDielectrics>) -> Dielectric {
     return (*nested_dielectrics).nested_dielectrics[(*nested_dielectrics).current_depth - 2u];
 }
-
 
 /**
  * Compute the schlick, simplified fresnel reflection coefficient.
@@ -168,7 +154,6 @@ fn schlick_reflection_coefficient(
         * one_minus_cos_x
     );
 }
-
 
 /**
  * Perform material sampling.
@@ -350,7 +335,6 @@ fn sample_material(
     *light_sampling_pdf = probability_over_pi;
     return probability_over_pi * dot(diffuse_direction, surface_normal);
 }
-
 
 fn sample_equiangular(
     distance_since_last_bounce: f32,

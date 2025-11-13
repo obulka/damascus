@@ -16,7 +16,6 @@
 // const EMISSION_TRAP: u32 = 65536u;
 // const SCATTERING_TRAP: u32 = 131072u;
 
-
 const CAPPED_CONE: u32 = 0u;
 const CAPPED_TORUS: u32 = 1u;
 const CAPSULE: u32 = 2u;
@@ -43,7 +42,6 @@ const SPHERE: u32 = 22u;
 const TORUS: u32 = 23u;
 const TRIANGULAR_PRISM: u32 = 24u;
 
-
 /**
  * Compute the min distance from a point to a circle.
  *
@@ -56,7 +54,6 @@ fn distance_to_circle(position: vec2f, radius: f32) -> f32 {
     return length(position) - radius;
 }
 
-
 /**
  * Compute the min distance from a point to a sphere.
  *
@@ -68,7 +65,6 @@ fn distance_to_circle(position: vec2f, radius: f32) -> f32 {
 fn distance_to_sphere(position: vec3f, radius: f32) -> f32 {
     return length(position) - radius;
 }
-
 
 /**
  * Compute the inexact min distance from a point to an ellipsoid.
@@ -88,7 +84,6 @@ fn distance_to_ellipsoid(position: vec3f, radii: vec3f) -> f32 {
 
     return scaled_length * (scaled_length - 1.) / length(transformed_position / radii);
 }
-
 
 /**
  * Compute the min distance from a point to a cut sphere.
@@ -137,7 +132,6 @@ fn distance_to_cut_sphere(
     }
 }
 
-
 /**
  * Compute the min distance from a point to a hollow sphere.
  * The hollowed opening points up the y-axis.
@@ -170,7 +164,6 @@ fn distance_to_hollow_sphere(
         cut_height * cylindrical_position.x < cut_radius * cylindrical_position.y,
     );
 }
-
 
 /**
  * Compute the min distance from a point to a death star.
@@ -224,7 +217,6 @@ fn distance_to_death_star(
     );
 }
 
-
 /**
  * Compute the min distance from a point to a solid angle.
  * The conical shape has its tip at the origin and opens up the y-axis.
@@ -265,7 +257,6 @@ fn distance_to_solid_angle(
     return max(distance_to_sphere, inside * distance_to_cone);
 }
 
-
 /**
  * Compute the min distance from a point to a rectangular prism.
  * Centered at the origin.
@@ -289,7 +280,6 @@ fn distance_to_rectangular_prism(
     // before getting the distance
     return sdf_length_vec3f(prism_to_position);
 }
-
 
 /**
  * Compute the min distance from a point to the frame of a
@@ -321,7 +311,6 @@ fn distance_to_rectangular_prism_frame(
         ),
     );
 }
-
 
 /**
  * Compute the min distance from a point to a rhombus.
@@ -366,7 +355,6 @@ fn distance_to_rhombus(
     return sdf_length_vec2f(rhombus_to_position);
 }
 
-
 /**
  * Compute the min distance from a point to a triangular prism.
  *
@@ -392,7 +380,6 @@ fn distance_to_triangular_prism(position: vec3f, base: f32, depth: f32) -> f32 {
     );
 }
 
-
 /**
  * Compute the min distance from a point to a cylinder
  * Symmetric about the xz-plane.
@@ -415,7 +402,6 @@ fn distance_to_cylinder(
     return sdf_length_vec2f(cylinder_to_position);
 }
 
-
 /**
  * Compute the min distance from a point to an infinite cylinder
  * (y-axis aligned).
@@ -428,7 +414,6 @@ fn distance_to_cylinder(
 fn distance_to_infinite_cylinder(position: vec3f, radius: f32) -> f32 {
     return distance_to_circle(position.xz, radius);
 }
-
 
 /**
  * Compute the min distance from a point to a plane.
@@ -443,7 +428,6 @@ fn distance_to_infinite_cylinder(position: vec3f, radius: f32) -> f32 {
 fn distance_to_plane(position: vec3f, normal: vec3f) -> f32 {
     return dot(position, normal);
 }
-
 
 /**
  * Compute the min distance from a point to a capsule.
@@ -470,7 +454,6 @@ fn distance_to_capsule(
         position.z,
     )) - radius;
 }
-
 
 /**
  * Compute the min distance from a point to a cone
@@ -519,7 +502,6 @@ fn distance_to_cone(position: vec3f, angle: f32, height: f32) -> f32 {
     return inside * min_length_vec2f(cone_edge_to_position, cone_top_to_position);
 }
 
-
 /**
  * Compute the min distance from a point to an infinite cone
  * (y-axis aligned). The tip of the cone is at the origin, and it opens
@@ -554,7 +536,6 @@ fn distance_to_infinite_cone(position: vec3f, angle: f32) -> f32 {
         ),
     );
 }
-
 
 /**
  * Compute the min distance from a point to a capped cone.
@@ -609,7 +590,6 @@ fn distance_to_capped_cone(
     );
 }
 
-
 /**
  * Compute the min distance from a point to a rounded cone.
  * Oriented along the y-axis.
@@ -650,7 +630,6 @@ fn distance_to_rounded_cone(
     return dot(cylindrical_position, vec2(parallel_y, -parallel_x)) - lower_radius;
 }
 
-
 /**
  * Compute the min distance from a point to a torus.
  *
@@ -666,7 +645,6 @@ fn distance_to_torus(position: vec3f, ring_radius: f32, tube_radius: f32) -> f32
         tube_radius,
     );
 }
-
 
 /**
  * Compute the min distance from a point to a capped torus.
@@ -704,7 +682,6 @@ fn distance_to_capped_torus(
     ) - tube_radius;
 }
 
-
 /**
  * Compute the min distance from a point to a chain link.
  *
@@ -733,7 +710,6 @@ fn distance_to_link(
         tube_radius,
     );
 }
-
 
 /**
  * Compute the min distance from a point to a hexagonal prism.
@@ -777,7 +753,6 @@ fn distance_to_hexagonal_prism(position: vec3f, height: f32, depth: f32) -> f32 
     return sdf_length_vec2f(radial_and_z_distance);
 }
 
-
 /**
  * Compute the min distance from a point to a octahedron.
  *
@@ -816,7 +791,6 @@ fn distance_to_octahedron(position: vec3f, radial_extent: f32) -> f32 {
         change_of_axes.z - surface,
     ));
 }
-
 
 /**
  * Compute the min distance from a point to a mandelbulb.
@@ -885,11 +859,9 @@ fn distance_to_mandelbulb(
     return 0.25 * log(radius_squared) * sqrt(radius_squared) / radius;
 }
 
-
 fn box_fold(position: vec3f, folding_limit: vec3f) -> vec3f {
     return clamp(position, -folding_limit, folding_limit) * 2. - position;
 }
-
 
 fn sphere_fold(
     position: vec4f,
@@ -900,7 +872,6 @@ fn sphere_fold(
         max(min_square_radius / radius_squared, min_square_radius),
     );
 }
-
 
 /**
  * Compute the min distance from a point to a mandelbox.

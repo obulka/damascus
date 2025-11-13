@@ -3,7 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 /**
  * Convert location in uv space to pixel space.
  *
@@ -16,7 +15,6 @@ fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return (pixel_coordinates + 1.) * (resolution - 1.) * 0.5;
 }
 
-
 /**
  * Convert location in pixel space to uv space.
  *
@@ -28,7 +26,6 @@ fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
 fn pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return pixel_coordinates * 2. / (resolution - 1.) - 1.;
 }
-
 
 fn scale_pixels_to_uv(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
     return pixel_coordinates * 2. / resolution;

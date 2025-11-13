@@ -5,7 +5,6 @@
 
 const INVERT: u32 = 1u;
 
-
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(
         pow(
@@ -26,7 +25,6 @@ fn grade_f32(colour: f32, grade: Grade) -> f32 {
         grade.white_point == grade.black_point,
     );
 }
-
 
 fn grade_vec3(colour: vec3f, grade: Grade) -> vec3f {
     return transform_colour3f(
@@ -52,7 +50,6 @@ fn grade_vec3(colour: vec3f, grade: Grade) -> vec3f {
     );
 }
 
-
 fn grade_vec4(colour: vec4f, grade: Grade) -> vec4f {
     return transform_colour4f(
         grade.transform,
@@ -76,7 +73,6 @@ fn grade_vec4(colour: vec4f, grade: Grade) -> vec4f {
         ),
     );
 }
-
 
 struct Grade {
     flags: u32,

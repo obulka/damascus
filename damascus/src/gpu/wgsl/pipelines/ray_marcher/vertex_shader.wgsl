@@ -5,27 +5,22 @@
 
 #include RayMarcherConstants
 
-
 struct VertexInput {
     @builtin(vertex_index) vertex_index: u32,
     @builtin(instance_index) instance_index: u32,
 }
-
 
 struct VertexOutput {
     @location(TEXTURE_UV_LOCATION) uv_coordinate: vec4f,
     @builtin(position) ndc_coordinate: vec4f, // <[-1, 1], [-1, 1], [0, 1]>
 }
 
-
 struct VertexData {
     uv_coordinate: vec2f,
 }
 
-
 @group(VERTEX_BIND_GROUP) @binding(VERTEX_DATA_BINDING)
 var<storage, read> _vertex_data: array<VertexData>;
-
 
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {

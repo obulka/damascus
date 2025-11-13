@@ -3,10 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-
 const FBM_NOISE: u32 = 0u;
 const TURBULENCE_NOISE: u32 = 1u;
-
 
 struct Noise {
     noise_type: u32,
@@ -22,10 +20,8 @@ struct Noise {
     inverse_transform: mat4x4f,
 }
 
-
 #ifdef EnableNoise
 const G4: f32 = 0.138196601;
-
 
 var<private> PERM: array<u32, 512> = array<u32, 512>(
     151u, 160u, 137u, 91u, 90u, 15u, 131u, 13u, 201u, 95u, 96u, 53u, 194u, 233u,
@@ -68,7 +64,6 @@ var<private> PERM: array<u32, 512> = array<u32, 512>(
     24u, 72u, 243u, 141u, 128u, 195u, 78u, 66u, 215u, 61u, 156u, 180u,
 );
 
-
 var<private> GRAD4: array<vec4f, 32> = array<vec4f, 32>(
     vec4(0., 1., 1., 1.), vec4(0., 1., 1., -1.),
     vec4(0., 1., -1., 1.), vec4(0., 1., -1., -1.),
@@ -87,7 +82,6 @@ var<private> GRAD4: array<vec4f, 32> = array<vec4f, 32>(
     vec4(-1., 1., 1., 0.), vec4(-1., 1., -1., 0.),
     vec4(-1., -1., 1., 0.), vec4(-1., -1., -1., 0.),
 );
-
 
 var<private> SIMPLEX: array<vec4u, 64> = array<vec4u, 64>(
     vec4(0u, 1u, 2u, 3u), vec4(0u, 1u, 3u, 2u),
@@ -123,7 +117,6 @@ var<private> SIMPLEX: array<vec4u, 64> = array<vec4u, 64>(
     vec4(3u, 1u, 0u, 2u), vec4(0u, 0u, 0u, 0u),
     vec4(3u, 2u, 0u, 1u), vec4(3u, 2u, 1u, 0u),
 );
-
 
 /**
  * 4D Perlin simplex noise
@@ -209,7 +202,6 @@ fn perlin_simplex_noise(seed: vec4f) -> f32 {
 
     return 27. * n;
 }
-
 
 /**
  * Octave noise.

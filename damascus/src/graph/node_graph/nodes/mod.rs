@@ -5,10 +5,10 @@
 
 use std::fmt;
 
+use macro_rules_attribute::derive;
 use slotmap::SlotMap;
-use strum::{EnumCount, EnumIter, EnumString};
 
-use crate::{Enumerator, Errors};
+use crate::ErrorTraits;
 
 use super::inputs::input_data::InputData;
 
@@ -21,17 +21,7 @@ slotmap::new_key_type! { pub struct NodeId; }
 
 pub type Nodes = SlotMap<NodeId, Node>;
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Default, ErrorTraits!)]
 pub enum NodeErrors {
     InputDowncastError {
         data: InputData,
@@ -88,6 +78,3 @@ impl fmt::Display for NodeErrors {
         }
     }
 }
-
-impl Enumerator for NodeErrors {}
-impl Errors for NodeErrors {}

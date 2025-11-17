@@ -6,10 +6,10 @@
 use std::{any::type_name, collections::HashMap};
 
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enum, Enumerator,
+    Enum, EnumTraits, Enumerator,
     camera::CameraId,
     geometry::primitives::PrimitiveId,
     graph::{
@@ -24,18 +24,7 @@ use crate::{
     textures::evaluators::TextureEvaluatorId,
 };
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Default, EnumTraits!)]
 pub enum InputData {
     #[default]
     None,
@@ -55,8 +44,6 @@ pub enum InputData {
     Filepath(String),
     SceneGraphId(SceneGraphId),
 }
-
-impl Enumerator for InputData {}
 
 impl InputData {
     pub fn try_to_bool(self) -> NodeResult<bool> {

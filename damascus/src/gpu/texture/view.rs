@@ -3,36 +3,19 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
-use crate::{Enumerator, gpu::PreprocessorDirectives};
+use crate::{EnumHashTraits, gpu::PreprocessorDirectives};
 
 pub const TEXTURE_VIEWER_VERTEX_SHADER: &str =
     include_str!("../wgsl/pipelines/texture/view/vertex_shader.wgsl");
 pub const TEXTURE_VIEWER_FRAGMENT_SHADER: &str =
     include_str!("../wgsl/pipelines/texture/view/fragment_shader.wgsl");
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    Copy,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    Hash,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum TextureViewerPreprocessorDirectives {
     #[default]
     None,
 }
-
-impl Enumerator for TextureViewerPreprocessorDirectives {}
 
 impl PreprocessorDirectives for TextureViewerPreprocessorDirectives {}

@@ -6,12 +6,12 @@
 use std::{collections::HashSet, str::FromStr};
 
 use crevice::std430::AsStd430;
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use super::PreprocessorDirectives;
 
 use crate::{
-    DualDevice, Enumerator,
+    DualDevice, EnumHashTraits,
     camera::{Camera, GPUCamera},
     geometry::{
         BlendType, Repetition,
@@ -86,22 +86,7 @@ impl GPUScene {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    Copy,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    Hash,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum ScenePreprocessorDirectives {
     #[default]
     EnableDiffuseColourTexture,
@@ -158,8 +143,6 @@ pub enum ScenePreprocessorDirectives {
     EnableAmbientOcclusion,
     EnableSoftShadows,
 }
-
-impl Enumerator for ScenePreprocessorDirectives {}
 
 impl PreprocessorDirectives for ScenePreprocessorDirectives {}
 

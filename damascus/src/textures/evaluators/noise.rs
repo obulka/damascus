@@ -5,32 +5,17 @@
 
 use crevice::std430::AsStd430;
 use glam::{Mat4, Vec4};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
-use crate::{DualDevice, Enumerator};
+use crate::{DualDevice, EnumHashTraits};
 
-#[derive(
-    Debug,
-    Default,
-    Display,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum NoiseType {
     #[default]
     FBMNoise,
     TurbulenceNoise,
     // VoronoiNoise,
 }
-
-impl Enumerator for NoiseType {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]

@@ -12,6 +12,7 @@ use std::{
 
 use crevice::std430::AsStd430;
 use glam::Mat4;
+use macro_rules_attribute::derive_alias;
 use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
@@ -121,7 +122,64 @@ impl<E: Enumerator> From<E> for Enum {
 
 pub trait Errors: Enumerator {}
 
-#[macro_export]
+derive_alias! {
+    #[derive(BaseEnumTraits!)] = #[derive(
+        Debug,
+        Clone,
+        strum::EnumIter,
+        strum::EnumCount,
+        strum::EnumString,
+        PartialEq,
+        serde::Serialize,
+        serde::Deserialize,
+        crate::EnumTrait!,
+    )];
+    #[derive(EnumTraits!)] = #[derive(
+        strum::Display,
+        crate::BaseEnumTraits!,
+    )];
+    #[derive(EnumBaseHashTraits!)] = #[derive(
+        Eq,
+        Hash,
+        Ord,
+        PartialOrd,
+        crate::BaseEnumTraits!,
+    )];
+    #[derive(EnumHashTraits!)] = #[derive(
+        strum::Display,
+        crate::EnumBaseHashTraits!,
+    )];
+    #[derive(ErrorTraits!)] = #[derive(crate::BaseEnumTraits!, crate::ErrorTrait!)];
+}
+
+macro_rules! EnumTrait {
+    (
+        $( #[$attr:meta] )*
+        $pub:vis
+        enum $type:ident {
+            $($variants:tt)*
+        }
+    ) => {
+        impl crate::Enumerator for $type {}
+    };
+}
+
+pub(crate) use EnumTrait;
+
+macro_rules! ErrorTrait {
+    (
+    $( #[$attr:meta] )*
+    $pub:vis
+    enum $type:ident {
+        $($variants:tt)*
+    }
+) => {
+        impl crate::Errors for $type {}
+    };
+}
+
+pub(crate) use ErrorTrait;
+
 macro_rules! impl_slot_map_indexing {
     ($graph:ty, $id_type:ty, $output_type:ty, $arena:ident) => {
         impl std::ops::Index<$id_type> for $graph {
@@ -153,3 +211,5 @@ macro_rules! impl_slot_map_indexing {
         }
     };
 }
+
+pub(crate) use impl_slot_map_indexing;

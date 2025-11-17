@@ -3,38 +3,22 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumTraits, Enumerator,
     graph::{
         node_graph::{NodeGraph, nodes::NodeId},
         scene_graph::SceneGraphIdType,
     },
 };
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumIter,
-    EnumCount,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumTraits!)]
 pub enum OutputData {
     #[default]
     Mat4,
     SceneGraphId(SceneGraphIdType),
 }
-
-impl Enumerator for OutputData {}
 
 pub trait NodeOutputData: Enumerator + Eq {
     fn default_data(&self) -> OutputData;

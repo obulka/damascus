@@ -6,12 +6,12 @@
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 use glam::Mat4;
+use macro_rules_attribute::derive;
 use serde_hashkey::to_key_with_ordered_float;
 use slotmap::SlotMap;
-use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use crate::{
-    DualDevice, Enumerator, Transformable,
+    DualDevice, EnumHashTraits, Transformable,
     camera::{Camera, CameraId, Cameras},
     geometry::primitives::{GPUPrimitive, Primitive, PrimitiveId, Primitives},
     gpu::scene::{GPUScene, GPUSceneArrayLengths, ScenePreprocessorDirectives},
@@ -30,23 +30,7 @@ use crate::{
 
 slotmap::new_key_type! { pub struct RootId; }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    Copy,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneGraphId {
     #[default]
     None,
@@ -57,8 +41,6 @@ pub enum SceneGraphId {
     Root(RootId),
     TextureEvaluator(TextureEvaluatorId),
 }
-
-impl Enumerator for SceneGraphId {}
 
 impl From<MaterialId> for SceneGraphId {
     fn from(material_id: MaterialId) -> Self {
@@ -96,21 +78,7 @@ impl From<TextureEvaluatorId> for SceneGraphId {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    Copy,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneGraphIdType {
     #[default]
     None,
@@ -121,8 +89,6 @@ pub enum SceneGraphIdType {
     Root,
     TextureEvaluator,
 }
-
-impl Enumerator for SceneGraphIdType {}
 
 impl From<SceneGraphId> for SceneGraphIdType {
     fn from(scene_graph_location: SceneGraphId) -> Self {

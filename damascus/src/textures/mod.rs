@@ -3,26 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
-use crate::Enumerator;
+use crate::EnumHashTraits;
 
 pub mod evaluators;
 
-#[derive(
-    Debug,
-    Default,
-    Display,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum AOVs {
     #[default]
     Beauty,
@@ -33,5 +20,3 @@ pub enum AOVs {
     Cryptomatte,
     Stats,
 }
-
-impl Enumerator for AOVs {}

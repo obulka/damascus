@@ -10,6 +10,7 @@ bytemuck = "1.23"
 crevice = { version = "0.18.0", features = ["glam"] }
 glam = { version = "0.30", features = ["serde"] }
 image = { version = "0.25" }
+macro_rules_attribute = "0.2.0"
 serde = "1"
 serde-hashkey = { version = "0.4.5", features = ["ordered-float"] }
 slotmap = { version = "1.0", features = ["serde"] }
@@ -17,5 +18,5 @@ strum = { version = "0.27", features = ["derive"] }
 wgpu = { version = "27.0" }
 
 [dev-dependencies]
-async-std = { version = "1.13", features = ["attributes"] }
+smol-macros = { version = "0.1" }
 futures-intrusive = { version = "0.5" }

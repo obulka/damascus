@@ -590,8 +590,8 @@ mod tests {
     use super::{inputs::input_data::InputData, nodes::node_data::*, *};
 
     use crate::{
-        geometry::primitives::Shapes, gpu::resources::TextureResource,
-        textures::evaluators::TextureEvaluators,
+        geometry::primitives::Shapes, gpu::get_device_queue_encoder,
+        gpu::resources::TextureResource, textures::evaluators::TextureEvaluators,
     };
 
     #[test]
@@ -1324,7 +1324,7 @@ mod tests {
         );
     }
 
-    #[async_std::test]
+    #[macro_rules_attribute::apply(smol_macros::test!)]
     async fn test_ray_marcher() {
         let mut graph = NodeGraph::new();
 
@@ -1552,36 +1552,9 @@ mod tests {
                 _ => assert!(false),
             }
 
-            // Get a device, encoder, and queue
-
-            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
-                backends: wgpu::Backends::PRIMARY,
-                ..Default::default()
-            });
-            let adapter = instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::HighPerformance,
-                    compatible_surface: None,
-                    ..Default::default()
-                })
-                .await
-                .unwrap();
-            let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor {
-                    label: Some("wgpu device"),
-                    required_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
-                    memory_hints: wgpu::MemoryHints::Performance,
-                    ..Default::default()
-                })
-                .await
-                .unwrap();
-            let mut encoder: wgpu::CommandEncoder =
-                device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
-            // Create a texture to render to
-
-            if let Some(output_texture) =
-                graph.scene_graph()[texture_evaluator_id].create_output_texture(&device)
+            if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await
+                && let Some(output_texture) =
+                    graph.scene_graph()[texture_evaluator_id].create_output_texture(&device)
                 && graph.scene_graph_mut()[texture_evaluator_id].render_to_texture_view(
                     &device,
                     &queue,
@@ -1640,13 +1613,13 @@ mod tests {
 
                     // Cast the buffer data into an image and save it to disk
 
-                    let buffer = image::Rgba32FImage::from_raw(
+                    let image_buffer = image::Rgba32FImage::from_raw(
                         output_texture.texture_view.texture().width(),
                         output_texture.texture_view.texture().height(),
                         bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
                     )
                     .unwrap();
-                    buffer.save("image.exr").unwrap();
+                    image_buffer.save("image.exr").unwrap();
                 }
 
                 // Release the buffer back to the GPU

@@ -5,12 +5,12 @@
 
 use crevice::std430::AsStd430;
 use glam::{Mat3, Vec3};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
+
+use crate::EnumHashTraits;
 
 pub mod primitives;
 pub mod vertex;
-
-use crate::Enumerator;
 
 #[repr(C)]
 #[derive(
@@ -23,21 +23,7 @@ pub struct Transform {
     pub inverse_rotation: Mat3,
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum BlendType {
     #[default]
     Union,
@@ -45,28 +31,10 @@ pub enum BlendType {
     Intersection,
 }
 
-impl Enumerator for BlendType {}
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum Repetition {
     #[default]
     None,
     Finite,
     Infinite,
 }
-
-impl Enumerator for Repetition {}

@@ -8,12 +8,12 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use strum::{EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
 
 use crate::{
-    Enumerator,
+    EnumBaseHashTraits,
     textures::{AOVs, evaluators::ray_marcher::RayMarcherRenderData},
 };
 
@@ -22,21 +22,7 @@ pub const RAY_MARCHER_VERTEX_SHADER: &str =
 pub const RAY_MARCHER_FRAGMENT_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/fragment_shader.wgsl");
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    Hash,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumBaseHashTraits!)]
 pub enum RayMarcherPreprocessorDirectives {
     #[default]
     EnableAOVs,
@@ -56,8 +42,6 @@ impl Display for RayMarcherPreprocessorDirectives {
         }
     }
 }
-
-impl Enumerator for RayMarcherPreprocessorDirectives {}
 
 impl PreprocessorDirectives for RayMarcherPreprocessorDirectives {}
 

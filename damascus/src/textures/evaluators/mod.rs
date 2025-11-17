@@ -7,13 +7,13 @@ use std::{borrow::Cow, fmt::Debug, ops::Range};
 
 use crevice::std430;
 use glam::UVec2;
+use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use slotmap::SlotMap;
-use strum::{Display, EnumCount, EnumIter, EnumString};
 use wgpu::{self, util::DeviceExt};
 
 use crate::{
-    DualDevice, Enumerator,
+    DualDevice, EnumTraits,
     geometry::vertex::Vertex,
     gpu::{
         PreprocessorDirectives, ShaderSource,
@@ -794,18 +794,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Default, EnumTraits!)]
 pub enum TextureEvaluators {
     #[default]
     White,
@@ -817,8 +806,6 @@ pub enum TextureEvaluators {
     RayMarcher(RayMarcher),
     TextureViewer(TextureViewer),
 }
-
-impl Enumerator for TextureEvaluators {}
 
 impl DualDevice<UVec2, std430::UVec2> for TextureEvaluators {
     fn to_gpu(&self) -> UVec2 {

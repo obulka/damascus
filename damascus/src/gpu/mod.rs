@@ -3,31 +3,83 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, fmt::Debug, hash::Hash, str::FromStr};
+use std::{collections::HashSet, fmt, hash::Hash, str::FromStr};
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
-use crate::Enumerator;
+use crate::{EnumHashTraits, Enumerator, ErrorTraits};
 
 pub mod ray_marcher;
 pub mod resources;
 pub mod scene;
 pub mod texture;
 
-#[derive(
-    Debug,
-    Default,
-    Display,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Default, ErrorTraits!)]
+pub enum GPUErrors {
+    RequestAdapterError(String),
+    RequestDeviceError(String),
+    PollError(String),
+    #[default]
+    UnknownError,
+}
+
+pub type GPUResult<T> = std::result::Result<T, GPUErrors>;
+
+impl fmt::Display for GPUErrors {
+    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        write!(formatter, "{}", self)
+    }
+}
+
+impl From<wgpu::RequestAdapterError> for GPUErrors {
+    fn from(error: wgpu::RequestAdapterError) -> Self {
+        Self::RequestAdapterError(error.to_string())
+    }
+}
+
+impl From<wgpu::RequestDeviceError> for GPUErrors {
+    fn from(error: wgpu::RequestDeviceError) -> Self {
+        Self::RequestDeviceError(error.to_string())
+    }
+}
+
+impl From<wgpu::PollError> for GPUErrors {
+    fn from(error: wgpu::PollError) -> Self {
+        Self::PollError(error.to_string())
+    }
+}
+
+pub async fn get_device_queue_encoder()
+-> GPUResult<(wgpu::Device, wgpu::Queue, wgpu::CommandEncoder)> {
+    let adapter: wgpu::Adapter = wgpu::Instance::new(&wgpu::InstanceDescriptor {
+        backends: wgpu::Backends::PRIMARY,
+        ..Default::default()
+    })
+    .request_adapter(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::HighPerformance,
+        compatible_surface: None,
+        ..Default::default()
+    })
+    .await?;
+
+    let (device, queue) = adapter
+        .request_device(&wgpu::DeviceDescriptor {
+            label: Some("wgpu device"),
+            required_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+            memory_hints: wgpu::MemoryHints::Performance,
+            ..Default::default()
+        })
+        .await?;
+
+    let encoder: wgpu::CommandEncoder =
+        device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("wgpu command encoder"),
+        });
+
+    Ok((device, queue, encoder))
+}
+
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum Includes {
     AOVs,
     Camera,
@@ -53,8 +105,6 @@ pub enum Includes {
     TextureViewerConstants,
     TextureViewerRenderParameters,
 }
-
-impl Enumerator for Includes {}
 
 impl Includes {
     fn source(&self) -> &str {
@@ -94,7 +144,7 @@ impl Includes {
 }
 
 pub trait PreprocessorDirectives:
-    Enumerator + Clone + Debug + Eq + Hash + serde::Serialize + for<'a> serde::Deserialize<'a>
+    Enumerator + Clone + fmt::Debug + Eq + Hash + serde::Serialize + for<'a> serde::Deserialize<'a>
 {
 }
 
@@ -255,6 +305,8 @@ pub fn process_shader_source<Directives: PreprocessorDirectives>(
 
 #[cfg(test)]
 mod tests {
+    use strum::EnumCount;
+
     use super::*;
     use ray_marcher::*;
     use scene::*;

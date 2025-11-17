@@ -6,37 +6,21 @@
 use std::collections::HashMap;
 
 use glam::Mat4;
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{Root, RootId, SceneGraph, SceneGraphId, SceneGraphIdType},
     },
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneInputData {
     #[default]
     Scene,
@@ -44,8 +28,6 @@ pub enum SceneInputData {
     Atmosphere,
     Axis,
 }
-
-impl Enumerator for SceneInputData {}
 
 impl NodeInputData for SceneInputData {
     fn default_data(&self) -> InputData {
@@ -58,27 +40,11 @@ impl NodeInputData for SceneInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneOutputData {
     #[default]
     RootId,
 }
-
-impl Enumerator for SceneOutputData {}
 
 impl NodeOutputData for SceneOutputData {
     fn default_data(&self) -> OutputData {

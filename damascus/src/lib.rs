@@ -149,6 +149,14 @@ derive_alias! {
         strum::Display,
         crate::EnumBaseHashTraits!,
     )];
+    #[derive(PreprocessorDirectivesBaseTraits!)] = #[derive(
+        crate::EnumBaseHashTraits!,
+        crate::gpu::PreprocessorDirectivesTrait!,
+    )];
+    #[derive(PreprocessorDirectivesTraits!)] = #[derive(
+        strum::Display,
+        crate::PreprocessorDirectivesBaseTraits!,
+    )];
     #[derive(ErrorTraits!)] = #[derive(crate::BaseEnumTraits!, crate::ErrorTrait!)];
 }
 

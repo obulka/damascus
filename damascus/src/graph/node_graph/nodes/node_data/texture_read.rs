@@ -5,10 +5,10 @@
 
 use std::collections::HashMap;
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
@@ -22,27 +22,11 @@ use crate::{
     },
 };
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum TextureReadInputData {
     #[default]
     Filepath,
 }
-
-impl Enumerator for TextureReadInputData {}
 
 impl NodeInputData for TextureReadInputData {
     fn default_data(&self) -> InputData {
@@ -53,27 +37,11 @@ impl NodeInputData for TextureReadInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum TextureReadOutputData {
     #[default]
     Texture,
 }
-
-impl Enumerator for TextureReadOutputData {}
 
 impl NodeOutputData for TextureReadOutputData {
     fn default_data(&self) -> OutputData {

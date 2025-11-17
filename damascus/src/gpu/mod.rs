@@ -148,6 +148,20 @@ pub trait PreprocessorDirectives:
 {
 }
 
+macro_rules! PreprocessorDirectivesTrait {
+    (
+    $( #[$attr:meta] )*
+    $pub:vis
+    enum $type:ident {
+        $($variants:tt)*
+    }
+) => {
+        impl crate::gpu::PreprocessorDirectives for $type {}
+    };
+}
+
+pub(crate) use PreprocessorDirectivesTrait;
+
 pub trait ShaderSource<Directives: PreprocessorDirectives> {
     fn vertex_shader_raw(&self) -> &str;
 

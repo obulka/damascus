@@ -6,37 +6,21 @@
 use std::{collections::HashMap, f32::consts::PI};
 
 use glam::{EulerRot, Mat4, Quat, Vec3};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::SceneGraph,
     },
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum AxisInputData {
     #[default]
     Axis,
@@ -44,8 +28,6 @@ pub enum AxisInputData {
     Rotate,
     UniformScale,
 }
-
-impl Enumerator for AxisInputData {}
 
 impl NodeInputData for AxisInputData {
     fn default_data(&self) -> InputData {
@@ -58,27 +40,11 @@ impl NodeInputData for AxisInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum AxisOutputData {
     #[default]
     Axis,
 }
-
-impl Enumerator for AxisOutputData {}
 
 impl NodeOutputData for AxisOutputData {
     fn default_data(&self) -> OutputData {

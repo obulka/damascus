@@ -6,10 +6,10 @@
 use std::collections::HashMap;
 
 use glam::{Vec3, Vec4};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     geometry::primitives::{Primitive, PrimitiveId, Shapes},
     graph::{
         node_graph::{
@@ -21,21 +21,7 @@ use crate::{
     },
 };
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum PrimitiveInputData {
     #[default]
     Child,
@@ -84,8 +70,6 @@ pub enum PrimitiveInputData {
     Elongation,
     Axis,
 }
-
-impl Enumerator for PrimitiveInputData {}
 
 impl NodeInputData for PrimitiveInputData {
     fn default_data(&self) -> InputData {
@@ -142,27 +126,11 @@ impl NodeInputData for PrimitiveInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum PrimitiveOutputData {
     #[default]
     Id,
 }
-
-impl Enumerator for PrimitiveOutputData {}
 
 impl NodeOutputData for PrimitiveOutputData {
     fn default_data(&self) -> OutputData {

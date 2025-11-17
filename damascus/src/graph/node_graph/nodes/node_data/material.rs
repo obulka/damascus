@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
@@ -20,23 +20,7 @@ use crate::{
     materials::{Material, MaterialId},
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum MaterialInputData {
     #[default]
     DiffuseColour,
@@ -63,8 +47,6 @@ pub enum MaterialInputData {
     ScatteringColour,
     ScatteringColourTexture,
 }
-
-impl Enumerator for MaterialInputData {}
 
 impl NodeInputData for MaterialInputData {
     fn default_data(&self) -> InputData {
@@ -105,27 +87,11 @@ impl NodeInputData for MaterialInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum MaterialOutputData {
     #[default]
     Id,
 }
-
-impl Enumerator for MaterialOutputData {}
 
 impl NodeOutputData for MaterialOutputData {
     fn default_data(&self) -> OutputData {

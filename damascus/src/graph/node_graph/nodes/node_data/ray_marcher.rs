@@ -5,10 +5,10 @@
 
 use std::collections::HashMap;
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     gpu::scene::GPUScene,
     graph::{
         node_graph::{
@@ -24,21 +24,7 @@ use crate::{
     },
 };
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum RayMarcherInputData {
     #[default]
     SceneRoot,
@@ -57,8 +43,6 @@ pub enum RayMarcherInputData {
     SecondarySampling,
     OutputAov,
 }
-
-impl Enumerator for RayMarcherInputData {}
 
 impl NodeInputData for RayMarcherInputData {
     fn default_data(&self) -> InputData {
@@ -87,27 +71,11 @@ impl NodeInputData for RayMarcherInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum RayMarcherOutputData {
     #[default]
     Render,
 }
-
-impl Enumerator for RayMarcherOutputData {}
 
 impl NodeOutputData for RayMarcherOutputData {
     fn default_data(&self) -> OutputData {

@@ -6,14 +6,14 @@
 use std::collections::HashMap;
 
 use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
@@ -21,23 +21,7 @@ use crate::{
     lights::{Light, LightId, LightType},
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum LightInputData {
     #[default]
     Child,
@@ -52,8 +36,6 @@ pub enum LightInputData {
     SoftenShadows,
     Axis,
 }
-
-impl Enumerator for LightInputData {}
 
 impl NodeInputData for LightInputData {
     fn default_data(&self) -> InputData {
@@ -74,27 +56,11 @@ impl NodeInputData for LightInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum LightOutputData {
     #[default]
     Id,
 }
-
-impl Enumerator for LightOutputData {}
 
 impl NodeOutputData for LightOutputData {
     fn default_data(&self) -> OutputData {

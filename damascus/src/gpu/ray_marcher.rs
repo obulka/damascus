@@ -10,10 +10,10 @@ use std::{
 
 use macro_rules_attribute::derive;
 
-use super::{PreprocessorDirectives, scene::ScenePreprocessorDirectives};
+use super::scene::ScenePreprocessorDirectives;
 
 use crate::{
-    EnumBaseHashTraits,
+    PreprocessorDirectivesBaseTraits,
     textures::{AOVs, evaluators::ray_marcher::RayMarcherRenderData},
 };
 
@@ -22,7 +22,7 @@ pub const RAY_MARCHER_VERTEX_SHADER: &str =
 pub const RAY_MARCHER_FRAGMENT_SHADER: &str =
     include_str!("./wgsl/pipelines/ray_marcher/fragment_shader.wgsl");
 
-#[derive(Copy, Default, EnumBaseHashTraits!)]
+#[derive(Copy, Default, PreprocessorDirectivesBaseTraits!)]
 pub enum RayMarcherPreprocessorDirectives {
     #[default]
     EnableAOVs,
@@ -42,8 +42,6 @@ impl Display for RayMarcherPreprocessorDirectives {
         }
     }
 }
-
-impl PreprocessorDirectives for RayMarcherPreprocessorDirectives {}
 
 impl From<ScenePreprocessorDirectives> for RayMarcherPreprocessorDirectives {
     fn from(scene_directive: ScenePreprocessorDirectives) -> Self {

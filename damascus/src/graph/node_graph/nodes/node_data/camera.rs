@@ -5,38 +5,22 @@
 
 use std::collections::HashMap;
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     camera::Camera,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum CameraInputData {
     #[default]
     FocalLength,
@@ -50,8 +34,6 @@ pub enum CameraInputData {
     Latlong,
     Axis,
 }
-
-impl Enumerator for CameraInputData {}
 
 impl NodeInputData for CameraInputData {
     fn default_data(&self) -> InputData {
@@ -71,27 +53,11 @@ impl NodeInputData for CameraInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum CameraOutputData {
     #[default]
     Id,
 }
-
-impl Enumerator for CameraOutputData {}
 
 impl NodeOutputData for CameraOutputData {
     fn default_data(&self) -> OutputData {

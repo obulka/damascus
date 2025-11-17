@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::NodeResult,
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
@@ -20,23 +20,7 @@ use crate::{
     textures::evaluators::{TextureEvaluators, grade::Grade},
 };
 
-use super::EvaluableNode;
-
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum GradeInputData {
     #[default]
     Texture,
@@ -48,8 +32,6 @@ pub enum GradeInputData {
     Invert,
     Transform,
 }
-
-impl Enumerator for GradeInputData {}
 
 impl NodeInputData for GradeInputData {
     fn default_data(&self) -> InputData {
@@ -67,27 +49,11 @@ impl NodeInputData for GradeInputData {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum GradeOutputData {
     #[default]
     Grade,
 }
-
-impl Enumerator for GradeOutputData {}
 
 impl NodeOutputData for GradeOutputData {
     fn default_data(&self) -> OutputData {

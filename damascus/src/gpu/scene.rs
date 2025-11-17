@@ -8,10 +8,8 @@ use std::{collections::HashSet, str::FromStr};
 use crevice::std430::AsStd430;
 use macro_rules_attribute::derive;
 
-use super::PreprocessorDirectives;
-
 use crate::{
-    DualDevice, EnumHashTraits,
+    DualDevice, PreprocessorDirectivesTraits,
     camera::{Camera, GPUCamera},
     geometry::{
         BlendType, Repetition,
@@ -86,7 +84,7 @@ impl GPUScene {
     }
 }
 
-#[derive(Copy, Default, EnumHashTraits!)]
+#[derive(Copy, Default, PreprocessorDirectivesTraits!)]
 pub enum ScenePreprocessorDirectives {
     #[default]
     EnableDiffuseColourTexture,
@@ -143,8 +141,6 @@ pub enum ScenePreprocessorDirectives {
     EnableAmbientOcclusion,
     EnableSoftShadows,
 }
-
-impl PreprocessorDirectives for ScenePreprocessorDirectives {}
 
 impl ScenePreprocessorDirectives {
     pub fn all_directives_for_material() -> HashSet<Self> {

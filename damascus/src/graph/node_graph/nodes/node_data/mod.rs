@@ -5,10 +5,10 @@
 
 use std::{collections::HashMap, iter, str::FromStr};
 
-use strum::{Display, EnumCount, EnumIter, EnumString};
+use macro_rules_attribute::derive;
 
 use crate::{
-    Enumerator,
+    EnumHashTraits,
     graph::{
         node_graph::{
             NodeGraph,
@@ -16,14 +16,12 @@ use crate::{
                 InputId,
                 input_data::{InputData, NodeInputData},
             },
-            nodes::NodeId,
+            nodes::{NodeErrors, NodeId, NodeResult},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId},
     },
 };
-
-use super::{NodeErrors, NodeResult};
 
 mod axis;
 mod camera;
@@ -179,21 +177,7 @@ pub trait EvaluableNode {
     }
 }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum NodeData {
     Axis,
     Camera,
@@ -206,8 +190,6 @@ pub enum NodeData {
     #[default]
     TextureRead,
 }
-
-impl Enumerator for NodeData {}
 
 impl NodeData {
     pub fn dynamic_input_connected(&self, node_graph: &mut NodeGraph, input_id: InputId) {

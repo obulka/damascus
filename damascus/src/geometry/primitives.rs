@@ -5,29 +5,15 @@
 
 use crevice::std430::AsStd430;
 use glam::{BVec3, Mat4, UVec3, Vec3, Vec4};
+use macro_rules_attribute::derive;
 use slotmap::SlotMap;
-use strum::{Display, EnumCount, EnumIter, EnumString};
 
 use super::{BlendType, Repetition, Transform};
-use crate::{DualDevice, Enumerator, Transformable};
+use crate::{DualDevice, EnumHashTraits, Transformable};
 
 slotmap::new_key_type! { pub struct PrimitiveId; }
 
-#[derive(
-    Debug,
-    Display,
-    Default,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    Eq,
-    PartialEq,
-    PartialOrd,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum Shapes {
     #[default]
     CappedCone,
@@ -56,8 +42,6 @@ pub enum Shapes {
     Torus,
     TriangularPrism,
 }
-
-impl Enumerator for Shapes {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]

@@ -5,26 +5,14 @@
 
 use crevice::std430::AsStd430;
 use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
+use macro_rules_attribute::derive;
 use slotmap::SlotMap;
-use strum::{Display, EnumCount, EnumIter, EnumString};
 
-use crate::{DualDevice, Enumerator, Transformable};
+use crate::{DualDevice, EnumHashTraits, Transformable};
 
 slotmap::new_key_type! { pub struct LightId; }
 
-#[derive(
-    Debug,
-    Default,
-    Display,
-    Copy,
-    Clone,
-    EnumCount,
-    EnumIter,
-    EnumString,
-    PartialEq,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Copy, Default, EnumHashTraits!)]
 pub enum LightType {
     Directional,
     Point,
@@ -32,8 +20,6 @@ pub enum LightType {
     #[default]
     AmbientOcclusion,
 }
-
-impl Enumerator for LightType {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]

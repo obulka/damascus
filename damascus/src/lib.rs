@@ -123,7 +123,7 @@ impl<E: Enumerator> From<E> for Enum {
 pub trait Errors: Enumerator {}
 
 derive_alias! {
-    #[derive(BaseEnumTraits!)] = #[derive(
+    #[derive(EnumBaseTraits!)] = #[derive(
         Debug,
         Clone,
         strum::EnumIter,
@@ -136,28 +136,28 @@ derive_alias! {
     )];
     #[derive(EnumTraits!)] = #[derive(
         strum::Display,
-        crate::BaseEnumTraits!,
+        crate::EnumBaseTraits!,
     )];
-    #[derive(EnumBaseHashTraits!)] = #[derive(
+    #[derive(EnumHashBaseTraits!)] = #[derive(
         Eq,
         Hash,
         Ord,
         PartialOrd,
-        crate::BaseEnumTraits!,
+        crate::EnumBaseTraits!,
     )];
     #[derive(EnumHashTraits!)] = #[derive(
         strum::Display,
-        crate::EnumBaseHashTraits!,
+        crate::EnumHashBaseTraits!,
     )];
     #[derive(PreprocessorDirectivesBaseTraits!)] = #[derive(
-        crate::EnumBaseHashTraits!,
+        crate::EnumHashBaseTraits!,
         crate::gpu::PreprocessorDirectivesTrait!,
     )];
     #[derive(PreprocessorDirectivesTraits!)] = #[derive(
         strum::Display,
         crate::PreprocessorDirectivesBaseTraits!,
     )];
-    #[derive(ErrorTraits!)] = #[derive(crate::BaseEnumTraits!, crate::ErrorTrait!)];
+    #[derive(ErrorTraits!)] = #[derive(crate::EnumBaseTraits!, crate::ErrorTrait!)];
 }
 
 macro_rules! EnumTrait {

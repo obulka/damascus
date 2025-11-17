@@ -590,9 +590,8 @@ mod tests {
     use super::{inputs::input_data::InputData, nodes::node_data::*, *};
 
     use crate::{
-        geometry::primitives::Shapes,
-        gpu::resources::{BufferData, RenderResource},
-        textures::evaluators::TextureEvaluator,
+        geometry::primitives::Shapes, gpu::resources::TextureResource,
+        textures::evaluators::TextureEvaluators,
     };
 
     #[test]
@@ -1463,16 +1462,12 @@ mod tests {
                 .unwrap(),
         );
 
-        let texture_width = 2048u32;
-        let texture_height = 1024u32;
-
         // Modify camera data
 
         let sensor_resolution_input_id: InputId = graph
             .node_input_id(camera_id, CameraInputData::SensorResolution)
             .unwrap();
-        graph[sensor_resolution_input_id].data =
-            InputData::UVec2(UVec2::new(texture_width, texture_height));
+        graph[sensor_resolution_input_id].data = InputData::UVec2(UVec2::new(2048u32, 1024u32));
 
         let secondary_camera_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
@@ -1533,7 +1528,7 @@ mod tests {
             // The node graph has produced the data needed to render a ray marching pass
             // test that it was built correctly, then render it on the gpu
             match &graph.scene_graph()[texture_evaluator_id] {
-                TextureEvaluator::RayMarcher(ray_marcher) => {
+                TextureEvaluators::RayMarcher(ray_marcher) => {
                     assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
                     assert_eq!(ray_marcher.render_data.gpu_scene.render_camera, 1);
                     assert_eq!(
@@ -1585,153 +1580,80 @@ mod tests {
 
             // Create a texture to render to
 
-            let texture_desc = wgpu::TextureDescriptor {
-                label: None,
-                size: wgpu::Extent3d {
-                    width: texture_width,
-                    height: texture_height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba32Float,
-                usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: &[],
-            };
-            let texture = device.create_texture(&texture_desc);
-            let texture_view = texture.create_view(&Default::default());
-
-            let target_state = wgpu::ColorTargetState {
-                format: texture_desc.format,
-                blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
-            };
-
-            // Get all the data for the scene/render parameters in the form
-            // of buffers that we can send to the gpu
-
-            let mut render_resource: RenderResource = graph.scene_graph_mut()[texture_evaluator_id]
-                .render_resource(&device, target_state.clone())
-                .unwrap();
-            let buffer_data: BufferData = graph.scene_graph_mut()[texture_evaluator_id]
-                .buffer_data(&device, target_state, &mut render_resource);
-
-            if let Some(frame_counter) =
-                graph.scene_graph_mut()[texture_evaluator_id].frame_counter_mut()
-            {
-                frame_counter.tick();
-            }
-
-            // Write that data to the bind groups
-
-            render_resource.write_bind_groups(&queue, &buffer_data);
-
-            // Set up a render pass and paint to it
-
-            let render_pass_desc = wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &texture_view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.,
-                            g: 0.,
-                            b: 0.,
-                            a: 1.,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            };
-
-            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
-
-            // ---------------------------------------------------------
-            // TODO test a grade pass here on the result then generalize
-            // all of this
-            // ---------------------------------------------------------
-
-            // Create a buffer that we can copy the render to
-
-            let rgba_f32_size = std::mem::size_of::<f32>() as u32 * 4;
-
-            let output_buffer_size =
-                (rgba_f32_size * texture_width * texture_height) as wgpu::BufferAddress;
-            let output_buffer_desc = wgpu::BufferDescriptor {
-                size: output_buffer_size,
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
-                label: Some("Rendered Image Buffer"),
-                mapped_at_creation: false,
-            };
-            let output_buffer: wgpu::Buffer = device.create_buffer(&output_buffer_desc);
-
-            // Copy the render to the buffer
-
-            encoder.copy_texture_to_buffer(
-                wgpu::TexelCopyTextureInfo {
-                    aspect: wgpu::TextureAspect::All,
-                    texture: &texture,
-                    mip_level: 0,
-                    origin: wgpu::Origin3d::ZERO,
-                },
-                wgpu::TexelCopyBufferInfo {
-                    buffer: &output_buffer,
-                    layout: wgpu::TexelCopyBufferLayout {
-                        offset: 0,
-                        bytes_per_row: Some(rgba_f32_size * texture_width),
-                        rows_per_image: Some(texture_height),
-                    },
-                },
-                texture_desc.size,
-            );
-
-            queue.submit(Some(encoder.finish()));
-
-            {
-                // Wait for the buffer to be populated with the rendered data
-
-                let (transmitter, receiver) = futures_intrusive::channel::shared::oneshot_channel();
-
-                let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-                buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                    transmitter.send(result).unwrap();
-                });
-
-                match device.poll(wgpu::PollType::Wait {
-                    submission_index: None,
-                    timeout: Some(core::time::Duration::new(5, 0)),
-                }) {
-                    Err(error) => {
-                        println!("{:?}", error);
-                        assert!(false);
-                    }
-                    _ => {}
-                };
-
-                receiver.receive().await.unwrap().unwrap();
-
-                // Get a read-only view into the buffer
-                let data = buffer_slice.get_mapped_range();
-
-                // Cast the buffer data into an image and save it to disk
-
-                let buffer = image::Rgba32FImage::from_raw(
-                    texture_width,
-                    texture_height,
-                    bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+            if let Some(output_texture) =
+                graph.scene_graph()[texture_evaluator_id].create_output_texture(&device)
+                && graph.scene_graph_mut()[texture_evaluator_id].render_to_texture_view(
+                    &device,
+                    &queue,
+                    &mut encoder,
+                    &output_texture,
                 )
-                .unwrap();
-                buffer.save("image.exr").unwrap();
-            }
+            {
+                // ---------------------------------------------------------
+                // TODO test a grade pass here on the result then generalize
+                // all of this
+                // ---------------------------------------------------------
 
-            // Release the buffer back to the GPU
-            output_buffer.unmap();
+                // let texture_viewer = TextureEvaluators::TextureViewer(
+                //             TextureViewer::default()
+                //                 .texture(TextureRead {
+                //                     layers: 1,
+                //                     filepath: Self::Inputs::Filepath
+                //                         .get_data(data_map)?
+                //                         .try_to_filepath()?,
+                //                 })
+                //                 .finalized();
+
+                // Create a buffer that we can copy the render to
+
+                let output_buffer: wgpu::Buffer =
+                    output_texture.copy_to_buffer(&device, &mut encoder);
+
+                queue.submit(Some(encoder.finish()));
+
+                {
+                    // Wait for the buffer to be populated with the rendered data
+
+                    let (transmitter, receiver) =
+                        futures_intrusive::channel::shared::oneshot_channel();
+
+                    let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
+                    buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                        transmitter.send(result).unwrap();
+                    });
+
+                    match device.poll(wgpu::PollType::Wait {
+                        submission_index: None,
+                        timeout: Some(core::time::Duration::new(5, 0)),
+                    }) {
+                        Err(error) => {
+                            println!("{:?}", error);
+                            assert!(false);
+                        }
+                        _ => {}
+                    };
+
+                    receiver.receive().await.unwrap().unwrap();
+
+                    // Get a read-only view into the buffer
+                    let data = buffer_slice.get_mapped_range();
+
+                    // Cast the buffer data into an image and save it to disk
+
+                    let buffer = image::Rgba32FImage::from_raw(
+                        output_texture.texture_view.texture().width(),
+                        output_texture.texture_view.texture().height(),
+                        bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+                    )
+                    .unwrap();
+                    buffer.save("image.exr").unwrap();
+                }
+
+                // Release the buffer back to the GPU
+                output_buffer.unmap();
+            } else {
+                assert!(false);
+            }
         } else {
             assert!(false);
         }

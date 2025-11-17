@@ -23,7 +23,7 @@ use crate::{
     lights::{Light, LightId, Lights},
     materials::{Material, MaterialId, Materials},
     textures::evaluators::{
-        TextureEvaluator, TextureEvaluatorId, TextureEvaluators, checkerboard::Checkerboard,
+        TextureEvaluatorId, TextureEvaluators, TextureEvaluatorsMap, checkerboard::Checkerboard,
         grade::Grade, noise::Noise,
     },
 };
@@ -179,7 +179,7 @@ pub struct SceneGraph {
     lights: Lights,
     materials: Materials,
     roots: Roots,
-    texture_evaluators: TextureEvaluators,
+    texture_evaluators: TextureEvaluatorsMap,
     material_primitives: MaterialPrimitives,
     transform_hierarchy: TransformHierarchy,
     render_cameras: RenderCameras,
@@ -320,7 +320,7 @@ impl SceneGraph {
         self.roots.insert(root)
     }
 
-    pub fn add_texture_evaluator(&mut self, texture: TextureEvaluator) -> TextureEvaluatorId {
+    pub fn add_texture_evaluator(&mut self, texture: TextureEvaluators) -> TextureEvaluatorId {
         self.texture_evaluators.insert(texture)
     }
 
@@ -372,7 +372,7 @@ impl SceneGraph {
         self.roots.iter().map(|(_root_id, root)| root)
     }
 
-    pub fn iter_texture_evaluators(&self) -> impl Iterator<Item = &TextureEvaluator> + '_ {
+    pub fn iter_texture_evaluators(&self) -> impl Iterator<Item = &TextureEvaluators> + '_ {
         self.texture_evaluators
             .iter()
             .map(|(_texture_id, texture)| texture)
@@ -612,7 +612,7 @@ impl_slot_map_indexing!(SceneGraph, RootId, Root, roots);
 impl_slot_map_indexing!(
     SceneGraph,
     TextureEvaluatorId,
-    TextureEvaluator,
+    TextureEvaluators,
     texture_evaluators
 );
 
@@ -629,7 +629,7 @@ mod tests {
         scene_graph.add_light(Light::default());
         scene_graph.add_material(Material::default());
         scene_graph.add_root(Root::default());
-        scene_graph.add_texture_evaluator(TextureEvaluator::default());
+        scene_graph.add_texture_evaluator(TextureEvaluators::default());
 
         assert_eq!(scene_graph.camera_count(), 1);
         assert_eq!(scene_graph.primitive_count(), 1);

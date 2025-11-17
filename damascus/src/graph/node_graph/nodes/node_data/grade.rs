@@ -17,7 +17,7 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    textures::evaluators::{TextureEvaluator, grade::Grade},
+    textures::evaluators::{TextureEvaluators, grade::Grade},
 };
 
 use super::EvaluableNode;
@@ -122,7 +122,7 @@ impl EvaluableNode for GradeNode {
         match output {
             Self::Outputs::Grade => Ok(InputData::SceneGraphId(
                 scene_graph
-                    .add_texture_evaluator(TextureEvaluator::Grade(Grade {
+                    .add_texture_evaluator(TextureEvaluators::Grade(Grade {
                         black_point: Self::Inputs::BlackPoint
                             .get_data(data_map)?
                             .try_to_float()?,

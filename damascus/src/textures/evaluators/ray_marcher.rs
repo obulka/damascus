@@ -6,6 +6,7 @@
 use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
+use glam::UVec2;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
@@ -22,7 +23,7 @@ use crate::{
     },
     textures::{
         AOVs,
-        evaluators::{GPUTextureEvaluator, GPUTextureEvaluatorHashes},
+        evaluators::{GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes},
     },
     time::FrameCounter,
 };
@@ -173,7 +174,7 @@ pub struct RayMarcher {
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
     pub subframe_counter: FrameCounter,
-    hashes: GPUTextureEvaluatorHashes,
+    hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
 }
 
@@ -183,9 +184,46 @@ impl Default for RayMarcher {
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
             subframe_counter: FrameCounter::default(),
-            hashes: GPUTextureEvaluatorHashes::default(),
+            hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
         }
+    }
+}
+
+impl TextureEvaluator for RayMarcher {
+    fn label(&self) -> String {
+        "ray marcher".to_owned()
+    }
+
+    fn hashes(&self) -> &TextureEvaluatorHashes {
+        &self.hashes
+    }
+
+    fn hashes_mut(&mut self) -> &mut TextureEvaluatorHashes {
+        &mut self.hashes
+    }
+
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.render_data)
+    }
+
+    fn frame_counter(&self) -> &FrameCounter {
+        &self.subframe_counter
+    }
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        &mut self.subframe_counter
+    }
+
+    fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
+        let sensor_resolution: UVec2 = self.render_data.gpu_scene.cameras
+            [self.render_data.gpu_scene.render_camera]
+            .sensor_resolution;
+        Some(wgpu::Extent3d {
+            width: sensor_resolution.x,
+            height: sensor_resolution.y,
+            depth_or_array_layers: 1, // TODO could output AOVs to other layers
+        })
     }
 }
 
@@ -323,22 +361,6 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
 }
 
 impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
-    fn label(&self) -> String {
-        "ray marcher".to_owned()
-    }
-
-    fn hashes(&self) -> &GPUTextureEvaluatorHashes {
-        &self.hashes
-    }
-
-    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes {
-        &mut self.hashes
-    }
-
-    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.render_data)
-    }
-
     fn create_recompilation_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.compilation_data)
     }
@@ -349,14 +371,6 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
             num_lights: self.render_data.gpu_scene.lights.len(),
             num_emissive_primitives: self.render_data.gpu_scene.emissive_primitive_indices.len(),
         })
-    }
-
-    fn frame_counter(&self) -> &FrameCounter {
-        &self.subframe_counter
-    }
-
-    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
-        &mut self.subframe_counter
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {

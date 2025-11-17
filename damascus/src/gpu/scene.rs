@@ -21,7 +21,7 @@ use crate::{
     lights::{GPULight, Light, LightType},
     materials::{GPUMaterial, Material},
     textures::evaluators::{
-        TextureEvaluator, checkerboard::GPUCheckerboard, grade::GPUGrade, noise::GPUNoise,
+        TextureEvaluators, checkerboard::GPUCheckerboard, grade::GPUGrade, noise::GPUNoise,
     },
 };
 
@@ -293,17 +293,19 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_texture_evaluator(texture_evaluator: &TextureEvaluator) -> HashSet<Self> {
+    pub fn directives_for_texture_evaluator(
+        texture_evaluator: &TextureEvaluators,
+    ) -> HashSet<Self> {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
         match texture_evaluator {
-            TextureEvaluator::Grade(_) => {
+            TextureEvaluators::Grade(_) => {
                 preprocessor_directives.insert(Self::EnableGrade);
             }
-            TextureEvaluator::Checkerboard(_) => {
+            TextureEvaluators::Checkerboard(_) => {
                 preprocessor_directives.insert(Self::EnableCheckerboard);
             }
-            TextureEvaluator::Noise(_) => {
+            TextureEvaluators::Noise(_) => {
                 preprocessor_directives.insert(Self::EnableNoise);
             }
             _ => {}
@@ -316,7 +318,7 @@ impl ScenePreprocessorDirectives {
         let mut preprocessor_directives = HashSet::<Self>::new();
 
         if let Some(texture_evaluator_id) = material.diffuse_colour_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableDiffuseColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -324,7 +326,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.specular_probability_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableSpecularProbabilityTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -332,7 +334,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.specular_roughness_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableSpecularRoughnessTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -340,7 +342,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.specular_colour_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableSpecularColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -348,7 +350,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.transmissive_probability_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableTransmissiveProbabilityTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -356,7 +358,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.transmissive_roughness_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableTransmissiveRoughnessTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -364,7 +366,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.transmissive_colour_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableExtinctionColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -372,7 +374,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.emissive_colour_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableEmissiveColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -380,7 +382,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.refractive_index_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableRefractiveIndexTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(
@@ -388,7 +390,7 @@ impl ScenePreprocessorDirectives {
             ));
         }
         if let Some(texture_evaluator_id) = material.scattering_colour_texture_id
-            && scene_graph[texture_evaluator_id] != TextureEvaluator::White
+            && scene_graph[texture_evaluator_id] != TextureEvaluators::White
         {
             preprocessor_directives.insert(Self::EnableScatteringColourTexture);
             preprocessor_directives.extend(Self::directives_for_texture_evaluator(

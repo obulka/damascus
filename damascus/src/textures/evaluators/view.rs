@@ -22,7 +22,7 @@ use crate::{
         },
     },
     textures::evaluators::{
-        FrameCounter, GPUTextureEvaluator, GPUTextureEvaluatorHashes, grade::Grade,
+        FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes, grade::Grade,
         read::TextureRead,
     },
 };
@@ -99,7 +99,7 @@ pub struct TextureViewer {
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
-    hashes: GPUTextureEvaluatorHashes,
+    hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
 }
 
@@ -112,9 +112,31 @@ impl Default for TextureViewer {
             zoom: 1.0,
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
-            hashes: GPUTextureEvaluatorHashes::default(),
+            hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
         }
+    }
+}
+
+impl TextureEvaluator for TextureViewer {
+    fn label(&self) -> String {
+        "texture viewer".to_owned()
+    }
+
+    fn hashes(&self) -> &TextureEvaluatorHashes {
+        &self.hashes
+    }
+
+    fn hashes_mut(&mut self) -> &mut TextureEvaluatorHashes {
+        &mut self.hashes
+    }
+
+    fn frame_counter(&self) -> &FrameCounter {
+        &self.frame_counter
+    }
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        &mut self.frame_counter
     }
 }
 
@@ -147,28 +169,8 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 }
 
 impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer {
-    fn label(&self) -> String {
-        "texture viewer".to_owned()
-    }
-
-    fn hashes(&self) -> &GPUTextureEvaluatorHashes {
-        &self.hashes
-    }
-
-    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes {
-        &mut self.hashes
-    }
-
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.construction_data)
-    }
-
-    fn frame_counter(&self) -> &FrameCounter {
-        &self.frame_counter
-    }
-
-    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
-        &mut self.frame_counter
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
@@ -219,13 +221,15 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
             label: Some("texture view"),
             view_formats: &[],
         };
+
         let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
         let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
         vec![TextureView {
             texture_view: texture_view,
-            texture_data: texture_data,
+            texture_data: Some(texture_data),
             visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             view_dimension: wgpu::TextureViewDimension::D2,
+            format: texture_descriptor.format,
         }]
     }
 }

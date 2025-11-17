@@ -9,7 +9,7 @@ use slotmap::SlotMap;
 
 use crate::{
     DualDevice,
-    textures::evaluators::{TextureEvaluator, TextureEvaluatorId},
+    textures::evaluators::{TextureEvaluatorId, TextureEvaluators},
 };
 
 slotmap::new_key_type! { pub struct MaterialId; }
@@ -189,16 +189,16 @@ impl DualDevice<GPUMaterial, Std430GPUMaterial> for Material {
             emissive_colour: self.scaled_emissive_colour(),
             scattering_colour: self.scattering_colour * self.scattering_coefficient,
             refractive_index: self.refractive_index,
-            diffuse_colour_texture: TextureEvaluator::White.to_gpu(),
-            specular_probability_texture: TextureEvaluator::White.to_gpu(),
-            specular_roughness_texture: TextureEvaluator::White.to_gpu(),
-            specular_colour_texture: TextureEvaluator::White.to_gpu(),
-            transmissive_probability_texture: TextureEvaluator::White.to_gpu(),
-            transmissive_roughness_texture: TextureEvaluator::White.to_gpu(),
-            extinction_colour_texture: TextureEvaluator::White.to_gpu(),
-            emissive_colour_texture: TextureEvaluator::White.to_gpu(),
-            refractive_index_texture: TextureEvaluator::White.to_gpu(),
-            scattering_colour_texture: TextureEvaluator::White.to_gpu(),
+            diffuse_colour_texture: TextureEvaluators::White.to_gpu(),
+            specular_probability_texture: TextureEvaluators::White.to_gpu(),
+            specular_roughness_texture: TextureEvaluators::White.to_gpu(),
+            specular_colour_texture: TextureEvaluators::White.to_gpu(),
+            transmissive_probability_texture: TextureEvaluators::White.to_gpu(),
+            transmissive_roughness_texture: TextureEvaluators::White.to_gpu(),
+            extinction_colour_texture: TextureEvaluators::White.to_gpu(),
+            emissive_colour_texture: TextureEvaluators::White.to_gpu(),
+            refractive_index_texture: TextureEvaluators::White.to_gpu(),
+            scattering_colour_texture: TextureEvaluators::White.to_gpu(),
         }
     }
 }

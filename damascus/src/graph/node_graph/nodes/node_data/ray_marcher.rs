@@ -19,7 +19,7 @@ use crate::{
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
     textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluator,
+        GPUTextureEvaluator, TextureEvaluators,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
 };
@@ -138,7 +138,7 @@ impl EvaluableNode for RayMarcherNode {
         match output {
             Self::Outputs::Render => Ok(InputData::SceneGraphId(
                 scene_graph
-                    .add_texture_evaluator(TextureEvaluator::RayMarcher(
+                    .add_texture_evaluator(TextureEvaluators::RayMarcher(
                         RayMarcher::default()
                             .gpu_scene(
                                 if let Ok(root_id) =

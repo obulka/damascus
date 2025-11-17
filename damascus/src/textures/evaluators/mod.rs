@@ -44,13 +44,13 @@ slotmap::new_key_type! { pub struct TextureEvaluatorId; }
 
 #[derive(Debug, Clone, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct GPUTextureEvaluatorHashes {
+pub struct TextureEvaluatorHashes {
     pub reset: Key<OrderedFloatPolicy>,
     pub recompile: Key<OrderedFloatPolicy>,
     pub reconstruct: Key<OrderedFloatPolicy>,
 }
 
-impl Default for GPUTextureEvaluatorHashes {
+impl Default for TextureEvaluatorHashes {
     fn default() -> Self {
         Self {
             reset: Key::<OrderedFloatPolicy>::Unit,
@@ -60,7 +60,7 @@ impl Default for GPUTextureEvaluatorHashes {
     }
 }
 
-impl PartialEq for GPUTextureEvaluatorHashes {
+impl PartialEq for TextureEvaluatorHashes {
     fn eq(&self, other: &Self) -> bool {
         self.reset == other.reset
             && self.recompile == other.recompile
@@ -68,13 +68,8 @@ impl PartialEq for GPUTextureEvaluatorHashes {
     }
 }
 
-pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
-    Debug
-    + Default
-    + Clone
-    + serde::Serialize
-    + for<'a> serde::Deserialize<'a>
-    + ShaderSource<Directives>
+pub trait TextureEvaluator:
+    Debug + Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
 {
     // fn num_inputs(&self) -> u32 {
     //     self.inputs().len()
@@ -86,24 +81,13 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
     // fn output(&self) -> TextureView;
 
-    fn hashes(&self) -> &GPUTextureEvaluatorHashes;
+    fn hashes(&self) -> &TextureEvaluatorHashes;
 
-    fn hashes_mut(&mut self) -> &mut GPUTextureEvaluatorHashes;
+    fn hashes_mut(&mut self) -> &mut TextureEvaluatorHashes;
 
     fn frame_counter(&self) -> &FrameCounter;
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter;
-
-    fn new() -> Self {
-        let mut texture_evaluator = Self::default();
-        texture_evaluator.update_hashes();
-        texture_evaluator
-    }
-
-    fn finalized(mut self) -> Self {
-        self.update_hashes();
-        self
-    }
 
     fn label(&self) -> String {
         String::new()
@@ -111,14 +95,6 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
     fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.hashes().reset)
-    }
-
-    fn create_recompilation_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.hashes().recompile)
-    }
-
-    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.hashes().reconstruct)
     }
 
     fn update_reset_hash(&mut self) -> bool {
@@ -129,6 +105,89 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             }
         }
         false
+    }
+
+    fn reset(&mut self) {
+        self.frame_counter_mut().reset();
+    }
+
+    fn reset_if_hash_changed(&mut self) -> bool {
+        if self.update_reset_hash() {
+            self.reset();
+            return true;
+        }
+        false
+    }
+
+    fn output_mip_level_count(&self) -> u32 {
+        1
+    }
+
+    fn output_sample_count(&self) -> u32 {
+        1
+    }
+
+    fn output_texture_format(&self) -> wgpu::TextureFormat {
+        wgpu::TextureFormat::Rgba32Float
+    }
+
+    fn output_texture_view_dimension(&self) -> wgpu::TextureViewDimension {
+        wgpu::TextureViewDimension::D2
+    }
+
+    fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
+        None
+    }
+
+    fn output_texture_view_descriptor(&self) -> wgpu::TextureViewDescriptor<'_> {
+        wgpu::TextureViewDescriptor::default()
+    }
+
+    fn output_texture_descriptor(&self) -> Option<wgpu::TextureDescriptor<'_>> {
+        if let Some(dimensions) = self.output_texture_dimensions() {
+            Some(wgpu::TextureDescriptor {
+                label: None,
+                size: dimensions,
+                mip_level_count: self.output_mip_level_count(),
+                sample_count: self.output_sample_count(),
+                dimension: self
+                    .output_texture_view_dimension()
+                    .compatible_texture_dimension(),
+                format: self.output_texture_format(),
+                usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            })
+        } else {
+            None
+        }
+    }
+
+    fn create_output_texture(&self, device: &wgpu::Device) -> Option<TextureView> {
+        if let Some(texture_descriptor) = self.output_texture_descriptor() {
+            Some(TextureView {
+                texture_view: device
+                    .create_texture(&texture_descriptor)
+                    .create_view(&self.output_texture_view_descriptor()),
+                texture_data: None,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                view_dimension: self.output_texture_view_dimension(),
+                format: texture_descriptor.format,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
+    TextureEvaluator + ShaderSource<Directives>
+{
+    fn create_recompilation_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.hashes().recompile)
+    }
+
+    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.hashes().reconstruct)
     }
 
     fn update_recompilation_hash(&mut self) -> bool {
@@ -161,16 +220,15 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         hash_changed
     }
 
-    fn reset(&mut self) {
-        self.frame_counter_mut().reset();
+    fn new() -> Self {
+        let mut texture_evaluator = Self::default();
+        texture_evaluator.update_hashes();
+        texture_evaluator
     }
 
-    fn reset_if_hash_changed(&mut self) -> bool {
-        if self.update_reset_hash() {
-            self.reset();
-            return true;
-        }
-        false
+    fn finalized(mut self) -> Self {
+        self.update_hashes();
+        self
     }
 
     fn reconstruct_if_hash_changed(
@@ -748,7 +806,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     serde::Serialize,
     serde::Deserialize,
 )]
-pub enum TextureEvaluator {
+pub enum TextureEvaluators {
     #[default]
     White,
     Black,
@@ -760,9 +818,9 @@ pub enum TextureEvaluator {
     TextureViewer(TextureViewer),
 }
 
-impl Enumerator for TextureEvaluator {}
+impl Enumerator for TextureEvaluators {}
 
-impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
+impl DualDevice<UVec2, std430::UVec2> for TextureEvaluators {
     fn to_gpu(&self) -> UVec2 {
         UVec2::new(
             match self {
@@ -779,7 +837,7 @@ impl DualDevice<UVec2, std430::UVec2> for TextureEvaluator {
     }
 }
 
-impl TextureEvaluator {
+impl TextureEvaluators {
     pub fn new() -> Self {
         Self::TextureViewer(TextureViewer::new())
     }
@@ -898,6 +956,74 @@ impl TextureEvaluator {
     pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
         Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene).finalized())
     }
+
+    pub fn create_output_texture(&self, device: &wgpu::Device) -> Option<TextureView> {
+        match self {
+            Self::RayMarcher(ray_marcher) => ray_marcher.create_output_texture(device),
+            Self::TextureViewer(texture_viewer) => texture_viewer.create_output_texture(device),
+            _ => None,
+        }
+    }
+
+    pub fn render_to_texture_view(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        texture_view: &TextureView,
+    ) -> bool {
+        if !texture_view
+            .texture_view
+            .texture()
+            .usage()
+            .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
+        {
+            return false;
+        }
+
+        if let Some(mut render_resource) = self.render_resource(&device, texture_view.format.into())
+        {
+            let buffer_data: BufferData =
+                self.buffer_data(&device, texture_view.format.into(), &mut render_resource);
+
+            if let Some(frame_counter) = self.frame_counter_mut() {
+                frame_counter.tick();
+            }
+
+            // Write that data to the bind groups
+
+            render_resource.write_bind_groups(&queue, &buffer_data);
+
+            // Set up a render pass and paint to it
+
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &texture_view.texture_view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.,
+                            g: 0.,
+                            b: 0.,
+                            a: 0.,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            };
+
+            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+
+            true
+        } else {
+            false
+        }
+    }
 }
 
-pub type TextureEvaluators = SlotMap<TextureEvaluatorId, TextureEvaluator>;
+pub type TextureEvaluatorsMap = SlotMap<TextureEvaluatorId, TextureEvaluators>;

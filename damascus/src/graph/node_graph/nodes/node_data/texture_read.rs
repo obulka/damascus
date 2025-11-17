@@ -18,7 +18,7 @@ use crate::{
         scene_graph::{SceneGraph, SceneGraphIdType},
     },
     textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluator, read::TextureRead, view::TextureViewer,
+        GPUTextureEvaluator, TextureEvaluators, read::TextureRead, view::TextureViewer,
     },
 };
 
@@ -97,7 +97,7 @@ impl EvaluableNode for TextureReadNode {
         match output {
             Self::Outputs::Texture => Ok(InputData::SceneGraphId(
                 scene_graph
-                    .add_texture_evaluator(TextureEvaluator::TextureViewer(
+                    .add_texture_evaluator(TextureEvaluators::TextureViewer(
                         TextureViewer::default()
                             .texture(TextureRead {
                                 layers: 1,

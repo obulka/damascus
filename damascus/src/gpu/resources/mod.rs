@@ -12,6 +12,67 @@ pub trait BindingResource {
     fn as_resource(&self) -> wgpu::BindingResource<'_>;
 }
 
+pub trait TextureResource: BindingResource {
+    fn format(&self) -> wgpu::TextureFormat;
+
+    fn texture_view(&self) -> &wgpu::TextureView;
+
+    fn colour_target_state(&self) -> wgpu::ColorTargetState {
+        self.format().into()
+    }
+
+    fn buffer_size(&self) -> wgpu::BufferAddress {
+        self.format()
+            .theoretical_memory_footprint(self.texture_view().texture().size())
+            as wgpu::BufferAddress
+    }
+
+    fn bytes_per_row(&self) -> u32 {
+        self.format().theoretical_memory_footprint(wgpu::Extent3d {
+            width: self.texture_view().texture().width(),
+            height: 1,
+            depth_or_array_layers: 1,
+        }) as u32
+    }
+
+    fn rows_per_image(&self) -> u32 {
+        self.texture_view().texture().height()
+    }
+
+    fn copy_to_buffer(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+    ) -> wgpu::Buffer {
+        let buffer: wgpu::Buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            size: self.buffer_size(),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            label: Some("texture copy buffer"),
+            mapped_at_creation: false,
+        });
+
+        encoder.copy_texture_to_buffer(
+            wgpu::TexelCopyTextureInfo {
+                aspect: wgpu::TextureAspect::All,
+                texture: &self.texture_view().texture(),
+                mip_level: 0,
+                origin: wgpu::Origin3d::ZERO,
+            },
+            wgpu::TexelCopyBufferInfo {
+                buffer: &buffer,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(self.bytes_per_row()),
+                    rows_per_image: Some(self.rows_per_image()),
+                },
+            },
+            self.texture_view().texture().size(),
+        );
+
+        buffer
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
@@ -27,9 +88,10 @@ impl BindingResource for Buffer {
 #[derive(Debug, Clone)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
-    pub texture_data: Rgba32FImage,
+    pub texture_data: Option<Rgba32FImage>,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
+    pub format: wgpu::TextureFormat,
 }
 
 impl BindingResource for TextureView {
@@ -38,18 +100,38 @@ impl BindingResource for TextureView {
     }
 }
 
+impl TextureResource for TextureView {
+    fn format(&self) -> wgpu::TextureFormat {
+        self.format
+    }
+
+    fn texture_view(&self) -> &wgpu::TextureView {
+        &self.texture_view
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct StorageTextureView {
     pub texture_view: wgpu::TextureView,
     pub visibility: wgpu::ShaderStages,
     pub access: wgpu::StorageTextureAccess,
-    pub format: wgpu::TextureFormat,
     pub view_dimension: wgpu::TextureViewDimension,
+    pub format: wgpu::TextureFormat,
 }
 
 impl BindingResource for StorageTextureView {
     fn as_resource(&self) -> wgpu::BindingResource<'_> {
         wgpu::BindingResource::TextureView(&self.texture_view)
+    }
+}
+
+impl TextureResource for StorageTextureView {
+    fn format(&self) -> wgpu::TextureFormat {
+        self.format
+    }
+
+    fn texture_view(&self) -> &wgpu::TextureView {
+        &self.texture_view
     }
 }
 
@@ -78,21 +160,23 @@ pub struct TextureViewBindGroup {
 impl TextureViewBindGroup {
     pub fn write(&self, queue: &wgpu::Queue) {
         for texture_view in self.texture_views.iter() {
-            queue.write_texture(
-                wgpu::TexelCopyTextureInfo {
-                    texture: &texture_view.texture_view.texture(),
-                    mip_level: 0,
-                    origin: wgpu::Origin3d::ZERO,
-                    aspect: wgpu::TextureAspect::All,
-                },
-                bytemuck::cast_slice(texture_view.texture_data.as_raw().as_slice()),
-                wgpu::TexelCopyBufferLayout {
-                    offset: 0,
-                    bytes_per_row: Some(16 * texture_view.texture_data.width()),
-                    rows_per_image: Some(texture_view.texture_data.height()),
-                },
-                texture_view.texture_view.texture().size(),
-            );
+            if let Some(texture_data) = &texture_view.texture_data {
+                queue.write_texture(
+                    wgpu::TexelCopyTextureInfo {
+                        texture: &texture_view.texture_view.texture(),
+                        mip_level: 0,
+                        origin: wgpu::Origin3d::ZERO,
+                        aspect: wgpu::TextureAspect::All,
+                    },
+                    bytemuck::cast_slice(texture_data.as_raw().as_slice()),
+                    wgpu::TexelCopyBufferLayout {
+                        offset: 0,
+                        bytes_per_row: Some(16 * texture_data.width()),
+                        rows_per_image: Some(texture_data.height()),
+                    },
+                    texture_view.texture_view.texture().size(),
+                );
+            }
         }
     }
 }

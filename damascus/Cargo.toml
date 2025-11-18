@@ -18,5 +18,5 @@ strum = { version = "0.27", features = ["derive"] }
 wgpu = { version = "27.0" }
 
 [dev-dependencies]
+smol = { version = "2.0" }
 smol-macros = { version = "0.1" }
-futures-intrusive = { version = "0.5" }

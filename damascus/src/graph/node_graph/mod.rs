@@ -1587,16 +1587,15 @@ mod tests {
                 {
                     // Wait for the buffer to be populated with the rendered data
 
-                    let (transmitter, receiver) =
-                        futures_intrusive::channel::shared::oneshot_channel();
+                    let (transmitter, receiver) = smol::channel::bounded(1);
 
                     let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
                     buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                        transmitter.send(result).unwrap();
+                        assert!(transmitter.try_send(result).is_ok());
                     });
 
                     match device.poll(wgpu::PollType::Wait {
-                        submission_index: None,
+                        submission_index: None, // None for most recent submission
                         timeout: Some(core::time::Duration::new(5, 0)),
                     }) {
                         Err(error) => {
@@ -1606,7 +1605,7 @@ mod tests {
                         _ => {}
                     };
 
-                    receiver.receive().await.unwrap().unwrap();
+                    assert!(receiver.recv().await.is_ok());
 
                     // Get a read-only view into the buffer
                     let data = buffer_slice.get_mapped_range();

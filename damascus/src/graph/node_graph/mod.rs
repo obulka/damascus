@@ -1553,13 +1553,13 @@ mod tests {
             }
 
             if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await
-                && let Some(output_texture) =
-                    graph.scene_graph()[texture_evaluator_id].create_output_texture(&device)
+                && let Some(output_texture_view) =
+                    graph.scene_graph()[texture_evaluator_id].create_output_texture_view(&device)
                 && graph.scene_graph_mut()[texture_evaluator_id].render_to_texture_view(
                     &device,
                     &queue,
                     &mut encoder,
-                    &output_texture,
+                    &output_texture_view,
                 )
             {
                 // ---------------------------------------------------------
@@ -1580,7 +1580,7 @@ mod tests {
                 // Create a buffer that we can copy the render to
 
                 let output_buffer: wgpu::Buffer =
-                    output_texture.copy_to_buffer(&device, &mut encoder);
+                    output_texture_view.copy_to_buffer(&device, &mut encoder);
 
                 queue.submit(Some(encoder.finish()));
 
@@ -1613,8 +1613,8 @@ mod tests {
                     // Cast the buffer data into an image and save it to disk
 
                     let image_buffer = image::Rgba32FImage::from_raw(
-                        output_texture.texture_view.texture().width(),
-                        output_texture.texture_view.texture().height(),
+                        output_texture_view.texture_view.texture().width(),
+                        output_texture_view.texture_view.texture().height(),
                         bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
                     )
                     .unwrap();

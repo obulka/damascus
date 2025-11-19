@@ -7,6 +7,7 @@ use std::{borrow::Cow, fmt::Debug, ops::Range};
 
 use crevice::std430;
 use glam::UVec2;
+use image::Rgba32FImage;
 use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use slotmap::SlotMap;
@@ -162,7 +163,7 @@ pub trait TextureEvaluator:
         }
     }
 
-    fn create_output_texture(&self, device: &wgpu::Device) -> Option<TextureView> {
+    fn create_output_texture_view(&self, device: &wgpu::Device) -> Option<TextureView> {
         if let Some(texture_descriptor) = self.output_texture_descriptor() {
             Some(TextureView {
                 texture_view: device
@@ -177,6 +178,8 @@ pub trait TextureEvaluator:
             None
         }
     }
+
+    fn render_to_texture(&mut self, _texture: &mut Rgba32FImage) {}
 }
 
 pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
@@ -944,10 +947,12 @@ impl TextureEvaluators {
         Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene).finalized())
     }
 
-    pub fn create_output_texture(&self, device: &wgpu::Device) -> Option<TextureView> {
+    pub fn create_output_texture_view(&self, device: &wgpu::Device) -> Option<TextureView> {
         match self {
-            Self::RayMarcher(ray_marcher) => ray_marcher.create_output_texture(device),
-            Self::TextureViewer(texture_viewer) => texture_viewer.create_output_texture(device),
+            Self::RayMarcher(ray_marcher) => ray_marcher.create_output_texture_view(device),
+            Self::TextureViewer(texture_viewer) => {
+                texture_viewer.create_output_texture_view(device)
+            }
             _ => None,
         }
     }

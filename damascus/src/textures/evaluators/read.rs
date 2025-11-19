@@ -91,6 +91,18 @@ impl TextureEvaluator for TextureReader {
         &mut self.frame_counter
     }
 
+    fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
+        if self.render_data.resolution.x == 0 && self.render_data.resolution.y == 0 {
+            None
+        } else {
+            Some(wgpu::Extent3d {
+                width: self.render_data.resolution.x,
+                height: self.render_data.resolution.y,
+                depth_or_array_layers: 1, // TODO could output AOVs to other layers
+            })
+        }
+    }
+
     fn render_to_texture(&mut self, texture: &mut Rgba32FImage) {
         let (mut width, mut height) = texture.dimensions();
         if let Ok(image) = ImageReader::open(&self.render_data.filepath) {

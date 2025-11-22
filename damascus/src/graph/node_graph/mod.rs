@@ -495,20 +495,40 @@ impl NodeGraph {
     }
 
     pub fn connect_output_to_input(&mut self, output_id: OutputId, input_id: InputId) -> bool {
-        if !self.is_valid_edge(output_id, input_id) {
+        if !self.is_valid_edge(output_id, input_id) || !self.edges.connect(output_id, input_id) {
             return false;
         }
-        self.edges.connect(output_id, input_id);
-        let node_data: NodeData = self[self[input_id].node_id].data;
+
+        let node_id: NodeId = self[input_id].node_id;
+
+        let node_data: NodeData = self[node_id].data;
         node_data.dynamic_input_connected(self, input_id);
+
+        self.remove_node_from_cache(node_id);
+
         true
     }
 
     pub fn connect_node_to_input(&mut self, node_id: NodeId, input_id: InputId) -> bool {
         if let Some(output_id) = self.node_first_output_id(node_id) {
-            return self.connect_output_to_input(*output_id, input_id);
+            self.connect_output_to_input(*output_id, input_id)
+        } else {
+            false
         }
-        false
+    }
+
+    pub fn disconnect_input_id(&mut self, input_id: &InputId) -> Option<OutputId> {
+        if let Some(output_id) = self.edges.disconnect_parent_of_child(input_id) {
+            let node_id: NodeId = self[*input_id].node_id;
+            let node_data: NodeData = self[node_id].data;
+            node_data.dynamic_input_disconnected(self, *input_id);
+
+            self.remove_node_from_cache(node_id);
+
+            Some(output_id)
+        } else {
+            None
+        }
     }
 
     pub fn disconnect_named_node_input<'a>(
@@ -516,20 +536,9 @@ impl NodeGraph {
         node_id: NodeId,
         input_name: &'a str,
     ) -> Option<(OutputId, InputId)> {
-        if let Some((output_id, input_id)) = self
-            .node_input_id_from_str(node_id, input_name)
-            .ok()
-            .iter()
-            .flat_map(|input_id| {
-                self.edges
-                    .disconnect_parents_of_child(input_id)
-                    .map(|output_id| (output_id, *input_id))
-                    .collect::<Vec<_>>()
-            })
-            .next()
+        if let Ok(input_id) = self.node_input_id_from_str(node_id, input_name)
+            && let Some(output_id) = self.disconnect_input_id(&input_id)
         {
-            let node_data: NodeData = self[self[input_id].node_id].data;
-            node_data.dynamic_input_disconnected(self, input_id);
             Some((output_id, input_id))
         } else {
             None
@@ -1350,7 +1359,7 @@ mod tests {
         let ray_marcher_id: NodeId = graph.add_node(NodeData::RayMarcher);
 
         // Connect camera to scene
-        // /raymarcher/scene/camera/secondary_axis/primary_axis
+        // /ray_marcher/scene/camera/secondary_axis/primary_axis
 
         graph.connect_node_to_input(
             primary_camera_axis_id,
@@ -1374,8 +1383,8 @@ mod tests {
         );
 
         // Connect light to scene
-        // /raymarcher/scene/camera/secondary_axis/primary_axis
-        // |          |     /light
+        // /ray_marcher/scene/camera/secondary_axis/primary_axis
+        // |           |     /light
 
         graph.connect_node_to_input(
             light_id,
@@ -1385,14 +1394,14 @@ mod tests {
         );
 
         // Connect primitives to scene
-        // /raymarcher/scene/camera/secondary_axis/primary_axis
-        // |          |     /light
-        // |          |     /primitive/axis
-        // |          |     |         /material
-        // |          |     |         /primitive2/axis2
-        // |          |     |                    /material1
-        // |          |     /primitive1/axis1
-        // |          |     |          /material1
+        // /ray_marcher/scene/camera/secondary_axis/primary_axis
+        // |           |     /light
+        // |           |     /primitive/axis
+        // |           |     |         /material
+        // |           |     |         /primitive2/axis2
+        // |           |     |                    /material1
+        // |           |     /primitive1/axis1
+        // |           |     |          /material1
 
         graph.connect_node_to_input(
             primitive_axis_id,
@@ -1516,7 +1525,7 @@ mod tests {
         let primitive2_axis_translate_input_id: InputId = graph
             .node_input_id(primitive2_axis_id, AxisInputData::Translate)
             .unwrap();
-        graph[primitive2_axis_translate_input_id].data = InputData::Vec3(Vec3::X * -1.);
+        graph[primitive2_axis_translate_input_id].data = InputData::Vec3(-Vec3::X);
 
         // Modify ray marcher data
 

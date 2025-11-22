@@ -970,10 +970,9 @@ impl TextureEvaluators {
             .usage()
             .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            return false;
-        }
-
-        if let Some(mut render_resource) = self.render_resource(&device, texture_view.format.into())
+            false
+        } else if let Some(mut render_resource) =
+            self.render_resource(&device, texture_view.format.into())
         {
             let buffer_data: BufferData =
                 self.buffer_data(&device, texture_view.format.into(), &mut render_resource);

@@ -1587,11 +1587,6 @@ mod tests {
                         .finalized(),
                 );
 
-                // let mut new_encoder: wgpu::CommandEncoder =
-                //     device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                //         label: Some("wgpu command encoder"),
-                //     });
-
                 if let Some(viewer_output_texture_view) =
                     texture_viewer.create_output_texture_view(&device)
                     && texture_viewer.render_to_texture_view(

@@ -169,6 +169,9 @@ pub trait EvaluableNode {
     }
 
     fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
         _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
         _output: Self::Outputs,

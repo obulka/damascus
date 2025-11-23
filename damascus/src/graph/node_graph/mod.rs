@@ -154,12 +154,18 @@ impl NodeGraph {
 
     fn evaluate_node(
         &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
         output_id: OutputId,
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
         let node_data: NodeData = self[self[output_id].node_id].data;
         let output_name: String = self[output_id].name.clone();
         let input_data: InputData = Node::evaluate(
+            device,
+            queue,
+            encoder,
             &mut self.scene_graph,
             node_data,
             input_data_map,
@@ -172,21 +178,26 @@ impl NodeGraph {
     }
 
     // Evaluate the input value of a node
-    pub fn evaluate_output(&mut self, output_id: OutputId) -> NodeResult<InputData> {
-        // The output depends on the data from each of the node's inputs
-        // so iterate over the inputs and collect their data
-        let input_ids: Vec<InputId> = self[self[output_id].node_id].input_ids.clone();
-
+    pub fn evaluate_output(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        output_id: &OutputId,
+    ) -> NodeResult<InputData> {
         // We will collect that input data in this map as we ascend the graph
         let mut all_input_data_for_node = HashMap::<String, InputData>::new();
 
-        for input_id in input_ids.into_iter() {
+        // The output depends on the data from each of the node's inputs
+        // so iterate over the inputs and collect their data
+        for input_id in self[self[*output_id].node_id].input_ids.clone().iter() {
             // Recursively retrieve the data for this input
-            let result: NodeResult<InputData> = self.evaluate_input(input_id);
+            let result: NodeResult<InputData> =
+                self.evaluate_input(device, queue, encoder, input_id);
 
             if let Ok(input_data) = result {
                 // If the data was valid, store it for the node to process
-                all_input_data_for_node.insert(self[input_id].name.clone(), input_data);
+                all_input_data_for_node.insert(self[*input_id].name.clone(), input_data);
                 continue;
             }
 
@@ -196,21 +207,27 @@ impl NodeGraph {
 
         // All input data for the node has been collected
         // so its time to process the data and start descending the graph
-        self.evaluate_node(output_id, all_input_data_for_node)
+        self.evaluate_node(device, queue, encoder, *output_id, all_input_data_for_node)
     }
 
-    pub fn evaluate_input(&mut self, input_id: InputId) -> NodeResult<InputData> {
-        if let Some(output_id) = self.edges.parent(&input_id) {
+    pub fn evaluate_input(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        input_id: &InputId,
+    ) -> NodeResult<InputData> {
+        if let Some(output_id) = self.edges.parent(input_id) {
             if let Some(input_data) = self.cache.get(*output_id) {
                 // Data was already cached, return it
                 Ok((*input_data).clone())
             } else {
-                self.evaluate_output(*output_id)
+                self.evaluate_output(device, queue, encoder, &output_id.clone())
             }
         } else {
             // Input is not connected
             // Return its current/default value
-            Ok(self[input_id].data.clone())
+            Ok(self[*input_id].data.clone())
         }
     }
 
@@ -490,7 +507,7 @@ impl NodeGraph {
             .next()
     }
 
-    pub fn node_first_output_id(&self, node_id: NodeId) -> Option<&OutputId> {
+    pub fn nodes_first_output_id(&self, node_id: NodeId) -> Option<&OutputId> {
         self[node_id].output_ids.iter().next()
     }
 
@@ -510,7 +527,7 @@ impl NodeGraph {
     }
 
     pub fn connect_node_to_input(&mut self, node_id: NodeId, input_id: InputId) -> bool {
-        if let Some(output_id) = self.node_first_output_id(node_id) {
+        if let Some(output_id) = self.nodes_first_output_id(node_id) {
             self.connect_output_to_input(*output_id, input_id)
         } else {
             false
@@ -573,7 +590,7 @@ impl NodeGraph {
     }
 
     pub fn node_output_is_connected(&self, node_id: NodeId) -> bool {
-        if let Some(output_id) = self.node_first_output_id(node_id) {
+        if let Some(output_id) = self.nodes_first_output_id(node_id) {
             return self.output_is_connected(*output_id);
         }
         false
@@ -756,10 +773,10 @@ mod tests {
         let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         let primary_axis_output_id: OutputId =
-            *graph.node_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(primary_axis_id).unwrap();
 
         let secondary_axis_output_id: OutputId =
-            *graph.node_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
             .unwrap();
@@ -818,18 +835,18 @@ mod tests {
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
         let primary_axis_output_id: OutputId =
-            *graph.node_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(primary_axis_id).unwrap();
         let primary_axis_axis_input_id: InputId = graph
             .node_input_id(primary_axis_id, AxisInputData::Axis)
             .unwrap();
 
         let secondary_axis_output_id: OutputId =
-            *graph.node_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Axis)
             .unwrap();
 
-        let camera_output_id: OutputId = *graph.node_first_output_id(camera_id).unwrap();
+        let camera_output_id: OutputId = *graph.nodes_first_output_id(camera_id).unwrap();
 
         assert!(graph.is_valid_edge(primary_axis_output_id, secondary_axis_axis_input_id));
         assert!(!graph.is_valid_edge(primary_axis_output_id, primary_axis_axis_input_id));
@@ -1244,8 +1261,8 @@ mod tests {
         assert!(new_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
     }
 
-    #[test]
-    fn test_axis_evaluation() {
+    #[macro_rules_attribute::apply(smol_macros::test!)]
+    async fn test_axis_evaluation() {
         let mut graph = NodeGraph::new();
 
         let primary_axis_id: NodeId = graph.add_node(NodeData::Axis);
@@ -1273,7 +1290,7 @@ mod tests {
             .node_input_id(primary_axis_id, AxisInputData::Rotate)
             .unwrap();
         let primary_axis_output_id: OutputId =
-            *graph.node_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(primary_axis_id).unwrap();
 
         let secondary_axis_translate_input_id: InputId = graph
             .node_input_id(secondary_axis_id, AxisInputData::Translate)
@@ -1282,59 +1299,61 @@ mod tests {
             .node_input_id(secondary_axis_id, AxisInputData::Rotate)
             .unwrap();
         let secondary_axis_output_id: OutputId =
-            *graph.node_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
 
-        assert_eq!(
-            graph.evaluate_output(primary_axis_output_id),
-            Ok(InputData::Mat4(Mat4::IDENTITY))
-        );
-        assert_eq!(
-            graph.evaluate_output(secondary_axis_output_id),
-            Ok(InputData::Mat4(Mat4::IDENTITY))
-        );
+        if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await {
+            assert_eq!(
+                graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
+                Ok(InputData::Mat4(Mat4::IDENTITY))
+            );
+            assert_eq!(
+                graph.evaluate_output(&device, &queue, &mut encoder, &secondary_axis_output_id),
+                Ok(InputData::Mat4(Mat4::IDENTITY))
+            );
 
-        let primary_translation = Vec3::new(1., 2., 3.);
-        let secondary_translation = Vec3::new(3., 1., 2.);
+            let primary_translation = Vec3::new(1., 2., 3.);
+            let secondary_translation = Vec3::new(3., 1., 2.);
 
-        let primary_rotation = Vec3::new(13., 75., 69.);
-        let secondary_rotation = Vec3::new(45., 15., 12.);
+            let primary_rotation = Vec3::new(13., 75., 69.);
+            let secondary_rotation = Vec3::new(45., 15., 12.);
 
-        let primary_euler_rotation = primary_rotation * std::f32::consts::PI / 180.;
-        let secondary_euler_rotation = secondary_rotation * std::f32::consts::PI / 180.;
+            let primary_euler_rotation = primary_rotation * std::f32::consts::PI / 180.;
+            let secondary_euler_rotation = secondary_rotation * std::f32::consts::PI / 180.;
 
-        let primary_matrix = Mat4::from_rotation_translation(
-            Quat::from_euler(
-                glam::EulerRot::XYZ,
-                primary_euler_rotation.x,
-                primary_euler_rotation.y,
-                primary_euler_rotation.z,
-            ),
-            primary_translation,
-        );
-        let secondary_matrix = Mat4::from_rotation_translation(
-            Quat::from_euler(
-                glam::EulerRot::XYZ,
-                secondary_euler_rotation.x,
-                secondary_euler_rotation.y,
-                secondary_euler_rotation.z,
-            ),
-            secondary_translation,
-        );
+            let primary_matrix = Mat4::from_rotation_translation(
+                Quat::from_euler(
+                    glam::EulerRot::XYZ,
+                    primary_euler_rotation.x,
+                    primary_euler_rotation.y,
+                    primary_euler_rotation.z,
+                ),
+                primary_translation,
+            );
+            let secondary_matrix = Mat4::from_rotation_translation(
+                Quat::from_euler(
+                    glam::EulerRot::XYZ,
+                    secondary_euler_rotation.x,
+                    secondary_euler_rotation.y,
+                    secondary_euler_rotation.z,
+                ),
+                secondary_translation,
+            );
 
-        graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
-        graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
+            graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
+            graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
 
-        graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
-        graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
+            graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
+            graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
 
-        assert_eq!(
-            graph.evaluate_output(primary_axis_output_id),
-            Ok(InputData::Mat4(primary_matrix))
-        );
-        assert_eq!(
-            graph.evaluate_output(secondary_axis_output_id),
-            Ok(InputData::Mat4(primary_matrix * secondary_matrix))
-        );
+            assert_eq!(
+                graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
+                Ok(InputData::Mat4(primary_matrix))
+            );
+            assert_eq!(
+                graph.evaluate_output(&device, &queue, &mut encoder, &secondary_axis_output_id),
+                Ok(InputData::Mat4(primary_matrix * secondary_matrix))
+            );
+        }
     }
 
     #[macro_rules_attribute::apply(smol_macros::test!)]
@@ -1531,13 +1550,79 @@ mod tests {
             .unwrap();
         graph[primitive2_axis_translate_input_id].data = InputData::Vec3(-Vec3::X);
 
-        // Modify ray marcher data
+        let ray_marcher_output_id: OutputId = *graph.nodes_first_output_id(ray_marcher_id).unwrap();
 
-        let ray_marcher_output_id: OutputId = *graph.node_first_output_id(ray_marcher_id).unwrap();
+        // Evaluate the graph
 
-        if let Ok(input_data) = graph.evaluate_output(ray_marcher_output_id)
+        if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await
+            && let Ok(input_data) =
+                graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id)
             && let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
+            && let Some(output_texture_view) = match &graph.scene_graph()[texture_evaluator_id] {
+                TextureEvaluators::RayMarcher(ray_marcher) => ray_marcher.output.clone(),
+                _ => None,
+            }
         {
+            let mut texture_viewer = TextureEvaluators::TextureViewer(
+                TextureViewer::default()
+                    .input_texture_view(output_texture_view)
+                    .grade(Grade::default().gain(3.))
+                    .finalized(),
+            );
+
+            if let Some(viewer_output_texture_view) =
+                texture_viewer.evaluate(&device, &queue, &mut encoder)
+            {
+                // Create a buffer that we can copy the render to
+
+                let output_buffer: wgpu::Buffer =
+                    viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
+
+                queue.submit(Some(encoder.finish()));
+
+                {
+                    // Wait for the buffer to be populated with the rendered data
+
+                    let (transmitter, receiver) = smol::channel::bounded(1);
+
+                    let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
+                    buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                        assert!(transmitter.try_send(result).is_ok());
+                    });
+
+                    match device.poll(wgpu::PollType::Wait {
+                        submission_index: None, // None for most recent submission
+                        timeout: Some(core::time::Duration::new(5, 0)),
+                    }) {
+                        Err(error) => {
+                            println!("{:?}", error);
+                            assert!(false);
+                        }
+                        _ => {}
+                    };
+
+                    assert!(receiver.recv().await.is_ok());
+
+                    // Get a read-only view into the buffer
+                    let data = buffer_slice.get_mapped_range();
+
+                    // Cast the buffer data into an image and save it to disk
+
+                    let image_buffer = image::Rgba32FImage::from_raw(
+                        viewer_output_texture_view.texture_view.texture().width(),
+                        viewer_output_texture_view.texture_view.texture().height(),
+                        bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+                    )
+                    .unwrap();
+                    image_buffer.save("image.exr").unwrap();
+                }
+
+                // Release the buffer back to the GPU
+                output_buffer.unmap();
+            } else {
+                assert!(false);
+            }
+
             // The node graph has produced the data needed to render a ray marching pass
             // test that it was built correctly, then render it on the gpu
             match &graph.scene_graph()[texture_evaluator_id] {
@@ -1563,90 +1648,6 @@ mod tests {
                     );
                 }
                 _ => assert!(false),
-            }
-
-            if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await
-                && let Some(output_texture_view) =
-                    graph.scene_graph()[texture_evaluator_id].create_output_texture_view(&device)
-                && graph.scene_graph_mut()[texture_evaluator_id].render_to_texture_view(
-                    &device,
-                    &queue,
-                    &mut encoder,
-                    &output_texture_view,
-                )
-            {
-                // ---------------------------------------------------------
-                // TODO test a grade pass here on the result then generalize
-                // all of this
-                // ---------------------------------------------------------
-
-                let mut texture_viewer = TextureEvaluators::TextureViewer(
-                    TextureViewer::default()
-                        .input_texture_view(output_texture_view.clone())
-                        .grade(Grade::default().gain(3.))
-                        .finalized(),
-                );
-
-                if let Some(viewer_output_texture_view) =
-                    texture_viewer.create_output_texture_view(&device)
-                    && texture_viewer.render_to_texture_view(
-                        &device,
-                        &queue,
-                        &mut encoder,
-                        &viewer_output_texture_view,
-                    )
-                {
-                    // Create a buffer that we can copy the render to
-
-                    let output_buffer: wgpu::Buffer =
-                        viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
-
-                    queue.submit(Some(encoder.finish()));
-
-                    {
-                        // Wait for the buffer to be populated with the rendered data
-
-                        let (transmitter, receiver) = smol::channel::bounded(1);
-
-                        let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-                        buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                            assert!(transmitter.try_send(result).is_ok());
-                        });
-
-                        match device.poll(wgpu::PollType::Wait {
-                            submission_index: None, // None for most recent submission
-                            timeout: Some(core::time::Duration::new(5, 0)),
-                        }) {
-                            Err(error) => {
-                                println!("{:?}", error);
-                                assert!(false);
-                            }
-                            _ => {}
-                        };
-
-                        assert!(receiver.recv().await.is_ok());
-
-                        // Get a read-only view into the buffer
-                        let data = buffer_slice.get_mapped_range();
-
-                        // Cast the buffer data into an image and save it to disk
-
-                        let image_buffer = image::Rgba32FImage::from_raw(
-                            viewer_output_texture_view.texture_view.texture().width(),
-                            viewer_output_texture_view.texture_view.texture().height(),
-                            bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
-                        )
-                        .unwrap();
-                        image_buffer.save("image.exr").unwrap();
-                    }
-
-                    // Release the buffer back to the GPU
-                    output_buffer.unmap();
-                } else {
-                    assert!(false);
-                }
-            } else {
-                assert!(false);
             }
         } else {
             assert!(false);

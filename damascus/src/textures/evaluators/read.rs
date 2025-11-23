@@ -7,7 +7,10 @@ use glam::UVec2;
 use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 
-use crate::textures::evaluators::{FrameCounter, TextureEvaluator, TextureEvaluatorHashes};
+use crate::{
+    gpu::resources::TextureView,
+    textures::evaluators::{FrameCounter, TextureEvaluator, TextureEvaluatorHashes},
+};
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
@@ -103,15 +106,21 @@ impl TextureEvaluator for TextureReader {
         }
     }
 
-    fn render_to_texture(&mut self, texture: &mut Rgba32FImage) {
-        let (mut width, mut height) = texture.dimensions();
-        if let Ok(image) = ImageReader::open(&self.render_data.filepath) {
-            if let Ok(decoded_image) = image.decode() {
-                *texture = decoded_image.to_rgba32f();
-                (width, height) = texture.dimensions();
+    fn evaluate(&mut self, device: &wgpu::Device) -> Option<TextureView> {
+        if let Ok(image) = ImageReader::open(&self.render_data.filepath)
+            && let Ok(decoded_image) = image.decode()
+        {
+            let texture_data: Rgba32FImage = decoded_image.to_rgba32f();
+            let (width, height) = texture_data.dimensions();
+            self.render_data.resolution = UVec2::new(width, height);
+
+            if let Some(mut texture_view) = self.create_output_texture_view(device) {
+                texture_view.texture_data = Some(texture_data);
+                return Some(texture_view);
             }
         }
-        self.render_data.resolution = UVec2::new(width, height);
+
+        None
     }
 }
 

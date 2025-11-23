@@ -74,6 +74,9 @@ impl EvaluableNode for CameraNode {
     type Outputs = CameraOutputData;
 
     fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,

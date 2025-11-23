@@ -61,6 +61,9 @@ impl EvaluableNode for AxisNode {
     type Outputs = AxisOutputData;
 
     fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
         _scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,

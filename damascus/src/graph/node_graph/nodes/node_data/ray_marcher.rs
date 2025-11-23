@@ -9,7 +9,7 @@ use macro_rules_attribute::derive;
 
 use crate::{
     EnumHashTraits,
-    gpu::scene::GPUScene,
+    gpu::{resources::TextureView, scene::GPUScene},
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
@@ -19,7 +19,7 @@ use crate::{
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
     textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluators,
+        GPUTextureEvaluator, TextureEvaluatorId, TextureEvaluators,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
 };
@@ -99,88 +99,99 @@ impl EvaluableNode for RayMarcherNode {
     }
 
     fn evaluate(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
+        let texture_evaluator_id: TextureEvaluatorId =
+            scene_graph.add_texture_evaluator(TextureEvaluators::RayMarcher(
+                RayMarcher::default()
+                    .gpu_scene(
+                        if let Ok(root_id) =
+                            Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
+                        {
+                            scene_graph.as_gpu_scene(root_id)
+                        } else {
+                            GPUScene::default()
+                        },
+                    )
+                    .max_ray_steps(
+                        Self::Inputs::MaxRaySteps
+                            .get_data(data_map)?
+                            .try_to_uint()?,
+                    )
+                    .max_bounces(Self::Inputs::MaxBounces.get_data(data_map)?.try_to_uint()?)
+                    .hit_tolerance(
+                        Self::Inputs::HitTolerance
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .shadow_bias(
+                        Self::Inputs::ShadowBias
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .max_brightness(
+                        Self::Inputs::MaxBrightness
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .seed(Self::Inputs::Seed.get_data(data_map)?.try_to_uint()?)
+                    .dynamic_level_of_detail(
+                        Self::Inputs::DynamicLevelOfDetail
+                            .get_data(data_map)?
+                            .try_to_bool()?,
+                    )
+                    .equiangular_samples(
+                        Self::Inputs::EquiangularSamples
+                            .get_data(data_map)?
+                            .try_to_uint()?,
+                    )
+                    .max_light_sampling_bounces(
+                        Self::Inputs::MaxLightSamplingBounces
+                            .get_data(data_map)?
+                            .try_to_uint()?,
+                    )
+                    .light_sampling(
+                        Self::Inputs::LightSampling
+                            .get_data(data_map)?
+                            .try_to_bool()?,
+                    )
+                    .sample_atmosphere(
+                        Self::Inputs::SampleAtmosphere
+                            .get_data(data_map)?
+                            .try_to_bool()?,
+                    )
+                    .light_sampling_bias(
+                        Self::Inputs::LightSamplingBias
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .secondary_sampling(
+                        Self::Inputs::SecondarySampling
+                            .get_data(data_map)?
+                            .try_to_bool()?,
+                    )
+                    .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
+                    .finalized(),
+            ));
+        let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
+
+        let output_texture_view: Option<TextureView> =
+            scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+
+        match &mut scene_graph[texture_evaluator_id] {
+            TextureEvaluators::RayMarcher(ray_marcher) => {
+                ray_marcher.output = output_texture_view;
+            }
+            _ => {}
+        }
+
         match output {
-            Self::Outputs::Render => Ok(InputData::SceneGraphId(
-                scene_graph
-                    .add_texture_evaluator(TextureEvaluators::RayMarcher(
-                        RayMarcher::default()
-                            .gpu_scene(
-                                if let Ok(root_id) =
-                                    Self::Inputs::SceneRoot.get_data(data_map)?.try_to_root_id()
-                                {
-                                    scene_graph.as_gpu_scene(root_id)
-                                } else {
-                                    GPUScene::default()
-                                },
-                            )
-                            .max_ray_steps(
-                                Self::Inputs::MaxRaySteps
-                                    .get_data(data_map)?
-                                    .try_to_uint()?,
-                            )
-                            .max_bounces(
-                                Self::Inputs::MaxBounces.get_data(data_map)?.try_to_uint()?,
-                            )
-                            .hit_tolerance(
-                                Self::Inputs::HitTolerance
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .shadow_bias(
-                                Self::Inputs::ShadowBias
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .max_brightness(
-                                Self::Inputs::MaxBrightness
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .seed(Self::Inputs::Seed.get_data(data_map)?.try_to_uint()?)
-                            .dynamic_level_of_detail(
-                                Self::Inputs::DynamicLevelOfDetail
-                                    .get_data(data_map)?
-                                    .try_to_bool()?,
-                            )
-                            .equiangular_samples(
-                                Self::Inputs::EquiangularSamples
-                                    .get_data(data_map)?
-                                    .try_to_uint()?,
-                            )
-                            .max_light_sampling_bounces(
-                                Self::Inputs::MaxLightSamplingBounces
-                                    .get_data(data_map)?
-                                    .try_to_uint()?,
-                            )
-                            .light_sampling(
-                                Self::Inputs::LightSampling
-                                    .get_data(data_map)?
-                                    .try_to_bool()?,
-                            )
-                            .sample_atmosphere(
-                                Self::Inputs::SampleAtmosphere
-                                    .get_data(data_map)?
-                                    .try_to_bool()?,
-                            )
-                            .light_sampling_bias(
-                                Self::Inputs::LightSamplingBias
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .secondary_sampling(
-                                Self::Inputs::SecondarySampling
-                                    .get_data(data_map)?
-                                    .try_to_bool()?,
-                            )
-                            .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
-                            .finalized(),
-                    ))
-                    .into(),
-            )),
+            Self::Outputs::Render => Ok(InputData::SceneGraphId(scene_graph_id)),
         }
     }
 }

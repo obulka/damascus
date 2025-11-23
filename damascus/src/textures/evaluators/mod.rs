@@ -181,7 +181,9 @@ pub trait TextureEvaluator:
         }
     }
 
-    fn render_to_texture(&mut self, _texture: &mut Rgba32FImage) {}
+    fn evaluate(&mut self, device: &wgpu::Device) -> Option<TextureView> {
+        self.create_output_texture_view(device)
+    }
 }
 
 pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
@@ -959,22 +961,23 @@ impl TextureEvaluators {
         }
     }
 
-    pub fn render_to_texture_view(
+    pub fn evaluate(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-        texture_view: &TextureView,
-    ) -> bool {
-        if !texture_view
+    ) -> Option<TextureView> {
+        if let Some(texture_view) = match self {
+            Self::RayMarcher(ray_marcher) => ray_marcher.evaluate(device),
+            Self::TextureViewer(texture_viewer) => texture_viewer.evaluate(device),
+            _ => None,
+        } && texture_view
             .texture_view
             .texture()
             .usage()
             .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
-        {
-            false
-        } else if let Some(mut render_resource) =
-            self.render_resource(&device, texture_view.format.into())
+            && let Some(mut render_resource) =
+                self.render_resource(&device, texture_view.format.into())
         {
             let buffer_data: BufferData =
                 self.buffer_data(&device, texture_view.format.into(), &mut render_resource);
@@ -1012,9 +1015,9 @@ impl TextureEvaluators {
 
             render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
 
-            true
+            Some(texture_view)
         } else {
-            false
+            None
         }
     }
 }

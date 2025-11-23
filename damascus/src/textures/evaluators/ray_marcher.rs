@@ -18,7 +18,7 @@ use crate::{
             RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
             RayMarcherPreprocessorDirectives,
         },
-        resources::{BufferDescriptor, StorageTextureView},
+        resources::{BufferDescriptor, StorageTextureView, TextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
     textures::{
@@ -171,6 +171,8 @@ pub struct GPURayMarcher {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcher {
+    #[serde(skip)]
+    pub output: Option<TextureView>,
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
     pub subframe_counter: FrameCounter,
@@ -181,6 +183,7 @@ pub struct RayMarcher {
 impl Default for RayMarcher {
     fn default() -> Self {
         Self {
+            output: None,
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
             subframe_counter: FrameCounter::default(),

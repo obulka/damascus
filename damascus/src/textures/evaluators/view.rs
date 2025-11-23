@@ -23,7 +23,6 @@ use crate::{
     },
     textures::evaluators::{
         FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes, grade::Grade,
-        read::TextureRead,
     },
 };
 
@@ -31,13 +30,14 @@ use crate::{
 // reconstruct its pipeline
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
-    pub texture: TextureRead, // TODO generalize, not always a read
+    #[serde(skip)]
+    pub input_texture_view: Option<TextureView>,
 }
 
 impl Default for TextureViewerConstructionData {
     fn default() -> Self {
         Self {
-            texture: TextureRead::default(),
+            input_texture_view: None,
         }
     }
 }
@@ -138,6 +138,18 @@ impl TextureEvaluator for TextureViewer {
     fn frame_counter_mut(&mut self) -> &mut FrameCounter {
         &mut self.frame_counter
     }
+
+    fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
+        if let Some(input_texture_view) = &self.construction_data.input_texture_view {
+            Some(wgpu::Extent3d {
+                width: input_texture_view.texture_view.texture().width(),
+                height: input_texture_view.texture_view.texture().height(),
+                depth_or_array_layers: 1,
+            })
+        } else {
+            None
+        }
+    }
 }
 
 impl DualDevice<GPUTextureViewer, Std430GPUTextureViewer> for TextureViewer {
@@ -194,49 +206,26 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
     }
 
     fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
-        let mut width: u32 = 10;
-        let mut height: u32 = 10;
-        let mut texture_data = Rgba32FImage::new(width, height);
-        if let Ok(image) = ImageReader::open(&self.construction_data.texture.filepath) {
-            if let Ok(decoded_image) = image.decode() {
-                texture_data = decoded_image.to_rgba32f();
-                (width, height) = texture_data.dimensions();
-            }
-        }
-
-        let texture_descriptor = wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width: width,
-                height: height,
-                depth_or_array_layers: self.construction_data.texture.layers,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::COPY_SRC
-                | wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TEXTURE_BINDING,
-            label: Some("texture view"),
-            view_formats: &[],
-        };
-
-        let texture: wgpu::Texture = device.create_texture(&texture_descriptor);
-        let texture_view: wgpu::TextureView = texture.create_view(&Default::default());
-        vec![TextureView {
-            texture_view: texture_view,
-            texture_data: Some(texture_data),
-            visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-            view_dimension: wgpu::TextureViewDimension::D2,
-            format: texture_descriptor.format,
-        }]
+        self.construction_data
+            .input_texture_view
+            .iter()
+            .cloned()
+            .collect()
     }
 }
 
 impl TextureViewer {
-    pub fn texture(mut self, texture: TextureRead) -> Self {
-        self.construction_data.texture = texture;
+    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+        self.render_data.resolution = UVec2::new(
+            input_texture_view.texture_view.texture().width(),
+            input_texture_view.texture_view.texture().height(),
+        );
+        self.construction_data.input_texture_view = Some(input_texture_view);
+        self
+    }
+
+    pub fn grade(mut self, grade: Grade) -> Self {
+        self.grade = grade;
         self
     }
 }

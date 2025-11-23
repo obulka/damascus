@@ -5,6 +5,16 @@
 
 const INVERT: u32 = 1u;
 
+struct Grade {
+    flags: u32,
+    black_point: f32,
+    white_point: f32,
+    lift: f32,
+    gain: f32,
+    gamma: f32,
+    transform: mat4x4f,
+}
+
 fn grade_f32(colour: f32, grade: Grade) -> f32 {
     return select(
         pow(
@@ -72,14 +82,4 @@ fn grade_vec4(colour: vec4f, grade: Grade) -> vec4f {
             grade.white_point == grade.black_point,
         ),
     );
-}
-
-struct Grade {
-    flags: u32,
-    black_point: f32,
-    white_point: f32,
-    lift: f32,
-    gain: f32,
-    gamma: f32,
-    transform: mat4x4f,
 }

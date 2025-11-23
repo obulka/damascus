@@ -155,7 +155,9 @@ pub trait TextureEvaluator:
                     .output_texture_view_dimension()
                     .compatible_texture_dimension(),
                 format: self.output_texture_format(),
-                usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                usage: wgpu::TextureUsages::COPY_SRC
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT
+                    | wgpu::TextureUsages::TEXTURE_BINDING,
                 view_formats: &[],
             })
         } else {

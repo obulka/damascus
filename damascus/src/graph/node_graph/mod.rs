@@ -599,8 +599,12 @@ mod tests {
     use super::{inputs::input_data::InputData, nodes::node_data::*, *};
 
     use crate::{
-        geometry::primitives::Shapes, gpu::get_device_queue_encoder,
-        gpu::resources::TextureResource, textures::evaluators::TextureEvaluators,
+        geometry::primitives::Shapes,
+        gpu::get_device_queue_encoder,
+        gpu::resources::TextureResource,
+        textures::evaluators::{
+            GPUTextureEvaluator, TextureEvaluators, grade::Grade, view::TextureViewer,
+        },
     };
 
     #[test]
@@ -1576,62 +1580,76 @@ mod tests {
                 // all of this
                 // ---------------------------------------------------------
 
-                // let texture_viewer = TextureEvaluators::TextureViewer(
-                //             TextureViewer::default()
-                //                 .texture(TextureRead {
-                //                     layers: 1,
-                //                     filepath: Self::Inputs::Filepath
-                //                         .get_data(data_map)?
-                //                         .try_to_filepath()?,
-                //                 })
-                //                 .finalized();
+                let mut texture_viewer = TextureEvaluators::TextureViewer(
+                    TextureViewer::default()
+                        .input_texture_view(output_texture_view.clone())
+                        .grade(Grade::default().gain(3.))
+                        .finalized(),
+                );
 
-                // Create a buffer that we can copy the render to
+                // let mut new_encoder: wgpu::CommandEncoder =
+                //     device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                //         label: Some("wgpu command encoder"),
+                //     });
 
-                let output_buffer: wgpu::Buffer =
-                    output_texture_view.copy_to_buffer(&device, &mut encoder);
-
-                queue.submit(Some(encoder.finish()));
-
-                {
-                    // Wait for the buffer to be populated with the rendered data
-
-                    let (transmitter, receiver) = smol::channel::bounded(1);
-
-                    let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-                    buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                        assert!(transmitter.try_send(result).is_ok());
-                    });
-
-                    match device.poll(wgpu::PollType::Wait {
-                        submission_index: None, // None for most recent submission
-                        timeout: Some(core::time::Duration::new(5, 0)),
-                    }) {
-                        Err(error) => {
-                            println!("{:?}", error);
-                            assert!(false);
-                        }
-                        _ => {}
-                    };
-
-                    assert!(receiver.recv().await.is_ok());
-
-                    // Get a read-only view into the buffer
-                    let data = buffer_slice.get_mapped_range();
-
-                    // Cast the buffer data into an image and save it to disk
-
-                    let image_buffer = image::Rgba32FImage::from_raw(
-                        output_texture_view.texture_view.texture().width(),
-                        output_texture_view.texture_view.texture().height(),
-                        bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+                if let Some(viewer_output_texture_view) =
+                    texture_viewer.create_output_texture_view(&device)
+                    && texture_viewer.render_to_texture_view(
+                        &device,
+                        &queue,
+                        &mut encoder,
+                        &viewer_output_texture_view,
                     )
-                    .unwrap();
-                    image_buffer.save("image.exr").unwrap();
-                }
+                {
+                    // Create a buffer that we can copy the render to
 
-                // Release the buffer back to the GPU
-                output_buffer.unmap();
+                    let output_buffer: wgpu::Buffer =
+                        viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
+
+                    queue.submit(Some(encoder.finish()));
+
+                    {
+                        // Wait for the buffer to be populated with the rendered data
+
+                        let (transmitter, receiver) = smol::channel::bounded(1);
+
+                        let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
+                        buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                            assert!(transmitter.try_send(result).is_ok());
+                        });
+
+                        match device.poll(wgpu::PollType::Wait {
+                            submission_index: None, // None for most recent submission
+                            timeout: Some(core::time::Duration::new(5, 0)),
+                        }) {
+                            Err(error) => {
+                                println!("{:?}", error);
+                                assert!(false);
+                            }
+                            _ => {}
+                        };
+
+                        assert!(receiver.recv().await.is_ok());
+
+                        // Get a read-only view into the buffer
+                        let data = buffer_slice.get_mapped_range();
+
+                        // Cast the buffer data into an image and save it to disk
+
+                        let image_buffer = image::Rgba32FImage::from_raw(
+                            viewer_output_texture_view.texture_view.texture().width(),
+                            viewer_output_texture_view.texture_view.texture().height(),
+                            bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+                        )
+                        .unwrap();
+                        image_buffer.save("image.exr").unwrap();
+                    }
+
+                    // Release the buffer back to the GPU
+                    output_buffer.unmap();
+                } else {
+                    assert!(false);
+                }
             } else {
                 assert!(false);
             }

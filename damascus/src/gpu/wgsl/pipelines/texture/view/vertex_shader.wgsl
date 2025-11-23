@@ -5,7 +5,9 @@
 
 #include TextureViewerConstants
 #include Math
+#include Colour
 #include Texture
+#include Grade
 #include TextureViewerRenderParameters
 
 struct VertexInput {

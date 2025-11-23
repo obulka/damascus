@@ -85,7 +85,7 @@ impl BindingResource for Buffer {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
     pub texture_data: Option<Rgba32FImage>,

@@ -6,8 +6,6 @@
 #include TextureViewerConstants
 #include Math
 #include Colour
-#include Random
-#include Texture
 #include Grade
 #include TextureViewerRenderParameters
 

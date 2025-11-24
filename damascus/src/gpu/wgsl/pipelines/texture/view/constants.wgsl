@@ -16,6 +16,5 @@ const VIEWER_GRADE_BINDING: u32 = 2u;
 const TEXTURE_BINDING: u32 = 0u;
 
 // Interstage variable locations
-const VERTEX_UV_LOCATION: u32 = 0u;
 const TEXTURE_COORDINATE_LOCATION: u32 = 0u;
 const PIXEL_COLOUR_LOCATION: u32 = 0u;

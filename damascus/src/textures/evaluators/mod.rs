@@ -72,16 +72,6 @@ impl PartialEq for TextureEvaluatorHashes {
 pub trait TextureEvaluator:
     Debug + Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
 {
-    // fn num_inputs(&self) -> u32 {
-    //     self.inputs().len()
-    // }
-
-    // fn inputs(&self) -> Vec {
-    //     vec![]
-    // }
-
-    // fn output(&self) -> TextureView;
-
     fn hashes(&self) -> &TextureEvaluatorHashes;
 
     fn hashes_mut(&mut self) -> &mut TextureEvaluatorHashes;
@@ -181,7 +171,7 @@ pub trait TextureEvaluator:
         }
     }
 
-    fn evaluate(&mut self, device: &wgpu::Device) -> Option<TextureView> {
+    fn evaluate_texture(&mut self, device: &wgpu::Device) -> Option<TextureView> {
         self.create_output_texture_view(device)
     }
 }
@@ -799,6 +789,62 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             storage_texture_views,
         }
     }
+
+    fn evaluate(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+    ) -> Option<TextureView> {
+        if let Some(texture_view) = self.create_output_texture_view(device)
+            && texture_view
+                .texture_view
+                .texture()
+                .usage()
+                .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
+        {
+            let mut render_resource = self.render_resource(&device, texture_view.format.into());
+
+            self.update_if_hash_changed(&device, texture_view.format.into(), &mut render_resource);
+
+            let buffer_data: BufferData = self.buffer_data();
+
+            self.frame_counter_mut().tick();
+
+            // Write that data to the bind groups
+
+            render_resource.write_bind_groups(&queue, &buffer_data);
+
+            // Set up a render pass and paint to it
+
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &texture_view.texture_view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.,
+                            g: 0.,
+                            b: 0.,
+                            a: 0.,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            };
+
+            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+
+            Some(texture_view)
+        } else {
+            None
+        }
+    }
 }
 
 #[derive(Default, EnumTraits!)]
@@ -967,57 +1013,10 @@ impl TextureEvaluators {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
     ) -> Option<TextureView> {
-        if let Some(texture_view) = match self {
-            Self::RayMarcher(ray_marcher) => ray_marcher.evaluate(device),
-            Self::TextureViewer(texture_viewer) => texture_viewer.evaluate(device),
+        match self {
+            Self::RayMarcher(ray_marcher) => ray_marcher.evaluate(device, queue, encoder),
+            Self::TextureViewer(texture_viewer) => texture_viewer.evaluate(device, queue, encoder),
             _ => None,
-        } && texture_view
-            .texture_view
-            .texture()
-            .usage()
-            .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
-            && let Some(mut render_resource) =
-                self.render_resource(&device, texture_view.format.into())
-        {
-            let buffer_data: BufferData =
-                self.buffer_data(&device, texture_view.format.into(), &mut render_resource);
-
-            if let Some(frame_counter) = self.frame_counter_mut() {
-                frame_counter.tick();
-            }
-
-            // Write that data to the bind groups
-
-            render_resource.write_bind_groups(&queue, &buffer_data);
-
-            // Set up a render pass and paint to it
-
-            let render_pass_desc = wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &texture_view.texture_view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.,
-                            g: 0.,
-                            b: 0.,
-                            a: 0.,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            };
-
-            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
-
-            Some(texture_view)
-        } else {
-            None
         }
     }
 }

@@ -106,7 +106,7 @@ impl TextureEvaluator for TextureReader {
         }
     }
 
-    fn evaluate(&mut self, device: &wgpu::Device) -> Option<TextureView> {
+    fn evaluate_texture(&mut self, device: &wgpu::Device) -> Option<TextureView> {
         if let Ok(image) = ImageReader::open(&self.render_data.filepath)
             && let Ok(decoded_image) = image.decode()
         {

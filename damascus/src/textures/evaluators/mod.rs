@@ -119,6 +119,7 @@ pub trait TextureEvaluator:
     }
 
     fn output_texture_format(&self) -> wgpu::TextureFormat {
+        // TODO make this a match on the Texture type
         wgpu::TextureFormat::Rgba32Float
     }
 

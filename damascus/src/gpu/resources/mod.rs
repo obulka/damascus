@@ -5,7 +5,6 @@
 
 use std::ops::Range;
 
-use image::Rgba32FImage;
 use wgpu;
 
 pub trait BindingResource {
@@ -88,7 +87,7 @@ impl BindingResource for Buffer {
 #[derive(Debug, PartialEq, Clone)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
-    pub texture_data: Option<Rgba32FImage>,
+    pub texture_data: Option<image::Rgba32FImage>,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
     pub format: wgpu::TextureFormat,
@@ -171,8 +170,8 @@ impl TextureViewBindGroup {
                     bytemuck::cast_slice(texture_data.as_raw().as_slice()),
                     wgpu::TexelCopyBufferLayout {
                         offset: 0,
-                        bytes_per_row: Some(16 * texture_data.width()),
-                        rows_per_image: Some(texture_data.height()),
+                        bytes_per_row: Some(texture_view.bytes_per_row()),
+                        rows_per_image: Some(texture_view.rows_per_image()),
                     },
                     texture_view.texture_view.texture().size(),
                 );

@@ -7,7 +7,6 @@ use std::{borrow::Cow, fmt::Debug, ops::Range};
 
 use crevice::std430;
 use glam::UVec2;
-use image::Rgba32FImage;
 use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use slotmap::SlotMap;
@@ -39,6 +38,7 @@ use checkerboard::Checkerboard;
 use grade::Grade;
 use noise::Noise;
 use ray_marcher::RayMarcher;
+use read::TextureReader;
 use view::TextureViewer;
 
 slotmap::new_key_type! { pub struct TextureEvaluatorId; }
@@ -110,6 +110,12 @@ pub trait TextureEvaluator:
         false
     }
 
+    /// TODO do not like the finalize/finalized hack to differentiate
+    fn finalize(mut self) -> Self {
+        self.update_reset_hash();
+        self
+    }
+
     fn output_mip_level_count(&self) -> u32 {
         1
     }
@@ -162,7 +168,7 @@ pub trait TextureEvaluator:
                 texture_view: device
                     .create_texture(&texture_descriptor)
                     .create_view(&self.output_texture_view_descriptor()),
-                texture_data: None,
+                data: vec![],
                 visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                 view_dimension: self.output_texture_view_dimension(),
                 format: texture_descriptor.format,
@@ -859,6 +865,7 @@ pub enum TextureEvaluators {
     Noise(Noise),
     RayMarcher(RayMarcher),
     TextureViewer(TextureViewer),
+    TextureReader(TextureReader),
 }
 
 impl DualDevice<UVec2, std430::UVec2> for TextureEvaluators {
@@ -887,6 +894,7 @@ impl TextureEvaluators {
         match self {
             Self::RayMarcher(ray_marcher) => ray_marcher.reset(),
             Self::TextureViewer(texture_viewer) => texture_viewer.reset(),
+            Self::TextureReader(texture_reader) => texture_reader.reset(),
             _ => {}
         }
     }
@@ -895,6 +903,7 @@ impl TextureEvaluators {
         match self {
             Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter()),
             Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter()),
+            Self::TextureReader(texture_reader) => Some(texture_reader.frame_counter()),
             _ => None,
         }
     }
@@ -903,6 +912,7 @@ impl TextureEvaluators {
         match self {
             Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter_mut()),
             Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter_mut()),
+            Self::TextureReader(texture_reader) => Some(texture_reader.frame_counter_mut()),
             _ => None,
         }
     }
@@ -990,6 +1000,7 @@ impl TextureEvaluators {
             Self::TextureViewer(texture_viewer) => {
                 texture_viewer.update_if_hash_changed(device, target_state, render_resource)
             }
+            Self::TextureReader(texture_reader) => texture_reader.reset_if_hash_changed(),
             _ => false,
         }
     }
@@ -1004,6 +1015,9 @@ impl TextureEvaluators {
             Self::TextureViewer(texture_viewer) => {
                 texture_viewer.create_output_texture_view(device)
             }
+            Self::TextureReader(texture_reader) => {
+                texture_reader.create_output_texture_view(device)
+            }
             _ => None,
         }
     }
@@ -1017,6 +1031,7 @@ impl TextureEvaluators {
         match self {
             Self::RayMarcher(ray_marcher) => ray_marcher.evaluate(device, queue, encoder),
             Self::TextureViewer(texture_viewer) => texture_viewer.evaluate(device, queue, encoder),
+            Self::TextureReader(texture_reader) => texture_reader.evaluate_texture(device),
             _ => None,
         }
     }

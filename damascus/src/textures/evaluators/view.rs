@@ -7,7 +7,6 @@ use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
-use image::{ImageReader, Rgba32FImage};
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
@@ -205,7 +204,7 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
         ]
     }
 
-    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
         self.construction_data
             .input_texture_view
             .iter()

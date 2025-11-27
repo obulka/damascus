@@ -12,13 +12,14 @@ use crate::{
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::{NodeErrors, NodeResult, node_data::EvaluableNode},
+            nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphIdType},
     },
     textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluators, read::TextureRead, view::TextureViewer,
+        TextureEvaluator, TextureEvaluators,
+        read::{TextureRead, TextureReader},
     },
 };
 
@@ -65,22 +66,20 @@ impl EvaluableNode for TextureReadNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        // match output {
-        //     Self::Outputs::Texture => Ok(InputData::SceneGraphId(
-        //         scene_graph
-        //             .add_texture_evaluator(TextureEvaluators::TextureViewer(
-        //                 TextureViewer::default()
-        //                     .texture(TextureRead {
-        //                         layers: 1,
-        //                         filepath: Self::Inputs::Filepath
-        //                             .get_data(data_map)?
-        //                             .try_to_filepath()?,
-        //                     })
-        //                     .finalized(),
-        //             ))
-        //             .into(),
-        //     )),
-        // }
-        Err(NodeErrors::NotImplementedError)
+        match output {
+            Self::Outputs::Texture => Ok(InputData::SceneGraphId(
+                scene_graph
+                    .add_texture_evaluator(TextureEvaluators::TextureReader(
+                        TextureReader::default()
+                            .filepath(
+                                Self::Inputs::Filepath
+                                    .get_data(data_map)?
+                                    .try_to_filepath()?,
+                            )
+                            .finalize(),
+                    ))
+                    .into(),
+            )),
+        }
     }
 }

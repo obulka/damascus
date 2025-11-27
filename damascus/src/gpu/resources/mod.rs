@@ -87,7 +87,7 @@ impl BindingResource for Buffer {
 #[derive(Debug, PartialEq, Clone)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
-    pub texture_data: Option<image::Rgba32FImage>,
+    pub data: Vec<u8>,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
     pub format: wgpu::TextureFormat,
@@ -159,7 +159,7 @@ pub struct TextureViewBindGroup {
 impl TextureViewBindGroup {
     pub fn write(&self, queue: &wgpu::Queue) {
         for texture_view in self.texture_views.iter() {
-            if let Some(texture_data) = &texture_view.texture_data {
+            if !texture_view.data.is_empty() {
                 queue.write_texture(
                     wgpu::TexelCopyTextureInfo {
                         texture: &texture_view.texture_view.texture(),
@@ -167,7 +167,7 @@ impl TextureViewBindGroup {
                         origin: wgpu::Origin3d::ZERO,
                         aspect: wgpu::TextureAspect::All,
                     },
-                    bytemuck::cast_slice(texture_data.as_raw().as_slice()),
+                    texture_view.data.as_slice(),
                     wgpu::TexelCopyBufferLayout {
                         offset: 0,
                         bytes_per_row: Some(texture_view.bytes_per_row()),

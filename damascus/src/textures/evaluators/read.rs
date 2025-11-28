@@ -12,22 +12,6 @@ use crate::{
     textures::evaluators::{FrameCounter, TextureEvaluator, TextureEvaluatorHashes},
 };
 
-#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-#[serde(default)]
-pub struct TextureRead {
-    pub layers: u32,
-    pub filepath: String,
-}
-
-impl Default for TextureRead {
-    fn default() -> Self {
-        Self {
-            layers: 1,
-            filepath: String::new(),
-        }
-    }
-}
-
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]

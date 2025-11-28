@@ -3,12 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#include TextureViewerConstants
-#include Math
-#include Colour
+#include GradeConstants
 #include Texture
-#include Grade
-#include TextureViewerRenderParameters
 
 struct VertexInput {
     @builtin(vertex_index) vertex_index: u32,
@@ -31,31 +27,18 @@ var<storage, read> _vertex_data: array<VertexData>;
 
 @vertex
 fn vs_main(vertex_input: VertexInput) -> VertexOutput {
-    var texture_uv: vec2f = _vertex_data[vertex_input.vertex_index].uv_coordinate;
+    var uv_coordinate: vec2f = _vertex_data[vertex_input.vertex_index].uv_coordinate;
 
     var texture_dimensions = vec2f(textureDimensions(_texture));
 
     var out: VertexOutput;
     out.texture_coordinate = vec4(
-        uv_to_pixels(vec2f(texture_uv.x, -texture_uv.y), texture_dimensions),
+        uv_to_pixels(vec2f(uv_coordinate.x, -uv_coordinate.y), texture_dimensions),
         0.,
         1.,
     );
 
-    texture_uv.y *=
-        _render_parameters.resolution.x * texture_dimensions.y
-        / (_render_parameters.resolution.y * texture_dimensions.x);
-
-    out.ndc_coordinate = vec4(
-        (
-            scale_pixels_to_uv(
-                _render_state.pan,
-                _render_parameters.resolution,
-            ) + texture_uv
-        ) / _render_state.zoom,
-        0.,
-        1.,
-    );
+    out.ndc_coordinate = vec4(uv_coordinate, 0., 1.);
 
     return out;
 }

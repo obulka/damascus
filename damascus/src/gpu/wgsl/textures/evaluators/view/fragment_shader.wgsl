@@ -7,7 +7,7 @@
 #include Math
 #include Colour
 #include Grade
-#include TextureViewerRenderParameters
+#include TextureViewerBindings
 
 struct FragmentInput {
     // Pixel index to read from the texture

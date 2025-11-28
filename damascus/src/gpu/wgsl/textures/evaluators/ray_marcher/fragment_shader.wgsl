@@ -21,7 +21,7 @@
 #include Material
 #include Primitive
 #include PrimitiveModifiers
-#include RayMarcherRenderParameters
+#include RayMarcherBindings
 #include SceneSDFs
 #include Normals
 #include Lights

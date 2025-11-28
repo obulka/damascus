@@ -7,29 +7,32 @@ use std::collections::HashSet;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
+use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
 use crate::{
-    DualDevice,
+    DualDevice, PreprocessorDirectivesTraits,
     gpu::{
         ShaderSource,
         resources::{BufferDescriptor, TextureView},
-        texture::view::{
-            TEXTURE_VIEWER_FRAGMENT_SHADER, TEXTURE_VIEWER_VERTEX_SHADER,
-            TextureViewerPreprocessorDirectives,
-        },
     },
     textures::evaluators::{
         FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes, grade::Grade,
     },
 };
 
+#[derive(Copy, Default, PreprocessorDirectivesTraits!)]
+pub enum TextureViewerPreprocessorDirectives {
+    #[default]
+    None,
+}
+
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
-    #[serde(skip)]
+    #[serde(skip_deserializing)]
     pub input_texture_view: Option<TextureView>,
 }
 
@@ -163,11 +166,11 @@ impl DualDevice<GPUTextureViewer, Std430GPUTextureViewer> for TextureViewer {
 
 impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn vertex_shader_raw(&self) -> &str {
-        TEXTURE_VIEWER_VERTEX_SHADER
+        include_str!("../../gpu/wgsl/textures/evaluators/view/vertex_shader.wgsl")
     }
 
     fn fragment_shader_raw(&self) -> &str {
-        TEXTURE_VIEWER_FRAGMENT_SHADER
+        include_str!("../../gpu/wgsl/textures/evaluators/view/fragment_shader.wgsl")
     }
 
     fn current_directives(&self) -> &HashSet<TextureViewerPreprocessorDirectives> {
@@ -215,6 +218,7 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
 
 impl TextureViewer {
     pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+        // TODO this should be the viewport, not texture, resolution
         self.render_data.resolution = UVec2::new(
             input_texture_view.texture_view.texture().width(),
             input_texture_view.texture_view.texture().height(),

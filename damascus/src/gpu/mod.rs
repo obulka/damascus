@@ -9,10 +9,8 @@ use macro_rules_attribute::derive;
 
 use crate::{EnumHashTraits, Enumerator, ErrorTraits};
 
-pub mod ray_marcher;
 pub mod resources;
 pub mod scene;
-pub mod texture;
 
 #[derive(Default, ErrorTraits!)]
 pub enum GPUErrors {
@@ -86,6 +84,8 @@ pub enum Includes {
     Checkerboard,
     Colour,
     Grade,
+    GradeBindings,
+    GradeConstants,
     Lights,
     Material,
     #[default]
@@ -98,22 +98,28 @@ pub enum Includes {
     ProceduralTexture,
     Random,
     Ray,
+    RayMarcherBindings,
     RayMarcherConstants,
-    RayMarcherRenderParameters,
     SceneSDFs,
     Texture,
+    TextureViewerBindings,
     TextureViewerConstants,
-    TextureViewerRenderParameters,
 }
 
 impl Includes {
     fn source(&self) -> &str {
         match *self {
-            Self::AOVs => include_str!("./wgsl/pipelines/ray_marcher/aovs.wgsl"),
+            Self::AOVs => include_str!("./wgsl/textures/evaluators/ray_marcher/aovs.wgsl"),
             Self::Camera => include_str!("./wgsl/camera/camera.wgsl"),
             Self::Checkerboard => include_str!("./wgsl/textures/evaluators/checkerboard.wgsl"),
             Self::Colour => include_str!("./wgsl/utils/colour.wgsl"),
-            Self::Grade => include_str!("./wgsl/textures/evaluators/grade.wgsl"),
+            Self::Grade => include_str!("./wgsl/textures/evaluators/grade/grade.wgsl"),
+            Self::GradeBindings => {
+                include_str!("./wgsl/textures/evaluators/grade/bindings.wgsl")
+            }
+            Self::GradeConstants => {
+                include_str!("./wgsl/textures/evaluators/grade/constants.wgsl")
+            }
             Self::Lights => include_str!("./wgsl/lights/lights.wgsl"),
             Self::Material => include_str!("./wgsl/materials/material.wgsl"),
             Self::Math => include_str!("./wgsl/utils/math.wgsl"),
@@ -126,18 +132,18 @@ impl Includes {
             Self::Random => include_str!("./wgsl/utils/random.wgsl"),
             Self::Ray => include_str!("./wgsl/geometry/ray.wgsl"),
             Self::RayMarcherConstants => {
-                include_str!("./wgsl/pipelines/ray_marcher/constants.wgsl")
+                include_str!("./wgsl/textures/evaluators/ray_marcher/constants.wgsl")
             }
-            Self::RayMarcherRenderParameters => {
-                include_str!("./wgsl/pipelines/ray_marcher/render_parameters.wgsl")
+            Self::RayMarcherBindings => {
+                include_str!("./wgsl/textures/evaluators/ray_marcher/bindings.wgsl")
             }
             Self::SceneSDFs => include_str!("./wgsl/geometry/scene_sdfs.wgsl"),
             Self::Texture => include_str!("./wgsl/textures/texture.wgsl"),
-            Self::TextureViewerConstants => {
-                include_str!("./wgsl/pipelines/texture/view/constants.wgsl")
+            Self::TextureViewerBindings => {
+                include_str!("./wgsl/textures/evaluators/view/bindings.wgsl")
             }
-            Self::TextureViewerRenderParameters => {
-                include_str!("./wgsl/pipelines/texture/view/render_parameters.wgsl")
+            Self::TextureViewerConstants => {
+                include_str!("./wgsl/textures/evaluators/view/constants.wgsl")
             }
         }
     }
@@ -322,7 +328,7 @@ mod tests {
     use strum::EnumCount;
 
     use super::*;
-    use ray_marcher::*;
+    use crate::textures::evaluators::ray_marcher::*;
     use scene::*;
 
     #[test]

@@ -91,19 +91,24 @@ impl EvaluableNode for GradeNode {
         match output {
             Self::Outputs::Grade => Ok(InputData::SceneGraphId(
                 scene_graph
-                    .add_texture_evaluator(TextureEvaluators::Grade(Grade {
-                        black_point: Self::Inputs::BlackPoint
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        white_point: Self::Inputs::WhitePoint
-                            .get_data(data_map)?
-                            .try_to_float()?,
-                        lift: Self::Inputs::Lift.get_data(data_map)?.try_to_float()?,
-                        gain: Self::Inputs::Gain.get_data(data_map)?.try_to_float()?,
-                        gamma: Self::Inputs::Gamma.get_data(data_map)?.try_to_float()?,
-                        invert: Self::Inputs::Invert.get_data(data_map)?.try_to_bool()?,
-                        transform: Self::Inputs::Transform.get_data(data_map)?.try_to_mat4()?,
-                    }))
+                    .add_texture_evaluator(TextureEvaluators::Grade(
+                        Grade::default()
+                            .black_point(
+                                Self::Inputs::BlackPoint
+                                    .get_data(data_map)?
+                                    .try_to_float()?,
+                            )
+                            .white_point(
+                                Self::Inputs::WhitePoint
+                                    .get_data(data_map)?
+                                    .try_to_float()?,
+                            )
+                            .lift(Self::Inputs::Lift.get_data(data_map)?.try_to_float()?)
+                            .gain(Self::Inputs::Gain.get_data(data_map)?.try_to_float()?)
+                            .gamma(Self::Inputs::Gamma.get_data(data_map)?.try_to_float()?)
+                            .invert(Self::Inputs::Invert.get_data(data_map)?.try_to_bool()?)
+                            .transform(Self::Inputs::Transform.get_data(data_map)?.try_to_mat4()?),
+                    ))
                     .into(),
             )),
         }

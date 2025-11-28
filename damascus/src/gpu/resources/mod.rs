@@ -3,7 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::ops::Range;
+use std::{
+    hash::{DefaultHasher, Hash, Hasher},
+    ops::Range,
+};
 
 use wgpu;
 
@@ -84,13 +87,24 @@ impl BindingResource for Buffer {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
     pub data: Vec<u8>,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
     pub format: wgpu::TextureFormat,
+}
+
+impl serde::Serialize for TextureView {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        serializer.serialize_u64(hasher.finish())
+    }
 }
 
 impl BindingResource for TextureView {

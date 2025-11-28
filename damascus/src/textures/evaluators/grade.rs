@@ -3,10 +3,48 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashSet;
+
 use crevice::std430::AsStd430;
 use glam::Mat4;
+use macro_rules_attribute::derive;
+use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
+use wgpu;
 
-use crate::DualDevice;
+use crate::{
+    DualDevice, PreprocessorDirectivesTraits,
+    gpu::{
+        ShaderSource,
+        resources::{BufferDescriptor, TextureView},
+    },
+    textures::evaluators::{
+        FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes,
+    },
+};
+
+#[derive(Copy, Default, PreprocessorDirectivesTraits!)]
+pub enum GradePreprocessorDirectives {
+    #[default]
+    None,
+}
+
+// A change in the data within this struct will trigger the pass to
+// reconstruct its pipeline
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GradeConstructionData {
+    #[serde(skip_deserializing)]
+    pub input_texture_view: Option<TextureView>,
+}
+
+impl Default for GradeConstructionData {
+    fn default() -> Self {
+        Self {
+            input_texture_view: None,
+        }
+    }
+}
+
+impl GradeConstructionData {}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -20,7 +58,7 @@ pub struct GPUGrade {
     inverse_transform: Mat4,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Grade {
     pub black_point: f32,
@@ -30,6 +68,10 @@ pub struct Grade {
     pub gamma: f32,
     pub invert: bool,
     pub transform: Mat4,
+    pub frame_counter: FrameCounter,
+    construction_data: GradeConstructionData,
+    hashes: TextureEvaluatorHashes,
+    preprocessor_directives: HashSet<GradePreprocessorDirectives>,
 }
 
 impl Default for Grade {
@@ -42,6 +84,10 @@ impl Default for Grade {
             gamma: 1.,
             invert: false,
             transform: Mat4::IDENTITY,
+            frame_counter: FrameCounter::default(),
+            construction_data: GradeConstructionData::default(),
+            hashes: TextureEvaluatorHashes::default(),
+            preprocessor_directives: HashSet::<GradePreprocessorDirectives>::new(),
         }
     }
 }
@@ -72,8 +118,18 @@ impl Grade {
         self
     }
 
+    pub fn invert(mut self, invert: bool) -> Self {
+        self.invert = invert;
+        self
+    }
+
     pub fn transform(mut self, transform: Mat4) -> Self {
         self.transform = transform;
+        self
+    }
+
+    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+        self.construction_data.input_texture_view = Some(input_texture_view);
         self
     }
 }
@@ -89,5 +145,83 @@ impl DualDevice<GPUGrade, Std430GPUGrade> for Grade {
             gamma: 1. / self.gamma,
             inverse_transform: self.transform.inverse(),
         }
+    }
+}
+
+impl TextureEvaluator for Grade {
+    fn label(&self) -> String {
+        "texture viewer".to_owned()
+    }
+
+    fn hashes(&self) -> &TextureEvaluatorHashes {
+        &self.hashes
+    }
+
+    fn hashes_mut(&mut self) -> &mut TextureEvaluatorHashes {
+        &mut self.hashes
+    }
+
+    fn frame_counter(&self) -> &FrameCounter {
+        &self.frame_counter
+    }
+
+    fn frame_counter_mut(&mut self) -> &mut FrameCounter {
+        &mut self.frame_counter
+    }
+
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.to_gpu())
+    }
+
+    fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
+        if let Some(input_texture_view) = &self.construction_data.input_texture_view {
+            Some(wgpu::Extent3d {
+                width: input_texture_view.texture_view.texture().width(),
+                height: input_texture_view.texture_view.texture().height(),
+                depth_or_array_layers: 1,
+            })
+        } else {
+            None
+        }
+    }
+}
+
+impl ShaderSource<GradePreprocessorDirectives> for Grade {
+    fn vertex_shader_raw(&self) -> &str {
+        include_str!("../../gpu/wgsl/textures/evaluators/view/vertex_shader.wgsl")
+    }
+
+    fn fragment_shader_raw(&self) -> &str {
+        include_str!("../../gpu/wgsl/textures/evaluators/view/fragment_shader.wgsl")
+    }
+
+    fn current_directives(&self) -> &HashSet<GradePreprocessorDirectives> {
+        &self.preprocessor_directives
+    }
+
+    fn current_directives_mut(&mut self) -> &mut HashSet<GradePreprocessorDirectives> {
+        &mut self.preprocessor_directives
+    }
+}
+
+impl GPUTextureEvaluator<GradePreprocessorDirectives> for Grade {
+    fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.construction_data)
+    }
+
+    fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
+        vec![BufferDescriptor {
+            data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            visibility: wgpu::ShaderStages::VERTEX,
+        }]
+    }
+
+    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
+        self.construction_data
+            .input_texture_view
+            .iter()
+            .cloned()
+            .collect()
     }
 }

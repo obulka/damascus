@@ -3,21 +3,21 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    fmt::{self, Display, Formatter},
+};
 
 use crevice::std430::AsStd430;
 use glam::UVec2;
+use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
 
 use crate::{
-    DualDevice,
+    DualDevice, PreprocessorDirectivesBaseTraits,
     gpu::{
         ShaderSource,
-        ray_marcher::{
-            RAY_MARCHER_FRAGMENT_SHADER, RAY_MARCHER_VERTEX_SHADER,
-            RayMarcherPreprocessorDirectives,
-        },
         resources::{BufferDescriptor, StorageTextureView, TextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
@@ -29,6 +29,55 @@ use crate::{
 };
 
 pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
+
+#[derive(Copy, Default, PreprocessorDirectivesBaseTraits!)]
+pub enum RayMarcherPreprocessorDirectives {
+    #[default]
+    EnableAOVs,
+    EnableLightSampling,
+    SceneDirective(ScenePreprocessorDirectives),
+}
+
+impl Display for RayMarcherPreprocessorDirectives {
+    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+        match self {
+            Self::SceneDirective(scene_directive) => {
+                write!(formatter, "{:?}", scene_directive)
+            }
+            _ => {
+                write!(formatter, "{:?}", self)
+            }
+        }
+    }
+}
+
+impl From<ScenePreprocessorDirectives> for RayMarcherPreprocessorDirectives {
+    fn from(scene_directive: ScenePreprocessorDirectives) -> Self {
+        Self::SceneDirective(scene_directive)
+    }
+}
+
+impl RayMarcherPreprocessorDirectives {
+    pub fn all_directives_for_ray_marcher() -> HashSet<Self> {
+        HashSet::<RayMarcherPreprocessorDirectives>::from([
+            Self::EnableAOVs,
+            Self::EnableLightSampling,
+        ])
+    }
+
+    pub fn directives_for_ray_marcher(ray_marcher: &RayMarcherRenderData) -> HashSet<Self> {
+        let mut preprocessor_directives = HashSet::<Self>::new();
+
+        if ray_marcher.output_aov > AOVs::Beauty {
+            preprocessor_directives.insert(Self::EnableAOVs);
+        }
+        if ray_marcher.light_sampling {
+            preprocessor_directives.insert(Self::EnableLightSampling);
+        }
+
+        preprocessor_directives
+    }
+}
 
 // A change in the data within this struct will trigger the pass to
 // recompile
@@ -333,11 +382,11 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 
     fn vertex_shader_raw(&self) -> &str {
-        RAY_MARCHER_VERTEX_SHADER
+        include_str!("../../gpu/wgsl/textures/evaluators/ray_marcher/vertex_shader.wgsl")
     }
 
     fn fragment_shader_raw(&self) -> &str {
-        RAY_MARCHER_FRAGMENT_SHADER
+        include_str!("../../gpu/wgsl/textures/evaluators/ray_marcher/fragment_shader.wgsl")
     }
 
     fn current_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {

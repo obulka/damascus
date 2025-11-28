@@ -17,10 +17,7 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphIdType},
     },
-    textures::evaluators::{
-        TextureEvaluator, TextureEvaluators,
-        read::{TextureRead, TextureReader},
-    },
+    textures::evaluators::{TextureEvaluator, TextureEvaluators, read::TextureReader},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -31,9 +28,8 @@ pub enum TextureReadInputData {
 
 impl NodeInputData for TextureReadInputData {
     fn default_data(&self) -> InputData {
-        let default_texture = TextureRead::default();
         match self {
-            Self::Filepath => InputData::Filepath(default_texture.filepath),
+            Self::Filepath => InputData::Filepath(String::new()),
         }
     }
 }

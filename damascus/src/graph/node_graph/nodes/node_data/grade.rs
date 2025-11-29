@@ -86,7 +86,14 @@ impl EvaluableNode for GradeNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        // let texture_evaluator_id: TextureEvaluatorId = Self::Inputs::Texture.get_data(data_map)?.try_to_texture_evaluator_id()?;
+        // let input_texture_evaluator_id: TextureEvaluatorId = Self::Inputs::Texture
+        //     .get_data(data_map)?
+        //     .try_to_texture_evaluator_id()?;
+
+        // let Some(input_texture_view) = match &scene_graph[input_texture_evaluator_id] {
+        //     TextureEvaluators::RayMarcher(ray_marcher) => ray_marcher.output.clone(),
+        //     _ => None,
+        // };
 
         match output {
             Self::Outputs::Grade => Ok(InputData::SceneGraphId(
@@ -112,5 +119,14 @@ impl EvaluableNode for GradeNode {
                     .into(),
             )),
         }
+
+        // let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
+
+        // let output_texture_view: Option<TextureView> =
+        //     scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+
+        // match output {
+        //     Self::Outputs::Render => Ok(InputData::SceneGraphId(scene_graph_id)),
+        // }
     }
 }

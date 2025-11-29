@@ -72,6 +72,8 @@ pub struct Grade {
     construction_data: GradeConstructionData,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<GradePreprocessorDirectives>,
+    #[serde(skip)]
+    output_texture_view: Option<TextureView>,
 }
 
 impl Default for Grade {
@@ -88,6 +90,7 @@ impl Default for Grade {
             construction_data: GradeConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<GradePreprocessorDirectives>::new(),
+            output_texture_view: None,
         }
     }
 }
@@ -184,15 +187,31 @@ impl TextureEvaluator for Grade {
             None
         }
     }
+
+    fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
+        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
+            *output_texture_view_mut = output_texture_view;
+        } else {
+            self.output_texture_view = Some(output_texture_view);
+        }
+    }
+
+    fn output_texture_view(&self) -> Option<&TextureView> {
+        self.output_texture_view.as_ref()
+    }
+
+    fn output_texture_view_mut(&mut self) -> Option<&mut TextureView> {
+        self.output_texture_view.as_mut()
+    }
 }
 
 impl ShaderSource<GradePreprocessorDirectives> for Grade {
     fn vertex_shader_raw(&self) -> &str {
-        include_str!("../../gpu/wgsl/textures/evaluators/view/vertex_shader.wgsl")
+        include_str!("../../gpu/wgsl/textures/evaluators/grade/vertex_shader.wgsl")
     }
 
     fn fragment_shader_raw(&self) -> &str {
-        include_str!("../../gpu/wgsl/textures/evaluators/view/fragment_shader.wgsl")
+        include_str!("../../gpu/wgsl/textures/evaluators/grade/fragment_shader.wgsl")
     }
 
     fn current_directives(&self) -> &HashSet<GradePreprocessorDirectives> {

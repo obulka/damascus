@@ -1554,103 +1554,116 @@ mod tests {
 
         // Evaluate the graph
 
-        if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await
-            && let Ok(input_data) =
-                graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id)
-            && let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
-            && let Some(output_texture_view) = match &graph.scene_graph()[texture_evaluator_id] {
-                TextureEvaluators::RayMarcher(ray_marcher) => ray_marcher.output.clone(),
-                _ => None,
-            }
-        {
-            let mut texture_viewer = TextureEvaluators::TextureViewer(
-                TextureViewer::default()
-                    .input_texture_view(output_texture_view)
-                    .grade(Grade::default().gain(3.))
-                    .finalized(),
-            );
-
-            if let Some(viewer_output_texture_view) =
-                texture_viewer.evaluate(&device, &queue, &mut encoder)
-            {
-                // Create a buffer that we can copy the render to
-
-                let output_buffer: wgpu::Buffer =
-                    viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
-
-                queue.submit(Some(encoder.finish()));
-
-                {
-                    // Wait for the buffer to be populated with the rendered data
-
-                    let (transmitter, receiver) = smol::channel::bounded(1);
-
-                    let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-                    buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                        assert!(transmitter.try_send(result).is_ok());
-                    });
-
-                    match device.poll(wgpu::PollType::Wait {
-                        submission_index: None, // None for most recent submission
-                        timeout: Some(core::time::Duration::new(5, 0)),
-                    }) {
-                        Err(error) => {
-                            println!("{:?}", error);
-                            assert!(false);
-                        }
-                        _ => {}
-                    };
-
-                    assert!(receiver.recv().await.is_ok());
-
-                    // Get a read-only view into the buffer
-                    let data = buffer_slice.get_mapped_range();
-
-                    // Cast the buffer data into an image and save it to disk
-
-                    let image_buffer = image::Rgba32FImage::from_raw(
-                        viewer_output_texture_view.texture_view.texture().width(),
-                        viewer_output_texture_view.texture_view.texture().height(),
-                        bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
-                    )
-                    .unwrap();
-                    image_buffer.save("image.exr").unwrap();
-                }
-
-                // Release the buffer back to the GPU
-                output_buffer.unmap();
-            } else {
-                assert!(false);
-            }
-
-            // The node graph has produced the data needed to render a ray marching pass
-            // test that it was built correctly, then render it on the gpu
-            match &graph.scene_graph()[texture_evaluator_id] {
-                TextureEvaluators::RayMarcher(ray_marcher) => {
-                    assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
-                    assert_eq!(ray_marcher.render_data.gpu_scene.render_camera, 1);
-                    assert_eq!(
-                        ray_marcher.render_data.gpu_scene.cameras
-                            [ray_marcher.render_data.gpu_scene.render_camera]
-                            .camera_to_world,
-                        glam::Mat4::from_translation(Vec3::Z * 10.),
-                    );
-
-                    assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 3);
-                    assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 3);
-                    assert_eq!(
-                        ray_marcher.render_data.gpu_scene.primitives[0].material_id,
-                        1,
-                    );
-                    assert_eq!(
-                        ray_marcher.render_data.gpu_scene.materials[1].diffuse_colour,
-                        Vec3::new(0.1, 0.1, 1.),
-                    );
-                }
-                _ => assert!(false),
-            }
-        } else {
+        let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await else {
             assert!(false);
+            return;
+        };
+
+        let Ok(input_data) =
+            graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id)
+        else {
+            assert!(false);
+            return;
+        };
+
+        let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
+            assert!(false);
+            return;
+        };
+
+        let Some(output_texture_view) =
+            graph.scene_graph()[texture_evaluator_id].output_texture_view()
+        else {
+            assert!(false);
+            return;
+        };
+
+        let mut texture_viewer = TextureEvaluators::TextureViewer(
+            TextureViewer::default()
+                .input_texture_view(output_texture_view.clone())
+                .grade(Grade::default().gain(3.))
+                .finalized(),
+        );
+
+        texture_viewer.evaluate(&device, &queue, &mut encoder);
+
+        let Some(viewer_output_texture_view) = texture_viewer.output_texture_view() else {
+            assert!(false);
+            return;
+        };
+
+        // Create a buffer that we can copy the render to
+
+        let output_buffer: wgpu::Buffer =
+            viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
+
+        queue.submit(Some(encoder.finish()));
+
+        {
+            // Wait for the buffer to be populated with the rendered data
+
+            let (transmitter, receiver) = smol::channel::bounded(1);
+
+            let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
+            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                assert!(transmitter.try_send(result).is_ok());
+            });
+
+            match device.poll(wgpu::PollType::Wait {
+                submission_index: None, // None for most recent submission
+                timeout: Some(core::time::Duration::new(5, 0)),
+            }) {
+                Err(error) => {
+                    println!("{:?}", error);
+                    assert!(false);
+                }
+                _ => {}
+            };
+
+            assert!(receiver.recv().await.is_ok());
+
+            // Get a read-only view into the buffer
+            let data = buffer_slice.get_mapped_range();
+
+            // Cast the buffer data into an image and save it to disk
+
+            let image_buffer = image::Rgba32FImage::from_raw(
+                viewer_output_texture_view.texture_view.texture().width(),
+                viewer_output_texture_view.texture_view.texture().height(),
+                bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+            )
+            .unwrap();
+            image_buffer.save("image.exr").unwrap();
+        }
+
+        // Release the buffer back to the GPU
+        output_buffer.unmap();
+
+        // The node graph has produced the data needed to render a ray marching pass
+        // test that it was built correctly, then render it on the gpu
+        match &graph.scene_graph()[texture_evaluator_id] {
+            TextureEvaluators::RayMarcher(ray_marcher) => {
+                assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
+                assert_eq!(ray_marcher.render_data.gpu_scene.render_camera, 1);
+                assert_eq!(
+                    ray_marcher.render_data.gpu_scene.cameras
+                        [ray_marcher.render_data.gpu_scene.render_camera]
+                        .camera_to_world,
+                    glam::Mat4::from_translation(Vec3::Z * 10.),
+                );
+
+                assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 3);
+                assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 3);
+                assert_eq!(
+                    ray_marcher.render_data.gpu_scene.primitives[0].material_id,
+                    1,
+                );
+                assert_eq!(
+                    ray_marcher.render_data.gpu_scene.materials[1].diffuse_colour,
+                    Vec3::new(0.1, 0.1, 1.),
+                );
+            }
+            _ => assert!(false),
         }
     }
 }

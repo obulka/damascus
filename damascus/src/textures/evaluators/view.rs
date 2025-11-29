@@ -103,6 +103,25 @@ pub struct TextureViewer {
     pub frame_counter: FrameCounter,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
+    #[serde(skip)]
+    output_texture_view: Option<TextureView>,
+}
+
+impl TextureViewer {
+    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+        // TODO this should be the viewport, not texture, resolution
+        self.render_data.resolution = UVec2::new(
+            input_texture_view.texture_view.texture().width(),
+            input_texture_view.texture_view.texture().height(),
+        );
+        self.construction_data.input_texture_view = Some(input_texture_view);
+        self
+    }
+
+    pub fn grade(mut self, grade: Grade) -> Self {
+        self.grade = grade;
+        self
+    }
 }
 
 impl Default for TextureViewer {
@@ -116,6 +135,7 @@ impl Default for TextureViewer {
             frame_counter: FrameCounter::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
+            output_texture_view: None,
         }
     }
 }
@@ -151,6 +171,22 @@ impl TextureEvaluator for TextureViewer {
         } else {
             None
         }
+    }
+
+    fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
+        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
+            *output_texture_view_mut = output_texture_view;
+        } else {
+            self.output_texture_view = Some(output_texture_view);
+        }
+    }
+
+    fn output_texture_view(&self) -> Option<&TextureView> {
+        self.output_texture_view.as_ref()
+    }
+
+    fn output_texture_view_mut(&mut self) -> Option<&mut TextureView> {
+        self.output_texture_view.as_mut()
     }
 }
 
@@ -213,22 +249,5 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
             .iter()
             .cloned()
             .collect()
-    }
-}
-
-impl TextureViewer {
-    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
-        // TODO this should be the viewport, not texture, resolution
-        self.render_data.resolution = UVec2::new(
-            input_texture_view.texture_view.texture().width(),
-            input_texture_view.texture_view.texture().height(),
-        );
-        self.construction_data.input_texture_view = Some(input_texture_view);
-        self
-    }
-
-    pub fn grade(mut self, grade: Grade) -> Self {
-        self.grade = grade;
-        self
     }
 }

@@ -178,8 +178,28 @@ pub trait TextureEvaluator:
         }
     }
 
-    fn evaluate_texture(&mut self, device: &wgpu::Device) -> Option<TextureView> {
-        self.create_output_texture_view(device)
+    fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
+        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
+            *output_texture_view_mut = output_texture_view;
+        }
+    }
+
+    fn initialize_output_texture_view(&mut self, device: &wgpu::Device) {
+        if let Some(output_texture_view) = self.create_output_texture_view(device) {
+            self.set_output_texture_view(output_texture_view)
+        }
+    }
+
+    fn output_texture_view(&self) -> Option<&TextureView> {
+        None
+    }
+
+    fn output_texture_view_mut(&mut self) -> Option<&mut TextureView> {
+        None
+    }
+
+    fn evaluate_texture(&mut self, device: &wgpu::Device) {
+        self.initialize_output_texture_view(device);
     }
 }
 
@@ -802,7 +822,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-    ) -> Option<TextureView> {
+    ) {
         if let Some(texture_view) = self.create_output_texture_view(device)
             && texture_view
                 .texture_view
@@ -847,9 +867,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
             render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
 
-            Some(texture_view)
-        } else {
-            None
+            self.set_output_texture_view(texture_view);
         }
     }
 }
@@ -892,6 +910,7 @@ impl TextureEvaluators {
 
     pub fn reset(&mut self) {
         match self {
+            Self::Grade(grade) => grade.reset(),
             Self::RayMarcher(ray_marcher) => ray_marcher.reset(),
             Self::TextureViewer(texture_viewer) => texture_viewer.reset(),
             Self::TextureReader(texture_reader) => texture_reader.reset(),
@@ -901,6 +920,7 @@ impl TextureEvaluators {
 
     pub fn frame_counter(&self) -> Option<&FrameCounter> {
         match self {
+            Self::Grade(grade) => Some(grade.frame_counter()),
             Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter()),
             Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter()),
             Self::TextureReader(texture_reader) => Some(texture_reader.frame_counter()),
@@ -910,6 +930,7 @@ impl TextureEvaluators {
 
     pub fn frame_counter_mut(&mut self) -> Option<&mut FrameCounter> {
         match self {
+            Self::Grade(grade) => Some(grade.frame_counter_mut()),
             Self::RayMarcher(ray_marcher) => Some(ray_marcher.frame_counter_mut()),
             Self::TextureViewer(texture_viewer) => Some(texture_viewer.frame_counter_mut()),
             Self::TextureReader(texture_reader) => Some(texture_reader.frame_counter_mut()),
@@ -923,6 +944,7 @@ impl TextureEvaluators {
         target_state: wgpu::ColorTargetState,
     ) -> Option<RenderResource> {
         match self {
+            Self::Grade(grade) => Some(grade.render_resource(device, target_state)),
             Self::RayMarcher(ray_marcher) => {
                 Some(ray_marcher.render_resource(device, target_state))
             }
@@ -941,6 +963,7 @@ impl TextureEvaluators {
     ) -> BufferData {
         self.update_if_hash_changed(device, target_state, render_resource);
         match self {
+            Self::Grade(grade) => grade.buffer_data(),
             Self::RayMarcher(ray_marcher) => ray_marcher.buffer_data(),
             Self::TextureViewer(texture_viewer) => texture_viewer.buffer_data(),
             _ => BufferData::default(),
@@ -954,6 +977,11 @@ impl TextureEvaluators {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
+            Self::Grade(grade) => grade.recompile_if_preprocessor_directives_changed(
+                device,
+                target_state,
+                render_resource,
+            ),
             Self::RayMarcher(ray_marcher) => ray_marcher
                 .recompile_if_preprocessor_directives_changed(
                     device,
@@ -977,6 +1005,7 @@ impl TextureEvaluators {
         render_resource: &mut RenderResource,
     ) {
         match self {
+            Self::Grade(grade) => grade.recompile_shader(device, target_state, render_resource),
             Self::RayMarcher(ray_marcher) => {
                 ray_marcher.recompile_shader(device, target_state, render_resource)
             }
@@ -994,6 +1023,9 @@ impl TextureEvaluators {
         render_resource: &mut RenderResource,
     ) -> bool {
         match self {
+            Self::Grade(grade) => {
+                grade.update_if_hash_changed(device, target_state, render_resource)
+            }
             Self::RayMarcher(ray_marcher) => {
                 ray_marcher.update_if_hash_changed(device, target_state, render_resource)
             }
@@ -1011,6 +1043,7 @@ impl TextureEvaluators {
 
     pub fn create_output_texture_view(&self, device: &wgpu::Device) -> Option<TextureView> {
         match self {
+            Self::Grade(grade) => grade.create_output_texture_view(device),
             Self::RayMarcher(ray_marcher) => ray_marcher.create_output_texture_view(device),
             Self::TextureViewer(texture_viewer) => {
                 texture_viewer.create_output_texture_view(device)
@@ -1022,17 +1055,28 @@ impl TextureEvaluators {
         }
     }
 
+    pub fn output_texture_view(&self) -> Option<&TextureView> {
+        match self {
+            Self::Grade(grade) => grade.output_texture_view(),
+            Self::RayMarcher(ray_marcher) => ray_marcher.output_texture_view(),
+            Self::TextureViewer(texture_viewer) => texture_viewer.output_texture_view(),
+            Self::TextureReader(texture_reader) => texture_reader.output_texture_view(),
+            _ => None,
+        }
+    }
+
     pub fn evaluate(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-    ) -> Option<TextureView> {
+    ) {
         match self {
+            Self::Grade(grade) => grade.evaluate(device, queue, encoder),
             Self::RayMarcher(ray_marcher) => ray_marcher.evaluate(device, queue, encoder),
             Self::TextureViewer(texture_viewer) => texture_viewer.evaluate(device, queue, encoder),
             Self::TextureReader(texture_reader) => texture_reader.evaluate_texture(device),
-            _ => None,
+            _ => {}
         }
     }
 }

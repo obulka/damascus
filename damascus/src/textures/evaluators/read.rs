@@ -7,10 +7,7 @@ use glam::UVec2;
 use image::{GenericImageView, ImageReader};
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 
-use crate::{
-    gpu::resources::TextureView,
-    textures::evaluators::{FrameCounter, TextureEvaluator, TextureEvaluatorHashes},
-};
+use crate::textures::evaluators::{FrameCounter, TextureEvaluator, TextureEvaluatorHashes};
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
@@ -90,7 +87,7 @@ impl TextureEvaluator for TextureReader {
         }
     }
 
-    fn evaluate_texture(&mut self, device: &wgpu::Device) -> Option<TextureView> {
+    fn evaluate_texture(&mut self, device: &wgpu::Device) {
         if let Some(mut texture_view) = self.create_output_texture_view(device)
             && let Ok(image) = ImageReader::open(&self.render_data.filepath)
             && let Ok(decoded_image) = image.decode()
@@ -199,13 +196,11 @@ impl TextureEvaluator for TextureReader {
                 //     channel: AstcChannel,
                 // },
                 _ => {
-                    return None;
+                    return;
                 }
             }
 
-            Some(texture_view)
-        } else {
-            None
+            self.set_output_texture_view(texture_view);
         }
     }
 }

@@ -9,7 +9,7 @@ use macro_rules_attribute::derive;
 
 use crate::{
     EnumHashTraits,
-    gpu::{resources::TextureView, scene::GPUScene},
+    gpu::scene::GPUScene,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
@@ -180,15 +180,12 @@ impl EvaluableNode for RayMarcherNode {
             ));
         let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
 
-        let output_texture_view: Option<TextureView> =
-            scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+        scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
-        match &mut scene_graph[texture_evaluator_id] {
-            TextureEvaluators::RayMarcher(ray_marcher) => {
-                ray_marcher.output = output_texture_view;
-            }
-            _ => {}
-        }
+        println!(
+            "{:?}",
+            scene_graph[texture_evaluator_id].output_texture_view()
+        );
 
         match output {
             Self::Outputs::Render => Ok(InputData::SceneGraphId(scene_graph_id)),

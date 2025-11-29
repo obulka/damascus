@@ -220,24 +220,24 @@ pub struct GPURayMarcher {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcher {
-    #[serde(skip)]
-    pub output: Option<TextureView>,
     pub render_data: RayMarcherRenderData,
     pub compilation_data: RayMarcherCompilationData,
     pub subframe_counter: FrameCounter,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
+    #[serde(skip)]
+    output_texture_view: Option<TextureView>,
 }
 
 impl Default for RayMarcher {
     fn default() -> Self {
         Self {
-            output: None,
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
             subframe_counter: FrameCounter::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
+            output_texture_view: None,
         }
     }
 }
@@ -276,6 +276,22 @@ impl TextureEvaluator for RayMarcher {
             height: sensor_resolution.y,
             depth_or_array_layers: 1, // TODO could output AOVs to other layers
         })
+    }
+
+    fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
+        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
+            *output_texture_view_mut = output_texture_view;
+        } else {
+            self.output_texture_view = Some(output_texture_view);
+        }
+    }
+
+    fn output_texture_view(&self) -> Option<&TextureView> {
+        self.output_texture_view.as_ref()
+    }
+
+    fn output_texture_view_mut(&mut self) -> Option<&mut TextureView> {
+        self.output_texture_view.as_mut()
     }
 }
 

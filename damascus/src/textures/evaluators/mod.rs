@@ -116,6 +116,14 @@ pub trait TextureEvaluator:
         self
     }
 
+    fn input_texture_views(&self) -> Vec<TextureView> {
+        vec![]
+    }
+
+    fn with_input_texture_views(self, _input_texture_views: Vec<TextureView>) -> Self {
+        self
+    }
+
     fn output_mip_level_count(&self) -> u32 {
         1
     }
@@ -139,6 +147,10 @@ pub trait TextureEvaluator:
 
     fn output_texture_view_descriptor(&self) -> wgpu::TextureViewDescriptor<'_> {
         wgpu::TextureViewDescriptor::default()
+    }
+
+    fn output_texture_view_visibility(&self) -> wgpu::ShaderStages {
+        wgpu::ShaderStages::VERTEX_FRAGMENT
     }
 
     fn output_texture_descriptor(&self) -> Option<wgpu::TextureDescriptor<'_>> {
@@ -168,8 +180,8 @@ pub trait TextureEvaluator:
                 texture_view: device
                     .create_texture(&texture_descriptor)
                     .create_view(&self.output_texture_view_descriptor()),
-                data: vec![],
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
+                data: vec![].into(),
+                visibility: self.output_texture_view_visibility(),
                 view_dimension: self.output_texture_view_dimension(),
                 format: texture_descriptor.format,
             })

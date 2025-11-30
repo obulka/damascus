@@ -101,34 +101,42 @@ impl TextureEvaluator for TextureReader {
                 | wgpu::TextureFormat::R8Uint
                 | wgpu::TextureFormat::R8Sint
                 | wgpu::TextureFormat::Stencil8 => {
-                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma8()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma8())
+                        .to_vec()
+                        .into();
                 }
                 wgpu::TextureFormat::R16Uint
                 | wgpu::TextureFormat::R16Sint
                 | wgpu::TextureFormat::R16Unorm
                 | wgpu::TextureFormat::R16Snorm
                 | wgpu::TextureFormat::Depth16Unorm => {
-                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma16()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma16())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::R16Float,
                 wgpu::TextureFormat::Rg8Unorm
                 | wgpu::TextureFormat::Rg8Snorm
                 | wgpu::TextureFormat::Rg8Uint
                 | wgpu::TextureFormat::Rg8Sint => {
-                    texture_view.data =
-                        bytemuck::cast_slice(&decoded_image.into_luma_alpha8()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma_alpha8())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::R32Uint
                 // | wgpu::TextureFormat::R32Sint,
                 wgpu::TextureFormat::R32Float | wgpu::TextureFormat::Depth32Float => {
-                    texture_view.data = bytemuck::cast_slice(&decoded_image.to_luma32f()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.to_luma32f())
+                        .to_vec()
+                        .into();
                 }
                 wgpu::TextureFormat::Rg16Uint
                 | wgpu::TextureFormat::Rg16Sint
                 | wgpu::TextureFormat::Rg16Unorm
                 | wgpu::TextureFormat::Rg16Snorm => {
-                    texture_view.data =
-                        bytemuck::cast_slice(&decoded_image.into_luma_alpha16()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_luma_alpha16())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::Rg16Float,
                 wgpu::TextureFormat::Rgba8Unorm
@@ -136,7 +144,9 @@ impl TextureEvaluator for TextureReader {
                 | wgpu::TextureFormat::Rgba8Snorm
                 | wgpu::TextureFormat::Rgba8Uint
                 | wgpu::TextureFormat::Rgba8Sint => {
-                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_rgba8()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_rgba8())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::Bgra8Unorm,
                 // wgpu::TextureFormat::Bgra8UnormSrgb,
@@ -148,8 +158,9 @@ impl TextureEvaluator for TextureReader {
                 // wgpu::TextureFormat::Rg32Uint,
                 // wgpu::TextureFormat::Rg32Sint,
                 wgpu::TextureFormat::Rg32Float => {
-                    texture_view.data =
-                        bytemuck::cast_slice(&decoded_image.to_luma_alpha32f()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.to_luma_alpha32f())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::Rgba16Uint,
                 // wgpu::TextureFormat::Rgba16Sint,
@@ -159,8 +170,9 @@ impl TextureEvaluator for TextureReader {
                 // wgpu::TextureFormat::Rgba32Uint,
                 // wgpu::TextureFormat::Rgba32Sint,
                 wgpu::TextureFormat::Rgba32Float => {
-                    texture_view.data =
-                        bytemuck::cast_slice(&decoded_image.into_rgba32f()).to_vec();
+                    texture_view.data = bytemuck::cast_slice(&decoded_image.into_rgba32f())
+                        .to_vec()
+                        .into();
                 }
                 // wgpu::TextureFormat::Depth24Plus,
                 // wgpu::TextureFormat::Depth24PlusStencil8,

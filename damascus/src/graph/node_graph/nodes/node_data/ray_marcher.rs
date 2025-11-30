@@ -182,11 +182,6 @@ impl EvaluableNode for RayMarcherNode {
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
-        println!(
-            "{:?}",
-            scene_graph[texture_evaluator_id].output_texture_view()
-        );
-
         match output {
             Self::Outputs::Render => Ok(InputData::SceneGraphId(scene_graph_id)),
         }

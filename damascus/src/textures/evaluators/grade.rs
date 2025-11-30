@@ -176,6 +176,22 @@ impl TextureEvaluator for Grade {
         to_key_with_ordered_float(&self.to_gpu())
     }
 
+    fn input_texture_views(&self) -> Vec<TextureView> {
+        self.construction_data
+            .input_texture_view
+            .iter()
+            .cloned()
+            .collect()
+    }
+
+    fn with_input_texture_views(self, mut input_texture_views: Vec<TextureView>) -> Self {
+        if let Some(input_texture_view) = input_texture_views.pop() {
+            self.input_texture_view(input_texture_view)
+        } else {
+            self
+        }
+    }
+
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
         if let Some(input_texture_view) = &self.construction_data.input_texture_view {
             Some(wgpu::Extent3d {
@@ -237,10 +253,6 @@ impl GPUTextureEvaluator<GradePreprocessorDirectives> for Grade {
     }
 
     fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
-        self.construction_data
-            .input_texture_view
-            .iter()
-            .cloned()
-            .collect()
+        self.input_texture_views()
     }
 }

@@ -33,13 +33,13 @@ pub enum TextureViewerPreprocessorDirectives {
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TextureViewerConstructionData {
     #[serde(skip_deserializing)]
-    pub input_texture_view: Option<TextureView>,
+    pub input_texture_views: Vec<TextureView>,
 }
 
 impl Default for TextureViewerConstructionData {
     fn default() -> Self {
         Self {
-            input_texture_view: None,
+            input_texture_views: vec![],
         }
     }
 }
@@ -114,7 +114,7 @@ impl TextureViewer {
             input_texture_view.texture_view.texture().width(),
             input_texture_view.texture_view.texture().height(),
         );
-        self.construction_data.input_texture_view = Some(input_texture_view);
+        self.construction_data.input_texture_views = vec![input_texture_view];
         self
     }
 
@@ -161,11 +161,29 @@ impl TextureEvaluator for TextureViewer {
         &mut self.frame_counter
     }
 
+    fn input_texture_views(&self) -> Vec<TextureView> {
+        self.construction_data.input_texture_views.clone()
+    }
+
+    fn with_input_texture_views(self, mut input_texture_views: Vec<TextureView>) -> Self {
+        if let Some(input_texture_view) = input_texture_views.pop() {
+            self.input_texture_view(input_texture_view)
+        } else {
+            self
+        }
+    }
+
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
-        if let Some(input_texture_view) = &self.construction_data.input_texture_view {
+        if !self.construction_data.input_texture_views.is_empty() {
             Some(wgpu::Extent3d {
-                width: input_texture_view.texture_view.texture().width(),
-                height: input_texture_view.texture_view.texture().height(),
+                width: self.construction_data.input_texture_views[0]
+                    .texture_view
+                    .texture()
+                    .width(),
+                height: self.construction_data.input_texture_views[0]
+                    .texture_view
+                    .texture()
+                    .height(),
                 depth_or_array_layers: 1,
             })
         } else {
@@ -244,10 +262,6 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
     }
 
     fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
-        self.construction_data
-            .input_texture_view
-            .iter()
-            .cloned()
-            .collect()
+        self.input_texture_views()
     }
 }

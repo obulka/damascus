@@ -9,6 +9,7 @@ use macro_rules_attribute::derive;
 
 use crate::{
     EnumHashTraits,
+    gpu::resources::TextureView,
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
@@ -17,7 +18,7 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    textures::evaluators::{TextureEvaluators, grade::Grade},
+    textures::evaluators::{TextureEvaluator, TextureEvaluatorId, TextureEvaluators, grade::Grade},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -79,54 +80,52 @@ impl EvaluableNode for GradeNode {
     }
 
     fn evaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        // let input_texture_evaluator_id: TextureEvaluatorId = Self::Inputs::Texture
-        //     .get_data(data_map)?
-        //     .try_to_texture_evaluator_id()?;
-
-        // let Some(input_texture_view) = match &scene_graph[input_texture_evaluator_id] {
-        //     TextureEvaluators::RayMarcher(ray_marcher) => ray_marcher.output.clone(),
-        //     _ => None,
-        // };
-
-        match output {
-            Self::Outputs::Grade => Ok(InputData::SceneGraphId(
-                scene_graph
-                    .add_texture_evaluator(TextureEvaluators::Grade(
-                        Grade::default()
-                            .black_point(
-                                Self::Inputs::BlackPoint
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .white_point(
-                                Self::Inputs::WhitePoint
-                                    .get_data(data_map)?
-                                    .try_to_float()?,
-                            )
-                            .lift(Self::Inputs::Lift.get_data(data_map)?.try_to_float()?)
-                            .gain(Self::Inputs::Gain.get_data(data_map)?.try_to_float()?)
-                            .gamma(Self::Inputs::Gamma.get_data(data_map)?.try_to_float()?)
-                            .invert(Self::Inputs::Invert.get_data(data_map)?.try_to_bool()?)
-                            .transform(Self::Inputs::Transform.get_data(data_map)?.try_to_mat4()?),
-                    ))
-                    .into(),
-            )),
+        let mut input_texture_views = Vec::<TextureView>::new();
+        if let Ok(input_texture_evaluator_id) = Self::Inputs::Texture
+            .get_data(data_map)?
+            .try_to_texture_evaluator_id()
+        {
+            input_texture_views = scene_graph[input_texture_evaluator_id]
+                .output_texture_view()
+                .into_iter()
+                .cloned()
+                .collect();
         }
 
-        // let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
+        let texture_evaluator_id: TextureEvaluatorId =
+            scene_graph.add_texture_evaluator(TextureEvaluators::Grade(
+                Grade::default()
+                    .black_point(
+                        Self::Inputs::BlackPoint
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .white_point(
+                        Self::Inputs::WhitePoint
+                            .get_data(data_map)?
+                            .try_to_float()?,
+                    )
+                    .lift(Self::Inputs::Lift.get_data(data_map)?.try_to_float()?)
+                    .gain(Self::Inputs::Gain.get_data(data_map)?.try_to_float()?)
+                    .gamma(Self::Inputs::Gamma.get_data(data_map)?.try_to_float()?)
+                    .invert(Self::Inputs::Invert.get_data(data_map)?.try_to_bool()?)
+                    .transform(Self::Inputs::Transform.get_data(data_map)?.try_to_mat4()?)
+                    .with_input_texture_views(input_texture_views),
+            ));
 
-        // let output_texture_view: Option<TextureView> =
-        //     scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+        let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
 
-        // match output {
-        //     Self::Outputs::Render => Ok(InputData::SceneGraphId(scene_graph_id)),
-        // }
+        scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+
+        match output {
+            Self::Outputs::Grade => Ok(InputData::SceneGraphId(scene_graph_id)),
+        }
     }
 }

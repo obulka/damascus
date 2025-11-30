@@ -6,6 +6,7 @@
 use std::{
     hash::{DefaultHasher, Hash, Hasher},
     ops::Range,
+    rc::Rc,
 };
 
 use wgpu;
@@ -90,7 +91,7 @@ impl BindingResource for Buffer {
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct TextureView {
     pub texture_view: wgpu::TextureView,
-    pub data: Vec<u8>,
+    pub data: Rc<Vec<u8>>,
     pub visibility: wgpu::ShaderStages,
     pub view_dimension: wgpu::TextureViewDimension,
     pub format: wgpu::TextureFormat,

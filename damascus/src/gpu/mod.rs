@@ -47,8 +47,7 @@ impl From<wgpu::PollError> for GPUErrors {
     }
 }
 
-pub async fn get_device_queue_encoder()
--> GPUResult<(wgpu::Device, wgpu::Queue, wgpu::CommandEncoder)> {
+pub async fn get_device_queue() -> GPUResult<(wgpu::Device, wgpu::Queue)> {
     let adapter: wgpu::Adapter = wgpu::Instance::new(&wgpu::InstanceDescriptor {
         backends: wgpu::Backends::PRIMARY,
         ..Default::default()
@@ -69,12 +68,7 @@ pub async fn get_device_queue_encoder()
         })
         .await?;
 
-    let encoder: wgpu::CommandEncoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("wgpu command encoder"),
-        });
-
-    Ok((device, queue, encoder))
+    Ok((device, queue))
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]

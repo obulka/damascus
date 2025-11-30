@@ -15,9 +15,11 @@ use crate::{
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    textures::evaluators::{TextureEvaluator, TextureEvaluators, read::TextureReader},
+    textures::evaluators::{
+        TextureEvaluator, TextureEvaluatorId, TextureEvaluators, read::TextureReader,
+    },
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -55,27 +57,30 @@ impl EvaluableNode for TextureReadNode {
     type Outputs = TextureReadOutputData;
 
     fn evaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
+        let texture_evaluator_id: TextureEvaluatorId =
+            scene_graph.add_texture_evaluator(TextureEvaluators::TextureReader(
+                TextureReader::default()
+                    .filepath(
+                        Self::Inputs::Filepath
+                            .get_data(data_map)?
+                            .try_to_filepath()?,
+                    )
+                    .finalize(),
+            ));
+
+        let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
+
+        scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+
         match output {
-            Self::Outputs::Texture => Ok(InputData::SceneGraphId(
-                scene_graph
-                    .add_texture_evaluator(TextureEvaluators::TextureReader(
-                        TextureReader::default()
-                            .filepath(
-                                Self::Inputs::Filepath
-                                    .get_data(data_map)?
-                                    .try_to_filepath()?,
-                            )
-                            .finalize(),
-                    ))
-                    .into(),
-            )),
+            Self::Outputs::Texture => Ok(InputData::SceneGraphId(scene_graph_id)),
         }
     }
 }

@@ -178,6 +178,7 @@ impl EvaluableNode for RayMarcherNode {
                     .output_aov(Self::Inputs::OutputAov.get_data(data_map)?.try_to_enum()?)
                     .finalized(),
             ));
+
         let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);

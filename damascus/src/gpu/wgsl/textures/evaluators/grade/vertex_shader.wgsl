@@ -4,7 +4,11 @@
 // LICENSE file in the root directory of this source tree.
 
 #include GradeConstants
+#include Math
+#include Colour
+#include Grade
 #include Texture
+#include GradeBindings
 
 struct VertexInput {
     @builtin(vertex_index) vertex_index: u32,

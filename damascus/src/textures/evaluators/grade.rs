@@ -153,7 +153,7 @@ impl DualDevice<GPUGrade, Std430GPUGrade> for Grade {
 
 impl TextureEvaluator for Grade {
     fn label(&self) -> String {
-        "texture viewer".to_owned()
+        "grade".to_owned()
     }
 
     fn hashes(&self) -> &TextureEvaluatorHashes {
@@ -248,7 +248,7 @@ impl GPUTextureEvaluator<GradePreprocessorDirectives> for Grade {
         vec![BufferDescriptor {
             data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
             usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-            visibility: wgpu::ShaderStages::VERTEX,
+            visibility: wgpu::ShaderStages::FRAGMENT,
         }]
     }
 

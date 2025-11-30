@@ -617,7 +617,7 @@ mod tests {
 
     use crate::{
         geometry::primitives::Shapes,
-        gpu::get_device_queue_encoder,
+        gpu::get_device_queue,
         gpu::resources::TextureResource,
         textures::evaluators::{
             GPUTextureEvaluator, TextureEvaluators, grade::Grade, view::TextureViewer,
@@ -1301,7 +1301,10 @@ mod tests {
         let secondary_axis_output_id: OutputId =
             *graph.nodes_first_output_id(secondary_axis_id).unwrap();
 
-        if let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await {
+        if let Ok((device, queue)) = get_device_queue().await {
+            let mut encoder: wgpu::CommandEncoder =
+                device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
                 Ok(InputData::Mat4(Mat4::IDENTITY))
@@ -1554,10 +1557,13 @@ mod tests {
 
         // Evaluate the graph
 
-        let Ok((device, queue, mut encoder)) = get_device_queue_encoder().await else {
+        let Ok((device, queue)) = get_device_queue().await else {
             assert!(false);
             return;
         };
+
+        let mut encoder: wgpu::CommandEncoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
         let Ok(input_data) =
             graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id)
@@ -1594,7 +1600,7 @@ mod tests {
 
         // Create a buffer that we can copy the render to
 
-        let output_buffer: wgpu::Buffer =
+        let mut output_buffer: wgpu::Buffer =
             viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
 
         queue.submit(Some(encoder.finish()));
@@ -1665,5 +1671,98 @@ mod tests {
             }
             _ => assert!(false),
         }
+
+        let read_id: NodeId = graph.add_node(NodeData::TextureRead);
+        let grade_id: NodeId = graph.add_node(NodeData::Grade);
+
+        // Connect read to grade
+        // /grade/texture_read
+
+        graph.connect_node_to_input(
+            read_id,
+            graph
+                .node_input_id(grade_id, GradeInputData::Texture)
+                .unwrap(),
+        );
+
+        // Set texture read parameters
+
+        let filepath_input_id: InputId = graph
+            .node_input_id(read_id, TextureReadInputData::Filepath)
+            .unwrap();
+        graph[filepath_input_id].data = InputData::Filepath("image.exr".to_string());
+
+        // Set grade parameters
+
+        let gain_id: InputId = graph.node_input_id(grade_id, GradeInputData::Gain).unwrap();
+        graph[gain_id].data = InputData::Float(0.5);
+
+        let grade_output_id: OutputId = *graph.nodes_first_output_id(grade_id).unwrap();
+
+        encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+
+        let Ok(input_data) = graph.evaluate_output(&device, &queue, &mut encoder, &grade_output_id)
+        else {
+            assert!(false);
+            return;
+        };
+
+        let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
+            assert!(false);
+            return;
+        };
+
+        let Some(output_texture_view) =
+            graph.scene_graph()[texture_evaluator_id].output_texture_view()
+        else {
+            assert!(false);
+            return;
+        };
+
+        // Create a buffer that we can copy the render to
+
+        output_buffer = output_texture_view.copy_to_buffer(&device, &mut encoder);
+
+        queue.submit(Some(encoder.finish()));
+
+        {
+            // Wait for the buffer to be populated with the rendered data
+
+            let (transmitter, receiver) = smol::channel::bounded(1);
+
+            let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
+            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
+                assert!(transmitter.try_send(result).is_ok());
+            });
+
+            match device.poll(wgpu::PollType::Wait {
+                submission_index: None, // None for most recent submission
+                timeout: Some(core::time::Duration::new(5, 0)),
+            }) {
+                Err(error) => {
+                    println!("{:?}", error);
+                    assert!(false);
+                }
+                _ => {}
+            };
+
+            assert!(receiver.recv().await.is_ok());
+
+            // Get a read-only view into the buffer
+            let data = buffer_slice.get_mapped_range();
+
+            // Cast the buffer data into an image and save it to disk
+
+            let image_buffer = image::Rgba32FImage::from_raw(
+                output_texture_view.texture_view.texture().width(),
+                output_texture_view.texture_view.texture().height(),
+                bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
+            )
+            .unwrap();
+            image_buffer.save("graded_image.exr").unwrap();
+        }
+
+        // Release the buffer back to the GPU
+        output_buffer.unmap();
     }
 }

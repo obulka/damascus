@@ -205,11 +205,7 @@ impl TextureEvaluator for Grade {
     }
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
-        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
-            *output_texture_view_mut = output_texture_view;
-        } else {
-            self.output_texture_view = Some(output_texture_view);
-        }
+        self.output_texture_view = Some(output_texture_view);
     }
 
     fn output_texture_view(&self) -> Option<&TextureView> {

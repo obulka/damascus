@@ -105,11 +105,13 @@ impl RayMarcherCompilationData {}
 
 // A change in the data within this struct will trigger the pass to
 // reconstruct its pipeline
-#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct RayMarcherConstructionData {
     pub num_primitives: usize,
     pub num_lights: usize,
     pub num_emissive_primitives: usize,
+    #[serde(skip_deserializing)]
+    input_texture_views: Vec<TextureView>,
 }
 
 #[repr(C)]
@@ -220,21 +222,104 @@ pub struct GPURayMarcher {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct RayMarcher {
-    pub render_data: RayMarcherRenderData,
-    pub compilation_data: RayMarcherCompilationData,
-    pub subframe_counter: FrameCounter,
+    subframe_counter: FrameCounter,
+    render_data: RayMarcherRenderData,
+    compilation_data: RayMarcherCompilationData,
+    construction_data: RayMarcherConstructionData,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
 }
 
+impl RayMarcher {
+    pub fn with_gpu_scene(&self) -> &GPUScene {
+        &self.render_data.gpu_scene
+    }
+
+    pub fn gpu_scene(mut self, gpu_scene: GPUScene) -> Self {
+        self.render_data.gpu_scene = gpu_scene;
+        self
+    }
+
+    pub fn max_ray_steps(mut self, max_ray_steps: u32) -> Self {
+        self.render_data.max_ray_steps = max_ray_steps;
+        self
+    }
+
+    pub fn max_bounces(mut self, max_bounces: u32) -> Self {
+        self.render_data.max_bounces = max_bounces;
+        self
+    }
+
+    pub fn hit_tolerance(mut self, hit_tolerance: f32) -> Self {
+        self.render_data.hit_tolerance = hit_tolerance;
+        self
+    }
+
+    pub fn shadow_bias(mut self, shadow_bias: f32) -> Self {
+        self.render_data.shadow_bias = shadow_bias;
+        self
+    }
+
+    pub fn max_brightness(mut self, max_brightness: f32) -> Self {
+        self.render_data.max_brightness = max_brightness;
+        self
+    }
+
+    pub fn seed(mut self, seed: u32) -> Self {
+        self.render_data.seed = seed;
+        self
+    }
+
+    pub fn dynamic_level_of_detail(mut self, dynamic_level_of_detail: bool) -> Self {
+        self.render_data.dynamic_level_of_detail = dynamic_level_of_detail;
+        self
+    }
+
+    pub fn equiangular_samples(mut self, equiangular_samples: u32) -> Self {
+        self.render_data.equiangular_samples = equiangular_samples;
+        self
+    }
+
+    pub fn max_light_sampling_bounces(mut self, max_light_sampling_bounces: u32) -> Self {
+        self.render_data.max_light_sampling_bounces = max_light_sampling_bounces;
+        self
+    }
+
+    pub fn light_sampling(mut self, light_sampling: bool) -> Self {
+        self.render_data.light_sampling = light_sampling;
+        self
+    }
+
+    pub fn sample_atmosphere(mut self, sample_atmosphere: bool) -> Self {
+        self.render_data.sample_atmosphere = sample_atmosphere;
+        self
+    }
+
+    pub fn light_sampling_bias(mut self, light_sampling_bias: f32) -> Self {
+        self.render_data.light_sampling_bias = light_sampling_bias;
+        self
+    }
+
+    pub fn secondary_sampling(mut self, secondary_sampling: bool) -> Self {
+        self.render_data.secondary_sampling = secondary_sampling;
+        self
+    }
+
+    pub fn output_aov(mut self, output_aov: AOVs) -> Self {
+        self.render_data.output_aov = output_aov;
+        self
+    }
+}
+
 impl Default for RayMarcher {
     fn default() -> Self {
         Self {
+            subframe_counter: FrameCounter::default(),
             render_data: RayMarcherRenderData::default(),
             compilation_data: RayMarcherCompilationData::default(),
-            subframe_counter: FrameCounter::default(),
+            construction_data: RayMarcherConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
             output_texture_view: None,
@@ -267,6 +352,15 @@ impl TextureEvaluator for RayMarcher {
         &mut self.subframe_counter
     }
 
+    fn input_texture_views(&self) -> Vec<TextureView> {
+        self.construction_data.input_texture_views.clone()
+    }
+
+    fn with_input_texture_views(mut self, input_texture_views: Vec<TextureView>) -> Self {
+        self.construction_data.input_texture_views = input_texture_views;
+        self
+    }
+
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
         let sensor_resolution: UVec2 = self.render_data.gpu_scene.cameras
             [self.render_data.gpu_scene.render_camera]
@@ -279,11 +373,7 @@ impl TextureEvaluator for RayMarcher {
     }
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
-        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
-            *output_texture_view_mut = output_texture_view;
-        } else {
-            self.output_texture_view = Some(output_texture_view);
-        }
+        self.output_texture_view = Some(output_texture_view);
     }
 
     fn output_texture_view(&self) -> Option<&TextureView> {
@@ -434,11 +524,11 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
     }
 
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&RayMarcherConstructionData {
-            num_primitives: self.render_data.gpu_scene.primitives.len(),
-            num_lights: self.render_data.gpu_scene.lights.len(),
-            num_emissive_primitives: self.render_data.gpu_scene.emissive_primitive_indices.len(),
-        })
+        self.construction_data.num_primitives = self.render_data.gpu_scene.primitives.len();
+        self.construction_data.num_lights = self.render_data.gpu_scene.lights.len();
+        self.construction_data.num_emissive_primitives =
+            self.render_data.gpu_scene.emissive_primitive_indices.len();
+        to_key_with_ordered_float(&self.construction_data)
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {
@@ -603,82 +693,5 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
             format: texture_descriptor.format,
             view_dimension: wgpu::TextureViewDimension::D2,
         }]
-    }
-}
-
-impl RayMarcher {
-    pub fn gpu_scene(mut self, gpu_scene: GPUScene) -> Self {
-        self.render_data.gpu_scene = gpu_scene;
-        self
-    }
-
-    pub fn max_ray_steps(mut self, max_ray_steps: u32) -> Self {
-        self.render_data.max_ray_steps = max_ray_steps;
-        self
-    }
-
-    pub fn max_bounces(mut self, max_bounces: u32) -> Self {
-        self.render_data.max_bounces = max_bounces;
-        self
-    }
-
-    pub fn hit_tolerance(mut self, hit_tolerance: f32) -> Self {
-        self.render_data.hit_tolerance = hit_tolerance;
-        self
-    }
-
-    pub fn shadow_bias(mut self, shadow_bias: f32) -> Self {
-        self.render_data.shadow_bias = shadow_bias;
-        self
-    }
-
-    pub fn max_brightness(mut self, max_brightness: f32) -> Self {
-        self.render_data.max_brightness = max_brightness;
-        self
-    }
-
-    pub fn seed(mut self, seed: u32) -> Self {
-        self.render_data.seed = seed;
-        self
-    }
-
-    pub fn dynamic_level_of_detail(mut self, dynamic_level_of_detail: bool) -> Self {
-        self.render_data.dynamic_level_of_detail = dynamic_level_of_detail;
-        self
-    }
-
-    pub fn equiangular_samples(mut self, equiangular_samples: u32) -> Self {
-        self.render_data.equiangular_samples = equiangular_samples;
-        self
-    }
-
-    pub fn max_light_sampling_bounces(mut self, max_light_sampling_bounces: u32) -> Self {
-        self.render_data.max_light_sampling_bounces = max_light_sampling_bounces;
-        self
-    }
-
-    pub fn light_sampling(mut self, light_sampling: bool) -> Self {
-        self.render_data.light_sampling = light_sampling;
-        self
-    }
-
-    pub fn sample_atmosphere(mut self, sample_atmosphere: bool) -> Self {
-        self.render_data.sample_atmosphere = sample_atmosphere;
-        self
-    }
-
-    pub fn light_sampling_bias(mut self, light_sampling_bias: f32) -> Self {
-        self.render_data.light_sampling_bias = light_sampling_bias;
-        self
-    }
-
-    pub fn secondary_sampling(mut self, secondary_sampling: bool) -> Self {
-        self.render_data.secondary_sampling = secondary_sampling;
-        self
-    }
-
-    pub fn output_aov(mut self, output_aov: AOVs) -> Self {
-        self.render_data.output_aov = output_aov;
-        self
     }
 }

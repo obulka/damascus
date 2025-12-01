@@ -1586,7 +1586,7 @@ mod tests {
 
         let mut texture_viewer = TextureEvaluators::TextureViewer(
             TextureViewer::default()
-                .input_texture_view(output_texture_view.clone())
+                .with_input_texture_view(output_texture_view.clone())
                 .grade(Grade::default().gain(3.))
                 .finalized(),
         );
@@ -1612,23 +1612,20 @@ mod tests {
         // test that it was built correctly, then render it on the gpu
         match &graph.scene_graph()[texture_evaluator_id] {
             TextureEvaluators::RayMarcher(ray_marcher) => {
-                assert_eq!(ray_marcher.render_data.gpu_scene.cameras.len(), 2);
-                assert_eq!(ray_marcher.render_data.gpu_scene.render_camera, 1);
+                assert_eq!(ray_marcher.with_gpu_scene().cameras.len(), 2);
+                assert_eq!(ray_marcher.with_gpu_scene().render_camera, 1);
                 assert_eq!(
-                    ray_marcher.render_data.gpu_scene.cameras
-                        [ray_marcher.render_data.gpu_scene.render_camera]
+                    ray_marcher.with_gpu_scene().cameras
+                        [ray_marcher.with_gpu_scene().render_camera]
                         .camera_to_world,
                     glam::Mat4::from_translation(Vec3::Z * 10.),
                 );
 
-                assert_eq!(ray_marcher.render_data.gpu_scene.materials.len(), 3);
-                assert_eq!(ray_marcher.render_data.gpu_scene.primitives.len(), 3);
+                assert_eq!(ray_marcher.with_gpu_scene().materials.len(), 3);
+                assert_eq!(ray_marcher.with_gpu_scene().primitives.len(), 3);
+                assert_eq!(ray_marcher.with_gpu_scene().primitives[0].material_id, 1,);
                 assert_eq!(
-                    ray_marcher.render_data.gpu_scene.primitives[0].material_id,
-                    1,
-                );
-                assert_eq!(
-                    ray_marcher.render_data.gpu_scene.materials[1].diffuse_colour,
+                    ray_marcher.with_gpu_scene().materials[1].diffuse_colour,
                     Vec3::new(0.1, 0.1, 1.),
                 );
             }

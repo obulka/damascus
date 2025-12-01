@@ -11,8 +11,7 @@ use std::{
 };
 
 use image::{
-    GrayAlphaImage, GrayImage, ImageBuffer, ImageError, Luma, LumaA, Rgb, Rgb32FImage, RgbImage,
-    Rgba, Rgba32FImage, RgbaImage,
+    GrayAlphaImage, GrayImage, ImageBuffer, ImageError, Luma, Rgba32FImage, RgbaImage,
     error::{LimitError, LimitErrorKind},
 };
 use wgpu;

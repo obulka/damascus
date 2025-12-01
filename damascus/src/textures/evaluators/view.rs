@@ -95,12 +95,12 @@ pub struct GPUTextureViewer {
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct TextureViewer {
-    pub render_data: TextureViewerRenderData,
-    pub construction_data: TextureViewerConstructionData,
     pub pan: Vec2,
     pub zoom: f32,
     pub grade: Grade,
     pub frame_counter: FrameCounter,
+    render_data: TextureViewerRenderData,
+    construction_data: TextureViewerConstructionData,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
     #[serde(skip)]
@@ -108,7 +108,7 @@ pub struct TextureViewer {
 }
 
 impl TextureViewer {
-    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+    pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
         // TODO this should be the viewport, not texture, resolution
         self.render_data.resolution = UVec2::new(
             input_texture_view.texture_view.texture().width(),
@@ -167,7 +167,7 @@ impl TextureEvaluator for TextureViewer {
 
     fn with_input_texture_views(self, mut input_texture_views: Vec<TextureView>) -> Self {
         if let Some(input_texture_view) = input_texture_views.pop() {
-            self.input_texture_view(input_texture_view)
+            self.with_input_texture_view(input_texture_view)
         } else {
             self
         }
@@ -192,11 +192,7 @@ impl TextureEvaluator for TextureViewer {
     }
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
-        if let Some(output_texture_view_mut) = self.output_texture_view_mut() {
-            *output_texture_view_mut = output_texture_view;
-        } else {
-            self.output_texture_view = Some(output_texture_view);
-        }
+        self.output_texture_view = Some(output_texture_view);
     }
 
     fn output_texture_view(&self) -> Option<&TextureView> {

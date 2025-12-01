@@ -1600,50 +1600,13 @@ mod tests {
 
         // Create a buffer that we can copy the render to
 
-        let mut output_buffer: wgpu::Buffer =
-            viewer_output_texture_view.copy_to_buffer(&device, &mut encoder);
-
-        queue.submit(Some(encoder.finish()));
-
-        {
-            // Wait for the buffer to be populated with the rendered data
-
-            let (transmitter, receiver) = smol::channel::bounded(1);
-
-            let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                assert!(transmitter.try_send(result).is_ok());
-            });
-
-            match device.poll(wgpu::PollType::Wait {
-                submission_index: None, // None for most recent submission
-                timeout: Some(core::time::Duration::new(5, 0)),
-            }) {
-                Err(error) => {
-                    println!("{:?}", error);
-                    assert!(false);
-                }
-                _ => {}
-            };
-
-            assert!(receiver.recv().await.is_ok());
-
-            // Get a read-only view into the buffer
-            let data = buffer_slice.get_mapped_range();
-
-            // Cast the buffer data into an image and save it to disk
-
-            let image_buffer = image::Rgba32FImage::from_raw(
-                viewer_output_texture_view.texture_view.texture().width(),
-                viewer_output_texture_view.texture_view.texture().height(),
-                bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
-            )
-            .unwrap();
-            image_buffer.save("image.exr").unwrap();
-        }
-
-        // Release the buffer back to the GPU
-        output_buffer.unmap();
+        assert_eq!(
+            viewer_output_texture_view
+                .write_to_file(&device, &queue, encoder, "image.exr".to_string())
+                .await
+                .map_err(|error| println!("{:?}", error)),
+            Ok(())
+        );
 
         // The node graph has produced the data needed to render a ray marching pass
         // test that it was built correctly, then render it on the gpu
@@ -1719,50 +1682,12 @@ mod tests {
             return;
         };
 
-        // Create a buffer that we can copy the render to
-
-        output_buffer = output_texture_view.copy_to_buffer(&device, &mut encoder);
-
-        queue.submit(Some(encoder.finish()));
-
-        {
-            // Wait for the buffer to be populated with the rendered data
-
-            let (transmitter, receiver) = smol::channel::bounded(1);
-
-            let buffer_slice: wgpu::BufferSlice<'_> = output_buffer.slice(..);
-            buffer_slice.map_async(wgpu::MapMode::Read, move |result| {
-                assert!(transmitter.try_send(result).is_ok());
-            });
-
-            match device.poll(wgpu::PollType::Wait {
-                submission_index: None, // None for most recent submission
-                timeout: Some(core::time::Duration::new(5, 0)),
-            }) {
-                Err(error) => {
-                    println!("{:?}", error);
-                    assert!(false);
-                }
-                _ => {}
-            };
-
-            assert!(receiver.recv().await.is_ok());
-
-            // Get a read-only view into the buffer
-            let data = buffer_slice.get_mapped_range();
-
-            // Cast the buffer data into an image and save it to disk
-
-            let image_buffer = image::Rgba32FImage::from_raw(
-                output_texture_view.texture_view.texture().width(),
-                output_texture_view.texture_view.texture().height(),
-                bytemuck::cast_slice::<u8, f32>(&data).to_vec(),
-            )
-            .unwrap();
-            image_buffer.save("graded_image.exr").unwrap();
-        }
-
-        // Release the buffer back to the GPU
-        output_buffer.unmap();
+        assert_eq!(
+            output_texture_view
+                .write_to_file(&device, &queue, encoder, "graded_image.exr".to_string())
+                .await
+                .map_err(|error| println!("{:?}", error)),
+            Ok(())
+        );
     }
 }

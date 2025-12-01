@@ -14,9 +14,11 @@ pub mod scene;
 
 #[derive(Default, ErrorTraits!)]
 pub enum GPUErrors {
+    ImageError(String),
+    PollError(String),
+    RecvError(String),
     RequestAdapterError(String),
     RequestDeviceError(String),
-    PollError(String),
     #[default]
     UnknownError,
 }
@@ -44,6 +46,18 @@ impl From<wgpu::RequestDeviceError> for GPUErrors {
 impl From<wgpu::PollError> for GPUErrors {
     fn from(error: wgpu::PollError) -> Self {
         Self::PollError(error.to_string())
+    }
+}
+
+impl From<image::ImageError> for GPUErrors {
+    fn from(error: image::ImageError) -> Self {
+        Self::ImageError(error.to_string())
+    }
+}
+
+impl From<smol::channel::RecvError> for GPUErrors {
+    fn from(error: smol::channel::RecvError) -> Self {
+        Self::RecvError(error.to_string())
     }
 }
 

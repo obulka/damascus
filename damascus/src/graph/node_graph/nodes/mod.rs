@@ -34,6 +34,12 @@ pub enum NodeErrors {
         node_id: NodeId,
         input_data: String,
     },
+    IncompatibleData {
+        node_id: NodeId,
+        input_name: String,
+        input_data: String,
+        expected_input_data: String,
+    },
     ParseOutputError(String),
     NotImplementedError,
     #[default]
@@ -70,7 +76,17 @@ impl fmt::Display for NodeErrors {
             } => write!(
                 formatter,
                 "{}: Node({:?}) should contain data for input {:?}",
-                self, node_id, input_data
+                self, node_id, input_data,
+            ),
+            Self::IncompatibleData {
+                node_id,
+                input_name,
+                input_data,
+                expected_input_data,
+            } => write!(
+                formatter,
+                "{}: Node({:?}) input {:?} received {:?} but expected {:?}",
+                self, node_id, input_name, input_data, expected_input_data,
             ),
             Self::ParseOutputError(error) => write!(formatter, "{}: {}", self, error),
             Self::UnknownError => write!(formatter, "{}: Skill issue tbh", self),

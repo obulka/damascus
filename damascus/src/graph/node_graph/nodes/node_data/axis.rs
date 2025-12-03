@@ -68,18 +68,24 @@ impl EvaluableNode for AxisNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let rotate: Vec3 = Self::Inputs::Rotate.get_data(data_map)?.try_to_vec3()? * PI / 180.;
+        let rotate: Vec3 = Self::Inputs::Rotate
+            .from_data_map(data_map)?
+            .try_to_vec3()?
+            * PI
+            / 180.;
         let quaternion = Quat::from_euler(EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
 
-        let axis: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?
+        let axis: Mat4 = Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?
             * Mat4::from_scale_rotation_translation(
                 Vec3::splat(
                     Self::Inputs::UniformScale
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_float()?,
                 ),
                 quaternion,
-                Self::Inputs::Translate.get_data(data_map)?.try_to_vec3()?,
+                Self::Inputs::Translate
+                    .from_data_map(data_map)?
+                    .try_to_vec3()?,
             );
 
         match output {

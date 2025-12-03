@@ -69,7 +69,7 @@ impl EvaluableNode for TextureReadNode {
                 TextureReader::default()
                     .filepath(
                         Self::Inputs::Filepath
-                            .get_data(data_map)?
+                            .from_data_map(data_map)?
                             .try_to_filepath()?,
                     )
                     .finalize(),

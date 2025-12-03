@@ -70,10 +70,13 @@ impl EvaluableNode for GradeNode {
     type Inputs = GradeInputData;
     type Outputs = GradeOutputData;
 
-    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_data_is_compatible_with_input(
+        output_data: &OutputData,
+        input: &Self::Inputs,
+    ) -> bool {
         match input {
             Self::Inputs::Texture => {
-                *output == OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator)
+                *output_data == OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator)
             }
             _ => false,
         }
@@ -89,7 +92,7 @@ impl EvaluableNode for GradeNode {
     ) -> NodeResult<InputData> {
         let mut input_texture_views = Vec::<TextureView>::new();
         if let Ok(input_texture_evaluator_id) = Self::Inputs::Texture
-            .get_data(data_map)?
+            .from_data_map(data_map)?
             .try_to_texture_evaluator_id()
         {
             input_texture_views = scene_graph[input_texture_evaluator_id]
@@ -104,19 +107,31 @@ impl EvaluableNode for GradeNode {
                 Grade::default()
                     .black_point(
                         Self::Inputs::BlackPoint
-                            .get_data(data_map)?
+                            .from_data_map(data_map)?
                             .try_to_float()?,
                     )
                     .white_point(
                         Self::Inputs::WhitePoint
-                            .get_data(data_map)?
+                            .from_data_map(data_map)?
                             .try_to_float()?,
                     )
-                    .lift(Self::Inputs::Lift.get_data(data_map)?.try_to_float()?)
-                    .gain(Self::Inputs::Gain.get_data(data_map)?.try_to_float()?)
-                    .gamma(Self::Inputs::Gamma.get_data(data_map)?.try_to_float()?)
-                    .invert(Self::Inputs::Invert.get_data(data_map)?.try_to_bool()?)
-                    .transform(Self::Inputs::Transform.get_data(data_map)?.try_to_mat4()?)
+                    .lift(Self::Inputs::Lift.from_data_map(data_map)?.try_to_float()?)
+                    .gain(Self::Inputs::Gain.from_data_map(data_map)?.try_to_float()?)
+                    .gamma(
+                        Self::Inputs::Gamma
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                    )
+                    .invert(
+                        Self::Inputs::Invert
+                            .from_data_map(data_map)?
+                            .try_to_bool()?,
+                    )
+                    .transform(
+                        Self::Inputs::Transform
+                            .from_data_map(data_map)?
+                            .try_to_mat4()?,
+                    )
                     .with_input_texture_views(input_texture_views),
             ));
 

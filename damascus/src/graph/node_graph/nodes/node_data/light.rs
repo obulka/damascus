@@ -80,13 +80,16 @@ impl EvaluableNode for LightNode {
         vec![Self::Inputs::Child].into_iter()
     }
 
-    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_data_is_compatible_with_input(
+        output_data: &OutputData,
+        input: &Self::Inputs,
+    ) -> bool {
         match input {
-            Self::Inputs::Child => match *output {
+            Self::Inputs::Child => match *output_data {
                 OutputData::SceneGraphId(location_type) => location_type.has_transform(),
                 _ => false,
             },
-            Self::Inputs::Axis => *output == OutputData::Mat4,
+            Self::Inputs::Axis => *output_data == OutputData::Mat4,
             _ => false,
         }
     }
@@ -99,25 +102,33 @@ impl EvaluableNode for LightNode {
         data_map: &mut HashMap<String, InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let local_to_world: Mat4 = Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?;
-        let light_type: LightType = Self::Inputs::LightType.get_data(data_map)?.try_to_enum()?;
+        let local_to_world: Mat4 = Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?;
+        let light_type: LightType = Self::Inputs::LightType
+            .from_data_map(data_map)?
+            .try_to_enum()?;
 
         let dimensional_data: Vec3 = match light_type {
             LightType::Directional => (local_to_world
                 * Vec4::from((
-                    Self::Inputs::Direction.get_data(data_map)?.try_to_vec3()?,
+                    Self::Inputs::Direction
+                        .from_data_map(data_map)?
+                        .try_to_vec3()?,
                     1.,
                 )))
             .xyz()
             .normalize(),
             LightType::Point => (local_to_world
                 * Vec4::from((
-                    Self::Inputs::Position.get_data(data_map)?.try_to_vec3()?,
+                    Self::Inputs::Position
+                        .from_data_map(data_map)?
+                        .try_to_vec3()?,
                     1.,
                 )))
             .xyz(),
             LightType::AmbientOcclusion => Vec3::new(
-                Self::Inputs::Iterations.get_data(data_map)?.try_to_uint()? as f32,
+                Self::Inputs::Iterations
+                    .from_data_map(data_map)?
+                    .try_to_uint()? as f32,
                 0.,
                 0.,
             ),
@@ -127,14 +138,20 @@ impl EvaluableNode for LightNode {
         let light_id: LightId = scene_graph.add_light(Light {
             light_type: light_type,
             dimensional_data: dimensional_data,
-            intensity: Self::Inputs::Intensity.get_data(data_map)?.try_to_float()?,
-            falloff: Self::Inputs::Falloff.get_data(data_map)?.try_to_uint()?,
-            colour: Self::Inputs::Colour.get_data(data_map)?.try_to_vec3()?,
+            intensity: Self::Inputs::Intensity
+                .from_data_map(data_map)?
+                .try_to_float()?,
+            falloff: Self::Inputs::Falloff
+                .from_data_map(data_map)?
+                .try_to_uint()?,
+            colour: Self::Inputs::Colour
+                .from_data_map(data_map)?
+                .try_to_vec3()?,
             shadow_hardness: Self::Inputs::ShadowHardness
-                .get_data(data_map)?
+                .from_data_map(data_map)?
                 .try_to_float()?,
             soften_shadows: Self::Inputs::SoftenShadows
-                .get_data(data_map)?
+                .from_data_map(data_map)?
                 .try_to_bool()?,
         });
         let scene_graph_id = SceneGraphId::Light(light_id);

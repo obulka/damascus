@@ -8,7 +8,7 @@ use std::{collections::HashMap, iter, str::FromStr};
 use macro_rules_attribute::derive;
 
 use crate::{
-    EnumHashTraits,
+    EnumHashTraits, Enumerator,
     graph::{
         node_graph::{
             NodeGraph,
@@ -68,7 +68,7 @@ pub trait EvaluableNode {
                         node_id,
                         &format!("{input_name}1"),
                         input.default_data(),
-                        node_graph.input_index(node_id, input_id) + 1,
+                        node_graph.input_index(&node_id, &input_id) + 1,
                     );
                 } else if let Ok(input_number) = input_number_as_str.parse::<usize>() {
                     // Assume the highest number was connected because disconnected
@@ -79,7 +79,7 @@ pub trait EvaluableNode {
                         node_id,
                         &format!("{input_name}{next_input_number}"),
                         input.default_data(),
-                        node_graph.input_index(node_id, input_id) + 1,
+                        node_graph.input_index(&node_id, &input_id) + 1,
                     );
                 }
             }
@@ -96,7 +96,7 @@ pub trait EvaluableNode {
 
                 let node_id: NodeId = node_graph[input_id].node_id;
                 for next_input_index in
-                    node_graph.input_index(node_id, input_id)..node_graph[node_id].input_ids.len()
+                    node_graph.input_index(&node_id, &input_id)..node_graph[node_id].input_ids.len()
                 {
                     let next_input_id: InputId = node_graph[node_id].input_ids[next_input_index];
                     if let Some(next_input_number_as_str) =
@@ -142,30 +142,59 @@ pub trait EvaluableNode {
         }
     }
 
-    fn output_is_compatible_with_named_input(output: &OutputData, input_name: &str) -> bool {
+    fn output_data_is_compatible_with_named_input(
+        output_data: &OutputData,
+        input_name: &str,
+    ) -> bool {
         for input in Self::dynamic_inputs() {
             if let Some(input_number_as_str) = input_name.strip_prefix(&input.name())
                 && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
             {
-                return Self::output_is_compatible_with_input(output, &input);
+                return Self::output_data_is_compatible_with_input(output_data, &input);
             }
         }
 
         match Self::Inputs::from_str(input_name) {
-            Ok(input_variant) => Self::output_is_compatible_with_input(output, &input_variant),
+            Ok(input_variant) => {
+                Self::output_data_is_compatible_with_input(output_data, &input_variant)
+            }
             _ => false,
         }
     }
 
-    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_data_is_compatible_with_input(
+        output_data: &OutputData,
+        input: &Self::Inputs,
+    ) -> bool {
         match input.default_data() {
-            InputData::Mat4(..) => *output == OutputData::Mat4,
-            InputData::SceneGraphId(..) => match *output {
+            InputData::Mat4(..) => *output_data == OutputData::Mat4,
+            InputData::SceneGraphId(..) => match *output_data {
                 OutputData::SceneGraphId(..) => true,
                 _ => false,
             },
             _ => false,
         }
+    }
+
+    fn input_data_is_compatible_with_named_input(input_data: &InputData, input_name: &str) -> bool {
+        for input in Self::dynamic_inputs() {
+            if let Some(input_number_as_str) = input_name.strip_prefix(&input.name())
+                && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
+            {
+                return Self::input_data_is_compatible_with_input(input_data, &input);
+            }
+        }
+
+        match Self::Inputs::from_str(input_name) {
+            Ok(input_variant) => {
+                Self::input_data_is_compatible_with_input(input_data, &input_variant)
+            }
+            _ => false,
+        }
+    }
+
+    fn input_data_is_compatible_with_input(input_data: &InputData, input: &Self::Inputs) -> bool {
+        input.default_data().variant_matches(input_data)
     }
 
     fn evaluate(
@@ -263,24 +292,74 @@ impl NodeData {
         }
     }
 
-    pub fn output_compatible_with_input(&self, output: &OutputData, input_name: &str) -> bool {
+    pub fn output_data_compatible_with_input(
+        &self,
+        output_data: &OutputData,
+        input_name: &str,
+    ) -> bool {
         match self {
-            Self::Axis => AxisNode::output_is_compatible_with_named_input(output, input_name),
-            Self::Camera => CameraNode::output_is_compatible_with_named_input(output, input_name),
-            Self::Grade => GradeNode::output_is_compatible_with_named_input(output, input_name),
-            Self::Light => LightNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Axis => {
+                AxisNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
+            Self::Camera => {
+                CameraNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
+            Self::Grade => {
+                GradeNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
+            Self::Light => {
+                LightNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
             Self::Material => {
-                MaterialNode::output_is_compatible_with_named_input(output, input_name)
+                MaterialNode::output_data_is_compatible_with_named_input(output_data, input_name)
             }
             Self::Primitive => {
-                PrimitiveNode::output_is_compatible_with_named_input(output, input_name)
+                PrimitiveNode::output_data_is_compatible_with_named_input(output_data, input_name)
             }
             Self::RayMarcher => {
-                RayMarcherNode::output_is_compatible_with_named_input(output, input_name)
+                RayMarcherNode::output_data_is_compatible_with_named_input(output_data, input_name)
             }
-            Self::Scene => SceneNode::output_is_compatible_with_named_input(output, input_name),
+            Self::Scene => {
+                SceneNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
             Self::TextureRead => {
-                TextureReadNode::output_is_compatible_with_named_input(output, input_name)
+                TextureReadNode::output_data_is_compatible_with_named_input(output_data, input_name)
+            }
+        }
+    }
+
+    pub fn input_data_compatible_with_input(
+        &self,
+        input_data: &InputData,
+        input_name: &str,
+    ) -> bool {
+        match self {
+            Self::Axis => {
+                AxisNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Camera => {
+                CameraNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Grade => {
+                GradeNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Light => {
+                LightNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Material => {
+                MaterialNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Primitive => {
+                PrimitiveNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::RayMarcher => {
+                RayMarcherNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::Scene => {
+                SceneNode::input_data_is_compatible_with_named_input(input_data, input_name)
+            }
+            Self::TextureRead => {
+                TextureReadNode::input_data_is_compatible_with_named_input(input_data, input_name)
             }
         }
     }

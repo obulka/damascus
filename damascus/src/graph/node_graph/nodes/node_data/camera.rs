@@ -85,25 +85,33 @@ impl EvaluableNode for CameraNode {
             Self::Outputs::Id => Ok(InputData::SceneGraphId(SceneGraphId::Camera(
                 scene_graph.add_camera(Camera::new(
                     Self::Inputs::FocalLength
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_float()?,
                     Self::Inputs::HorizontalAperture
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_float()?,
-                    Self::Inputs::NearPlane.get_data(data_map)?.try_to_float()?,
-                    Self::Inputs::FarPlane.get_data(data_map)?.try_to_float()?,
+                    Self::Inputs::NearPlane
+                        .from_data_map(data_map)?
+                        .try_to_float()?,
+                    Self::Inputs::FarPlane
+                        .from_data_map(data_map)?
+                        .try_to_float()?,
                     Self::Inputs::FocalDistance
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_float()?,
-                    Self::Inputs::FStop.get_data(data_map)?.try_to_float()?,
+                    Self::Inputs::FStop
+                        .from_data_map(data_map)?
+                        .try_to_float()?,
                     Self::Inputs::SensorResolution
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_uvec2()?,
                     Self::Inputs::EnableDepthOfField
-                        .get_data(data_map)?
+                        .from_data_map(data_map)?
                         .try_to_bool()?,
-                    Self::Inputs::Latlong.get_data(data_map)?.try_to_bool()?,
-                    Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?,
+                    Self::Inputs::Latlong
+                        .from_data_map(data_map)?
+                        .try_to_bool()?,
+                    Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
                 )),
             ))),
         }

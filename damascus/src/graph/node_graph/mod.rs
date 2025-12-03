@@ -12,7 +12,7 @@ use super::{
     edges::{BidirectedEdges, SingleParentBidirectedEdges},
     scene_graph::SceneGraph,
 };
-use crate::impl_slot_map_indexing;
+use crate::{Enumerator, impl_slot_map_indexing};
 
 pub mod inputs;
 pub mod nodes;
@@ -133,8 +133,8 @@ impl NodeGraph {
         }
     }
 
-    pub fn remove_node_from_cache(&mut self, node_id: NodeId) {
-        let node_output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
+    pub fn remove_node_from_cache(&mut self, node_id: &NodeId) {
+        let node_output_ids: Vec<OutputId> = self[*node_id].output_ids.clone();
         self.descendants_output_ids(node_id)
             .iter()
             .chain(node_output_ids.iter())
@@ -256,7 +256,7 @@ impl NodeGraph {
         input_node_id != output_node_id
             && self[input_node_id]
                 .data
-                .output_compatible_with_input(&self[output_id].data, &self[input_id].name)
+                .output_data_compatible_with_input(&self[output_id].data, &self[input_id].name)
             && !self.is_ancestor(&output_node_id, &input_node_id)
     }
 
@@ -341,8 +341,8 @@ impl NodeGraph {
             .collect()
     }
 
-    pub fn descendants_output_ids(&self, node_id: NodeId) -> Vec<OutputId> {
-        self.descendants(&node_id)
+    pub fn descendants_output_ids(&self, node_id: &NodeId) -> Vec<OutputId> {
+        self.descendants(node_id)
             .iter()
             .flat_map(|descendant_id| {
                 self[**descendant_id]
@@ -419,50 +419,50 @@ impl NodeGraph {
         other_to_new_node_ids
     }
 
-    pub fn input_index(&self, node_id: NodeId, input_id: InputId) -> usize {
-        self[node_id]
+    pub fn input_index(&self, node_id: &NodeId, input_id: &InputId) -> usize {
+        self[*node_id]
             .input_ids
             .iter()
-            .position(|&id| id == input_id)
+            .position(|&id| id == *input_id)
             .unwrap()
     }
 
-    pub fn node_inputs(&self, node_id: NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
-        self[node_id]
+    pub fn node_inputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
+        self[*node_id]
             .input_ids
             .iter()
             .map(|input_id| (input_id, &self[*input_id]))
     }
 
-    pub fn node_outputs(&self, node_id: NodeId) -> impl Iterator<Item = (&OutputId, &Output)> {
-        self[node_id]
+    pub fn node_outputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&OutputId, &Output)> {
+        self[*node_id]
             .output_ids
             .iter()
             .map(|output_id| (output_id, &self[*output_id]))
     }
 
-    pub fn node_input_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<&Input> {
+    pub fn node_input_from_str(&self, node_id: &NodeId, name: &str) -> NodeResult<&Input> {
         self.node_inputs(node_id)
             .find(|(_input_id, input)| input.name == name)
             .map(|(_input_id, input)| input)
             .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
     }
 
-    pub fn node_input_id_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<InputId> {
+    pub fn node_input_id_from_str(&self, node_id: &NodeId, name: &str) -> NodeResult<InputId> {
         self.node_inputs(node_id)
             .find(|(_input_id, input)| input.name == name)
             .map(|(input_id, _input)| *input_id)
             .ok_or_else(|| NodeErrors::InputDoesNotExistError(name.to_string()))
     }
 
-    pub fn node_output_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<&Output> {
+    pub fn node_output_from_str(&self, node_id: &NodeId, name: &str) -> NodeResult<&Output> {
         self.node_outputs(node_id)
             .find(|(_output_id, output)| output.name == name)
             .map(|(_output_id, output)| output)
             .ok_or_else(|| NodeErrors::OutputDoesNotExistError(name.to_string()))
     }
 
-    pub fn node_output_id_from_str(&self, node_id: NodeId, name: &str) -> NodeResult<OutputId> {
+    pub fn node_output_id_from_str(&self, node_id: &NodeId, name: &str) -> NodeResult<OutputId> {
         self.node_outputs(node_id)
             .find(|(_output_id, output)| output.name == name)
             .map(|(output_id, _output)| *output_id)
@@ -471,8 +471,8 @@ impl NodeGraph {
 
     pub fn node_input_id<I: NodeInputData>(
         &self,
-        node_id: NodeId,
-        node_input_data: I,
+        node_id: &NodeId,
+        node_input_data: &I,
     ) -> NodeResult<InputId> {
         self.node_inputs(node_id)
             .find(|(_input_id, input)| input.name == node_input_data.name())
@@ -482,7 +482,7 @@ impl NodeGraph {
 
     pub fn node_output_id<O: NodeOutputData>(
         &self,
-        node_id: NodeId,
+        node_id: &NodeId,
         node_output_data: O,
     ) -> NodeResult<OutputId> {
         self.node_outputs(node_id)
@@ -491,24 +491,24 @@ impl NodeGraph {
             .ok_or_else(|| NodeErrors::OutputDoesNotExistError(node_output_data.name()))
     }
 
-    pub fn node_first_input(&self, node_id: NodeId) -> Option<&Input> {
+    pub fn node_first_input(&self, node_id: &NodeId) -> Option<&Input> {
         self.node_inputs(node_id)
             .map(|(_input_id, input)| input)
             .next()
     }
 
-    pub fn node_first_input_id(&self, node_id: NodeId) -> Option<&InputId> {
-        self[node_id].input_ids.iter().next()
+    pub fn node_first_input_id(&self, node_id: &NodeId) -> Option<&InputId> {
+        self[*node_id].input_ids.iter().next()
     }
 
-    pub fn node_first_output(&self, node_id: NodeId) -> Option<&Output> {
+    pub fn node_first_output(&self, node_id: &NodeId) -> Option<&Output> {
         self.node_outputs(node_id)
             .map(|(_output_id, output)| output)
             .next()
     }
 
-    pub fn nodes_first_output_id(&self, node_id: NodeId) -> Option<&OutputId> {
-        self[node_id].output_ids.iter().next()
+    pub fn nodes_first_output_id(&self, node_id: &NodeId) -> Option<&OutputId> {
+        self[*node_id].output_ids.iter().next()
     }
 
     pub fn connect_output_to_input(&mut self, output_id: OutputId, input_id: InputId) -> bool {
@@ -521,14 +521,14 @@ impl NodeGraph {
         let node_data: NodeData = self[node_id].data;
         node_data.dynamic_input_connected(self, input_id);
 
-        self.remove_node_from_cache(node_id);
+        self.remove_node_from_cache(&node_id);
 
         true
     }
 
-    pub fn connect_node_to_input(&mut self, node_id: NodeId, input_id: InputId) -> bool {
+    pub fn connect_node_to_input(&mut self, node_id: &NodeId, input_id: &InputId) -> bool {
         if let Some(output_id) = self.nodes_first_output_id(node_id) {
-            self.connect_output_to_input(*output_id, input_id)
+            self.connect_output_to_input(*output_id, *input_id)
         } else {
             false
         }
@@ -540,7 +540,7 @@ impl NodeGraph {
             let node_data: NodeData = self[node_id].data;
             node_data.dynamic_input_disconnected(self, *input_id);
 
-            self.remove_node_from_cache(node_id);
+            self.remove_node_from_cache(&node_id);
 
             Some(output_id)
         } else {
@@ -550,7 +550,7 @@ impl NodeGraph {
 
     pub fn disconnect_named_node_input<'a>(
         &'a mut self,
-        node_id: NodeId,
+        node_id: &'a NodeId,
         input_name: &'a str,
     ) -> Option<(OutputId, InputId)> {
         if let Ok(input_id) = self.node_input_id_from_str(node_id, input_name)
@@ -564,8 +564,8 @@ impl NodeGraph {
 
     pub fn disconnect_node_input<I: NodeInputData>(
         &mut self,
-        node_id: NodeId,
-        node_input_data: I,
+        node_id: &NodeId,
+        node_input_data: &I,
     ) -> Option<(OutputId, InputId)> {
         self.disconnect_named_node_input(node_id, &node_input_data.name())
     }
@@ -576,8 +576,8 @@ impl NodeGraph {
 
     pub fn node_input_is_connected<I: NodeInputData>(
         &self,
-        node_id: NodeId,
-        node_input_data: I,
+        node_id: &NodeId,
+        node_input_data: &I,
     ) -> bool {
         match self.node_input_id(node_id, node_input_data) {
             Ok(input_id) => self.input_is_connected(input_id),
@@ -585,15 +585,46 @@ impl NodeGraph {
         }
     }
 
-    pub fn output_is_connected(&self, output_id: OutputId) -> bool {
-        self.edges.has_child(&output_id)
+    pub fn output_is_connected(&self, output_id: &OutputId) -> bool {
+        self.edges.has_child(output_id)
     }
 
-    pub fn node_output_is_connected(&self, node_id: NodeId) -> bool {
+    pub fn node_output_is_connected(&self, node_id: &NodeId) -> bool {
         if let Some(output_id) = self.nodes_first_output_id(node_id) {
-            return self.output_is_connected(*output_id);
+            return self.output_is_connected(output_id);
         }
         false
+    }
+
+    pub fn set_input_data<I: NodeInputData>(
+        &mut self,
+        node_id: &NodeId,
+        node_input_data: &I,
+        input_data: InputData,
+    ) -> NodeResult<InputId> {
+        match self.node_input_id(node_id, node_input_data) {
+            Ok(input_id) => {
+                if self[*node_id]
+                    .data
+                    .input_data_compatible_with_input(&input_data, &node_input_data.name())
+                {
+                    if self[input_id].data != input_data {
+                        self[input_id].data = input_data;
+                        self.remove_node_from_cache(node_id);
+                    }
+
+                    Ok(input_id)
+                } else {
+                    Err(NodeErrors::IncompatibleData {
+                        node_id: *node_id,
+                        input_name: node_input_data.name(),
+                        input_data: input_data.variant(),
+                        expected_input_data: self[input_id].data.variant(),
+                    })
+                }
+            }
+            Err(error) => Err(error),
+        }
     }
 }
 
@@ -678,9 +709,9 @@ mod tests {
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
@@ -691,9 +722,9 @@ mod tests {
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
@@ -712,17 +743,17 @@ mod tests {
         assert_eq!(graph.edge_count(), 0);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id_from_str(secondary_axis_id, "Axis")
+            &primary_axis_id,
+            &graph
+                .node_input_id_from_str(&secondary_axis_id, "Axis")
                 .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 1);
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph.node_input_id_from_str(camera_id, "Axis").unwrap(),
+            &secondary_axis_id,
+            &graph.node_input_id_from_str(&camera_id, "Axis").unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 2);
@@ -737,26 +768,26 @@ mod tests {
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         assert_eq!(graph.edge_count(), 2);
 
-        graph.disconnect_node_input(secondary_axis_id, AxisInputData::Axis);
+        graph.disconnect_node_input(&secondary_axis_id, &AxisInputData::Axis);
 
         assert_eq!(graph.edge_count(), 1);
 
-        graph.disconnect_node_input(camera_id, CameraInputData::Axis);
+        graph.disconnect_node_input(&camera_id, &CameraInputData::Axis);
 
         assert_eq!(graph.edge_count(), 0);
     }
@@ -773,47 +804,47 @@ mod tests {
         let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         let primary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&primary_axis_id).unwrap();
 
         let secondary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
-            .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
             .unwrap();
 
         let camera_axis_input_id: InputId = graph
-            .node_input_id(camera_id, CameraInputData::Axis)
+            .node_input_id(&camera_id, &CameraInputData::Axis)
             .unwrap();
 
         let primitive_axis_input_id: InputId = graph
-            .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
             .unwrap();
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive0_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+            &primitive0_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Child)
                 .unwrap(),
         );
 
@@ -835,18 +866,18 @@ mod tests {
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
 
         let primary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&primary_axis_id).unwrap();
         let primary_axis_axis_input_id: InputId = graph
-            .node_input_id(primary_axis_id, AxisInputData::Axis)
+            .node_input_id(&primary_axis_id, &AxisInputData::Axis)
             .unwrap();
 
         let secondary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&secondary_axis_id).unwrap();
         let secondary_axis_axis_input_id: InputId = graph
-            .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
             .unwrap();
 
-        let camera_output_id: OutputId = *graph.nodes_first_output_id(camera_id).unwrap();
+        let camera_output_id: OutputId = *graph.nodes_first_output_id(&camera_id).unwrap();
 
         assert!(graph.is_valid_edge(primary_axis_output_id, secondary_axis_axis_input_id));
         assert!(!graph.is_valid_edge(primary_axis_output_id, primary_axis_axis_input_id));
@@ -854,16 +885,16 @@ mod tests {
         assert!(!graph.is_valid_edge(camera_output_id, primary_axis_axis_input_id));
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
@@ -882,30 +913,30 @@ mod tests {
         let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive0_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+            &primitive0_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Child)
                 .unwrap(),
         );
 
@@ -945,37 +976,37 @@ mod tests {
         let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive0_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+            &primitive0_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Child)
                 .unwrap(),
         );
 
         assert!(graph.descendants(&camera_id).is_empty());
         assert!(graph.descendants(&primitive1_id).is_empty());
-        assert!(graph.descendants_output_ids(camera_id).is_empty());
-        assert!(graph.descendants_output_ids(primitive1_id).is_empty());
+        assert!(graph.descendants_output_ids(&camera_id).is_empty());
+        assert!(graph.descendants_output_ids(&primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -998,7 +1029,7 @@ mod tests {
 
         assert_eq!(
             graph
-                .descendants_output_ids(secondary_axis_id)
+                .descendants_output_ids(&secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
             secondary_axis_descendants_output_ids,
@@ -1027,7 +1058,7 @@ mod tests {
 
         assert_eq!(
             graph
-                .descendants_output_ids(primary_axis_id)
+                .descendants_output_ids(&primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
             primary_axis_descendants_output_ids,
@@ -1036,11 +1067,11 @@ mod tests {
         assert_eq!(graph.descendants(&primitive0_id), vec![&primitive1_id],);
 
         assert_eq!(
-            graph.descendants_output_ids(primitive0_id),
+            graph.descendants_output_ids(&primitive0_id),
             graph[primitive1_id].output_ids,
         );
         assert_eq!(
-            graph.descendants_output_ids(primitive0_id),
+            graph.descendants_output_ids(&primitive0_id),
             graph[primitive1_id].output_ids,
         );
     }
@@ -1092,30 +1123,30 @@ mod tests {
             let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
             graph.connect_node_to_input(
-                primary_axis_id,
-                graph
-                    .node_input_id(secondary_axis_id, AxisInputData::Axis)
+                &primary_axis_id,
+                &graph
+                    .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                     .unwrap(),
             );
 
             graph.connect_node_to_input(
-                secondary_axis_id,
-                graph
-                    .node_input_id(camera_id, CameraInputData::Axis)
+                &secondary_axis_id,
+                &graph
+                    .node_input_id(&camera_id, &CameraInputData::Axis)
                     .unwrap(),
             );
 
             graph.connect_node_to_input(
-                secondary_axis_id,
-                graph
-                    .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+                &secondary_axis_id,
+                &graph
+                    .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
                     .unwrap(),
             );
 
             graph.connect_node_to_input(
-                primitive0_id,
-                graph
-                    .node_input_id(primitive1_id, PrimitiveInputData::Child)
+                &primitive0_id,
+                &graph
+                    .node_input_id(&primitive1_id, &PrimitiveInputData::Child)
                     .unwrap(),
             );
 
@@ -1138,8 +1169,8 @@ mod tests {
 
         assert!(graphs[0].descendants(&camera_id).is_empty());
         assert!(graphs[0].descendants(&primitive1_id).is_empty());
-        assert!(graphs[0].descendants_output_ids(camera_id).is_empty());
-        assert!(graphs[0].descendants_output_ids(primitive1_id).is_empty());
+        assert!(graphs[0].descendants_output_ids(&camera_id).is_empty());
+        assert!(graphs[0].descendants_output_ids(&primitive1_id).is_empty());
 
         let mut secondary_axis_descendants = HashSet::<NodeId>::new();
         secondary_axis_descendants.insert(camera_id);
@@ -1162,7 +1193,7 @@ mod tests {
 
         assert_eq!(
             graphs[0]
-                .descendants_output_ids(secondary_axis_id)
+                .descendants_output_ids(&secondary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
             secondary_axis_descendants_output_ids,
@@ -1191,7 +1222,7 @@ mod tests {
 
         assert_eq!(
             graphs[0]
-                .descendants_output_ids(primary_axis_id)
+                .descendants_output_ids(&primary_axis_id)
                 .into_iter()
                 .collect::<HashSet<OutputId>>(),
             primary_axis_descendants_output_ids,
@@ -1199,7 +1230,7 @@ mod tests {
 
         assert_eq!(graphs[0].descendants(&primitive0_id), vec![&primitive1_id],);
         assert_eq!(
-            graphs[0].descendants_output_ids(primitive0_id),
+            graphs[0].descendants_output_ids(&primitive0_id),
             graphs[0][primitive1_id].output_ids,
         );
     }
@@ -1216,30 +1247,30 @@ mod tests {
         let primitive1_id: NodeId = graph.add_node(NodeData::Primitive);
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_axis_id,
-            graph
-                .node_input_id(primitive0_id, PrimitiveInputData::Axis)
+            &secondary_axis_id,
+            &graph
+                .node_input_id(&primitive0_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive0_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Child)
+            &primitive0_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Child)
                 .unwrap(),
         );
 
@@ -1255,10 +1286,10 @@ mod tests {
             new_graph.descendants(&primary_axis_id).pop(),
             Some(&secondary_axis_id)
         );
-        assert!(new_graph.node_output_is_connected(primary_axis_id));
-        assert!(!new_graph.node_output_is_connected(secondary_axis_id));
-        assert!(!new_graph.node_input_is_connected(primary_axis_id, AxisInputData::Axis));
-        assert!(new_graph.node_input_is_connected(secondary_axis_id, AxisInputData::Axis));
+        assert!(new_graph.node_output_is_connected(&primary_axis_id));
+        assert!(!new_graph.node_output_is_connected(&secondary_axis_id));
+        assert!(!new_graph.node_input_is_connected(&primary_axis_id, &AxisInputData::Axis));
+        assert!(new_graph.node_input_is_connected(&secondary_axis_id, &AxisInputData::Axis));
     }
 
     #[macro_rules_attribute::apply(smol_macros::test!)]
@@ -1272,9 +1303,9 @@ mod tests {
         assert!(!graph.is_ancestor(&primary_axis_id, &secondary_axis_id));
 
         graph.connect_node_to_input(
-            primary_axis_id,
-            graph
-                .node_input_id(secondary_axis_id, AxisInputData::Axis)
+            &primary_axis_id,
+            &graph
+                .node_input_id(&secondary_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
@@ -1284,22 +1315,22 @@ mod tests {
         assert!(!graph.is_descendant(&secondary_axis_id, &primary_axis_id));
 
         let primary_axis_translate_input_id: InputId = graph
-            .node_input_id(primary_axis_id, AxisInputData::Translate)
+            .node_input_id(&primary_axis_id, &AxisInputData::Translate)
             .unwrap();
         let primary_axis_rotate_input_id: InputId = graph
-            .node_input_id(primary_axis_id, AxisInputData::Rotate)
+            .node_input_id(&primary_axis_id, &AxisInputData::Rotate)
             .unwrap();
         let primary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(primary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&primary_axis_id).unwrap();
 
         let secondary_axis_translate_input_id: InputId = graph
-            .node_input_id(secondary_axis_id, AxisInputData::Translate)
+            .node_input_id(&secondary_axis_id, &AxisInputData::Translate)
             .unwrap();
         let secondary_axis_rotate_input_id: InputId = graph
-            .node_input_id(secondary_axis_id, AxisInputData::Rotate)
+            .node_input_id(&secondary_axis_id, &AxisInputData::Rotate)
             .unwrap();
         let secondary_axis_output_id: OutputId =
-            *graph.nodes_first_output_id(secondary_axis_id).unwrap();
+            *graph.nodes_first_output_id(&secondary_axis_id).unwrap();
 
         if let Ok((device, queue)) = get_device_queue().await {
             let mut encoder: wgpu::CommandEncoder =
@@ -1388,23 +1419,23 @@ mod tests {
         // /ray_marcher/scene/camera/secondary_axis/primary_axis
 
         graph.connect_node_to_input(
-            primary_camera_axis_id,
-            graph
-                .node_input_id(secondary_camera_axis_id, AxisInputData::Axis)
+            &primary_camera_axis_id,
+            &graph
+                .node_input_id(&secondary_camera_axis_id, &AxisInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            secondary_camera_axis_id,
-            graph
-                .node_input_id(camera_id, CameraInputData::Axis)
+            &secondary_camera_axis_id,
+            &graph
+                .node_input_id(&camera_id, &CameraInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            camera_id,
-            graph
-                .node_input_id(scene_id, SceneInputData::RenderCamera)
+            &camera_id,
+            &graph
+                .node_input_id(&scene_id, &SceneInputData::RenderCamera)
                 .unwrap(),
         );
 
@@ -1413,9 +1444,9 @@ mod tests {
         // |           |     /light
 
         graph.connect_node_to_input(
-            light_id,
-            graph
-                .node_input_id(scene_id, SceneInputData::Scene)
+            &light_id,
+            &graph
+                .node_input_id(&scene_id, &SceneInputData::Scene)
                 .unwrap(),
         );
 
@@ -1430,130 +1461,131 @@ mod tests {
         // |           |     |          /material1
 
         graph.connect_node_to_input(
-            primitive_axis_id,
-            graph
-                .node_input_id(primitive_id, PrimitiveInputData::Axis)
+            &primitive_axis_id,
+            &graph
+                .node_input_id(&primitive_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive_material_id,
-            graph
-                .node_input_id(primitive_id, PrimitiveInputData::Material)
+            &primitive_material_id,
+            &graph
+                .node_input_id(&primitive_id, &PrimitiveInputData::Material)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive_id,
-            graph.node_input_id_from_str(scene_id, "Scene1").unwrap(),
+            &primitive_id,
+            &graph.node_input_id_from_str(&scene_id, "Scene1").unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive1_axis_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Axis)
+            &primitive1_axis_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive1_material_id,
-            graph
-                .node_input_id(primitive1_id, PrimitiveInputData::Material)
+            &primitive1_material_id,
+            &graph
+                .node_input_id(&primitive1_id, &PrimitiveInputData::Material)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive1_id,
-            graph.node_input_id_from_str(scene_id, "Scene2").unwrap(),
+            &primitive1_id,
+            &graph.node_input_id_from_str(&scene_id, "Scene2").unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive2_axis_id,
-            graph
-                .node_input_id(primitive2_id, PrimitiveInputData::Axis)
+            &primitive2_axis_id,
+            &graph
+                .node_input_id(&primitive2_id, &PrimitiveInputData::Axis)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive1_material_id,
-            graph
-                .node_input_id(primitive2_id, PrimitiveInputData::Material)
+            &primitive1_material_id,
+            &graph
+                .node_input_id(&primitive2_id, &PrimitiveInputData::Material)
                 .unwrap(),
         );
 
         graph.connect_node_to_input(
-            primitive2_id,
-            graph
-                .node_input_id(primitive_id, PrimitiveInputData::Child)
+            &primitive2_id,
+            &graph
+                .node_input_id(&primitive_id, &PrimitiveInputData::Child)
                 .unwrap(),
         );
 
         // Connect scene to ray marcher
 
         graph.connect_node_to_input(
-            scene_id,
-            graph
-                .node_input_id(ray_marcher_id, RayMarcherInputData::SceneRoot)
+            &scene_id,
+            &graph
+                .node_input_id(&ray_marcher_id, &RayMarcherInputData::SceneRoot)
                 .unwrap(),
         );
 
         // Modify camera data
 
         let sensor_resolution_input_id: InputId = graph
-            .node_input_id(camera_id, CameraInputData::SensorResolution)
+            .node_input_id(&camera_id, &CameraInputData::SensorResolution)
             .unwrap();
         graph[sensor_resolution_input_id].data = InputData::UVec2(UVec2::new(2048u32, 1024u32));
 
         let secondary_camera_axis_translate_input_id: InputId = graph
-            .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
+            .node_input_id(&secondary_camera_axis_id, &AxisInputData::Translate)
             .unwrap();
         graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
 
         let secondary_camera_axis_translate_input_id: InputId = graph
-            .node_input_id(secondary_camera_axis_id, AxisInputData::Translate)
+            .node_input_id(&secondary_camera_axis_id, &AxisInputData::Translate)
             .unwrap();
         graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
 
         // Modify light data
 
         let light_colour_input_id: InputId = graph
-            .node_input_id(light_id, LightInputData::Colour)
+            .node_input_id(&light_id, &LightInputData::Colour)
             .unwrap();
         graph[light_colour_input_id].data = InputData::Vec3(Vec3::new(1., 0.1, 0.1));
 
         // Modify primitive data
 
         let diffuse_colour_input_id: InputId = graph
-            .node_input_id(primitive_material_id, MaterialInputData::DiffuseColour)
+            .node_input_id(&primitive_material_id, &MaterialInputData::DiffuseColour)
             .unwrap();
         graph[diffuse_colour_input_id].data = InputData::Vec3(Vec3::new(0.1, 0.1, 1.));
 
         let shape_input_id: InputId = graph
-            .node_input_id(primitive_id, PrimitiveInputData::Shape)
+            .node_input_id(&primitive_id, &PrimitiveInputData::Shape)
             .unwrap();
         graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
 
         let blend_strength_input_id: InputId = graph
-            .node_input_id(primitive_id, PrimitiveInputData::BlendStrength)
+            .node_input_id(&primitive_id, &PrimitiveInputData::BlendStrength)
             .unwrap();
         graph[blend_strength_input_id].data = InputData::Float(0.5);
 
         let enable_orbit_trap_colour_input_id: InputId = graph
-            .node_input_id(primitive_id, PrimitiveInputData::EnableOrbitTrapColour)
+            .node_input_id(&primitive_id, &PrimitiveInputData::EnableOrbitTrapColour)
             .unwrap();
         graph[enable_orbit_trap_colour_input_id].data = InputData::Bool(true);
 
         let primitive1_axis_translate_input_id: InputId = graph
-            .node_input_id(primitive1_axis_id, AxisInputData::Translate)
+            .node_input_id(&primitive1_axis_id, &AxisInputData::Translate)
             .unwrap();
         graph[primitive1_axis_translate_input_id].data = InputData::Vec3(Vec3::X);
 
         let primitive2_axis_translate_input_id: InputId = graph
-            .node_input_id(primitive2_axis_id, AxisInputData::Translate)
+            .node_input_id(&primitive2_axis_id, &AxisInputData::Translate)
             .unwrap();
         graph[primitive2_axis_translate_input_id].data = InputData::Vec3(-Vec3::X);
 
-        let ray_marcher_output_id: OutputId = *graph.nodes_first_output_id(ray_marcher_id).unwrap();
+        let ray_marcher_output_id: OutputId =
+            *graph.nodes_first_output_id(&ray_marcher_id).unwrap();
 
         // Evaluate the graph
 
@@ -1639,25 +1671,27 @@ mod tests {
         // /grade/texture_read
 
         graph.connect_node_to_input(
-            read_id,
-            graph
-                .node_input_id(grade_id, GradeInputData::Texture)
+            &read_id,
+            &graph
+                .node_input_id(&grade_id, &GradeInputData::Texture)
                 .unwrap(),
         );
 
         // Set texture read parameters
 
         let filepath_input_id: InputId = graph
-            .node_input_id(read_id, TextureReadInputData::Filepath)
+            .node_input_id(&read_id, &TextureReadInputData::Filepath)
             .unwrap();
         graph[filepath_input_id].data = InputData::Filepath("image.exr".to_string());
 
         // Set grade parameters
 
-        let gain_id: InputId = graph.node_input_id(grade_id, GradeInputData::Gain).unwrap();
+        let gain_id: InputId = graph
+            .node_input_id(&grade_id, &GradeInputData::Gain)
+            .unwrap();
         graph[gain_id].data = InputData::Float(0.5);
 
-        let grade_output_id: OutputId = *graph.nodes_first_output_id(grade_id).unwrap();
+        let grade_output_id: OutputId = *graph.nodes_first_output_id(&grade_id).unwrap();
 
         encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 

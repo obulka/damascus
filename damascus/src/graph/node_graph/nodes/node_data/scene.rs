@@ -64,19 +64,22 @@ impl EvaluableNode for SceneNode {
         vec![Self::Inputs::Scene].into_iter()
     }
 
-    fn output_is_compatible_with_input(output: &OutputData, input: &Self::Inputs) -> bool {
+    fn output_data_is_compatible_with_input(
+        output_data: &OutputData,
+        input: &Self::Inputs,
+    ) -> bool {
         match input {
-            Self::Inputs::Scene => match *output {
+            Self::Inputs::Scene => match *output_data {
                 OutputData::SceneGraphId(location_type) => location_type.has_transform(),
                 _ => false,
             },
             Self::Inputs::RenderCamera => {
-                *output == OutputData::SceneGraphId(SceneGraphIdType::Camera)
+                *output_data == OutputData::SceneGraphId(SceneGraphIdType::Camera)
             }
             Self::Inputs::Atmosphere => {
-                *output == OutputData::SceneGraphId(SceneGraphIdType::Material)
+                *output_data == OutputData::SceneGraphId(SceneGraphIdType::Material)
             }
-            Self::Inputs::Axis => *output == OutputData::Mat4,
+            Self::Inputs::Axis => *output_data == OutputData::Mat4,
         }
     }
 
@@ -89,19 +92,19 @@ impl EvaluableNode for SceneNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         let root_id: RootId = scene_graph.add_root(Root {
-            local_to_world: Self::Inputs::Axis.get_data(data_map)?.try_to_mat4()?,
+            local_to_world: Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
         });
         let scene_graph_id = SceneGraphId::Root(root_id);
 
         if let Ok(atmosphere_id) = Self::Inputs::Atmosphere
-            .get_data(data_map)?
+            .from_data_map(data_map)?
             .try_to_material_id()
         {
             scene_graph.set_atmosphere(root_id, atmosphere_id);
         }
 
         if let Ok(render_camera_id) = Self::Inputs::RenderCamera
-            .get_data(data_map)?
+            .from_data_map(data_map)?
             .try_to_camera_id()
         {
             scene_graph.set_render_camera(root_id, render_camera_id);

@@ -274,15 +274,11 @@ pub trait NodeInputData: Enumerator + Eq {
         });
     }
 
-    fn get_data(&self, data_map: &mut HashMap<String, InputData>) -> NodeResult<InputData> {
+    fn from_data_map(&self, data_map: &mut HashMap<String, InputData>) -> NodeResult<InputData> {
         let name: String = self.name();
         data_map
             .remove(&name)
             .ok_or_else(|| NodeErrors::InputDataDoesNotExistError(name))
-    }
-
-    fn compute_output(_data_map: &mut HashMap<String, InputData>) -> NodeResult<InputData> {
-        Err(NodeErrors::UnknownError)
     }
 }
 

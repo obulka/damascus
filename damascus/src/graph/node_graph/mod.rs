@@ -612,7 +612,6 @@ impl NodeGraph {
                         self[input_id].data = input_data;
                         self.remove_node_from_cache(node_id);
                     }
-
                     Ok(input_id)
                 } else {
                     Err(NodeErrors::IncompatibleData {
@@ -1373,11 +1372,48 @@ mod tests {
                 secondary_translation,
             );
 
-            graph[primary_axis_translate_input_id].data = InputData::Vec3(primary_translation);
-            graph[secondary_axis_translate_input_id].data = InputData::Vec3(secondary_translation);
+            assert!(
+                graph
+                    .set_input_data(
+                        &primary_axis_id,
+                        &AxisInputData::Translate,
+                        InputData::Float(1.5),
+                    )
+                    .is_err(),
+            );
+            assert_eq!(
+                graph.set_input_data(
+                    &primary_axis_id,
+                    &AxisInputData::Translate,
+                    InputData::Vec3(primary_translation),
+                ),
+                Ok(primary_axis_translate_input_id),
+            );
+            assert_eq!(
+                graph.set_input_data(
+                    &secondary_axis_id,
+                    &AxisInputData::Translate,
+                    InputData::Vec3(secondary_translation),
+                ),
+                Ok(secondary_axis_translate_input_id),
+            );
 
-            graph[primary_axis_rotate_input_id].data = InputData::Vec3(primary_rotation);
-            graph[secondary_axis_rotate_input_id].data = InputData::Vec3(secondary_rotation);
+            assert_eq!(
+                graph.set_input_data(
+                    &primary_axis_id,
+                    &AxisInputData::Rotate,
+                    InputData::Vec3(primary_rotation),
+                ),
+                Ok(primary_axis_rotate_input_id),
+            );
+            assert_eq!(
+                graph.set_input_data(
+                    &secondary_axis_id,
+                    &AxisInputData::Rotate,
+                    InputData::Vec3(secondary_rotation),
+                ),
+                Ok(secondary_axis_rotate_input_id),
+            );
 
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
@@ -1530,59 +1566,108 @@ mod tests {
 
         // Modify camera data
 
-        let sensor_resolution_input_id: InputId = graph
-            .node_input_id(&camera_id, &CameraInputData::SensorResolution)
-            .unwrap();
-        graph[sensor_resolution_input_id].data = InputData::UVec2(UVec2::new(2048u32, 1024u32));
+        assert!(
+            graph
+                .set_input_data(
+                    &camera_id,
+                    &CameraInputData::SensorResolution,
+                    InputData::UVec2(UVec2::new(2048u32, 1024u32)),
+                )
+                .is_ok(),
+        );
 
-        let secondary_camera_axis_translate_input_id: InputId = graph
-            .node_input_id(&secondary_camera_axis_id, &AxisInputData::Translate)
-            .unwrap();
-        graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
-
-        let secondary_camera_axis_translate_input_id: InputId = graph
-            .node_input_id(&secondary_camera_axis_id, &AxisInputData::Translate)
-            .unwrap();
-        graph[secondary_camera_axis_translate_input_id].data = InputData::Vec3(Vec3::Z * 10.);
+        assert!(
+            graph
+                .set_input_data(
+                    &secondary_camera_axis_id,
+                    &AxisInputData::Translate,
+                    InputData::Vec3(Vec3::Z * 10.),
+                )
+                .is_ok(),
+        );
 
         // Modify light data
 
-        let light_colour_input_id: InputId = graph
-            .node_input_id(&light_id, &LightInputData::Colour)
-            .unwrap();
-        graph[light_colour_input_id].data = InputData::Vec3(Vec3::new(1., 0.1, 0.1));
+        assert!(
+            graph
+                .set_input_data(
+                    &light_id,
+                    &LightInputData::Colour,
+                    InputData::Vec3(Vec3::new(1., 0.1, 0.1)),
+                )
+                .is_ok(),
+        );
 
         // Modify primitive data
 
-        let diffuse_colour_input_id: InputId = graph
-            .node_input_id(&primitive_material_id, &MaterialInputData::DiffuseColour)
-            .unwrap();
-        graph[diffuse_colour_input_id].data = InputData::Vec3(Vec3::new(0.1, 0.1, 1.));
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive_material_id,
+                    &MaterialInputData::DiffuseColour,
+                    InputData::Vec3(Vec3::new(0.1, 0.1, 1.)),
+                )
+                .is_ok(),
+        );
 
-        let shape_input_id: InputId = graph
-            .node_input_id(&primitive_id, &PrimitiveInputData::Shape)
-            .unwrap();
-        graph[shape_input_id].data = InputData::Enum(Shapes::Capsule.into());
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive_id,
+                    &PrimitiveInputData::Shape,
+                    InputData::Enum(Shapes::Capsule.into()),
+                )
+                .is_ok(),
+        );
 
-        let blend_strength_input_id: InputId = graph
-            .node_input_id(&primitive_id, &PrimitiveInputData::BlendStrength)
-            .unwrap();
-        graph[blend_strength_input_id].data = InputData::Float(0.5);
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive_id,
+                    &PrimitiveInputData::BlendStrength,
+                    InputData::Float(0.5),
+                )
+                .is_ok(),
+        );
 
-        let enable_orbit_trap_colour_input_id: InputId = graph
-            .node_input_id(&primitive_id, &PrimitiveInputData::EnableOrbitTrapColour)
-            .unwrap();
-        graph[enable_orbit_trap_colour_input_id].data = InputData::Bool(true);
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive_id,
+                    &PrimitiveInputData::EnableOrbitTrapColour,
+                    InputData::Int(3),
+                )
+                .is_err(),
+        );
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive_id,
+                    &PrimitiveInputData::EnableOrbitTrapColour,
+                    InputData::Bool(true),
+                )
+                .is_ok(),
+        );
 
-        let primitive1_axis_translate_input_id: InputId = graph
-            .node_input_id(&primitive1_axis_id, &AxisInputData::Translate)
-            .unwrap();
-        graph[primitive1_axis_translate_input_id].data = InputData::Vec3(Vec3::X);
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive1_axis_id,
+                    &AxisInputData::Translate,
+                    InputData::Vec3(Vec3::X),
+                )
+                .is_ok(),
+        );
 
-        let primitive2_axis_translate_input_id: InputId = graph
-            .node_input_id(&primitive2_axis_id, &AxisInputData::Translate)
-            .unwrap();
-        graph[primitive2_axis_translate_input_id].data = InputData::Vec3(-Vec3::X);
+        assert!(
+            graph
+                .set_input_data(
+                    &primitive2_axis_id,
+                    &AxisInputData::Translate,
+                    InputData::Vec3(-Vec3::X),
+                )
+                .is_ok(),
+        );
 
         let ray_marcher_output_id: OutputId =
             *graph.nodes_first_output_id(&ray_marcher_id).unwrap();
@@ -1679,17 +1764,23 @@ mod tests {
 
         // Set texture read parameters
 
-        let filepath_input_id: InputId = graph
-            .node_input_id(&read_id, &TextureReadInputData::Filepath)
-            .unwrap();
-        graph[filepath_input_id].data = InputData::Filepath("image.exr".to_string());
+        assert!(
+            graph
+                .set_input_data(
+                    &read_id,
+                    &TextureReadInputData::Filepath,
+                    InputData::Filepath("image.exr".to_string()),
+                )
+                .is_ok(),
+        );
 
         // Set grade parameters
 
-        let gain_id: InputId = graph
-            .node_input_id(&grade_id, &GradeInputData::Gain)
-            .unwrap();
-        graph[gain_id].data = InputData::Float(0.5);
+        assert!(
+            graph
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(0.5),)
+                .is_ok(),
+        );
 
         let grade_output_id: OutputId = *graph.nodes_first_output_id(&grade_id).unwrap();
 
@@ -1716,6 +1807,42 @@ mod tests {
         assert_eq!(
             output_texture_view
                 .write_to_file(&device, &queue, encoder, "graded_image.exr".to_string())
+                .await
+                .map_err(|error| println!("{:?}", error)),
+            Ok(())
+        );
+
+        // Ensure that updating an input clears cached data and outputs different image
+
+        assert!(
+            graph
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(2.),)
+                .is_ok(),
+        );
+
+        encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+
+        let Ok(input_data) = graph.evaluate_output(&device, &queue, &mut encoder, &grade_output_id)
+        else {
+            assert!(false);
+            return;
+        };
+
+        let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
+            assert!(false);
+            return;
+        };
+
+        let Some(output_texture_view) =
+            graph.scene_graph()[texture_evaluator_id].output_texture_view()
+        else {
+            assert!(false);
+            return;
+        };
+
+        assert_eq!(
+            output_texture_view
+                .write_to_file(&device, &queue, encoder, "ungraded_image.exr".to_string())
                 .await
                 .map_err(|error| println!("{:?}", error)),
             Ok(())

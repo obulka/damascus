@@ -247,56 +247,56 @@ fn texture_primitive(
     );
 
 #ifdef EnableDiffuseColourTexture
-    material_sample.diffuse_colour = evaluate_vec3f(
+    material_sample.diffuse_colour = evaluate_texture_vec3f(
         procedural_texture_seed,
         material_sample.diffuse_colour,
         _materials[(*primitive).material_id].diffuse_colour_texture,
     );
 #endif
 #ifdef EnableSpecularProbabilityTexture
-    material_sample.specular_probability = evaluate_f32(
+    material_sample.specular_probability = evaluate_texture_f32(
         procedural_texture_seed,
         material_sample.specular_probability,
         _materials[(*primitive).material_id].specular_probability_texture,
     );
 #endif
 #ifdef EnableSpecularRoughnessTexture
-    material_sample.specular_roughness = evaluate_f32(
+    material_sample.specular_roughness = evaluate_texture_f32(
         procedural_texture_seed,
         material_sample.specular_roughness,
         _materials[(*primitive).material_id].specular_roughness_texture,
     );
 #endif
 #ifdef EnableSpecularColourTexture
-    material_sample.specular_colour = evaluate_vec3f(
+    material_sample.specular_colour = evaluate_texture_vec3f(
         procedural_texture_seed,
         material_sample.specular_colour,
         _materials[(*primitive).material_id].specular_colour_texture,
     );
 #endif
 #ifdef EnableTransmissiveProbabilityTexture
-    material_sample.transmissive_probability = evaluate_f32(
+    material_sample.transmissive_probability = evaluate_texture_f32(
         procedural_texture_seed,
         material_sample.transmissive_probability,
         _materials[(*primitive).material_id].transmissive_probability_texture,
     );
 #endif
 #ifdef EnableTransmissiveRoughnessTexture
-    material_sample.transmissive_roughness = evaluate_f32(
+    material_sample.transmissive_roughness = evaluate_texture_f32(
         procedural_texture_seed,
         material_sample.transmissive_roughness,
         _materials[(*primitive).material_id].transmissive_roughness_texture,
     );
 #endif
 #ifdef EnableEmissiveColourTexture
-    material_sample.emissive_colour = evaluate_vec3f(
+    material_sample.emissive_colour = evaluate_texture_vec3f(
         procedural_texture_seed,
         material_sample.emissive_colour,
         _materials[(*primitive).material_id].emissive_colour_texture,
     );
 #endif
 #ifdef EnableRefractiveIndexTexture
-    material_sample.refractive_index = evaluate_f32(
+    material_sample.refractive_index = evaluate_texture_f32(
         procedural_texture_seed,
         material_sample.refractive_index,
         _materials[(*primitive).material_id].refractive_index_texture,

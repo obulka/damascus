@@ -269,6 +269,8 @@ impl NodeGraph {
     pub fn remove_node(&mut self, node_id: NodeId) -> (Node, HashMap<OutputId, InputId>) {
         let mut disconnected_edges = HashMap::<OutputId, InputId>::new();
 
+        self.remove_node_from_cache(node_id);
+
         let input_ids: Vec<InputId> = self[node_id].input_ids.clone();
         let output_ids: Vec<OutputId> = self[node_id].output_ids.clone();
 
@@ -609,8 +611,10 @@ impl NodeGraph {
                     .input_data_compatible_with_input(&input_data, &node_input_data.name())
                 {
                     if self[input_id].data != input_data {
+                        if !input_data.is_evaluable() {
+                            self.remove_node_from_cache(node_id);
+                        }
                         self[input_id].data = input_data;
-                        self.remove_node_from_cache(node_id);
                     }
                     Ok(input_id)
                 } else {
@@ -1778,7 +1782,7 @@ mod tests {
 
         assert!(
             graph
-                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(0.5),)
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(0.5))
                 .is_ok(),
         );
 

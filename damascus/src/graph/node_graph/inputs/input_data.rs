@@ -46,6 +46,16 @@ pub enum InputData {
 }
 
 impl InputData {
+    pub fn is_evaluable(&self) -> bool {
+        match self {
+            InputData::SceneGraphId(scene_graph_id) => match scene_graph_id {
+                TextureEvaluator(..) => true,
+                _ => false,
+            },
+            _ => false,
+        }
+    }
+
     pub fn try_to_bool(self) -> NodeResult<bool> {
         match self {
             InputData::Bool(value) => Ok(value),

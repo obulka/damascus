@@ -49,7 +49,7 @@ impl InputData {
     pub fn is_evaluable(&self) -> bool {
         match self {
             InputData::SceneGraphId(scene_graph_id) => match scene_graph_id {
-                TextureEvaluator(..) => true,
+                SceneGraphId::TextureEvaluator(..) => true,
                 _ => false,
             },
             _ => false,

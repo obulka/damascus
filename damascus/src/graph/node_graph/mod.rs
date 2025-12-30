@@ -119,7 +119,7 @@ impl NodeGraph {
         self.outputs.len()
     }
 
-    pub fn remove_output_from_cache(&mut self, output_id: &OutputId) -> Option<InputData> {
+    fn remove_output_from_cache(&mut self, output_id: &OutputId) -> Option<InputData> {
         if let Some(input_data) = self.cache.remove(*output_id) {
             match input_data {
                 InputData::SceneGraphId(scene_graph_id) => {
@@ -269,7 +269,7 @@ impl NodeGraph {
     pub fn remove_node(&mut self, node_id: NodeId) -> (Node, HashMap<OutputId, InputId>) {
         let mut disconnected_edges = HashMap::<OutputId, InputId>::new();
 
-        self.remove_node_from_cache(node_id);
+        self.remove_node_from_cache(&node_id);
 
         let input_ids: Vec<InputId> = self[node_id].input_ids.clone();
         let output_ids: Vec<OutputId> = self[node_id].output_ids.clone();

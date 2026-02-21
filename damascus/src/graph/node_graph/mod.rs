@@ -1820,7 +1820,7 @@ mod tests {
 
         assert!(
             graph
-                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(2.),)
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(2.))
                 .is_ok(),
         );
 

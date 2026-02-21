@@ -270,8 +270,8 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
     );
 }
 
-@group(STORAGE_TEXTURE_BIND_GROUP) @binding(PROGRESSIVE_RENDERING_TEXTURE_BINDING)
-var _progressive_rendering_texture: texture_storage_2d<rgba32float, read_write>;
+@group(TEXTURE_BIND_GROUP) @binding(PROGRESSIVE_RENDERING_TEXTURE_BINDING)
+var _progressive_rendering_texture: texture_2d<f32>;
 
 struct FragmentInput {
     @location(TEXTURE_UV_LOCATION) uv_coordinate: vec4f,
@@ -290,7 +290,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     // the first path, in which case initialise as black
     var pixel_colour: vec4f = select(
         vec4f(),
-        textureLoad(_progressive_rendering_texture, texture_coordinates),
+        textureLoad(_progressive_rendering_texture, texture_coordinates, 0),
         _render_state.paths_rendered_per_pixel > 0,
     );
 
@@ -329,7 +329,6 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
             + vec4(ray.colour, 1.)
         ) / f32(_render_state.paths_rendered_per_pixel + 1);
     }
-    textureStore(_progressive_rendering_texture, texture_coordinates, pixel_colour);
 
     return pixel_colour;
 }

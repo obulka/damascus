@@ -441,7 +441,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         device: &wgpu::Device,
         target_state: wgpu::ColorTargetState,
     ) -> RenderResource {
-        self.reset();
+        // self.reset(); // TODO can this actually be commented??
 
         let index_buffer: Buffer = self.create_index_buffer(device);
         let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);

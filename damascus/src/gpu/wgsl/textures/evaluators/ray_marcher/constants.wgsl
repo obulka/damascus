@@ -7,8 +7,7 @@
 const VERTEX_BIND_GROUP: u32 = 0u;
 const UNIFORM_BIND_GROUP: u32 = 1u;
 const STORAGE_BIND_GROUP: u32 = 2u;
-// const TEXTURE_BIND_GROUP: u32 = 3u;
-const STORAGE_TEXTURE_BIND_GROUP: u32 = 3u;
+const TEXTURE_BIND_GROUP: u32 = 3u;
 
 // Bindings
 const VERTEX_DATA_BINDING: u32 = 0u;

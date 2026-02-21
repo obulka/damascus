@@ -152,6 +152,29 @@ impl NodeGraph {
         self.scene_graph.clear();
     }
 
+    fn reevaluate_node(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        output_id: OutputId,
+        input_data_map: HashMap<String, InputData>,
+        input_data: InputData,
+    ) -> NodeResult<InputData> {
+        let node_data: NodeData = self[self[output_id].node_id].data;
+        let output_name: String = self[output_id].name.clone();
+        Ok(Node::reevaluate(
+            device,
+            queue,
+            encoder,
+            &mut self.scene_graph,
+            node_data,
+            input_data_map,
+            input_data,
+            output_name,
+        )?)
+    }
+
     fn evaluate_node(
         &mut self,
         device: &wgpu::Device,
@@ -205,9 +228,21 @@ impl NodeGraph {
             return result;
         }
 
-        // All input data for the node has been collected
-        // so its time to process the data and start descending the graph
-        self.evaluate_node(device, queue, encoder, *output_id, all_input_data_for_node)
+        if let Some(input_data) = self.cache.get(*output_id) {
+            // Data was already cached, return it
+            self.reevaluate_node(
+                device,
+                queue,
+                encoder,
+                *output_id,
+                all_input_data_for_node,
+                input_data.clone(),
+            )
+        } else {
+            // All input data for the node has been collected
+            // so its time to process the data and start descending the graph
+            self.evaluate_node(device, queue, encoder, *output_id, all_input_data_for_node)
+        }
     }
 
     pub fn evaluate_input(
@@ -1679,30 +1714,31 @@ mod tests {
         // Evaluate the graph
 
         let Ok((device, queue)) = get_device_queue().await else {
-            assert!(false);
-            return;
+            panic!("Could not establish a connection with a GPU device.");
         };
 
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
+        let paths_per_pixel: u32 = 1;
+        for _ in 1..paths_per_pixel {
+            let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
+        }
+
         let Ok(input_data) =
             graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id)
         else {
-            assert!(false);
-            return;
+            panic!("Failed to evaluate the ray marcher node of the graph.");
         };
 
         let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
-            assert!(false);
-            return;
+            panic!("The ray marcher node was not a texture evaluator? That's odd.");
         };
 
         let Some(output_texture_view) =
             graph.scene_graph()[texture_evaluator_id].output_texture_view()
         else {
-            assert!(false);
-            return;
+            panic!("Render did not produce an output.");
         };
 
         let mut texture_viewer = TextureEvaluators::TextureViewer(

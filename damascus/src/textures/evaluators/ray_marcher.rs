@@ -18,7 +18,7 @@ use crate::{
     DualDevice, PreprocessorDirectivesBaseTraits,
     gpu::{
         ShaderSource,
-        resources::{BufferDescriptor, StorageTextureView, TextureView},
+        resources::{BufferDescriptor, TextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
     textures::{
@@ -330,6 +330,11 @@ impl Default for RayMarcher {
 impl TextureEvaluator for RayMarcher {
     fn label(&self) -> String {
         "ray marcher".to_owned()
+    }
+
+    fn reset(&mut self) {
+        self.frame_counter_mut().reset();
+        self.output_texture_view = None;
     }
 
     fn hashes(&self) -> &TextureEvaluatorHashes {
@@ -668,30 +673,13 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
         ]
     }
 
-    fn create_storage_texture_views(&self, device: &wgpu::Device) -> Vec<StorageTextureView> {
-        let texture_descriptor = wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
-                width: MAX_TEXTURE_DIMENSION,
-                height: MAX_TEXTURE_DIMENSION,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba32Float,
-            usage: wgpu::TextureUsages::COPY_SRC | wgpu::TextureUsages::STORAGE_BINDING,
-            label: Some("ray marcher progressive rendering texture"),
-            view_formats: &[],
-        };
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        if let Some(output_texture_view) = &self.output_texture_view {
+            return vec![output_texture_view.clone()];
+        } else if let Some(output_texture_view) = self.create_output_texture_view(device) {
+            return vec![output_texture_view];
+        }
 
-        vec![StorageTextureView {
-            texture_view: device
-                .create_texture(&texture_descriptor)
-                .create_view(&Default::default()),
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            access: wgpu::StorageTextureAccess::ReadWrite,
-            format: texture_descriptor.format,
-            view_dimension: wgpu::TextureViewDimension::D2,
-        }]
+        vec![]
     }
 }

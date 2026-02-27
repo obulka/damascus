@@ -1720,7 +1720,7 @@ mod tests {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        let paths_per_pixel: u32 = 1;
+        let paths_per_pixel: u32 = 3;
         for _ in 1..paths_per_pixel {
             let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
         }
@@ -1755,6 +1755,13 @@ mod tests {
             return;
         };
 
+        // let Some(viewer_output_texture_view) =
+        //     graph.scene_graph()[texture_evaluator_id].output_texture_view()
+        // else {
+        //     assert!(false);
+        //     return;
+        // };
+
         // Create a buffer that we can copy the render to
 
         assert_eq!(
@@ -1764,6 +1771,8 @@ mod tests {
                 .map_err(|error| println!("{:?}", error)),
             Ok(())
         );
+
+        panic!("");
 
         // The node graph has produced the data needed to render a ray marching pass
         // test that it was built correctly, then render it on the gpu

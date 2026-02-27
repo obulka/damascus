@@ -270,21 +270,15 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
     );
 }
 
-@group(TEXTURE_BIND_GROUP) @binding(PROGRESSIVE_RENDERING_TEXTURE_BINDING)
-var _progressive_rendering_texture: texture_2d<f32>;
-
 struct FragmentInput {
-    @location(TEXTURE_UV_LOCATION) uv_coordinate: vec4f,
+    @location(TEXTURE_COORDINATE_LOCATION) texture_coordinate: vec4f,
     @builtin(position) frag_coordinate: vec4f, // pixel centers
 }
 
 @fragment
 fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
-    var sensor_resolution = vec2f(_render_camera.sensor_resolution);
-
-    // Use the UV coordinates and resolution to get texture coordinates
-    var current_pixel_indices: vec2f = uv_to_pixels(in.uv_coordinate.xy, sensor_resolution);
-    var texture_coordinates = vec2u(current_pixel_indices);
+    var texture_coordinates = vec2u(in.texture_coordinate.xy);
+    var sensor_resolution = vec2f(textureDimensions(_progressive_rendering_texture));
 
     // Load the current state of the progressive render, unless this is
     // the first path, in which case initialise as black
@@ -313,7 +307,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     // provides antialiasing for free
     var uv_coordinates: vec2f = pixels_to_uv(
         // Add a random offset to the uv_coordinates for anti-aliasing 
-        current_pixel_indices + random_vec2f(&seed),
+        in.texture_coordinate.xy + random_vec2f(&seed),
         sensor_resolution,
     );
 
@@ -321,7 +315,7 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
     var ray: Ray = create_render_camera_ray(&seed, uv_coordinates);
     march_path(&seed, &ray);
 
-    if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
+    if _render_state.paths_rendered_per_pixel == 0 && ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
         // Read, update, and store the current value for our pixel
         // so that the render can be done progressively
         pixel_colour = (
@@ -330,5 +324,5 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
         ) / f32(_render_state.paths_rendered_per_pixel + 1);
     }
 
-    return pixel_colour;
+    return vec4f(_render_state.paths_rendered_per_pixel);
 }

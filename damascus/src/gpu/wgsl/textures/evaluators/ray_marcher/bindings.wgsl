@@ -47,3 +47,6 @@ var<uniform> _scene_parameters: SceneParameters;
 
 @group(UNIFORM_BIND_GROUP) @binding(RENDER_STATE_BINDING)
 var<uniform> _render_state: RenderState;
+
+@group(TEXTURE_BIND_GROUP) @binding(PROGRESSIVE_RENDERING_TEXTURE_BINDING)
+var _progressive_rendering_texture: texture_2d<f32>;

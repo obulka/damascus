@@ -26,5 +26,5 @@ const NOISE_BINDING: u32 = 5u;
 const GRADE_BINDING: u32 = 6u;
 
 // Interstage variable locations
-const TEXTURE_UV_LOCATION: u32 = 0u;
+const TEXTURE_COORDINATE_LOCATION: u32 = 0u;
 const PIXEL_COLOUR_LOCATION: u32 = 0u;

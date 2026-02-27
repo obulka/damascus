@@ -283,7 +283,7 @@ pub trait TextureResource: BindingResource {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Buffer {
     pub buffer: wgpu::Buffer,
     pub visibility: wgpu::ShaderStages,
@@ -331,7 +331,7 @@ impl TextureResource for TextureView {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct StorageTextureView {
     pub texture_view: wgpu::TextureView,
     pub visibility: wgpu::ShaderStages,
@@ -356,7 +356,7 @@ impl TextureResource for StorageTextureView {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BufferBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -371,7 +371,7 @@ impl BufferBindGroup {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -402,14 +402,14 @@ impl TextureViewBindGroup {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct StorageTextureViewBindGroup {
     pub bind_group: wgpu::BindGroup,
     pub bind_group_layout: wgpu::BindGroupLayout,
     pub storage_texture_views: Vec<StorageTextureView>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BindGroups {
     pub vertex_bind_group: BufferBindGroup,
     pub uniform_bind_group: Option<BufferBindGroup>,
@@ -495,7 +495,7 @@ pub struct BufferData {
     pub storage: Vec<BufferDescriptor>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RenderResource {
     pub render_pipeline: wgpu::RenderPipeline,
     pub index_buffer: Buffer,
@@ -541,7 +541,7 @@ impl RenderResource {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RenderResources {
     pub resources: Vec<Option<RenderResource>>,
 }

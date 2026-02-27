@@ -229,9 +229,9 @@ pub struct RayMarcher {
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
     #[serde(skip)]
-    render_resource: Option<RenderResource>,
-    #[serde(skip)]
     output_texture_view: Option<TextureView>,
+    #[serde(skip)]
+    render_resource: Option<RenderResource>,
 }
 
 impl RayMarcher {
@@ -324,8 +324,8 @@ impl Default for RayMarcher {
             construction_data: RayMarcherConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
-            render_resource: None,
             output_texture_view: None,
+            render_resource: None,
         }
     }
 }
@@ -395,7 +395,6 @@ impl TextureEvaluator for RayMarcher {
 
 impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
     fn to_gpu(&self) -> GPURayMarcher {
-        println!("  {:?}", self.subframe_counter.frame);
         GPURayMarcher {
             paths_rendered_per_pixel: self.subframe_counter.frame,
             flags: self.subframe_counter.paused as u32,
@@ -538,6 +537,10 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
         self.construction_data.num_emissive_primitives =
             self.render_data.gpu_scene.emissive_primitive_indices.len();
         to_key_with_ordered_float(&self.construction_data)
+    }
+
+    fn render_resource(&self) -> &Option<RenderResource> {
+        &self.render_resource
     }
 
     fn render_resource_mut(&mut self) -> &mut Option<RenderResource> {

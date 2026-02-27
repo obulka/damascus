@@ -213,7 +213,7 @@ impl EvaluableNode for RayMarcherNode {
                             .from_data_map(data_map)?
                             .try_to_enum()?,
                     )
-                    .finalized(),
+                    .finalized(device),
             ));
 
         let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);

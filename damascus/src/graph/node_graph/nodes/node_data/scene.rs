@@ -83,18 +83,6 @@ impl EvaluableNode for SceneNode {
         }
     }
 
-    fn reevaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
-        _scene_graph: &mut SceneGraph,
-        _data_map: &mut HashMap<String, InputData>,
-        input_data: InputData,
-        _output: Self::Outputs,
-    ) -> NodeResult<InputData> {
-        Ok(input_data)
-    }
-
     fn evaluate(
         _device: &wgpu::Device,
         _queue: &wgpu::Queue,

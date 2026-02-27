@@ -18,7 +18,9 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    textures::evaluators::{TextureEvaluator, TextureEvaluatorId, TextureEvaluators, grade::Grade},
+    textures::evaluators::{
+        GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorId, TextureEvaluators, grade::Grade,
+    },
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -132,7 +134,8 @@ impl EvaluableNode for GradeNode {
                             .from_data_map(data_map)?
                             .try_to_mat4()?,
                     )
-                    .with_input_texture_views(input_texture_views),
+                    .with_input_texture_views(input_texture_views)
+                    .finalized(device),
             ));
 
         let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);

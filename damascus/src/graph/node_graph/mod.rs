@@ -1720,7 +1720,7 @@ mod tests {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        let paths_per_pixel: u32 = 1;
+        let paths_per_pixel: u32 = 2;
         for _ in 1..paths_per_pixel {
             let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
         }
@@ -1735,32 +1735,32 @@ mod tests {
             panic!("The ray marcher node was not a texture evaluator? That's odd.");
         };
 
-        let Some(output_texture_view) =
-            graph.scene_graph()[texture_evaluator_id].output_texture_view()
-        else {
-            panic!("Render did not produce an output.");
-        };
-
-        let mut texture_viewer = TextureEvaluators::TextureViewer(
-            TextureViewer::default()
-                .with_input_texture_view(output_texture_view.clone())
-                // .grade(Grade::default().gain(1.))
-                .finalized(&device),
-        );
-
-        texture_viewer.evaluate(&device, &queue, &mut encoder);
-
-        let Some(viewer_output_texture_view) = texture_viewer.output_texture_view() else {
-            assert!(false);
-            return;
-        };
-
-        // let Some(viewer_output_texture_view) =
+        // let Some(output_texture_view) =
         //     graph.scene_graph()[texture_evaluator_id].output_texture_view()
         // else {
+        //     panic!("Render did not produce an output.");
+        // };
+
+        // let mut texture_viewer = TextureEvaluators::TextureViewer(
+        //     TextureViewer::default()
+        //         .with_input_texture_view(output_texture_view.clone())
+        //         // .grade(Grade::default().gain(1.))
+        //         .finalized(&device),
+        // );
+
+        // texture_viewer.evaluate(&device, &queue, &mut encoder);
+
+        // let Some(viewer_output_texture_view) = texture_viewer.output_texture_view() else {
         //     assert!(false);
         //     return;
         // };
+
+        let Some(viewer_output_texture_view) =
+            graph.scene_graph()[texture_evaluator_id].output_texture_view()
+        else {
+            assert!(false);
+            return;
+        };
 
         // Create a buffer that we can copy the render to
 

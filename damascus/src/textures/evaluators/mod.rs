@@ -838,6 +838,9 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
             // Write that data to the bind groups
             let texture_views = self.create_texture_views(device);
+            for tv in &texture_views {
+                println!("new {:?}", tv);
+            }
             // TODO only if changed
             let bind_group = self.create_texture_view_bind_group(device, texture_views);
 
@@ -847,6 +850,17 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 {
                     *texture_bind_group = bind_group;
                 }
+            }
+
+            let mut render_pipeline: Option<wgpu::RenderPipeline> = None;
+            if let Some(render_resource) = self.render_resource() {
+                render_pipeline = Some(self.render_pipeline(device, &render_resource.bind_groups));
+            }
+
+            if let Some(render_resource) = self.render_resource_mut()
+                && let Some(pipeline) = render_pipeline
+            {
+                render_resource.render_pipeline = pipeline;
                 render_resource.write_bind_groups(&queue, &buffer_data);
             }
 
@@ -877,6 +891,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
             }
 
+            println!("set out {:?}", texture_view);
             self.set_output_texture_view(texture_view);
         }
     }

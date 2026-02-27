@@ -211,6 +211,10 @@ pub trait TextureEvaluator:
         None
     }
 
+    fn output_colour_target_state(&self) -> wgpu::ColorTargetState {
+        self.output_texture_format().into()
+    }
+
     fn evaluate_texture(&mut self, device: &wgpu::Device) {
         self.initialize_output_texture_view(device);
     }
@@ -263,65 +267,48 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         texture_evaluator
     }
 
-    fn finalized(mut self) -> Self {
+    fn finalized(mut self, device: &wgpu::Device) -> Self {
         self.update_hashes();
+        *self.render_resource_mut() = Some(self.create_render_resource(device));
         self
     }
 
-    fn reconstruct_if_hash_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-    ) -> Option<RenderResource> {
+    fn reconstruct_if_hash_changed(&mut self, device: &wgpu::Device) -> bool {
         if self.update_reconstruction_hash() {
             if self.dynamic_recompilation_enabled() {
                 self.update_directives();
             }
-            return Some(self.render_resource(device, target_state));
+            *self.render_resource_mut() = Some(self.create_render_resource(device));
+            true
+        } else {
+            false
         }
-        None
     }
 
-    fn recompile_if_preprocessor_directives_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> bool {
+    fn recompile_if_preprocessor_directives_changed(&mut self, device: &wgpu::Device) -> bool {
         if self.dynamic_recompilation_enabled() && self.update_directives() {
-            self.recompile_shader(device, target_state, render_resource);
+            self.recompile_shader(device);
             return true;
         }
         false
     }
 
-    fn recompile_if_hash_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> bool {
+    fn recompile_if_hash_changed(&mut self, device: &wgpu::Device) -> bool {
         if self.update_recompilation_hash() {
-            self.recompile_shader(device, target_state, render_resource);
+            self.recompile_shader(device);
             return true;
         }
         false
     }
 
-    fn update_if_hash_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> bool {
-        if let Some(new_resource) = self.reconstruct_if_hash_changed(device, target_state.clone()) {
-            *render_resource = new_resource;
+    fn update_if_hash_changed(&mut self, device: &wgpu::Device) -> bool {
+        if self.reconstruct_if_hash_changed(device) {
             self.update_recompilation_hash();
             self.update_reset_hash();
             return true;
         }
 
-        if self.recompile_if_hash_changed(device, target_state, render_resource) {
+        if self.recompile_if_hash_changed(device) {
             self.update_reset_hash();
             return true;
         }
@@ -376,7 +363,6 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     fn render_pipeline(
         &self,
         device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
         bind_groups: &BindGroups,
     ) -> wgpu::RenderPipeline {
         let pipeline_layout: wgpu::PipelineLayout =
@@ -410,7 +396,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             fragment: Some(wgpu::FragmentState {
                 module: &fragment_shader,
                 entry_point: Some("fs_main"),
-                targets: &[Some(target_state)],
+                targets: &[Some(self.output_colour_target_state())],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
             primitive: wgpu::PrimitiveState {
@@ -424,24 +410,26 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         })
     }
 
-    fn recompile_shader(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) {
+    fn recompile_shader(&mut self, device: &wgpu::Device) {
         self.reset();
-        let render_pipeline: wgpu::RenderPipeline =
-            self.render_pipeline(device, target_state, &render_resource.bind_groups);
-        render_resource.render_pipeline = render_pipeline;
+
+        let mut render_pipeline: Option<wgpu::RenderPipeline> = None;
+        if let Some(render_resource) = self.render_resource() {
+            render_pipeline = Some(self.render_pipeline(device, &render_resource.bind_groups));
+        }
+
+        if let Some(render_resource) = self.render_resource_mut()
+            && let Some(pipeline) = render_pipeline
+        {
+            render_resource.render_pipeline = pipeline;
+        }
     }
 
-    fn render_resource(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-    ) -> RenderResource {
-        // self.reset(); // TODO can this actually be commented??
+    fn render_resource(&self) -> &Option<RenderResource>;
+    fn render_resource_mut(&mut self) -> &mut Option<RenderResource>;
+
+    fn create_render_resource(&mut self, device: &wgpu::Device) -> RenderResource {
+        self.reset();
 
         let index_buffer: Buffer = self.create_index_buffer(device);
         let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);
@@ -483,8 +471,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             storage_texture_bind_group,
         };
 
-        let render_pipeline: wgpu::RenderPipeline =
-            self.render_pipeline(device, target_state, &bind_groups);
+        let render_pipeline: wgpu::RenderPipeline = self.render_pipeline(device, &bind_groups);
 
         RenderResource {
             render_pipeline: render_pipeline,
@@ -843,17 +830,25 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 .usage()
                 .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            let mut render_resource = self.render_resource(&device, texture_view.format.into());
-
-            self.update_if_hash_changed(&device, texture_view.format.into(), &mut render_resource);
+            self.update_if_hash_changed(device);
 
             let buffer_data: BufferData = self.buffer_data();
 
             self.frame_counter_mut().tick();
 
             // Write that data to the bind groups
+            let texture_views = self.create_texture_views(device);
+            // TODO only if changed
+            let bind_group = self.create_texture_view_bind_group(device, texture_views);
 
-            render_resource.write_bind_groups(&queue, &buffer_data);
+            if let Some(render_resource) = self.render_resource_mut() {
+                if let Some(texture_bind_group) =
+                    &mut render_resource.bind_groups.texture_bind_group
+                {
+                    *texture_bind_group = bind_group;
+                }
+                render_resource.write_bind_groups(&queue, &buffer_data);
+            }
 
             // Set up a render pass and paint to it
 
@@ -878,7 +873,9 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 occlusion_query_set: None,
             };
 
-            render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+            if let Some(render_resource) = self.render_resource_mut() {
+                render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+            }
 
             self.set_output_texture_view(texture_view);
         }
@@ -951,30 +948,19 @@ impl TextureEvaluators {
         }
     }
 
-    pub fn render_resource(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-    ) -> Option<RenderResource> {
+    pub fn create_render_resource(&mut self, device: &wgpu::Device) -> Option<RenderResource> {
         match self {
-            Self::Grade(grade) => Some(grade.render_resource(device, target_state)),
-            Self::RayMarcher(ray_marcher) => {
-                Some(ray_marcher.render_resource(device, target_state))
-            }
+            Self::Grade(grade) => Some(grade.create_render_resource(device)),
+            Self::RayMarcher(ray_marcher) => Some(ray_marcher.create_render_resource(device)),
             Self::TextureViewer(texture_viewer) => {
-                Some(texture_viewer.render_resource(device, target_state))
+                Some(texture_viewer.create_render_resource(device))
             }
             _ => None,
         }
     }
 
-    pub fn buffer_data(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> BufferData {
-        self.update_if_hash_changed(device, target_state, render_resource);
+    pub fn buffer_data(&mut self, device: &wgpu::Device) -> BufferData {
+        self.update_if_hash_changed(device);
         match self {
             Self::Grade(grade) => grade.buffer_data(),
             Self::RayMarcher(ray_marcher) => ray_marcher.buffer_data(),
@@ -983,75 +969,40 @@ impl TextureEvaluators {
         }
     }
 
-    pub fn recompile_if_preprocessor_directives_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> bool {
+    pub fn recompile_if_preprocessor_directives_changed(&mut self, device: &wgpu::Device) -> bool {
         match self {
-            Self::Grade(grade) => grade.recompile_if_preprocessor_directives_changed(
-                device,
-                target_state,
-                render_resource,
-            ),
-            Self::RayMarcher(ray_marcher) => ray_marcher
-                .recompile_if_preprocessor_directives_changed(
-                    device,
-                    target_state,
-                    render_resource,
-                ),
-            Self::TextureViewer(texture_viewer) => texture_viewer
-                .recompile_if_preprocessor_directives_changed(
-                    device,
-                    target_state,
-                    render_resource,
-                ),
+            Self::Grade(grade) => grade.recompile_if_preprocessor_directives_changed(device),
+            Self::RayMarcher(ray_marcher) => {
+                ray_marcher.recompile_if_preprocessor_directives_changed(device)
+            }
+            Self::TextureViewer(texture_viewer) => {
+                texture_viewer.recompile_if_preprocessor_directives_changed(device)
+            }
             _ => false,
         }
     }
 
-    pub fn recompile_shader(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) {
+    pub fn recompile_shader(&mut self, device: &wgpu::Device) {
         match self {
-            Self::Grade(grade) => grade.recompile_shader(device, target_state, render_resource),
-            Self::RayMarcher(ray_marcher) => {
-                ray_marcher.recompile_shader(device, target_state, render_resource)
-            }
-            Self::TextureViewer(texture_viewer) => {
-                texture_viewer.recompile_shader(device, target_state, render_resource)
-            }
+            Self::Grade(grade) => grade.recompile_shader(device),
+            Self::RayMarcher(ray_marcher) => ray_marcher.recompile_shader(device),
+            Self::TextureViewer(texture_viewer) => texture_viewer.recompile_shader(device),
             _ => {}
         }
     }
 
-    pub fn update_if_hash_changed(
-        &mut self,
-        device: &wgpu::Device,
-        target_state: wgpu::ColorTargetState,
-        render_resource: &mut RenderResource,
-    ) -> bool {
+    pub fn update_if_hash_changed(&mut self, device: &wgpu::Device) -> bool {
         match self {
-            Self::Grade(grade) => {
-                grade.update_if_hash_changed(device, target_state, render_resource)
-            }
-            Self::RayMarcher(ray_marcher) => {
-                ray_marcher.update_if_hash_changed(device, target_state, render_resource)
-            }
-            Self::TextureViewer(texture_viewer) => {
-                texture_viewer.update_if_hash_changed(device, target_state, render_resource)
-            }
+            Self::Grade(grade) => grade.update_if_hash_changed(device),
+            Self::RayMarcher(ray_marcher) => ray_marcher.update_if_hash_changed(device),
+            Self::TextureViewer(texture_viewer) => texture_viewer.update_if_hash_changed(device),
             Self::TextureReader(texture_reader) => texture_reader.reset_if_hash_changed(),
             _ => false,
         }
     }
 
     pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
-        Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene).finalized())
+        Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene)) // TODO this was finalized, make sure it doesnt need to be
     }
 
     pub fn create_output_texture_view(&self, device: &wgpu::Device) -> Option<TextureView> {

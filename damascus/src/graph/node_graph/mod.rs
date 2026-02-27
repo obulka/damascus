@@ -1720,7 +1720,7 @@ mod tests {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        let paths_per_pixel: u32 = 1;
+        let paths_per_pixel: u32 = 2;
         for _ in 1..paths_per_pixel {
             let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
         }
@@ -1744,8 +1744,8 @@ mod tests {
         let mut texture_viewer = TextureEvaluators::TextureViewer(
             TextureViewer::default()
                 .with_input_texture_view(output_texture_view.clone())
-                .grade(Grade::default().gain(3.))
-                .finalized(),
+                .grade(Grade::default().gain(1.))
+                .finalized(&device),
         );
 
         texture_viewer.evaluate(&device, &queue, &mut encoder);

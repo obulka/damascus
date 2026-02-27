@@ -15,7 +15,7 @@ use crate::{
     DualDevice, PreprocessorDirectivesTraits,
     gpu::{
         ShaderSource,
-        resources::{BufferDescriptor, TextureView},
+        resources::{BufferDescriptor, RenderResource, TextureView},
     },
     textures::evaluators::{
         FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes, grade::Grade,
@@ -105,6 +105,8 @@ pub struct TextureViewer {
     preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
+    #[serde(skip)]
+    render_resource: Option<RenderResource>,
 }
 
 impl TextureViewer {
@@ -136,6 +138,7 @@ impl Default for TextureViewer {
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
             output_texture_view: None,
+            render_resource: None,
         }
     }
 }
@@ -235,6 +238,14 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
         to_key_with_ordered_float(&self.construction_data)
+    }
+
+    fn render_resource(&self) -> &Option<RenderResource> {
+        &self.render_resource
+    }
+
+    fn render_resource_mut(&mut self) -> &mut Option<RenderResource> {
+        &mut self.render_resource
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {

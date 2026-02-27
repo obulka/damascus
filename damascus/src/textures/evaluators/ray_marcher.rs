@@ -18,7 +18,7 @@ use crate::{
     DualDevice, PreprocessorDirectivesBaseTraits,
     gpu::{
         ShaderSource,
-        resources::{BufferDescriptor, TextureView},
+        resources::{BufferDescriptor, RenderResource, TextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
     textures::{
@@ -230,6 +230,8 @@ pub struct RayMarcher {
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
+    #[serde(skip)]
+    render_resource: Option<RenderResource>,
 }
 
 impl RayMarcher {
@@ -323,6 +325,7 @@ impl Default for RayMarcher {
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
             output_texture_view: None,
+            render_resource: None,
         }
     }
 }
@@ -534,6 +537,14 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
         self.construction_data.num_emissive_primitives =
             self.render_data.gpu_scene.emissive_primitive_indices.len();
         to_key_with_ordered_float(&self.construction_data)
+    }
+
+    fn render_resource(&self) -> &Option<RenderResource> {
+        &self.render_resource
+    }
+
+    fn render_resource_mut(&mut self) -> &mut Option<RenderResource> {
+        &mut self.render_resource
     }
 
     fn uniform_buffer_data(&self) -> Vec<BufferDescriptor> {

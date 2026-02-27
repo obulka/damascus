@@ -49,57 +49,63 @@ impl Node {
         output_name: String,
     ) -> NodeResult<InputData> {
         match node_data {
-            NodeData::Axis => AxisNode::evaluate(
+            NodeData::Axis => AxisNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 AxisOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Camera => CameraNode::evaluate(
+            NodeData::Camera => CameraNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 CameraOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Grade => GradeNode::evaluate(
+            NodeData::Grade => GradeNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 GradeOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Light => LightNode::evaluate(
+            NodeData::Light => LightNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 LightOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Material => MaterialNode::evaluate(
+            NodeData::Material => MaterialNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 MaterialOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Primitive => PrimitiveNode::evaluate(
+            NodeData::Primitive => PrimitiveNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 PrimitiveOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -113,21 +119,23 @@ impl Node {
                 RayMarcherOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::Scene => SceneNode::evaluate(
+            NodeData::Scene => SceneNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 SceneOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
-            NodeData::TextureRead => TextureReadNode::evaluate(
+            NodeData::TextureRead => TextureReadNode::reevaluate(
                 device,
                 queue,
                 encoder,
                 scene_graph,
                 &mut data_map,
+                input_data,
                 TextureReadOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),

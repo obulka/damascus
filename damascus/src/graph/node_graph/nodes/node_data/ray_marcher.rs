@@ -114,7 +114,8 @@ impl EvaluableNode for RayMarcherNode {
     ) -> NodeResult<InputData> {
         match input_data.try_to_texture_evaluator_id() {
             Ok(texture_evaluator_id) => {
-                scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
+                println!("reevaluating ray marcher {:?}", texture_evaluator_id);
+                scene_graph[texture_evaluator_id].reevaluate(device, queue, encoder);
 
                 match output {
                     Self::Outputs::Render => Ok(InputData::SceneGraphId(
@@ -217,6 +218,8 @@ impl EvaluableNode for RayMarcherNode {
             ));
 
         let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
+
+        println!("evaluating ray marcher {:?}", texture_evaluator_id);
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 

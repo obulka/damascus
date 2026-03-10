@@ -34,7 +34,7 @@ fn vs_main(vertex_input: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
     out.texture_coordinate = vec4(
-        uv_to_pixels(vec2f(uv_coordinate.x, uv_coordinate.y), texture_dimensions),
+        uv_to_pixels(vec2f(uv_coordinate.x, -uv_coordinate.y), texture_dimensions),
         0.,
         1.,
     );

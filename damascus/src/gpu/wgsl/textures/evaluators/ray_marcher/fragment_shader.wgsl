@@ -118,7 +118,7 @@ fn material_interaction(
  *
  * @returns: The ray colour.
  */
-fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
+fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) -> bool {
     var nested_dielectrics: NestedDielectrics;
     push_dielectric(dielectric_from_atmosphere(), &nested_dielectrics);
 
@@ -151,6 +151,8 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
         / dot((*ray).direction, render_camera_forward())
     );
 
+    var hit_any_object = false;
+
     // March the ray
     while (
         distance_travelled < max_distance
@@ -175,6 +177,8 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
 
         // Have we hit the nearest object?
         var hit_object: bool = step_distance < pixel_footprint;
+        hit_any_object |= hit_object;
+
         if hit_object {
             bounces++;
             var intersection_position = position_on_ray + step_distance * (*ray).direction;
@@ -205,7 +209,7 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
                     nearest_primitive.id,
                     ray,
                 );
-                return;
+                return hit_any_object;
             }
 #endif
             previous_material_pdf = material_interaction(
@@ -233,7 +237,7 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
                     ray,
                 );
 #endif
-                return;
+                return hit_any_object;
             }
 
             // Account for the lost intensity from the early exits
@@ -268,6 +272,8 @@ fn march_path(seed: ptr<function, Seed>, ray: ptr<function, Ray>) {
         ray,
         &nested_dielectrics,
     );
+
+    return hit_any_object;
 }
 
 struct FragmentInput {
@@ -313,16 +319,20 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
 
     // Create and march a ray
     var ray: Ray = create_render_camera_ray(&seed, uv_coordinates);
-    march_path(&seed, &ray);
+    var hit_any_object: bool = march_path(&seed, &ray);
 
     if ray.colour.x == ray.colour.x && ray.colour.y == ray.colour.y && ray.colour.z == ray.colour.z {
         // Read, update, and store the current value for our pixel
         // so that the render can be done progressively
         pixel_colour = (
             f32(_render_state.paths_rendered_per_pixel) * pixel_colour
-            + vec4(ray.colour, 1.)
+            + vec4(ray.colour, f32(hit_any_object))
         ) / f32(_render_state.paths_rendered_per_pixel + 1);
     }
 
+    // if(_render_state.paths_rendered_per_pixel == 1)
+    // {
+    // }
     return pixel_colour;
+    // return vec4(ray.colour, f32(hit_any_object));
 }

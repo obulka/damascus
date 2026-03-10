@@ -230,6 +230,7 @@ impl NodeGraph {
 
         if let Some(input_data) = self.cache.get(*output_id) {
             // Data was already cached, return it
+            println!("reevaluate {:?}", input_data);
             self.reevaluate_node(
                 device,
                 queue,
@@ -255,6 +256,7 @@ impl NodeGraph {
         if let Some(output_id) = self.edges.parent(input_id) {
             if let Some(input_data) = self.cache.get(*output_id) {
                 // Data was already cached, return it
+                // TODO need to reevaluate here ex. if input is texture evaluator
                 Ok((*input_data).clone())
             } else {
                 self.evaluate_output(device, queue, encoder, &output_id.clone())
@@ -1703,7 +1705,7 @@ mod tests {
                 .set_input_data(
                     &primitive2_axis_id,
                     &AxisInputData::Translate,
-                    InputData::Vec3(-Vec3::X),
+                    InputData::Vec3(-Vec3::new(1., 1., 0.)),
                 )
                 .is_ok(),
         );
@@ -1762,11 +1764,38 @@ mod tests {
             return;
         };
 
+        println!(
+            "writing texture view {:?} to disk",
+            viewer_output_texture_view
+        );
+
         // Create a buffer that we can copy the render to
 
         assert_eq!(
             viewer_output_texture_view
                 .write_to_file(&device, &queue, encoder, "image.exr".to_string())
+                .await
+                .map_err(|error| println!("{:?}", error)),
+            Ok(())
+        );
+
+        /////////
+        encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+
+        let input_texture_views = graph.scene_graph()[texture_evaluator_id].input_texture_views();
+
+        let Some(output_texture_view) = input_texture_views.first() else {
+            assert!(false);
+            return;
+        };
+
+        println!("writing texture view {:?} to disk", output_texture_view);
+
+        // Create a buffer that we can copy the render to
+
+        assert_eq!(
+            output_texture_view
+                .write_to_file(&device, &queue, encoder, "imagein.exr".to_string())
                 .await
                 .map_err(|error| println!("{:?}", error)),
             Ok(())

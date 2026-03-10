@@ -215,6 +215,8 @@ pub trait TextureEvaluator:
         self.output_texture_format().into()
     }
 
+    fn reevaluate_texture(&mut self, device: &wgpu::Device) {}
+
     fn evaluate_texture(&mut self, device: &wgpu::Device) {
         self.initialize_output_texture_view(device);
     }
@@ -269,6 +271,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
     fn finalized(mut self, device: &wgpu::Device) -> Self {
         self.update_hashes();
+        println!("finalizing");
         *self.render_resource_mut() = Some(self.create_render_resource(device));
         self
     }
@@ -817,7 +820,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         }
     }
 
-    fn evaluate(
+    fn reevaluate(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -830,7 +833,11 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 .usage()
                 .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            self.update_if_hash_changed(device);
+            println!("created texture to output to: {:?}", texture_view);
+            println!("hash changed: {:?}", self.update_if_hash_changed(device));
+            // self.update_if_hash_changed(device);
+
+            println!("frame: {:?}", self.frame_counter().frame);
 
             let buffer_data: BufferData = self.buffer_data();
 
@@ -838,9 +845,9 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
             // Write that data to the bind groups
             let texture_views = self.create_texture_views(device);
-            for tv in &texture_views {
-                println!("new {:?}", tv);
-            }
+            // for tv in &texture_views {
+            //     println!("new {:?}", tv);
+            // }
             // TODO only if changed
             let bind_group = self.create_texture_view_bind_group(device, texture_views);
 
@@ -848,6 +855,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 if let Some(texture_bind_group) =
                     &mut render_resource.bind_groups.texture_bind_group
                 {
+                    println!("update bind group");
                     *texture_bind_group = bind_group;
                 }
             }
@@ -860,7 +868,9 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             if let Some(render_resource) = self.render_resource_mut()
                 && let Some(pipeline) = render_pipeline
             {
+                println!("update pipeline");
                 render_resource.render_pipeline = pipeline;
+                println!("writing bind groups");
                 render_resource.write_bind_groups(&queue, &buffer_data);
             }
 
@@ -894,6 +904,70 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             println!("set out {:?}", texture_view);
             self.set_output_texture_view(texture_view);
         }
+        println!("");
+    }
+
+    fn evaluate(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+    ) {
+        if let Some(texture_view) = self.create_output_texture_view(device)
+            && texture_view
+                .texture_view
+                .texture()
+                .usage()
+                .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
+        {
+            println!("created texture to output to: {:?}", texture_view);
+            println!("hash changed: {:?}", self.update_if_hash_changed(device));
+            // self.update_if_hash_changed(device);
+
+            println!("frame: {:?}", self.frame_counter().frame);
+
+            let buffer_data: BufferData = self.buffer_data();
+
+            self.frame_counter_mut().tick();
+
+            // Write that data to the bind groups
+
+            if let Some(render_resource) = self.render_resource_mut() {
+                println!("writing bind groups");
+                render_resource.write_bind_groups(&queue, &buffer_data);
+            }
+
+            // Set up a render pass and paint to it
+
+            let render_pass_desc = wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &texture_view.texture_view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.,
+                            g: 0.,
+                            b: 0.,
+                            a: 0.,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                timestamp_writes: None,
+                occlusion_query_set: None,
+            };
+
+            if let Some(render_resource) = self.render_resource_mut() {
+                render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
+            }
+
+            println!("set out {:?}", texture_view);
+            self.set_output_texture_view(texture_view);
+        }
+        println!("");
     }
 }
 
@@ -1020,6 +1094,16 @@ impl TextureEvaluators {
         Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene)) // TODO this was finalized, make sure it doesnt need to be
     }
 
+    pub fn input_texture_views(&self) -> Vec<TextureView> {
+        match self {
+            Self::Grade(grade) => grade.input_texture_views(),
+            Self::RayMarcher(ray_marcher) => ray_marcher.input_texture_views(),
+            Self::TextureViewer(texture_viewer) => texture_viewer.input_texture_views(),
+            Self::TextureReader(texture_reader) => texture_reader.input_texture_views(),
+            _ => vec![],
+        }
+    }
+
     pub fn create_output_texture_view(&self, device: &wgpu::Device) -> Option<TextureView> {
         match self {
             Self::Grade(grade) => grade.create_output_texture_view(device),
@@ -1041,6 +1125,23 @@ impl TextureEvaluators {
             Self::TextureViewer(texture_viewer) => texture_viewer.output_texture_view(),
             Self::TextureReader(texture_reader) => texture_reader.output_texture_view(),
             _ => None,
+        }
+    }
+
+    pub fn reevaluate(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+    ) {
+        match self {
+            Self::Grade(grade) => grade.reevaluate(device, queue, encoder),
+            Self::RayMarcher(ray_marcher) => ray_marcher.reevaluate(device, queue, encoder),
+            Self::TextureViewer(texture_viewer) => {
+                texture_viewer.reevaluate(device, queue, encoder)
+            }
+            Self::TextureReader(texture_reader) => texture_reader.reevaluate_texture(device),
+            _ => {}
         }
     }
 

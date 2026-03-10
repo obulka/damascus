@@ -162,7 +162,7 @@ fn create_render_camera_ray(seed: ptr<function, Seed>, uv_coordinate: vec2f) -> 
         normalize((
             _render_camera.camera_to_world
             * vec4(
-                (_render_camera.screen_to_camera * vec4(uv_coordinate, 0., 1.)).xyz,
+                (_render_camera.screen_to_camera * vec4(uv_coordinate.x, -uv_coordinate.y, 0., 1.)).xyz,
                 0.,
             )
         ).xyz),

@@ -12,7 +12,7 @@
  * @returns: The pixel indices.
  */
 fn uv_to_pixels(pixel_coordinates: vec2f, resolution: vec2f) -> vec2f {
-    return (pixel_coordinates + 1.) * (resolution - 1.) * 0.5;
+    return (pixel_coordinates + 1.) * resolution * 0.5;
 }
 
 /**

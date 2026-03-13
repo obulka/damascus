@@ -270,8 +270,8 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     }
 
     fn finalized(mut self, device: &wgpu::Device) -> Self {
+        self.reset();
         self.update_hashes();
-        println!("finalizing");
         *self.render_resource_mut() = Some(self.create_render_resource(device));
         self
     }
@@ -281,6 +281,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             if self.dynamic_recompilation_enabled() {
                 self.update_directives();
             }
+            self.reset();
             *self.render_resource_mut() = Some(self.create_render_resource(device));
             true
         } else {
@@ -432,7 +433,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     fn render_resource_mut(&mut self) -> &mut Option<RenderResource>;
 
     fn create_render_resource(&mut self, device: &wgpu::Device) -> RenderResource {
-        self.reset();
+        // self.reset();
 
         let index_buffer: Buffer = self.create_index_buffer(device);
         let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);
@@ -833,11 +834,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 .usage()
                 .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            println!("created texture to output to: {:?}", texture_view);
-            println!("hash changed: {:?}", self.update_if_hash_changed(device));
-            // self.update_if_hash_changed(device);
-
-            println!("frame: {:?}", self.frame_counter().frame);
+            self.update_if_hash_changed(device);
 
             let buffer_data: BufferData = self.buffer_data();
 
@@ -845,9 +842,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
             // Write that data to the bind groups
             let texture_views = self.create_texture_views(device);
-            // for tv in &texture_views {
-            //     println!("new {:?}", tv);
-            // }
+
             // TODO only if changed
             let bind_group = self.create_texture_view_bind_group(device, texture_views);
 
@@ -855,23 +850,12 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 if let Some(texture_bind_group) =
                     &mut render_resource.bind_groups.texture_bind_group
                 {
-                    println!("update bind group");
                     *texture_bind_group = bind_group;
                 }
             }
 
-            let mut render_pipeline: Option<wgpu::RenderPipeline> = None;
-            if let Some(render_resource) = self.render_resource() {
-                render_pipeline = Some(self.render_pipeline(device, &render_resource.bind_groups));
-            }
-
-            if let Some(render_resource) = self.render_resource_mut()
-                && let Some(pipeline) = render_pipeline
-            {
-                println!("update pipeline");
-                render_resource.render_pipeline = pipeline;
-                println!("writing bind groups");
-                render_resource.write_bind_groups(&queue, &buffer_data);
+            if let Some(render_resource) = self.render_resource_mut() {
+                render_resource.write_bind_groups(queue, &buffer_data);
             }
 
             // Set up a render pass and paint to it
@@ -901,10 +885,8 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
             }
 
-            println!("set out {:?}", texture_view);
             self.set_output_texture_view(texture_view);
         }
-        println!("");
     }
 
     fn evaluate(
@@ -920,11 +902,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 .usage()
                 .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            println!("created texture to output to: {:?}", texture_view);
-            println!("hash changed: {:?}", self.update_if_hash_changed(device));
-            // self.update_if_hash_changed(device);
-
-            println!("frame: {:?}", self.frame_counter().frame);
+            self.update_if_hash_changed(device);
 
             let buffer_data: BufferData = self.buffer_data();
 
@@ -933,8 +911,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             // Write that data to the bind groups
 
             if let Some(render_resource) = self.render_resource_mut() {
-                println!("writing bind groups");
-                render_resource.write_bind_groups(&queue, &buffer_data);
+                render_resource.write_bind_groups(queue, &buffer_data);
             }
 
             // Set up a render pass and paint to it
@@ -964,10 +941,8 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
             }
 
-            println!("set out {:?}", texture_view);
             self.set_output_texture_view(texture_view);
         }
-        println!("");
     }
 }
 
@@ -1038,6 +1013,7 @@ impl TextureEvaluators {
     }
 
     pub fn create_render_resource(&mut self, device: &wgpu::Device) -> Option<RenderResource> {
+        self.reset();
         match self {
             Self::Grade(grade) => Some(grade.create_render_resource(device)),
             Self::RayMarcher(ray_marcher) => Some(ray_marcher.create_render_resource(device)),

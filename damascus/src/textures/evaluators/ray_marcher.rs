@@ -383,7 +383,6 @@ impl TextureEvaluator for RayMarcher {
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
         self.output_texture_view.push(output_texture_view);
-        println!("output set to {:?}", self.output_texture_view);
     }
 
     fn output_texture_view(&self) -> Option<&TextureView> {
@@ -688,15 +687,10 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
 
     fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
         if let Some(output_texture_view) = self.output_texture_view() {
-            println!("clone existing output {:?}", output_texture_view);
             return vec![output_texture_view.clone()];
         } else if let Some(output_texture_view) = self.create_output_texture_view(device) {
-            println!("created output {:?}", output_texture_view);
             return vec![output_texture_view];
         }
-
-        println!("EMPTY");
-
         vec![]
     }
 }

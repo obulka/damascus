@@ -229,7 +229,7 @@ pub struct RayMarcher {
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
     #[serde(skip)]
-    output_texture_view: Vec<TextureView>, // TODO we dont have multiple
+    output_texture_view: Option<TextureView>,
     #[serde(skip)]
     render_resource: Option<RenderResource>,
 }
@@ -324,7 +324,7 @@ impl Default for RayMarcher {
             construction_data: RayMarcherConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
-            output_texture_view: vec![],
+            output_texture_view: None,
             render_resource: None,
         }
     }
@@ -337,7 +337,7 @@ impl TextureEvaluator for RayMarcher {
 
     fn reset(&mut self) {
         self.frame_counter_mut().reset();
-        self.output_texture_view = vec![];
+        self.output_texture_view = None;
     }
 
     fn hashes(&self) -> &TextureEvaluatorHashes {
@@ -361,8 +361,7 @@ impl TextureEvaluator for RayMarcher {
     }
 
     fn input_texture_views(&self) -> Vec<TextureView> {
-        // self.construction_data.input_texture_views.clone()
-        self.output_texture_view.clone()
+        self.construction_data.input_texture_views.clone()
     }
 
     fn with_input_texture_views(mut self, input_texture_views: Vec<TextureView>) -> Self {
@@ -382,15 +381,15 @@ impl TextureEvaluator for RayMarcher {
     }
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {
-        self.output_texture_view.push(output_texture_view);
+        self.output_texture_view = Some(output_texture_view);
     }
 
     fn output_texture_view(&self) -> Option<&TextureView> {
-        self.output_texture_view.last()
+        self.output_texture_view.as_ref()
     }
 
     fn output_texture_view_mut(&mut self) -> Option<&mut TextureView> {
-        self.output_texture_view.last_mut()
+        self.output_texture_view.as_mut()
     }
 }
 

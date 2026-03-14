@@ -1721,7 +1721,7 @@ mod tests {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        let paths_per_pixel: u32 = 100;
+        let paths_per_pixel: u32 = 1000;
         for _ in 1..paths_per_pixel {
             queue.submit(Some(encoder.finish()));
             encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
@@ -1741,7 +1741,7 @@ mod tests {
         let Some(output_texture_view) =
             graph.scene_graph()[texture_evaluator_id].output_texture_view()
         else {
-            panic!("Render did not produce an output.");
+            panic!("Ray marcher render did not produce an output TextureView.");
         };
 
         let mut texture_viewer = TextureEvaluators::TextureViewer(
@@ -1754,8 +1754,7 @@ mod tests {
         texture_viewer.evaluate(&device, &queue, &mut encoder);
 
         let Some(viewer_output_texture_view) = texture_viewer.output_texture_view() else {
-            assert!(false);
-            return;
+            panic!("Texture viewer did not produce an output TextureView.");
         };
 
         // Create a buffer that we can copy the render to
@@ -1789,7 +1788,7 @@ mod tests {
                     Vec3::new(0.1, 0.1, 1.),
                 );
             }
-            _ => assert!(false),
+            _ => panic!("Ray marcher texture evaluator id does not reference a ray marcher."),
         }
 
         let read_id: NodeId = graph.add_node(NodeData::TextureRead);
@@ -1831,20 +1830,17 @@ mod tests {
 
         let Ok(input_data) = graph.evaluate_output(&device, &queue, &mut encoder, &grade_output_id)
         else {
-            assert!(false);
-            return;
+            panic!("Grade did not produce an output.");
         };
 
         let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
-            assert!(false);
-            return;
+            panic!("Grade output was not a texture evaluator id.");
         };
 
         let Some(output_texture_view) =
             graph.scene_graph()[texture_evaluator_id].output_texture_view()
         else {
-            assert!(false);
-            return;
+            panic!("Grade did not produce an output TextureView.");
         };
 
         assert_eq!(
@@ -1867,20 +1863,17 @@ mod tests {
 
         let Ok(input_data) = graph.evaluate_output(&device, &queue, &mut encoder, &grade_output_id)
         else {
-            assert!(false);
-            return;
+            panic!("Grade did not produce an output.");
         };
 
         let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
-            assert!(false);
-            return;
+            panic!("Grade output was not a texture evaluator id.");
         };
 
         let Some(output_texture_view) =
             graph.scene_graph()[texture_evaluator_id].output_texture_view()
         else {
-            assert!(false);
-            return;
+            panic!("Grade did not produce an output TextureView.");
         };
 
         assert_eq!(

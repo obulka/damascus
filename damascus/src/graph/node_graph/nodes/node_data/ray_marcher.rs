@@ -108,13 +108,13 @@ impl EvaluableNode for RayMarcherNode {
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
-        data_map: &mut HashMap<String, InputData>,
+        data_map: &mut HashMap<String, InputData>, // TODO update the evaluator data from this map
         input_data: InputData,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match input_data.try_to_texture_evaluator_id() {
             Ok(texture_evaluator_id) => {
-                scene_graph[texture_evaluator_id].reevaluate(device, queue, encoder);
+                scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
                 match output {
                     Self::Outputs::Render => Ok(InputData::SceneGraphId(

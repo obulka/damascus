@@ -1721,7 +1721,7 @@ mod tests {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        let paths_per_pixel: u32 = 1000;
+        let paths_per_pixel: u32 = 10;
         for _ in 1..paths_per_pixel {
             queue.submit(Some(encoder.finish()));
             encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());

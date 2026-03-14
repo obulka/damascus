@@ -136,7 +136,7 @@ impl Default for TextureViewer {
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
             hashes: TextureEvaluatorHashes::default(),
-            preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(), //TODO update the directives here
+            preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(),
             output_texture_view: None,
             render_resource: None,
         }

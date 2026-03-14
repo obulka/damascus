@@ -22,7 +22,6 @@ use crate::{
             RenderResource, StorageTextureView, StorageTextureViewBindGroup, TextureView,
             TextureViewBindGroup,
         },
-        scene::GPUScene,
     },
     time::FrameCounter,
 };
@@ -994,10 +993,6 @@ impl TextureEvaluators {
             Self::TextureReader(texture_reader) => texture_reader.reset_if_hash_changed(),
             _ => false,
         }
-    }
-
-    pub fn default_pass_for_scene(gpu_scene: GPUScene) -> Self {
-        Self::RayMarcher(RayMarcher::default().gpu_scene(gpu_scene)) // TODO this was finalized, make sure it doesnt need to be
     }
 
     pub fn input_texture_views(&self) -> Vec<TextureView> {

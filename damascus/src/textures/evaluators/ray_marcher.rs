@@ -28,8 +28,6 @@ use crate::{
     time::FrameCounter,
 };
 
-pub const MAX_TEXTURE_DIMENSION: u32 = 8192; // TODO get rid of this
-
 #[derive(Copy, Default, PreprocessorDirectivesBaseTraits!)]
 pub enum RayMarcherPreprocessorDirectives {
     #[default]

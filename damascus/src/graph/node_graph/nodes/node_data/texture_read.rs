@@ -15,7 +15,7 @@ use crate::{
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphIdType},
     },
     textures::evaluators::{
         TextureEvaluator, TextureEvaluatorId, TextureEvaluators, read::TextureReader,
@@ -75,12 +75,10 @@ impl EvaluableNode for TextureReadNode {
                     .finalize(),
             ));
 
-        let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
-
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
         match output {
-            Self::Outputs::Texture => Ok(InputData::SceneGraphId(scene_graph_id)),
+            Self::Outputs::Texture => Ok(InputData::SceneGraphId(texture_evaluator_id.into())),
         }
     }
 }

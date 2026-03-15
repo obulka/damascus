@@ -16,7 +16,7 @@ use crate::{
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphIdType},
     },
 };
 
@@ -82,38 +82,40 @@ impl EvaluableNode for CameraNode {
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphId(SceneGraphId::Camera(
-                scene_graph.add_camera(Camera::new(
-                    Self::Inputs::FocalLength
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::HorizontalAperture
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::NearPlane
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::FarPlane
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::FocalDistance
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::FStop
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                    Self::Inputs::SensorResolution
-                        .from_data_map(data_map)?
-                        .try_to_uvec2()?,
-                    Self::Inputs::EnableDepthOfField
-                        .from_data_map(data_map)?
-                        .try_to_bool()?,
-                    Self::Inputs::Latlong
-                        .from_data_map(data_map)?
-                        .try_to_bool()?,
-                    Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
-                )),
-            ))),
+            Self::Outputs::Id => Ok(InputData::SceneGraphId(
+                scene_graph
+                    .add_camera(Camera::new(
+                        Self::Inputs::FocalLength
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::HorizontalAperture
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::NearPlane
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::FarPlane
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::FocalDistance
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::FStop
+                            .from_data_map(data_map)?
+                            .try_to_float()?,
+                        Self::Inputs::SensorResolution
+                            .from_data_map(data_map)?
+                            .try_to_uvec2()?,
+                        Self::Inputs::EnableDepthOfField
+                            .from_data_map(data_map)?
+                            .try_to_bool()?,
+                        Self::Inputs::Latlong
+                            .from_data_map(data_map)?
+                            .try_to_bool()?,
+                        Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
+                    ))
+                    .into(),
+            )),
         }
     }
 }

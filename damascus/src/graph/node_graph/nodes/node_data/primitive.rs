@@ -474,7 +474,7 @@ impl EvaluableNode for PrimitiveNode {
                 .try_to_bool()?,
             dimensional_data: dimensional_data,
         });
-        let scene_graph_id = SceneGraphId::Primitive(primitive_id);
+        let scene_graph_id: SceneGraphId = primitive_id.into();
 
         if let Ok(material_id) = Self::Inputs::Material
             .from_data_map(data_map)?

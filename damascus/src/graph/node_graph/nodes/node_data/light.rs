@@ -18,7 +18,7 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    lights::{Light, LightId, LightType},
+    lights::{Light, LightType},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -135,26 +135,27 @@ impl EvaluableNode for LightNode {
             _ => Vec3::ZERO,
         };
 
-        let light_id: LightId = scene_graph.add_light(Light {
-            light_type: light_type,
-            dimensional_data: dimensional_data,
-            intensity: Self::Inputs::Intensity
-                .from_data_map(data_map)?
-                .try_to_float()?,
-            falloff: Self::Inputs::Falloff
-                .from_data_map(data_map)?
-                .try_to_uint()?,
-            colour: Self::Inputs::Colour
-                .from_data_map(data_map)?
-                .try_to_vec3()?,
-            shadow_hardness: Self::Inputs::ShadowHardness
-                .from_data_map(data_map)?
-                .try_to_float()?,
-            soften_shadows: Self::Inputs::SoftenShadows
-                .from_data_map(data_map)?
-                .try_to_bool()?,
-        });
-        let scene_graph_id = SceneGraphId::Light(light_id);
+        let scene_graph_id: SceneGraphId = scene_graph
+            .add_light(Light {
+                light_type: light_type,
+                dimensional_data: dimensional_data,
+                intensity: Self::Inputs::Intensity
+                    .from_data_map(data_map)?
+                    .try_to_float()?,
+                falloff: Self::Inputs::Falloff
+                    .from_data_map(data_map)?
+                    .try_to_uint()?,
+                colour: Self::Inputs::Colour
+                    .from_data_map(data_map)?
+                    .try_to_vec3()?,
+                shadow_hardness: Self::Inputs::ShadowHardness
+                    .from_data_map(data_map)?
+                    .try_to_float()?,
+                soften_shadows: Self::Inputs::SoftenShadows
+                    .from_data_map(data_map)?
+                    .try_to_bool()?,
+            })
+            .into();
 
         Self::add_dynamic_children_to_scene_graph(
             scene_graph,

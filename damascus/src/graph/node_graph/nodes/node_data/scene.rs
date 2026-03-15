@@ -94,7 +94,7 @@ impl EvaluableNode for SceneNode {
         let root_id: RootId = scene_graph.add_root(Root {
             local_to_world: Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
         });
-        let scene_graph_id = SceneGraphId::Root(root_id);
+        let scene_graph_id: SceneGraphId = root_id.into();
 
         if let Ok(atmosphere_id) = Self::Inputs::Atmosphere
             .from_data_map(data_map)?

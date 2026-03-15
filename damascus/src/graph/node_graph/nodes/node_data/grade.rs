@@ -138,12 +138,10 @@ impl EvaluableNode for GradeNode {
                     .finalized(device),
             ));
 
-        let scene_graph_id = SceneGraphId::TextureEvaluator(texture_evaluator_id);
-
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
         match output {
-            Self::Outputs::Grade => Ok(InputData::SceneGraphId(scene_graph_id)),
+            Self::Outputs::Grade => Ok(InputData::SceneGraphId(texture_evaluator_id.into())),
         }
     }
 }

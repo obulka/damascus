@@ -152,39 +152,16 @@ impl NodeGraph {
         self.scene_graph.clear();
     }
 
-    fn reevaluate_node(
-        &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
-        output_id: OutputId,
-        input_data_map: HashMap<String, InputData>,
-        input_data: InputData,
-    ) -> NodeResult<InputData> {
-        let node_data: NodeData = self[self[output_id].node_id].data;
-        let output_name: String = self[output_id].name.clone();
-        Ok(Node::reevaluate(
-            device,
-            queue,
-            encoder,
-            &mut self.scene_graph,
-            node_data,
-            input_data_map,
-            input_data,
-            output_name,
-        )?)
-    }
-
     fn evaluate_node(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
-        output_id: OutputId,
+        output_id: &OutputId,
         input_data_map: HashMap<String, InputData>,
     ) -> NodeResult<InputData> {
-        let node_data: NodeData = self[self[output_id].node_id].data;
-        let output_name: String = self[output_id].name.clone();
+        let node_data: NodeData = self[self[*output_id].node_id].data;
+        let output_name: String = self[*output_id].name.clone();
         let input_data: InputData = Node::evaluate(
             device,
             queue,
@@ -192,10 +169,11 @@ impl NodeGraph {
             &mut self.scene_graph,
             node_data,
             input_data_map,
+            self.cache.get(*output_id).cloned(),
             output_name,
         )?;
 
-        self.insert_in_cache(output_id, input_data.clone());
+        self.insert_in_cache(*output_id, input_data.clone());
 
         Ok(input_data)
     }
@@ -228,21 +206,9 @@ impl NodeGraph {
             return result;
         }
 
-        if let Some(input_data) = self.cache.get(*output_id) {
-            // Data was already cached, return it
-            self.reevaluate_node(
-                device,
-                queue,
-                encoder,
-                *output_id,
-                all_input_data_for_node,
-                input_data.clone(),
-            )
-        } else {
-            // All input data for the node has been collected
-            // so its time to process the data and start descending the graph
-            self.evaluate_node(device, queue, encoder, *output_id, all_input_data_for_node)
-        }
+        // All input data for the node has been collected
+        // so its time to process the data and start descending the graph
+        self.evaluate_node(device, queue, encoder, output_id, all_input_data_for_node)
     }
 
     pub fn evaluate_input(
@@ -253,13 +219,7 @@ impl NodeGraph {
         input_id: &InputId,
     ) -> NodeResult<InputData> {
         if let Some(output_id) = self.edges.parent(input_id) {
-            if let Some(input_data) = self.cache.get(*output_id) {
-                // Data was already cached, return it
-                // TODO need to reevaluate here ex. if input is texture evaluator
-                Ok((*input_data).clone())
-            } else {
-                self.evaluate_output(device, queue, encoder, &output_id.clone())
-            }
+            self.evaluate_output(device, queue, encoder, &output_id.clone())
         } else {
             // Input is not connected
             // Return its current/default value
@@ -646,12 +606,7 @@ impl NodeGraph {
                     .data
                     .input_data_compatible_with_input(&input_data, &node_input_data.name())
                 {
-                    if self[input_id].data != input_data {
-                        if !input_data.is_evaluable() {
-                            self.remove_node_from_cache(node_id);
-                        }
-                        self[input_id].data = input_data;
-                    }
+                    self[input_id].data = input_data;
                     Ok(input_id)
                 } else {
                     Err(NodeErrors::IncompatibleData {
@@ -1771,20 +1726,19 @@ mod tests {
         // test that it was built correctly, then render it on the gpu
         match &graph.scene_graph()[texture_evaluator_id] {
             TextureEvaluators::RayMarcher(ray_marcher) => {
-                assert_eq!(ray_marcher.with_gpu_scene().cameras.len(), 2);
-                assert_eq!(ray_marcher.with_gpu_scene().render_camera, 1);
+                assert_eq!(ray_marcher.gpu_scene().cameras.len(), 2);
+                assert_eq!(ray_marcher.gpu_scene().render_camera, 1);
                 assert_eq!(
-                    ray_marcher.with_gpu_scene().cameras
-                        [ray_marcher.with_gpu_scene().render_camera]
+                    ray_marcher.gpu_scene().cameras[ray_marcher.gpu_scene().render_camera]
                         .camera_to_world,
                     glam::Mat4::from_translation(Vec3::Z * 10.),
                 );
 
-                assert_eq!(ray_marcher.with_gpu_scene().materials.len(), 3);
-                assert_eq!(ray_marcher.with_gpu_scene().primitives.len(), 3);
-                assert_eq!(ray_marcher.with_gpu_scene().primitives[0].material_id, 1,);
+                assert_eq!(ray_marcher.gpu_scene().materials.len(), 3);
+                assert_eq!(ray_marcher.gpu_scene().primitives.len(), 3);
+                assert_eq!(ray_marcher.gpu_scene().primitives[0].material_id, 1,);
                 assert_eq!(
-                    ray_marcher.with_gpu_scene().materials[1].diffuse_colour,
+                    ray_marcher.gpu_scene().materials[1].diffuse_colour,
                     Vec3::new(0.1, 0.1, 1.),
                 );
             }

@@ -23,6 +23,7 @@ pub type Nodes = SlotMap<NodeId, Node>;
 
 #[derive(Default, ErrorTraits!)]
 pub enum NodeErrors {
+    InvalidCachedData,
     InputDowncastError {
         data: InputData,
         conversion_to: String,

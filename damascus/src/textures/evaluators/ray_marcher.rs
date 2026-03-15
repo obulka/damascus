@@ -233,83 +233,68 @@ pub struct RayMarcher {
 }
 
 impl RayMarcher {
-    pub fn with_gpu_scene(&self) -> &GPUScene {
+    pub fn gpu_scene(&self) -> &GPUScene {
         &self.render_data.gpu_scene
     }
 
-    pub fn gpu_scene(mut self, gpu_scene: GPUScene) -> Self {
+    pub fn set_gpu_scene(&mut self, gpu_scene: GPUScene) {
         self.render_data.gpu_scene = gpu_scene;
-        self
     }
 
-    pub fn max_ray_steps(mut self, max_ray_steps: u32) -> Self {
+    pub fn set_max_ray_steps(&mut self, max_ray_steps: u32) {
         self.render_data.max_ray_steps = max_ray_steps;
-        self
     }
 
-    pub fn max_bounces(mut self, max_bounces: u32) -> Self {
+    pub fn set_max_bounces(&mut self, max_bounces: u32) {
         self.render_data.max_bounces = max_bounces;
-        self
     }
 
-    pub fn hit_tolerance(mut self, hit_tolerance: f32) -> Self {
+    pub fn set_hit_tolerance(&mut self, hit_tolerance: f32) {
         self.render_data.hit_tolerance = hit_tolerance;
-        self
     }
 
-    pub fn shadow_bias(mut self, shadow_bias: f32) -> Self {
+    pub fn set_shadow_bias(&mut self, shadow_bias: f32) {
         self.render_data.shadow_bias = shadow_bias;
-        self
     }
 
-    pub fn max_brightness(mut self, max_brightness: f32) -> Self {
+    pub fn set_max_brightness(&mut self, max_brightness: f32) {
         self.render_data.max_brightness = max_brightness;
-        self
     }
 
-    pub fn seed(mut self, seed: u32) -> Self {
+    pub fn set_seed(&mut self, seed: u32) {
         self.render_data.seed = seed;
-        self
     }
 
-    pub fn dynamic_level_of_detail(mut self, dynamic_level_of_detail: bool) -> Self {
+    pub fn set_dynamic_level_of_detail(&mut self, dynamic_level_of_detail: bool) {
         self.render_data.dynamic_level_of_detail = dynamic_level_of_detail;
-        self
     }
 
-    pub fn equiangular_samples(mut self, equiangular_samples: u32) -> Self {
+    pub fn set_equiangular_samples(&mut self, equiangular_samples: u32) {
         self.render_data.equiangular_samples = equiangular_samples;
-        self
     }
 
-    pub fn max_light_sampling_bounces(mut self, max_light_sampling_bounces: u32) -> Self {
+    pub fn set_max_light_sampling_bounces(&mut self, max_light_sampling_bounces: u32) {
         self.render_data.max_light_sampling_bounces = max_light_sampling_bounces;
-        self
     }
 
-    pub fn light_sampling(mut self, light_sampling: bool) -> Self {
+    pub fn set_light_sampling(&mut self, light_sampling: bool) {
         self.render_data.light_sampling = light_sampling;
-        self
     }
 
-    pub fn sample_atmosphere(mut self, sample_atmosphere: bool) -> Self {
+    pub fn set_sample_atmosphere(&mut self, sample_atmosphere: bool) {
         self.render_data.sample_atmosphere = sample_atmosphere;
-        self
     }
 
-    pub fn light_sampling_bias(mut self, light_sampling_bias: f32) -> Self {
+    pub fn set_light_sampling_bias(&mut self, light_sampling_bias: f32) {
         self.render_data.light_sampling_bias = light_sampling_bias;
-        self
     }
 
-    pub fn secondary_sampling(mut self, secondary_sampling: bool) -> Self {
+    pub fn set_secondary_sampling(&mut self, secondary_sampling: bool) {
         self.render_data.secondary_sampling = secondary_sampling;
-        self
     }
 
-    pub fn output_aov(mut self, output_aov: AOVs) -> Self {
+    pub fn set_output_aov(&mut self, output_aov: AOVs) {
         self.render_data.output_aov = output_aov;
-        self
     }
 }
 

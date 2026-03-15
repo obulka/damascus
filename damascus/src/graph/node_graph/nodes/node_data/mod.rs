@@ -197,27 +197,30 @@ pub trait EvaluableNode {
         input.default_data().variant_matches(input_data)
     }
 
-    fn reevaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+    fn update_data_model(
         _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
-        input_data: InputData,
-        _output: Self::Outputs,
-    ) -> NodeResult<InputData> {
-        Ok(input_data)
+        _input_data: &InputData,
+    ) -> NodeResult<()> {
+        Ok(())
     }
 
     fn evaluate(
         _device: &wgpu::Device,
         _queue: &wgpu::Queue,
         _encoder: &mut wgpu::CommandEncoder,
-        _scene_graph: &mut SceneGraph,
-        _data_map: &mut HashMap<String, InputData>,
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
         _output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        Err(NodeErrors::NotImplementedError)
+        if let Some(input_data) = cached_input_data {
+            Self::update_data_model(scene_graph, data_map, &input_data)?;
+
+            Ok(input_data)
+        } else {
+            Err(NodeErrors::NotImplementedError)
+        }
     }
 }
 

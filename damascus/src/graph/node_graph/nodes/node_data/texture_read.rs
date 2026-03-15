@@ -62,17 +62,22 @@ impl EvaluableNode for TextureReadNode {
         encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
+        let texture_evaluator_id: TextureEvaluatorId = match cached_input_data {
+            Some(input_data) => input_data.try_to_texture_evaluator_id()?,
+            None => scene_graph
+                .add_texture_evaluator(TextureEvaluators::TextureReader(TextureReader::default())),
+        };
+
         let texture_evaluator_id: TextureEvaluatorId =
             scene_graph.add_texture_evaluator(TextureEvaluators::TextureReader(
-                TextureReader::default()
-                    .filepath(
-                        Self::Inputs::Filepath
-                            .from_data_map(data_map)?
-                            .try_to_filepath()?,
-                    )
-                    .finalize(),
+                TextureReader::default().filepath(
+                    Self::Inputs::Filepath
+                        .from_data_map(data_map)?
+                        .try_to_filepath()?,
+                ),
             ));
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);

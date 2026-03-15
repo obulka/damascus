@@ -109,12 +109,6 @@ pub trait TextureEvaluator:
         false
     }
 
-    /// TODO do not like the finalize/finalized hack to differentiate
-    fn finalize(mut self) -> Self {
-        self.update_reset_hash();
-        self
-    }
-
     fn input_texture_views(&self) -> Vec<TextureView> {
         vec![]
     }
@@ -430,8 +424,6 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
     fn render_resource_mut(&mut self) -> &mut Option<RenderResource>;
 
     fn create_render_resource(&mut self, device: &wgpu::Device) -> RenderResource {
-        // self.reset();
-
         let index_buffer: Buffer = self.create_index_buffer(device);
         let vertex_buffers: Vec<Buffer> = self.create_vertex_buffers(device);
         let uniform_buffers: Vec<Buffer> = self.create_uniform_buffers(device);

@@ -9,14 +9,14 @@ use macro_rules_attribute::derive;
 
 use crate::{
     EnumHashTraits,
-    camera::Camera,
+    camera::{Camera, CameraId},
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
 };
 
@@ -46,9 +46,9 @@ impl NodeInputData for CameraInputData {
             Self::NearPlane => InputData::Float(default_camera.near_plane),
             Self::FarPlane => InputData::Float(default_camera.far_plane),
             Self::SensorResolution => InputData::UVec2(default_camera.sensor_resolution),
-            Self::Axis => InputData::Mat4(default_camera.camera_to_world),
             Self::EnableDepthOfField => InputData::Bool(default_camera.enable_depth_of_field),
             Self::Latlong => InputData::Bool(default_camera.latlong),
+            Self::Axis => InputData::Mat4(default_camera.camera_to_world),
         }
     }
 }
@@ -73,49 +73,64 @@ impl EvaluableNode for CameraNode {
     type Inputs = CameraInputData;
     type Outputs = CameraOutputData;
 
+    fn update_data_model(
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let camera_id: &CameraId = input_data.as_camera_id()?;
+
+        scene_graph[*camera_id].focal_length = Self::Inputs::FocalLength
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].focal_distance = Self::Inputs::FocalDistance
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].f_stop = Self::Inputs::FStop
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].horizontal_aperture = Self::Inputs::HorizontalAperture
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].near_plane = Self::Inputs::NearPlane
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].far_plane = Self::Inputs::FarPlane
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*camera_id].sensor_resolution = Self::Inputs::SensorResolution
+            .from_data_map(data_map)?
+            .try_to_uvec2()?;
+        scene_graph[*camera_id].enable_depth_of_field = Self::Inputs::EnableDepthOfField
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*camera_id].latlong = Self::Inputs::Latlong
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*camera_id].camera_to_world =
+            Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?;
+
+        Ok(())
+    }
+
     fn evaluate(
         _device: &wgpu::Device,
         _queue: &wgpu::Queue,
         _encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphId(
-                scene_graph
-                    .add_camera(Camera::new(
-                        Self::Inputs::FocalLength
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::HorizontalAperture
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::NearPlane
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::FarPlane
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::FocalDistance
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::FStop
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                        Self::Inputs::SensorResolution
-                            .from_data_map(data_map)?
-                            .try_to_uvec2()?,
-                        Self::Inputs::EnableDepthOfField
-                            .from_data_map(data_map)?
-                            .try_to_bool()?,
-                        Self::Inputs::Latlong
-                            .from_data_map(data_map)?
-                            .try_to_bool()?,
-                        Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
-                    ))
-                    .into(),
-            )),
+            Self::Outputs::Id => {
+                let scene_graph_id =
+                    InputData::SceneGraphId(scene_graph.add_camera(Camera::default()).into());
+
+                Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
+
+                Ok(scene_graph_id)
+            }
         }
     }
 }

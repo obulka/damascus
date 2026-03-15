@@ -173,6 +173,7 @@ impl EvaluableNode for PrimitiveNode {
         _encoder: &mut wgpu::CommandEncoder,
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
+        input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         let shape: Shapes = Self::Inputs::Shape.from_data_map(data_map)?.try_to_enum()?;

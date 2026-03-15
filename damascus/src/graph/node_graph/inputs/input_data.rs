@@ -45,6 +45,90 @@ pub enum InputData {
     SceneGraphId(SceneGraphId),
 }
 
+impl From<bool> for InputData {
+    fn from(value: bool) -> Self {
+        Self::Bool(value)
+    }
+}
+
+impl From<BVec3> for InputData {
+    fn from(value: BVec3) -> Self {
+        Self::BVec3(value)
+    }
+}
+
+impl From<i32> for InputData {
+    fn from(value: i32) -> Self {
+        Self::Int(value)
+    }
+}
+
+impl From<u32> for InputData {
+    fn from(value: u32) -> Self {
+        Self::UInt(value)
+    }
+}
+
+impl From<UVec2> for InputData {
+    fn from(value: UVec2) -> Self {
+        Self::UVec2(value)
+    }
+}
+
+impl From<UVec3> for InputData {
+    fn from(value: UVec3) -> Self {
+        Self::UVec3(value)
+    }
+}
+
+impl From<f32> for InputData {
+    fn from(value: f32) -> Self {
+        Self::Float(value)
+    }
+}
+
+impl From<Vec2> for InputData {
+    fn from(value: Vec2) -> Self {
+        Self::Vec2(value)
+    }
+}
+
+impl From<Vec3> for InputData {
+    fn from(value: Vec3) -> Self {
+        Self::Vec3(value)
+    }
+}
+
+impl From<Vec4> for InputData {
+    fn from(value: Vec4) -> Self {
+        Self::Vec4(value)
+    }
+}
+
+impl From<Mat3> for InputData {
+    fn from(value: Mat3) -> Self {
+        Self::Mat3(value)
+    }
+}
+
+impl From<Mat4> for InputData {
+    fn from(value: Mat4) -> Self {
+        Self::Mat4(value)
+    }
+}
+
+impl From<Enum> for InputData {
+    fn from(value: Enum) -> Self {
+        Self::Enum(value)
+    }
+}
+
+impl From<SceneGraphId> for InputData {
+    fn from(value: SceneGraphId) -> Self {
+        Self::SceneGraphId(value)
+    }
+}
+
 impl InputData {
     pub fn is_evaluable(&self) -> bool {
         match self {
@@ -53,6 +137,16 @@ impl InputData {
                 _ => false,
             },
             _ => false,
+        }
+    }
+
+    pub fn as_bool(&self) -> NodeResult<&bool> {
+        match self {
+            InputData::Bool(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self.clone(),
+                conversion_to: type_name::<bool>().to_string(),
+            }),
         }
     }
 
@@ -196,12 +290,32 @@ impl InputData {
         }
     }
 
+    pub fn as_scene_graph_id(&self) -> NodeResult<&SceneGraphId> {
+        match self {
+            InputData::SceneGraphId(value) => Ok(value),
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self.clone(),
+                conversion_to: type_name::<SceneGraphId>().to_string(),
+            }),
+        }
+    }
+
     pub fn try_to_scene_graph_id(self) -> NodeResult<SceneGraphId> {
         match self {
             InputData::SceneGraphId(value) => Ok(value),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
                 conversion_to: type_name::<SceneGraphId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn as_material_id(&self) -> NodeResult<&MaterialId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::Material(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<MaterialId>().to_string(),
             }),
         }
     }
@@ -236,6 +350,16 @@ impl InputData {
         }
     }
 
+    pub fn as_camera_id(&self) -> NodeResult<&CameraId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::Camera(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<CameraId>().to_string(),
+            }),
+        }
+    }
+
     pub fn try_to_camera_id(self) -> NodeResult<CameraId> {
         match self.try_to_scene_graph_id()? {
             SceneGraphId::Camera(value) => Ok(value),
@@ -252,6 +376,16 @@ impl InputData {
             value => Err(NodeErrors::InputDowncastError {
                 data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<RootId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn as_texture_evaluator_id(&self) -> NodeResult<&TextureEvaluatorId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::TextureEvaluator(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<TextureEvaluatorId>().to_string(),
             }),
         }
     }

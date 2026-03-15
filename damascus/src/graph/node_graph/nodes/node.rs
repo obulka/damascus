@@ -38,110 +38,6 @@ impl Node {
         }
     }
 
-    pub fn reevaluate(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
-        scene_graph: &mut SceneGraph,
-        node_data: NodeData,
-        mut data_map: HashMap<String, InputData>,
-        input_data: InputData,
-        output_name: String,
-    ) -> NodeResult<InputData> {
-        match node_data {
-            NodeData::Axis => AxisNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                AxisOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Camera => CameraNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                CameraOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Grade => GradeNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                GradeOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Light => LightNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                LightOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Material => MaterialNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                MaterialOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Primitive => PrimitiveNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                PrimitiveOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::RayMarcher => RayMarcherNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                RayMarcherOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::Scene => SceneNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                SceneOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-            NodeData::TextureRead => TextureReadNode::reevaluate(
-                device,
-                queue,
-                encoder,
-                scene_graph,
-                &mut data_map,
-                input_data,
-                TextureReadOutputData::from_str(&output_name)
-                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
-            ),
-        }
-    }
-
     pub fn evaluate(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -149,6 +45,7 @@ impl Node {
         scene_graph: &mut SceneGraph,
         node_data: NodeData,
         mut data_map: HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
         output_name: String,
     ) -> NodeResult<InputData> {
         match node_data {
@@ -158,6 +55,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 AxisOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -167,6 +65,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 CameraOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -176,6 +75,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 GradeOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -185,6 +85,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 LightOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -194,6 +95,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 MaterialOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -203,6 +105,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 PrimitiveOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -212,6 +115,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 RayMarcherOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -221,6 +125,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 SceneOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
@@ -230,6 +135,7 @@ impl Node {
                 encoder,
                 scene_graph,
                 &mut data_map,
+                cached_input_data,
                 TextureReadOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),

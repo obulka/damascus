@@ -30,6 +30,54 @@ use crate::{
 
 slotmap::new_key_type! { pub struct RootId; }
 
+#[derive(Clone, Default)]
+pub enum SceneGraphData {
+    #[default]
+    None,
+    Camera(Camera),
+    Light(Light),
+    Material(Material),
+    Primitive(Primitive),
+    Root(Root),
+    TextureEvaluator(TextureEvaluators),
+}
+
+impl From<Material> for SceneGraphData {
+    fn from(material: Material) -> Self {
+        Self::Material(material)
+    }
+}
+
+impl From<Camera> for SceneGraphData {
+    fn from(camera: Camera) -> Self {
+        Self::Camera(camera)
+    }
+}
+
+impl From<Light> for SceneGraphData {
+    fn from(light: Light) -> Self {
+        Self::Light(light)
+    }
+}
+
+impl From<Primitive> for SceneGraphData {
+    fn from(primitive: Primitive) -> Self {
+        Self::Primitive(primitive)
+    }
+}
+
+impl From<Root> for SceneGraphData {
+    fn from(root: Root) -> Self {
+        Self::Root(root)
+    }
+}
+
+impl From<TextureEvaluators> for SceneGraphData {
+    fn from(texture_evaluator: TextureEvaluators) -> Self {
+        Self::TextureEvaluator(texture_evaluator)
+    }
+}
+
 #[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneGraphId {
     #[default]
@@ -266,12 +314,22 @@ impl SceneGraph {
         disconnected_edges
     }
 
-    pub fn add_camera(&mut self, camera: Camera) -> CameraId {
-        self.cameras.insert(camera)
+    pub fn add_data(&mut self, data: SceneGraphData) -> SceneGraphId {
+        match data {
+            SceneGraphData::Camera(camera) => self.add_camera(camera).into(),
+            SceneGraphData::Light(light) => self.add_light(light).into(),
+            SceneGraphData::Material(material) => self.add_material(material).into(),
+            SceneGraphData::Primitive(primitive) => self.add_primitive(primitive).into(),
+            SceneGraphData::Root(root) => self.add_root(root).into(),
+            SceneGraphData::TextureEvaluator(texture_evaluator) => {
+                self.add_texture_evaluator(texture_evaluator).into()
+            }
+            _ => SceneGraphId::None,
+        }
     }
 
-    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
-        self.primitives.insert(primitive)
+    pub fn add_camera(&mut self, camera: Camera) -> CameraId {
+        self.cameras.insert(camera)
     }
 
     pub fn add_light(&mut self, light: Light) -> LightId {
@@ -280,6 +338,10 @@ impl SceneGraph {
 
     pub fn add_material(&mut self, material: Material) -> MaterialId {
         self.materials.insert(material)
+    }
+
+    pub fn add_primitive(&mut self, primitive: Primitive) -> PrimitiveId {
+        self.primitives.insert(primitive)
     }
 
     pub fn add_root(&mut self, root: Root) -> RootId {

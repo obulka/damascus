@@ -12,14 +12,12 @@ use crate::{
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::{NodeResult, node_data::EvaluableNode},
+            nodes::{NodeErrors, NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphIdType},
     },
-    textures::evaluators::{
-        TextureEvaluator, TextureEvaluatorId, TextureEvaluators, read::TextureReader,
-    },
+    textures::evaluators::{TextureEvaluatorId, TextureEvaluators, read::TextureReader},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -56,6 +54,27 @@ impl EvaluableNode for TextureReadNode {
     type Inputs = TextureReadInputData;
     type Outputs = TextureReadOutputData;
 
+    fn update_data_model(
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let texture_evaluator_id: &TextureEvaluatorId = input_data.as_texture_evaluator_id()?;
+
+        match &mut scene_graph[*texture_evaluator_id] {
+            TextureEvaluators::TextureReader(texture_reader) => {
+                texture_reader.set_filepath(
+                    Self::Inputs::Filepath
+                        .from_data_map(data_map)?
+                        .try_to_filepath()?,
+                );
+
+                Ok(())
+            }
+            _ => Err(NodeErrors::InvalidCachedData),
+        }
+    }
+
     fn evaluate(
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -71,14 +90,9 @@ impl EvaluableNode for TextureReadNode {
                 .add_texture_evaluator(TextureEvaluators::TextureReader(TextureReader::default())),
         };
 
-        let texture_evaluator_id: TextureEvaluatorId =
-            scene_graph.add_texture_evaluator(TextureEvaluators::TextureReader(
-                TextureReader::default().filepath(
-                    Self::Inputs::Filepath
-                        .from_data_map(data_map)?
-                        .try_to_filepath()?,
-                ),
-            ));
+        let scene_graph_id = InputData::SceneGraphId(texture_evaluator_id.into());
+
+        Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 

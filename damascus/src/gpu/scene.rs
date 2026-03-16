@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::BTreeSet, str::FromStr};
 
 use crevice::std430::AsStd430;
 use macro_rules_attribute::derive;
@@ -45,7 +45,7 @@ pub struct GPUScene {
     pub render_camera: usize,
     pub atmosphere: usize,
     pub array_lengths: GPUSceneArrayLengths,
-    pub preprocessor_directives: HashSet<ScenePreprocessorDirectives>,
+    pub preprocessor_directives: BTreeSet<ScenePreprocessorDirectives>,
 }
 
 impl Default for GPUScene {
@@ -54,7 +54,7 @@ impl Default for GPUScene {
             cameras: vec![Camera::default().to_gpu()],
             primitives: vec![],
             lights: vec![],
-            materials: vec![Material::default().diffuse_colour(glam::Vec3::X).to_gpu()],
+            materials: vec![Material::default().to_gpu()],
             checkerboards: vec![],
             noises: vec![],
             grades: vec![],
@@ -67,7 +67,7 @@ impl Default for GPUScene {
                 material_count: 1,
                 non_physical_light_count: 0,
             },
-            preprocessor_directives: HashSet::<ScenePreprocessorDirectives>::new(),
+            preprocessor_directives: BTreeSet::<ScenePreprocessorDirectives>::new(),
         }
     }
 }
@@ -143,8 +143,8 @@ pub enum ScenePreprocessorDirectives {
 }
 
 impl ScenePreprocessorDirectives {
-    pub fn all_directives_for_material() -> HashSet<Self> {
-        HashSet::<Self>::from([
+    pub fn all_directives_for_material() -> BTreeSet<Self> {
+        BTreeSet::<Self>::from([
             Self::EnableDiffuseColourTexture,
             Self::EnableScatteringColourTexture,
             Self::EnableSpecularProbabilityTexture,
@@ -163,8 +163,8 @@ impl ScenePreprocessorDirectives {
         ])
     }
 
-    pub fn all_directives_for_primitive() -> HashSet<Self> {
-        HashSet::<Self>::from([
+    pub fn all_directives_for_primitive() -> BTreeSet<Self> {
+        BTreeSet::<Self>::from([
             Self::EnableCappedCone,
             Self::EnableCappedTorus,
             Self::EnableCapsule,
@@ -202,8 +202,8 @@ impl ScenePreprocessorDirectives {
         ])
     }
 
-    pub fn all_directives_for_light() -> HashSet<Self> {
-        HashSet::<Self>::from([
+    pub fn all_directives_for_light() -> BTreeSet<Self> {
+        BTreeSet::<Self>::from([
             Self::EnableDirectionalLights,
             Self::EnablePointLights,
             Self::EnableAmbientOcclusion,
@@ -211,16 +211,16 @@ impl ScenePreprocessorDirectives {
         ])
     }
 
-    pub fn all_directives_for_texture_evaluator() -> HashSet<Self> {
-        HashSet::<Self>::from([
+    pub fn all_directives_for_texture_evaluator() -> BTreeSet<Self> {
+        BTreeSet::<Self>::from([
             Self::EnableGrade,
             Self::EnableCheckerboard,
             Self::EnableNoise,
         ])
     }
 
-    pub fn directives_for_primitive(primitive: &Primitive) -> HashSet<Self> {
-        let mut preprocessor_directives = HashSet::<Self>::new();
+    pub fn directives_for_primitive(primitive: &Primitive) -> BTreeSet<Self> {
+        let mut preprocessor_directives = BTreeSet::<Self>::new();
 
         if primitive.blend_type > BlendType::Union || primitive.blend_strength > 0. {
             match primitive.blend_type {
@@ -274,8 +274,8 @@ impl ScenePreprocessorDirectives {
 
     pub fn directives_for_texture_evaluator(
         texture_evaluator: &TextureEvaluators,
-    ) -> HashSet<Self> {
-        let mut preprocessor_directives = HashSet::<Self>::new();
+    ) -> BTreeSet<Self> {
+        let mut preprocessor_directives = BTreeSet::<Self>::new();
 
         match texture_evaluator {
             TextureEvaluators::Grade(_) => {
@@ -293,8 +293,11 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_material(material: &Material, scene_graph: &SceneGraph) -> HashSet<Self> {
-        let mut preprocessor_directives = HashSet::<Self>::new();
+    pub fn directives_for_material(
+        material: &Material,
+        scene_graph: &SceneGraph,
+    ) -> BTreeSet<Self> {
+        let mut preprocessor_directives = BTreeSet::<Self>::new();
 
         if let Some(texture_evaluator_id) = material.diffuse_colour_texture_id
             && scene_graph[texture_evaluator_id] != TextureEvaluators::White
@@ -391,8 +394,8 @@ impl ScenePreprocessorDirectives {
         preprocessor_directives
     }
 
-    pub fn directives_for_light(light: &Light) -> HashSet<Self> {
-        let mut preprocessor_directives = HashSet::<Self>::new();
+    pub fn directives_for_light(light: &Light) -> BTreeSet<Self> {
+        let mut preprocessor_directives = BTreeSet::<Self>::new();
 
         match light.light_type {
             LightType::Directional => {

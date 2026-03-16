@@ -4,7 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
-    collections::HashSet,
+    collections::BTreeSet,
     fmt::{self, Display, Formatter},
 };
 
@@ -56,15 +56,15 @@ impl From<ScenePreprocessorDirectives> for RayMarcherPreprocessorDirectives {
 }
 
 impl RayMarcherPreprocessorDirectives {
-    pub fn all_directives_for_ray_marcher() -> HashSet<Self> {
-        HashSet::<RayMarcherPreprocessorDirectives>::from([
+    pub fn all_directives_for_ray_marcher() -> BTreeSet<Self> {
+        BTreeSet::<RayMarcherPreprocessorDirectives>::from([
             Self::EnableAOVs,
             Self::EnableLightSampling,
         ])
     }
 
-    pub fn directives_for_ray_marcher(ray_marcher: &RayMarcherRenderData) -> HashSet<Self> {
-        let mut preprocessor_directives = HashSet::<Self>::new();
+    pub fn directives_for_ray_marcher(ray_marcher: &RayMarcherRenderData) -> BTreeSet<Self> {
+        let mut preprocessor_directives = BTreeSet::<Self>::new();
 
         if ray_marcher.output_aov > AOVs::Beauty {
             preprocessor_directives.insert(Self::EnableAOVs);
@@ -225,7 +225,7 @@ pub struct RayMarcher {
     compilation_data: RayMarcherCompilationData,
     construction_data: RayMarcherConstructionData,
     hashes: TextureEvaluatorHashes,
-    preprocessor_directives: HashSet<RayMarcherPreprocessorDirectives>,
+    preprocessor_directives: BTreeSet<RayMarcherPreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
     #[serde(skip)]
@@ -306,7 +306,7 @@ impl Default for RayMarcher {
             compilation_data: RayMarcherCompilationData::default(),
             construction_data: RayMarcherConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
-            preprocessor_directives: HashSet::<RayMarcherPreprocessorDirectives>::new(),
+            preprocessor_directives: BTreeSet::<RayMarcherPreprocessorDirectives>::new(),
             output_texture_view: None,
             render_resource: None,
         }
@@ -347,9 +347,8 @@ impl TextureEvaluator for RayMarcher {
         self.construction_data.input_texture_views.clone()
     }
 
-    fn with_input_texture_views(mut self, input_texture_views: Vec<TextureView>) -> Self {
+    fn set_input_texture_views(&mut self, input_texture_views: Vec<TextureView>) {
         self.construction_data.input_texture_views = input_texture_views;
-        self
     }
 
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
@@ -386,8 +385,8 @@ impl DualDevice<GPURayMarcher, Std430GPURayMarcher> for RayMarcher {
 }
 
 impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
-    fn dynamic_directives(&self) -> HashSet<RayMarcherPreprocessorDirectives> {
-        let mut preprocessor_directives = HashSet::<RayMarcherPreprocessorDirectives>::new();
+    fn dynamic_directives(&self) -> BTreeSet<RayMarcherPreprocessorDirectives> {
+        let mut preprocessor_directives = BTreeSet::<RayMarcherPreprocessorDirectives>::new();
 
         if !self
             .compilation_data
@@ -486,11 +485,11 @@ impl ShaderSource<RayMarcherPreprocessorDirectives> for RayMarcher {
         include_str!("../../gpu/wgsl/textures/evaluators/ray_marcher/fragment_shader.wgsl")
     }
 
-    fn current_directives(&self) -> &HashSet<RayMarcherPreprocessorDirectives> {
+    fn current_directives(&self) -> &BTreeSet<RayMarcherPreprocessorDirectives> {
         &self.preprocessor_directives
     }
 
-    fn current_directives_mut(&mut self) -> &mut HashSet<RayMarcherPreprocessorDirectives> {
+    fn current_directives_mut(&mut self) -> &mut BTreeSet<RayMarcherPreprocessorDirectives> {
         &mut self.preprocessor_directives
     }
 

@@ -330,12 +330,32 @@ impl InputData {
         }
     }
 
+    pub fn as_primitive_id(&self) -> NodeResult<&PrimitiveId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::Primitive(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<PrimitiveId>().to_string(),
+            }),
+        }
+    }
+
     pub fn try_to_primitive_id(self) -> NodeResult<PrimitiveId> {
         match self.try_to_scene_graph_id()? {
             SceneGraphId::Primitive(value) => Ok(value),
             value => Err(NodeErrors::InputDowncastError {
                 data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<PrimitiveId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn as_light_id(&self) -> NodeResult<&LightId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::Light(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<LightId>().to_string(),
             }),
         }
     }
@@ -366,6 +386,16 @@ impl InputData {
             value => Err(NodeErrors::InputDowncastError {
                 data: InputData::SceneGraphId(value),
                 conversion_to: type_name::<CameraId>().to_string(),
+            }),
+        }
+    }
+
+    pub fn as_root_id(&self) -> NodeResult<&RootId> {
+        match self.as_scene_graph_id()? {
+            SceneGraphId::Root(value) => Ok(value),
+            value => Err(NodeErrors::InputDowncastError {
+                data: InputData::SceneGraphId(*value),
+                conversion_to: type_name::<RootId>().to_string(),
             }),
         }
     }

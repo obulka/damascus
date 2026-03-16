@@ -13,14 +13,12 @@ use crate::{
     graph::{
         node_graph::{
             inputs::input_data::{InputData, NodeInputData},
-            nodes::{NodeResult, node_data::EvaluableNode},
+            nodes::{NodeErrors, NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorId, TextureEvaluators, grade::Grade,
-    },
+    textures::evaluators::{TextureEvaluator, TextureEvaluatorId, TextureEvaluators, grade::Grade},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -84,15 +82,13 @@ impl EvaluableNode for GradeNode {
         }
     }
 
-    fn evaluate(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
+    fn update_data_model(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        input_data: Option<InputData>,
-        output: Self::Outputs,
-    ) -> NodeResult<InputData> {
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let texture_evaluator_id: &TextureEvaluatorId = input_data.as_texture_evaluator_id()?;
+
         let mut input_texture_views = Vec::<TextureView>::new();
         if let Ok(input_texture_evaluator_id) = Self::Inputs::Texture
             .from_data_map(data_map)?
@@ -105,44 +101,55 @@ impl EvaluableNode for GradeNode {
                 .collect();
         }
 
-        let texture_evaluator_id: TextureEvaluatorId =
-            scene_graph.add_texture_evaluator(TextureEvaluators::Grade(
-                Grade::default()
-                    .black_point(
-                        Self::Inputs::BlackPoint
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                    )
-                    .white_point(
-                        Self::Inputs::WhitePoint
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                    )
-                    .lift(Self::Inputs::Lift.from_data_map(data_map)?.try_to_float()?)
-                    .gain(Self::Inputs::Gain.from_data_map(data_map)?.try_to_float()?)
-                    .gamma(
-                        Self::Inputs::Gamma
-                            .from_data_map(data_map)?
-                            .try_to_float()?,
-                    )
-                    .invert(
-                        Self::Inputs::Invert
-                            .from_data_map(data_map)?
-                            .try_to_bool()?,
-                    )
-                    .transform(
-                        Self::Inputs::Transform
-                            .from_data_map(data_map)?
-                            .try_to_mat4()?,
-                    )
-                    .with_input_texture_views(input_texture_views)
-                    .finalized(device),
-            ));
+        match &mut scene_graph[*texture_evaluator_id] {
+            TextureEvaluators::Grade(grade) => {
+                grade.black_point = Self::Inputs::BlackPoint
+                    .from_data_map(data_map)?
+                    .try_to_float()?;
+                grade.white_point = Self::Inputs::WhitePoint
+                    .from_data_map(data_map)?
+                    .try_to_float()?;
+                grade.lift = Self::Inputs::Lift.from_data_map(data_map)?.try_to_float()?;
+                grade.gain = Self::Inputs::Gain.from_data_map(data_map)?.try_to_float()?;
+                grade.gamma = Self::Inputs::Gamma
+                    .from_data_map(data_map)?
+                    .try_to_float()?;
+                grade.invert = Self::Inputs::Invert
+                    .from_data_map(data_map)?
+                    .try_to_bool()?;
+                grade.transform = Self::Inputs::Transform
+                    .from_data_map(data_map)?
+                    .try_to_mat4()?;
+                grade.set_input_texture_views(input_texture_views);
+
+                Ok(())
+            }
+            _ => Err(NodeErrors::InvalidCachedData),
+        }
+    }
+
+    fn evaluate(
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
+        output: Self::Outputs,
+    ) -> NodeResult<InputData> {
+        let texture_evaluator_id: TextureEvaluatorId = match cached_input_data {
+            Some(input_data) => input_data.try_to_texture_evaluator_id()?,
+            None => scene_graph.add_texture_evaluator(TextureEvaluators::Grade(Grade::default())),
+        };
+
+        let scene_graph_id = InputData::SceneGraphId(texture_evaluator_id.into());
+
+        Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 
         match output {
-            Self::Outputs::Grade => Ok(InputData::SceneGraphId(texture_evaluator_id.into())),
+            Self::Outputs::Grade => Ok(scene_graph_id),
         }
     }
 }

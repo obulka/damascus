@@ -18,7 +18,7 @@ use crate::{
         },
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
-    lights::{Light, LightType},
+    lights::{Light, LightId, LightType},
 };
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -94,15 +94,13 @@ impl EvaluableNode for LightNode {
         }
     }
 
-    fn evaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+    fn update_data_model(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        input_data: Option<InputData>,
-        output: Self::Outputs,
-    ) -> NodeResult<InputData> {
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let light_id: &LightId = input_data.as_light_id()?;
+
         let local_to_world: Mat4 = Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?;
         let light_type: LightType = Self::Inputs::LightType
             .from_data_map(data_map)?
@@ -136,27 +134,43 @@ impl EvaluableNode for LightNode {
             _ => Vec3::ZERO,
         };
 
-        let scene_graph_id: SceneGraphId = scene_graph
-            .add_light(Light {
-                light_type: light_type,
-                dimensional_data: dimensional_data,
-                intensity: Self::Inputs::Intensity
-                    .from_data_map(data_map)?
-                    .try_to_float()?,
-                falloff: Self::Inputs::Falloff
-                    .from_data_map(data_map)?
-                    .try_to_uint()?,
-                colour: Self::Inputs::Colour
-                    .from_data_map(data_map)?
-                    .try_to_vec3()?,
-                shadow_hardness: Self::Inputs::ShadowHardness
-                    .from_data_map(data_map)?
-                    .try_to_float()?,
-                soften_shadows: Self::Inputs::SoftenShadows
-                    .from_data_map(data_map)?
-                    .try_to_bool()?,
-            })
-            .into();
+        scene_graph[*light_id].light_type = light_type;
+        scene_graph[*light_id].dimensional_data = dimensional_data;
+        scene_graph[*light_id].intensity = Self::Inputs::Intensity
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*light_id].falloff = Self::Inputs::Falloff
+            .from_data_map(data_map)?
+            .try_to_uint()?;
+        scene_graph[*light_id].colour = Self::Inputs::Colour
+            .from_data_map(data_map)?
+            .try_to_vec3()?;
+        scene_graph[*light_id].shadow_hardness = Self::Inputs::ShadowHardness
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*light_id].soften_shadows = Self::Inputs::SoftenShadows
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+
+        Ok(())
+    }
+
+    fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
+        output: Self::Outputs,
+    ) -> NodeResult<InputData> {
+        let light_id: LightId = match cached_input_data {
+            Some(input_data) => input_data.try_to_light_id()?,
+            None => scene_graph.add_light(Light::default()),
+        };
+
+        let scene_graph_id: SceneGraphId = light_id.into();
+        let input_data_id = InputData::SceneGraphId(scene_graph_id);
 
         Self::add_dynamic_children_to_scene_graph(
             scene_graph,
@@ -165,8 +179,10 @@ impl EvaluableNode for LightNode {
             Self::Inputs::Child,
         );
 
+        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphId(scene_graph_id)),
+            Self::Outputs::Id => Ok(input_data_id),
         }
     }
 }

@@ -66,7 +66,7 @@ impl EvaluableNode for AxisNode {
         _encoder: &mut wgpu::CommandEncoder,
         _scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        input_data: Option<InputData>,
+        _cached_input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
         let rotate: Vec3 = Self::Inputs::Rotate

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
@@ -102,7 +102,7 @@ pub struct TextureViewer {
     render_data: TextureViewerRenderData,
     construction_data: TextureViewerConstructionData,
     hashes: TextureEvaluatorHashes,
-    preprocessor_directives: HashSet<TextureViewerPreprocessorDirectives>,
+    preprocessor_directives: BTreeSet<TextureViewerPreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
     #[serde(skip)]
@@ -110,13 +110,17 @@ pub struct TextureViewer {
 }
 
 impl TextureViewer {
-    pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+    pub fn set_input_texture_view(&mut self, input_texture_view: TextureView) {
         // TODO this should be the viewport, not texture, resolution
         self.render_data.resolution = UVec2::new(
             input_texture_view.texture_view.texture().width(),
             input_texture_view.texture_view.texture().height(),
         );
         self.construction_data.input_texture_views = vec![input_texture_view];
+    }
+
+    pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+        self.set_input_texture_view(input_texture_view);
         self
     }
 
@@ -136,7 +140,7 @@ impl Default for TextureViewer {
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
             hashes: TextureEvaluatorHashes::default(),
-            preprocessor_directives: HashSet::<TextureViewerPreprocessorDirectives>::new(),
+            preprocessor_directives: BTreeSet::<TextureViewerPreprocessorDirectives>::new(),
             output_texture_view: None,
             render_resource: None,
         }
@@ -168,11 +172,9 @@ impl TextureEvaluator for TextureViewer {
         self.construction_data.input_texture_views.clone()
     }
 
-    fn with_input_texture_views(self, mut input_texture_views: Vec<TextureView>) -> Self {
+    fn set_input_texture_views(&mut self, mut input_texture_views: Vec<TextureView>) {
         if let Some(input_texture_view) = input_texture_views.pop() {
-            self.with_input_texture_view(input_texture_view)
-        } else {
-            self
+            self.set_input_texture_view(input_texture_view);
         }
     }
 
@@ -226,11 +228,11 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
         include_str!("../../gpu/wgsl/textures/evaluators/view/fragment_shader.wgsl")
     }
 
-    fn current_directives(&self) -> &HashSet<TextureViewerPreprocessorDirectives> {
+    fn current_directives(&self) -> &BTreeSet<TextureViewerPreprocessorDirectives> {
         &self.preprocessor_directives
     }
 
-    fn current_directives_mut(&mut self) -> &mut HashSet<TextureViewerPreprocessorDirectives> {
+    fn current_directives_mut(&mut self) -> &mut BTreeSet<TextureViewerPreprocessorDirectives> {
         &mut self.preprocessor_directives
     }
 }

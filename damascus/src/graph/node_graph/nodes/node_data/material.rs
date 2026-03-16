@@ -239,8 +239,12 @@ impl EvaluableNode for MaterialNode {
             None => scene_graph.add_material(Material::default()),
         };
 
+        let input_data_id = InputData::SceneGraphId(material_id.into());
+
+        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphId(material_id.into())),
+            Self::Outputs::Id => Ok(input_data_id),
         }
     }
 }

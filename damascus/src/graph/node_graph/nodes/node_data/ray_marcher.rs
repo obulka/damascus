@@ -19,7 +19,7 @@ use crate::{
         scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
     },
     textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluatorId, TextureEvaluators,
+        TextureEvaluatorId, TextureEvaluators,
         ray_marcher::{RayMarcher, RayMarcherRenderData},
     },
 };

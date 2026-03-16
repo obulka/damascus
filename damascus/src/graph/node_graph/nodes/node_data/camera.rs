@@ -16,7 +16,7 @@ use crate::{
             nodes::{NodeResult, node_data::EvaluableNode},
             outputs::output_data::{NodeOutputData, OutputData},
         },
-        scene_graph::{SceneGraph, SceneGraphId, SceneGraphIdType},
+        scene_graph::{SceneGraph, SceneGraphIdType},
     },
 };
 
@@ -122,15 +122,17 @@ impl EvaluableNode for CameraNode {
         cached_input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
+        let camera_id: CameraId = match cached_input_data {
+            Some(input_data) => input_data.try_to_camera_id()?,
+            None => scene_graph.add_camera(Camera::default()),
+        };
+
+        let scene_graph_id = InputData::SceneGraphId(camera_id.into());
+
+        Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
+
         match output {
-            Self::Outputs::Id => {
-                let scene_graph_id =
-                    InputData::SceneGraphId(scene_graph.add_camera(Camera::default()).into());
-
-                Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
-
-                Ok(scene_graph_id)
-            }
+            Self::Outputs::Id => Ok(scene_graph_id),
         }
     }
 }

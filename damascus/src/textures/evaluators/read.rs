@@ -45,6 +45,12 @@ pub struct TextureReader {
     output_texture_view: Option<TextureView>,
 }
 
+impl TextureReader {
+    pub fn set_filepath(&mut self, filepath: String) {
+        self.render_data.filepath = filepath;
+    }
+}
+
 impl Default for TextureReader {
     fn default() -> Self {
         Self {

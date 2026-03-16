@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crevice::std430::AsStd430;
 use glam::Mat4;
@@ -71,7 +71,7 @@ pub struct Grade {
     pub frame_counter: FrameCounter,
     construction_data: GradeConstructionData,
     hashes: TextureEvaluatorHashes,
-    preprocessor_directives: HashSet<GradePreprocessorDirectives>,
+    preprocessor_directives: BTreeSet<GradePreprocessorDirectives>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
     #[serde(skip)]
@@ -91,7 +91,7 @@ impl Default for Grade {
             frame_counter: FrameCounter::default(),
             construction_data: GradeConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
-            preprocessor_directives: HashSet::<GradePreprocessorDirectives>::new(),
+            preprocessor_directives: BTreeSet::<GradePreprocessorDirectives>::new(),
             output_texture_view: None,
             render_resource: None,
         }
@@ -134,9 +134,8 @@ impl Grade {
         self
     }
 
-    pub fn input_texture_view(mut self, input_texture_view: TextureView) -> Self {
+    pub fn set_input_texture_view(&mut self, input_texture_view: TextureView) {
         self.construction_data.input_texture_view = Some(input_texture_view);
-        self
     }
 }
 
@@ -187,11 +186,9 @@ impl TextureEvaluator for Grade {
             .collect()
     }
 
-    fn with_input_texture_views(self, mut input_texture_views: Vec<TextureView>) -> Self {
+    fn set_input_texture_views(&mut self, mut input_texture_views: Vec<TextureView>) {
         if let Some(input_texture_view) = input_texture_views.pop() {
-            self.input_texture_view(input_texture_view)
-        } else {
-            self
+            self.set_input_texture_view(input_texture_view)
         }
     }
 
@@ -229,11 +226,11 @@ impl ShaderSource<GradePreprocessorDirectives> for Grade {
         include_str!("../../gpu/wgsl/textures/evaluators/grade/fragment_shader.wgsl")
     }
 
-    fn current_directives(&self) -> &HashSet<GradePreprocessorDirectives> {
+    fn current_directives(&self) -> &BTreeSet<GradePreprocessorDirectives> {
         &self.preprocessor_directives
     }
 
-    fn current_directives_mut(&mut self) -> &mut HashSet<GradePreprocessorDirectives> {
+    fn current_directives_mut(&mut self) -> &mut BTreeSet<GradePreprocessorDirectives> {
         &mut self.preprocessor_directives
     }
 }

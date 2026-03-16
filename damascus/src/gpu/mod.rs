@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashSet, fmt, hash::Hash, str::FromStr};
+use std::{cmp::Ord, collections::BTreeSet, fmt, hash::Hash, str::FromStr};
 
 use macro_rules_attribute::derive;
 
@@ -158,7 +158,14 @@ impl Includes {
 }
 
 pub trait PreprocessorDirectives:
-    Enumerator + Clone + fmt::Debug + Eq + Hash + serde::Serialize + for<'a> serde::Deserialize<'a>
+    Enumerator
+    + Clone
+    + fmt::Debug
+    + Eq
+    + Hash
+    + Ord
+    + serde::Serialize
+    + for<'a> serde::Deserialize<'a>
 {
 }
 
@@ -181,12 +188,12 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
 
     fn fragment_shader_raw(&self) -> &str;
 
-    fn current_directives(&self) -> &HashSet<Directives>;
+    fn current_directives(&self) -> &BTreeSet<Directives>;
 
-    fn current_directives_mut(&mut self) -> &mut HashSet<Directives>;
+    fn current_directives_mut(&mut self) -> &mut BTreeSet<Directives>;
 
-    fn dynamic_directives(&self) -> HashSet<Directives> {
-        HashSet::<Directives>::new()
+    fn dynamic_directives(&self) -> BTreeSet<Directives> {
+        BTreeSet::<Directives>::new()
     }
 
     fn update_directives(&mut self) -> bool {
@@ -213,11 +220,11 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
         true
     }
 
-    fn all_directives(&self) -> HashSet<Directives> {
+    fn all_directives(&self) -> BTreeSet<Directives> {
         Directives::iter().collect()
     }
 
-    fn directives(&self) -> HashSet<Directives> {
+    fn directives(&self) -> BTreeSet<Directives> {
         if self.dynamic_recompilation_enabled() {
             return self.dynamic_directives();
         }
@@ -227,14 +234,14 @@ pub trait ShaderSource<Directives: PreprocessorDirectives> {
 
 pub fn preprocess_directives<Directives: PreprocessorDirectives>(
     shader_source: Vec<String>,
-    preprocessor_directives: &HashSet<Directives>,
+    preprocessor_directives: &BTreeSet<Directives>,
 ) -> Vec<String> {
     // Handle ifdef preprocessor macro
     let mut branch_stack = Vec::<(bool, bool)>::new();
     let directives = preprocessor_directives
         .iter()
         .map(|directive| directive.to_string())
-        .collect::<HashSet<String>>();
+        .collect::<BTreeSet<String>>();
     shader_source
         .into_iter()
         .filter(|line| {
@@ -307,7 +314,7 @@ pub fn preprocess_directives<Directives: PreprocessorDirectives>(
 
 pub fn process_shader_source<Directives: PreprocessorDirectives>(
     shader_source: &str,
-    preprocessor_directives: &HashSet<Directives>,
+    preprocessor_directives: &BTreeSet<Directives>,
 ) -> String {
     let mut processed_source = Vec::<String>::new();
 
@@ -341,14 +348,14 @@ mod tests {
 
     #[test]
     fn test_all_directives_covered() {
-        let mut scene_directives: HashSet<ScenePreprocessorDirectives> =
+        let mut scene_directives: BTreeSet<ScenePreprocessorDirectives> =
             ScenePreprocessorDirectives::all_directives_for_material();
         scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_primitive());
         scene_directives.extend(ScenePreprocessorDirectives::all_directives_for_light());
         scene_directives
             .extend(ScenePreprocessorDirectives::all_directives_for_texture_evaluator());
 
-        let ray_marcher_directives: HashSet<RayMarcherPreprocessorDirectives> =
+        let ray_marcher_directives: BTreeSet<RayMarcherPreprocessorDirectives> =
             RayMarcherPreprocessorDirectives::all_directives_for_ray_marcher();
 
         assert_eq!(
@@ -359,7 +366,7 @@ mod tests {
 
     #[test]
     fn test_ifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        let mut preprocessor_directives = BTreeSet::<ScenePreprocessorDirectives>::new();
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
@@ -387,7 +394,7 @@ mod tests {
 
     #[test]
     fn test_else_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        let mut preprocessor_directives = BTreeSet::<ScenePreprocessorDirectives>::new();
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
 
         let source = vec![
@@ -419,7 +426,7 @@ mod tests {
 
     #[test]
     fn test_elifdef_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        let mut preprocessor_directives = BTreeSet::<ScenePreprocessorDirectives>::new();
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableSpecularColourTexture);
 
@@ -497,7 +504,7 @@ mod tests {
 
     #[test]
     fn test_nested_preprocessor_directives() {
-        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        let mut preprocessor_directives = BTreeSet::<ScenePreprocessorDirectives>::new();
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableDiffuseColourTexture);
         preprocessor_directives.insert(ScenePreprocessorDirectives::EnableSpecularColourTexture);
 
@@ -625,7 +632,7 @@ mod tests {
             "}",
         ];
 
-        let mut preprocessor_directives = HashSet::<ScenePreprocessorDirectives>::new();
+        let mut preprocessor_directives = BTreeSet::<ScenePreprocessorDirectives>::new();
 
         let mut expected_result = vec![
             "fn transform_position(",

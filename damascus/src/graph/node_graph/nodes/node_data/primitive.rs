@@ -167,15 +167,13 @@ impl EvaluableNode for PrimitiveNode {
         }
     }
 
-    fn evaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+    fn update_data_model(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        input_data: Option<InputData>,
-        output: Self::Outputs,
-    ) -> NodeResult<InputData> {
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let primitive_id: &PrimitiveId = input_data.as_primitive_id()?;
+
         let shape: Shapes = Self::Inputs::Shape.from_data_map(data_map)?.try_to_enum()?;
         let dimensional_data: Vec4 = match shape {
             Shapes::CappedCone | Shapes::RoundedCone => Vec4::new(
@@ -428,54 +426,72 @@ impl EvaluableNode for PrimitiveNode {
             ),
         };
 
-        let primitive_id: PrimitiveId = scene_graph.add_primitive(Primitive {
-            shape: shape,
-            local_to_world: Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
-            edge_radius: Self::Inputs::EdgeRadius
-                .from_data_map(data_map)?
-                .try_to_float()?,
-            repetition: Self::Inputs::Repetition
-                .from_data_map(data_map)?
-                .try_to_enum()?,
-            negative_repetitions: Self::Inputs::NegativeRepetitions
-                .from_data_map(data_map)?
-                .try_to_uvec3()?,
-            positive_repetitions: Self::Inputs::PositiveRepetitions
-                .from_data_map(data_map)?
-                .try_to_uvec3()?,
-            spacing: Self::Inputs::Spacing
-                .from_data_map(data_map)?
-                .try_to_vec3()?,
-            blend_type: Self::Inputs::BlendType
-                .from_data_map(data_map)?
-                .try_to_enum()?,
-            blend_strength: Self::Inputs::BlendStrength
-                .from_data_map(data_map)?
-                .try_to_float()?,
-            mirror: Self::Inputs::Mirror
-                .from_data_map(data_map)?
-                .try_to_bvec3()?,
-            hollow: Self::Inputs::Hollow
-                .from_data_map(data_map)?
-                .try_to_bool()?,
-            wall_thickness: Self::Inputs::WallThickness
-                .from_data_map(data_map)?
-                .try_to_float()?,
-            elongate: Self::Inputs::Elongate
-                .from_data_map(data_map)?
-                .try_to_bool()?,
-            elongation: Self::Inputs::Elongation
-                .from_data_map(data_map)?
-                .try_to_vec3()?,
-            bounding_volume: Self::Inputs::BoundingVolume
-                .from_data_map(data_map)?
-                .try_to_bool()?,
-            enable_orbit_trap_colour: Self::Inputs::EnableOrbitTrapColour
-                .from_data_map(data_map)?
-                .try_to_bool()?,
-            dimensional_data: dimensional_data,
-        });
+        scene_graph[*primitive_id].shape = shape;
+        scene_graph[*primitive_id].local_to_world =
+            Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?;
+        scene_graph[*primitive_id].edge_radius = Self::Inputs::EdgeRadius
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*primitive_id].repetition = Self::Inputs::Repetition
+            .from_data_map(data_map)?
+            .try_to_enum()?;
+        scene_graph[*primitive_id].negative_repetitions = Self::Inputs::NegativeRepetitions
+            .from_data_map(data_map)?
+            .try_to_uvec3()?;
+        scene_graph[*primitive_id].positive_repetitions = Self::Inputs::PositiveRepetitions
+            .from_data_map(data_map)?
+            .try_to_uvec3()?;
+        scene_graph[*primitive_id].spacing = Self::Inputs::Spacing
+            .from_data_map(data_map)?
+            .try_to_vec3()?;
+        scene_graph[*primitive_id].blend_type = Self::Inputs::BlendType
+            .from_data_map(data_map)?
+            .try_to_enum()?;
+        scene_graph[*primitive_id].blend_strength = Self::Inputs::BlendStrength
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*primitive_id].mirror = Self::Inputs::Mirror
+            .from_data_map(data_map)?
+            .try_to_bvec3()?;
+        scene_graph[*primitive_id].hollow = Self::Inputs::Hollow
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*primitive_id].wall_thickness = Self::Inputs::WallThickness
+            .from_data_map(data_map)?
+            .try_to_float()?;
+        scene_graph[*primitive_id].elongate = Self::Inputs::Elongate
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*primitive_id].elongation = Self::Inputs::Elongation
+            .from_data_map(data_map)?
+            .try_to_vec3()?;
+        scene_graph[*primitive_id].bounding_volume = Self::Inputs::BoundingVolume
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*primitive_id].enable_orbit_trap_colour = Self::Inputs::EnableOrbitTrapColour
+            .from_data_map(data_map)?
+            .try_to_bool()?;
+        scene_graph[*primitive_id].dimensional_data = dimensional_data;
+
+        Ok(())
+    }
+
+    fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
+        output: Self::Outputs,
+    ) -> NodeResult<InputData> {
+        let primitive_id: PrimitiveId = match cached_input_data {
+            Some(input_data) => input_data.try_to_primitive_id()?,
+            None => scene_graph.add_primitive(Primitive::default()),
+        };
+
         let scene_graph_id: SceneGraphId = primitive_id.into();
+        let input_data_id = InputData::SceneGraphId(scene_graph_id);
 
         if let Ok(material_id) = Self::Inputs::Material
             .from_data_map(data_map)?
@@ -491,8 +507,10 @@ impl EvaluableNode for PrimitiveNode {
             Self::Inputs::Child,
         );
 
+        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+
         match output {
-            Self::Outputs::Id => Ok(InputData::SceneGraphId(scene_graph_id)),
+            Self::Outputs::Id => Ok(input_data_id),
         }
     }
 }

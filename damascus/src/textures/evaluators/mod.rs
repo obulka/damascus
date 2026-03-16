@@ -113,7 +113,10 @@ pub trait TextureEvaluator:
         vec![]
     }
 
-    fn with_input_texture_views(self, _input_texture_views: Vec<TextureView>) -> Self {
+    fn set_input_texture_views(&mut self, _input_texture_views: Vec<TextureView>) {}
+
+    fn with_input_texture_views(mut self, input_texture_views: Vec<TextureView>) -> Self {
+        self.set_input_texture_views(input_texture_views);
         self
     }
 

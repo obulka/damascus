@@ -83,33 +83,49 @@ impl EvaluableNode for SceneNode {
         }
     }
 
-    fn evaluate(
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
-        _encoder: &mut wgpu::CommandEncoder,
+    fn update_data_model(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        input_data: Option<InputData>,
-        output: Self::Outputs,
-    ) -> NodeResult<InputData> {
-        let root_id: RootId = scene_graph.add_root(Root {
-            local_to_world: Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?,
-        });
-        let scene_graph_id: SceneGraphId = root_id.into();
+        input_data: &InputData,
+    ) -> NodeResult<()> {
+        let root_id: &RootId = input_data.as_root_id()?;
+
+        scene_graph[*root_id].local_to_world =
+            Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?;
 
         if let Ok(atmosphere_id) = Self::Inputs::Atmosphere
             .from_data_map(data_map)?
             .try_to_material_id()
         {
-            scene_graph.set_atmosphere(root_id, atmosphere_id);
+            scene_graph.set_atmosphere(*root_id, atmosphere_id);
         }
 
         if let Ok(render_camera_id) = Self::Inputs::RenderCamera
             .from_data_map(data_map)?
             .try_to_camera_id()
         {
-            scene_graph.set_render_camera(root_id, render_camera_id);
+            scene_graph.set_render_camera(*root_id, render_camera_id);
         }
+
+        Ok(())
+    }
+
+    fn evaluate(
+        _device: &wgpu::Device,
+        _queue: &wgpu::Queue,
+        _encoder: &mut wgpu::CommandEncoder,
+        scene_graph: &mut SceneGraph,
+        data_map: &mut HashMap<String, InputData>,
+        cached_input_data: Option<InputData>,
+        output: Self::Outputs,
+    ) -> NodeResult<InputData> {
+        let root_id: RootId = match cached_input_data {
+            Some(input_data) => input_data.try_to_root_id()?,
+            None => scene_graph.add_root(Root::default()),
+        };
+
+        let scene_graph_id: SceneGraphId = root_id.into();
+        let input_data_id = InputData::SceneGraphId(scene_graph_id);
 
         Self::add_dynamic_children_to_scene_graph(
             scene_graph,
@@ -118,8 +134,10 @@ impl EvaluableNode for SceneNode {
             Self::Inputs::Scene,
         );
 
+        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+
         match output {
-            Self::Outputs::RootId => Ok(InputData::SceneGraphId(scene_graph_id)),
+            Self::Outputs::RootId => Ok(input_data_id),
         }
     }
 }

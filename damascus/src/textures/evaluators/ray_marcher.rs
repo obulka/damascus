@@ -695,17 +695,16 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
             self.frame_counter_mut().tick();
 
             if !reset {
-                // Write that data to the bind groups
+                // Update the texture bind group for progressive rendering
                 let texture_views = self.create_texture_views(device);
 
                 let bind_group = self.create_texture_view_bind_group(device, texture_views);
 
-                if let Some(render_resource) = self.render_resource_mut() {
-                    if let Some(texture_bind_group) =
+                if let Some(render_resource) = self.render_resource_mut()
+                    && let Some(texture_bind_group) =
                         &mut render_resource.bind_groups.texture_bind_group
-                    {
-                        *texture_bind_group = bind_group;
-                    }
+                {
+                    *texture_bind_group = bind_group;
                 }
             }
 

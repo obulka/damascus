@@ -167,7 +167,7 @@ impl EvaluableNode for PrimitiveNode {
         }
     }
 
-    fn update_data_model(
+    fn update_from_data_map(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         input_data: &InputData,
@@ -507,7 +507,7 @@ impl EvaluableNode for PrimitiveNode {
             Self::Inputs::Child,
         );
 
-        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+        Self::update_from_data_map(scene_graph, data_map, &input_data_id)?;
 
         match output {
             Self::Outputs::Id => Ok(input_data_id),

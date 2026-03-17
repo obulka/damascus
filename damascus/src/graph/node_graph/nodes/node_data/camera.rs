@@ -73,7 +73,7 @@ impl EvaluableNode for CameraNode {
     type Inputs = CameraInputData;
     type Outputs = CameraOutputData;
 
-    fn update_data_model(
+    fn update_from_data_map(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         input_data: &InputData,
@@ -129,7 +129,7 @@ impl EvaluableNode for CameraNode {
 
         let scene_graph_id = InputData::SceneGraphId(camera_id.into());
 
-        Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
+        Self::update_from_data_map(scene_graph, data_map, &scene_graph_id)?;
 
         match output {
             Self::Outputs::Id => Ok(scene_graph_id),

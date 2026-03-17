@@ -103,7 +103,7 @@ impl EvaluableNode for RayMarcherNode {
         }
     }
 
-    fn update_data_model(
+    fn update_from_data_map(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         input_data: &InputData,
@@ -212,7 +212,7 @@ impl EvaluableNode for RayMarcherNode {
 
         let scene_graph_id = InputData::SceneGraphId(texture_evaluator_id.into());
 
-        Self::update_data_model(scene_graph, data_map, &scene_graph_id)?;
+        Self::update_from_data_map(scene_graph, data_map, &scene_graph_id)?;
 
         scene_graph[texture_evaluator_id].evaluate(device, queue, encoder);
 

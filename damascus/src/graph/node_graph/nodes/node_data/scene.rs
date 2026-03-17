@@ -83,7 +83,7 @@ impl EvaluableNode for SceneNode {
         }
     }
 
-    fn update_data_model(
+    fn update_from_data_map(
         scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
         input_data: &InputData,
@@ -134,7 +134,7 @@ impl EvaluableNode for SceneNode {
             Self::Inputs::Scene,
         );
 
-        Self::update_data_model(scene_graph, data_map, &input_data_id)?;
+        Self::update_from_data_map(scene_graph, data_map, &input_data_id)?;
 
         match output {
             Self::Outputs::RootId => Ok(input_data_id),

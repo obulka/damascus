@@ -197,7 +197,7 @@ pub trait EvaluableNode {
         input.default_data().variant_matches(input_data)
     }
 
-    fn update_data_model(
+    fn update_from_data_map(
         _scene_graph: &mut SceneGraph,
         _data_map: &mut HashMap<String, InputData>,
         _input_data: &InputData,
@@ -215,7 +215,7 @@ pub trait EvaluableNode {
         _output: Self::Outputs,
     ) -> NodeResult<InputData> {
         if let Some(input_data) = cached_input_data {
-            Self::update_data_model(scene_graph, data_map, &input_data)?;
+            Self::update_from_data_map(scene_graph, data_map, &input_data)?;
 
             Ok(input_data)
         } else {

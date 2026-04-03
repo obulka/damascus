@@ -18,7 +18,7 @@ use crate::{
     DualDevice, PreprocessorDirectivesBaseTraits,
     gpu::{
         ShaderSource,
-        resources::{BufferData, BufferDescriptor, RenderResource, TextureView},
+        resources::{BufferDescriptor, RenderResource, TextureView},
         scene::{GPUScene, ScenePreprocessorDirectives},
     },
     textures::{
@@ -675,71 +675,20 @@ impl GPUTextureEvaluator<RayMarcherPreprocessorDirectives> for RayMarcher {
         vec![]
     }
 
-    fn evaluate(
-        &mut self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
-    ) {
-        if let Some(texture_view) = self.create_output_texture_view(device)
-            && texture_view
-                .texture_view
-                .texture()
-                .usage()
-                .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
+    fn update_for_reevaluation(&mut self, device: &wgpu::Device) {
+        // No new data triggered a reset/recompile/reconstruction of
+        // the pipeline, therefore we can build on top of the previous
+        // render pass. To do so we must pass the previous output
+        // TextureView as an input to this render pass
+
+        let texture_views = self.create_texture_views(device);
+
+        let bind_group = self.create_texture_view_bind_group(device, texture_views);
+
+        if let Some(render_resource) = self.render_resource_mut()
+            && let Some(texture_bind_group) = &mut render_resource.bind_groups.texture_bind_group
         {
-            let reset: bool = self.update_if_hash_changed(device);
-
-            let buffer_data: BufferData = self.buffer_data();
-
-            self.frame_counter_mut().tick();
-
-            if !reset {
-                // Update the texture bind group for progressive rendering
-                let texture_views = self.create_texture_views(device);
-
-                let bind_group = self.create_texture_view_bind_group(device, texture_views);
-
-                if let Some(render_resource) = self.render_resource_mut()
-                    && let Some(texture_bind_group) =
-                        &mut render_resource.bind_groups.texture_bind_group
-                {
-                    *texture_bind_group = bind_group;
-                }
-            }
-
-            if let Some(render_resource) = self.render_resource_mut() {
-                render_resource.write_bind_groups(queue, &buffer_data);
-            }
-
-            // Set up a render pass and paint to it
-
-            let render_pass_desc = wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &texture_view.texture_view,
-                    depth_slice: None,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.,
-                            g: 0.,
-                            b: 0.,
-                            a: 0.,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                timestamp_writes: None,
-                occlusion_query_set: None,
-            };
-
-            if let Some(render_resource) = self.render_resource_mut() {
-                render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
-            }
-
-            self.set_output_texture_view(texture_view);
+            *texture_bind_group = bind_group;
         }
     }
 }

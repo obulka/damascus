@@ -813,6 +813,8 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
         }
     }
 
+    fn update_for_reevaluation(&mut self, _device: &wgpu::Device) {}
+
     fn evaluate(
         &mut self,
         device: &wgpu::Device,
@@ -826,14 +828,17 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 .usage()
                 .contains(wgpu::TextureUsages::RENDER_ATTACHMENT)
         {
-            self.update_if_hash_changed(device);
+            if !self.update_if_hash_changed(device) {
+                // No new data triggered a reset/recompile/reconstruction of
+                // the pipeline, therefore we can build on top of the previous
+                // render pass
+
+                self.update_for_reevaluation(device);
+            }
+
+            // Pass our potentially updated data to the GPU
 
             let buffer_data: BufferData = self.buffer_data();
-
-            self.frame_counter_mut().tick();
-
-            // Write that data to the bind groups
-
             if let Some(render_resource) = self.render_resource_mut() {
                 render_resource.write_bind_groups(queue, &buffer_data);
             }
@@ -865,7 +870,9 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
             }
 
+            // Set everything up for the next render pass
             self.set_output_texture_view(texture_view);
+            self.frame_counter_mut().tick();
         }
     }
 }

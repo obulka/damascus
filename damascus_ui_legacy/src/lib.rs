@@ -7,11 +7,11 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![allow(long_running_const_eval)]
 
-// pub mod app;
-// pub mod icons;
-// pub mod widgets;
+pub mod app;
+pub mod icons;
+pub mod widgets;
 
-// pub use app::Damascus;
+pub use app::Damascus;
 
-// pub const MAX_TEXTURE_DIMENSION: u32 = 8192;
-// pub const MAX_BUFFER_SIZE: usize = 1024 << 20; // (1Gb)
+pub const MAX_TEXTURE_DIMENSION: u32 = 8192;
+pub const MAX_BUFFER_SIZE: usize = 1024 << 20; // (1Gb)

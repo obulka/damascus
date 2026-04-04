@@ -32,6 +32,12 @@ impl NodeInputData for TextureReadInputData {
             Self::Filepath => InputData::Filepath(String::new()),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Filepath => "The path to the texture.",
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -44,6 +50,12 @@ impl NodeOutputData for TextureReadOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Texture => OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Texture => "A texture that has been loaded from disk.",
         }
     }
 }

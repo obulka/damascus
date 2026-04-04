@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -41,7 +42,7 @@ pub enum RayMarcherInputData {
     SampleAtmosphere,
     LightSamplingBias,
     SecondarySampling,
-    OutputAov,
+    OutputAOV,
 }
 
 impl NodeInputData for RayMarcherInputData {
@@ -66,7 +67,81 @@ impl NodeInputData for RayMarcherInputData {
             Self::SampleAtmosphere => InputData::Bool(default_ray_marcher.sample_atmosphere),
             Self::LightSamplingBias => InputData::Float(default_ray_marcher.light_sampling_bias),
             Self::SecondarySampling => InputData::Bool(default_ray_marcher.secondary_sampling),
-            Self::OutputAov => InputData::Enum(default_ray_marcher.output_aov.into()),
+            Self::OutputAOV => InputData::Enum(default_ray_marcher.output_aov.into()),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::SceneRoot => "The scene to render.",
+            Self::MaxRaySteps => {
+                "Limits the number of times the ray will march per-intersection test."
+            }
+            Self::MaxBounces => indoc! {
+                "Limits the number of times the rays can intersect an object
+                    per subpixel."
+            },
+            Self::HitTolerance => indoc! {
+                "The ray will be considered to have hit an object when it is
+                    within this distance of its surface."
+            },
+            Self::ShadowBias => indoc! {
+                "After intersecting an object the ray is offset from
+                    the surface before continuing. Multiply that offset
+                    distance by this factor."
+            },
+            Self::MaxBrightness => indoc! {
+                "The maximum brightness of a pixel. This protects against
+                    overflowing to infinity."
+            },
+            Self::Seed => indoc! {
+                "The seed used to generate per-pixel, random seeds.
+                    Be sure this is different for each parallel render."
+            },
+            Self::DynamicLevelOfDetail => indoc! {
+                "Increase the hit tolerance the farther the ray travels without
+                    hitting a surface. This has performance and antialiasing benefits."
+            },
+            Self::EquiangularSamples => indoc! {
+                "The number of equi-angular samples to perform if
+                    the extinction/scattering coefficients are greater
+                    than 0. This enables participating media such as
+                    fog/smoke/clouds to be traced."
+            },
+            Self::LightSampling => {
+                "Send a ray towards light sources when hitting a diffuse surface."
+            }
+            Self::MaxLightSamplingBounces => indoc! {
+                "The maximum number of bounces during light sampling.
+                    Light sampling will be disabled if this is 0. Light
+                    sampling means that each time a surface is hit, the
+                    direct illumination from lights in the scene will be
+                    computed, which helps to reduce noise very quickly.\nTODO"
+            },
+            Self::SampleAtmosphere => indoc! {
+                "Include the skybox in the list of lights that can be sampled
+                    during light sampling."
+            },
+            Self::LightSamplingBias => indoc! {
+                "A fully biased (1) light sampling means that on each
+                    light sample the ray will be initialised pointing
+                    directly at the light. Reducing this bias means that
+                    some rays will be pointed away from the light. This,
+                    when combined with multiple 'max light sampling
+                    bounces' allows the renderer to find difficult paths,
+                    such as volumetric caustics.\nTODO"
+            },
+            Self::SecondarySampling => indoc! {
+                "Sample the artificial lights (those in the 'lights'
+                    input) while casting shadow rays for light sampling.\nTODO"
+            },
+            Self::OutputAOV => indoc! {
+                "The AOV type to output.\nThe stats AOV has the
+                    average number of bounces in the red channel,
+                    average number of steps in the green channel,
+                    and the distance travelled in the blue channel.
+                    Each is displayed as a fraction of the maximums."
+            },
         }
     }
 }
@@ -81,6 +156,12 @@ impl NodeOutputData for RayMarcherOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Render => OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Render => "A texture containing a ray marched scene.",
         }
     }
 }
@@ -184,7 +265,7 @@ impl EvaluableNode for RayMarcherNode {
                         .try_to_bool()?,
                 );
                 ray_marcher.set_output_aov(
-                    Self::Inputs::OutputAov
+                    Self::Inputs::OutputAOV
                         .from_data_map(data_map)?
                         .try_to_enum()?,
                 );

@@ -6,6 +6,7 @@
 use std::{collections::HashMap, f32::consts::PI};
 
 use glam::{EulerRot, Mat4, Quat, Vec3};
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -38,6 +39,19 @@ impl NodeInputData for AxisInputData {
             Self::UniformScale => InputData::Float(1.),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Axis => "The parent axis.",
+            Self::Translate => "The translation of this axis.",
+            Self::Rotate => "The rotation of this axis.",
+            Self::UniformScale => indoc! {
+                "The uniform scale of this axis.\n
+                    We use uniform scale because the signed distance
+                    fields cannot have their individual axes scaled."
+            },
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -50,6 +64,12 @@ impl NodeOutputData for AxisOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Axis => OutputData::Mat4,
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Axis => "A transformation matrix.",
         }
     }
 }

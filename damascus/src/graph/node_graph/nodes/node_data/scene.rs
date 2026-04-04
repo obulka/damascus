@@ -38,6 +38,17 @@ impl NodeInputData for SceneInputData {
             Self::Axis => InputData::Mat4(Mat4::IDENTITY),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Scene => "The children scenes to merge.",
+            Self::RenderCamera => "The camera to render the scene through.",
+            Self::Atmosphere => {
+                "The material to apply to the atmosphere (smoke, extinction, hdri, etc.)."
+            }
+            Self::Axis => "A global transform to apply to the entire scene.",
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -50,6 +61,12 @@ impl NodeOutputData for SceneOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::RootId => OutputData::SceneGraphId(SceneGraphIdType::Root),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::RootId => "A renderable scene.",
         }
     }
 }

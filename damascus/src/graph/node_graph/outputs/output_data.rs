@@ -3,6 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -29,6 +30,13 @@ pub trait NodeOutputData: Enumerator + Eq {
 
     fn label(&self) -> String {
         self.variant_label()
+    }
+
+    fn tooltip(&self) -> &str {
+        indoc! {
+            "The one who built this node was selfish and lazy, and did
+                not bother to write a tooltip."
+        }
     }
 
     fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {

@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -48,6 +49,25 @@ impl NodeInputData for GradeInputData {
             Self::Transform => InputData::Mat4(default_grade.transform),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Texture => indoc! {
+                "A render pass which results in the production of the texture
+                    to grade."
+            },
+            Self::BlackPoint => "The black point of the texture.",
+            Self::WhitePoint => "The white point of the texture.",
+            Self::Lift => "The lift to apply to the texture.",
+            Self::Gain => "The gain to apply to the texture colour.",
+            Self::Gamma => indoc! {
+                "The gamma to apply to the texture. This is computed
+                    by raising the colour to the power of 1/gamma."
+            },
+            Self::Invert => "Invert the colour.",
+            Self::Transform => "A transormation matrix to apply in colour space",
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -60,6 +80,12 @@ impl NodeOutputData for GradeOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Grade => OutputData::SceneGraphId(SceneGraphIdType::TextureEvaluator),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Grade => "A graded image.",
         }
     }
 }

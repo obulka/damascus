@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use glam::{Vec3, Vec4};
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -124,6 +125,141 @@ impl NodeInputData for PrimitiveInputData {
             Self::Axis => InputData::Mat4(default_primitive.local_to_world),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Child => indoc! {
+                "The children of this primitive.\n
+                    These will be transformed using this primitive's
+                    blend_type and transform.\n
+                    If this primitive is a bounding volume, children
+                    outside of its bounds will not be rendered, and
+                    increased performance can be achieved when
+                    rendering the children."
+            },
+            Self::Material => "The primitive's material.",
+            Self::Shape => "The shape of the primitive.",
+            Self::Radius => "The radius.",
+            Self::Radii => "The radii of the ellipsoid.",
+            Self::Height => "The height (y-axis).",
+            Self::HollowRadius => "The radius of the sphere that is cut from the solid.",
+            Self::HollowHeight => indoc! {
+                "The height (y-axis) of the center of the sphere
+                    that is cut from the solid, above solidRadius +
+                    hollowRadius, the result will be a standard
+                    sphere of radius solidRadius."
+            },
+            Self::SolidAngle => indoc! {
+                "The angle between the edge of the solid angle and the
+                    y-axis on [0-180] measured between the y-axis and wall
+                    of the solid angle."
+            },
+            Self::Width => "The width (x-axis).",
+            Self::Depth => "The depth (z-axis).",
+            Self::Thickness => "The thickness of the walls.",
+            Self::CornerRadius => {
+                "The radius of the corners of the rhombus' xy-plane parallel face."
+            }
+            Self::Base => "The equilateral triangles edge length (xy-plane).",
+            Self::Normal => "The normal direction of the plane.",
+            Self::NegativeHeight => {
+                "The distance along the negative y-axis before entering the dome."
+            }
+            Self::PositiveHeight => {
+                "The distance along the positive y-axis before entering the dome."
+            }
+            Self::Angle => indoc! {
+                "The angle between the tip and base of the cone [0-90]
+                    measured between the y-axis and wall of the cone."
+            },
+            Self::LowerRadius => "The radius of the cone at y = -height/2.",
+            Self::UpperRadius => "The radius of the cone at y = height/2.",
+            Self::RingRadius => "The radius (xy-plane) of the ring of the torus.",
+            Self::TubeRadius => "The radius of the tube of the torus.",
+            Self::CapAngle => {
+                "The angle (xy-plane, symmetric about y-axis) to cap at, in the range [0-180.]."
+            }
+            Self::RadialExtent => indoc! {
+                "The maximum distance along the x, y, and z axes.
+                    ie. The vertices are at +/-radial_extent on the x, y,
+                    and z axes."
+            },
+            Self::Power => "One greater than the axes of symmetry in the xy-plane.",
+            Self::Iterations => indoc! {
+                "The number of iterations to compute, the higher this
+                    is, the slower it will be to compute, but the more
+                    detail the fractal will have."
+            },
+            Self::MaxSquareRadius => {
+                "When the square radius has reached this length, stop iterating."
+            }
+            Self::Scale => {
+                "The amount to scale the position between folds. Can be negative or positive."
+            }
+            Self::MinSquareRadius => "The minimum square radius to use when spherically folding.",
+            Self::FoldingLimit => indoc! {
+                "Clamp the position between +/- this value when
+                    performing the box fold. Higher values will result
+                    in a denser fractal.",
+            },
+            Self::EnableOrbitTrapColour => {
+                "The orbital traps will affect the material of this primitive if enabled."
+            }
+            Self::EdgeRadius => "The thickness of the walls of the shape, if the shape is hollow.",
+            Self::Repetition => indoc! {
+                "Repeat objects in the scene with no extra memory
+                    consumption. Note that if the repeated objects overlap
+                    some strange things can occur."
+            },
+            Self::NegativeRepetitions => {
+                "The number of repetitions along the negative x, y, and z axes."
+            }
+            Self::PositiveRepetitions => {
+                "The number of repetitions along the positive x, y, and z axes."
+            }
+            Self::Spacing => "The spacing along each positive axis to repeat the objects.",
+            Self::BoundingVolume => indoc! {
+                "If enabled, this object will act as a bounding volume
+                    for all its children. This means that until a ray hits
+                    the bounding volume, none of the child object's signed
+                    distance fields will be computed. This can vastly
+                    improve performance, especially when many complex
+                    objects are far from the camera. This option does
+                    not always play well with lighting effects that depend
+                    on the number of iterations in the computation such
+                    as 'ambient occlusion' and 'softened shadows' due
+                    to the variation near the surface of the bounding object."
+            },
+            Self::BlendType => indoc! {
+                "The type of interaction this object will have with its children.\n
+                    \tUnion: All objects will appear as normal.\n
+                    \tSubtraction: This object will be subtracted from all of its\n
+                    \t\tchildren, leaving holes.\n
+                    \tIntersection: Only the region where this object and its\n
+                    \t\tchildren overlap will remain.\n
+                    \tSmooth Union: All children will smoothly blend together\n
+                    \t\twith this object according to the 'blend strength'.\n
+                    \tSmooth Subtraction:This object will be subtracted from all\n
+                    \t\tof its children,  leaving holes that are smoothed\n
+                    \t\taccording to the 'blend strength'.\n
+                    \tSmooth Intersection: Only the region where this object\n
+                    \t\tand its children overlap will remain, and the remaining\n
+                    \t\tregions will be smoothed according to the 'blend\n
+                    \t\tstrength'.",
+            },
+            Self::BlendStrength => "The amount to blend with this primitive's children.",
+            Self::Mirror => "Mirror along the x, y, and z axes.",
+            Self::Hollow => {
+                "If enabled, the object will be hollow, with a thickness of 'wall thickness'."
+            }
+            Self::WallThickness => {
+                "The thickness of the walls of the shape, if the primitive is hollow."
+            }
+            Self::Elongate => "Enable the elongation of the object.",
+            Self::Elongation => "The elongation of the object along the respective axes.",
+            Self::Axis => "The world matrix/axis of the primitive.",
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -136,6 +272,12 @@ impl NodeOutputData for PrimitiveOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Primitive),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Id => "A primitive geometry object.",
         }
     }
 }

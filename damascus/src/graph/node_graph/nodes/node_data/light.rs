@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 
 use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -54,6 +55,39 @@ impl NodeInputData for LightInputData {
             Self::Axis => InputData::Mat4(Mat4::IDENTITY),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Child => indoc! {
+                "Chain other non-physical lights in the scene, their axes will
+                    be parented to this lights axis."
+            },
+            Self::LightType => indoc! {
+                "The type of non-physical light to create.\n
+                    \tPoint: A point light.\n
+                    \tDirectional: A directional light.\n
+                    \tAmbient: An ambient light (will be a uniform colour).\n
+                    \tAmbient Occlusion: Ambient occlusion."
+            },
+            Self::Direction => "The direction vector of the light.",
+            Self::Position => "The position of the point light.",
+            Self::Iterations => "The number of iterations used to compute the occlusion.",
+            Self::Intensity => "The time-averaged power on the surface of the light.",
+            Self::Falloff => "The exponent of the falloff (point lights only).",
+            Self::Colour => "The light colour.",
+            Self::ShadowHardness => "The hardness of softened shadows.",
+            Self::SoftenShadows => indoc! {
+                "If enabled, the shadows will be softened (directional and
+                    point lights only)."
+            },
+            Self::Axis => indoc! {
+                "The world matrix to apply to the light (point and
+                    directional only).\n
+                    \tPoint: Will affect the position of the light.\n
+                    \tDirectional: Will affect the direction vector of the light."
+            },
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -66,6 +100,15 @@ impl NodeOutputData for LightOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Light),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Id => indoc! {
+                "An non-physical light. For a physical light use an emissive
+                    material on a primitive."
+            },
         }
     }
 }

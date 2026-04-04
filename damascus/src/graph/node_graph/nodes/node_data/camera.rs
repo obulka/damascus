@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -51,6 +52,24 @@ impl NodeInputData for CameraInputData {
             Self::Axis => InputData::Mat4(default_camera.camera_to_world),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::FocalLength => "The focal length of the camera.",
+            Self::FocalDistance => "The focal distance of the camera.",
+            Self::FStop => "The f-stop of the camera.",
+            Self::HorizontalAperture => "The horizontal aperture of the camera.",
+            Self::NearPlane => "The distance to the near plane of the camera.",
+            Self::FarPlane => "The distance to the far plane of the camera.",
+            Self::SensorResolution => indoc! {
+                "The resolution of the camera sensor, used when generating a
+                    texture by rendering through this camera.",
+            },
+            Self::EnableDepthOfField => "If enabled, this camera will render with depth of field.",
+            Self::Latlong => "Output a LatLong, 360 degree field of view image.",
+            Self::Axis => "The world matrix/axis of the camera.",
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -63,6 +82,12 @@ impl NodeOutputData for CameraOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Camera),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Id => "A camera.",
         }
     }
 }

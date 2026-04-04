@@ -5,6 +5,7 @@
 
 use std::collections::HashMap;
 
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -85,6 +86,63 @@ impl NodeInputData for MaterialInputData {
             Self::ScatteringColourTexture => InputData::SceneGraphId(SceneGraphId::None),
         }
     }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::DiffuseColour => "The diffuse colour of the material.",
+            Self::DiffuseColourTexture => {
+                "Texture that affects the diffuse colour of this material."
+            }
+            Self::SpecularProbability => indoc! {
+                "The probability that light will be specularly reflected
+                    when it interacts with this material."
+            },
+            Self::SpecularProbabilityTexture => {
+                "Texture that affects the specular probability of this material."
+            }
+            Self::SpecularRoughness => "The roughness of the material when specularly reflected.",
+            Self::SpecularRoughnessTexture => {
+                "Texture that affects the specular roughness of this material."
+            }
+            Self::SpecularColour => "The specular colour of the material.",
+            Self::SpecularColourTexture => {
+                "Texture that affects the specular colour of this material."
+            }
+            Self::TransmissiveProbability => indoc! {
+                "The probability that light will be transmitted through
+                    the material (before accounting for Fresnel) when it
+                    interacts with this material."
+            },
+            Self::TransmissiveProbabilityTexture => {
+                "Texture that affects the transmissive probability of this material."
+            }
+            Self::TransmissiveRoughness => "The roughness when transmitted through the material.",
+            Self::TransmissiveRoughnessTexture => {
+                "Texture that affects the transmissive roughness of this material."
+            }
+            Self::ExtinctionCoefficient => "The extinction coefficient of the material.",
+            Self::TransmissiveColour => "The transmitted colour of the material.",
+            Self::TransmissiveColourTexture => {
+                "Texture that affects the transmissive colour of this material."
+            }
+            Self::EmissiveIntensity => {
+                "The intensity of light that will be emitted from the material."
+            }
+            Self::EmissiveColour => "The emissive colour of the material.",
+            Self::EmissiveColourTexture => {
+                "Texture that affects the emissive colour of this material."
+            }
+            Self::RefractiveIndex => "The index of refraction of the material.",
+            Self::RefractiveIndexTexture => {
+                "Texture that affects the refractive index of this material."
+            }
+            Self::ScatteringCoefficient => "The scattering coefficient of the material.",
+            Self::ScatteringColour => "The scattering colour of the material.",
+            Self::ScatteringColourTexture => {
+                "Texture that affects the scattering colour of this material."
+            }
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]
@@ -97,6 +155,12 @@ impl NodeOutputData for MaterialOutputData {
     fn default_data(&self) -> OutputData {
         match self {
             Self::Id => OutputData::SceneGraphId(SceneGraphIdType::Material),
+        }
+    }
+
+    fn tooltip(&self) -> &str {
+        match self {
+            Self::Id => "A material.",
         }
     }
 }

@@ -6,6 +6,7 @@
 use std::{any::type_name, collections::HashMap};
 
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
+use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -440,6 +441,13 @@ pub trait NodeInputData: Enumerator + Eq {
 
     fn label(&self) -> String {
         self.variant_label()
+    }
+
+    fn tooltip(&self) -> &str {
+        indoc! {
+            "The one who built this node was selfish and lazy, and did
+                not bother to write a tooltip."
+        }
     }
 
     fn add_to_node(graph: &mut NodeGraph, node_id: NodeId) {

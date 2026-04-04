@@ -260,6 +260,44 @@ impl NodeInputData for PrimitiveInputData {
             Self::Axis => "The world matrix/axis of the primitive.",
         }
     }
+
+    fn hidden_by_default(&self) -> bool {
+        match self {
+            Self::Radii
+            | Self::Height
+            | Self::HollowRadius
+            | Self::HollowHeight
+            | Self::SolidAngle
+            | Self::Width
+            | Self::Depth
+            | Self::Thickness
+            | Self::CornerRadius
+            | Self::Base
+            | Self::Normal
+            | Self::NegativeHeight
+            | Self::PositiveHeight
+            | Self::Angle
+            | Self::LowerRadius
+            | Self::UpperRadius
+            | Self::RingRadius
+            | Self::TubeRadius
+            | Self::CapAngle
+            | Self::RadialExtent
+            | Self::Power
+            | Self::Iterations
+            | Self::MaxSquareRadius
+            | Self::Scale
+            | Self::MinSquareRadius
+            | Self::FoldingLimit
+            | Self::EnableOrbitTrapColour
+            | Self::NegativeRepetitions
+            | Self::PositiveRepetitions
+            | Self::Spacing
+            | Self::WallThickness
+            | Self::Elongation => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]

@@ -88,6 +88,13 @@ impl NodeInputData for LightInputData {
             },
         }
     }
+
+    fn hidden_by_default(&self) -> bool {
+        match self {
+            Self::Direction | Self::Position => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]

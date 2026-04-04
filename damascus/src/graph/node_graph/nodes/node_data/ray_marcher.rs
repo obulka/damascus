@@ -144,6 +144,16 @@ impl NodeInputData for RayMarcherInputData {
             },
         }
     }
+
+    fn hidden_by_default(&self) -> bool {
+        match self {
+            Self::MaxLightSamplingBounces
+            | Self::SampleAtmosphere
+            | Self::LightSamplingBias
+            | Self::SecondarySampling => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Copy, Default, EnumHashTraits!)]

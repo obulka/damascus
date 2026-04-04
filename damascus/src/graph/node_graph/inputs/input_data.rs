@@ -450,6 +450,10 @@ pub trait NodeInputData: Enumerator + Eq {
         }
     }
 
+    fn hidden_by_default(&self) -> bool {
+        false
+    }
+
     fn add_to_node(graph: &mut NodeGraph, node_id: NodeId) {
         Self::iter().for_each(|input| {
             graph.add_input(node_id, &input.name(), input.default_data());

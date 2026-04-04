@@ -208,7 +208,7 @@ impl Panel {
                             None
                         }),
                 ))
-                .padding(10)
+                .padding(3)
                 .style(if is_focused {
                     style::title_bar_focused
                 } else {
@@ -227,12 +227,11 @@ impl Panel {
         })
         .width(Fill)
         .height(Fill)
-        .spacing(10)
         .on_click(PanelMessage::Clicked)
         .on_drag(PanelMessage::Dragged)
         .on_resize(10, PanelMessage::Resized);
 
-        container(pane_grid).padding(10).into()
+        container(pane_grid).into()
     }
 }
 
@@ -323,7 +322,7 @@ fn view_content<'a>(
     .max_width(160);
 
     let content = column![text!("{}x{}", size.width, size.height).size(24), controls,]
-        .spacing(10)
+        .spacing(3)
         .align_x(Center);
 
     center_y(scrollable(content)).padding(5).into()

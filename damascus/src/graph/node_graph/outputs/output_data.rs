@@ -39,6 +39,10 @@ pub trait NodeOutputData: Enumerator + Eq {
         }
     }
 
+    fn hidden_by_default(&self) -> bool {
+        false
+    }
+
     fn add_to_node(node_graph: &mut NodeGraph, node_id: NodeId) {
         Self::iter().for_each(|output| {
             node_graph.add_output(node_id, &output.name(), output.default_data());

@@ -122,9 +122,6 @@ pub fn title_bar(preferences: &Preferences) -> iced::widget::container::Style {
 }
 
 pub fn title_bar_focused(preferences: &Preferences) -> iced::widget::container::Style {
-    let theme: iced::Theme = <Theme as Into<iced::Theme>>::into(preferences.theme);
-    let palette: &iced::theme::palette::Extended = theme.extended_palette();
-
     let mut style = title_bar(preferences);
 
     style.border = iced::Border {

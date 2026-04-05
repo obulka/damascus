@@ -37,16 +37,4 @@ derive_alias! {
         strum::Display,
         crate::EnumBaseTraits!,
     )];
-    #[derive(EnumHashBaseTraits!)] = #[derive(
-        Eq,
-        Hash,
-        Ord,
-        PartialOrd,
-        crate::EnumBaseTraits!,
-    )];
-    #[derive(EnumHashTraits!)] = #[derive(
-        strum::Display,
-        crate::EnumHashBaseTraits!,
-    )];
-    #[derive(ErrorTraits!)] = #[derive(crate::EnumBaseTraits!, damascus::ErrorTrait!)];
 }

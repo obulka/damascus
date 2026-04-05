@@ -10,11 +10,11 @@
 use std::collections::BTreeMap;
 
 use iced::{
-    Center, Color, ContentFit, Element, Fill, Size, Subscription, Task, Theme, Vector, keyboard,
+    Center, Element, Fill, Size, Subscription, Task, Theme, Vector, keyboard,
     widget::{
-        Svg, button, center, center_x, center_y, column, container, operation,
+        button, center, center_y, column, container, operation,
         pane_grid::{self, PaneGrid},
-        responsive, row, scrollable, space, text, text_input,
+        responsive, row, scrollable, space, text,
     },
     window,
 };
@@ -84,7 +84,7 @@ enum PanelMessage {
 
 impl Panel {
     fn new() -> Self {
-        let (panes, _) = pane_grid::State::new(Pane::new(0));
+        let (panes, _) = pane_grid::State::new(Pane::new());
 
         Panel {
             panes,
@@ -96,7 +96,7 @@ impl Panel {
     fn update(&mut self, message: PanelMessage) {
         match message {
             PanelMessage::Split(axis, pane) => {
-                let result = self.panes.split(axis, pane, Pane::new(self.panes_created));
+                let result = self.panes.split(axis, pane, Pane::new());
 
                 if let Some((pane, _)) = result {
                     self.focus = Some(pane);
@@ -106,7 +106,7 @@ impl Panel {
             }
             PanelMessage::SplitFocused(axis) => {
                 if let Some(pane) = self.focus {
-                    let result = self.panes.split(axis, pane, Pane::new(self.panes_created));
+                    let result = self.panes.split(axis, pane, Pane::new());
 
                     if let Some((pane, _)) = result {
                         self.focus = Some(pane);
@@ -157,8 +157,8 @@ impl Panel {
     }
 
     fn view_content<'a>(
-        pane: pane_grid::Pane,
-        total_panes: usize,
+        _pane: pane_grid::Pane,
+        _total_panes: usize,
         size: Size,
     ) -> Element<'a, PanelMessage> {
         let content = column![text!("{}x{}", size.width, size.height).size(24)]
@@ -224,7 +224,7 @@ impl Panel {
         let focus = self.focus;
         let total_panes = self.panes.len();
 
-        let pane_grid = PaneGrid::new(&self.panes, |id, pane, is_maximized| {
+        let pane_grid = PaneGrid::new(&self.panes, |id, _pane, is_maximized| {
             let is_focused = focus == Some(id);
 
             let title_bar = pane_grid::TitleBar::new(row![])
@@ -237,7 +237,7 @@ impl Panel {
                     }),
                 ))
                 .padding(3)
-                .style(move |theme| {
+                .style(move |_theme| {
                     if is_focused {
                         style::title_bar_focused(preferences)
                     } else {
@@ -249,7 +249,7 @@ impl Panel {
                 Self::view_content(id, total_panes, size)
             }))
             .title_bar(title_bar)
-            .style(move |theme| {
+            .style(move |_theme| {
                 if is_focused {
                     style::pane_focused(preferences)
                 } else {
@@ -275,13 +275,11 @@ impl Default for Panel {
 }
 
 #[derive(Clone, Copy)]
-struct Pane {
-    id: usize,
-}
+struct Pane {}
 
 impl Pane {
-    fn new(id: usize) -> Self {
-        Self { id }
+    fn new() -> Self {
+        Self {}
     }
 }
 
@@ -311,7 +309,6 @@ struct Window {
 #[derive(Debug, Clone)]
 enum WindowMessage {
     Event(window::Id, window::Event),
-    Open,
     Opened(window::Id),
     Closed(window::Id),
     ScaleInputChanged(window::Id, String),
@@ -432,16 +429,16 @@ impl Damascus {
         match message {
             WindowMessage::Event(id, event) => {
                 match event {
-                    // Opened {
-                    //     position,
-                    //     size,
-                    // },
-                    // Closed,
-                    // Moved(point),
-                    // Resized(Size),
-                    // Rescaled(f32),
-                    // RedrawRequested(Instant),
-                    // CloseRequested,
+                    window::Event::Opened {
+                        position: _,
+                        size: _,
+                    } => {}
+                    // window::Event::Closed,
+                    // window::Event::Moved(point),
+                    // window::Event::Resized(Size),
+                    // window::Event::Rescaled(f32),
+                    // window::Event::RedrawRequested(Instant),
+                    // window::Event::CloseRequested,
                     window::Event::Focused => self.focused_window_id = Some(id),
                     window::Event::Unfocused => {
                         if let Some(focused_window_id) = self.focused_window_id
@@ -449,34 +446,13 @@ impl Damascus {
                         {
                             self.focused_window_id = None;
                         }
-                    } // FileHovered(PathBuf),
-                    // FileDropped(PathBuf),
-                    // FilesHoveredLeft,
+                    } // window::Event::FileHovered(PathBuf),
+                    // window::Event::FileDropped(PathBuf),
+                    // window::Event::FilesHoveredLeft,
                     _ => {}
                 };
                 // println!("{:?}, {:?}", id, event);
                 Task::none()
-            }
-            WindowMessage::Open => {
-                let Some(last_window) = self.windows.keys().last() else {
-                    return Task::none();
-                };
-
-                window::position(*last_window)
-                    .then(|last_position| {
-                        let position =
-                            last_position.map_or(window::Position::Default, |last_position| {
-                                window::Position::Specific(last_position + Vector::new(20.0, 20.0))
-                            });
-
-                        let (_, open) = window::open(window::Settings {
-                            position,
-                            ..window::Settings::default()
-                        });
-
-                        open
-                    })
-                    .map(|id| WindowMessage::Opened(id).into())
             }
             WindowMessage::Opened(id) => {
                 let window = Window::new(self.windows.len() + 1);
@@ -596,14 +572,6 @@ impl Damascus {
                 Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
             }
             Key::Named(key) => {
-                let direction = match key {
-                    key::Named::ArrowUp => Some(Direction::Up),
-                    key::Named::ArrowDown => Some(Direction::Down),
-                    key::Named::ArrowLeft => Some(Direction::Left),
-                    key::Named::ArrowRight => Some(Direction::Right),
-                    _ => None,
-                };
-
                 if let Some(direction) = match key {
                     key::Named::ArrowUp => Some(Direction::Up),
                     key::Named::ArrowDown => Some(Direction::Down),
@@ -621,7 +589,6 @@ impl Damascus {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        let id = self.focused_window_id.clone();
         Subscription::batch(
             std::iter::once(keyboard::listen().filter_map(|event| {
                 let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {

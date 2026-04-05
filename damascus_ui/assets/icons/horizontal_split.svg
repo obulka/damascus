@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="71"
-   height="72"
-   viewBox="0 0 71 72"
+   width="75"
+   height="10"
+   viewBox="0 0 75 10"
    version="1.1"
    id="svg5"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -12,6 +12,13 @@
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
      id="defs2">
+    <linearGradient
+       id="linearGradient3498">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3496" />
+    </linearGradient>
     <linearGradient
        id="linearGradient5406">
       <stop
@@ -85,7 +92,7 @@
     <linearGradient
        id="linearGradient2057">
       <stop
-         style="stop-color:#414141;stop-opacity:1;"
+         style="stop-color:#4d4d4d;stop-opacity:1;"
          offset="0"
          id="stop2055" />
     </linearGradient>
@@ -260,39 +267,6 @@
        y2="95.177589"
        gradientUnits="userSpaceOnUse" />
     <linearGradient
-       xlink:href="#icon"
-       id="linearGradient1304"
-       x1="87.057777"
-       y1="114.18006"
-       x2="140.99998"
-       y2="114.18006"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#icon"
-       id="linearGradient1306"
-       x1="87.028877"
-       y1="54.180061"
-       x2="118.99999"
-       y2="54.180061"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#shadow"
-       id="linearGradient1308"
-       x1="118.99999"
-       y1="60.190216"
-       x2="140.99998"
-       y2="60.190216"
-       gradientUnits="userSpaceOnUse" />
-    <linearGradient
-       xlink:href="#icon"
-       id="linearGradient1388"
-       gradientUnits="userSpaceOnUse"
-       x1="118.99999"
-       y1="60.190216"
-       x2="140.99998"
-       y2="60.190216"
-       gradientTransform="translate(4e-6)" />
-    <linearGradient
        xlink:href="#shadow"
        id="linearGradient1390"
        gradientUnits="userSpaceOnUse"
@@ -308,22 +282,6 @@
        y1="95.177589"
        x2="140.96204"
        y2="95.177589" />
-    <linearGradient
-       xlink:href="#shadow"
-       id="linearGradient1394"
-       gradientUnits="userSpaceOnUse"
-       x1="87.057777"
-       y1="114.18006"
-       x2="140.99998"
-       y2="114.18006" />
-    <linearGradient
-       xlink:href="#shadow"
-       id="linearGradient1396"
-       gradientUnits="userSpaceOnUse"
-       x1="87.028877"
-       y1="54.180061"
-       x2="118.99999"
-       y2="54.180061" />
     <linearGradient
        xlink:href="#linearGradient5400"
        id="linearGradient5402"
@@ -386,8 +344,8 @@
        x2="79"
        y2="48" />
     <linearGradient
-       xlink:href="#shadow"
-       id="linearGradient12580"
+       xlink:href="#linearGradient5400"
+       id="linearGradient13150"
        gradientUnits="userSpaceOnUse"
        x1="19"
        y1="52"
@@ -395,7 +353,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12582"
+       id="linearGradient3731"
        gradientUnits="userSpaceOnUse"
        x1="19"
        y1="52"
@@ -403,7 +361,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12584"
+       id="linearGradient3733"
        gradientUnits="userSpaceOnUse"
        x1="15"
        y1="48"
@@ -411,7 +369,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12586"
+       id="linearGradient3735"
        gradientUnits="userSpaceOnUse"
        x1="15"
        y1="48"
@@ -419,7 +377,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12588"
+       id="linearGradient3737"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -427,7 +385,7 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#linearGradient5400"
-       id="linearGradient12590"
+       id="linearGradient3739"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="52"
@@ -435,7 +393,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12592"
+       id="linearGradient3741"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -443,7 +401,55 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12594"
+       id="linearGradient3743"
+       gradientUnits="userSpaceOnUse"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48" />
+    <linearGradient
+       xlink:href="#linearGradient5400"
+       id="linearGradient3745"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="52"
+       x2="91.5"
+       y2="52" />
+    <linearGradient
+       xlink:href="#shadow"
+       id="linearGradient3747"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="49.477753"
+       x2="92.067528"
+       y2="49.477753" />
+    <linearGradient
+       xlink:href="#icon"
+       id="linearGradient3749"
+       gradientUnits="userSpaceOnUse"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48" />
+    <linearGradient
+       xlink:href="#linearGradient5400"
+       id="linearGradient3751"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="52"
+       x2="91.5"
+       y2="52" />
+    <linearGradient
+       xlink:href="#shadow"
+       id="linearGradient3753"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="49.477753"
+       x2="92.067528"
+       y2="49.477753" />
+    <linearGradient
+       xlink:href="#icon"
+       id="linearGradient3755"
        gradientUnits="userSpaceOnUse"
        x1="17"
        y1="48"
@@ -451,7 +457,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12596"
+       id="linearGradient3761"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -459,7 +465,7 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12598"
+       id="linearGradient3763"
        gradientUnits="userSpaceOnUse"
        x1="17"
        y1="48"
@@ -469,19 +475,19 @@
   <g
      id="layer3"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="layer1"
-       style="display:none;fill:url(#linearGradient7178);fill-opacity:1">
+       style="display:inline;fill:url(#linearGradient7178);fill-opacity:1">
       <rect
-         style="fill:url(#linearGradient12580);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="fill:url(#linearGradient3731);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769-6"
          width="23"
          height="70"
          x="20"
          y="15" />
       <rect
-         style="fill:url(#linearGradient12582);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="fill:url(#linearGradient13150);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769-7"
          width="23"
          height="70"
@@ -492,14 +498,14 @@
        id="layer2"
        style="fill:url(#linearGradient7172);fill-opacity:1">
       <rect
-         style="display:inline;fill:url(#linearGradient12584);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="display:inline;fill:url(#linearGradient3733);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769"
          width="23"
          height="70"
          x="15"
          y="13" />
       <rect
-         style="display:inline;fill:url(#linearGradient12586);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="display:inline;fill:url(#linearGradient3735);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6771"
          width="23"
          height="70"
@@ -509,11 +515,11 @@
   </g>
   <g
      id="layer4"
-     style="display:inline"
-     transform="translate(-15,-13)">
+     style="display:none"
+     transform="translate(-13,-46)">
     <g
        id="layer6"
-       style="display:inline;fill:url(#linearGradient12588);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient3737);fill-opacity:1"
        transform="translate(-6)">
       <path
          style="fill:url(#linearGradient7407);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
@@ -532,40 +538,84 @@
   <g
      id="g2667"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="g2661"
-       style="display:inline;fill:url(#linearGradient12592);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient3741);fill-opacity:1"
        transform="translate(-6)">
       <path
-         style="fill:none;fill-opacity:1;stroke:url(#linearGradient12590);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-         d="M 28,17 V 83 H 90 V 17 Z"
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient3739);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 30,19 V 81 H 88 V 19 Z"
          id="path2659" />
     </g>
     <g
        id="g2665"
        style="stroke:none">
       <path
-         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient12594);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
-         d="M 17,15 V 81 H 79 V 15 Z"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient3743);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 19,17 V 79 H 77 V 17 Z"
          id="path2663" />
+    </g>
+  </g>
+  <g
+     id="g2826"
+     style="display:none"
+     transform="translate(-13,-46)">
+    <g
+       id="g2820"
+       style="display:inline;fill:url(#linearGradient3747);fill-opacity:1"
+       transform="translate(-6)">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient3745);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 61,85 V 15"
+         id="path2818" />
+    </g>
+    <g
+       id="g2824"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient3749);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 50,83 V 13"
+         id="path2822" />
+    </g>
+  </g>
+  <g
+     id="g3285"
+     style="display:inline"
+     transform="translate(-13,-46)">
+    <g
+       id="g3279"
+       style="display:inline;fill:url(#linearGradient3753);fill-opacity:1"
+       transform="translate(-6)">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient3751);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 94,52 H 24"
+         id="path3277" />
+    </g>
+    <g
+       id="g3283"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient3755);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 83,50 H 13"
+         id="path3281" />
     </g>
   </g>
   <g
      id="g7721"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="g7715"
-       style="display:inline;fill:url(#linearGradient12596);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient3761);fill-opacity:1"
        transform="translate(-6)">
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8235);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8235);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 84,83 22,17"
          id="path7717-2"
          transform="translate(6)" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8237);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8237);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 22,83 84,17"
          id="path7717-5-9"
          transform="translate(6)" />
@@ -574,11 +624,11 @@
        id="g7719"
        style="stroke:none">
       <path
-         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient12598);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient3763);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 79,81 17,15"
          id="path7717" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8169);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8169);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 17,81 79,15"
          id="path7717-5" />
     </g>
@@ -586,38 +636,38 @@
   <g
      id="g6209"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="g6203"
        style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
        transform="translate(-6)">
       <path
-         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-         d="M 28,27 V 83 H 76 V 27 Z"
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 30,33 V 81 H 70 V 33 Z"
          id="path6201" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6282);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-         d="M 42,17 V 69 H 90 V 17 Z"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6282);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 48,19 V 63 H 88 V 19 Z"
          id="path6201-7" />
     </g>
     <g
        id="g6207"
        style="stroke:none">
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6278);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
-         d="M 37,15 V 67 H 85 V 15 Z"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6278);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 43,17 V 61 H 83 V 17 Z"
          id="path6205-5"
          transform="translate(-6)" />
       <path
-         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
-         d="M 17,29 V 81 H 65 V 29 Z"
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 19,35 V 79 H 59 V 35 Z"
          id="path6205" />
     </g>
   </g>
   <g
      id="layer7"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="layer9">
       <path
@@ -640,7 +690,7 @@
   <g
      id="g2448"
      style="display:none"
-     transform="translate(-15,-13)">
+     transform="translate(-13,-46)">
     <g
        id="g2442">
       <path
@@ -663,7 +713,7 @@
   <g
      id="g2448-7"
      style="display:none"
-     transform="translate(-24,-10)">
+     transform="translate(-22,-43)">
     <g
        id="g2442-5"
        transform="translate(4.3402976,4.4708258)"
@@ -694,7 +744,7 @@
   <g
      id="g291"
      style="display:none"
-     transform="translate(-24,-10)">
+     transform="translate(-22,-43)">
     <g
        id="g1380"
        transform="translate(-51.018963,-33.164963)"
@@ -713,25 +763,6 @@
          height="48"
          x="136.01897"
          y="69.164963" />
-      <rect
-         style="fill:url(#linearGradient1394);fill-opacity:1;stroke-width:0.879292"
-         id="rect1374"
-         width="54.000004"
-         height="2.9999998"
-         x="88.018967"
-         y="114.16496" />
-      <rect
-         style="display:inline;fill:url(#linearGradient1396);fill-opacity:1;stroke-width:0.676936"
-         id="rect1376"
-         width="22.000004"
-         height="10"
-         x="98.018967"
-         y="47.164963"
-         ry="2.3144531e-07" />
-      <path
-         style="fill:url(#linearGradient1308);fill-opacity:1"
-         d="m 120.01896,47.164963 22,22 h -22 z"
-         id="path1378" />
     </g>
     <g
        id="g289"
@@ -751,24 +782,6 @@
          height="47.974747"
          x="130.99998"
          y="71.190216" />
-      <rect
-         style="fill:url(#linearGradient1304);fill-opacity:1;stroke-width:0.879292"
-         id="rect351"
-         width="53.942215"
-         height="10.020314"
-         x="87.057777"
-         y="109.1699" />
-      <rect
-         style="display:inline;fill:url(#linearGradient1306);fill-opacity:1;stroke-width:0.676936"
-         id="rect351-6"
-         width="31.971115"
-         height="10.020314"
-         x="87.028877"
-         y="49.169903" />
-      <path
-         style="fill:url(#linearGradient1388);fill-opacity:1"
-         d="m 118.99999,49.190216 22,22 h -22 z"
-         id="path568" />
     </g>
   </g>
 </svg>

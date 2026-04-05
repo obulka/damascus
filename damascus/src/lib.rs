@@ -160,6 +160,7 @@ derive_alias! {
     #[derive(ErrorTraits!)] = #[derive(crate::EnumBaseTraits!, crate::ErrorTrait!)];
 }
 
+#[macro_export]
 macro_rules! EnumTrait {
     (
         $( #[$attr:meta] )*
@@ -172,8 +173,7 @@ macro_rules! EnumTrait {
     };
 }
 
-pub(crate) use EnumTrait;
-
+#[macro_export]
 macro_rules! ErrorTrait {
     (
     $( #[$attr:meta] )*
@@ -185,8 +185,6 @@ macro_rules! ErrorTrait {
         impl crate::Errors for $type {}
     };
 }
-
-pub(crate) use ErrorTrait;
 
 macro_rules! impl_slot_map_indexing {
     ($graph:ty, $id_type:ty, $output_type:ty, $arena:ident) => {

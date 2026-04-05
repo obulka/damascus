@@ -8,9 +8,9 @@
    version="1.1"
    id="svg5"
    sodipodi:docname="icons.svg"
-   inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
-   inkscape:export-xdpi="126.87919"
-   inkscape:export-ydpi="126.87919"
+   inkscape:export-filename="../damascus_ui/assets/icons/horizontal_split.svg"
+   inkscape:export-xdpi="126.88"
+   inkscape:export-ydpi="126.88"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -29,15 +29,15 @@
      inkscape:document-units="px"
      showgrid="true"
      showguides="true"
-     inkscape:zoom="18.47"
-     inkscape:cx="49.025447"
-     inkscape:cy="49.40444"
-     inkscape:window-width="3794"
-     inkscape:window-height="2091"
-     inkscape:window-x="1966"
-     inkscape:window-y="432"
+     inkscape:zoom="14"
+     inkscape:cx="23.214286"
+     inkscape:cy="49.607143"
+     inkscape:window-width="3440"
+     inkscape:window-height="1403"
+     inkscape:window-x="1920"
+     inkscape:window-y="340"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g1380">
+     inkscape:current-layer="g3285">
     <inkscape:grid
        type="xygrid"
        id="grid132"
@@ -53,6 +53,46 @@
   </sodipodi:namedview>
   <defs
      id="defs2">
+    <linearGradient
+       id="linearGradient3498"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3496" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5406"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop5404" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5400"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#0a0a0a;stop-opacity:1;"
+         offset="0"
+         id="stop5398" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient5394"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#6e6e6e;stop-opacity:1;"
+         offset="0"
+         id="stop5392" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3375"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3373" />
+    </linearGradient>
     <linearGradient
        id="linearGradient1298"
        inkscape:swatch="solid">
@@ -105,7 +145,7 @@
        id="linearGradient2057"
        inkscape:swatch="solid">
       <stop
-         style="stop-color:#000000;stop-opacity:1;"
+         style="stop-color:#4d4d4d;stop-opacity:1;"
          offset="0"
          id="stop2055" />
     </linearGradient>
@@ -373,6 +413,92 @@
        y1="54.180061"
        x2="118.99999"
        y2="54.180061" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5400"
+       id="linearGradient5402"
+       x1="24.5"
+       y1="52"
+       x2="91.5"
+       y2="52"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#icon"
+       id="linearGradient5408"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2057"
+       id="linearGradient6278"
+       gradientUnits="userSpaceOnUse"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48"
+       gradientTransform="translate(41,15)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5400"
+       id="linearGradient6282"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="52"
+       x2="91.5"
+       y2="52"
+       gradientTransform="translate(35,15)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#icon"
+       id="linearGradient8169"
+       gradientUnits="userSpaceOnUse"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48"
+       gradientTransform="translate(14,-5.9999999)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#shadow"
+       id="linearGradient8235"
+       gradientUnits="userSpaceOnUse"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48"
+       gradientTransform="translate(-2.9999999,15)" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#shadow"
+       id="linearGradient8237"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(11,9.0000001)"
+       x1="17"
+       y1="48"
+       x2="79"
+       y2="48" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5400"
+       id="linearGradient13150"
+       gradientUnits="userSpaceOnUse"
+       x1="19"
+       y1="52"
+       x2="85"
+       y2="52" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#icon"
+       id="linearGradient3500"
+       x1="15"
+       y1="48"
+       x2="81"
+       y2="48"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <g
      inkscape:groupmode="layer"
@@ -383,7 +509,7 @@
        inkscape:label="pause shadow"
        inkscape:groupmode="layer"
        id="layer1"
-       style="fill:url(#linearGradient7178);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient7178);fill-opacity:1"
        inkscape:export-filename="../damascus_ui/assets/icons/pause.svg"
        inkscape:export-xdpi="126.87919"
        inkscape:export-ydpi="126.87919">
@@ -392,15 +518,15 @@
          id="rect6769-6"
          width="23"
          height="70"
-         x="19"
-         y="17" />
+         x="20"
+         y="15" />
       <rect
-         style="fill:url(#linearGradient7178);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="fill:url(#linearGradient13150);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769-7"
          width="23"
          height="70"
-         x="62"
-         y="17" />
+         x="63"
+         y="15" />
     </g>
     <g
        inkscape:groupmode="layer"
@@ -439,8 +565,9 @@
        inkscape:export-ydpi="126.87919">
       <path
          style="fill:url(#linearGradient7407);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
-         d="M 25,17 V 87 L 91,54 Z"
-         id="path7355-3" />
+         d="M 26,15 V 85 L 92,52 Z"
+         id="path7355-3"
+         sodipodi:nodetypes="cccc" />
     </g>
     <g
        inkscape:groupmode="layer"
@@ -455,6 +582,230 @@
   </g>
   <g
      inkscape:groupmode="layer"
+     id="g2667"
+     inkscape:label="maximize"
+     style="display:none">
+    <g
+       inkscape:groupmode="layer"
+       id="g2661"
+       inkscape:label="maximize shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 30,19 V 81 H 88 V 19 Z"
+         id="path2659"
+         sodipodi:nodetypes="ccccc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g2665"
+       inkscape:label="maximize icon"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 19,17 V 79 H 77 V 17 Z"
+         id="path2663"
+         sodipodi:nodetypes="ccccc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g2826"
+     inkscape:label="vertical_split"
+     style="display:none">
+    <g
+       inkscape:groupmode="layer"
+       id="g2820"
+       inkscape:label="vertical_split shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 61,85 V 15"
+         id="path2818"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g2824"
+       inkscape:label="vertical_split icon"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 50,83 V 13"
+         id="path2822"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g3285"
+     inkscape:label="horizontal_split"
+     style="display:inline">
+    <g
+       inkscape:groupmode="layer"
+       id="g3279"
+       inkscape:label="horizontal_split shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 94,52 H 24"
+         id="path3277"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g3283"
+       inkscape:label="horizontal_split icon"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 83,50 H 13"
+         id="path3281"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g2312"
+     inkscape:label="minimize"
+     style="display:none">
+    <g
+       inkscape:groupmode="layer"
+       id="g2306"
+       inkscape:label="minimize shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 26,81 H 92"
+         id="path2304"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g2310"
+       inkscape:label="minimize icon"
+       style="stroke:none">
+      <path
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient3500);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 15,79 H 81"
+         id="path2308"
+         sodipodi:nodetypes="cc" />
+      <path
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:none;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 15,17 H 81"
+         id="path3527"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g7721"
+     inkscape:label="close"
+     style="display:none">
+    <g
+       inkscape:groupmode="layer"
+       id="g7715"
+       inkscape:label="close shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8235);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 84,83 22,17"
+         id="path7717-2"
+         sodipodi:nodetypes="cc"
+         inkscape:label="path7717"
+         transform="translate(6)" />
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8237);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 22,83 84,17"
+         id="path7717-5-9"
+         sodipodi:nodetypes="cc"
+         inkscape:label="path7717"
+         transform="translate(6)" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g7719"
+       inkscape:label="close icon"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 79,81 17,15"
+         id="path7717"
+         sodipodi:nodetypes="cc"
+         inkscape:label="path7717" />
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8169);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 17,81 79,15"
+         id="path7717-5"
+         sodipodi:nodetypes="cc"
+         inkscape:label="path7717" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g6209"
+     inkscape:label="detach"
+     style="display:none">
+    <g
+       inkscape:groupmode="layer"
+       id="g6203"
+       inkscape:label="detach shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 30,33 V 81 H 70 V 33 Z"
+         id="path6201"
+         sodipodi:nodetypes="ccccc" />
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6282);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 48,19 V 63 H 88 V 19 Z"
+         id="path6201-7"
+         sodipodi:nodetypes="ccccc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g6207"
+       inkscape:label="detach icon"
+       style="stroke:none">
+      <path
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient6278);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 43,17 V 61 H 83 V 17 Z"
+         id="path6205-5"
+         sodipodi:nodetypes="ccccc"
+         transform="translate(-6)" />
+      <path
+         style="display:inline;opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 19,35 V 79 H 59 V 35 Z"
+         id="path6205"
+         sodipodi:nodetypes="ccccc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="arrow_right"
      style="display:none">
@@ -465,7 +816,7 @@
       <path
          id="path2053-7"
          style="fill:url(#linearGradient2065-3);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="M 55,40 V 60 L 20,40 M 55,80 85,50 55,20 M 20,40 v 20 h 35"
+         d="M 56,36 V 56 L 21,36 M 56,76 86,46 56,16 M 21,36 v 20 h 35"
          class="UnoptimicedTransforms"
          sodipodi:nodetypes="ccccccccc"
          transform="translate(-1)" />
@@ -495,7 +846,7 @@
       <path
          id="path2440"
          style="fill:url(#linearGradient2450);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
-         d="M 55,40 V 60 L 20,40 M 55,80 85,50 55,20 M 20,40 v 20 h 35"
+         d="m 54.5,36 v 20 l -35,-20 m 35,40 30,-30 -30,-30 m -35,20 v 20 h 35"
          class="UnoptimicedTransforms"
          sodipodi:nodetypes="ccccccccc"
          transform="matrix(-1,0,0,1,104.5,0)" />
@@ -531,16 +882,16 @@
          sodipodi:type="arc"
          sodipodi:cx="58.999992"
          sodipodi:cy="47.016411"
-         sodipodi:rx="27.842592"
-         sodipodi:ry="27.826195"
+         sodipodi:rx="27.34029"
+         sodipodi:ry="30.487236"
          sodipodi:start="2.8073652"
-         sodipodi:end="0.88373292"
+         sodipodi:end="0.73166743"
          sodipodi:arc-type="arc"
-         d="M 32.698097,56.144501 A 27.842592,27.826195 0 0 1 46.843329,21.9827 27.842592,27.826195 0 0 1 82.448937,32.013358 27.842592,27.826195 0 0 1 76.659702,68.529174"
+         d="M 33.172604,57.017428 A 27.34029,30.487236 0 0 1 45.831747,20.298379 27.34029,30.487236 0 0 1 80.415832,28.064475 27.34029,30.487236 0 0 1 79.342847,67.385276"
          sodipodi:open="true" />
       <path
          style="fill:url(#linearGradient2092);fill-opacity:1;stroke-width:17.5695;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:none;paint-order:stroke fill markers"
-         d="M 19,64 47,51 40,72 19,64"
+         d="m 19.659702,61.529174 28,-13 -7,21 -21,-8"
          id="path1949"
          sodipodi:nodetypes="cccc" />
     </g>
@@ -574,7 +925,7 @@
      inkscape:groupmode="layer"
      id="g291"
      inkscape:label="file"
-     style="display:inline"
+     style="display:none"
      transform="translate(-9,3)">
     <g
        inkscape:groupmode="layer"
@@ -585,34 +936,35 @@
       <rect
          style="fill:url(#linearGradient1390);fill-opacity:1"
          id="rect1370"
-         width="9.96206"
-         height="69.949493"
-         x="87.037933"
-         y="49.215469" />
+         width="6.0000038"
+         height="63"
+         x="92.018967"
+         y="54.164963" />
       <rect
          style="display:inline;fill:url(#linearGradient1392);fill-opacity:1;stroke-width:0.82816"
          id="rect1372"
-         width="9.96206"
-         height="47.974747"
-         x="130.99998"
-         y="71.190216" />
+         width="6.0000038"
+         height="48"
+         x="136.01897"
+         y="69.164963" />
       <rect
          style="fill:url(#linearGradient1394);fill-opacity:1;stroke-width:0.879292"
          id="rect1374"
-         width="53.942215"
-         height="10.020314"
-         x="87.057777"
-         y="109.1699" />
+         width="54.000004"
+         height="2.9999998"
+         x="88.018967"
+         y="114.16496" />
       <rect
          style="display:inline;fill:url(#linearGradient1396);fill-opacity:1;stroke-width:0.676936"
          id="rect1376"
-         width="31.971115"
-         height="10.020314"
-         x="87.028877"
-         y="49.169903" />
+         width="22.000004"
+         height="10"
+         x="98.018967"
+         y="47.164963"
+         ry="2.3144531e-07" />
       <path
          style="fill:url(#linearGradient1308);fill-opacity:1"
-         d="m 118.99999,49.190216 22,22 h -22 z"
+         d="m 120.01896,47.164963 22,22 h -22 z"
          id="path1378"
          sodipodi:nodetypes="cccc" />
     </g>

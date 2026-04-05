@@ -386,8 +386,8 @@
        x2="79"
        y2="48" />
     <linearGradient
-       xlink:href="#shadow"
-       id="linearGradient12580"
+       xlink:href="#linearGradient5400"
+       id="linearGradient13150"
        gradientUnits="userSpaceOnUse"
        x1="19"
        y1="52"
@@ -395,7 +395,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12582"
+       id="linearGradient1736"
        gradientUnits="userSpaceOnUse"
        x1="19"
        y1="52"
@@ -403,7 +403,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12584"
+       id="linearGradient1738"
        gradientUnits="userSpaceOnUse"
        x1="15"
        y1="48"
@@ -411,7 +411,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12586"
+       id="linearGradient1740"
        gradientUnits="userSpaceOnUse"
        x1="15"
        y1="48"
@@ -419,7 +419,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12588"
+       id="linearGradient1742"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -427,7 +427,7 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#linearGradient5400"
-       id="linearGradient12590"
+       id="linearGradient1744"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="52"
@@ -435,7 +435,7 @@
        y2="52" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12592"
+       id="linearGradient1746"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -443,7 +443,7 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12594"
+       id="linearGradient1748"
        gradientUnits="userSpaceOnUse"
        x1="17"
        y1="48"
@@ -451,7 +451,7 @@
        y2="48" />
     <linearGradient
        xlink:href="#shadow"
-       id="linearGradient12596"
+       id="linearGradient1750"
        gradientUnits="userSpaceOnUse"
        x1="24.5"
        y1="49.477753"
@@ -459,7 +459,7 @@
        y2="49.477753" />
     <linearGradient
        xlink:href="#icon"
-       id="linearGradient12598"
+       id="linearGradient1752"
        gradientUnits="userSpaceOnUse"
        x1="17"
        y1="48"
@@ -472,16 +472,16 @@
      transform="translate(-15,-13)">
     <g
        id="layer1"
-       style="display:none;fill:url(#linearGradient7178);fill-opacity:1">
+       style="display:inline;fill:url(#linearGradient7178);fill-opacity:1">
       <rect
-         style="fill:url(#linearGradient12580);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="fill:url(#linearGradient1736);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769-6"
          width="23"
          height="70"
          x="20"
          y="15" />
       <rect
-         style="fill:url(#linearGradient12582);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="fill:url(#linearGradient13150);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769-7"
          width="23"
          height="70"
@@ -492,14 +492,14 @@
        id="layer2"
        style="fill:url(#linearGradient7172);fill-opacity:1">
       <rect
-         style="display:inline;fill:url(#linearGradient12584);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="display:inline;fill:url(#linearGradient1738);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6769"
          width="23"
          height="70"
          x="15"
          y="13" />
       <rect
-         style="display:inline;fill:url(#linearGradient12586);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
+         style="display:inline;fill:url(#linearGradient1740);fill-opacity:1;fill-rule:evenodd;stroke-width:0.959166;paint-order:stroke fill markers"
          id="rect6771"
          width="23"
          height="70"
@@ -509,11 +509,11 @@
   </g>
   <g
      id="layer4"
-     style="display:inline"
+     style="display:none"
      transform="translate(-15,-13)">
     <g
        id="layer6"
-       style="display:inline;fill:url(#linearGradient12588);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient1742);fill-opacity:1"
        transform="translate(-6)">
       <path
          style="fill:url(#linearGradient7407);fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
@@ -531,23 +531,23 @@
   </g>
   <g
      id="g2667"
-     style="display:none"
+     style="display:inline"
      transform="translate(-15,-13)">
     <g
        id="g2661"
-       style="display:inline;fill:url(#linearGradient12592);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient1746);fill-opacity:1"
        transform="translate(-6)">
       <path
-         style="fill:none;fill-opacity:1;stroke:url(#linearGradient12590);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-         d="M 28,17 V 83 H 90 V 17 Z"
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient1744);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 30,19 V 81 H 88 V 19 Z"
          id="path2659" />
     </g>
     <g
        id="g2665"
        style="stroke:none">
       <path
-         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient12594);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
-         d="M 17,15 V 81 H 79 V 15 Z"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient1748);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 19,17 V 79 H 77 V 17 Z"
          id="path2663" />
     </g>
   </g>
@@ -557,15 +557,15 @@
      transform="translate(-15,-13)">
     <g
        id="g7715"
-       style="display:inline;fill:url(#linearGradient12596);fill-opacity:1"
+       style="display:inline;fill:url(#linearGradient1750);fill-opacity:1"
        transform="translate(-6)">
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8235);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8235);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 84,83 22,17"
          id="path7717-2"
          transform="translate(6)" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8237);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8237);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 22,83 84,17"
          id="path7717-5-9"
          transform="translate(6)" />
@@ -574,11 +574,11 @@
        id="g7719"
        style="stroke:none">
       <path
-         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient12598);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient1752);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 79,81 17,15"
          id="path7717" />
       <path
-         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8169);stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         style="display:inline;fill:none;fill-opacity:1;stroke:url(#linearGradient8169);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 17,81 79,15"
          id="path7717-5" />
     </g>

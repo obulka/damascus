@@ -3,26 +3,56 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use eframe::egui::{self, include_image};
+use iced::{
+    Element,
+    widget::{Svg, svg},
+};
+
 use strum::EnumString;
 
 #[derive(Debug, EnumString)]
 pub enum Icons {
+    ArrowLeft,
+    ArrowRight,
+    Close,
+    Detach,
+    File,
+    HorizontalSplit,
+    Maximize,
+    Minimize,
     Pause,
     Play,
     Refresh,
+    VerticalSplit,
 }
 
 impl Icons {
-    pub fn source(&self) -> egui::ImageSource<'_> {
-        match *self {
-            Self::Pause => include_image!("../assets/icons/pause.svg"),
-            Self::Play => include_image!("../assets/icons/play.svg"),
-            Self::Refresh => include_image!("../assets/icons/refresh.svg"),
-        }
+    pub fn as_svg(&self) -> Svg<'_> {
+        svg(match *self {
+            Self::ArrowLeft => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_left.svg"),
+            Self::ArrowRight => {
+                concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_right.svg")
+            }
+            Self::Close => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/close.svg"),
+            Self::Detach => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/detach.svg"),
+            Self::File => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/file.svg"),
+            Self::HorizontalSplit => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/icons/horizontal_split.svg"
+            ),
+            Self::Maximize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/maximize.svg"),
+            Self::Minimize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/minimize.svg"),
+            Self::Pause => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/pause.svg"),
+            Self::Play => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/play.svg"),
+            Self::Refresh => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/refresh.svg"),
+            Self::VerticalSplit => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/icons/vertical_split.svg"
+            ),
+        })
     }
 
-    pub fn forget(&self, ctx: &egui::Context) {
-        ctx.forget_image(self.source().uri().unwrap());
-    }
+    // pub fn as_button<Message>(&self) -> Button<'static, Message> {
+
+    // }
 }

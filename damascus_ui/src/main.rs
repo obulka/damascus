@@ -9,14 +9,17 @@
 
 use std::collections::BTreeMap;
 
-use iced::keyboard;
-use iced::widget::{
-    button, center, center_x, center_y, column, container, operation,
-    pane_grid::{self, PaneGrid},
-    responsive, row, scrollable, space, text, text_input,
+use iced::{
+    Center, Color, ContentFit, Element, Fill, Size, Subscription, Task, Theme, Vector, keyboard,
+    widget::{
+        Svg, button, center, center_x, center_y, column, container, operation,
+        pane_grid::{self, PaneGrid},
+        responsive, row, scrollable, space, text, text_input,
+    },
+    window,
 };
-use iced::window;
-use iced::{Center, Color, Element, Fill, Size, Subscription, Task, Theme, Vector};
+
+use damascus_ui::{icons::Icons, style};
 
 //
 //
@@ -37,6 +40,7 @@ fn main() -> iced::Result {
     iced::daemon(Damascus::new, Damascus::update, Damascus::view)
         .subscription(Damascus::subscription)
         .title(Damascus::title)
+        .default_font(iced::Font::MONOSPACE)
         .theme(Damascus::theme)
         .scale_factor(Damascus::scale_factor)
         .run()
@@ -71,7 +75,6 @@ enum PanelMessage {
     Clicked(pane_grid::Pane),
     Dragged(pane_grid::DragEvent),
     Resized(pane_grid::ResizeEvent),
-    TogglePin(pane_grid::Pane),
     Maximize(pane_grid::Pane),
     Restore,
     Close(pane_grid::Pane),
@@ -128,12 +131,7 @@ impl Panel {
             PanelMessage::Dragged(pane_grid::DragEvent::Dropped { pane, target }) => {
                 self.panes.drop(pane, target);
             }
-            PanelMessage::Dragged(_) => {}
-            PanelMessage::TogglePin(pane) => {
-                if let Some(Pane { is_pinned, .. }) = self.panes.get_mut(pane) {
-                    *is_pinned = !*is_pinned;
-                }
-            }
+            PanelMessage::Dragged(_drag_event) => {}
             PanelMessage::Maximize(pane) => self.panes.maximize(pane),
             PanelMessage::Restore => {
                 self.panes.restore();
@@ -145,8 +143,6 @@ impl Panel {
             }
             PanelMessage::CloseFocused => {
                 if let Some(pane) = self.focus
-                    && let Some(Pane { is_pinned, .. }) = self.panes.get(pane)
-                    && !is_pinned
                     && let Some((_, sibling)) = self.panes.close(pane)
                 {
                     self.focus = Some(sibling);
@@ -174,62 +170,113 @@ impl Panel {
         })
     }
 
-    fn view(&self) -> Element<'_, PanelMessage> {
+    fn view_content<'a>(
+        pane: pane_grid::Pane,
+        total_panes: usize,
+        size: Size,
+    ) -> Element<'a, PanelMessage> {
+        let content = column![text!("{}x{}", size.width, size.height).size(24)]
+            .spacing(3)
+            .align_x(Center);
+
+        center_y(scrollable(content)).padding(5).into()
+    }
+
+    fn view_controls<'a>(
+        pane: pane_grid::Pane,
+        total_panes: usize,
+        is_maximized: bool,
+    ) -> Element<'a, PanelMessage> {
+        let horizontal_split = button(Icons::HorizontalSplit.as_svg().width(16).height(16))
+            .style(button::secondary)
+            .padding(3)
+            .on_press(PanelMessage::Split(pane_grid::Axis::Horizontal, pane));
+
+        let vertical_split = button(Icons::VerticalSplit.as_svg().width(16).height(16))
+            .style(button::secondary)
+            .padding(3)
+            .on_press(PanelMessage::Split(pane_grid::Axis::Vertical, pane));
+
+        let maximize = if total_panes > 1 {
+            let (content, message) = if is_maximized {
+                (Icons::Minimize.as_svg(), PanelMessage::Restore)
+            } else {
+                (Icons::Maximize.as_svg(), PanelMessage::Maximize(pane))
+            };
+
+            Some(
+                button(content.width(16).height(16))
+                    .style(button::secondary)
+                    .padding(3)
+                    .on_press(message),
+            )
+        } else {
+            None
+        };
+
+        let detach = button(Icons::Detach.as_svg().width(16).height(16))
+            .style(button::secondary)
+            .padding(3)
+            .on_press_maybe(if total_panes > 1 {
+                Some(PanelMessage::Detach(pane))
+            } else {
+                None
+            });
+
+        let close = style::close_button().on_press_maybe(if total_panes > 1 {
+            Some(PanelMessage::Close(pane))
+        } else {
+            None
+        });
+
+        row![horizontal_split, vertical_split, maximize, detach, close]
+            .spacing(3)
+            .into()
+    }
+
+    fn view<'a>(&'a self, preferences: &'a style::Preferences) -> Element<'a, PanelMessage> {
         let focus = self.focus;
         let total_panes = self.panes.len();
 
         let pane_grid = PaneGrid::new(&self.panes, |id, pane, is_maximized| {
             let is_focused = focus == Some(id);
 
-            let pin_button = button(text(if pane.is_pinned { "Unpin" } else { "Pin" }).size(14))
-                .on_press(PanelMessage::TogglePin(id))
-                .padding(3);
-
-            let title = row![
-                pin_button,
-                "Pane",
-                text(pane.id.to_string()).color(if is_focused {
-                    PANE_ID_COLOR_FOCUSED
-                } else {
-                    PANE_ID_COLOR_UNFOCUSED
-                }),
-            ]
-            .spacing(5);
-
-            let title_bar = pane_grid::TitleBar::new(title)
+            let title_bar = pane_grid::TitleBar::new(row![])
                 .controls(pane_grid::Controls::dynamic(
-                    view_controls(id, total_panes, pane.is_pinned, is_maximized),
-                    button(text("X").size(14))
-                        .style(button::danger)
-                        .padding(3)
-                        .on_press_maybe(if total_panes > 1 && !pane.is_pinned {
-                            Some(PanelMessage::Close(id))
-                        } else {
-                            None
-                        }),
+                    Self::view_controls(id, total_panes, is_maximized),
+                    style::close_button().on_press_maybe(if total_panes > 1 {
+                        Some(PanelMessage::Close(id))
+                    } else {
+                        None
+                    }),
                 ))
                 .padding(3)
-                .style(if is_focused {
-                    style::title_bar_focused
-                } else {
-                    style::title_bar_active
+                .style(move |theme| {
+                    if is_focused {
+                        style::title_bar_focused(preferences)
+                    } else {
+                        style::title_bar(preferences)
+                    }
                 });
 
             pane_grid::Content::new(responsive(move |size| {
-                view_content(id, total_panes, pane.is_pinned, size)
+                Self::view_content(id, total_panes, size)
             }))
             .title_bar(title_bar)
-            .style(if is_focused {
-                style::pane_focused
-            } else {
-                style::pane_active
+            .style(move |theme| {
+                if is_focused {
+                    style::pane_focused(preferences)
+                } else {
+                    style::pane(preferences)
+                }
             })
         })
         .width(Fill)
         .height(Fill)
+        .spacing(2)
         .on_click(PanelMessage::Clicked)
         .on_drag(PanelMessage::Dragged)
-        .on_resize(10, PanelMessage::Resized);
+        .on_resize(5, PanelMessage::Resized);
 
         container(pane_grid).into()
     }
@@ -240,17 +287,6 @@ impl Default for Panel {
         Panel::new()
     }
 }
-
-const PANE_ID_COLOR_UNFOCUSED: Color = Color::from_rgb(
-    0xFF as f32 / 255.0,
-    0xC7 as f32 / 255.0,
-    0xC7 as f32 / 255.0,
-);
-const PANE_ID_COLOR_FOCUSED: Color = Color::from_rgb(
-    0xFF as f32 / 255.0,
-    0x47 as f32 / 255.0,
-    0x47 as f32 / 255.0,
-);
 
 fn handle_hotkey(key: keyboard::Key) -> Option<PanelMessage> {
     use keyboard::key::{self, Key};
@@ -278,146 +314,11 @@ fn handle_hotkey(key: keyboard::Key) -> Option<PanelMessage> {
 #[derive(Clone, Copy)]
 struct Pane {
     id: usize,
-    pub is_pinned: bool,
 }
 
 impl Pane {
     fn new(id: usize) -> Self {
-        Self {
-            id,
-            is_pinned: false,
-        }
-    }
-}
-
-fn view_content<'a>(
-    pane: pane_grid::Pane,
-    total_panes: usize,
-    is_pinned: bool,
-    size: Size,
-) -> Element<'a, PanelMessage> {
-    let button = |label, message| {
-        button(text(label).width(Fill).align_x(Center).size(16))
-            .width(Fill)
-            .padding(8)
-            .on_press(message)
-    };
-
-    let controls = column![
-        button(
-            "Split horizontally",
-            PanelMessage::Split(pane_grid::Axis::Horizontal, pane),
-        ),
-        button(
-            "Split vertically",
-            PanelMessage::Split(pane_grid::Axis::Vertical, pane),
-        ),
-        if total_panes > 1 && !is_pinned {
-            Some(button("Close", PanelMessage::Close(pane)).style(button::danger))
-        } else {
-            None
-        }
-    ]
-    .spacing(5)
-    .max_width(160);
-
-    let content = column![text!("{}x{}", size.width, size.height).size(24), controls,]
-        .spacing(3)
-        .align_x(Center);
-
-    center_y(scrollable(content)).padding(5).into()
-}
-
-fn view_controls<'a>(
-    pane: pane_grid::Pane,
-    total_panes: usize,
-    is_pinned: bool,
-    is_maximized: bool,
-) -> Element<'a, PanelMessage> {
-    let maximize = if total_panes > 1 {
-        let (content, message) = if is_maximized {
-            ("Restore", PanelMessage::Restore)
-        } else {
-            ("Maximize", PanelMessage::Maximize(pane))
-        };
-
-        Some(
-            button(text(content).size(14))
-                .style(button::secondary)
-                .padding(3)
-                .on_press(message),
-        )
-    } else {
-        None
-    };
-
-    let detach = button(text("Detach").size(14))
-        .style(button::secondary)
-        .padding(3)
-        .on_press(PanelMessage::Detach(pane));
-
-    let close = button(text("Close").size(14))
-        .style(button::danger)
-        .padding(3)
-        .on_press_maybe(if total_panes > 1 && !is_pinned {
-            Some(PanelMessage::Close(pane))
-        } else {
-            None
-        });
-
-    row![maximize, detach, close].spacing(5).into()
-}
-
-mod style {
-    use iced::widget::container;
-    use iced::{Border, Theme};
-
-    pub fn title_bar_active(theme: &Theme) -> container::Style {
-        let palette = theme.extended_palette();
-
-        container::Style {
-            text_color: Some(palette.background.strong.text),
-            background: Some(palette.background.strong.color.into()),
-            ..Default::default()
-        }
-    }
-
-    pub fn title_bar_focused(theme: &Theme) -> container::Style {
-        let palette = theme.extended_palette();
-
-        container::Style {
-            text_color: Some(palette.primary.strong.text),
-            background: Some(palette.primary.strong.color.into()),
-            ..Default::default()
-        }
-    }
-
-    pub fn pane_active(theme: &Theme) -> container::Style {
-        let palette = theme.extended_palette();
-
-        container::Style {
-            background: Some(palette.background.weak.color.into()),
-            border: Border {
-                width: 2.0,
-                color: palette.background.strong.color,
-                ..Border::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    pub fn pane_focused(theme: &Theme) -> container::Style {
-        let palette = theme.extended_palette();
-
-        container::Style {
-            background: Some(palette.background.weak.color.into()),
-            border: Border {
-                width: 2.0,
-                color: palette.primary.strong.color,
-                ..Border::default()
-            },
-            ..Default::default()
-        }
+        Self { id }
     }
 }
 
@@ -440,7 +341,7 @@ struct Window {
     title: String,
     scale_input: String,
     current_scale: f32,
-    theme: Theme,
+    preferences: style::Preferences,
     panel: Panel,
 }
 
@@ -461,7 +362,7 @@ impl Window {
             title: format!("damascus-{count}"),
             scale_input: "1.0".to_string(),
             current_scale: 1.0,
-            theme: Theme::ALL[count % Theme::ALL.len()].clone(),
+            preferences: style::Preferences::default(),
             panel: Panel::new(),
         }
     }
@@ -497,7 +398,7 @@ impl Window {
         // .width(200);
 
         self.panel
-            .view()
+            .view(&self.preferences)
             .map(move |panel_message| WindowMessage::Panel(id, panel_message).into())
     }
 }
@@ -660,7 +561,7 @@ impl Damascus {
     }
 
     fn theme(&self, window: window::Id) -> Option<Theme> {
-        Some(self.windows.get(&window)?.theme.clone())
+        Some(self.windows.get(&window)?.preferences.theme.into())
     }
 
     fn scale_factor(&self, window: window::Id) -> f32 {

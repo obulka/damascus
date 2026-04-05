@@ -317,7 +317,7 @@ enum WindowMessage {
     ScaleInputChanged(window::Id, String),
     ScaleChanged(window::Id, String),
     TitleChanged(window::Id, String),
-    Panel(window::Id, PanelMessage),
+    Panel(Option<window::Id>, PanelMessage),
 }
 
 impl Window {
@@ -363,7 +363,7 @@ impl Window {
 
         self.panel
             .view(&self.preferences)
-            .map(move |panel_message| WindowMessage::Panel(id, panel_message).into())
+            .map(move |panel_message| WindowMessage::Panel(Some(id), panel_message).into())
     }
 }
 
@@ -454,7 +454,7 @@ impl Damascus {
                     // FilesHoveredLeft,
                     _ => {}
                 };
-                println!("{:?}, {:?}", id, event);
+                // println!("{:?}, {:?}", id, event);
                 Task::none()
             }
             WindowMessage::Open => {
@@ -519,7 +519,11 @@ impl Damascus {
 
                 Task::none()
             }
-            WindowMessage::Panel(id, panel_message) => {
+            WindowMessage::Panel(window_id, panel_message) => {
+                let Some(id) = window_id.or_else(|| self.focused_window_id) else {
+                    return Task::none();
+                };
+
                 let task: Task<Message> = match panel_message {
                     PanelMessage::Detach(_) => window::position(id)
                         .then(|last_position| {
@@ -577,58 +581,49 @@ impl Damascus {
             .unwrap_or(1.0)
     }
 
-    fn handle_hotkey(focused_window_id: Option<window::Id>, key: keyboard::Key) -> Option<Message> {
+    fn handle_hotkey(key: keyboard::Key) -> Option<Message> {
         use keyboard::key::{self, Key};
         use pane_grid::{Axis, Direction};
 
-        if let Some(window_id) = focused_window_id {
-            match key.as_ref() {
-                Key::Character("v") => Some(
-                    WindowMessage::Panel(window_id, PanelMessage::SplitFocused(Axis::Vertical))
-                        .into(),
-                ),
-                Key::Character("h") => Some(
-                    WindowMessage::Panel(window_id, PanelMessage::SplitFocused(Axis::Horizontal))
-                        .into(),
-                ),
-                Key::Character("w") => {
-                    Some(WindowMessage::Panel(window_id, PanelMessage::CloseFocused).into())
-                }
-                Key::Named(key) => {
-                    let direction = match key {
-                        key::Named::ArrowUp => Some(Direction::Up),
-                        key::Named::ArrowDown => Some(Direction::Down),
-                        key::Named::ArrowLeft => Some(Direction::Left),
-                        key::Named::ArrowRight => Some(Direction::Right),
-                        _ => None,
-                    };
-
-                    if let Some(direction) = match key {
-                        key::Named::ArrowUp => Some(Direction::Up),
-                        key::Named::ArrowDown => Some(Direction::Down),
-                        key::Named::ArrowLeft => Some(Direction::Left),
-                        key::Named::ArrowRight => Some(Direction::Right),
-                        _ => None,
-                    } {
-                        Some(
-                            WindowMessage::Panel(window_id, PanelMessage::FocusAdjacent(direction))
-                                .into(),
-                        )
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
+        match key.as_ref() {
+            Key::Character("v") => {
+                Some(WindowMessage::Panel(None, PanelMessage::SplitFocused(Axis::Vertical)).into())
             }
-        } else {
-            None
+            Key::Character("h") => Some(
+                WindowMessage::Panel(None, PanelMessage::SplitFocused(Axis::Horizontal)).into(),
+            ),
+            Key::Character("w") => {
+                Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
+            }
+            Key::Named(key) => {
+                let direction = match key {
+                    key::Named::ArrowUp => Some(Direction::Up),
+                    key::Named::ArrowDown => Some(Direction::Down),
+                    key::Named::ArrowLeft => Some(Direction::Left),
+                    key::Named::ArrowRight => Some(Direction::Right),
+                    _ => None,
+                };
+
+                if let Some(direction) = match key {
+                    key::Named::ArrowUp => Some(Direction::Up),
+                    key::Named::ArrowDown => Some(Direction::Down),
+                    key::Named::ArrowLeft => Some(Direction::Left),
+                    key::Named::ArrowRight => Some(Direction::Right),
+                    _ => None,
+                } {
+                    Some(WindowMessage::Panel(None, PanelMessage::FocusAdjacent(direction)).into())
+                } else {
+                    None
+                }
+            }
+            _ => None,
         }
     }
 
     fn subscription(&self) -> Subscription<Message> {
         let id = self.focused_window_id.clone();
         Subscription::batch(
-            std::iter::once(keyboard::listen().filter_map(move |event| {
+            std::iter::once(keyboard::listen().filter_map(|event| {
                 let keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
                     return None;
                 };
@@ -637,8 +632,7 @@ impl Damascus {
                     return None;
                 }
 
-                // Self::handle_hotkey(id, key)
-                None
+                Self::handle_hotkey(key)
             }))
             .chain(std::iter::once(
                 window::close_events().map(|window_id| WindowMessage::Closed(window_id).into()),

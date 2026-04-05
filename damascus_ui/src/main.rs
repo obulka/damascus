@@ -10,10 +10,14 @@
 use std::collections::BTreeMap;
 
 use iced::{
-    Center, Element, Fill, Size, Subscription, Task, Theme, Vector, keyboard,
+    Center, Element, Fill, Size, Subscription, Task, Theme, Vector,
+    keyboard::{
+        self,
+        key::{self, Key},
+    },
     widget::{
         button, center, center_y, column, container, operation,
-        pane_grid::{self, PaneGrid},
+        pane_grid::{self, Axis, Direction, PaneGrid},
         responsive, row, scrollable, space, text,
     },
     window,
@@ -300,8 +304,6 @@ impl Pane {
 
 struct Window {
     title: String,
-    scale_input: String,
-    current_scale: f32,
     preferences: style::Preferences,
     panel: Panel,
 }
@@ -311,8 +313,7 @@ enum WindowMessage {
     Event(window::Id, window::Event),
     Opened(window::Id),
     Closed(window::Id),
-    ScaleInputChanged(window::Id, String),
-    ScaleChanged(window::Id, String),
+    ScaleChanged(Option<window::Id>, f32),
     TitleChanged(window::Id, String),
     Panel(Option<window::Id>, PanelMessage),
 }
@@ -321,21 +322,12 @@ impl Window {
     fn new(count: usize) -> Self {
         Self {
             title: format!("damascus-{count}"),
-            scale_input: "1.0".to_string(),
-            current_scale: 1.0,
             preferences: style::Preferences::default(),
             panel: Panel::new(),
         }
     }
 
     fn view(&self, id: window::Id) -> Element<'_, Message> {
-        // let scale_input = column![
-        //     text("Window scale factor:"),
-        //     text_input("Window Scale", &self.scale_input)
-        //         .on_input(move |scale| WindowMessage::ScaleInputChanged(id, scale).into())
-        //         .on_submit(WindowMessage::ScaleChanged(id, self.scale_input.to_string()).into())
-        // ];
-
         // let title_input = column![
         //     text("Window title:"),
         //     text_input("Window Title", &self.title)
@@ -471,19 +463,13 @@ impl Damascus {
                     Task::none()
                 }
             }
-            WindowMessage::ScaleInputChanged(id, scale) => {
-                if let Some(window) = self.windows.get_mut(&id) {
-                    window.scale_input = scale;
-                }
+            WindowMessage::ScaleChanged(window_id, scale) => {
+                let Some(id) = window_id.or_else(|| self.focused_window_id) else {
+                    return Task::none();
+                };
 
-                Task::none()
-            }
-            WindowMessage::ScaleChanged(id, scale) => {
                 if let Some(window) = self.windows.get_mut(&id) {
-                    window.current_scale = scale
-                        .parse()
-                        .unwrap_or(window.current_scale)
-                        .clamp(0.5, 5.0);
+                    window.preferences.scale *= scale;
                 }
 
                 Task::none()
@@ -553,24 +539,35 @@ impl Damascus {
     fn scale_factor(&self, window: window::Id) -> f32 {
         self.windows
             .get(&window)
-            .map(|window| window.current_scale)
+            .map(|window| window.preferences.scale)
             .unwrap_or(1.0)
     }
 
-    fn handle_hotkey(key: keyboard::Key) -> Option<Message> {
-        use keyboard::key::{self, Key};
-        use pane_grid::{Axis, Direction};
-
+    fn handle_ctrl_alt_shift_hotkey(key: keyboard::Key) -> Option<Message> {
         match key.as_ref() {
-            Key::Character("v") => {
-                Some(WindowMessage::Panel(None, PanelMessage::SplitFocused(Axis::Vertical)).into())
-            }
-            Key::Character("h") => Some(
-                WindowMessage::Panel(None, PanelMessage::SplitFocused(Axis::Horizontal)).into(),
-            ),
+            _ => None,
+        }
+    }
+
+    fn handle_ctrl_shift_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
+            _ => None,
+        }
+    }
+
+    fn handle_ctrl_alt_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
+            _ => None,
+        }
+    }
+
+    fn handle_ctrl_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
             Key::Character("w") => {
                 Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
             }
+            Key::Character("=") => Some(WindowMessage::ScaleChanged(None, 1.05).into()),
+            Key::Character("-") => Some(WindowMessage::ScaleChanged(None, 0.95).into()),
             Key::Named(key) => {
                 if let Some(direction) = match key {
                     key::Named::ArrowUp => Some(Direction::Up),
@@ -588,6 +585,40 @@ impl Damascus {
         }
     }
 
+    fn handle_shift_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
+            _ => None,
+        }
+    }
+
+    fn handle_alt_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
+            _ => None,
+        }
+    }
+
+    fn handle_hotkeys(modifiers: keyboard::Modifiers, key: keyboard::Key) -> Option<Message> {
+        let ctrl_down: bool = modifiers.command();
+        let shift_down: bool = modifiers.shift();
+        let alt_down: bool = modifiers.alt();
+
+        if ctrl_down && shift_down && alt_down {
+            Self::handle_ctrl_alt_shift_hotkey(key)
+        } else if ctrl_down && shift_down {
+            Self::handle_ctrl_shift_hotkey(key)
+        } else if ctrl_down && alt_down {
+            Self::handle_ctrl_alt_hotkey(key)
+        } else if ctrl_down {
+            Self::handle_ctrl_hotkey(key)
+        } else if alt_down {
+            Self::handle_alt_hotkey(key)
+        } else if shift_down {
+            Self::handle_shift_hotkey(key)
+        } else {
+            None
+        }
+    }
+
     fn subscription(&self) -> Subscription<Message> {
         Subscription::batch(
             std::iter::once(keyboard::listen().filter_map(|event| {
@@ -595,11 +626,7 @@ impl Damascus {
                     return None;
                 };
 
-                if !modifiers.command() {
-                    return None;
-                }
-
-                Self::handle_hotkey(key)
+                Self::handle_hotkeys(modifiers, key)
             }))
             .chain(std::iter::once(
                 window::close_events().map(|window_id| WindowMessage::Closed(window_id).into()),

@@ -97,6 +97,7 @@ impl From<Theme> for iced::Theme {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Preferences {
+    pub scale: f32,
     pub border_width: f32,
     pub theme: Theme,
 }
@@ -104,6 +105,7 @@ pub struct Preferences {
 impl Default for Preferences {
     fn default() -> Self {
         Self {
+            scale: 1.0,
             border_width: 2.0,
             theme: Theme::default(),
         }

@@ -11,10 +11,11 @@ use macro_rules_attribute::derive_alias;
 
 use damascus::Enumerator;
 
-// pub mod app;
+pub mod app;
 pub mod icons;
 pub mod style;
-// pub mod widgets;
+pub mod widgets;
+pub mod windows;
 
 // pub use app::Damascus;
 

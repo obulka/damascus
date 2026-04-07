@@ -23,6 +23,8 @@ use iced::{
     window,
 };
 
+use damascus;
+
 use damascus_ui::{icons::Icons, style};
 
 //
@@ -363,6 +365,26 @@ impl Window {
 //
 //
 //
+// Node graph
+//
+//
+//
+//
+//
+//
+
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
+struct NodeGraph {
+    node_graph: damascus::graph::node_graph::NodeGraph,
+}
+
+//
+//
+//
+//
+//
+//
+//
 // Main App
 //
 //
@@ -371,52 +393,23 @@ impl Window {
 //
 //
 
-enum NodeGraphMessage {
-    None,
-}
-
-enum ViewerMessage {
-    None,
-}
-
-struct Damascus {
+struct WindowManager {
+    main_window: Option<window::Id>,
     focused_window_id: Option<window::Id>,
     windows: BTreeMap<window::Id, Window>,
 }
 
-#[derive(Debug, Clone)]
-enum Message {
-    Window(WindowMessage),
-    NodeGraphMessage,
-    ViewerMessage,
-}
-
-impl From<WindowMessage> for Message {
-    fn from(window_message: WindowMessage) -> Self {
-        Self::Window(window_message)
+impl Default for WindowManager {
+    fn default() -> Self {
+        Self {
+            main_window: None,
+            focused_window_id: None,
+            windows: BTreeMap::new(),
+        }
     }
 }
 
-impl Damascus {
-    fn new() -> (Self, Task<Message>) {
-        let (_, open) = window::open(window::Settings::default());
-
-        (
-            Self {
-                focused_window_id: None,
-                windows: BTreeMap::new(),
-            },
-            open.map(|id| WindowMessage::Opened(id).into()),
-        )
-    }
-
-    fn title(&self, window: window::Id) -> String {
-        self.windows
-            .get(&window)
-            .map(|window| window.title.clone())
-            .unwrap_or_default()
-    }
-
+impl WindowManager {
     fn update_window(&mut self, message: WindowMessage) -> Task<Message> {
         match message {
             WindowMessage::Event(id, event) => {
@@ -443,10 +436,14 @@ impl Damascus {
                     // window::Event::FilesHoveredLeft,
                     _ => {}
                 };
-                // println!("{:?}, {:?}", id, event);
+                println!("{:?}, {:?}", id, event);
                 Task::none()
             }
             WindowMessage::Opened(id) => {
+                if self.main_window.is_none() {
+                    self.main_window = Some(id);
+                }
+
                 let window = Window::new(self.windows.len() + 1);
                 let focus_input = operation::focus(format!("input-{id}"));
 
@@ -458,6 +455,10 @@ impl Damascus {
                 self.windows.remove(&id);
 
                 if self.windows.is_empty() {
+                    iced::exit()
+                } else if let Some(main_window) = self.main_window
+                    && main_window == id
+                {
                     iced::exit()
                 } else {
                     Task::none()
@@ -514,10 +515,58 @@ impl Damascus {
             }
         }
     }
+}
+
+enum NodeGraphMessage {
+    None,
+}
+
+enum ViewerMessage {
+    None,
+}
+
+struct Damascus {
+    window_manager: WindowManager,
+    node_graph: NodeGraph,
+}
+
+#[derive(Debug, Clone)]
+enum Message {
+    Window(WindowMessage),
+    NodeGraphMessage,
+    ViewerMessage,
+}
+
+impl From<WindowMessage> for Message {
+    fn from(window_message: WindowMessage) -> Self {
+        Self::Window(window_message)
+    }
+}
+
+impl Damascus {
+    fn new() -> (Self, Task<Message>) {
+        let (_, open) = window::open(window::Settings::default());
+
+        (
+            Self {
+                window_manager: WindowManager::default(),
+                node_graph: NodeGraph::default(),
+            },
+            open.map(|id| WindowMessage::Opened(id).into()),
+        )
+    }
+
+    fn title(&self, window: window::Id) -> String {
+        self.window_manager
+            .windows
+            .get(&window)
+            .map(|window| window.title.clone())
+            .unwrap_or_default()
+    }
 
     fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Window(window_message) => self.update_window(window_message),
+            Message::Window(window_message) => self.window_manager.update_window(window_message),
             _ => {
                 todo!("Add the meat")
             }
@@ -525,7 +574,7 @@ impl Damascus {
     }
 
     fn view(&self, window_id: window::Id) -> Element<'_, Message> {
-        if let Some(window) = self.windows.get(&window_id) {
+        if let Some(window) = self.window_manager.windows.get(&window_id) {
             center(window.view(window_id)).into()
         } else {
             space().into()
@@ -533,11 +582,19 @@ impl Damascus {
     }
 
     fn theme(&self, window: window::Id) -> Option<Theme> {
-        Some(self.windows.get(&window)?.preferences.theme.into())
+        Some(
+            self.window_manager
+                .windows
+                .get(&window)?
+                .preferences
+                .theme
+                .into(),
+        )
     }
 
     fn scale_factor(&self, window: window::Id) -> f32 {
-        self.windows
+        self.window_manager
+            .windows
             .get(&window)
             .map(|window| window.preferences.scale)
             .unwrap_or(1.0)
@@ -556,6 +613,12 @@ impl Damascus {
     }
 
     fn handle_ctrl_alt_hotkey(key: keyboard::Key) -> Option<Message> {
+        match key.as_ref() {
+            _ => None,
+        }
+    }
+
+    fn handle_alt_shift_hotkey(key: keyboard::Key) -> Option<Message> {
         match key.as_ref() {
             _ => None,
         }
@@ -608,6 +671,8 @@ impl Damascus {
             Self::handle_ctrl_shift_hotkey(key)
         } else if ctrl_down && alt_down {
             Self::handle_ctrl_alt_hotkey(key)
+        } else if shift_down && alt_down {
+            Self::handle_alt_shift_hotkey(key)
         } else if ctrl_down {
             Self::handle_ctrl_hotkey(key)
         } else if alt_down {

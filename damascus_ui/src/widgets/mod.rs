@@ -5,6 +5,6 @@
 
 // pub mod dialog;
 // pub mod node_graph;
-// pub mod toolbar;
+pub mod toolbar;
 // pub mod viewport;
 pub mod panel;

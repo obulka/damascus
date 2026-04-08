@@ -47,7 +47,7 @@ impl Panel {
     pub fn new() -> Self {
         let (panes, _) = iced::widget::pane_grid::State::new(Pane::default());
 
-        Panel {
+        Self {
             panes,
             panes_created: 1,
             focus: None,

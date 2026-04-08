@@ -12,7 +12,7 @@ use damascus;
 
 use crate::{
     widgets::panel::PanelMessage,
-    windows::{window::WindowMessage, window_manager::WindowManager},
+    windows::window_manager::{WindowManager, WindowManagerMessage},
 };
 
 //
@@ -62,14 +62,14 @@ pub struct NodeGraph {
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Window(WindowMessage),
+    WindowManager(WindowManagerMessage),
     NodeGraph(NodeGraphMessage),
     Viewer(ViewerMessage),
 }
 
-impl From<WindowMessage> for Message {
-    fn from(window_message: WindowMessage) -> Self {
-        Self::Window(window_message)
+impl From<WindowManagerMessage> for Message {
+    fn from(window_manager_message: WindowManagerMessage) -> Self {
+        Self::WindowManager(window_manager_message)
     }
 }
 
@@ -174,9 +174,9 @@ impl Damascus {
         }
 
         match message {
-            Message::Window(window_message) => self
+            Message::WindowManager(window_manager_message) => self
                 .window_manager
-                .update_window(window_message)
+                .update(window_manager_message)
                 .map(|window_message| window_message.into()),
             _ => {
                 todo!("Add the meat")
@@ -185,16 +185,7 @@ impl Damascus {
     }
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
-        if let Some(window) = self.window_manager.windows.get(&window_id) {
-            iced::widget::center(
-                window
-                    .view(window_id)
-                    .map(|window_message| window_message.into()),
-            )
-            .into()
-        } else {
-            iced::widget::space().into()
-        }
+        self.window_manager.view(window_id)
     }
 
     fn display_error() {

@@ -35,6 +35,13 @@ impl Window {
         }
     }
 
+    pub fn update(&mut self, message: WindowMessage) -> iced::Task<WindowMessage> {
+        // match message {
+        //     _ => { iced::Task::none() }
+        // }
+        iced::Task::none()
+    }
+
     pub fn view(&self, id: iced::window::Id) -> iced::Element<'_, WindowMessage> {
         // let title_input = column![
         //     text("Window title:"),

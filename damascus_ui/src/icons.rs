@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use iced::widget::{Svg, svg};
+use iced;
 
 use strum::EnumString;
 
@@ -24,8 +24,8 @@ pub enum Icons {
 }
 
 impl Icons {
-    pub fn as_svg(&self) -> Svg<'_> {
-        svg(match *self {
+    pub fn as_svg(&self) -> iced::widget::Svg<'_> {
+        iced::widget::svg(match *self {
             Self::ArrowLeft => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_left.svg"),
             Self::ArrowRight => {
                 concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_right.svg")

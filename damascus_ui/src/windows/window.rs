@@ -5,12 +5,12 @@
 
 use iced;
 
-use crate::{
+use crate::widgets::{
+    panel::{Panel, PanelMessage},
     style,
-    widgets::panel::{Panel, PanelMessage},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum WindowMessage {
     Event(iced::window::Id, iced::window::Event),
     Opened(iced::window::Id),

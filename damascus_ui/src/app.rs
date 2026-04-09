@@ -8,11 +8,15 @@ use std::time::{Duration, SystemTime};
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 
-use damascus;
-
 use crate::{
-    widgets::panel::PanelMessage,
-    windows::window_manager::{WindowManager, WindowManagerMessage},
+    widgets::{
+        node_graph::{NodeGraph, NodeGraphMessage},
+        panel::PanelMessage,
+    },
+    windows::{
+        window::WindowMessage,
+        window_manager::{WindowManager, WindowManagerMessage},
+    },
 };
 
 //
@@ -30,19 +34,9 @@ use crate::{
 //
 //
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ViewerMessage {
     None,
-}
-
-#[derive(Debug, Clone)]
-pub enum NodeGraphMessage {
-    None,
-}
-
-#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
-pub struct NodeGraph {
-    pub node_graph: damascus::graph::node_graph::NodeGraph,
 }
 
 //
@@ -60,11 +54,17 @@ pub struct NodeGraph {
 //
 //
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum Message {
     WindowManager(WindowManagerMessage),
     NodeGraph(NodeGraphMessage),
     Viewer(ViewerMessage),
+}
+
+impl From<WindowMessage> for Message {
+    fn from(window_message: WindowMessage) -> Self {
+        Self::WindowManager(WindowManagerMessage::Window(window_message))
+    }
 }
 
 impl From<WindowManagerMessage> for Message {
@@ -73,7 +73,7 @@ impl From<WindowManagerMessage> for Message {
     }
 }
 
-#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct PersistentData {
     pub context: Context,
@@ -81,7 +81,7 @@ pub struct PersistentData {
     // pub viewport_state: ViewportState,
 }
 
-#[derive(Clone, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Context {
     pub working_file: Option<String>,
@@ -176,7 +176,11 @@ impl Damascus {
         match message {
             Message::WindowManager(window_manager_message) => self
                 .window_manager
-                .update(window_manager_message)
+                .update(
+                    &mut self.context,
+                    &mut self.node_graph,
+                    window_manager_message,
+                )
                 .map(|window_message| window_message.into()),
             _ => {
                 todo!("Add the meat")
@@ -185,7 +189,9 @@ impl Damascus {
     }
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
-        self.window_manager.view(window_id)
+        self.window_manager
+            .view(window_id)
+            .map(|window_manager_message| window_manager_message.into())
     }
 
     fn display_error() {

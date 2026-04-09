@@ -5,7 +5,7 @@
 
 use iced;
 
-use crate::{icons::Icons, style};
+use crate::{icons::Icons, widgets::style};
 
 #[derive(Clone, Copy)]
 struct Pane {}
@@ -54,7 +54,7 @@ impl Panel {
         }
     }
 
-    pub fn update(&mut self, message: PanelMessage) {
+    pub fn update(&mut self, message: PanelMessage) -> iced::Task<PanelMessage> {
         match message {
             PanelMessage::Split(axis, pane) => {
                 let result = self.panes.split(axis, pane, Pane::default());
@@ -115,6 +115,8 @@ impl Panel {
                 }
             }
         }
+
+        iced::Task::none()
     }
 
     fn view_content<'a>(

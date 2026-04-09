@@ -13,7 +13,6 @@ use damascus::Enumerator;
 
 pub mod app;
 pub mod icons;
-pub mod style;
 pub mod widgets;
 pub mod windows;
 

@@ -8,11 +8,31 @@ use std::collections::BTreeMap;
 use iced;
 
 use super::window::{Window, WindowMessage};
-use crate::widgets::{panel::PanelMessage, toolbar::ToolbarMessage};
+use crate::{
+    app::Context,
+    widgets::{
+        node_graph::NodeGraph,
+        panel::PanelMessage,
+        toolbar::{Toolbar, ToolbarMessage},
+    },
+};
 
+#[derive(Clone, Debug)]
 pub enum WindowManagerMessage {
     Toolbar(ToolbarMessage),
     Window(WindowMessage),
+}
+
+impl From<WindowMessage> for WindowManagerMessage {
+    fn from(window_message: WindowMessage) -> Self {
+        Self::Window(window_message)
+    }
+}
+
+impl From<ToolbarMessage> for WindowManagerMessage {
+    fn from(toolbar_message: ToolbarMessage) -> Self {
+        Self::Toolbar(toolbar_message)
+    }
 }
 
 pub struct WindowManager {
@@ -22,21 +42,10 @@ pub struct WindowManager {
     pub windows: BTreeMap<iced::window::Id, Window>,
 }
 
-impl From<WindowManagerMessage> for WindowMessage {
-    fn from(window_message: WindowMessage) -> Self {
-        Self::Window(window_message)
-    }
-}
-
-impl From<WindowManagerMessage> for ToolbarMessage {
-    fn from(toolbar_message: ToolbarMessage) -> Self {
-        Self::Toolbar(toolbar_message)
-    }
-}
-
 impl Default for WindowManager {
     fn default() -> Self {
         Self {
+            toolbar: Toolbar::default(),
             main_window_id: None,
             focused_window_id: None,
             windows: BTreeMap::new(),
@@ -48,14 +57,25 @@ impl WindowManager {
     pub fn new() -> (Self, iced::Task<WindowManagerMessage>) {
         let (_, open) = iced::window::open(iced::window::Settings::default());
 
-        (Self::default(), open.map(|id| WindowMessage::Opened(id)))
+        (
+            Self::default(),
+            open.map(|id| WindowMessage::Opened(id).into()),
+        )
     }
 
-    pub fn update(&mut self, message: WindowManagerMessage) -> iced::Task<WindowManagerMessage> {
+    pub fn update(
+        &mut self,
+        context: &mut Context,
+        node_graph: &mut NodeGraph,
+        message: WindowManagerMessage,
+    ) -> iced::Task<WindowManagerMessage> {
         match message {
-            WindowMessage::Toolbar(toolbar_message) => self.toolbar.update(toolbar_message),
-            WindowMessage::Window(window_message) => {
-                match message {
+            WindowManagerMessage::Toolbar(toolbar_message) => self
+                .toolbar
+                .update(context, node_graph, toolbar_message)
+                .map(|toolbar_message| toolbar_message.into()),
+            WindowManagerMessage::Window(window_message) => {
+                match window_message {
                     WindowMessage::Event(id, event) => {
                         match event {
                             // iced::window::Event::Opened {
@@ -161,32 +181,33 @@ impl WindowManager {
                         task
                     }
                 }
+                .map(|window_message| window_message.into())
             }
         }
     }
 
-    pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
+    pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, WindowManagerMessage> {
         if let Some(window) = self.windows.get(&window_id) {
-            let toolbar: iced::Element<'_, ToolbarMessage> = if let Some(main_window_id) =
-                self.main_window_id
-                && main_window_id == window_id
-            {
-                self.toolbar
-                    .view()
-                    .map(|toolbar_message| toolbar_message.into())
-            } else {
-                iced::widget::Space::new(0, 0).into()
-            };
+            let toolbar: Option<iced::Element<'_, WindowManagerMessage>> =
+                if let Some(main_window_id) = self.main_window_id
+                    && main_window_id == window_id
+                {
+                    Some(
+                        self.toolbar
+                            .view(&window.preferences)
+                            .map(|toolbar_message| toolbar_message.into()),
+                    )
+                } else {
+                    None
+                };
 
             iced::widget::column![
                 toolbar,
-                iced::widget::center(
-                    window
-                        .view(window_id)
-                        .map(|window_message| window_message.into()),
-                )
-                .into()
+                window
+                    .view(window_id)
+                    .map(|window_message| { window_message.into() })
             ]
+            .into()
         } else {
             iced::widget::space().into()
         }

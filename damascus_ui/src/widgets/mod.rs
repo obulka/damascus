@@ -4,7 +4,8 @@
 // LICENSE file in the root directory of this source tree.
 
 // pub mod dialog;
-// pub mod node_graph;
+pub mod node_graph;
 pub mod toolbar;
 // pub mod viewport;
 pub mod panel;
+pub mod style;

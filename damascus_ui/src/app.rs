@@ -6,7 +6,7 @@
 use std::time::{Duration, SystemTime};
 
 use iced;
-use serde_hashkey::{Key, OrderedFloatPolicy};
+use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 
 use damascus;
 
@@ -76,20 +76,20 @@ impl From<WindowManagerMessage> for Message {
 #[serde(default)]
 pub struct Context {
     pub default_preferences: style::Preferences,
-    pub working_file: Option<String>,
-    pub working_file_hash: Option<Key<OrderedFloatPolicy>>,
+    working_file: Option<String>,
+    working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub node_graph: damascus::graph::node_graph::NodeGraph,
 }
 
 impl Context {
-    // pub fn set_working_file(&mut self, working_file: String) {
-    //     self.working_file = Some(working_file);
-    //     self.working_file_hash = if let Ok(hash) = to_key_with_ordered_float(node_graph) {
-    //         Some(hash)
-    //     } else {
-    //         None
-    //     }
-    // }
+    pub fn working_file(&self) -> &Option<String> {
+        &self.working_file
+    }
+
+    pub fn set_working_file(&mut self, working_file: String) {
+        self.working_file = Some(working_file);
+        self.working_file_hash = to_key_with_ordered_float(&self.node_graph).ok()
+    }
 
     // pub fn update(&mut self, working_file: String, node_graph: &NodeGraph) {
     //     self.working_file = Some(working_file);

@@ -30,7 +30,11 @@ pub enum FileMessage {
     SaveAs(FileDescriptor),
 }
 
-fn save(file_path: &str, context: &Context, success_dialog: bool) {
+fn save(context: &mut Context, success_dialog: bool) -> bool {
+    let Some(file_path) = context.working_file() else {
+        return false;
+    };
+
     let Ok(mut file) = File::create(file_path) else {
         println!("File Creation Error");
         // dialog::error(
@@ -38,7 +42,7 @@ fn save(file_path: &str, context: &Context, success_dialog: bool) {
         //     "File Creation Error",
         //     &format!("Could not save file at {:}", file_path),
         // );
-        return;
+        return false;
     };
     let Ok(serialization) = serde_json::to_string_pretty(context) else {
         println!("Serialization Error");
@@ -47,7 +51,7 @@ fn save(file_path: &str, context: &Context, success_dialog: bool) {
         //     "Node Graph Serialization Error",
         //     &format!("Could not save file at {:}", file_path),
         // );
-        return;
+        return false;
     };
     let Ok(_) = file.write_all(serialization.as_bytes()) else {
         println!("File Write Error");
@@ -56,11 +60,34 @@ fn save(file_path: &str, context: &Context, success_dialog: bool) {
         //     "File Write Error",
         //     &format!("Could not save file at {:}", file_path),
         // );
-        return;
+        return false;
     };
+
     if success_dialog {
         println!("File saved at {:}", file_path);
         // dialog::success(&modal, "Success", &format!("File saved at {:}", file_path));
+    }
+
+    true
+}
+
+fn save_as(context: &mut Context, success_dialog: bool) -> bool {
+    let mut file_dialog = rfd::FileDialog::new()
+        .set_title("save to file")
+        .add_filter("damascus", &["dam"]);
+
+    if let Some(file_path) = context.working_file() {
+        if let Some(directory) = std::path::Path::new(file_path).parent() {
+            file_dialog = file_dialog.set_directory(directory);
+        }
+        file_dialog = file_dialog.set_file_name(file_path);
+    }
+
+    if let Some(path) = file_dialog.save_file() {
+        context.set_working_file(path.display().to_string());
+        save(context, true)
+    } else {
+        false
     }
 }
 
@@ -95,9 +122,15 @@ fn save(file_path: &str, context: &Context, success_dialog: bool) {
 //     *node_graph = state;
 // }
 
+// #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+// pub enum ToolbarError {
+//     Unknown,
+// }
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
     File(FileMessage),
+    // Error(ToolbarError),
 }
 
 #[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
@@ -113,8 +146,8 @@ impl Widget<ToolbarMessage> for Toolbar {
             ToolbarMessage::File(file_message) => match file_message {
                 FileMessage::Load(_file) => {}
                 FileMessage::Save => {
-                    if let Some(working_file) = &context.working_file {
-                        save(working_file, &context, true);
+                    if !save(context, true) {
+                        save_as(context, true);
                     }
                 }
                 FileMessage::SaveAs(_file) => {}

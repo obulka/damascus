@@ -15,7 +15,7 @@ use macro_rules_attribute::derive;
 // };
 use crate::{
     app::Context,
-    widgets::{node_graph::NodeGraph, panel::PanelMessage, style},
+    widgets::{Widget, style},
 };
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -103,10 +103,10 @@ pub enum ToolbarMessage {
 #[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Toolbar {}
 
-impl Toolbar {
-    pub fn update(
+impl Widget<ToolbarMessage> for Toolbar {
+    fn update(
         &mut self,
-        context: &Context,
+        context: &mut Context,
         message: ToolbarMessage,
     ) -> iced::Task<ToolbarMessage> {
         match message {
@@ -123,10 +123,10 @@ impl Toolbar {
         iced::Task::none()
     }
 
-    pub fn view<'a>(
+    fn view<'a>(
         &'a self,
-        preferences: &'a style::Preferences,
-        // _viewport: &mut Viewport,
+        _window_id: iced::window::Id,
+        _preferences: &'a style::Preferences,
     ) -> iced::Element<'a, ToolbarMessage> {
         // let mut modal =
         //     egui_modal::Modal::new(egui_context, "dialog_modal").with_style(&egui_modal::ModalStyle {
@@ -135,7 +135,7 @@ impl Toolbar {
         // modal.show_dialog();
 
         let file_menu = iced::widget::button(iced::widget::text("File/Save").height(16))
-            .style(iced::widget::button::secondary)
+            .style(iced::widget::button::subtle)
             .padding(3)
             .on_press(ToolbarMessage::File(FileMessage::Save));
 

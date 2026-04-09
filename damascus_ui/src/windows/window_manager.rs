@@ -12,7 +12,6 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
-        node_graph::NodeGraph,
         panel::PanelMessage,
         style,
         toolbar::{Toolbar, ToolbarMessage},
@@ -37,6 +36,7 @@ impl From<ToolbarMessage> for WindowManagerMessage {
     }
 }
 
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct WindowManager {
     pub toolbar: Toolbar,
     pub main_window_id: Option<iced::window::Id>,
@@ -166,11 +166,23 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             _ => iced::Task::none(),
                         };
 
-                        if let Some(window) = self.windows.get_mut(&id) {
-                            window.panel.update(context, panel_message);
-                        }
-
-                        task
+                        iced::Task::batch(
+                            std::iter::once(task).chain(
+                                std::iter::once(if let Some(window) = self.windows.get_mut(&id) {
+                                    Some(window.panel.update(context, panel_message).map(
+                                        move |panel_message| {
+                                            WindowMessage::from_panel_message_with_id(
+                                                id,
+                                                panel_message,
+                                            )
+                                        },
+                                    ))
+                                } else {
+                                    None
+                                })
+                                .flatten(),
+                            ),
+                        )
                     }
                 }
                 .map(|window_message| window_message.into())
@@ -190,7 +202,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                 {
                     Some(
                         self.toolbar
-                            .view(&window.preferences)
+                            .view(window_id, &window.preferences)
                             .map(|toolbar_message| toolbar_message.into()),
                     )
                 } else {

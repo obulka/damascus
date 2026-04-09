@@ -21,7 +21,19 @@ pub enum WindowMessage {
     Panel(Option<iced::window::Id>, PanelMessage),
 }
 
-#[derive(Clone, Debug)]
+impl From<PanelMessage> for WindowMessage {
+    fn from(panel_message: PanelMessage) -> Self {
+        Self::Panel(None, panel_message)
+    }
+}
+
+impl WindowMessage {
+    pub fn from_panel_message_with_id(id: iced::window::Id, panel_message: PanelMessage) -> Self {
+        Self::Panel(Some(id), panel_message)
+    }
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Window {
     pub title: String,
     pub preferences: style::Preferences,
@@ -41,7 +53,7 @@ impl Default for Window {
 impl Widget<WindowMessage> for Window {
     fn view<'a>(
         &'a self,
-        id: iced::window::Id,
+        window_id: iced::window::Id,
         preferences: &'a style::Preferences,
     ) -> iced::Element<'a, WindowMessage> {
         // let title_input = column![
@@ -67,7 +79,7 @@ impl Widget<WindowMessage> for Window {
         // .width(200);
 
         self.panel
-            .view(id, preferences)
-            .map(move |panel_message| WindowMessage::Panel(Some(id), panel_message))
+            .view(window_id, preferences)
+            .map(move |panel_message| WindowMessage::Panel(Some(window_id), panel_message))
     }
 }

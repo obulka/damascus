@@ -6,7 +6,7 @@
 use std::time::{Duration, SystemTime};
 
 use iced;
-use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
+use serde_hashkey::{Key, OrderedFloatPolicy};
 
 use damascus;
 
@@ -208,7 +208,7 @@ impl Damascus {
     }
 
     pub fn default_font() -> iced::Font {
-        iced::Font::MONOSPACE
+        iced::Font::DEFAULT
     }
 
     pub fn title(&self, window: iced::window::Id) -> String {

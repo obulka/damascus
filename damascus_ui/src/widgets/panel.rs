@@ -11,7 +11,7 @@ use crate::{
     widgets::{Widget, style},
 };
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
 struct Pane {}
 
 impl Default for Pane {
@@ -35,11 +35,13 @@ pub enum PanelMessage {
     Detach(iced::widget::pane_grid::Pane),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Panel {
-    panes: iced::widget::pane_grid::State<Pane>,
-    panes_created: usize,
+    #[serde(skip)]
     focus: Option<iced::widget::pane_grid::Pane>,
+    #[serde(skip)]
+    panes: iced::widget::pane_grid::State<Pane>,
 }
 
 impl Default for Panel {
@@ -129,11 +131,7 @@ impl Widget<PanelMessage> for Panel {
     fn new() -> Self {
         let (panes, _) = iced::widget::pane_grid::State::new(Pane::default());
 
-        Self {
-            panes,
-            panes_created: 1,
-            focus: None,
-        }
+        Self { focus: None, panes }
     }
 
     fn update(
@@ -148,8 +146,6 @@ impl Widget<PanelMessage> for Panel {
                 if let Some((pane, _)) = result {
                     self.focus = Some(pane);
                 }
-
-                self.panes_created += 1;
             }
             PanelMessage::SplitFocused(axis) => {
                 if let Some(pane) = self.focus {
@@ -158,8 +154,6 @@ impl Widget<PanelMessage> for Panel {
                     if let Some((pane, _)) = result {
                         self.focus = Some(pane);
                     }
-
-                    self.panes_created += 1;
                 }
             }
             PanelMessage::FocusAdjacent(direction) => {

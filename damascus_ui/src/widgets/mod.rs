@@ -3,6 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::fmt::Debug;
+
 use iced;
 
 use crate::app::Context;
@@ -14,7 +16,9 @@ pub mod toolbar;
 pub mod panel;
 pub mod style;
 
-pub trait Widget<WidgetMessage: Clone>: Default {
+pub trait Widget<WidgetMessage: Clone>:
+    Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize
+{
     fn new() -> Self {
         Self::default()
     }

@@ -25,9 +25,9 @@ pub struct FileDescriptor {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum FileMessage {
-    Load(FileDescriptor),
+    Load,
     Save,
-    SaveAs(FileDescriptor),
+    SaveAs,
 }
 
 fn save(context: &mut Context, success_dialog: bool) -> bool {
@@ -85,42 +85,69 @@ fn save_as(context: &mut Context, success_dialog: bool) -> bool {
 
     if let Some(path) = file_dialog.save_file() {
         context.set_working_file(path.display().to_string());
-        save(context, true)
+        save(context, success_dialog)
     } else {
         false
     }
 }
 
-// fn load(file_path: &str, node_graph: &mut NodeGraph) {
-//     let Ok(file) = File::open(file_path) else {
-//         dialog::error(
-//             modal,
-//             "File Open Error",
-//             &format!("Could not open file from {:}", file_path),
-//         );
-//         return;
-//     };
-//     let mut buf_reader = BufReader::new(file);
-//     let mut contents = String::new();
-//     let Ok(_) = buf_reader.read_to_string(&mut contents) else {
-//         dialog::error(
-//             modal,
-//             "File Read Error",
-//             &format!("Could not read file from {:}", file_path),
-//         );
-//         return;
-//     };
-//     let Ok(state) = serde_json::from_str(&contents) else {
-//         dialog::error(
-//             modal,
-//             "Deserialization Error",
-//             &format!("Could not load node graph from {:}", file_path),
-//         );
-//         return;
-//     };
+fn load(context: &mut Context, success_dialog: bool) -> bool {
+    // TODO Unload current
 
-//     *node_graph = state;
-// }
+    let mut file_dialog = rfd::FileDialog::new()
+        .set_title("load from file")
+        .add_filter("damascus", &["dam"]);
+
+    if let Some(file_path) = &context.working_file() {
+        if let Some(directory) = std::path::Path::new(file_path).parent() {
+            file_dialog = file_dialog.set_directory(directory);
+        }
+        file_dialog = file_dialog.set_file_name(file_path);
+    }
+
+    if let Some(path) = file_dialog.pick_file() {
+        let file_path: String = path.display().to_string();
+
+        let Ok(file) = File::open(&file_path) else {
+            println!("Could not open file from {:}", file_path);
+            // dialog::error(
+            //     modal,
+            //     "File Open Error",
+            //     &format!("Could not open file from {:}", file_path),
+            // );
+            return false;
+        };
+        let mut buf_reader = BufReader::new(file);
+        let mut contents = String::new();
+        let Ok(_) = buf_reader.read_to_string(&mut contents) else {
+            println!("Could not read file from {:}", file_path);
+            // dialog::error(
+            //     modal,
+            //     "File Read Error",
+            //     &format!("Could not read file from {:}", file_path),
+            // );
+            return false;
+        };
+        let Ok(state) = serde_json::from_str(&contents) else {
+            println!("Could not load node graph from {:}", file_path);
+            // dialog::error(
+            //     modal,
+            //     "Deserialization Error",
+            //     &format!("Could not load node graph from {:}", file_path),
+            // );
+            return false;
+        };
+
+        *context = state;
+
+        println!("Loaded {:}", file_path);
+
+        true
+    } else {
+        println!("No file chosen");
+        false
+    }
+}
 
 // #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 // pub enum ToolbarError {
@@ -144,13 +171,17 @@ impl Widget<ToolbarMessage> for Toolbar {
     ) -> iced::Task<ToolbarMessage> {
         match message {
             ToolbarMessage::File(file_message) => match file_message {
-                FileMessage::Load(_file) => {}
+                FileMessage::Load => {
+                    load(context, true);
+                }
                 FileMessage::Save => {
                     if !save(context, true) {
                         save_as(context, true);
                     }
                 }
-                FileMessage::SaveAs(_file) => {}
+                FileMessage::SaveAs => {
+                    save_as(context, true);
+                }
             },
         }
         iced::Task::none()
@@ -172,7 +203,12 @@ impl Widget<ToolbarMessage> for Toolbar {
             .padding(3)
             .on_press(ToolbarMessage::File(FileMessage::Save));
 
-        iced::widget::row![file_menu]
+        let file_load_menu = iced::widget::button(iced::widget::text("File/Load").height(16))
+            .style(iced::widget::button::subtle)
+            .padding(3)
+            .on_press(ToolbarMessage::File(FileMessage::Load));
+
+        iced::widget::row![file_menu, file_load_menu]
             .spacing(3)
             // .style(style::title_bar(preferences))
             .into()

@@ -8,11 +8,10 @@ use std::time::{Duration, SystemTime};
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 
+use damascus;
+
 use crate::{
-    widgets::{
-        node_graph::{NodeGraph, NodeGraphMessage},
-        panel::PanelMessage,
-    },
+    widgets::{Widget, node_graph::NodeGraphMessage, panel::PanelMessage, style},
     windows::{
         window::WindowMessage,
         window_manager::{WindowManager, WindowManagerMessage},
@@ -73,46 +72,48 @@ impl From<WindowManagerMessage> for Message {
     }
 }
 
-#[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
-#[serde(default)]
-pub struct PersistentData {
-    pub context: Context,
-    pub node_graph: NodeGraph,
-    // pub viewport_state: ViewportState,
-}
-
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Context {
+    pub default_preferences: style::Preferences,
     pub working_file: Option<String>,
     pub working_file_hash: Option<Key<OrderedFloatPolicy>>,
+    pub node_graph: damascus::graph::node_graph::NodeGraph,
 }
 
 impl Context {
-    pub fn update(&mut self, working_file: String, node_graph: &NodeGraph) {
-        self.working_file = Some(working_file);
-        self.working_file_hash = if let Ok(hash) = to_key_with_ordered_float(node_graph) {
-            Some(hash)
-        } else {
-            None
-        }
-    }
+    // pub fn set_working_file(&mut self, working_file: String) {
+    //     self.working_file = Some(working_file);
+    //     self.working_file_hash = if let Ok(hash) = to_key_with_ordered_float(node_graph) {
+    //         Some(hash)
+    //     } else {
+    //         None
+    //     }
+    // }
 
-    pub fn dirty(&self, node_graph: &NodeGraph) -> bool {
-        if let Some(working_file_hash) = &self.working_file_hash {
-            if let Ok(new_hash) = to_key_with_ordered_float(node_graph) {
-                return new_hash != *working_file_hash;
-            }
-        }
-        true
-    }
+    // pub fn update(&mut self, working_file: String, node_graph: &NodeGraph) {
+    //     self.working_file = Some(working_file);
+    //     self.working_file_hash = if let Ok(hash) = to_key_with_ordered_float(node_graph) {
+    //         Some(hash)
+    //     } else {
+    //         None
+    //     }
+    // }
+
+    // pub fn dirty(&self, node_graph: &NodeGraph) -> bool {
+    //     if let Some(working_file_hash) = &self.working_file_hash {
+    //         if let Ok(new_hash) = to_key_with_ordered_float(node_graph) {
+    //             return new_hash != *working_file_hash;
+    //         }
+    //     }
+    //     true
+    // }
 }
 
 pub struct Damascus {
     last_lazy_update: SystemTime,
     context: Context,
     window_manager: WindowManager,
-    node_graph: NodeGraph,
     // viewport: Viewport,
 }
 
@@ -121,23 +122,22 @@ impl Damascus {
 
     pub fn new() -> (Self, iced::Task<Message>) {
         // TODO read from disk
-        let persistent_data = PersistentData::default();
+        let persistent_data = Context::default();
 
-        let (window_manager, open_task) = WindowManager::new();
+        let (_, open) = iced::window::open(iced::window::Settings::default());
 
         (
             Self {
                 last_lazy_update: SystemTime::now()
                     - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.0) as u64),
-                context: persistent_data.context,
-                window_manager: window_manager,
-                node_graph: persistent_data.node_graph,
+                context: persistent_data,
+                window_manager: WindowManager::new(),
                 // viewports: Viewport::new(
                 //     persistent_data.viewport_state,
                 //     creation_context.wgpu_render_state.as_ref().unwrap(),
                 // ),
             },
-            open_task.map(|window_message| window_message.into()),
+            open.map(|id| WindowMessage::Opened(id).into()),
         )
     }
 
@@ -176,11 +176,7 @@ impl Damascus {
         match message {
             Message::WindowManager(window_manager_message) => self
                 .window_manager
-                .update(
-                    &mut self.context,
-                    &mut self.node_graph,
-                    window_manager_message,
-                )
+                .update(&mut self.context, window_manager_message)
                 .map(|window_message| window_message.into()),
             _ => {
                 todo!("Add the meat")
@@ -190,7 +186,7 @@ impl Damascus {
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
         self.window_manager
-            .view(window_id)
+            .view(window_id, &self.context.default_preferences)
             .map(|window_manager_message| window_manager_message.into())
     }
 
@@ -200,7 +196,7 @@ impl Damascus {
 
     pub fn save(&self) {
         todo!("Save state to disk");
-        // PersistentData {
+        // Context {
         //     context: self.context.clone(),
         //     node_graph_editor_state: self.node_graph.clone(),
         //     // viewport_state: self.viewport.state,

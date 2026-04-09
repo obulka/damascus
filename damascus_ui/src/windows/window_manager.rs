@@ -11,8 +11,10 @@ use super::window::{Window, WindowMessage};
 use crate::{
     app::Context,
     widgets::{
+        Widget,
         node_graph::NodeGraph,
         panel::PanelMessage,
+        style,
         toolbar::{Toolbar, ToolbarMessage},
     },
 };
@@ -53,26 +55,16 @@ impl Default for WindowManager {
     }
 }
 
-impl WindowManager {
-    pub fn new() -> (Self, iced::Task<WindowManagerMessage>) {
-        let (_, open) = iced::window::open(iced::window::Settings::default());
-
-        (
-            Self::default(),
-            open.map(|id| WindowMessage::Opened(id).into()),
-        )
-    }
-
-    pub fn update(
+impl Widget<WindowManagerMessage> for WindowManager {
+    fn update(
         &mut self,
         context: &mut Context,
-        node_graph: &mut NodeGraph,
         message: WindowManagerMessage,
     ) -> iced::Task<WindowManagerMessage> {
         match message {
             WindowManagerMessage::Toolbar(toolbar_message) => self
                 .toolbar
-                .update(context, node_graph, toolbar_message)
+                .update(context, toolbar_message)
                 .map(|toolbar_message| toolbar_message.into()),
             WindowManagerMessage::Window(window_message) => {
                 match window_message {
@@ -108,7 +100,7 @@ impl WindowManager {
                             self.main_window_id = Some(id);
                         }
 
-                        let window = Window::new(self.windows.len() + 1);
+                        let window = Window::new();
                         let focus_input = iced::widget::operation::focus(format!("input-{id}"));
 
                         self.windows.insert(id, window);
@@ -175,7 +167,7 @@ impl WindowManager {
                         };
 
                         if let Some(window) = self.windows.get_mut(&id) {
-                            window.panel.update(panel_message);
+                            window.panel.update(context, panel_message);
                         }
 
                         task
@@ -186,7 +178,11 @@ impl WindowManager {
         }
     }
 
-    pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, WindowManagerMessage> {
+    fn view(
+        &self,
+        window_id: iced::window::Id,
+        _global_preferences: &style::Preferences,
+    ) -> iced::Element<'_, WindowManagerMessage> {
         if let Some(window) = self.windows.get(&window_id) {
             let toolbar: Option<iced::Element<'_, WindowManagerMessage>> =
                 if let Some(main_window_id) = self.main_window_id
@@ -204,7 +200,7 @@ impl WindowManager {
             iced::widget::column![
                 toolbar,
                 window
-                    .view(window_id)
+                    .view(window_id, &window.preferences)
                     .map(|window_message| { window_message.into() })
             ]
             .into()

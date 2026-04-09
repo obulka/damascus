@@ -5,9 +5,13 @@
 
 use iced;
 
-use crate::{icons::Icons, widgets::style};
+use crate::{
+    app::Context,
+    icons::Icons,
+    widgets::{Widget, style},
+};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 struct Pane {}
 
 impl Default for Pane {
@@ -31,6 +35,7 @@ pub enum PanelMessage {
     Detach(iced::widget::pane_grid::Pane),
 }
 
+#[derive(Clone, Debug)]
 pub struct Panel {
     panes: iced::widget::pane_grid::State<Pane>,
     panes_created: usize,
@@ -44,81 +49,6 @@ impl Default for Panel {
 }
 
 impl Panel {
-    pub fn new() -> Self {
-        let (panes, _) = iced::widget::pane_grid::State::new(Pane::default());
-
-        Self {
-            panes,
-            panes_created: 1,
-            focus: None,
-        }
-    }
-
-    pub fn update(&mut self, message: PanelMessage) -> iced::Task<PanelMessage> {
-        match message {
-            PanelMessage::Split(axis, pane) => {
-                let result = self.panes.split(axis, pane, Pane::default());
-
-                if let Some((pane, _)) = result {
-                    self.focus = Some(pane);
-                }
-
-                self.panes_created += 1;
-            }
-            PanelMessage::SplitFocused(axis) => {
-                if let Some(pane) = self.focus {
-                    let result = self.panes.split(axis, pane, Pane::default());
-
-                    if let Some((pane, _)) = result {
-                        self.focus = Some(pane);
-                    }
-
-                    self.panes_created += 1;
-                }
-            }
-            PanelMessage::FocusAdjacent(direction) => {
-                if let Some(pane) = self.focus
-                    && let Some(adjacent) = self.panes.adjacent(pane, direction)
-                {
-                    self.focus = Some(adjacent);
-                }
-            }
-            PanelMessage::Clicked(pane) => {
-                self.focus = Some(pane);
-            }
-            PanelMessage::Resized(iced::widget::pane_grid::ResizeEvent { split, ratio }) => {
-                self.panes.resize(split, ratio);
-            }
-            PanelMessage::Dragged(iced::widget::pane_grid::DragEvent::Dropped { pane, target }) => {
-                self.panes.drop(pane, target);
-            }
-            PanelMessage::Dragged(_drag_event) => {}
-            PanelMessage::Maximize(pane) => self.panes.maximize(pane),
-            PanelMessage::Restore => {
-                self.panes.restore();
-            }
-            PanelMessage::Close(pane) => {
-                if let Some((_, sibling)) = self.panes.close(pane) {
-                    self.focus = Some(sibling);
-                }
-            }
-            PanelMessage::CloseFocused => {
-                if let Some(pane) = self.focus
-                    && let Some((_, sibling)) = self.panes.close(pane)
-                {
-                    self.focus = Some(sibling);
-                }
-            }
-            PanelMessage::Detach(pane) => {
-                if let Some((_, sibling)) = self.panes.close(pane) {
-                    self.focus = Some(sibling);
-                }
-            }
-        }
-
-        iced::Task::none()
-    }
-
     fn view_content<'a>(
         _pane: iced::widget::pane_grid::Pane,
         _total_panes: usize,
@@ -193,9 +123,91 @@ impl Panel {
             .spacing(3)
             .into()
     }
+}
 
-    pub fn view<'a>(
+impl Widget<PanelMessage> for Panel {
+    fn new() -> Self {
+        let (panes, _) = iced::widget::pane_grid::State::new(Pane::default());
+
+        Self {
+            panes,
+            panes_created: 1,
+            focus: None,
+        }
+    }
+
+    fn update(
+        &mut self,
+        _context: &mut Context,
+        message: PanelMessage,
+    ) -> iced::Task<PanelMessage> {
+        match message {
+            PanelMessage::Split(axis, pane) => {
+                let result = self.panes.split(axis, pane, Pane::default());
+
+                if let Some((pane, _)) = result {
+                    self.focus = Some(pane);
+                }
+
+                self.panes_created += 1;
+            }
+            PanelMessage::SplitFocused(axis) => {
+                if let Some(pane) = self.focus {
+                    let result = self.panes.split(axis, pane, Pane::default());
+
+                    if let Some((pane, _)) = result {
+                        self.focus = Some(pane);
+                    }
+
+                    self.panes_created += 1;
+                }
+            }
+            PanelMessage::FocusAdjacent(direction) => {
+                if let Some(pane) = self.focus
+                    && let Some(adjacent) = self.panes.adjacent(pane, direction)
+                {
+                    self.focus = Some(adjacent);
+                }
+            }
+            PanelMessage::Clicked(pane) => {
+                self.focus = Some(pane);
+            }
+            PanelMessage::Resized(iced::widget::pane_grid::ResizeEvent { split, ratio }) => {
+                self.panes.resize(split, ratio);
+            }
+            PanelMessage::Dragged(iced::widget::pane_grid::DragEvent::Dropped { pane, target }) => {
+                self.panes.drop(pane, target);
+            }
+            PanelMessage::Dragged(_drag_event) => {}
+            PanelMessage::Maximize(pane) => self.panes.maximize(pane),
+            PanelMessage::Restore => {
+                self.panes.restore();
+            }
+            PanelMessage::Close(pane) => {
+                if let Some((_, sibling)) = self.panes.close(pane) {
+                    self.focus = Some(sibling);
+                }
+            }
+            PanelMessage::CloseFocused => {
+                if let Some(pane) = self.focus
+                    && let Some((_, sibling)) = self.panes.close(pane)
+                {
+                    self.focus = Some(sibling);
+                }
+            }
+            PanelMessage::Detach(pane) => {
+                if let Some((_, sibling)) = self.panes.close(pane) {
+                    self.focus = Some(sibling);
+                }
+            }
+        }
+
+        iced::Task::none()
+    }
+
+    fn view<'a>(
         &'a self,
+        _window_id: iced::window::Id,
         preferences: &'a style::Preferences,
     ) -> iced::Element<'a, PanelMessage> {
         let focus = self.focus;

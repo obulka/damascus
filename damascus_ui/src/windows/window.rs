@@ -6,6 +6,7 @@
 use iced;
 
 use crate::widgets::{
+    Widget,
     panel::{Panel, PanelMessage},
     style,
 };
@@ -20,29 +21,29 @@ pub enum WindowMessage {
     Panel(Option<iced::window::Id>, PanelMessage),
 }
 
+#[derive(Clone, Debug)]
 pub struct Window {
     pub title: String,
     pub preferences: style::Preferences,
     pub panel: Panel,
 }
 
-impl Window {
-    pub fn new(count: usize) -> Self {
+impl Default for Window {
+    fn default() -> Self {
         Self {
-            title: format!("damascus-{count}"),
+            title: format!("damascus"),
             preferences: style::Preferences::default(),
             panel: Panel::default(),
         }
     }
+}
 
-    pub fn update(&mut self, message: WindowMessage) -> iced::Task<WindowMessage> {
-        // match message {
-        //     _ => { iced::Task::none() }
-        // }
-        iced::Task::none()
-    }
-
-    pub fn view(&self, id: iced::window::Id) -> iced::Element<'_, WindowMessage> {
+impl Widget<WindowMessage> for Window {
+    fn view<'a>(
+        &'a self,
+        id: iced::window::Id,
+        preferences: &'a style::Preferences,
+    ) -> iced::Element<'a, WindowMessage> {
         // let title_input = column![
         //     text("Window title:"),
         //     text_input("Window Title", &self.title)
@@ -66,7 +67,7 @@ impl Window {
         // .width(200);
 
         self.panel
-            .view(&self.preferences)
+            .view(id, preferences)
             .map(move |panel_message| WindowMessage::Panel(Some(id), panel_message))
     }
 }

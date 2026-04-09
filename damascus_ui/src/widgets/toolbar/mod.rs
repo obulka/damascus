@@ -30,7 +30,7 @@ pub enum FileMessage {
     SaveAs(FileDescriptor),
 }
 
-fn save(file_path: &str, node_graph: &NodeGraph, success_dialog: bool) {
+fn save(file_path: &str, context: &Context, success_dialog: bool) {
     let Ok(mut file) = File::create(file_path) else {
         println!("File Creation Error");
         // dialog::error(
@@ -40,8 +40,8 @@ fn save(file_path: &str, node_graph: &NodeGraph, success_dialog: bool) {
         // );
         return;
     };
-    let Ok(serialization) = serde_json::to_string_pretty(node_graph) else {
-        println!("Node Graph Serialization Error");
+    let Ok(serialization) = serde_json::to_string_pretty(context) else {
+        println!("Serialization Error");
         // dialog::error(
         //     modal,
         //     "Node Graph Serialization Error",
@@ -107,7 +107,6 @@ impl Toolbar {
     pub fn update(
         &mut self,
         context: &Context,
-        node_graph: &NodeGraph,
         message: ToolbarMessage,
     ) -> iced::Task<ToolbarMessage> {
         match message {
@@ -115,7 +114,7 @@ impl Toolbar {
                 FileMessage::Load(_file) => {}
                 FileMessage::Save => {
                     if let Some(working_file) = &context.working_file {
-                        save(working_file, node_graph, true);
+                        save(working_file, &context, true);
                     }
                 }
                 FileMessage::SaveAs(_file) => {}

@@ -8,12 +8,14 @@ use std::io::{BufReader, Read, Write};
 
 use iced;
 use macro_rules_attribute::derive;
+use strum::IntoEnumIterator;
 
 // use super::{
 //     dialog,
 //     viewport::Viewport,
 // };
 use crate::{
+    EnumTraits,
     app::Context,
     widgets::{Widget, style},
 };
@@ -23,9 +25,10 @@ pub struct FileDescriptor {
     path: String,
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Default, EnumTraits!)]
 pub enum FileMessage {
     Load,
+    #[default]
     Save,
     SaveAs,
 }
@@ -154,14 +157,32 @@ fn load(context: &mut Context, success_dialog: bool) -> bool {
 //     Unknown,
 // }
 
+#[derive(Default, EnumTraits!)]
+pub enum MenuOptions {
+    #[default]
+    File,
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
     File(FileMessage),
     // Error(ToolbarError),
+    OpenMenu(MenuOptions),
 }
 
-#[derive(Clone, Default, Debug, serde::Serialize, serde::Deserialize)]
-pub struct Toolbar {}
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct Toolbar {
+    #[serde(skip)]
+    file_menu: iced::widget::combo_box::State<FileMessage>,
+}
+
+impl Default for Toolbar {
+    fn default() -> Self {
+        Self {
+            file_menu: iced::widget::combo_box::State::new(FileMessage::iter().collect()),
+        }
+    }
+}
 
 impl Widget<ToolbarMessage> for Toolbar {
     fn update(
@@ -198,20 +219,21 @@ impl Widget<ToolbarMessage> for Toolbar {
         //     });
         // modal.show_dialog();
 
-        let file_menu = iced::widget::button(iced::widget::text("File/Save").height(16))
-            .style(iced::widget::button::subtle)
-            .padding(3)
-            .on_press(ToolbarMessage::File(FileMessage::Save));
-
-        let file_load_menu = iced::widget::button(iced::widget::text("File/Load").height(16))
-            .style(iced::widget::button::subtle)
-            .padding(3)
-            .on_press(ToolbarMessage::File(FileMessage::Load));
-
-        iced::widget::row![file_menu, file_load_menu]
-            .spacing(3)
-            // .style(style::title_bar(preferences))
-            .into()
+        iced::widget::column![
+            iced::widget::row(MenuOptions::iter().map(|menu_option| {
+                iced::widget::combo_box(
+                    &self.file_menu,
+                    &MenuOptions::File.to_string(),
+                    None,
+                    ToolbarMessage::File,
+                )
+                .into()
+            }))
+            .spacing(3),
+        ]
+        .spacing(3)
+        // .style(style::title_bar(preferences))
+        .into()
 
         // egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {
         //     egui::MenuBar::new().ui(ui, |ui| {

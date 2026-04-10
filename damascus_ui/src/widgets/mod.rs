@@ -13,6 +13,7 @@ use crate::app::Context;
 pub mod node_graph;
 pub mod toolbar;
 // pub mod viewport;
+pub mod menu;
 pub mod panel;
 pub mod style;
 

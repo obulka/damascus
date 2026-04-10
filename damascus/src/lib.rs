@@ -102,13 +102,6 @@ impl Enum {
             _ => E::default(),
         }
     }
-
-    pub fn to_enumerator<E: Enumerator>(self) -> E {
-        match E::from_str(&self.variant) {
-            Ok(variant) => variant,
-            _ => E::default(),
-        }
-    }
 }
 
 impl<E: Enumerator> From<E> for Enum {

@@ -3,12 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::{
+    fs::File,
+    io::{BufReader, Read, Write},
+    str::FromStr,
+};
 
 use iced;
 use macro_rules_attribute::derive;
 use strum::IntoEnumIterator;
+
+use damascus::Enumerator;
 
 // use super::{
 //     dialog,
@@ -27,10 +32,10 @@ pub struct FileDescriptor {
 
 #[derive(Default, EnumTraits!)]
 pub enum FileMessage {
-    Load,
     #[default]
     Save,
     SaveAs,
+    Load,
 }
 
 fn save(context: &mut Context, success_dialog: bool) -> bool {
@@ -158,16 +163,55 @@ fn load(context: &mut Context, success_dialog: bool) -> bool {
 // }
 
 #[derive(Default, EnumTraits!)]
-pub enum MenuOptions {
+pub enum Menus {
     #[default]
     File,
+}
+
+impl Menus {
+    pub fn menu_options(&self) -> Vec<String> {
+        match self {
+            Menus::File => FileMessage::iter()
+                .map(|variant| variant.variant_pascal_label())
+                .collect(),
+        }
+    }
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub enum ToolbarError {
+    DeserializeError(String),
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
     File(FileMessage),
-    // Error(ToolbarError),
-    // OpenMenu(MenuOptions),
+    Error(ToolbarError),
+}
+
+impl FromStr for ToolbarMessage {
+    type Err = ToolbarError;
+
+    fn from_str(option: &str) -> Result<Self, Self::Err> {
+        let variant: String = option.chars().filter(|c| !c.is_whitespace()).collect();
+
+        // Currently different menus having the same option will not be supported
+        // but I think unique names will be used anyway
+        if let Ok(message) = FileMessage::from_str(&variant) {
+            Ok(ToolbarMessage::File(message))
+        } else {
+            Err(Self::Err::DeserializeError(variant))
+        }
+    }
+}
+
+impl From<Result<Self, ToolbarError>> for ToolbarMessage {
+    fn from(result: Result<Self, ToolbarError>) -> Self {
+        match result {
+            Ok(message) => message,
+            Err(error) => ToolbarMessage::Error(error),
+        }
+    }
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -187,9 +231,6 @@ impl Widget<ToolbarMessage> for Toolbar {
     ) -> iced::Task<ToolbarMessage> {
         match message {
             ToolbarMessage::File(file_message) => match file_message {
-                FileMessage::Load => {
-                    load(context, true);
-                }
                 FileMessage::Save => {
                     if !save(context, true) {
                         save_as(context, true);
@@ -198,7 +239,11 @@ impl Widget<ToolbarMessage> for Toolbar {
                 FileMessage::SaveAs => {
                     save_as(context, true);
                 }
+                FileMessage::Load => {
+                    load(context, true);
+                }
             },
+            _ => {}
         }
         iced::Task::none()
     }
@@ -214,12 +259,11 @@ impl Widget<ToolbarMessage> for Toolbar {
         //     });
         // modal.show_dialog();
 
-        iced::widget::row(MenuOptions::iter().map(|menu_option| {
-            // TODO all menus will have same values, need to get message type for each dynamically
+        iced::widget::row(Menus::iter().map(|menu_option| {
             iced::widget::pick_list(
-                FileMessage::iter().collect::<Vec<_>>(),
-                None::<FileMessage>,
-                ToolbarMessage::File,
+                menu_option.menu_options(),
+                None::<String>,
+                |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
             .placeholder(&menu_option.to_string())
             .handle(iced::widget::pick_list::Handle::None)

@@ -69,7 +69,7 @@ pub trait Enumerator:
                 words.push(word.clone());
                 word.clear();
             }
-            word.push_str(&character.to_lowercase().to_string());
+            word.push_str(&character.to_string());
         }
 
         if !word.is_empty() {
@@ -79,11 +79,91 @@ pub trait Enumerator:
         words
     }
 
-    fn variant_snake_case(&self) -> String {
+    fn variant_pascal_case(&self) -> String {
+        self.to_string()
+    }
+
+    fn variant_screaming_snake_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_uppercase())
+            .collect::<Vec<_>>()
+            .join("_")
+    }
+
+    fn variant_pascal_snake_case(&self) -> String {
         self.variant_split_words().join("_")
     }
 
+    fn variant_snake_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_lowercase())
+            .collect::<Vec<_>>()
+            .join("_")
+    }
+
+    fn variant_kebab_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_lowercase())
+            .collect::<Vec<_>>()
+            .join("-")
+    }
+
+    fn variant_camel_case(&self) -> String {
+        let mut words: Vec<String> = self.variant_split_words();
+        if !words.is_empty() {
+            words[0] = words[0].to_lowercase();
+        }
+        words.join("")
+    }
+
+    fn variant_flat_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_lowercase())
+            .collect::<Vec<_>>()
+            .join("")
+    }
+
+    fn variant_upper_flat_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_uppercase())
+            .collect::<Vec<_>>()
+            .join("")
+    }
+
+    fn variant_camel_snake_case(&self) -> String {
+        let mut words: Vec<String> = self.variant_split_words();
+        if !words.is_empty() {
+            words[0] = words[0].to_lowercase();
+        }
+        words.join("_")
+    }
+
+    fn variant_train_case(&self) -> String {
+        self.variant_split_words().join("-")
+    }
+
+    fn variant_cobol_case(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_uppercase())
+            .collect::<Vec<_>>()
+            .join("-")
+    }
+
     fn variant_label(&self) -> String {
+        self.variant_split_words()
+            .into_iter()
+            .map(|word| word.to_lowercase())
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    fn variant_pascal_label(&self) -> String {
         self.variant_split_words().join(" ")
     }
 }
@@ -212,3 +292,64 @@ macro_rules! impl_slot_map_indexing {
 }
 
 pub(crate) use impl_slot_map_indexing;
+
+#[cfg(test)]
+mod tests {
+    use crate::{Enumerator, geometry::primitives::Shapes};
+
+    #[test]
+    fn test_variant_conventions() {
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant(),
+            "RectangularPrismFrame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_pascal_case(),
+            "RectangularPrismFrame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_screaming_snake_case(),
+            "RECTANGULAR_PRISM_FRAME"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_pascal_snake_case(),
+            "Rectangular_Prism_Frame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_kebab_case(),
+            "rectangular-prism-frame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_camel_case(),
+            "rectangularPrismFrame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_flat_case(),
+            "rectangularprismframe"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_upper_flat_case(),
+            "RECTANGULARPRISMFRAME"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_camel_snake_case(),
+            "rectangular_Prism_Frame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_train_case(),
+            "Rectangular-Prism-Frame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_cobol_case(),
+            "RECTANGULAR-PRISM-FRAME"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_label(),
+            "rectangular prism frame"
+        );
+        assert_eq!(
+            Shapes::RectangularPrismFrame.variant_pascal_label(),
+            "Rectangular Prism Frame"
+        );
+    }
+}

@@ -167,20 +167,15 @@ pub enum MenuOptions {
 pub enum ToolbarMessage {
     File(FileMessage),
     // Error(ToolbarError),
-    OpenMenu(MenuOptions),
+    // OpenMenu(MenuOptions),
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct Toolbar {
-    #[serde(skip)]
-    file_menu: iced::widget::combo_box::State<FileMessage>,
-}
+pub struct Toolbar {}
 
 impl Default for Toolbar {
     fn default() -> Self {
-        Self {
-            file_menu: iced::widget::combo_box::State::new(FileMessage::iter().collect()),
-        }
+        Self {}
     }
 }
 
@@ -219,20 +214,50 @@ impl Widget<ToolbarMessage> for Toolbar {
         //     });
         // modal.show_dialog();
 
-        iced::widget::column![
-            iced::widget::row(MenuOptions::iter().map(|menu_option| {
-                iced::widget::combo_box(
-                    &self.file_menu,
-                    &MenuOptions::File.to_string(),
-                    None,
-                    ToolbarMessage::File,
-                )
-                .into()
-            }))
-            .spacing(3),
-        ]
+        iced::widget::row(MenuOptions::iter().map(|menu_option| {
+            // TODO all menus will have same values, need to get message type for each dynamically
+            iced::widget::pick_list(
+                FileMessage::iter().collect::<Vec<_>>(),
+                None::<FileMessage>,
+                ToolbarMessage::File,
+            )
+            .placeholder(&menu_option.to_string())
+            .handle(iced::widget::pick_list::Handle::None)
+            .style(
+                |theme: &iced::Theme, status| -> iced::widget::pick_list::Style {
+                    let palette = theme.extended_palette();
+                    let base = iced::widget::pick_list::Style {
+                        background: palette.background.weakest.color.into(),
+                        text_color: palette.background.weakest.text,
+                        border: iced::border::rounded(2),
+                        handle_color: iced::Color::TRANSPARENT,
+                        placeholder_color: palette.background.weakest.text,
+                    };
+
+                    match status {
+                        iced::widget::pick_list::Status::Active => base,
+                        iced::widget::pick_list::Status::Opened { is_hovered: _ }
+                        | iced::widget::pick_list::Status::Hovered => {
+                            iced::widget::pick_list::Style {
+                                background: iced::Background::Color(
+                                    palette.background.weaker.color,
+                                ),
+                                ..base
+                            }
+                        }
+                    }
+                },
+            )
+            .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
+                let palette = theme.extended_palette();
+                iced::overlay::menu::Style {
+                    background: palette.background.weakest.color.into(),
+                    ..iced::overlay::menu::default(theme)
+                }
+            })
+            .into()
+        }))
         .spacing(3)
-        // .style(style::title_bar(preferences))
         .into()
 
         // egui::TopBottomPanel::top("toolbar").show(egui_context, |ui| {

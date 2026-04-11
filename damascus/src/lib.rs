@@ -46,7 +46,7 @@ pub trait Transformable {
 }
 
 pub trait Enumerator:
-    IntoEnumIterator + EnumCount + Default + Display + FromStr + PartialEq
+    Clone + IntoEnumIterator + EnumCount + Default + Display + FromStr + PartialEq
 {
     fn variant(&self) -> String {
         self.to_string()

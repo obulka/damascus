@@ -9,7 +9,7 @@
 
 use macro_rules_attribute::derive_alias;
 
-use damascus::Enumerator;
+use damascus::{Enumerator, Errors};
 
 pub mod app;
 pub mod icons;
@@ -37,4 +37,5 @@ derive_alias! {
         strum::Display,
         crate::EnumBaseTraits!,
     )];
+    #[derive(ErrorTraits!)] = #[derive(crate::EnumBaseTraits!, damascus::ErrorTrait!)];
 }

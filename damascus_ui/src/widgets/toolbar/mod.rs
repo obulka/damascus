@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
+    fmt,
     fs::File,
     io::{BufReader, Read, Write},
     str::FromStr,
@@ -20,7 +21,7 @@ use damascus::Enumerator;
 //     viewport::Viewport,
 // };
 use crate::{
-    EnumTraits,
+    EnumTraits, ErrorTraits,
     app::Context,
     widgets::{Widget, style},
 };
@@ -157,11 +158,6 @@ fn load(context: &mut Context, success_dialog: bool) -> bool {
     }
 }
 
-// #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-// pub enum ToolbarError {
-//     Unknown,
-// }
-
 #[derive(Default, EnumTraits!)]
 pub enum Menus {
     #[default]
@@ -178,19 +174,34 @@ impl Menus {
     }
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub enum ToolbarError {
+#[derive(Default, ErrorTraits!)]
+pub enum ToolbarErrors {
     DeserializeError(String),
+    #[default]
+    UnknownError,
+}
+
+impl fmt::Display for ToolbarErrors {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DeserializeError(error) => write!(
+                formatter,
+                "{}: Could not deserialize from: {:?}",
+                self, error
+            ),
+            _ => write!(formatter, "{}", self),
+        }
+    }
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
     File(FileMessage),
-    Error(ToolbarError),
+    Error(ToolbarErrors),
 }
 
 impl FromStr for ToolbarMessage {
-    type Err = ToolbarError;
+    type Err = ToolbarErrors;
 
     fn from_str(option: &str) -> Result<Self, Self::Err> {
         let variant: String = option.chars().filter(|c| !c.is_whitespace()).collect();
@@ -205,8 +216,8 @@ impl FromStr for ToolbarMessage {
     }
 }
 
-impl From<Result<Self, ToolbarError>> for ToolbarMessage {
-    fn from(result: Result<Self, ToolbarError>) -> Self {
+impl From<Result<Self, ToolbarErrors>> for ToolbarMessage {
+    fn from(result: Result<Self, ToolbarErrors>) -> Self {
         match result {
             Ok(message) => message,
             Err(error) => ToolbarMessage::Error(error),
@@ -214,14 +225,8 @@ impl From<Result<Self, ToolbarError>> for ToolbarMessage {
     }
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct Toolbar {}
-
-impl Default for Toolbar {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl Widget<ToolbarMessage> for Toolbar {
     fn update(

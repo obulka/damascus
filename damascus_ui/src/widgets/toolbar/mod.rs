@@ -256,7 +256,7 @@ impl Widget<ToolbarMessage> for Toolbar {
     fn view<'a>(
         &'a self,
         _window_id: iced::window::Id,
-        _preferences: &'a style::Preferences,
+        preferences: &'a style::Preferences,
     ) -> iced::Element<'a, ToolbarMessage> {
         // let mut modal =
         //     egui_modal::Modal::new(egui_context, "dialog_modal").with_style(&egui_modal::ModalStyle {
@@ -278,7 +278,7 @@ impl Widget<ToolbarMessage> for Toolbar {
                     let base = iced::widget::pick_list::Style {
                         background: palette.background.weakest.color.into(),
                         text_color: palette.background.weakest.text,
-                        border: iced::border::rounded(2),
+                        border: iced::border::rounded(preferences.border_width),
                         handle_color: iced::Color::TRANSPARENT,
                         placeholder_color: palette.background.weakest.text,
                     };

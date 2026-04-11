@@ -100,6 +100,10 @@ pub struct Preferences {
     pub scale: f32,
     pub border_width: f32,
     pub theme: Theme,
+    pub spacing: f32,
+    pub padding: f32,
+    pub icon_size: u32,
+    pub leeway: f32,
 }
 
 impl Default for Preferences {
@@ -108,6 +112,10 @@ impl Default for Preferences {
             scale: 1.0,
             border_width: 2.0,
             theme: Theme::default(),
+            spacing: 3.0,
+            padding: 3.0,
+            icon_size: 16,
+            leeway: 5.0,
         }
     }
 }
@@ -165,8 +173,45 @@ pub fn pane_focused(preferences: &Preferences) -> iced::widget::container::Style
     style
 }
 
-pub fn close_button<Message>() -> iced::widget::Button<'static, Message> {
-    iced::widget::button(Icons::Close.as_svg().width(16).height(16))
-        .style(iced::widget::button::secondary)
-        .padding(3)
+pub fn close_button<'a, Message>(
+    preferences: &'a Preferences,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(
+        Icons::Close
+            .as_svg()
+            .width(preferences.icon_size)
+            .height(preferences.icon_size),
+    )
+    .style(iced::widget::button::secondary)
+    .padding(preferences.padding)
+}
+
+pub fn maximize_button<'a, Message>(
+    preferences: &'a Preferences,
+    is_maximized: bool,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(
+        if is_maximized {
+            Icons::Minimize.as_svg()
+        } else {
+            Icons::Maximize.as_svg()
+        }
+        .width(preferences.icon_size)
+        .height(preferences.icon_size),
+    )
+    .style(iced::widget::button::secondary)
+    .padding(preferences.padding)
+}
+
+pub fn detach_button<'a, Message>(
+    preferences: &'a Preferences,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(
+        Icons::Detach
+            .as_svg()
+            .width(preferences.icon_size)
+            .height(preferences.icon_size),
+    )
+    .style(iced::widget::button::secondary)
+    .padding(preferences.padding)
 }

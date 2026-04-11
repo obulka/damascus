@@ -52,77 +52,79 @@ impl Default for Panel {
 
 impl Panel {
     fn view_content<'a>(
+        preferences: &'a style::Preferences,
         _pane: iced::widget::pane_grid::Pane,
         _total_panes: usize,
         size: iced::Size,
     ) -> iced::Element<'a, PanelMessage> {
         let content =
             iced::widget::column![iced::widget::text!("{}x{}", size.width, size.height).size(24)]
-                .spacing(3)
+                .spacing(preferences.spacing)
                 .align_x(iced::Center);
 
         iced::widget::center_y(iced::widget::scrollable(content))
-            .padding(5)
+            .padding(preferences.padding)
             .into()
     }
 
     fn view_controls<'a>(
+        preferences: &'a style::Preferences,
         pane: iced::widget::pane_grid::Pane,
         total_panes: usize,
         is_maximized: bool,
     ) -> iced::Element<'a, PanelMessage> {
-        let horizontal_split =
-            iced::widget::button(Icons::HorizontalSplit.as_svg().width(16).height(16))
-                .style(iced::widget::button::secondary)
-                .padding(3)
-                .on_press(PanelMessage::Split(
-                    iced::widget::pane_grid::Axis::Horizontal,
-                    pane,
-                ));
+        let horizontal_split = iced::widget::button(
+            Icons::HorizontalSplit
+                .as_svg()
+                .width(preferences.icon_size)
+                .height(preferences.icon_size),
+        )
+        .style(iced::widget::button::secondary)
+        .padding(preferences.padding)
+        .on_press(PanelMessage::Split(
+            iced::widget::pane_grid::Axis::Horizontal,
+            pane,
+        ));
 
-        let vertical_split =
-            iced::widget::button(Icons::VerticalSplit.as_svg().width(16).height(16))
-                .style(iced::widget::button::secondary)
-                .padding(3)
-                .on_press(PanelMessage::Split(
-                    iced::widget::pane_grid::Axis::Vertical,
-                    pane,
-                ));
+        let vertical_split = iced::widget::button(
+            Icons::VerticalSplit
+                .as_svg()
+                .width(preferences.icon_size)
+                .height(preferences.icon_size),
+        )
+        .style(iced::widget::button::secondary)
+        .padding(preferences.padding)
+        .on_press(PanelMessage::Split(
+            iced::widget::pane_grid::Axis::Vertical,
+            pane,
+        ));
 
         let maximize = if total_panes > 1 {
-            let (content, message) = if is_maximized {
-                (Icons::Minimize.as_svg(), PanelMessage::Restore)
-            } else {
-                (Icons::Maximize.as_svg(), PanelMessage::Maximize(pane))
-            };
-
             Some(
-                iced::widget::button(content.width(16).height(16))
-                    .style(iced::widget::button::secondary)
-                    .padding(3)
-                    .on_press(message),
+                style::maximize_button(preferences, is_maximized).on_press(if is_maximized {
+                    PanelMessage::Restore
+                } else {
+                    PanelMessage::Maximize(pane)
+                }),
             )
         } else {
             None
         };
 
-        let detach = iced::widget::button(Icons::Detach.as_svg().width(16).height(16))
-            .style(iced::widget::button::secondary)
-            .padding(3)
-            .on_press_maybe(if total_panes > 1 {
-                Some(PanelMessage::Detach(pane))
-            } else {
-                None
-            });
+        let detach = style::detach_button(preferences).on_press_maybe(if total_panes > 1 {
+            Some(PanelMessage::Detach(pane))
+        } else {
+            None
+        });
 
-        let close = style::close_button().on_press_maybe(if total_panes > 1 {
+        let close = style::close_button(preferences).on_press_maybe(if total_panes > 1 {
             Some(PanelMessage::Close(pane))
         } else {
             None
         });
 
-        iced::widget::row![horizontal_split, vertical_split, maximize, detach, close]
-            .spacing(3)
+        iced::widget::row![horizontal_split, vertical_split, maximize, detach, close,]
+            .spacing(preferences.spacing)
             .into()
     }
 }
@@ -212,14 +214,14 @@ impl Widget<PanelMessage> for Panel {
 
             let title_bar = iced::widget::pane_grid::TitleBar::new(iced::widget::row![])
                 .controls(iced::widget::pane_grid::Controls::dynamic(
-                    Self::view_controls(id, total_panes, is_maximized),
-                    style::close_button().on_press_maybe(if total_panes > 1 {
+                    Self::view_controls(preferences, id, total_panes, is_maximized),
+                    style::close_button(preferences).on_press_maybe(if total_panes > 1 {
                         Some(PanelMessage::Close(id))
                     } else {
                         None
                     }),
                 ))
-                .padding(3)
+                .padding(preferences.padding)
                 .style(move |_theme| {
                     if is_focused {
                         style::title_bar_focused(preferences)
@@ -229,7 +231,7 @@ impl Widget<PanelMessage> for Panel {
                 });
 
             iced::widget::pane_grid::Content::new(iced::widget::responsive(move |size| {
-                Self::view_content(id, total_panes, size)
+                Self::view_content(preferences, id, total_panes, size)
             }))
             .title_bar(title_bar)
             .style(move |_theme| {
@@ -242,10 +244,10 @@ impl Widget<PanelMessage> for Panel {
         })
         .width(iced::Fill)
         .height(iced::Fill)
-        .spacing(2)
+        .spacing(preferences.spacing)
         .on_click(PanelMessage::Clicked)
         .on_drag(PanelMessage::Dragged)
-        .on_resize(5, PanelMessage::Resized);
+        .on_resize(preferences.leeway, PanelMessage::Resized);
 
         iced::widget::container(pane_grid).into()
     }

@@ -4,56 +4,66 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
+    fmt,
     fs::File,
     io::{BufReader, Read, Write},
 };
 
 use macro_rules_attribute::derive;
 
-use crate::{EnumTraits, app::Context};
+use crate::{EnumTraits, ErrorTraits, app::Context};
 
-pub fn save(context: &mut Context, success_dialog: bool) -> bool {
+#[derive(Default, ErrorTraits!)]
+pub enum FileErrors {
+    FileCreationError(String),
+    SerializationError(String),
+    FileWriteError(String),
+    #[default]
+    UnknownError,
+}
+
+impl fmt::Display for FileErrors {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::FileCreationError(file_path) => write!(
+                formatter,
+                "{}: Could not create file at: {:?}",
+                self, file_path
+            ),
+            Self::SerializationError(error) => write!(formatter, "{}: {:?}", self, error),
+            Self::FileWriteError(file_path) => write!(
+                formatter,
+                "{}: Could not write to file: {:?}",
+                self, file_path
+            ),
+            _ => write!(formatter, "{}", self),
+        }
+    }
+}
+
+pub type FileResult<E> = Result<E, FileErrors>;
+
+pub fn save(context: &mut Context) -> FileResult<bool> {
     let Some(file_path) = context.working_file() else {
-        return false;
+        return Ok(false);
     };
 
     let Ok(mut file) = File::create(file_path) else {
-        println!("File Creation Error");
-        // dialog::error(
-        //     modal,
-        //     "File Creation Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
+        return Err(FileErrors::FileCreationError(file_path.to_string()));
     };
-    let Ok(serialization) = serde_json::to_string_pretty(context) else {
-        println!("Serialization Error");
-        // dialog::error(
-        //     modal,
-        //     "Node Graph Serialization Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
-    };
-    let Ok(_) = file.write_all(serialization.as_bytes()) else {
-        println!("File Write Error");
-        // dialog::error(
-        //     modal,
-        //     "File Write Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
-    };
+    match serde_json::to_string_pretty(context) {
+        Ok(serialization) => {
+            let Ok(_) = file.write_all(serialization.as_bytes()) else {
+                return Err(FileErrors::FileWriteError(file_path.to_string()));
+            };
 
-    if success_dialog {
-        println!("File saved at {:}", file_path);
-        // dialog::success(&modal, "Success", &format!("File saved at {:}", file_path));
+            Ok(true)
+        }
+        Err(error) => Err(FileErrors::SerializationError(error.to_string())),
     }
-
-    true
 }
 
-pub fn save_as(context: &mut Context, success_dialog: bool) -> bool {
+pub fn save_as(context: &mut Context) -> FileResult<bool> {
     let mut file_dialog = rfd::FileDialog::new()
         .set_title("save to file")
         .add_filter("damascus", &["dam"]);
@@ -67,9 +77,9 @@ pub fn save_as(context: &mut Context, success_dialog: bool) -> bool {
 
     if let Some(path) = file_dialog.save_file() {
         context.set_working_file(path.display().to_string());
-        save(context, success_dialog)
+        save(context)
     } else {
-        false
+        Ok(false)
     }
 }
 
@@ -132,9 +142,15 @@ pub fn load(context: &mut Context, success_dialog: bool) -> bool {
 }
 
 #[derive(Default, EnumTraits!)]
-pub enum FileMessage {
+pub enum FileMenuOptions {
     #[default]
     Save,
     SaveAs,
     Load,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+pub enum FileMessage {
+    OptionSelected(FileMenuOptions),
+    Error(FileErrors),
 }

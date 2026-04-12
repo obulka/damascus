@@ -20,7 +20,7 @@ use crate::{
 pub mod file;
 pub mod preferences;
 
-use file::FileMessage;
+use file::{FileMenuOptions, FileMessage, FileResult};
 use preferences::PreferenceMessage;
 
 #[derive(Default, EnumTraits!)]
@@ -33,7 +33,7 @@ pub enum Menus {
 impl Menus {
     pub fn menu_options(&self) -> Vec<String> {
         match self {
-            Menus::File => FileMessage::iter()
+            Menus::File => FileMenuOptions::iter()
                 .map(|variant| variant.variant_pascal_label())
                 .collect(),
             Menus::Preferences => PreferenceMessage::iter()
@@ -72,6 +72,18 @@ pub enum ToolbarMessage {
     Error(ToolbarErrors),
 }
 
+impl From<Dialog> for ToolbarMessage {
+    fn from(dialog: Dialog) -> Self {
+        Self::ShowModal(dialog)
+    }
+}
+
+impl From<FileMenuOptions> for ToolbarMessage {
+    fn from(menu_option: FileMenuOptions) -> Self {
+        Self::File(FileMessage::OptionSelected(menu_option))
+    }
+}
+
 impl FromStr for ToolbarMessage {
     type Err = ToolbarErrors;
 
@@ -80,8 +92,8 @@ impl FromStr for ToolbarMessage {
 
         // Currently different menus having the same option will not be supported
         // but I think unique names will be used anyway
-        if let Ok(message) = FileMessage::from_str(&variant) {
-            Ok(ToolbarMessage::File(message))
+        if let Ok(option) = FileMenuOptions::from_str(&variant) {
+            Ok(ToolbarMessage::File(FileMessage::OptionSelected(option)))
         } else if let Ok(message) = PreferenceMessage::from_str(&variant) {
             Ok(ToolbarMessage::Preferences(message))
         } else {
@@ -112,24 +124,50 @@ impl Widget<ToolbarMessage> for Toolbar {
     ) -> iced::Task<ToolbarMessage> {
         match message {
             ToolbarMessage::File(file_message) => match file_message {
-                FileMessage::Save => {
-                    let mut success = true;
-                    if !file::save(context, true) {
-                        success = file::save_as(context, true);
+                FileMessage::OptionSelected(option) => match option {
+                    FileMenuOptions::Save => match file::save(context) {
+                        Ok(saved) => {
+                            if !saved {
+                                iced::Task::done(FileMenuOptions::SaveAs.into())
+                            } else {
+                                iced::Task::none()
+                            }
+                        }
+                        Err(error) => iced::Task::done(
+                            Dialog::Error("Error".to_string(), error.to_string()).into(),
+                        ),
+                    },
+                    FileMenuOptions::SaveAs => {
+                        let dialog: Option<Dialog> = match file::save_as(context) {
+                            Ok(saved) => Some(if let Some(working_file) = context.working_file() {
+                                Dialog::Success(
+                                    "Success".to_string(),
+                                    format!("Successfully saved file at path: {:}", working_file),
+                                )
+                            } else {
+                                Dialog::Error(
+                                    "Error".to_string(),
+                                    "File saved, but working file was not updated.".to_string(),
+                                )
+                            }),
+                            Err(error) => {
+                                Some(Dialog::Error("Error".to_string(), error.to_string()))
+                            }
+                        };
+
+                        if let Some(dialog) = dialog {
+                            iced::Task::done(dialog.into())
+                        } else {
+                            iced::Task::none()
+                        }
                     }
-                    iced::Task::done(ToolbarMessage::ShowModal(if success {
-                        Dialog::Error("Success".to_string(), "success".to_string())
-                    } else {
-                        Dialog::Error("Error".to_string(), "error".to_string())
-                    }))
-                }
-                FileMessage::SaveAs => {
-                    file::save_as(context, true);
-                    iced::Task::none()
-                }
-                FileMessage::Load => {
-                    file::load(context, true);
-                    iced::Task::none()
+                    FileMenuOptions::Load => {
+                        file::load(context, true);
+                        iced::Task::none()
+                    }
+                },
+                FileMessage::Error(error) => {
+                    iced::Task::done(Dialog::Error("Error".to_string(), error.to_string()).into())
                 }
             },
             ToolbarMessage::ShowModal(dialog) => {

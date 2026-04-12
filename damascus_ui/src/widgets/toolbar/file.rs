@@ -69,6 +69,20 @@ impl fmt::Display for FileErrors {
 
 pub type FileResult<E> = Result<E, FileErrors>;
 
+#[derive(Default, EnumTraits!)]
+pub enum FileMenuOptions {
+    #[default]
+    Save,
+    SaveAs,
+    Load,
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+pub enum FileMessage {
+    OptionSelected(FileMenuOptions),
+    Error(FileErrors),
+}
+
 pub fn save(context: &mut Context) -> FileResult<bool> {
     let Some(file_path) = context.working_file() else {
         return Ok(false);
@@ -145,18 +159,4 @@ pub fn load(context: &mut Context) -> FileResult<bool> {
     } else {
         Ok(false)
     }
-}
-
-#[derive(Default, EnumTraits!)]
-pub enum FileMenuOptions {
-    #[default]
-    Save,
-    SaveAs,
-    Load,
-}
-
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
-pub enum FileMessage {
-    OptionSelected(FileMenuOptions),
-    Error(FileErrors),
 }

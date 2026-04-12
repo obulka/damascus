@@ -8,7 +8,7 @@ use iced;
 use crate::widgets::{
     Widget,
     panel::{Panel, PanelMessage},
-    style,
+    style::Style,
 };
 
 #[derive(Clone, Debug)]
@@ -36,7 +36,7 @@ impl WindowMessage {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Window {
     pub title: String,
-    pub preferences: style::Preferences,
+    pub style: Style,
     pub panel: Panel,
 }
 
@@ -44,7 +44,7 @@ impl Default for Window {
     fn default() -> Self {
         Self {
             title: Self::default_title().to_string(),
-            preferences: style::Preferences::default(),
+            style: Style::default(),
             panel: Panel::default(),
         }
     }
@@ -54,10 +54,10 @@ impl Widget<WindowMessage> for Window {
     fn view<'a>(
         &'a self,
         window_id: iced::window::Id,
-        preferences: &'a style::Preferences,
+        style: &'a Style,
     ) -> iced::Element<'a, WindowMessage> {
         self.panel
-            .view(window_id, preferences)
+            .view(window_id, style)
             .map(move |panel_message| WindowMessage::Panel(Some(window_id), panel_message))
     }
 }

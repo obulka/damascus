@@ -17,6 +17,8 @@ pub mod toolbar;
 pub mod panel;
 pub mod style;
 
+use style::Style;
+
 pub trait Widget<WidgetMessage: Clone>:
     Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize
 {
@@ -35,7 +37,7 @@ pub trait Widget<WidgetMessage: Clone>:
     fn view<'a>(
         &'a self,
         _window_id: iced::window::Id,
-        _preferences: &'a style::Preferences,
+        _style: &'a Style,
     ) -> iced::Element<'a, WidgetMessage> {
         None::<iced::Element<'a, WidgetMessage>>.into()
     }

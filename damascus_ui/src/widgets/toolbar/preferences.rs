@@ -10,5 +10,5 @@ use crate::EnumTraits;
 #[derive(Default, EnumTraits!)]
 pub enum PreferenceMessage {
     #[default]
-    Settings,
+    Style,
 }

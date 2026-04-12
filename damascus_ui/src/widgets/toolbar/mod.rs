@@ -14,7 +14,7 @@ use damascus::Enumerator;
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{Widget, dialog::Dialog, menu, style},
+    widgets::{Widget, dialog::Dialog, menu, style::Style},
 };
 
 pub mod file;
@@ -192,7 +192,7 @@ impl Widget<ToolbarMessage> for Toolbar {
     fn view<'a>(
         &'a self,
         _window_id: iced::window::Id,
-        preferences: &'a style::Preferences,
+        style: &'a Style,
     ) -> iced::Element<'a, ToolbarMessage> {
         iced::widget::row(Menus::iter().map(|menu_option| {
             menu::DropdownMenu::new(
@@ -201,7 +201,7 @@ impl Widget<ToolbarMessage> for Toolbar {
                 |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
             .style(|theme: &iced::Theme, status| -> menu::Style {
-                menu::from_preferences(theme, status, preferences)
+                menu::from_style(theme, status, style)
             })
             .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
                 let palette = theme.extended_palette();

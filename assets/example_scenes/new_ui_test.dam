@@ -1,5 +1,6 @@
 {
-  "default_preferences": {
+  "default_style": {
+    "text_size": 16.0,
     "scale": 1.0,
     "border_width": 2.0,
     "theme": "Dracula",
@@ -9,30 +10,7 @@
     "leeway": 5.0
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": {
-    "nodes": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "inputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "outputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "edges": {
-      "parents": {},
-      "children": {}
-    }
-  },
+  "working_file_hash": null,
   "node_graph": {
     "nodes": [
       {

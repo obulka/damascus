@@ -12,9 +12,8 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
-        dialog::modal,
         panel::PanelMessage,
-        style,
+        style::Style,
         toolbar::{Toolbar, ToolbarMessage},
     },
 };
@@ -129,7 +128,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
 
                         if let Some(window) = self.windows.get_mut(&id) {
-                            window.preferences.scale *= scale;
+                            window.style.scale *= scale;
                         }
 
                         iced::Task::none()
@@ -197,7 +196,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
     fn view(
         &self,
         window_id: iced::window::Id,
-        _global_preferences: &style::Preferences,
+        _global_style: &Style,
     ) -> iced::Element<'_, WindowManagerMessage> {
         if let Some(window) = self.windows.get(&window_id) {
             let toolbar: Option<iced::Element<'_, WindowManagerMessage>> =
@@ -206,7 +205,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                 {
                     Some(
                         self.toolbar
-                            .view(window_id, &window.preferences)
+                            .view(window_id, &window.style)
                             .map(|toolbar_message| toolbar_message.into()),
                     )
                 } else {
@@ -218,16 +217,15 @@ impl Widget<WindowManagerMessage> for WindowManager {
             let main_contents = iced::widget::column![
                 toolbar,
                 window
-                    .view(window_id, &window.preferences)
+                    .view(window_id, &window.style)
                     .map(|window_message| { window_message.into() })
             ]
             .into();
 
             if is_main_window && let Some(dialog) = &self.toolbar.dialog {
-                modal(
-                    &window.preferences,
+                dialog.modal(
+                    &window.style,
                     main_contents,
-                    &dialog,
                     ToolbarMessage::HideModal.into(),
                 )
             } else {

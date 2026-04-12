@@ -19,7 +19,7 @@ use iced_core::{
     Rectangle, Shell, Size, Theme, Vector, Widget,
 };
 
-use crate::widgets::style::Preferences;
+use crate::widgets::style;
 
 pub struct DropdownMenu<'a, T, L, Message, Theme = iced::Theme, Renderer = iced::Renderer>
 where
@@ -553,7 +553,7 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     let base = Style {
         background: palette.background.weakest.color.into(),
         text_color: palette.background.weakest.text,
-        border: iced::border::rounded(Preferences::default().border_width),
+        border: iced::border::rounded(style::Style::default().border_width),
         menu_title_color: palette.background.weakest.text,
     };
 
@@ -567,11 +567,11 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 }
 
 /// The default style of the field of a [`DropdownMenu`].
-pub fn from_preferences(theme: &Theme, status: Status, preferences: &Preferences) -> Style {
+pub fn from_style(theme: &Theme, status: Status, style: &style::Style) -> Style {
     let base: Style = default(theme, status);
 
     Style {
-        border: iced::border::rounded(preferences.border_width),
+        border: iced::border::rounded(style.border_width),
         ..base
     }
 }

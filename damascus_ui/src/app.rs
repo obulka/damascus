@@ -15,7 +15,7 @@ use crate::{
         Widget,
         node_graph::NodeGraphMessage,
         panel::PanelMessage,
-        style,
+        style::Style,
         toolbar::{ToolbarMessage, file::FileMenuOptions},
     },
     windows::{
@@ -87,7 +87,7 @@ impl From<FileMenuOptions> for Message {
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Context {
-    pub default_preferences: style::Preferences,
+    pub default_style: Style,
     working_file: Option<String>,
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub node_graph: damascus::graph::node_graph::NodeGraph,
@@ -193,7 +193,7 @@ impl Damascus {
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
         self.window_manager
-            .view(window_id, &self.context.default_preferences)
+            .view(window_id, &self.context.default_style)
             .map(|window_manager_message| window_manager_message.into())
     }
 
@@ -218,21 +218,14 @@ impl Damascus {
     }
 
     pub fn theme(&self, window: iced::window::Id) -> Option<iced::Theme> {
-        Some(
-            self.window_manager
-                .windows
-                .get(&window)?
-                .preferences
-                .theme
-                .into(),
-        )
+        Some(self.window_manager.windows.get(&window)?.style.theme.into())
     }
 
     pub fn scale_factor(&self, window: iced::window::Id) -> f32 {
         self.window_manager
             .windows
             .get(&window)
-            .map(|window| window.preferences.scale)
+            .map(|window| window.style.scale)
             .unwrap_or(1.0)
     }
 

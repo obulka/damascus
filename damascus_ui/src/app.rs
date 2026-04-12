@@ -11,7 +11,13 @@ use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 use damascus;
 
 use crate::{
-    widgets::{Widget, node_graph::NodeGraphMessage, panel::PanelMessage, style},
+    widgets::{
+        Widget,
+        node_graph::NodeGraphMessage,
+        panel::PanelMessage,
+        style,
+        toolbar::{ToolbarMessage, file::FileMenuOptions},
+    },
     windows::{
         window::{Window, WindowMessage},
         window_manager::{WindowManager, WindowManagerMessage},
@@ -69,6 +75,12 @@ impl From<WindowMessage> for Message {
 impl From<WindowManagerMessage> for Message {
     fn from(window_manager_message: WindowManagerMessage) -> Self {
         Self::WindowManager(window_manager_message)
+    }
+}
+
+impl From<FileMenuOptions> for Message {
+    fn from(file_option: FileMenuOptions) -> Self {
+        Self::WindowManager(<FileMenuOptions as Into<ToolbarMessage>>::into(file_option).into())
     }
 }
 
@@ -232,6 +244,7 @@ impl Damascus {
 
     fn handle_ctrl_shift_hotkey(key: iced::keyboard::Key) -> Option<Message> {
         match key.as_ref() {
+            iced::keyboard::key::Key::Character("s") => Some(FileMenuOptions::SaveAs.into()),
             _ => None,
         }
     }
@@ -250,6 +263,8 @@ impl Damascus {
 
     fn handle_ctrl_hotkey(key: iced::keyboard::Key) -> Option<Message> {
         match key.as_ref() {
+            iced::keyboard::key::Key::Character("s") => Some(FileMenuOptions::Save.into()),
+            iced::keyboard::key::Key::Character("l") => Some(FileMenuOptions::Load.into()),
             iced::keyboard::key::Key::Character("w") => {
                 Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
             }

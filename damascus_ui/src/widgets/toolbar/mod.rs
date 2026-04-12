@@ -16,158 +16,32 @@ use strum::IntoEnumIterator;
 
 use damascus::Enumerator;
 
-// use super::{
-//     dialog,
-//     viewport::Viewport,
-// };
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{Widget, style},
+    widgets::{Widget, menu, style},
 };
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct FileDescriptor {
-    path: String,
-}
+pub mod file;
+pub mod preferences;
 
-#[derive(Default, EnumTraits!)]
-pub enum FileMessage {
-    #[default]
-    Save,
-    SaveAs,
-    Load,
-}
-
-fn save(context: &mut Context, success_dialog: bool) -> bool {
-    let Some(file_path) = context.working_file() else {
-        return false;
-    };
-
-    let Ok(mut file) = File::create(file_path) else {
-        println!("File Creation Error");
-        // dialog::error(
-        //     modal,
-        //     "File Creation Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
-    };
-    let Ok(serialization) = serde_json::to_string_pretty(context) else {
-        println!("Serialization Error");
-        // dialog::error(
-        //     modal,
-        //     "Node Graph Serialization Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
-    };
-    let Ok(_) = file.write_all(serialization.as_bytes()) else {
-        println!("File Write Error");
-        // dialog::error(
-        //     modal,
-        //     "File Write Error",
-        //     &format!("Could not save file at {:}", file_path),
-        // );
-        return false;
-    };
-
-    if success_dialog {
-        println!("File saved at {:}", file_path);
-        // dialog::success(&modal, "Success", &format!("File saved at {:}", file_path));
-    }
-
-    true
-}
-
-fn save_as(context: &mut Context, success_dialog: bool) -> bool {
-    let mut file_dialog = rfd::FileDialog::new()
-        .set_title("save to file")
-        .add_filter("damascus", &["dam"]);
-
-    if let Some(file_path) = context.working_file() {
-        if let Some(directory) = std::path::Path::new(file_path).parent() {
-            file_dialog = file_dialog.set_directory(directory);
-        }
-        file_dialog = file_dialog.set_file_name(file_path);
-    }
-
-    if let Some(path) = file_dialog.save_file() {
-        context.set_working_file(path.display().to_string());
-        save(context, success_dialog)
-    } else {
-        false
-    }
-}
-
-fn load(context: &mut Context, success_dialog: bool) -> bool {
-    // TODO Unload current
-
-    let mut file_dialog = rfd::FileDialog::new()
-        .set_title("load from file")
-        .add_filter("damascus", &["dam"]);
-
-    if let Some(file_path) = &context.working_file() {
-        if let Some(directory) = std::path::Path::new(file_path).parent() {
-            file_dialog = file_dialog.set_directory(directory);
-        }
-        file_dialog = file_dialog.set_file_name(file_path);
-    }
-
-    if let Some(path) = file_dialog.pick_file() {
-        let file_path: String = path.display().to_string();
-
-        let Ok(file) = File::open(&file_path) else {
-            println!("Could not open file from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "File Open Error",
-            //     &format!("Could not open file from {:}", file_path),
-            // );
-            return false;
-        };
-        let mut buf_reader = BufReader::new(file);
-        let mut contents = String::new();
-        let Ok(_) = buf_reader.read_to_string(&mut contents) else {
-            println!("Could not read file from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "File Read Error",
-            //     &format!("Could not read file from {:}", file_path),
-            // );
-            return false;
-        };
-        let Ok(state) = serde_json::from_str(&contents) else {
-            println!("Could not load node graph from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "Deserialization Error",
-            //     &format!("Could not load node graph from {:}", file_path),
-            // );
-            return false;
-        };
-
-        *context = state;
-
-        println!("Loaded {:}", file_path);
-
-        true
-    } else {
-        println!("No file chosen");
-        false
-    }
-}
+use file::FileMessage;
+use preferences::PreferenceMessage;
 
 #[derive(Default, EnumTraits!)]
 pub enum Menus {
     #[default]
     File,
+    Preferences,
 }
 
 impl Menus {
     pub fn menu_options(&self) -> Vec<String> {
         match self {
             Menus::File => FileMessage::iter()
+                .map(|variant| variant.variant_pascal_label())
+                .collect(),
+            Menus::Preferences => PreferenceMessage::iter()
                 .map(|variant| variant.variant_pascal_label())
                 .collect(),
         }
@@ -197,6 +71,7 @@ impl fmt::Display for ToolbarErrors {
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
     File(FileMessage),
+    Preferences(PreferenceMessage),
     Error(ToolbarErrors),
 }
 
@@ -210,6 +85,8 @@ impl FromStr for ToolbarMessage {
         // but I think unique names will be used anyway
         if let Ok(message) = FileMessage::from_str(&variant) {
             Ok(ToolbarMessage::File(message))
+        } else if let Ok(message) = PreferenceMessage::from_str(&variant) {
+            Ok(ToolbarMessage::Preferences(message))
         } else {
             Err(Self::Err::DeserializeError(variant))
         }
@@ -237,15 +114,15 @@ impl Widget<ToolbarMessage> for Toolbar {
         match message {
             ToolbarMessage::File(file_message) => match file_message {
                 FileMessage::Save => {
-                    if !save(context, true) {
-                        save_as(context, true);
+                    if !file::save(context, true) {
+                        file::save_as(context, true);
                     }
                 }
                 FileMessage::SaveAs => {
-                    save_as(context, true);
+                    file::save_as(context, true);
                 }
                 FileMessage::Load => {
-                    load(context, true);
+                    file::load(context, true);
                 }
             },
             _ => {}
@@ -265,38 +142,14 @@ impl Widget<ToolbarMessage> for Toolbar {
         // modal.show_dialog();
 
         iced::widget::row(Menus::iter().map(|menu_option| {
-            iced::widget::pick_list(
+            menu::DropdownMenu::new(
                 menu_option.menu_options(),
-                None::<String>,
+                menu_option.to_string(),
                 |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
-            .placeholder(&menu_option.to_string())
-            .handle(iced::widget::pick_list::Handle::None)
-            .style(
-                |theme: &iced::Theme, status| -> iced::widget::pick_list::Style {
-                    let palette = theme.extended_palette();
-                    let base = iced::widget::pick_list::Style {
-                        background: palette.background.weakest.color.into(),
-                        text_color: palette.background.weakest.text,
-                        border: iced::border::rounded(preferences.border_width),
-                        handle_color: iced::Color::TRANSPARENT,
-                        placeholder_color: palette.background.weakest.text,
-                    };
-
-                    match status {
-                        iced::widget::pick_list::Status::Active => base,
-                        iced::widget::pick_list::Status::Opened { is_hovered: _ }
-                        | iced::widget::pick_list::Status::Hovered => {
-                            iced::widget::pick_list::Style {
-                                background: iced::Background::Color(
-                                    palette.background.weaker.color,
-                                ),
-                                ..base
-                            }
-                        }
-                    }
-                },
-            )
+            .style(|theme: &iced::Theme, status| -> menu::Style {
+                menu::from_preferences(theme, status, preferences)
+            })
             .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
                 let palette = theme.extended_palette();
                 iced::overlay::menu::Style {

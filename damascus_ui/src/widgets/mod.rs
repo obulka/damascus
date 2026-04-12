@@ -10,6 +10,7 @@ use iced;
 use crate::app::Context;
 
 // pub mod dialog;
+pub mod menu;
 pub mod node_graph;
 pub mod toolbar;
 // pub mod viewport;

@@ -7,6 +7,7 @@ use iced;
 
 use crate::widgets::{
     Widget,
+    dialog::Dialog,
     panel::{Panel, PanelMessage},
     style,
 };

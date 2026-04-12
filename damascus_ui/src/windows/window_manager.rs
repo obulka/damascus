@@ -12,6 +12,7 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
+        dialog::modal,
         panel::PanelMessage,
         style,
         toolbar::{Toolbar, ToolbarMessage},
@@ -209,13 +210,26 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     None
                 };
 
-            iced::widget::column![
+            let is_main_window: bool = toolbar.is_some();
+
+            let main_contents = iced::widget::column![
                 toolbar,
                 window
                     .view(window_id, &window.preferences)
                     .map(|window_message| { window_message.into() })
             ]
-            .into()
+            .into();
+
+            if is_main_window && let Some(dialog) = &self.toolbar.dialog {
+                modal(
+                    &window.preferences,
+                    main_contents,
+                    &dialog,
+                    ToolbarMessage::HideModal.into(),
+                )
+            } else {
+                main_contents
+            }
         } else {
             iced::widget::space().into()
         }

@@ -186,6 +186,15 @@ pub fn close_button<'a, Message>(
     .padding(preferences.padding)
 }
 
+pub fn success_button<'a, Message>(
+    preferences: &'a Preferences,
+    text: &'a str,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(iced::widget::text(text))
+        .style(iced::widget::button::success)
+        .padding(preferences.padding)
+}
+
 pub fn maximize_button<'a, Message>(
     preferences: &'a Preferences,
     is_maximized: bool,

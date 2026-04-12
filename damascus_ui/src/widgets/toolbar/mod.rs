@@ -14,7 +14,7 @@ use damascus::Enumerator;
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{Widget, menu, style},
+    widgets::{Widget, dialog::Dialog, menu, style},
 };
 
 pub mod file;
@@ -67,6 +67,8 @@ impl fmt::Display for ToolbarErrors {
 pub enum ToolbarMessage {
     File(FileMessage),
     Preferences(PreferenceMessage),
+    ShowModal(Dialog),
+    HideModal,
     Error(ToolbarErrors),
 }
 
@@ -98,7 +100,9 @@ impl From<Result<Self, ToolbarErrors>> for ToolbarMessage {
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub struct Toolbar {}
+pub struct Toolbar {
+    pub dialog: Option<Dialog>,
+}
 
 impl Widget<ToolbarMessage> for Toolbar {
     fn update(
@@ -109,20 +113,35 @@ impl Widget<ToolbarMessage> for Toolbar {
         match message {
             ToolbarMessage::File(file_message) => match file_message {
                 FileMessage::Save => {
+                    let mut success = true;
                     if !file::save(context, true) {
-                        file::save_as(context, true);
+                        success = file::save_as(context, true);
                     }
+                    iced::Task::done(ToolbarMessage::ShowModal(if success {
+                        Dialog::Error("Success".to_string(), "success".to_string())
+                    } else {
+                        Dialog::Error("Error".to_string(), "error".to_string())
+                    }))
                 }
                 FileMessage::SaveAs => {
                     file::save_as(context, true);
+                    iced::Task::none()
                 }
                 FileMessage::Load => {
                     file::load(context, true);
+                    iced::Task::none()
                 }
             },
-            _ => {}
+            ToolbarMessage::ShowModal(dialog) => {
+                self.dialog = Some(dialog);
+                iced::Task::none()
+            }
+            ToolbarMessage::HideModal => {
+                self.dialog = None;
+                iced::Task::none()
+            }
+            _ => iced::Task::none(),
         }
-        iced::Task::none()
     }
 
     fn view<'a>(

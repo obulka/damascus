@@ -2,7 +2,11 @@
   "default_preferences": {
     "scale": 1.0,
     "border_width": 2.0,
-    "theme": "Dracula"
+    "theme": "Dracula",
+    "spacing": 3.0,
+    "padding": 3.0,
+    "icon_size": 16,
+    "leeway": 5.0
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
   "working_file_hash": {

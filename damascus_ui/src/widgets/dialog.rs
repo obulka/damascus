@@ -9,17 +9,17 @@ use super::style;
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Dialog {
-    Error(String, String),
-    Info(String, String),
-    Warning(String, String),
-    Success(String, String),
+    Error(String),
+    Info(String),
+    Warning(String),
+    Success(String),
 }
 
 pub fn modal<'a, Message: Clone>(
     preferences: &'a style::Preferences,
     base: impl Into<iced::Element<'a, Message>>,
     dialog: &'a Dialog,
-    message: Message,
+    on_close: Message,
 ) -> iced::Element<'a, Message>
 where
     Message: Clone + 'a,
@@ -29,17 +29,17 @@ where
         iced::widget::opaque(
             iced::widget::mouse_area(
                 iced::widget::center(iced::widget::opaque(match dialog {
-                    Dialog::Error(title, body) => {
-                        success(preferences, title, body, message.clone())
+                    Dialog::Error(message) => {
+                        error(preferences, message, on_close.clone())
                     }
-                    Dialog::Info(title, body) => {
-                        success(preferences, title, body, message.clone())
+                    Dialog::Info(message) => {
+                        success(preferences, message, on_close.clone())
                     }
-                    Dialog::Warning(title, body) => {
-                        success(preferences, title, body, message.clone())
+                    Dialog::Warning(message) => {
+                        success(preferences, message, on_close.clone())
                     }
-                    Dialog::Success(title, body) => {
-                        success(preferences, title, body, message.clone())
+                    Dialog::Success(message) => {
+                        success(preferences, message, on_close.clone())
                     }
                 }))
                 .style(|_theme| {
@@ -55,49 +55,66 @@ where
                     }
                 })
             )
-            .on_press(message)
+            .on_press(on_close)
         )
     ]
     .into()
 }
 
-// pub fn error(modal: &Modal, title: &str, body: &str) {
-//     modal
-//         .dialog()
-//         .with_title(title)
-//         .with_body(body)
-//         .with_icon(Icon::Error)
-//         .open();
-// }
+pub fn error<'a, Message: Clone + 'a>(
+    preferences: &'a style::Preferences,
+    message: &'a str,
+    on_close: Message,
+) -> iced::Element<'a, Message> {
+    iced::widget::container(iced::widget::column![
+        iced::widget::text("Error"),
+        iced::widget::text(message),
+        style::error_button(preferences, "Ok").on_press(on_close),
+    ])
+    .padding(preferences.padding)
+    .style(iced::widget::container::rounded_box)
+    .into()
+}
 
-// pub fn info(modal: &Modal, title: &str, body: &str) {
-//     modal
-//         .dialog()
-//         .with_title(title)
-//         .with_body(body)
-//         .with_icon(Icon::Info)
-//         .open();
-// }
+pub fn info<'a, Message: Clone + 'a>(
+    preferences: &'a style::Preferences,
+    message: &'a str,
+    on_close: Message,
+) -> iced::Element<'a, Message> {
+    iced::widget::container(iced::widget::column![
+        iced::widget::text("Warning"),
+        iced::widget::text(message),
+        style::button(preferences, "Ok").on_press(on_close),
+    ])
+    .padding(preferences.padding)
+    .style(iced::widget::container::rounded_box)
+    .into()
+}
 
-// pub fn warning(modal: &Modal, title: &str, body: &str) {
-//     modal
-//         .dialog()
-//         .with_title(title)
-//         .with_body(body)
-//         .with_icon(Icon::Warning)
-//         .open();
-// }
+pub fn warning<'a, Message: Clone + 'a>(
+    preferences: &'a style::Preferences,
+    message: &'a str,
+    on_close: Message,
+) -> iced::Element<'a, Message> {
+    iced::widget::container(iced::widget::column![
+        iced::widget::text("Warning"),
+        iced::widget::text(message),
+        style::warning_button(preferences, "Ok").on_press(on_close),
+    ])
+    .padding(preferences.padding)
+    .style(iced::widget::container::rounded_box)
+    .into()
+}
 
 pub fn success<'a, Message: Clone + 'a>(
     preferences: &'a style::Preferences,
-    title: &'a str,
-    body: &'a str,
-    message: Message,
+    message: &'a str,
+    on_close: Message,
 ) -> iced::Element<'a, Message> {
     iced::widget::container(iced::widget::column![
-        iced::widget::text(title),
-        iced::widget::text(body),
-        style::success_button(preferences, "Ok").on_press(message),
+        iced::widget::text("Success"),
+        iced::widget::text(message),
+        style::success_button(preferences, "Ok").on_press(on_close),
     ])
     .padding(preferences.padding)
     .style(iced::widget::container::rounded_box)

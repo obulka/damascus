@@ -46,14 +46,14 @@ pub trait Transformable {
 }
 
 pub trait Enumerator:
-    Clone + IntoEnumIterator + EnumCount + Default + Display + FromStr + PartialEq
+    AsRef<str> + Clone + IntoEnumIterator + EnumCount + Default + Debug + Display + FromStr + PartialEq
 {
     fn variant(&self) -> String {
-        self.to_string()
+        self.as_ref().to_string()
     }
 
     fn variants() -> Vec<String> {
-        Self::iter().map(|variant| variant.to_string()).collect()
+        Self::iter().map(|variant| variant.variant()).collect()
     }
 
     fn variant_matches(&self, other: &Self) -> bool {
@@ -199,6 +199,7 @@ derive_alias! {
     #[derive(EnumBaseTraits!)] = #[derive(
         Debug,
         Clone,
+        strum::AsRefStr,
         strum::EnumIter,
         strum::EnumCount,
         strum::EnumString,

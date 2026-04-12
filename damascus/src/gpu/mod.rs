@@ -27,7 +27,24 @@ pub type GPUResult<T> = std::result::Result<T, GPUErrors>;
 
 impl fmt::Display for GPUErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        write!(formatter, "{}", self)
+        match self {
+            Self::ImageError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            Self::PollError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            Self::RecvError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            Self::RequestAdapterError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            Self::RequestDeviceError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            _ => write!(formatter, "{}: Skill issue tbh", self.variant()),
+        }
     }
 }
 

@@ -25,6 +25,7 @@ derive_alias! {
     #[derive(EnumBaseTraits!)] = #[derive(
         Debug,
         Clone,
+        strum::AsRefStr,
         strum::EnumIter,
         strum::EnumCount,
         strum::EnumString,

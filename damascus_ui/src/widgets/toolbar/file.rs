@@ -11,13 +11,18 @@ use std::{
 
 use macro_rules_attribute::derive;
 
+use damascus::Enumerator;
+
 use crate::{EnumTraits, ErrorTraits, app::Context};
 
 #[derive(Default, ErrorTraits!)]
 pub enum FileErrors {
     FileCreationError(String),
+    DeserializationError(String),
     SerializationError(String),
     FileWriteError(String),
+    FileOpenError(String),
+    FileReadError(String),
     #[default]
     UnknownError,
 }
@@ -27,16 +32,37 @@ impl fmt::Display for FileErrors {
         match self {
             Self::FileCreationError(file_path) => write!(
                 formatter,
-                "{}: Could not create file at: {:?}",
-                self, file_path
+                "{}: Could not create file at '{}'",
+                self.variant(),
+                file_path
             ),
-            Self::SerializationError(error) => write!(formatter, "{}: {:?}", self, error),
+            Self::DeserializationError(error) => {
+                write!(formatter, "{}: {}", self.variant(), error)
+            }
+            Self::SerializationError(error) => write!(formatter, "{}: {}", self.variant(), error),
             Self::FileWriteError(file_path) => write!(
                 formatter,
-                "{}: Could not write to file: {:?}",
-                self, file_path
+                "{}: Could not write to file '{}'",
+                self.variant(),
+                file_path
             ),
-            _ => write!(formatter, "{}", self),
+            Self::FileOpenError(file_path) => {
+                write!(
+                    formatter,
+                    "{}: Could not open file '{}'",
+                    self.variant(),
+                    file_path
+                )
+            }
+            Self::FileReadError(file_path) => {
+                write!(
+                    formatter,
+                    "{}: Could not read file '{}'",
+                    self.variant(),
+                    file_path
+                )
+            }
+            _ => write!(formatter, "{}: Fuck you.", self.variant()),
         }
     }
 }
@@ -83,7 +109,7 @@ pub fn save_as(context: &mut Context) -> FileResult<bool> {
     }
 }
 
-pub fn load(context: &mut Context, success_dialog: bool) -> bool {
+pub fn load(context: &mut Context) -> FileResult<bool> {
     // TODO Unload current
 
     let mut file_dialog = rfd::FileDialog::new()
@@ -101,43 +127,23 @@ pub fn load(context: &mut Context, success_dialog: bool) -> bool {
         let file_path: String = path.display().to_string();
 
         let Ok(file) = File::open(&file_path) else {
-            println!("Could not open file from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "File Open Error",
-            //     &format!("Could not open file from {:}", file_path),
-            // );
-            return false;
+            return Err(FileErrors::FileOpenError(file_path));
         };
         let mut buf_reader = BufReader::new(file);
         let mut contents = String::new();
         let Ok(_) = buf_reader.read_to_string(&mut contents) else {
-            println!("Could not read file from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "File Read Error",
-            //     &format!("Could not read file from {:}", file_path),
-            // );
-            return false;
-        };
-        let Ok(state) = serde_json::from_str(&contents) else {
-            println!("Could not load node graph from {:}", file_path);
-            // dialog::error(
-            //     modal,
-            //     "Deserialization Error",
-            //     &format!("Could not load node graph from {:}", file_path),
-            // );
-            return false;
+            return Err(FileErrors::FileReadError(file_path));
         };
 
-        *context = state;
-
-        println!("Loaded {:}", file_path);
-
-        true
+        match serde_json::from_str(&contents) {
+            Ok(state) => {
+                *context = state;
+                Ok(true)
+            }
+            Err(error) => Err(FileErrors::DeserializationError(error.to_string())),
+        }
     } else {
-        println!("No file chosen");
-        false
+        Ok(false)
     }
 }
 

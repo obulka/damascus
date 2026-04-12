@@ -95,7 +95,7 @@ impl From<Theme> for iced::Theme {
     }
 }
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Preferences {
     pub scale: f32,
     pub border_width: f32,
@@ -184,6 +184,33 @@ pub fn close_button<'a, Message>(
     )
     .style(iced::widget::button::secondary)
     .padding(preferences.padding)
+}
+
+pub fn error_button<'a, Message>(
+    preferences: &'a Preferences,
+    text: &'a str,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(iced::widget::text(text))
+        .style(iced::widget::button::danger)
+        .padding(preferences.padding)
+}
+
+pub fn button<'a, Message>(
+    preferences: &'a Preferences,
+    text: &'a str,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(iced::widget::text(text))
+        .style(iced::widget::button::secondary)
+        .padding(preferences.padding)
+}
+
+pub fn warning_button<'a, Message>(
+    preferences: &'a Preferences,
+    text: &'a str,
+) -> iced::widget::Button<'a, Message> {
+    iced::widget::button(iced::widget::text(text))
+        .style(iced::widget::button::warning)
+        .padding(preferences.padding)
 }
 
 pub fn success_button<'a, Message>(

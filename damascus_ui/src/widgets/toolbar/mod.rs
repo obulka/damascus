@@ -50,15 +50,18 @@ pub enum ToolbarErrors {
     UnknownError,
 }
 
+pub type ToolbarResult<E> = Result<E, ToolbarErrors>;
+
 impl fmt::Display for ToolbarErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DeserializeError(error) => write!(
                 formatter,
-                "{}: Could not deserialize from: {:?}",
-                self, error
+                "{}: Could not deserialize from: {}",
+                self.variant(),
+                error
             ),
-            _ => write!(formatter, "{}", self),
+            _ => write!(formatter, "{}: Sounds like a you problem.", self.variant()),
         }
     }
 }
@@ -87,7 +90,7 @@ impl From<FileMenuOptions> for ToolbarMessage {
 impl FromStr for ToolbarMessage {
     type Err = ToolbarErrors;
 
-    fn from_str(option: &str) -> Result<Self, Self::Err> {
+    fn from_str(option: &str) -> ToolbarResult<Self> {
         let variant: String = option.chars().filter(|c| !c.is_whitespace()).collect();
 
         // Currently different menus having the same option will not be supported
@@ -102,8 +105,8 @@ impl FromStr for ToolbarMessage {
     }
 }
 
-impl From<Result<Self, ToolbarErrors>> for ToolbarMessage {
-    fn from(result: Result<Self, ToolbarErrors>) -> Self {
+impl From<ToolbarResult<Self>> for ToolbarMessage {
+    fn from(result: ToolbarResult<Self>) -> Self {
         match result {
             Ok(message) => message,
             Err(error) => ToolbarMessage::Error(error),
@@ -133,26 +136,21 @@ impl Widget<ToolbarMessage> for Toolbar {
                                 iced::Task::none()
                             }
                         }
-                        Err(error) => iced::Task::done(
-                            Dialog::Error("Error".to_string(), error.to_string()).into(),
-                        ),
+                        Err(error) => iced::Task::done(Dialog::Error(error.to_string()).into()),
                     },
                     FileMenuOptions::SaveAs => {
                         let dialog: Option<Dialog> = match file::save_as(context) {
                             Ok(saved) => Some(if let Some(working_file) = context.working_file() {
-                                Dialog::Success(
-                                    "Success".to_string(),
-                                    format!("Successfully saved file at path: {:}", working_file),
-                                )
+                                Dialog::Success(format!(
+                                    "Successfully saved file at path '{}'.",
+                                    working_file
+                                ))
                             } else {
                                 Dialog::Error(
-                                    "Error".to_string(),
                                     "File saved, but working file was not updated.".to_string(),
                                 )
                             }),
-                            Err(error) => {
-                                Some(Dialog::Error("Error".to_string(), error.to_string()))
-                            }
+                            Err(error) => Some(Dialog::Error(error.to_string())),
                         };
 
                         if let Some(dialog) = dialog {
@@ -162,12 +160,14 @@ impl Widget<ToolbarMessage> for Toolbar {
                         }
                     }
                     FileMenuOptions::Load => {
-                        file::load(context, true);
-                        iced::Task::none()
+                        let Err(error) = file::load(context) else {
+                            return iced::Task::none();
+                        };
+                        iced::Task::done(Dialog::Error(error.to_string()).into())
                     }
                 },
                 FileMessage::Error(error) => {
-                    iced::Task::done(Dialog::Error("Error".to_string(), error.to_string()).into())
+                    iced::Task::done(Dialog::Error(error.to_string()).into())
                 }
             },
             ToolbarMessage::ShowModal(dialog) => {

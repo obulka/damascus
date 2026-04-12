@@ -4,23 +4,13 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
-    fmt,
     fs::File,
     io::{BufReader, Read, Write},
-    str::FromStr,
 };
 
-use iced;
 use macro_rules_attribute::derive;
-use strum::IntoEnumIterator;
 
-use damascus::Enumerator;
-
-use crate::{
-    EnumTraits, ErrorTraits,
-    app::Context,
-    widgets::{Widget, style},
-};
+use crate::{EnumTraits, app::Context};
 
 pub fn save(context: &mut Context, success_dialog: bool) -> bool {
     let Some(file_path) = context.working_file() else {

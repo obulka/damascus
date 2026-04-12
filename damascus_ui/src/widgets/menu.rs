@@ -331,7 +331,7 @@ where
 
     fn draw(
         &self,
-        tree: &Tree,
+        _tree: &Tree,
         renderer: &mut Renderer,
         theme: &Theme,
         _style: &renderer::Style,
@@ -340,8 +340,6 @@ where
         viewport: &Rectangle,
     ) {
         let font = self.font.unwrap_or_else(|| renderer.default_font());
-        let state = tree.state.downcast_ref::<State<Renderer::Paragraph>>();
-
         let bounds = layout.bounds();
 
         let style = Catalog::style(
@@ -394,7 +392,6 @@ where
     ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
         let font = self.font.unwrap_or_else(|| renderer.default_font());
-        let text_size = self.text_size.unwrap_or_else(|| renderer.default_size());
 
         if state.is_open {
             let max_width = match self.width {

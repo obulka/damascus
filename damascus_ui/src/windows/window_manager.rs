@@ -106,7 +106,9 @@ impl Widget<WindowManagerMessage> for WindowManager {
 
                         self.windows.insert(id, window);
 
-                        focus_input
+                        iced::Task::batch(std::iter::once(focus_input).chain(std::iter::once(
+                            iced::Task::done(WindowMessage::UpdateTitle),
+                        )))
                     }
                     WindowMessage::Closed(id) => {
                         self.windows.remove(&id);
@@ -132,9 +134,10 @@ impl Widget<WindowManagerMessage> for WindowManager {
 
                         iced::Task::none()
                     }
-                    WindowMessage::TitleChanged(id, title) => {
-                        if let Some(window) = self.windows.get_mut(&id) {
-                            window.title = title;
+                    WindowMessage::UpdateTitle => {
+                        let title: String = context.window_title();
+                        for (_id, window) in &mut self.windows {
+                            window.title = title.clone();
                         }
 
                         iced::Task::none()

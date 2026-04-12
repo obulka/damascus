@@ -7,7 +7,6 @@ use iced;
 
 use crate::widgets::{
     Widget,
-    dialog::Dialog,
     panel::{Panel, PanelMessage},
     style,
 };
@@ -18,7 +17,7 @@ pub enum WindowMessage {
     Opened(iced::window::Id),
     Closed(iced::window::Id),
     ScaleChanged(Option<iced::window::Id>, f32),
-    TitleChanged(iced::window::Id, String),
+    UpdateTitle,
     Panel(Option<iced::window::Id>, PanelMessage),
 }
 
@@ -44,7 +43,7 @@ pub struct Window {
 impl Default for Window {
     fn default() -> Self {
         Self {
-            title: format!("damascus"),
+            title: Self::default_title().to_string(),
             preferences: style::Preferences::default(),
             panel: Panel::default(),
         }
@@ -57,30 +56,14 @@ impl Widget<WindowMessage> for Window {
         window_id: iced::window::Id,
         preferences: &'a style::Preferences,
     ) -> iced::Element<'a, WindowMessage> {
-        // let title_input = column![
-        //     text("Window title:"),
-        //     text_input("Window Title", &self.title)
-        //         .on_input(move |title| WindowMessage::TitleChanged(id, title).into())
-        //         .id(format!("input-{id}"))
-        // ];
-
-        // let new_window_button = button(text("New Window")).on_press(WindowMessage::Open.into());
-
-        // let content = column![
-        //     scale_input,
-        //     title_input,
-        //     new_window_button,
-        //     self.panel
-        //         .view()
-        //         .map(move |panel_message| WindowMessage::Panel(id, panel_message).into())
-        // ]
-        // .spacing(50)
-        // .width(Fill)
-        // .align_x(Center)
-        // .width(200);
-
         self.panel
             .view(window_id, preferences)
             .map(move |panel_message| WindowMessage::Panel(Some(window_id), panel_message))
+    }
+}
+
+impl Window {
+    pub fn default_title() -> &'static str {
+        "damascus"
     }
 }

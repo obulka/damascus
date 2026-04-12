@@ -20,7 +20,7 @@ use crate::{
 pub mod file;
 pub mod preferences;
 
-use file::{FileMenuOptions, FileMessage, FileResult};
+use file::{FileMenuOptions, FileMessage};
 use preferences::PreferenceMessage;
 
 #[derive(Default, EnumTraits!)]
@@ -140,16 +140,23 @@ impl Widget<ToolbarMessage> for Toolbar {
                     },
                     FileMenuOptions::SaveAs => {
                         let dialog: Option<Dialog> = match file::save_as(context) {
-                            Ok(saved) => Some(if let Some(working_file) = context.working_file() {
-                                Dialog::Success(format!(
-                                    "Successfully saved file at path '{}'.",
-                                    working_file
-                                ))
-                            } else {
-                                Dialog::Error(
-                                    "File saved, but working file was not updated.".to_string(),
-                                )
-                            }),
+                            Ok(saved) => {
+                                if saved {
+                                    Some(if let Some(working_file) = context.working_file() {
+                                        Dialog::Success(format!(
+                                            "Successfully saved file at path '{}'.",
+                                            working_file
+                                        ))
+                                    } else {
+                                        Dialog::Error(
+                                            "File saved, but working file was not updated."
+                                                .to_string(),
+                                        )
+                                    })
+                                } else {
+                                    None
+                                }
+                            }
                             Err(error) => Some(Dialog::Error(error.to_string())),
                         };
 

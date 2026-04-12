@@ -97,6 +97,8 @@ pub fn save(context: &mut Context) -> FileResult<bool> {
                 return Err(FileErrors::FileWriteError(file_path.to_string()));
             };
 
+            context.update_hash();
+
             Ok(true)
         }
         Err(error) => Err(FileErrors::SerializationError(error.to_string())),
@@ -152,6 +154,8 @@ pub fn load(context: &mut Context) -> FileResult<bool> {
         match serde_json::from_str(&contents) {
             Ok(state) => {
                 *context = state;
+                context.update(file_path);
+
                 Ok(true)
             }
             Err(error) => Err(FileErrors::DeserializationError(error.to_string())),

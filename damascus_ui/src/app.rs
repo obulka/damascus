@@ -13,7 +13,7 @@ use damascus;
 use crate::{
     widgets::{Widget, node_graph::NodeGraphMessage, panel::PanelMessage, style},
     windows::{
-        window::WindowMessage,
+        window::{Window, WindowMessage},
         window_manager::{WindowManager, WindowManagerMessage},
     },
 };
@@ -82,32 +82,44 @@ pub struct Context {
 }
 
 impl Context {
+    pub fn window_title(&self) -> String {
+        if let Some(working_file) = &self.working_file {
+            format!(
+                "{:} - {:}{:}",
+                Window::default_title(),
+                working_file,
+                if self.dirty() { "*" } else { "" }
+            )
+        } else {
+            Window::default_title().to_string()
+        }
+    }
+
     pub fn working_file(&self) -> &Option<String> {
         &self.working_file
     }
 
     pub fn set_working_file(&mut self, working_file: String) {
         self.working_file = Some(working_file);
-        self.working_file_hash = to_key_with_ordered_float(&self.node_graph).ok()
     }
 
-    // pub fn update(&mut self, working_file: String, node_graph: &NodeGraph) {
-    //     self.working_file = Some(working_file);
-    //     self.working_file_hash = if let Ok(hash) = to_key_with_ordered_float(node_graph) {
-    //         Some(hash)
-    //     } else {
-    //         None
-    //     }
-    // }
+    pub fn update_hash(&mut self) {
+        self.working_file_hash = to_key_with_ordered_float(&self.node_graph).ok();
+    }
 
-    // pub fn dirty(&self, node_graph: &NodeGraph) -> bool {
-    //     if let Some(working_file_hash) = &self.working_file_hash {
-    //         if let Ok(new_hash) = to_key_with_ordered_float(node_graph) {
-    //             return new_hash != *working_file_hash;
-    //         }
-    //     }
-    //     true
-    // }
+    pub fn update(&mut self, working_file: String) {
+        self.set_working_file(working_file);
+        self.update_hash();
+    }
+
+    pub fn dirty(&self) -> bool {
+        if let Some(working_file_hash) = &self.working_file_hash
+            && let Ok(current_hash) = to_key_with_ordered_float(&self.node_graph)
+        {
+            return current_hash != *working_file_hash;
+        }
+        true
+    }
 }
 
 pub struct Damascus {
@@ -141,47 +153,34 @@ impl Damascus {
         )
     }
 
-    fn lazy_update(&self) {
-        println!("TODO: Lazy update");
-        // WindowMessage::TitleChanged(
-        //     if let Some(working_file) = &self.context.working_file {
-        //         format!(
-        //             "damascus - {:}{:}",
-        //             working_file,
-        //             if self.context.dirty(&self.node_graph) {
-        //                 "*"
-        //             } else {
-        //                 ""
-        //             }
-        //         )
-        //     } else {
-        //         "damascus".to_owned()
-        //     },
-        // ));
+    fn lazy_update(&self) -> iced::Task<Message> {
+        iced::Task::done(WindowMessage::UpdateTitle.into())
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
         // TODO might be able to use iced's native lazy functionality
         // this was only originally done to update title because egui
         // was checking dirty hash every frame
-        if let Ok(duration_since_lazy_update) =
+        let lazy_task: iced::Task<Message> = if let Ok(duration_since_lazy_update) =
             SystemTime::now().duration_since(self.last_lazy_update)
+            && duration_since_lazy_update.as_secs_f32() >= Self::LAZY_UPDATE_DELAY
         {
-            if duration_since_lazy_update.as_secs_f32() >= Self::LAZY_UPDATE_DELAY {
-                self.lazy_update();
-                self.last_lazy_update = SystemTime::now();
-            }
-        }
+            let task: iced::Task<Message> = self.lazy_update();
+            self.last_lazy_update = SystemTime::now();
+            task
+        } else {
+            iced::Task::none()
+        };
 
-        match message {
-            Message::WindowManager(window_manager_message) => self
-                .window_manager
-                .update(&mut self.context, window_manager_message)
-                .map(|window_message| window_message.into()),
-            _ => {
-                todo!("Add the meat")
-            }
-        }
+        iced::Task::batch(
+            std::iter::once(lazy_task).chain(std::iter::once(match message {
+                Message::WindowManager(window_manager_message) => self
+                    .window_manager
+                    .update(&mut self.context, window_manager_message)
+                    .map(|window_message| window_message.into()),
+                _ => iced::Task::none(),
+            })),
+        )
     }
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
@@ -190,22 +189,13 @@ impl Damascus {
             .map(|window_manager_message| window_manager_message.into())
     }
 
-    fn display_error() {
-        todo!("Display Error to User")
-    }
+    // fn display_error() {
+    //     todo!("Display Error to User")
+    // }
 
-    pub fn save(&self) {
-        todo!("Save state to disk");
-        // Context {
-        //     context: self.context.clone(),
-        //     node_graph_editor_state: self.node_graph.clone(),
-        //     // viewport_state: self.viewport.state,
-        // }.to_string();
-    }
-
-    fn auto_save_interval(&self) -> Duration {
-        Duration::from_secs(15)
-    }
+    // fn auto_save_interval(&self) -> Duration {
+    //     Duration::from_secs(15)
+    // }
 
     pub fn default_font() -> iced::Font {
         iced::Font::DEFAULT

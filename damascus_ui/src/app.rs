@@ -79,6 +79,7 @@ pub struct Context {
     working_file: Option<String>,
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub node_graph: damascus::graph::node_graph::NodeGraph,
+    // viewport: Viewport,
 }
 
 impl Context {
@@ -126,7 +127,6 @@ pub struct Damascus {
     last_lazy_update: SystemTime,
     context: Context,
     window_manager: WindowManager,
-    // viewport: Viewport,
 }
 
 impl Damascus {
@@ -144,10 +144,6 @@ impl Damascus {
                     - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.0) as u64),
                 context: persistent_data,
                 window_manager: WindowManager::new(),
-                // viewports: Viewport::new(
-                //     persistent_data.viewport_state,
-                //     creation_context.wgpu_render_state.as_ref().unwrap(),
-                // ),
             },
             open.map(|id| WindowMessage::Opened(id).into()),
         )

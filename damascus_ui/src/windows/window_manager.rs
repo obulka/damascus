@@ -92,7 +92,6 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             // iced::window::Event::FilesHoveredLeft,
                             _ => {}
                         };
-                        // println!("{:?}, {:?}", id, event);
                         iced::Task::none()
                     }
                     WindowMessage::Opened(id) => {
@@ -221,7 +220,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
             .into();
 
             if let Some(dialog) = &self.toolbar.dialog {
-                dialog.modal(
+                dialog.inform_user(
                     &window.style,
                     main_contents,
                     ToolbarMessage::HideModal.into(),

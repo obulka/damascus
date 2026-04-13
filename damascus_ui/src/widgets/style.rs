@@ -3,6 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use glam::Vec4;
 use iced;
 use macro_rules_attribute::derive;
 
@@ -105,6 +106,7 @@ pub struct Style {
     pub padding: f32,
     pub icon_size: u32,
     pub leeway: f32,
+    pub modal_background_colour: Vec4,
 }
 
 impl Default for Style {
@@ -119,6 +121,7 @@ impl Default for Style {
             padding: 3.0,
             icon_size: 16,
             leeway: 5.0,
+            modal_background_colour: Vec4::new(0.0, 0.0, 0.0, 0.69),
         }
     }
 }

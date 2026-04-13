@@ -177,6 +177,12 @@ impl Widget<ToolbarMessage> for Toolbar {
                     iced::Task::done(Dialog::Error(error.to_string()).into())
                 }
             },
+            ToolbarMessage::Preferences(preference_message) => match preference_message {
+                PreferenceMessage::Style => {
+                    println!("open style settings");
+                    iced::Task::none()
+                }
+            },
             ToolbarMessage::ShowModal(dialog) => {
                 self.dialog = Some(dialog);
                 iced::Task::none()

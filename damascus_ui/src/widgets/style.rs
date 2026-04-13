@@ -156,6 +156,14 @@ impl Style {
         iced::widget::text(message).size(self.h2_size()).into()
     }
 
+    pub fn subsubheading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
+        iced::widget::text(message).size(self.h3_size()).into()
+    }
+
+    pub fn subsubsubheading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
+        iced::widget::text(message).size(self.h4_size()).into()
+    }
+
     pub fn title_bar(&self) -> iced::widget::container::Style {
         let theme: iced::Theme = <Theme as Into<iced::Theme>>::into(self.theme);
         let palette: &iced::theme::palette::Extended = theme.extended_palette();

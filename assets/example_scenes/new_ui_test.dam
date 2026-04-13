@@ -10,7 +10,30 @@
     "leeway": 5.0
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": null,
+  "working_file_hash": {
+    "nodes": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "inputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "outputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "edges": {
+      "parents": {},
+      "children": {}
+    }
+  },
   "node_graph": {
     "nodes": [
       {

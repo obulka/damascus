@@ -212,8 +212,6 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     None
                 };
 
-            let is_main_window: bool = toolbar.is_some();
-
             let main_contents = iced::widget::column![
                 toolbar,
                 window
@@ -222,7 +220,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
             ]
             .into();
 
-            if is_main_window && let Some(dialog) = &self.toolbar.dialog {
+            if let Some(dialog) = &self.toolbar.dialog {
                 dialog.modal(
                     &window.style,
                     main_contents,

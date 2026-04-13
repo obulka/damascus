@@ -5,7 +5,7 @@
 
 use iced;
 
-use super::style::Style;
+use super::{modal, style::Style};
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum Dialog {
@@ -16,41 +16,6 @@ pub enum Dialog {
 }
 
 impl Dialog {
-    pub fn modal<'a, Message: Clone>(
-        &'a self,
-        style: &'a Style,
-        base_widget: impl Into<iced::Element<'a, Message>>,
-        modal_widget: impl Into<iced::Element<'a, Message>>,
-        on_close: Message,
-    ) -> iced::Element<'a, Message>
-    where
-        Message: Clone + 'a,
-    {
-        iced::widget::stack![
-            base_widget.into(),
-            iced::widget::opaque(
-                iced::widget::mouse_area(
-                    iced::widget::center(iced::widget::opaque(modal_widget)).style(|_theme| {
-                        iced::widget::container::Style {
-                            background: Some(
-                                iced::Color {
-                                    r: style.modal_background_colour.x,
-                                    g: style.modal_background_colour.y,
-                                    b: style.modal_background_colour.z,
-                                    a: style.modal_background_colour.w,
-                                }
-                                .into(),
-                            ),
-                            ..iced::widget::container::Style::default()
-                        }
-                    })
-                )
-                .on_press(on_close)
-            )
-        ]
-        .into()
-    }
-
     pub fn inform_user<'a, Message: Clone>(
         &'a self,
         style: &'a Style,
@@ -60,7 +25,7 @@ impl Dialog {
     where
         Message: Clone + 'a,
     {
-        self.modal(
+        modal(
             style,
             base,
             match self {

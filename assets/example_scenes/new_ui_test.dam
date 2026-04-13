@@ -7,33 +7,11 @@
     "spacing": 3.0,
     "padding": 3.0,
     "icon_size": 16,
-    "leeway": 5.0
+    "leeway": 5.0,
+    "modal_opacity": 0.69
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": {
-    "nodes": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "inputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "outputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "edges": {
-      "parents": {},
-      "children": {}
-    }
-  },
+  "working_file_hash": null,
   "node_graph": {
     "nodes": [
       {

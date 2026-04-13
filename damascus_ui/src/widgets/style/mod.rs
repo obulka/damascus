@@ -3,98 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use glam::Vec4;
+use std::ops::RangeInclusive;
+
 use iced;
 use macro_rules_attribute::derive;
 
 use crate::{EnumTraits, icons::Icons};
 
-// TODO Support Custom Themes
-#[derive(Copy, Default, EnumTraits!)]
-pub enum Theme {
-    Light,
-    Dark,
-    #[default]
-    Dracula,
-    Nord,
-    SolarizedLight,
-    SolarizedDark,
-    GruvboxLight,
-    GruvboxDark,
-    CatppuccinLatte,
-    CatppuccinFrappe,
-    CatppuccinMacchiato,
-    CatppuccinMocha,
-    TokyoNight,
-    TokyoNightStorm,
-    TokyoNightLight,
-    KanagawaWave,
-    KanagawaDragon,
-    KanagawaLotus,
-    Moonfly,
-    Nightfly,
-    Oxocarbon,
-    Ferra,
-}
+pub mod editor;
+pub mod theme;
 
-impl From<iced::Theme> for Theme {
-    fn from(theme: iced::Theme) -> Self {
-        match theme {
-            iced::Theme::Light => Theme::Light,
-            iced::Theme::Dark => Theme::Dark,
-            iced::Theme::Dracula => Theme::Dracula,
-            iced::Theme::Nord => Theme::Nord,
-            iced::Theme::SolarizedLight => Theme::SolarizedLight,
-            iced::Theme::SolarizedDark => Theme::SolarizedDark,
-            iced::Theme::GruvboxLight => Theme::GruvboxLight,
-            iced::Theme::GruvboxDark => Theme::GruvboxDark,
-            iced::Theme::CatppuccinLatte => Theme::CatppuccinLatte,
-            iced::Theme::CatppuccinFrappe => Theme::CatppuccinFrappe,
-            iced::Theme::CatppuccinMacchiato => Theme::CatppuccinMacchiato,
-            iced::Theme::CatppuccinMocha => Theme::CatppuccinMocha,
-            iced::Theme::TokyoNight => Theme::TokyoNight,
-            iced::Theme::TokyoNightStorm => Theme::TokyoNightStorm,
-            iced::Theme::TokyoNightLight => Theme::TokyoNightLight,
-            iced::Theme::KanagawaWave => Theme::KanagawaWave,
-            iced::Theme::KanagawaDragon => Theme::KanagawaDragon,
-            iced::Theme::KanagawaLotus => Theme::KanagawaLotus,
-            iced::Theme::Moonfly => Theme::Moonfly,
-            iced::Theme::Nightfly => Theme::Nightfly,
-            iced::Theme::Oxocarbon => Theme::Oxocarbon,
-            iced::Theme::Ferra => Theme::Ferra,
-            _ => Theme::Dark,
-        }
-    }
-}
-
-impl From<Theme> for iced::Theme {
-    fn from(theme: Theme) -> Self {
-        match theme {
-            Theme::Light => iced::Theme::Light,
-            Theme::Dark => iced::Theme::Dark,
-            Theme::Dracula => iced::Theme::Dracula,
-            Theme::Nord => iced::Theme::Nord,
-            Theme::SolarizedLight => iced::Theme::SolarizedLight,
-            Theme::SolarizedDark => iced::Theme::SolarizedDark,
-            Theme::GruvboxLight => iced::Theme::GruvboxLight,
-            Theme::GruvboxDark => iced::Theme::GruvboxDark,
-            Theme::CatppuccinLatte => iced::Theme::CatppuccinLatte,
-            Theme::CatppuccinFrappe => iced::Theme::CatppuccinFrappe,
-            Theme::CatppuccinMacchiato => iced::Theme::CatppuccinMacchiato,
-            Theme::CatppuccinMocha => iced::Theme::CatppuccinMocha,
-            Theme::TokyoNight => iced::Theme::TokyoNight,
-            Theme::TokyoNightStorm => iced::Theme::TokyoNightStorm,
-            Theme::TokyoNightLight => iced::Theme::TokyoNightLight,
-            Theme::KanagawaWave => iced::Theme::KanagawaWave,
-            Theme::KanagawaDragon => iced::Theme::KanagawaDragon,
-            Theme::KanagawaLotus => iced::Theme::KanagawaLotus,
-            Theme::Moonfly => iced::Theme::Moonfly,
-            Theme::Nightfly => iced::Theme::Nightfly,
-            Theme::Oxocarbon => iced::Theme::Oxocarbon,
-            Theme::Ferra => iced::Theme::Ferra,
-        }
-    }
-}
+use theme::Theme;
 
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Style {
@@ -106,7 +25,7 @@ pub struct Style {
     pub padding: f32,
     pub icon_size: u32,
     pub leeway: f32,
-    pub modal_background_colour: Vec4,
+    pub modal_opacity: f32,
 }
 
 impl Default for Style {
@@ -121,7 +40,7 @@ impl Default for Style {
             padding: 3.0,
             icon_size: 16,
             leeway: 5.0,
-            modal_background_colour: Vec4::new(0.0, 0.0, 0.0, 0.69),
+            modal_opacity: 0.69,
         }
     }
 }
@@ -287,5 +206,25 @@ impl Style {
         )
         .style(iced::widget::button::secondary)
         .padding(self.padding)
+    }
+
+    pub fn slider<'a, T, F, Message>(
+        &'a self,
+        name: &'a str,
+        range: RangeInclusive<T>,
+        value: T,
+        on_change: F,
+    ) -> iced::Element<'a, Message>
+    where
+        T: Copy + From<u8> + PartialOrd + num_traits::cast::FromPrimitive + 'a,
+        F: Fn(T) -> Message + 'a,
+        Message: Clone + 'a,
+        f64: From<T> + 'a,
+    {
+        iced::widget::row![
+            self.text(name),
+            iced::widget::slider(range, value, on_change),
+        ]
+        .into()
     }
 }

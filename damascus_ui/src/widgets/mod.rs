@@ -42,3 +42,31 @@ pub trait Widget<WidgetMessage: Clone>:
         None::<iced::Element<'a, WidgetMessage>>.into()
     }
 }
+
+pub fn modal<'a, Message: Clone>(
+    style: &'a Style,
+    base_widget: impl Into<iced::Element<'a, Message>>,
+    modal_widget: impl Into<iced::Element<'a, Message>>,
+    on_close: Message,
+) -> iced::Element<'a, Message>
+where
+    Message: Clone + 'a,
+{
+    iced::widget::stack![
+        base_widget.into(),
+        iced::widget::opaque(
+            iced::widget::mouse_area(
+                iced::widget::center(iced::widget::opaque(modal_widget)).style(|theme| {
+                    let mut background_colour: iced::Color = theme.palette().background;
+                    background_colour.a = style.modal_opacity;
+                    iced::widget::container::Style {
+                        background: Some(background_colour.into()),
+                        ..iced::widget::container::Style::default()
+                    }
+                })
+            )
+            .on_press(on_close)
+        )
+    ]
+    .into()
+}

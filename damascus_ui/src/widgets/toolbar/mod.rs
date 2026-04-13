@@ -14,7 +14,12 @@ use damascus::Enumerator;
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{Widget, dialog::Dialog, menu, style::Style},
+    widgets::{
+        Widget,
+        dialog::Dialog,
+        menu,
+        style::{Style, editor::StyleEditor},
+    },
 };
 
 pub mod file;
@@ -175,12 +180,6 @@ impl Widget<ToolbarMessage> for Toolbar {
                 },
                 FileMessage::Error(error) => {
                     iced::Task::done(Dialog::Error(error.to_string()).into())
-                }
-            },
-            ToolbarMessage::Preferences(preference_message) => match preference_message {
-                PreferenceMessage::Style => {
-                    println!("open style settings");
-                    iced::Task::none()
                 }
             },
             ToolbarMessage::ShowModal(dialog) => {

@@ -11,10 +11,10 @@ use super::window::{Window, WindowMessage};
 use crate::{
     app::Context,
     widgets::{
-        Widget,
+        Widget, modal,
         panel::PanelMessage,
         style::Style,
-        toolbar::{Toolbar, ToolbarMessage},
+        toolbar::{Toolbar, ToolbarMessage, preferences::PreferenceMessage},
     },
 };
 
@@ -62,10 +62,26 @@ impl Widget<WindowManagerMessage> for WindowManager {
         message: WindowManagerMessage,
     ) -> iced::Task<WindowManagerMessage> {
         match message {
-            WindowManagerMessage::Toolbar(toolbar_message) => self
-                .toolbar
-                .update(context, toolbar_message)
-                .map(|toolbar_message| toolbar_message.into()),
+            WindowManagerMessage::Toolbar(toolbar_message) => {
+                // TODO temp for testing
+                match toolbar_message {
+                    ToolbarMessage::Preferences(ref preference_message) => match preference_message
+                    {
+                        PreferenceMessage::Style => {
+                            if let Some(focused_window_id) = self.focused_window_id
+                                && let Some(window) = self.windows.get_mut(&focused_window_id)
+                            {
+                                window.open_style_editor();
+                            }
+                        }
+                    },
+                    _ => {}
+                }
+
+                self.toolbar
+                    .update(context, toolbar_message)
+                    .map(|toolbar_message| toolbar_message.into())
+            }
             WindowManagerMessage::Window(window_message) => {
                 match window_message {
                     WindowMessage::Event(id, event) => {
@@ -121,13 +137,27 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             iced::Task::none()
                         }
                     }
-                    WindowMessage::ScaleChanged(window_id, scale) => {
+                    WindowMessage::StyleEditor(window_id, style_editor_message) => {
                         let Some(id) = window_id.or_else(|| self.focused_window_id) else {
                             return iced::Task::none();
                         };
 
                         if let Some(window) = self.windows.get_mut(&id) {
-                            window.style.scale *= scale;
+                            window.update(
+                                context,
+                                WindowMessage::StyleEditor(Some(id), style_editor_message),
+                            )
+                        } else {
+                            iced::Task::none()
+                        }
+                    }
+                    WindowMessage::CloseStyleEditor(window_id) => {
+                        let Some(id) = window_id.or_else(|| self.focused_window_id) else {
+                            return iced::Task::none();
+                        };
+
+                        if let Some(window) = self.windows.get_mut(&id) {
+                            window.close_style_editor();
                         }
 
                         iced::Task::none()
@@ -211,7 +241,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     None
                 };
 
-            let main_contents = iced::widget::column![
+            let main_contents: iced::Element<'_, WindowManagerMessage> = iced::widget::column![
                 toolbar,
                 window
                     .view(window_id, &window.style)

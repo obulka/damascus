@@ -15,7 +15,7 @@ use crate::{
         Widget,
         node_graph::NodeGraphMessage,
         panel::PanelMessage,
-        style::Style,
+        style::{Style, editor::StyleEditorMessage},
         toolbar::{ToolbarMessage, file::FileMenuOptions},
     },
     windows::{
@@ -69,6 +69,12 @@ pub enum Message {
 impl From<WindowMessage> for Message {
     fn from(window_message: WindowMessage) -> Self {
         Self::WindowManager(WindowManagerMessage::Window(window_message))
+    }
+}
+
+impl From<StyleEditorMessage> for Message {
+    fn from(style_editor_message: StyleEditorMessage) -> Self {
+        <StyleEditorMessage as Into<WindowMessage>>::into(style_editor_message).into()
     }
 }
 
@@ -262,10 +268,10 @@ impl Damascus {
                 Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
             }
             iced::keyboard::key::Key::Character("=") => {
-                Some(WindowMessage::ScaleChanged(None, 1.05).into())
+                Some(WindowMessage::StyleEditor(None, StyleEditorMessage::IncrementScale).into())
             }
             iced::keyboard::key::Key::Character("-") => {
-                Some(WindowMessage::ScaleChanged(None, 0.95).into())
+                Some(WindowMessage::StyleEditor(None, StyleEditorMessage::DecrementScale).into())
             }
             iced::keyboard::key::Key::Named(key) => {
                 if let Some(direction) = match key {

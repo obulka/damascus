@@ -100,64 +100,75 @@ impl Widget<StyleEditorMessage> for StyleEditor {
     ) -> iced::Element<'a, StyleEditorMessage> {
         let text_size = style.slider(
             StyleEditorMessage::TextSize(0.).as_ref(),
-            1.0..=100.0,
+            3.0..=36.0,
             style.text_size,
+            0.25,
             StyleEditorMessage::TextSize,
         );
         let scale = style.slider(
             StyleEditorMessage::Scale(0.).as_ref(),
-            1.0..=100.0,
+            0.1..=10.0,
             style.scale,
+            0.1,
             StyleEditorMessage::Scale,
         );
         let border_width = style.slider(
             StyleEditorMessage::BorderWidth(0.).as_ref(),
-            1.0..=100.0,
+            0.0..=10.0,
             style.border_width,
+            0.1,
             StyleEditorMessage::BorderWidth,
         );
         // let theme = style.slider(1.0..=100.0, style.theme, StyleEditorMessage::Theme);
         let spacing = style.slider(
             StyleEditorMessage::Spacing(0.).as_ref(),
-            1.0..=100.0,
+            0.0..=10.0,
             style.spacing,
+            0.1,
             StyleEditorMessage::Spacing,
         );
         let padding = style.slider(
             StyleEditorMessage::Padding(0.).as_ref(),
-            1.0..=100.0,
+            0.0..=10.0,
             style.padding,
+            0.1,
             StyleEditorMessage::Padding,
         );
         let icon_size = style.slider(
             StyleEditorMessage::IconSize(0).as_ref(),
-            1..=100,
+            4..=36,
             style.icon_size,
+            1,
             StyleEditorMessage::IconSize,
         );
         let leeway = style.slider(
             StyleEditorMessage::Leeway(0.).as_ref(),
             1.0..=100.0,
             style.leeway,
+            1.,
             StyleEditorMessage::Leeway,
         );
         let modal_opacity = style.slider(
             StyleEditorMessage::ModalOpacity(0.).as_ref(),
-            1.0..=100.0,
+            0.0..=1.0,
             style.modal_opacity,
+            0.1,
             StyleEditorMessage::ModalOpacity,
         );
 
-        iced::widget::container(iced::widget::column![
-            text_size,
-            scale,
-            border_width,
-            spacing,
-            padding,
-            icon_size,
-            leeway,
-            modal_opacity,
-        ])
+        iced::widget::container(
+            iced::widget::column![
+                text_size,
+                scale,
+                border_width,
+                spacing,
+                padding,
+                icon_size,
+                leeway,
+                modal_opacity,
+            ]
+            .spacing(style.spacing),
+        )
         .width(250)
         .into()
     }

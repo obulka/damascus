@@ -3,10 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::ops::RangeInclusive;
+use std::{
+    fmt::Display,
+    ops::{AddAssign, DivAssign, MulAssign, RangeInclusive, RemAssign, SubAssign},
+    str::FromStr,
+};
 
 use iced;
 use macro_rules_attribute::derive;
+use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
 use crate::{EnumTraits, icons::Icons};
 
@@ -66,24 +71,42 @@ impl Style {
         1.125 * self.text_size
     }
 
-    pub fn text<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
-        iced::widget::text(message).size(self.text_size()).into()
+    pub fn text<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    where
+        Message: iced::widget::text::Catalog + 'a,
+    {
+        iced::widget::text(message).size(self.text_size())
     }
 
-    pub fn heading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
-        iced::widget::text(message).size(self.h1_size()).into()
+    pub fn heading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    where
+        Message: iced::widget::text::Catalog + 'a,
+    {
+        iced::widget::text(message).size(self.h1_size())
     }
 
-    pub fn subheading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
-        iced::widget::text(message).size(self.h2_size()).into()
+    pub fn subheading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    where
+        Message: iced::widget::text::Catalog + 'a,
+    {
+        iced::widget::text(message).size(self.h2_size())
     }
 
-    pub fn subsubheading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
-        iced::widget::text(message).size(self.h3_size()).into()
+    pub fn subsubheading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    where
+        Message: iced::widget::text::Catalog + 'a,
+    {
+        iced::widget::text(message).size(self.h3_size())
     }
 
-    pub fn subsubsubheading<'a, Message>(&'a self, message: &'a str) -> iced::Element<'a, Message> {
-        iced::widget::text(message).size(self.h4_size()).into()
+    pub fn subsubsubheading<'a, Message>(
+        &'a self,
+        message: &'a str,
+    ) -> iced::widget::Text<'a, Message>
+    where
+        Message: iced::widget::text::Catalog + 'a,
+    {
+        iced::widget::text(message).size(self.h4_size())
     }
 
     pub fn title_bar(&self) -> iced::widget::container::Style {
@@ -213,18 +236,37 @@ impl Style {
         name: &'a str,
         range: RangeInclusive<T>,
         value: T,
+        step: T,
         on_change: F,
     ) -> iced::Element<'a, Message>
     where
-        T: Copy + From<u8> + PartialOrd + num_traits::cast::FromPrimitive + 'a,
-        F: Fn(T) -> Message + 'a,
+        T: Num
+            + NumAssignOps
+            + PartialOrd
+            + Display
+            + FromStr
+            + Clone
+            + Bounded
+            + FromPrimitive
+            + From<u8>
+            + Copy
+            + 'static,
+        F: Fn(T) -> Message + Copy + 'static,
         Message: Clone + 'a,
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.text(name),
-            iced::widget::slider(range, value, on_change),
+            self.text(name).align_y(iced::alignment::Vertical::Center),
+            iced_aw::widget::number_input(&value, .., on_change)
+                .step(step) // TODO dynamic based on highlight?
+                .ignore_buttons(true)
+                .width(iced::Length::Fixed(self.text_size * 3.))
+                .padding(self.padding),
+            iced::widget::slider(range, value, on_change)
+                .step(step)
+                .height(self.text_size + 2. * self.padding),
         ]
+        .spacing(self.spacing)
         .into()
     }
 }

@@ -14,12 +14,7 @@ use damascus::Enumerator;
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{
-        Widget,
-        dialog::Dialog,
-        menu,
-        style::{Style, editor::StyleEditor},
-    },
+    widgets::{Widget, dialog::Dialog, menu, style::Style},
 };
 
 pub mod file;
@@ -101,9 +96,9 @@ impl FromStr for ToolbarMessage {
         // Currently different menus having the same option will not be supported
         // but I think unique names will be used anyway
         if let Ok(option) = FileMenuOptions::from_str(&variant) {
-            Ok(ToolbarMessage::File(FileMessage::OptionSelected(option)))
+            Ok(Self::File(FileMessage::OptionSelected(option)))
         } else if let Ok(message) = PreferenceMessage::from_str(&variant) {
-            Ok(ToolbarMessage::Preferences(message))
+            Ok(Self::Preferences(message))
         } else {
             Err(Self::Err::DeserializeError(variant))
         }

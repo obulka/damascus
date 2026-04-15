@@ -15,7 +15,10 @@ use crate::{
         Widget,
         node_graph::NodeGraphMessage,
         panel::PanelMessage,
-        style::{Style, editor::StyleEditorMessage},
+        style::{
+            Style,
+            editor::{StyleEditorFields, StyleEditorMessage},
+        },
         toolbar::{ToolbarMessage, file::FileMenuOptions},
     },
     windows::{
@@ -267,12 +270,20 @@ impl Damascus {
             iced::keyboard::key::Key::Character("w") => {
                 Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
             }
-            iced::keyboard::key::Key::Character("=") => {
-                Some(WindowMessage::StyleEditor(None, StyleEditorMessage::IncrementScale).into())
-            }
-            iced::keyboard::key::Key::Character("-") => {
-                Some(WindowMessage::StyleEditor(None, StyleEditorMessage::DecrementScale).into())
-            }
+            iced::keyboard::key::Key::Character("=") => Some(
+                WindowMessage::StyleEditor(
+                    None,
+                    StyleEditorMessage::Increment(StyleEditorFields::Scale),
+                )
+                .into(),
+            ),
+            iced::keyboard::key::Key::Character("-") => Some(
+                WindowMessage::StyleEditor(
+                    None,
+                    StyleEditorMessage::Decrement(StyleEditorFields::Scale),
+                )
+                .into(),
+            ),
             iced::keyboard::key::Key::Named(key) => {
                 if let Some(direction) = match key {
                     iced::keyboard::key::Named::ArrowUp => {

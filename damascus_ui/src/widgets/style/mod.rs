@@ -5,7 +5,7 @@
 
 use std::{
     fmt::Display,
-    ops::{AddAssign, DivAssign, MulAssign, RangeInclusive, RemAssign, SubAssign},
+    ops::{AddAssign, DivAssign, MulAssign, RangeBounds, RangeInclusive, RemAssign, SubAssign},
     str::FromStr,
 };
 
@@ -31,6 +31,7 @@ pub struct Style {
     pub icon_size: u32,
     pub leeway: f32,
     pub modal_opacity: f32,
+    pub float_input_step: f32,
 }
 
 impl Default for Style {
@@ -46,6 +47,7 @@ impl Default for Style {
             icon_size: 16,
             leeway: 5.0,
             modal_opacity: 0.69,
+            float_input_step: 1e-4,
         }
     }
 }
@@ -234,10 +236,12 @@ impl Style {
     pub fn slider<'a, T, F, Message>(
         &'a self,
         name: &'a str,
-        range: RangeInclusive<T>,
+        suggested_range: RangeInclusive<T>,
+        limit_range: impl RangeBounds<T>,
         value: T,
         step: T,
         on_change: F,
+        on_release: Message,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -257,16 +261,20 @@ impl Style {
     {
         iced::widget::row![
             self.text(name).align_y(iced::alignment::Vertical::Center),
-            iced_aw::widget::number_input(&value, .., on_change)
+            iced_aw::widget::number_input(&value, limit_range, on_change)
                 .step(step) // TODO dynamic based on highlight?
                 .ignore_buttons(true)
                 .width(iced::Length::Fixed(self.text_size * 3.))
                 .padding(self.padding),
-            iced::widget::slider(range, value, on_change)
+            iced::widget::slider(suggested_range, value, on_change)
                 .step(step)
                 .height(self.text_size + 2. * self.padding),
         ]
         .spacing(self.spacing)
         .into()
+    }
+
+    pub fn none<'a, Message>() -> iced::Element<'a, Message> {
+        None::<iced::Element<'a, Message>>.into()
     }
 }

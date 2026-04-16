@@ -11,7 +11,7 @@ use super::window::{Window, WindowMessage};
 use crate::{
     app::Context,
     widgets::{
-        Widget, modal,
+        Widget,
         panel::PanelMessage,
         style::Style,
         toolbar::{Toolbar, ToolbarMessage, preferences::PreferenceMessage},

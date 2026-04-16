@@ -5,7 +5,7 @@
 
 use std::{
     fmt::Display,
-    ops::{AddAssign, DivAssign, MulAssign, RangeBounds, RangeInclusive, RemAssign, SubAssign},
+    ops::{RangeBounds, RangeInclusive},
     str::FromStr,
 };
 
@@ -13,7 +13,9 @@ use iced;
 use macro_rules_attribute::derive;
 use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
-use crate::{EnumTraits, icons::Icons};
+use damascus::Enumerator;
+
+use crate::icons::Icons;
 
 pub mod editor;
 pub mod theme;
@@ -73,28 +75,42 @@ impl Style {
         1.125 * self.text_size
     }
 
-    pub fn text<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    pub fn text<'a, Message>(
+        &'a self,
+        message: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Text<'a, Message>
     where
         Message: iced::widget::text::Catalog + 'a,
     {
-        iced::widget::text(message).size(self.text_size())
+        iced::widget::text(message)
+            .size(self.text_size())
+            .wrapping(iced::widget::text::Wrapping::None)
     }
 
-    pub fn heading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    pub fn heading<'a, Message>(
+        &'a self,
+        message: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Text<'a, Message>
     where
         Message: iced::widget::text::Catalog + 'a,
     {
         iced::widget::text(message).size(self.h1_size())
     }
 
-    pub fn subheading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    pub fn subheading<'a, Message>(
+        &'a self,
+        message: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Text<'a, Message>
     where
         Message: iced::widget::text::Catalog + 'a,
     {
         iced::widget::text(message).size(self.h2_size())
     }
 
-    pub fn subsubheading<'a, Message>(&'a self, message: &'a str) -> iced::widget::Text<'a, Message>
+    pub fn subsubheading<'a, Message>(
+        &'a self,
+        message: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Text<'a, Message>
     where
         Message: iced::widget::text::Catalog + 'a,
     {
@@ -103,7 +119,7 @@ impl Style {
 
     pub fn subsubsubheading<'a, Message>(
         &'a self,
-        message: &'a str,
+        message: impl iced::widget::text::IntoFragment<'a>,
     ) -> iced::widget::Text<'a, Message>
     where
         Message: iced::widget::text::Catalog + 'a,
@@ -175,13 +191,19 @@ impl Style {
         .padding(self.padding)
     }
 
-    pub fn error_button<'a, Message>(&'a self, text: &'a str) -> iced::widget::Button<'a, Message> {
+    pub fn error_button<'a, Message>(
+        &'a self,
+        text: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::danger)
             .padding(self.padding)
     }
 
-    pub fn button<'a, Message>(&'a self, text: &'a str) -> iced::widget::Button<'a, Message> {
+    pub fn button<'a, Message>(
+        &'a self,
+        text: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::secondary)
             .padding(self.padding)
@@ -233,9 +255,61 @@ impl Style {
         .padding(self.padding)
     }
 
+    pub fn pick_list<'a, T, F, Message>(
+        &'a self,
+        name: impl iced::widget::text::IntoFragment<'a>,
+        picked: T,
+        on_change: F,
+    ) -> iced::Element<'a, Message>
+    where
+        T: Enumerator,
+        F: Fn(T) -> Message + Copy + 'static,
+        Message: Clone + 'a,
+    {
+        iced::widget::row![
+            self.text(name)
+                .width(iced::Length::FillPortion(1))
+                .align_y(iced::alignment::Vertical::Center),
+            iced::widget::pick_list(
+                T::iter()
+                    .map(|variant| variant.variant_pascal_label())
+                    .collect::<Vec<String>>(),
+                Some(picked.variant_pascal_label()),
+                move |mut value| -> Message {
+                    value = value.chars().filter(|c| !c.is_whitespace()).collect();
+                    on_change(match T::from_str(&value) {
+                        Ok(variant) => variant,
+                        Err(_parse_error) => T::default(),
+                    })
+                },
+            )
+            .width(iced::Length::FillPortion(2))
+            .style(
+                |theme: &iced::Theme, status| -> iced::widget::pick_list::Style {
+                    let base: iced::widget::pick_list::Style =
+                        iced::widget::pick_list::default(theme, status);
+
+                    iced::widget::pick_list::Style {
+                        border: iced::border::rounded(self.border_width),
+                        ..base
+                    }
+                },
+            )
+            .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
+                let palette = theme.extended_palette();
+                iced::overlay::menu::Style {
+                    background: palette.background.weakest.color.into(),
+                    ..iced::overlay::menu::default(theme)
+                }
+            })
+        ]
+        .spacing(self.spacing)
+        .into()
+    }
+
     pub fn slider<'a, T, F, Message>(
         &'a self,
-        name: &'a str,
+        name: impl iced::widget::text::IntoFragment<'a>,
         suggested_range: RangeInclusive<T>,
         limit_range: impl RangeBounds<T>,
         value: T,
@@ -260,15 +334,31 @@ impl Style {
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.text(name).align_y(iced::alignment::Vertical::Center),
+            self.text(name)
+                .align_y(iced::alignment::Vertical::Center)
+                .width(iced::Length::FillPortion(2)),
             iced_aw::widget::number_input(&value, limit_range, on_change)
                 .step(step) // TODO dynamic based on highlight?
                 .ignore_buttons(true)
-                .width(iced::Length::Fixed(self.text_size * 3.))
-                .padding(self.padding),
+                .set_size(self.text_size)
+                .width(iced::Length::FillPortion(1))
+                .font(iced::Font::MONOSPACE)
+                .padding(self.padding)
+                .on_submit(on_release.clone())
+                .input_style(|theme: &iced::Theme, status| {
+                    let mut background_colour: iced::Color =
+                        theme.extended_palette().background.base.color;
+                    background_colour.a = 1.0;
+                    iced::widget::text_input::Style {
+                        background: background_colour.into(),
+                        ..iced::widget::text_input::default(theme, status)
+                    }
+                }),
             iced::widget::slider(suggested_range, value, on_change)
                 .step(step)
-                .height(self.text_size + 2. * self.padding),
+                .width(iced::Length::FillPortion(3))
+                .height(self.text_size + 2. * self.padding)
+                .on_release(on_release),
         ]
         .spacing(self.spacing)
         .into()

@@ -3,18 +3,15 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::str::FromStr;
-
 use iced;
 use macro_rules_attribute::derive;
-use strum::{Display, IntoEnumIterator};
+use strum::Display;
 
 use damascus::Enumerator;
 
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    icons::Icons,
     widgets::{
         Widget,
         style::{Style, theme::Theme},
@@ -169,8 +166,13 @@ impl Widget<StyleEditorMessage> for StyleEditor {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, StyleEditorMessage> {
+        let theme = style.pick_list(
+            StyleEditorFields::Theme.variant_label(),
+            style.theme,
+            |theme| -> StyleEditorMessage { StyleEditorData::Theme(theme).into() },
+        );
         let text_size = style.slider(
-            StyleEditorFields::TextSize.as_ref(),
+            StyleEditorFields::TextSize.variant_label(),
             6.0..=36.0,
             ..,
             style.text_size,
@@ -179,7 +181,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::TextSize(style.text_size).into(),
         );
         let scale = style.slider(
-            StyleEditorFields::Scale.as_ref(),
+            StyleEditorFields::Scale.variant_label(),
             0.25..=5.0,
             style.float_input_step..,
             style.scale,
@@ -188,7 +190,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::Scale(style.scale).into(),
         );
         let border_width = style.slider(
-            StyleEditorFields::BorderWidth.as_ref(),
+            StyleEditorFields::BorderWidth.variant_label(),
             0.0..=10.0,
             ..,
             style.border_width,
@@ -196,46 +198,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
             StyleEditorData::BorderWidth(style.border_width).into(),
         );
-        let theme = iced::widget::row![
-            style
-                .text(StyleEditorFields::Theme.as_ref())
-                .align_y(iced::alignment::Vertical::Center),
-            iced::widget::pick_list(
-                Theme::iter()
-                    .map(|variant| variant.variant_pascal_label())
-                    .collect::<Vec<String>>(),
-                Some(style.theme.to_string()),
-                |mut value| -> StyleEditorMessage {
-                    value = value.chars().filter(|c| !c.is_whitespace()).collect();
-                    if let Ok(theme) = Theme::from_str(&value) {
-                        StyleEditorData::Theme(theme).into()
-                    } else {
-                        StyleEditorErrors::DeserializeError(value.into()).into()
-                    }
-                },
-            )
-            .style(
-                |theme: &iced::Theme, status| -> iced::widget::pick_list::Style {
-                    let base: iced::widget::pick_list::Style =
-                        iced::widget::pick_list::default(theme, status);
-
-                    iced::widget::pick_list::Style {
-                        border: iced::border::rounded(style.border_width),
-                        ..base
-                    }
-                },
-            )
-            .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
-                let palette = theme.extended_palette();
-                iced::overlay::menu::Style {
-                    background: palette.background.weakest.color.into(),
-                    ..iced::overlay::menu::default(theme)
-                }
-            })
-        ]
-        .spacing(style.spacing);
         let spacing = style.slider(
-            StyleEditorFields::Spacing.as_ref(),
+            StyleEditorFields::Spacing.variant_label(),
             0.0..=10.0,
             ..,
             style.spacing,
@@ -244,7 +208,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::Spacing(style.spacing).into(),
         );
         let padding = style.slider(
-            StyleEditorFields::Padding.as_ref(),
+            StyleEditorFields::Padding.variant_label(),
             0.0..=10.0,
             ..,
             style.padding,
@@ -253,7 +217,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::Padding(style.padding).into(),
         );
         let icon_size = style.slider(
-            StyleEditorFields::IconSize.as_ref(),
+            StyleEditorFields::IconSize.variant_label(),
             4..=36,
             ..,
             style.icon_size,
@@ -262,7 +226,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::IconSize(style.icon_size).into(),
         );
         let leeway = style.slider(
-            StyleEditorFields::Leeway.as_ref(),
+            StyleEditorFields::Leeway.variant_label(),
             1.0..=100.0,
             ..,
             style.leeway,
@@ -271,7 +235,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::Leeway(style.leeway).into(),
         );
         let modal_opacity = style.slider(
-            StyleEditorFields::ModalOpacity.as_ref(),
+            StyleEditorFields::ModalOpacity.variant_label(),
             0.0..=1.0,
             ..,
             style.modal_opacity,
@@ -280,7 +244,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::ModalOpacity(style.modal_opacity).into(),
         );
         let float_input_step = style.slider(
-            StyleEditorFields::FloatInputStep.as_ref(),
+            StyleEditorFields::FloatInputStep.variant_label(),
             1e-32..=1e-1,
             ..,
             style.float_input_step,

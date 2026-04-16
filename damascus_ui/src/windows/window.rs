@@ -70,11 +70,11 @@ impl Default for Window {
 impl Widget<WindowMessage> for Window {
     fn update(
         &mut self,
-        context: &mut Context,
+        _context: &mut Context,
         message: WindowMessage,
     ) -> iced::Task<WindowMessage> {
         match message {
-            WindowMessage::StyleEditor(id, style_editor_message) => self
+            WindowMessage::StyleEditor(_id, style_editor_message) => self
                 .style_editor
                 .update_style(&mut self.style, style_editor_message)
                 .map(|style_editor_message| style_editor_message.into()),

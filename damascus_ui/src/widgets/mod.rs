@@ -56,7 +56,7 @@ where
         base_widget.into(),
         iced::widget::opaque(
             iced::widget::mouse_area(
-                iced::widget::center(iced::widget::opaque(iced::widget::row![
+                iced::widget::center(iced::widget::row![
                         <iced::widget::Container<'_, Message> as Into<
                             iced::Element<'a, Message>,
                         >>::into(
@@ -66,7 +66,7 @@ where
                         <iced::widget::Container<'_, Message> as Into<
                             iced::Element<'a, Message>,
                         >>::into(
-                            iced::widget::container(modal_widget)
+                            iced::widget::container(iced::widget::opaque(modal_widget))
                                 .width(iced::Length::FillPortion(1))
                         ),
                         <iced::widget::Container<'_, Message> as Into<
@@ -75,7 +75,7 @@ where
                             iced::widget::container(Style::none())
                                 .width(iced::Length::FillPortion(1))
                         ),
-                    ]))
+                    ])
                 .style(|theme: &iced::Theme| {
                     let mut background_colour: iced::Color = theme.palette().background;
                     background_colour.a = style.modal_opacity;

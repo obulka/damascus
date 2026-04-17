@@ -84,7 +84,7 @@ impl Style {
     {
         iced::widget::text(message)
             .size(self.text_size())
-            .wrapping(iced::widget::text::Wrapping::None)
+            .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
     }
 
     pub fn heading<'a, Message>(

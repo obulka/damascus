@@ -3,9 +3,13 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::{collections::BTreeMap, fmt::Debug};
+
 use iced;
+use macro_rules_attribute::derive;
 
 use crate::{
+    EnumTraits,
     app::Context,
     icons::Icons,
     widgets::{Widget, style::Style},
@@ -35,6 +39,92 @@ pub enum PanelMessage {
     Detach(iced::widget::pane_grid::Pane),
 }
 
+#[derive(Default, EnumTraits!)]
+pub enum PanelAxis {
+    #[default]
+    Horizontal,
+    Vertical,
+}
+
+impl From<iced::widget::pane_grid::Axis> for PanelAxis {
+    fn from(axis: iced::widget::pane_grid::Axis) -> Self {
+        match axis {
+            iced::widget::pane_grid::Axis::Horizontal => Self::Horizontal,
+            iced::widget::pane_grid::Axis::Vertical => Self::Vertical,
+        }
+    }
+}
+
+impl From<PanelAxis> for iced::widget::pane_grid::Axis {
+    fn from(axis: PanelAxis) -> Self {
+        match axis {
+            PanelAxis::Horizontal => Self::Horizontal,
+            PanelAxis::Vertical => Self::Vertical,
+        }
+    }
+}
+
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(bound = "T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize")]
+pub enum PanelContext<T>
+where
+    T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize,
+{
+    Split {
+        axis: PanelAxis,
+        ratio: f32,
+        a: Box<PanelContext<T>>,
+        b: Box<PanelContext<T>>,
+    },
+    Pane(T),
+}
+
+impl<T> PanelContext<T>
+where
+    T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize,
+{
+    pub fn from_node(
+        node: iced::widget::pane_grid::Node,
+        panes: &BTreeMap<iced::widget::pane_grid::Pane, T>,
+    ) -> Self {
+        match node {
+            iced::widget::pane_grid::Node::Split {
+                id: _,
+                axis,
+                ratio,
+                a,
+                b,
+            } => Self::Split {
+                axis: axis.into(),
+                ratio: ratio,
+                a: Box::new(Self::from_node(*a, panes)),
+                b: Box::new(Self::from_node(*b, panes)),
+            },
+            iced::widget::pane_grid::Node::Pane(pane) => match panes.get(&pane) {
+                Some(state) => Self::Pane(state.clone()),
+                None => Self::Pane(T::default()),
+            },
+        }
+    }
+}
+
+impl<T> From<PanelContext<T>> for iced::widget::pane_grid::Configuration<T>
+where
+    T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize,
+{
+    fn from(panel_context: PanelContext<T>) -> Self {
+        match panel_context {
+            PanelContext::Split { axis, ratio, a, b } => Self::Split {
+                axis: axis.into(),
+                ratio: ratio,
+                a: Box::new((*a).into()),
+                b: Box::new((*b).into()),
+            },
+            PanelContext::Pane(state) => Self::Pane(state),
+        }
+    }
+}
+
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[serde(default)]
 pub struct Panel {
@@ -58,7 +148,7 @@ impl Panel {
         size: iced::Size,
     ) -> iced::Element<'a, PanelMessage> {
         let content =
-            iced::widget::column![iced::widget::text!("{}x{}", size.width, size.height).size(24)]
+            iced::widget::column![style.text(format!("{:}x{:}", size.width, size.height))]
                 .spacing(style.spacing)
                 .align_x(iced::Center);
 

@@ -200,6 +200,8 @@ impl Widget<ToolbarMessage> for Toolbar {
                 menu_option.variant(),
                 |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
+            .padding(style.padding)
+            .text_size(style.text_size)
             .style(|theme: &iced::Theme, status| -> menu::Style {
                 menu::from_style(theme, status, style)
             })

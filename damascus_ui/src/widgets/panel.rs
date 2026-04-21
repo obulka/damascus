@@ -81,10 +81,10 @@ where
 
 impl<T> PanelContext<T>
 where
-    T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    T: Clone + Debug + Default + for<'de> serde::Deserialize<'de> + serde::Serialize,
 {
     pub fn from_node(
-        node: iced::widget::pane_grid::Node,
+        node: &iced::widget::pane_grid::Node,
         panes: &BTreeMap<iced::widget::pane_grid::Pane, T>,
     ) -> Self {
         match node {
@@ -95,10 +95,10 @@ where
                 a,
                 b,
             } => Self::Split {
-                axis: axis.into(),
-                ratio: ratio,
-                a: Box::new(Self::from_node(*a, panes)),
-                b: Box::new(Self::from_node(*b, panes)),
+                axis: (*axis).into(),
+                ratio: *ratio,
+                a: Box::new(Self::from_node(a, panes)),
+                b: Box::new(Self::from_node(b, panes)),
             },
             iced::widget::pane_grid::Node::Pane(pane) => match panes.get(&pane) {
                 Some(state) => Self::Pane(state.clone()),
@@ -110,7 +110,7 @@ where
 
 impl<T> From<PanelContext<T>> for iced::widget::pane_grid::Configuration<T>
 where
-    T: Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    T: Clone + Debug + Default + for<'de> serde::Deserialize<'de> + serde::Serialize,
 {
     fn from(panel_context: PanelContext<T>) -> Self {
         match panel_context {
@@ -125,13 +125,31 @@ where
     }
 }
 
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
-#[serde(default)]
+#[derive(Clone, Debug)]
 pub struct Panel {
-    #[serde(skip)]
     focus: Option<iced::widget::pane_grid::Pane>,
-    #[serde(skip)]
     panes: iced::widget::pane_grid::State<Pane>,
+}
+
+impl serde::Serialize for Panel {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.as_context().serialize(serializer)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for Panel {
+    fn deserialize<D>(deserializer: D) -> Result<Panel, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        match PanelContext::deserialize(deserializer) {
+            Ok(context) => Ok(Self::from_context(context)),
+            Err(error) => Err(error),
+        }
+    }
 }
 
 impl Default for Panel {
@@ -141,6 +159,21 @@ impl Default for Panel {
 }
 
 impl Panel {
+    fn as_context(&self) -> PanelContext<Pane> {
+        PanelContext::from_node(self.panes.layout(), &self.panes.panes)
+    }
+
+    fn from_context(context: PanelContext<Pane>) -> Self {
+        Self {
+            focus: None, // TODO
+            panes: iced::widget::pane_grid::State::with_configuration(
+                <PanelContext<Pane> as Into<iced::widget::pane_grid::Configuration<Pane>>>::into(
+                    context,
+                ),
+            ),
+        }
+    }
+
     fn view_content<'a>(
         style: &'a Style,
         _pane: iced::widget::pane_grid::Pane,

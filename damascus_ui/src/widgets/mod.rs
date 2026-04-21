@@ -20,7 +20,7 @@ pub mod style;
 use style::Style;
 
 pub trait Widget<WidgetMessage: Clone>:
-    Clone + Debug + Default + for<'a> serde::Deserialize<'a> + serde::Serialize
+    Clone + Debug + Default + for<'de> serde::Deserialize<'de> + serde::Serialize
 {
     fn new() -> Self {
         Self::default()

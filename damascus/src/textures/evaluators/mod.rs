@@ -69,7 +69,7 @@ impl PartialEq for TextureEvaluatorHashes {
 }
 
 pub trait TextureEvaluator:
-    Debug + Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
+    Debug + Default + Clone + serde::Serialize + for<'de> serde::Deserialize<'de>
 {
     fn hashes(&self) -> &TextureEvaluatorHashes;
 

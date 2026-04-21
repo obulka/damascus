@@ -29,10 +29,10 @@ pub trait DualDevice<
         + Clone
         + PartialEq
         + serde::Serialize
-        + for<'a> serde::Deserialize<'a>
+        + for<'de> serde::Deserialize<'de>
         + AsStd430<Output = S>,
     S,
->: Default + Clone + serde::Serialize + for<'a> serde::Deserialize<'a>
+>: Default + Clone + serde::Serialize + for<'de> serde::Deserialize<'de>
 {
     fn to_gpu(&self) -> G;
 

@@ -75,6 +75,7 @@ pub enum FileMenuOptions {
     Save,
     SaveAs,
     Load,
+    Restore,
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]

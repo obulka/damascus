@@ -23,7 +23,7 @@ use crate::{
     },
     windows::{
         window::{Window, WindowMessage},
-        window_manager::{WindowManager, WindowManagerMessage},
+        window_manager::{WindowManager, WindowManagerContext, WindowManagerMessage},
     },
 };
 
@@ -101,6 +101,7 @@ pub struct Context {
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub node_graph: damascus::graph::node_graph::NodeGraph,
     // viewport: Viewport,
+    pub window_manager_context: WindowManagerContext,
 }
 
 impl Context {
@@ -170,14 +171,13 @@ impl Damascus {
         )
     }
 
-    fn lazy_update(&self) -> iced::Task<Message> {
-        iced::Task::done(WindowMessage::UpdateTitle.into())
+    fn lazy_update(&mut self) -> iced::Task<Message> {
+        iced::Task::batch(std::iter::once(iced::Task::done(
+            WindowMessage::UpdateTitle.into(),
+        )))
     }
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
-        // TODO might be able to use iced's native lazy functionality
-        // this was only originally done to update title because egui
-        // was checking dirty hash every frame
         let lazy_task: iced::Task<Message> = if let Ok(duration_since_lazy_update) =
             SystemTime::now().duration_since(self.last_lazy_update)
             && duration_since_lazy_update.as_secs_f32() >= Self::LAZY_UPDATE_DELAY
@@ -190,13 +190,14 @@ impl Damascus {
         };
 
         iced::Task::batch(
-            std::iter::once(lazy_task).chain(std::iter::once(match message {
+            std::iter::once(match message {
                 Message::WindowManager(window_manager_message) => self
                     .window_manager
                     .update(&mut self.context, window_manager_message)
                     .map(|window_message| window_message.into()),
                 _ => iced::Task::none(),
-            })),
+            })
+            .chain(std::iter::once(lazy_task)),
         )
     }
 

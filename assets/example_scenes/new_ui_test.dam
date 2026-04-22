@@ -8,10 +8,34 @@
     "padding": 3.0,
     "icon_size": 16,
     "leeway": 5.0,
-    "modal_opacity": 0.69
+    "modal_opacity": 0.69,
+    "float_input_step": 0.0001
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": null,
+  "working_file_hash": {
+    "nodes": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "inputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "outputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "edges": {
+      "parents": {},
+      "children": {}
+    }
+  },
   "node_graph": {
     "nodes": [
       {
@@ -35,5 +59,47 @@
       "parents": {},
       "children": {}
     }
+  },
+  "window_manager_context": {
+    "windows": [
+      {
+        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
+        "style": {
+          "text_size": 16.0,
+          "scale": 1.0,
+          "border_width": 2.0,
+          "theme": "Dracula",
+          "spacing": 3.0,
+          "padding": 3.0,
+          "icon_size": 16,
+          "leeway": 5.0,
+          "modal_opacity": 0.69,
+          "float_input_step": 0.0001
+        },
+        "panel": {
+          "Split": {
+            "axis": "Vertical",
+            "ratio": 0.7966697,
+            "a": {
+              "Pane": {}
+            },
+            "b": {
+              "Split": {
+                "axis": "Horizontal",
+                "ratio": 0.5,
+                "a": {
+                  "Pane": {}
+                },
+                "b": {
+                  "Pane": {}
+                }
+              }
+            }
+          }
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      }
+    ]
   }
 }

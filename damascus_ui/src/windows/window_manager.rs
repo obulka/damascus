@@ -14,7 +14,11 @@ use crate::{
         Widget,
         panel::PanelMessage,
         style::Style,
-        toolbar::{Toolbar, ToolbarMessage, preferences::PreferenceMessage},
+        toolbar::{
+            Toolbar, ToolbarMessage,
+            file::{FileMenuOptions, FileMessage},
+            preferences::PreferenceMessage,
+        },
     },
 };
 
@@ -36,6 +40,11 @@ impl From<ToolbarMessage> for WindowManagerMessage {
     }
 }
 
+#[derive(Clone, Debug, Default, serde::Deserialize, serde::Serialize)]
+pub struct WindowManagerContext {
+    pub windows: Vec<Window>,
+}
+
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct WindowManager {
     pub toolbar: Toolbar,
@@ -55,6 +64,32 @@ impl Default for WindowManager {
     }
 }
 
+impl From<WindowManager> for WindowManagerContext {
+    fn from(window_manager: WindowManager) -> Self {
+        Self {
+            windows: window_manager
+                .windows
+                .iter()
+                .map(|(_id, window)| window)
+                .cloned()
+                .collect(),
+        }
+    }
+}
+
+impl WindowManagerContext {
+    pub fn from_window_manager(window_manager: &WindowManager) -> Self {
+        Self {
+            windows: window_manager
+                .windows
+                .iter()
+                .map(|(_id, window)| window)
+                .cloned()
+                .collect(),
+        }
+    }
+}
+
 impl Widget<WindowManagerMessage> for WindowManager {
     fn update(
         &mut self,
@@ -63,8 +98,20 @@ impl Widget<WindowManagerMessage> for WindowManager {
     ) -> iced::Task<WindowManagerMessage> {
         match message {
             WindowManagerMessage::Toolbar(toolbar_message) => {
-                // TODO temp for testing
-                match toolbar_message {
+                let tasks: iced::Task<WindowManagerMessage> = match toolbar_message {
+                    ToolbarMessage::File(ref file_message) => match file_message {
+                        FileMessage::OptionSelected(option) => {
+                            match option {
+                                FileMenuOptions::Save | FileMenuOptions::SaveAs => {
+                                    (*context).window_manager_context =
+                                        WindowManagerContext::from_window_manager(self);
+                                }
+                                _ => {}
+                            };
+                            iced::Task::none()
+                        }
+                        _ => iced::Task::none(),
+                    },
                     ToolbarMessage::Preferences(ref preference_message) => match preference_message
                     {
                         PreferenceMessage::Style => {
@@ -73,14 +120,32 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             {
                                 window.open_style_editor();
                             }
+                            iced::Task::none()
                         }
                     },
-                    _ => {}
-                }
+                    ToolbarMessage::RestoreWindows => {
+                        let mut windows_to_restore: std::slice::Iter<'_, Window> =
+                            context.window_manager_context.windows.iter();
 
-                self.toolbar
-                    .update(context, toolbar_message)
-                    .map(|toolbar_message| toolbar_message.into())
+                        if let Some(main_window_id) = &self.main_window_id
+                            && let Some(window) = self.windows.get_mut(main_window_id)
+                            && let Some(window_context) = windows_to_restore.next()
+                        {
+                            *window = window_context.clone();
+                        }
+
+                        iced::Task::none()
+                    }
+                    _ => iced::Task::none(),
+                };
+
+                iced::Task::batch(
+                    std::iter::once(tasks).chain(std::iter::once(
+                        self.toolbar
+                            .update(context, toolbar_message)
+                            .map(|toolbar_message| toolbar_message.into()),
+                    )),
+                )
             }
             WindowManagerMessage::Window(window_message) => {
                 match window_message {

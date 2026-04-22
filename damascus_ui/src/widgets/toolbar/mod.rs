@@ -72,6 +72,7 @@ pub enum ToolbarMessage {
     Preferences(PreferenceMessage),
     ShowModal(Dialog),
     HideModal,
+    RestoreWindows,
     Error(ToolbarErrors),
 }
 
@@ -172,6 +173,16 @@ impl Widget<ToolbarMessage> for Toolbar {
                         };
                         iced::Task::done(Dialog::Error(error.to_string()).into())
                     }
+                    FileMenuOptions::Restore => match file::load(context) {
+                        Ok(loaded) => {
+                            if loaded {
+                                iced::Task::done(ToolbarMessage::RestoreWindows)
+                            } else {
+                                iced::Task::none()
+                            }
+                        }
+                        Err(error) => iced::Task::done(Dialog::Error(error.to_string()).into()),
+                    },
                 },
                 FileMessage::Error(error) => {
                     iced::Task::done(Dialog::Error(error.to_string()).into())

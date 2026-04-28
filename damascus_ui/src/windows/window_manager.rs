@@ -134,7 +134,39 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             *window = window_context.clone();
                         }
 
-                        iced::Task::none()
+                        iced::Task::batch(
+                            self.windows
+                                .iter()
+                                .flat_map(|(id, _window)| {
+                                    if let Some(main_window_id) = self.main_window_id
+                                        && main_window_id == *id
+                                    {
+                                        None
+                                    } else {
+                                        Some(*id)
+                                    }
+                                })
+                                .map(|id| iced::Task::done(WindowMessage::Close(id).into()))
+                                .chain(
+                                    windows_to_restore.map(|window| {
+                                        iced::Task::done(
+                                            WindowMessage::Open(window.position).into(),
+                                        )
+                                    }), // iced::window::position(self.windows.iter().rev().next())
+                                        //     .then(|last_position| {
+                                        //         last_position.map_or(
+                                        //             iced::window::Position::Default,
+                                        //             |last_position| {
+                                        //                 iced::window::Position::Specific(
+                                        //                     last_position
+                                        //                         + iced::Vector::new(20.0, 20.0),
+                                        //                 )
+                                        //             },
+                                        //         )
+                                        //     })
+                                        //     .map(|position| WindowMessage::Open(position)),
+                                ),
+                        )
                     }
                     _ => iced::Task::none(),
                 };
@@ -151,13 +183,19 @@ impl Widget<WindowManagerMessage> for WindowManager {
                 match window_message {
                     WindowMessage::Event(id, event) => {
                         match event {
-                            // iced::window::Event::Opened {
-                            //     position: _,
-                            //     size: _,
-                            // } => {}
+                            iced::window::Event::Opened { position, size } => {
+                                println!("window opened at {:?}", position);
+                                println!("    with size {:?}", size);
+                            }
                             // iced::window::Event::Closed,
-                            // iced::window::Event::Moved(point),
-                            // iced::window::Event::Resized(Size),
+                            iced::window::Event::Moved(point) => {
+                                if let Some(window) = self.windows.get_mut(&id) {
+                                    window.position = Some(glam::Vec2::new(point.x, point.y));
+                                }
+                            }
+                            iced::window::Event::Resized(size) => {
+                                println!("window resized to {:?}", size)
+                            }
                             // iced::window::Event::Rescaled(f32),
                             // iced::window::Event::RedrawRequested(Instant),
                             // iced::window::Event::CloseRequested,
@@ -175,7 +213,23 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
                         iced::Task::none()
                     }
+                    WindowMessage::Open(position) => {
+                        println!("opening");
+                        let (_, open) = iced::window::open(iced::window::Settings {
+                            position: position.map_or(
+                                iced::window::Position::Default,
+                                |position| {
+                                    iced::window::Position::Specific(iced::Point::new(
+                                        position.x, position.y,
+                                    ))
+                                },
+                            ),
+                            ..iced::window::Settings::default()
+                        });
+                        open.map(|id| WindowMessage::Opened(id).into())
+                    }
                     WindowMessage::Opened(id) => {
+                        println!("custom opened {:?}", id);
                         if self.main_window_id.is_none() {
                             self.main_window_id = Some(id);
                         }
@@ -189,7 +243,12 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             iced::Task::done(WindowMessage::UpdateTitle),
                         )))
                     }
+                    WindowMessage::Close(id) => {
+                        println!("closing {:?}", id);
+                        iced::window::close(id)
+                    }
                     WindowMessage::Closed(id) => {
+                        println!("closed {:?}", id);
                         self.windows.remove(&id);
 
                         if self.windows.is_empty() {

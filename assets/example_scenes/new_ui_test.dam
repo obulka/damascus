@@ -12,30 +12,7 @@
     "float_input_step": 0.0001
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": {
-    "nodes": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "inputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "outputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "edges": {
-      "parents": {},
-      "children": {}
-    }
-  },
+  "working_file_hash": null,
   "node_graph": {
     "nodes": [
       {
@@ -63,7 +40,11 @@
   "window_manager_context": {
     "windows": [
       {
-        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
+        "position": [
+          2570.0,
+          607.0
+        ],
+        "title": "damascus",
         "style": {
           "text_size": 16.0,
           "scale": 1.0,
@@ -79,14 +60,14 @@
         "panel": {
           "Split": {
             "axis": "Vertical",
-            "ratio": 0.7966697,
+            "ratio": 0.5,
             "a": {
               "Pane": {}
             },
             "b": {
               "Split": {
                 "axis": "Horizontal",
-                "ratio": 0.5,
+                "ratio": 0.71100545,
                 "a": {
                   "Pane": {}
                 },
@@ -96,6 +77,54 @@
               }
             }
           }
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      },
+      {
+        "position": [
+          3906.0,
+          617.0
+        ],
+        "title": "damascus",
+        "style": {
+          "text_size": 16.0,
+          "scale": 1.0,
+          "border_width": 2.0,
+          "theme": "Dracula",
+          "spacing": 3.0,
+          "padding": 3.0,
+          "icon_size": 16,
+          "leeway": 5.0,
+          "modal_opacity": 0.69,
+          "float_input_step": 0.0001
+        },
+        "panel": {
+          "Pane": {}
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      },
+      {
+        "position": [
+          3798.0,
+          1051.0
+        ],
+        "title": "damascus",
+        "style": {
+          "text_size": 16.0,
+          "scale": 1.0,
+          "border_width": 2.0,
+          "theme": "Dracula",
+          "spacing": 3.0,
+          "padding": 3.0,
+          "icon_size": 16,
+          "leeway": 5.0,
+          "modal_opacity": 0.69,
+          "float_input_step": 0.0001
+        },
+        "panel": {
+          "Pane": {}
         },
         "style_editor": {},
         "style_editor_visible": false

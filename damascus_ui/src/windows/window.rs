@@ -3,6 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use glam;
 use iced;
 
 use crate::{
@@ -20,7 +21,9 @@ use crate::{
 #[derive(Clone, Debug)]
 pub enum WindowMessage {
     Event(iced::window::Id, iced::window::Event),
+    Open(Option<glam::Vec2>),
     Opened(iced::window::Id),
+    Close(iced::window::Id),
     Closed(iced::window::Id),
     UpdateTitle,
     Panel(Option<iced::window::Id>, PanelMessage),
@@ -48,6 +51,7 @@ impl WindowMessage {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Window {
+    pub position: Option<glam::Vec2>,
     pub title: String,
     pub style: Style,
     pub panel: Panel,
@@ -58,6 +62,7 @@ pub struct Window {
 impl Default for Window {
     fn default() -> Self {
         Self {
+            position: None,
             title: Self::default_title().to_string(),
             style: Style::default(),
             panel: Panel::default(),

@@ -196,7 +196,9 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             iced::window::Event::Resized(size) => {
                                 println!("window resized to {:?}", size)
                             }
-                            // iced::window::Event::Rescaled(f32),
+                            iced::window::Event::Rescaled(scale) => {
+                                println!("rescaled {:?}", scale)
+                            }
                             // iced::window::Event::RedrawRequested(Instant),
                             // iced::window::Event::CloseRequested,
                             iced::window::Event::Focused => self.focused_window_id = Some(id),

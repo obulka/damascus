@@ -111,7 +111,44 @@
         "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
         "style": {
           "text_size": 36.0,
-          "scale": 1.0,
+          "scale": 0.51334196,
+          "border_width": 2.0,
+          "theme": "Dracula",
+          "spacing": 3.0,
+          "padding": 3.0,
+          "icon_size": 16,
+          "leeway": 5.0,
+          "modal_opacity": 0.69,
+          "float_input_step": 0.0001
+        },
+        "panel": {
+          "Split": {
+            "axis": "Vertical",
+            "ratio": 0.5,
+            "a": {
+              "Pane": {}
+            },
+            "b": {
+              "Pane": {}
+            }
+          }
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      },
+      {
+        "position": [
+          650.0,
+          641.0
+        ],
+        "size": [
+          591.0,
+          376.0
+        ],
+        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
+        "style": {
+          "text_size": 36.0,
+          "scale": 1.3400954,
           "border_width": 2.0,
           "theme": "Dracula",
           "spacing": 3.0,

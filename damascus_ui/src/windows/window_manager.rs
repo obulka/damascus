@@ -12,7 +12,7 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
-        panel::PanelMessage,
+        panel::{Panel, PanelMessage},
         style::Style,
         toolbar::{
             Toolbar, ToolbarMessage,
@@ -181,10 +181,10 @@ impl Widget<WindowManagerMessage> for WindowManager {
                 match window_message {
                     WindowMessage::Event(id, event) => {
                         match event {
-                            iced::window::Event::Opened { position, size } => {
-                                println!("window opened at {:?}", position);
-                                println!("    with size {:?}", size);
-                            }
+                            // iced::window::Event::Opened { position, size } => {
+                            //     println!("window opened at {:?}", position);
+                            //     println!("    with size {:?}", size);
+                            // }
                             // iced::window::Event::Closed,
                             iced::window::Event::Moved(point) => {
                                 if let Some(window) = self.windows.get_mut(&id) {
@@ -239,7 +239,6 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         open.map(move |id| WindowMessage::Opened(id, window.clone()).into())
                     }
                     WindowMessage::Opened(id, window) => {
-                        println!("custom opened {:?}", id);
                         if self.main_window_id.is_none() {
                             self.main_window_id = Some(id);
                         }
@@ -253,12 +252,8 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             iced::Task::done(WindowMessage::UpdateTitle),
                         )))
                     }
-                    WindowMessage::Close(id) => {
-                        println!("closing {:?}", id);
-                        iced::window::close(id)
-                    }
+                    WindowMessage::Close(id) => iced::window::close(id),
                     WindowMessage::Closed(id) => {
-                        println!("closed {:?}", id);
                         self.windows.remove(&id);
 
                         if self.windows.is_empty() {
@@ -307,28 +302,16 @@ impl Widget<WindowManagerMessage> for WindowManager {
 
                         let task: iced::Task<WindowMessage> = match panel_message {
                             PanelMessage::Detach(_) => {
-                                let window: Option<Window> = self.windows.get(&id).cloned();
+                                let mut window: Option<Window> = self.windows.get(&id).cloned();
 
-                                iced::window::position(id)
-                                    .then(|last_position| {
-                                        let position = last_position.map_or(
-                                            iced::window::Position::Default,
-                                            |last_position| {
-                                                iced::window::Position::Specific(
-                                                    last_position + iced::Vector::new(20.0, 20.0),
-                                                )
-                                            },
-                                        );
+                                if let Some(ref mut window) = window {
+                                    if let Some(ref mut position) = window.position {
+                                        *position += glam::Vec2::splat(20.0);
+                                    }
+                                    window.panel = Panel::default();
+                                }
 
-                                        let (_, open) =
-                                            iced::window::open(iced::window::Settings {
-                                                position,
-                                                ..iced::window::Settings::default()
-                                            });
-
-                                        open
-                                    })
-                                    .map(move |id| WindowMessage::Opened(id, window.clone()))
+                                iced::Task::done(WindowMessage::Open(window).into())
                             }
                             _ => iced::Task::none(),
                         };

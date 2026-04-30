@@ -12,10 +12,11 @@ use crate::app::Context;
 pub mod dialog;
 pub mod menu;
 pub mod node_graph;
-pub mod toolbar;
-// pub mod viewport;
 pub mod panel;
 pub mod style;
+pub mod tabs;
+pub mod toolbar;
+pub mod viewport;
 
 use style::Style;
 

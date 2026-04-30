@@ -20,6 +20,7 @@ use crate::{
             editor::{StyleEditorFields, StyleEditorMessage},
         },
         toolbar::{ToolbarMessage, file::FileMenuOptions},
+        viewport::ViewportMessage,
     },
     windows::{
         window::{Window, WindowMessage},
@@ -27,46 +28,11 @@ use crate::{
     },
 };
 
-//
-//
-//
-//
-//
-//
-//
-// tmp Viewer & Node graph
-//
-//
-//
-//
-//
-//
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub enum ViewerMessage {
-    None,
-}
-
-//
-//
-//
-//
-//
-//
-//
-// Main App
-//
-//
-//
-//
-//
-//
-
 #[derive(Clone, Debug)]
 pub enum Message {
     WindowManager(WindowManagerMessage),
     NodeGraph(NodeGraphMessage),
-    Viewer(ViewerMessage),
+    Viewport(ViewportMessage),
 }
 
 impl From<WindowMessage> for Message {

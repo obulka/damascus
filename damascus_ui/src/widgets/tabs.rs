@@ -3,7 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub enum ViewportMessage {
-    None,
+use macro_rules_attribute::derive;
+
+use crate::EnumTraits;
+
+#[derive(Default, EnumTraits!)]
+pub enum Tabs {
+    #[default]
+    NodeGraph,
+    Viewer,
+    Properties,
 }

@@ -115,9 +115,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     ToolbarMessage::Preferences(ref preference_message) => match preference_message
                     {
                         PreferenceMessage::Style => {
-                            if let Some(focused_window_id) = self.focused_window_id
-                                && let Some(window) = self.windows.get_mut(&focused_window_id)
-                            {
+                            for (_id, window) in self.windows.iter_mut() {
                                 window.open_style_editor();
                             }
                             iced::Task::none()
@@ -150,8 +148,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                 .chain(
                                     windows_to_restore.map(|window| {
                                         iced::Task::done(
-                                            WindowMessage::Open(window.position, window.size)
-                                                .into(),
+                                            WindowMessage::Open(Some(window.clone())).into(),
                                         )
                                     }), // iced::window::position(self.windows.iter().rev().next())
                                         //     .then(|last_position| {
@@ -218,34 +215,39 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
                         iced::Task::none()
                     }
-                    WindowMessage::Open(position, size) => {
-                        println!("opening");
+                    WindowMessage::Open(maybe_window) => {
+                        let mut position = iced::window::Position::Default;
+                        let mut size = iced::Size::default();
+                        if let Some(ref window) = maybe_window {
+                            if let Some(window_position) = window.position {
+                                position = iced::window::Position::Specific(iced::Point::new(
+                                    window_position.x,
+                                    window_position.y,
+                                ));
+                            }
+                            if let Some(window_size) = window.size {
+                                size = iced::Size::new(window_size.x, window_size.y);
+                            }
+                        }
+
                         let (_, open) = iced::window::open(iced::window::Settings {
-                            position: position.map_or(
-                                iced::window::Position::Default,
-                                |position| {
-                                    iced::window::Position::Specific(iced::Point::new(
-                                        position.x, position.y,
-                                    ))
-                                },
-                            ),
-                            size: size.map_or(iced::Size::default(), |size| {
-                                iced::Size::new(size.x, size.y)
-                            }),
+                            position: position,
+                            size: size,
                             ..iced::window::Settings::default()
                         });
-                        open.map(|id| WindowMessage::Opened(id).into())
+
+                        open.map(move |id| WindowMessage::Opened(id, maybe_window.clone()).into())
                     }
-                    WindowMessage::Opened(id) => {
+                    WindowMessage::Opened(id, window) => {
                         println!("custom opened {:?}", id);
                         if self.main_window_id.is_none() {
                             self.main_window_id = Some(id);
                         }
 
-                        let window = Window::new();
                         let focus_input = iced::widget::operation::focus(format!("input-{id}"));
 
-                        self.windows.insert(id, window);
+                        self.windows
+                            .insert(id, window.map_or(Window::new(), |window| window));
 
                         iced::Task::batch(std::iter::once(focus_input).chain(std::iter::once(
                             iced::Task::done(WindowMessage::UpdateTitle),
@@ -283,12 +285,8 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             iced::Task::none()
                         }
                     }
-                    WindowMessage::CloseStyleEditor(window_id) => {
-                        let Some(id) = window_id.or_else(|| self.focused_window_id) else {
-                            return iced::Task::none();
-                        };
-
-                        if let Some(window) = self.windows.get_mut(&id) {
+                    WindowMessage::CloseStyleEditor(_window_id) => {
+                        for (_id, window) in self.windows.iter_mut() {
                             window.close_style_editor();
                         }
 
@@ -308,25 +306,30 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
 
                         let task: iced::Task<WindowMessage> = match panel_message {
-                            PanelMessage::Detach(_) => iced::window::position(id)
-                                .then(|last_position| {
-                                    let position = last_position.map_or(
-                                        iced::window::Position::Default,
-                                        |last_position| {
-                                            iced::window::Position::Specific(
-                                                last_position + iced::Vector::new(20.0, 20.0),
-                                            )
-                                        },
-                                    );
+                            PanelMessage::Detach(_) => {
+                                let window: Option<Window> = self.windows.get(&id).cloned();
 
-                                    let (_, open) = iced::window::open(iced::window::Settings {
-                                        position,
-                                        ..iced::window::Settings::default()
-                                    });
+                                iced::window::position(id)
+                                    .then(|last_position| {
+                                        let position = last_position.map_or(
+                                            iced::window::Position::Default,
+                                            |last_position| {
+                                                iced::window::Position::Specific(
+                                                    last_position + iced::Vector::new(20.0, 20.0),
+                                                )
+                                            },
+                                        );
 
-                                    open
-                                })
-                                .map(|id| WindowMessage::Opened(id)),
+                                        let (_, open) =
+                                            iced::window::open(iced::window::Settings {
+                                                position,
+                                                ..iced::window::Settings::default()
+                                            });
+
+                                        open
+                                    })
+                                    .map(move |id| WindowMessage::Opened(id, window.clone()))
+                            }
                             _ => iced::Task::none(),
                         };
 

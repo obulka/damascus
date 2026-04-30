@@ -167,7 +167,7 @@ impl Damascus {
                 context: persistent_data,
                 window_manager: WindowManager::new(),
             },
-            open.map(|id| WindowMessage::Opened(id).into()),
+            open.map(|id| WindowMessage::Opened(id, None).into()),
         )
     }
 

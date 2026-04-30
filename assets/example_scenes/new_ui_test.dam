@@ -12,7 +12,30 @@
     "float_input_step": 0.0001
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": null,
+  "working_file_hash": {
+    "nodes": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "inputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "outputs": [
+      {
+        "value": null,
+        "version": 0
+      }
+    ],
+    "edges": {
+      "parents": {},
+      "children": {}
+    }
+  },
   "node_graph": {
     "nodes": [
       {
@@ -48,7 +71,7 @@
           1024.0,
           768.0
         ],
-        "title": "damascus",
+        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
         "style": {
           "text_size": 16.0,
           "scale": 1.0,
@@ -78,16 +101,16 @@
       },
       {
         "position": [
-          775.0,
-          118.0
+          1136.0,
+          148.0
         ],
         "size": [
-          531.0,
-          216.0
+          665.0,
+          521.0
         ],
-        "title": "damascus",
+        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
         "style": {
-          "text_size": 16.0,
+          "text_size": 36.0,
           "scale": 1.0,
           "border_width": 2.0,
           "theme": "Dracula",

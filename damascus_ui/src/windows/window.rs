@@ -21,8 +21,8 @@ use crate::{
 #[derive(Clone, Debug)]
 pub enum WindowMessage {
     Event(iced::window::Id, iced::window::Event),
-    Open(Option<glam::Vec2>, Option<glam::Vec2>),
-    Opened(iced::window::Id),
+    Open(Option<Window>),
+    Opened(iced::window::Id, Option<Window>),
     Close(iced::window::Id),
     Closed(iced::window::Id),
     UpdateTitle,

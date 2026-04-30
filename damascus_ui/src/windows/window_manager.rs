@@ -145,25 +145,11 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                     }
                                 })
                                 .map(|id| iced::Task::done(WindowMessage::Close(id).into()))
-                                .chain(
-                                    windows_to_restore.map(|window| {
-                                        iced::Task::done(
-                                            WindowMessage::Open(Some(window.clone())).into(),
-                                        )
-                                    }), // iced::window::position(self.windows.iter().rev().next())
-                                        //     .then(|last_position| {
-                                        //         last_position.map_or(
-                                        //             iced::window::Position::Default,
-                                        //             |last_position| {
-                                        //                 iced::window::Position::Specific(
-                                        //                     last_position
-                                        //                         + iced::Vector::new(20.0, 20.0),
-                                        //                 )
-                                        //             },
-                                        //         )
-                                        //     })
-                                        //     .map(|position| WindowMessage::Open(position)),
-                                ),
+                                .chain(windows_to_restore.map(|window| {
+                                    iced::Task::done(
+                                        WindowMessage::Open(Some(window.clone())).into(),
+                                    )
+                                })),
                         )
                     }
                     _ => iced::Task::none(),
@@ -182,8 +168,6 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     WindowMessage::Event(id, event) => {
                         match event {
                             // iced::window::Event::Opened { position, size } => {
-                            //     println!("window opened at {:?}", position);
-                            //     println!("    with size {:?}", size);
                             // }
                             // iced::window::Event::Closed,
                             iced::window::Event::Moved(point) => {
@@ -197,7 +181,6 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                 }
                             }
                             // iced::window::Event::Rescaled(scale) => {
-                            //     println!("rescaled {:?}", scale)
                             // }
                             // iced::window::Event::RedrawRequested(Instant),
                             // iced::window::Event::CloseRequested,

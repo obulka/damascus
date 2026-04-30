@@ -165,7 +165,7 @@ impl Panel {
 
     fn from_context(context: PanelContext<Pane>) -> Self {
         Self {
-            focus: None, // TODO
+            focus: None,
             panes: iced::widget::pane_grid::State::with_configuration(
                 <PanelContext<Pane> as Into<iced::widget::pane_grid::Configuration<Pane>>>::into(
                     context,

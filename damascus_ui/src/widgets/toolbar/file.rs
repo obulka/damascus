@@ -127,8 +127,6 @@ pub fn save_as(context: &mut Context) -> FileResult<bool> {
 }
 
 pub fn load(context: &mut Context) -> FileResult<bool> {
-    // TODO Unload current
-
     let mut file_dialog = rfd::FileDialog::new()
         .set_title("load from file")
         .add_filter("damascus", &["dam"]);

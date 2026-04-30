@@ -215,10 +215,10 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
                         iced::Task::none()
                     }
-                    WindowMessage::Open(maybe_window) => {
+                    WindowMessage::Open(window) => {
                         let mut position = iced::window::Position::Default;
                         let mut size = iced::Size::default();
-                        if let Some(ref window) = maybe_window {
+                        if let Some(ref window) = window {
                             if let Some(window_position) = window.position {
                                 position = iced::window::Position::Specific(iced::Point::new(
                                     window_position.x,
@@ -236,7 +236,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             ..iced::window::Settings::default()
                         });
 
-                        open.map(move |id| WindowMessage::Opened(id, maybe_window.clone()).into())
+                        open.map(move |id| WindowMessage::Opened(id, window.clone()).into())
                     }
                     WindowMessage::Opened(id, window) => {
                         println!("custom opened {:?}", id);

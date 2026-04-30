@@ -122,7 +122,25 @@
           "float_input_step": 0.0001
         },
         "panel": {
-          "Pane": {}
+          "Split": {
+            "axis": "Vertical",
+            "ratio": 0.5,
+            "a": {
+              "Pane": {}
+            },
+            "b": {
+              "Split": {
+                "axis": "Horizontal",
+                "ratio": 0.5,
+                "a": {
+                  "Pane": {}
+                },
+                "b": {
+                  "Pane": {}
+                }
+              }
+            }
+          }
         },
         "style_editor": {},
         "style_editor_visible": false

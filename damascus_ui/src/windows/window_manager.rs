@@ -150,7 +150,8 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                 .chain(
                                     windows_to_restore.map(|window| {
                                         iced::Task::done(
-                                            WindowMessage::Open(window.position).into(),
+                                            WindowMessage::Open(window.position, window.size)
+                                                .into(),
                                         )
                                     }), // iced::window::position(self.windows.iter().rev().next())
                                         //     .then(|last_position| {
@@ -194,11 +195,13 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                 }
                             }
                             iced::window::Event::Resized(size) => {
-                                println!("window resized to {:?}", size)
+                                if let Some(window) = self.windows.get_mut(&id) {
+                                    window.size = Some(glam::Vec2::new(size.width, size.height));
+                                }
                             }
-                            iced::window::Event::Rescaled(scale) => {
-                                println!("rescaled {:?}", scale)
-                            }
+                            // iced::window::Event::Rescaled(scale) => {
+                            //     println!("rescaled {:?}", scale)
+                            // }
                             // iced::window::Event::RedrawRequested(Instant),
                             // iced::window::Event::CloseRequested,
                             iced::window::Event::Focused => self.focused_window_id = Some(id),
@@ -215,7 +218,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
                         iced::Task::none()
                     }
-                    WindowMessage::Open(position) => {
+                    WindowMessage::Open(position, size) => {
                         println!("opening");
                         let (_, open) = iced::window::open(iced::window::Settings {
                             position: position.map_or(
@@ -226,6 +229,9 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                     ))
                                 },
                             ),
+                            size: size.map_or(iced::Size::default(), |size| {
+                                iced::Size::new(size.x, size.y)
+                            }),
                             ..iced::window::Settings::default()
                         });
                         open.map(|id| WindowMessage::Opened(id).into())

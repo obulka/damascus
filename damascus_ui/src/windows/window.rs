@@ -21,7 +21,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub enum WindowMessage {
     Event(iced::window::Id, iced::window::Event),
-    Open(Option<glam::Vec2>),
+    Open(Option<glam::Vec2>, Option<glam::Vec2>),
     Opened(iced::window::Id),
     Close(iced::window::Id),
     Closed(iced::window::Id),
@@ -52,6 +52,7 @@ impl WindowMessage {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Window {
     pub position: Option<glam::Vec2>,
+    pub size: Option<glam::Vec2>,
     pub title: String,
     pub style: Style,
     pub panel: Panel,
@@ -63,6 +64,7 @@ impl Default for Window {
     fn default() -> Self {
         Self {
             position: None,
+            size: None,
             title: Self::default_title().to_string(),
             style: Style::default(),
             panel: Panel::default(),

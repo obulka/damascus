@@ -41,8 +41,12 @@
     "windows": [
       {
         "position": [
-          2570.0,
-          607.0
+          94.0,
+          82.0
+        ],
+        "size": [
+          1024.0,
+          768.0
         ],
         "title": "damascus",
         "style": {
@@ -65,16 +69,7 @@
               "Pane": {}
             },
             "b": {
-              "Split": {
-                "axis": "Horizontal",
-                "ratio": 0.71100545,
-                "a": {
-                  "Pane": {}
-                },
-                "b": {
-                  "Pane": {}
-                }
-              }
+              "Pane": {}
             }
           }
         },
@@ -83,32 +78,12 @@
       },
       {
         "position": [
-          3906.0,
-          617.0
+          775.0,
+          118.0
         ],
-        "title": "damascus",
-        "style": {
-          "text_size": 16.0,
-          "scale": 1.0,
-          "border_width": 2.0,
-          "theme": "Dracula",
-          "spacing": 3.0,
-          "padding": 3.0,
-          "icon_size": 16,
-          "leeway": 5.0,
-          "modal_opacity": 0.69,
-          "float_input_step": 0.0001
-        },
-        "panel": {
-          "Pane": {}
-        },
-        "style_editor": {},
-        "style_editor_visible": false
-      },
-      {
-        "position": [
-          3798.0,
-          1051.0
+        "size": [
+          531.0,
+          216.0
         ],
         "title": "damascus",
         "style": {

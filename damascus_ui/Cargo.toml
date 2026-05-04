@@ -20,4 +20,4 @@ macro_rules_attribute = { version = "0.2" }
 num-traits = { version = "0.2" }
 rfd = "0.15"
 strum = { version = "0.27", features = ["derive"] }
-#undo_2 = "0.1" # one day...
+undo = { version = "0.52" }

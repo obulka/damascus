@@ -19,7 +19,10 @@ use crate::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},
         },
-        toolbar::{ToolbarMessage, file::FileMenuOptions},
+        toolbar::{
+            ToolbarMessage,
+            file::{FileMenuOptions, FileMessage},
+        },
         viewport::ViewportMessage,
     },
     windows::{
@@ -56,6 +59,12 @@ impl From<WindowManagerMessage> for Message {
 impl From<FileMenuOptions> for Message {
     fn from(file_option: FileMenuOptions) -> Self {
         Self::WindowManager(<FileMenuOptions as Into<ToolbarMessage>>::into(file_option).into())
+    }
+}
+
+impl From<FileMessage> for Message {
+    fn from(file_message: FileMessage) -> Self {
+        Self::WindowManager(<FileMessage as Into<ToolbarMessage>>::into(file_message).into())
     }
 }
 
@@ -121,7 +130,8 @@ impl Damascus {
     const LAZY_UPDATE_DELAY: f32 = 1.0;
 
     pub fn new() -> (Self, iced::Task<Message>) {
-        // TODO read from disk
+        let args: Vec<String> = std::env::args().collect();
+
         let persistent_data = Context::default();
 
         let (_, open) = iced::window::open(iced::window::Settings::default());
@@ -133,7 +143,12 @@ impl Damascus {
                 context: persistent_data,
                 window_manager: WindowManager::new(),
             },
-            open.map(|id| WindowMessage::Opened(id, None).into()),
+            open.map(|id| WindowMessage::Opened(id, None).into())
+                .chain(if args.len() > 1 {
+                    iced::Task::done(FileMessage::Restore(args[args.len() - 1].clone()).into())
+                } else {
+                    iced::Task::none()
+                }),
         )
     }
 

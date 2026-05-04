@@ -88,6 +88,12 @@ impl From<FileMenuOptions> for ToolbarMessage {
     }
 }
 
+impl From<FileMessage> for ToolbarMessage {
+    fn from(file_message: FileMessage) -> Self {
+        Self::File(file_message)
+    }
+}
+
 impl FromStr for ToolbarMessage {
     type Err = ToolbarErrors;
 
@@ -183,6 +189,16 @@ impl Widget<ToolbarMessage> for Toolbar {
                         }
                         Err(error) => iced::Task::done(Dialog::Error(error.to_string()).into()),
                     },
+                },
+                FileMessage::Restore(file_path) => match file::load_path(context, file_path) {
+                    Ok(loaded) => {
+                        if loaded {
+                            iced::Task::done(ToolbarMessage::RestoreWindows)
+                        } else {
+                            iced::Task::none()
+                        }
+                    }
+                    Err(error) => iced::Task::done(Dialog::Error(error.to_string()).into()),
                 },
                 FileMessage::Error(error) => {
                     iced::Task::done(Dialog::Error(error.to_string()).into())

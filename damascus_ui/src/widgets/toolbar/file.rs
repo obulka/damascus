@@ -81,6 +81,7 @@ pub enum FileMenuOptions {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub enum FileMessage {
     OptionSelected(FileMenuOptions),
+    Restore(String),
     Error(FileErrors),
 }
 
@@ -126,6 +127,27 @@ pub fn save_as(context: &mut Context) -> FileResult<bool> {
     }
 }
 
+pub fn load_path(context: &mut Context, file_path: String) -> FileResult<bool> {
+    let Ok(file) = File::open(&file_path) else {
+        return Err(FileErrors::FileOpenError(file_path));
+    };
+    let mut buf_reader = BufReader::new(file);
+    let mut contents = String::new();
+    let Ok(_) = buf_reader.read_to_string(&mut contents) else {
+        return Err(FileErrors::FileReadError(file_path));
+    };
+
+    match serde_json::from_str(&contents) {
+        Ok(state) => {
+            *context = state;
+            context.update(file_path);
+
+            Ok(true)
+        }
+        Err(error) => Err(FileErrors::DeserializationError(error.to_string())),
+    }
+}
+
 pub fn load(context: &mut Context) -> FileResult<bool> {
     let mut file_dialog = rfd::FileDialog::new()
         .set_title("load from file")
@@ -138,27 +160,8 @@ pub fn load(context: &mut Context) -> FileResult<bool> {
         file_dialog = file_dialog.set_file_name(file_path);
     }
 
-    if let Some(path) = file_dialog.pick_file() {
-        let file_path: String = path.display().to_string();
-
-        let Ok(file) = File::open(&file_path) else {
-            return Err(FileErrors::FileOpenError(file_path));
-        };
-        let mut buf_reader = BufReader::new(file);
-        let mut contents = String::new();
-        let Ok(_) = buf_reader.read_to_string(&mut contents) else {
-            return Err(FileErrors::FileReadError(file_path));
-        };
-
-        match serde_json::from_str(&contents) {
-            Ok(state) => {
-                *context = state;
-                context.update(file_path);
-
-                Ok(true)
-            }
-            Err(error) => Err(FileErrors::DeserializationError(error.to_string())),
-        }
+    if let Some(file_path) = file_dialog.pick_file() {
+        load_path(context, file_path.display().to_string())
     } else {
         Ok(false)
     }

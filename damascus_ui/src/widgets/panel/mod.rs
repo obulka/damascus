@@ -15,16 +15,12 @@ use crate::{
     widgets::{Widget, style::Style},
 };
 
-#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
-struct Pane {}
+pub mod pane;
+pub mod tabs;
 
-impl Default for Pane {
-    fn default() -> Self {
-        Self {}
-    }
-}
+use pane::{Pane, PaneMessage};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum PanelMessage {
     Split(iced::widget::pane_grid::Axis, iced::widget::pane_grid::Pane),
     SplitFocused(iced::widget::pane_grid::Axis),
@@ -37,6 +33,7 @@ pub enum PanelMessage {
     Close(iced::widget::pane_grid::Pane),
     CloseFocused,
     Detach(iced::widget::pane_grid::Pane),
+    Pane(iced::widget::pane_grid::Pane, PaneMessage),
 }
 
 #[derive(Default, EnumTraits!)]
@@ -261,11 +258,7 @@ impl Widget<PanelMessage> for Panel {
         Self { focus: None, panes }
     }
 
-    fn update(
-        &mut self,
-        _context: &mut Context,
-        message: PanelMessage,
-    ) -> iced::Task<PanelMessage> {
+    fn update(&mut self, context: &mut Context, message: PanelMessage) -> iced::Task<PanelMessage> {
         match message {
             PanelMessage::Split(axis, pane) => {
                 let result = self.panes.split(axis, pane, Pane::default());
@@ -273,6 +266,8 @@ impl Widget<PanelMessage> for Panel {
                 if let Some((pane, _)) = result {
                     self.focus = Some(pane);
                 }
+
+                iced::Task::none()
             }
             PanelMessage::SplitFocused(axis) => {
                 if let Some(pane) = self.focus {
@@ -282,6 +277,8 @@ impl Widget<PanelMessage> for Panel {
                         self.focus = Some(pane);
                     }
                 }
+
+                iced::Task::none()
             }
             PanelMessage::FocusAdjacent(direction) => {
                 if let Some(pane) = self.focus
@@ -289,25 +286,41 @@ impl Widget<PanelMessage> for Panel {
                 {
                     self.focus = Some(adjacent);
                 }
+
+                iced::Task::none()
             }
             PanelMessage::Clicked(pane) => {
                 self.focus = Some(pane);
+
+                iced::Task::none()
             }
             PanelMessage::Resized(iced::widget::pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(split, ratio);
+
+                iced::Task::none()
             }
             PanelMessage::Dragged(iced::widget::pane_grid::DragEvent::Dropped { pane, target }) => {
                 self.panes.drop(pane, target);
+
+                iced::Task::none()
             }
-            PanelMessage::Dragged(_drag_event) => {}
-            PanelMessage::Maximize(pane) => self.panes.maximize(pane),
+            PanelMessage::Dragged(_drag_event) => iced::Task::none(),
+            PanelMessage::Maximize(pane) => {
+                self.panes.maximize(pane);
+
+                iced::Task::none()
+            }
             PanelMessage::Restore => {
                 self.panes.restore();
+
+                iced::Task::none()
             }
             PanelMessage::Close(pane) => {
                 if let Some((_, sibling)) = self.panes.close(pane) {
                     self.focus = Some(sibling);
                 }
+
+                iced::Task::none()
             }
             PanelMessage::CloseFocused => {
                 if let Some(pane) = self.focus
@@ -315,15 +328,26 @@ impl Widget<PanelMessage> for Panel {
                 {
                     self.focus = Some(sibling);
                 }
+
+                iced::Task::none()
             }
             PanelMessage::Detach(pane) => {
                 if let Some((_, sibling)) = self.panes.close(pane) {
                     self.focus = Some(sibling);
                 }
+
+                iced::Task::none()
+            }
+            PanelMessage::Pane(pane, pane_message) => {
+                if let Some(pane_widget) = self.panes.get_mut(pane) {
+                    pane_widget
+                        .update(context, pane_message)
+                        .map(move |pane_message| PanelMessage::Pane(pane, pane_message))
+                } else {
+                    iced::Task::none()
+                }
             }
         }
-
-        iced::Task::none()
     }
 
     fn view<'a>(

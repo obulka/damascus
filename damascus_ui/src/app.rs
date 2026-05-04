@@ -8,8 +8,6 @@ use std::time::{Duration, SystemTime};
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 
-use damascus;
-
 use crate::{
     widgets::{
         Widget,
@@ -74,8 +72,6 @@ pub struct Context {
     pub default_style: Style,
     working_file: Option<String>,
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
-    pub node_graph: damascus::graph::node_graph::NodeGraph,
-    // viewport: Viewport,
     pub window_manager_context: WindowManagerContext,
 }
 
@@ -102,7 +98,7 @@ impl Context {
     }
 
     pub fn update_hash(&mut self) {
-        self.working_file_hash = to_key_with_ordered_float(&self.node_graph).ok();
+        self.working_file_hash = to_key_with_ordered_float(&self.window_manager_context).ok();
     }
 
     pub fn update(&mut self, working_file: String) {
@@ -112,7 +108,7 @@ impl Context {
 
     pub fn dirty(&self) -> bool {
         if let Some(working_file_hash) = &self.working_file_hash
-            && let Ok(current_hash) = to_key_with_ordered_float(&self.node_graph)
+            && let Ok(current_hash) = to_key_with_ordered_float(&self.window_manager_context)
         {
             return current_hash != *working_file_hash;
         }

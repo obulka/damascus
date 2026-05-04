@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::all, rust_2018_idioms)]
 #![allow(long_running_const_eval)]
+#![recursion_limit = "256"]
 
 use macro_rules_attribute::derive_alias;
 

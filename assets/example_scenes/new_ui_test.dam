@@ -12,54 +12,7 @@
     "float_input_step": 0.0001
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": {
-    "nodes": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "inputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "outputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "edges": {
-      "parents": {},
-      "children": {}
-    }
-  },
-  "node_graph": {
-    "nodes": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "inputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "outputs": [
-      {
-        "value": null,
-        "version": 0
-      }
-    ],
-    "edges": {
-      "parents": {},
-      "children": {}
-    }
-  },
+  "working_file_hash": null,
   "window_manager_context": {
     "windows": [
       {
@@ -71,7 +24,7 @@
           1024.0,
           768.0
         ],
-        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
+        "title": "damascus",
         "style": {
           "text_size": 16.0,
           "scale": 1.0,
@@ -86,97 +39,51 @@
         },
         "panel": {
           "Split": {
-            "axis": "Vertical",
+            "axis": "Horizontal",
             "ratio": 0.5,
             "a": {
-              "Pane": {}
+              "Pane": {
+                "active_tab": 0,
+                "tabs": []
+              }
             },
             "b": {
-              "Pane": {}
-            }
-          }
-        },
-        "style_editor": {},
-        "style_editor_visible": false
-      },
-      {
-        "position": [
-          1136.0,
-          148.0
-        ],
-        "size": [
-          665.0,
-          521.0
-        ],
-        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-        "style": {
-          "text_size": 36.0,
-          "scale": 0.51334196,
-          "border_width": 2.0,
-          "theme": "Dracula",
-          "spacing": 3.0,
-          "padding": 3.0,
-          "icon_size": 16,
-          "leeway": 5.0,
-          "modal_opacity": 0.69,
-          "float_input_step": 0.0001
-        },
-        "panel": {
-          "Split": {
-            "axis": "Vertical",
-            "ratio": 0.5,
-            "a": {
-              "Pane": {}
-            },
-            "b": {
-              "Pane": {}
-            }
-          }
-        },
-        "style_editor": {},
-        "style_editor_visible": false
-      },
-      {
-        "position": [
-          650.0,
-          641.0
-        ],
-        "size": [
-          591.0,
-          376.0
-        ],
-        "title": "damascus - /home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-        "style": {
-          "text_size": 36.0,
-          "scale": 1.3400954,
-          "border_width": 2.0,
-          "theme": "Dracula",
-          "spacing": 3.0,
-          "padding": 3.0,
-          "icon_size": 16,
-          "leeway": 5.0,
-          "modal_opacity": 0.69,
-          "float_input_step": 0.0001
-        },
-        "panel": {
-          "Split": {
-            "axis": "Vertical",
-            "ratio": 0.5,
-            "a": {
-              "Pane": {}
-            },
-            "b": {
-              "Split": {
-                "axis": "Horizontal",
-                "ratio": 0.5,
-                "a": {
-                  "Pane": {}
-                },
-                "b": {
-                  "Pane": {}
-                }
+              "Pane": {
+                "active_tab": 0,
+                "tabs": []
               }
             }
+          }
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      },
+      {
+        "position": [
+          1164.0,
+          96.0
+        ],
+        "size": [
+          298.0,
+          306.0
+        ],
+        "title": "damascus",
+        "style": {
+          "text_size": 36.0,
+          "scale": 1.0,
+          "border_width": 2.0,
+          "theme": "Dracula",
+          "spacing": 3.0,
+          "padding": 3.0,
+          "icon_size": 16,
+          "leeway": 5.0,
+          "modal_opacity": 0.69,
+          "float_input_step": 0.0001
+        },
+        "panel": {
+          "Pane": {
+            "active_tab": 0,
+            "tabs": []
           }
         },
         "style_editor": {},

@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
+    borrow::Borrow,
     fmt::Display,
     ops::{RangeBounds, RangeInclusive},
     str::FromStr,
@@ -15,7 +16,7 @@ use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
 use damascus::Enumerator;
 
-use crate::icons::Icons;
+use crate::{icons::Icons, widgets::menu};
 
 pub mod editor;
 pub mod theme;
@@ -362,6 +363,33 @@ impl Style {
         ]
         .spacing(self.spacing)
         .into()
+    }
+
+    pub fn dropdown_menu<'a, T, L, Message>(
+        &'a self,
+        options: L,
+        menu_title: String,
+        on_select: impl Fn(T) -> Message + 'a,
+    ) -> iced::Element<'a, Message>
+    where
+        T: ToString + PartialEq + Clone + 'a,
+        L: Borrow<[T]> + 'a,
+        Message: Clone + 'a,
+    {
+        menu::DropdownMenu::new(options, menu_title, on_select)
+            .padding(self.padding)
+            .text_size(self.text_size)
+            .style(|theme: &iced::Theme, status| -> menu::Style {
+                menu::from_style(theme, status, self)
+            })
+            .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
+                let palette = theme.extended_palette();
+                iced::overlay::menu::Style {
+                    background: palette.background.weakest.color.into(),
+                    ..iced::overlay::menu::default(theme)
+                }
+            })
+            .into()
     }
 
     pub fn none<'a, Message>() -> iced::Element<'a, Message> {

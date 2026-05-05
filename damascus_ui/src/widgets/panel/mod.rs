@@ -6,6 +6,7 @@
 use std::{collections::BTreeMap, fmt::Debug};
 
 use iced;
+use iced_aw;
 use macro_rules_attribute::derive;
 
 use crate::{
@@ -19,6 +20,7 @@ pub mod pane;
 pub mod tabs;
 
 use pane::{Pane, PaneMessage};
+use tabs::{TabMessage, Tabs};
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -171,22 +173,6 @@ impl Panel {
         }
     }
 
-    fn view_content<'a>(
-        style: &'a Style,
-        _pane: iced::widget::pane_grid::Pane,
-        _total_panes: usize,
-        size: iced::Size,
-    ) -> iced::Element<'a, PanelMessage> {
-        let content =
-            iced::widget::column![style.text(format!("{:}x{:}", size.width, size.height))]
-                .spacing(style.spacing)
-                .align_x(iced::Center);
-
-        iced::widget::center_y(iced::widget::scrollable(content))
-            .padding(style.padding)
-            .into()
-    }
-
     fn view_controls<'a>(
         style: &'a Style,
         pane: iced::widget::pane_grid::Pane,
@@ -245,7 +231,7 @@ impl Panel {
             None
         });
 
-        iced::widget::row![horizontal_split, vertical_split, maximize, detach, close,]
+        iced::widget::row![horizontal_split, vertical_split, maximize, detach, close]
             .spacing(style.spacing)
             .into()
     }
@@ -352,35 +338,64 @@ impl Widget<PanelMessage> for Panel {
 
     fn view<'a>(
         &'a self,
-        _window_id: iced::window::Id,
+        window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, PanelMessage> {
         let focus = self.focus;
         let total_panes = self.panes.len();
 
-        let pane_grid = iced::widget::PaneGrid::new(&self.panes, |id, _pane, is_maximized| {
+        let pane_grid = iced::widget::PaneGrid::new(&self.panes, |id, pane, is_maximized| {
             let is_focused = focus == Some(id);
 
-            let title_bar = iced::widget::pane_grid::TitleBar::new(iced::widget::row![])
-                .controls(iced::widget::pane_grid::Controls::dynamic(
-                    Self::view_controls(style, id, total_panes, is_maximized),
-                    style.close_button().on_press_maybe(if total_panes > 1 {
-                        Some(PanelMessage::Close(id))
-                    } else {
-                        None
-                    }),
-                ))
-                .padding(style.padding)
-                .style(move |_theme| {
-                    if is_focused {
-                        style.title_bar_focused()
-                    } else {
-                        style.title_bar()
-                    }
-                });
+            let title_bar = iced::widget::pane_grid::TitleBar::new(iced::widget::row![
+                style.dropdown_menu(
+                    Tabs::iter().map(|variant| variant.variant_pascal_label()),
+                    "+",
+                    |option| -> PanelMessage {
+                        PanelMessage::Pane(id, TabMessage::from_str(&option).into())
+                    },
+                ),
+                pane.tabs
+                    .iter()
+                    .fold(
+                        iced_aw::TabBar::new(move |tab_index| {
+                            PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
+                        }),
+                        |tab_bar, tab| {
+                            let tab_count = tab_bar.size();
+                            tab_bar.push(tab_count, iced_aw::TabLabel::Text("".to_owned()))
+                        },
+                    )
+                    .set_active_tab(&pane.active_tab)
+                    .on_close(move |tab_index| {
+                        PanelMessage::Pane(id, TabMessage::Closed(tab_index).into())
+                    })
+                    .tab_width(iced::Length::Shrink)
+                    .width(iced::Length::Shrink)
+                    .spacing(style.spacing)
+                    .padding(style.padding)
+                    .text_size(style.text_size),
+            ])
+            .controls(iced::widget::pane_grid::Controls::dynamic(
+                Self::view_controls(style, id, total_panes, is_maximized),
+                style.close_button().on_press_maybe(if total_panes > 1 {
+                    Some(PanelMessage::Close(id))
+                } else {
+                    None
+                }),
+            ))
+            .padding(style.padding)
+            .style(move |_theme| {
+                if is_focused {
+                    style.title_bar_focused()
+                } else {
+                    style.title_bar()
+                }
+            });
 
-            iced::widget::pane_grid::Content::new(iced::widget::responsive(move |size| {
-                Self::view_content(style, id, total_panes, size)
+            iced::widget::pane_grid::Content::new(iced::widget::responsive(move |_size| {
+                pane.view(window_id, style)
+                    .map(move |pane_message| PanelMessage::Pane(id, pane_message))
             }))
             .title_bar(title_bar)
             .style(move |_theme| {

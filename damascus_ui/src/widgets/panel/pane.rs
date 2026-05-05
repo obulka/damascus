@@ -3,14 +3,24 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::widgets::{
-    Widget,
-    panel::tabs::{Tab, TabMessage},
+use crate::{
+    app::Context,
+    widgets::{
+        Widget,
+        panel::tabs::{Tab, TabMessage},
+        style::Style,
+    },
 };
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum PaneMessage {
     Tab(TabMessage),
+}
+
+impl From<TabMessage> for PaneMessage {
+    fn from(tab_message: TabMessage) -> Self {
+        Self::Tab(tab_message)
+    }
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -28,4 +38,46 @@ impl Default for Pane {
     }
 }
 
-impl Widget<PaneMessage> for Pane {}
+impl Widget<PaneMessage> for Pane {
+    fn update(&mut self, context: &mut Context, message: PaneMessage) -> iced::Task<PaneMessage> {
+        match message {
+            PaneMessage::Tab(tab_message) => {
+                match tab_message {
+                    TabMessage::Selected(tab_index) => {
+                        self.active_tab = tab_index;
+                    }
+                    TabMessage::Closed(tab_index) => {
+                        self.tabs.remove(tab_index);
+                        self.active_tab = if self.tabs.is_empty() {
+                            0
+                        } else {
+                            usize::max(0, usize::min(self.active_tab, self.tabs.len() - 1))
+                        };
+                    }
+                    _ => {}
+                }
+                if self.tabs.len() > self.active_tab {
+                    self.tabs[self.active_tab]
+                        .update(context, tab_message)
+                        .map(|tab_message| tab_message.into())
+                } else {
+                    iced::Task::none()
+                }
+            }
+        }
+    }
+
+    fn view<'a>(
+        &'a self,
+        window_id: iced::window::Id,
+        style: &'a Style,
+    ) -> iced::Element<'a, PaneMessage> {
+        if self.tabs.len() > self.active_tab {
+            self.tabs[self.active_tab]
+                .view(window_id, style)
+                .map(|tab_message| tab_message.into())
+        } else {
+            None::<iced::Element<'a, PaneMessage>>.into()
+        }
+    }
+}

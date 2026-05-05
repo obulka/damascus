@@ -14,7 +14,7 @@ use damascus::Enumerator;
 use crate::{
     EnumTraits, ErrorTraits,
     app::Context,
-    widgets::{Widget, dialog::Dialog, menu, style::Style},
+    widgets::{Widget, dialog::Dialog, style::Style},
 };
 
 pub mod file;
@@ -50,8 +50,6 @@ pub enum ToolbarErrors {
     UnknownError,
 }
 
-pub type ToolbarResult<E> = Result<E, ToolbarErrors>;
-
 impl fmt::Display for ToolbarErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -65,6 +63,8 @@ impl fmt::Display for ToolbarErrors {
         }
     }
 }
+
+pub type ToolbarResult<E> = Result<E, ToolbarErrors>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ToolbarMessage {
@@ -222,24 +222,11 @@ impl Widget<ToolbarMessage> for Toolbar {
         style: &'a Style,
     ) -> iced::Element<'a, ToolbarMessage> {
         iced::widget::row(Menus::iter().map(|menu_option| {
-            menu::DropdownMenu::new(
+            style.dropdown_menu(
                 menu_option.menu_options(),
                 menu_option.variant(),
                 |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
-            .padding(style.padding)
-            .text_size(style.text_size)
-            .style(|theme: &iced::Theme, status| -> menu::Style {
-                menu::from_style(theme, status, style)
-            })
-            .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
-                let palette = theme.extended_palette();
-                iced::overlay::menu::Style {
-                    background: palette.background.weakest.color.into(),
-                    ..iced::overlay::menu::default(theme)
-                }
-            })
-            .into()
         }))
         .spacing(3)
         .into()

@@ -3,11 +3,14 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::BTreeMap, fmt::Debug};
+use std::{collections::BTreeMap, fmt::Debug, str::FromStr};
 
 use iced;
 use iced_aw;
 use macro_rules_attribute::derive;
+use strum::IntoEnumIterator;
+
+use damascus::Enumerator;
 
 use crate::{
     EnumTraits,
@@ -349,9 +352,11 @@ impl Widget<PanelMessage> for Panel {
 
             let title_bar = iced::widget::pane_grid::TitleBar::new(iced::widget::row![
                 style.dropdown_menu(
-                    Tabs::iter().map(|variant| variant.variant_pascal_label()),
-                    "+",
-                    |option| -> PanelMessage {
+                    Tabs::iter()
+                        .map(|variant| variant.variant_pascal_label())
+                        .collect::<Vec<String>>(),
+                    "+".to_string(), // TODO use icon
+                    move |option| -> PanelMessage {
                         PanelMessage::Pane(id, TabMessage::from_str(&option).into())
                     },
                 ),
@@ -363,7 +368,10 @@ impl Widget<PanelMessage> for Panel {
                         }),
                         |tab_bar, tab| {
                             let tab_count = tab_bar.size();
-                            tab_bar.push(tab_count, iced_aw::TabLabel::Text("".to_owned()))
+                            tab_bar.push(
+                                tab_count,
+                                iced_aw::TabLabel::Text(tab.as_tabs().variant_pascal_label()),
+                            )
                         },
                     )
                     .set_active_tab(&pane.active_tab)
@@ -373,8 +381,10 @@ impl Widget<PanelMessage> for Panel {
                     .tab_width(iced::Length::Shrink)
                     .width(iced::Length::Shrink)
                     .spacing(style.spacing)
-                    .padding(style.padding)
-                    .text_size(style.text_size),
+                    .padding(iced::Padding::ZERO.horizontal(style.padding))
+                    .text_size(style.text_size)
+                    .icon_size(style.icon_size as f32)
+                    .close_size(style.icon_size as f32),
             ])
             .controls(iced::widget::pane_grid::Controls::dynamic(
                 Self::view_controls(style, id, total_panes, is_maximized),

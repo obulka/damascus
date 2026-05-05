@@ -3,9 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::str::FromStr;
+use std::{fmt, str::FromStr};
 
 use macro_rules_attribute::derive;
+
+use damascus::Enumerator;
 
 use crate::{
     EnumTraits, ErrorTraits,
@@ -24,7 +26,7 @@ pub enum TabErrors {
     UnknownError,
 }
 
-impl fmt::Display for ToolbarErrors {
+impl fmt::Display for TabErrors {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::DeserializeError(error) => write!(
@@ -48,6 +50,7 @@ pub enum TabMessage {
     Selected(usize),
     Closed(usize),
     New(Tabs),
+    Error(TabErrors),
 }
 
 impl FromStr for TabMessage {
@@ -60,6 +63,15 @@ impl FromStr for TabMessage {
             Ok(Self::New(option))
         } else {
             Err(Self::Err::DeserializeError(variant))
+        }
+    }
+}
+
+impl From<TabResult<Self>> for TabMessage {
+    fn from(result: TabResult<Self>) -> Self {
+        match result {
+            Ok(message) => message,
+            Err(error) => TabMessage::Error(error),
         }
     }
 }
@@ -91,6 +103,38 @@ pub enum Tab {
     Properties,
     #[default]
     None,
+}
+
+impl Tab {
+    pub fn as_tabs(&self) -> Tabs {
+        match self {
+            Self::NodeGraph(_) => Tabs::NodeGraph,
+            Self::Viewport(_) => Tabs::Viewport,
+            Self::Properties => Tabs::Properties,
+            _ => Tabs::default(),
+        }
+    }
+}
+
+impl From<Tabs> for Tab {
+    fn from(tab: Tabs) -> Self {
+        match tab {
+            Tabs::NodeGraph => Self::NodeGraph(NodeGraph::default()),
+            Tabs::Viewport => Self::Viewport(Viewport::default()),
+            Tabs::Properties => Self::Properties,
+        }
+    }
+}
+
+impl From<Tab> for Tabs {
+    fn from(tab: Tab) -> Self {
+        match tab {
+            Tab::NodeGraph(_) => Self::NodeGraph,
+            Tab::Viewport(_) => Self::Viewport,
+            Tab::Properties => Self::Properties,
+            _ => Self::default(),
+        }
+    }
 }
 
 impl Widget<TabMessage> for Tab {

@@ -7,7 +7,7 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
-        panel::tabs::{Tab, TabMessage},
+        panel::tabs::{Tab, TabMessage, TabResult},
         style::Style,
     },
 };
@@ -20,6 +20,12 @@ pub enum PaneMessage {
 impl From<TabMessage> for PaneMessage {
     fn from(tab_message: TabMessage) -> Self {
         Self::Tab(tab_message)
+    }
+}
+
+impl From<TabResult<TabMessage>> for PaneMessage {
+    fn from(tab_result: TabResult<TabMessage>) -> Self {
+        <TabResult<TabMessage> as Into<TabMessage>>::into(tab_result).into()
     }
 }
 
@@ -53,6 +59,9 @@ impl Widget<PaneMessage> for Pane {
                         } else {
                             usize::max(0, usize::min(self.active_tab, self.tabs.len() - 1))
                         };
+                    }
+                    TabMessage::New(ref tab) => {
+                        self.tabs.push(tab.clone().into());
                     }
                     _ => {}
                 }

@@ -24,8 +24,33 @@ pub enum Icons {
 }
 
 impl Icons {
-    pub fn as_svg(&self) -> iced::widget::Svg<'_> {
+    pub fn as_svg<Theme: iced::widget::svg::Catalog>(&self) -> iced::widget::Svg<'_, Theme> {
         iced::widget::svg(match *self {
+            Self::ArrowLeft => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_left.svg"),
+            Self::ArrowRight => {
+                concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_right.svg")
+            }
+            Self::Close => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/close.svg"),
+            Self::Detach => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/detach.svg"),
+            Self::File => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/file.svg"),
+            Self::HorizontalSplit => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/icons/horizontal_split.svg"
+            ),
+            Self::Maximize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/maximize.svg"),
+            Self::Minimize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/minimize.svg"),
+            Self::Pause => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/pause.svg"),
+            Self::Play => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/play.svg"),
+            Self::Refresh => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/refresh.svg"),
+            Self::VerticalSplit => concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/icons/vertical_split.svg"
+            ),
+        })
+    }
+
+    pub fn as_core_svg<Theme: iced::widget::svg::Catalog>(&self) -> iced_core::Svg {
+        iced_core::Svg::new(match *self {
             Self::ArrowLeft => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_left.svg"),
             Self::ArrowRight => {
                 concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_right.svg")

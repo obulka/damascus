@@ -6,7 +6,6 @@
 use std::{collections::BTreeMap, fmt::Debug, str::FromStr};
 
 use iced;
-use iced_aw;
 use macro_rules_attribute::derive;
 use strum::IntoEnumIterator;
 
@@ -16,7 +15,11 @@ use crate::{
     EnumTraits,
     app::Context,
     icons::Icons,
-    widgets::{Widget, style::Style},
+    widgets::{
+        Widget,
+        style::Style,
+        tab_bar::{TabBar, TabLabel},
+    },
 };
 
 pub mod pane;
@@ -363,14 +366,14 @@ impl Widget<PanelMessage> for Panel {
                 pane.tabs
                     .iter()
                     .fold(
-                        iced_aw::TabBar::new(move |tab_index| {
+                        TabBar::new(move |tab_index| {
                             PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
                         }),
                         |tab_bar, tab| {
                             let tab_count = tab_bar.size();
                             tab_bar.push(
                                 tab_count,
-                                iced_aw::TabLabel::Text(tab.as_tabs().variant_pascal_label()),
+                                TabLabel::Text(tab.as_tabs().variant_pascal_label()),
                             )
                         },
                     )
@@ -384,7 +387,7 @@ impl Widget<PanelMessage> for Panel {
                     .padding(iced::Padding::ZERO.horizontal(style.padding))
                     .text_size(style.text_size)
                     .icon_size(style.icon_size as f32)
-                    .close_size(style.icon_size as f32),
+                    .close_size(style.text_size as f32),
             ])
             .controls(iced::widget::pane_grid::Controls::dynamic(
                 Self::view_controls(style, id, total_panes, is_maximized),

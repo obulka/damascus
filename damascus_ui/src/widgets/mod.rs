@@ -14,6 +14,7 @@ pub mod menu;
 pub mod node_graph;
 pub mod panel;
 pub mod style;
+pub mod tab_bar;
 pub mod toolbar;
 pub mod viewport;
 

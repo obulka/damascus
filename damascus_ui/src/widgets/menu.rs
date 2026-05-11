@@ -1,3 +1,8 @@
+//
+// The following widget was adapted from iced's PickList:
+// https://github.com/iced-rs/iced/blob/0.14.0/widget/src/pick_list.rs
+//
+
 use std::{borrow::Borrow, f32};
 
 use iced;

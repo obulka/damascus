@@ -107,11 +107,11 @@ impl Default for Style {
             border_width: 0.0,
             tab_border_radius: Radius::default(),
             tab_label_background: Background::Color([0.87, 0.87, 0.87].into()),
-            tab_label_border_color: [0.7, 0.7, 0.7].into(),
-            tab_label_border_width: 1.0,
+            tab_label_border_color: Color::TRANSPARENT,
+            tab_label_border_width: 0.0,
             icon_color: Color::BLACK,
             icon_background: Some(Background::Color(Color::TRANSPARENT)),
-            icon_border_radius: 4.0.into(),
+            icon_border_radius: 0.0.into(),
             text_color: Color::BLACK,
         }
     }
@@ -127,13 +127,16 @@ pub fn primary(theme: &Theme, status: Status) -> Style {
 
     match status {
         Status::Disabled => {
-            base.tab_label_background = Background::Color(palette.background.strong.color);
+            base.text_color = palette.background.weakest.text;
+            base.tab_label_background = Background::Color(palette.background.weakest.color);
         }
         Status::Hovered => {
-            base.tab_label_background = Background::Color(palette.primary.strong.color);
+            base.text_color = palette.background.weaker.text;
+            base.tab_label_background = Background::Color(palette.background.weaker.color);
         }
         _ => {
-            base.tab_label_background = Background::Color(palette.primary.base.color);
+            base.text_color = palette.background.base.text;
+            base.tab_label_background = Background::Color(palette.background.base.color);
         }
     }
 
@@ -592,7 +595,7 @@ where
                                 .push(layout_icon(icon, self.icon_size, self.font)),
 
                             TabLabel::Text(text) => Column::new()
-                                .padding(5.0)
+                                .padding(self.padding)
                                 .align_x(Alignment::Center)
                                 .push(layout_text(text, self.text_size, self.text_font)),
 
@@ -743,10 +746,10 @@ where
             let active_idx = self.get_active_tab_idx();
             let tab_status = self.tab_statuses.get_mut(i).expect("Should have a status.");
 
-            let current_status = if cursor.is_over(layout.bounds()) {
-                Status::Hovered
-            } else if i == active_idx {
+            let current_status = if i == active_idx {
                 Status::Active
+            } else if cursor.is_over(layout.bounds()) {
+                Status::Hovered
             } else {
                 Status::Disabled
             };

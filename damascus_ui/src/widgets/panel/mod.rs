@@ -384,10 +384,10 @@ impl Widget<PanelMessage> for Panel {
                     .tab_width(iced::Length::Shrink)
                     .width(iced::Length::Shrink)
                     .spacing(style.spacing)
-                    .padding(iced::Padding::ZERO.horizontal(style.padding))
+                    .padding(style.padding)
                     .text_size(style.text_size)
                     .icon_size(style.icon_size as f32)
-                    .close_size(style.text_size as f32),
+                    .close_size(style.text_size as f32 * 0.69),
             ])
             .controls(iced::widget::pane_grid::Controls::dynamic(
                 Self::view_controls(style, id, total_panes, is_maximized),

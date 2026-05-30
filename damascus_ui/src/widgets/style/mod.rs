@@ -133,8 +133,13 @@ impl Style {
         let palette: &iced::theme::palette::Extended = theme.extended_palette();
 
         iced::widget::container::Style {
-            text_color: Some(palette.background.strong.text),
-            background: Some(palette.background.strong.color.into()),
+            text_color: Some(palette.background.weakest.text),
+            background: Some(palette.background.weakest.color.into()),
+            border: iced::Border {
+                width: self.border_width,
+                color: palette.background.base.color,
+                ..Default::default()
+            },
             ..Default::default()
         }
     }
@@ -156,10 +161,9 @@ impl Style {
         let palette: &iced::theme::palette::Extended = theme.extended_palette();
 
         iced::widget::container::Style {
-            background: Some(palette.background.weak.color.into()),
+            background: Some(palette.background.base.color.into()),
             border: iced::Border {
-                width: self.border_width,
-                color: palette.background.strong.color,
+                color: palette.background.base.color,
                 ..iced::Border::default()
             },
             ..Default::default()
@@ -379,9 +383,7 @@ impl Style {
         menu::DropdownMenu::new(options, menu_title, on_select)
             .padding(self.padding)
             .text_size(self.text_size)
-            .style(|theme: &iced::Theme, status| -> menu::Style {
-                menu::from_style(theme, status, self)
-            })
+            .style(|theme: &iced::Theme, status| -> menu::Style { menu::default(theme, status) })
             .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
                 let palette = theme.extended_palette();
                 iced::overlay::menu::Style {

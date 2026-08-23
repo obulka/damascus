@@ -164,11 +164,11 @@ impl Default for Panel {
 }
 
 impl Panel {
-    fn as_context(&self) -> PanelContext<Pane> {
+    pub fn as_context(&self) -> PanelContext<Pane> {
         PanelContext::from_node(self.panes.layout(), &self.panes.panes)
     }
 
-    fn from_context(context: PanelContext<Pane>) -> Self {
+    pub fn from_context(context: PanelContext<Pane>) -> Self {
         Self {
             focus: None,
             panes: iced::widget::pane_grid::State::with_configuration(

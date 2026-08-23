@@ -5,6 +5,8 @@
 
 use damascus::graph::node_graph::{self, nodes::NodeId};
 
+use crate::widgets::Style;
+
 use super::Widget;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -22,4 +24,12 @@ pub struct NodeGraph {
     pub node_graph: node_graph::NodeGraph,
 }
 
-impl Widget<NodeGraphMessage> for NodeGraph {}
+impl Widget<NodeGraphMessage> for NodeGraph {
+    fn view<'a>(
+        &'a self,
+        _window_id: iced::window::Id,
+        style: &'a Style,
+    ) -> iced::Element<'a, NodeGraphMessage> {
+        style.text("Node Graph").into()
+    }
+}

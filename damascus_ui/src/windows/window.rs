@@ -10,7 +10,12 @@ use crate::{
     app::Context,
     widgets::{
         Widget, modal,
-        panel::{Panel, PanelMessage},
+        node_graph::NodeGraph,
+        panel::{
+            Panel, PanelAxis, PanelContext, PanelMessage,
+            pane::Pane,
+            tabs::{Tab, Tabs},
+        },
         style::{
             Style,
             editor::{StyleEditor, StyleEditorMessage},
@@ -67,7 +72,26 @@ impl Default for Window {
             size: None,
             title: Self::default_title().to_string(),
             style: Style::default(),
-            panel: Panel::default(),
+            panel: Panel::from_context(PanelContext::<Pane>::Split {
+                axis: PanelAxis::Vertical,
+                ratio: 0.67,
+                a: Box::new(PanelContext::<Pane>::Split {
+                    axis: PanelAxis::Horizontal,
+                    ratio: 0.5,
+                    a: Box::new(PanelContext::<Pane>::Pane(Pane {
+                        active_tab: 0,
+                        tabs: vec![Tabs::Viewport.into()],
+                    })),
+                    b: Box::new(PanelContext::<Pane>::Pane(Pane {
+                        active_tab: 0,
+                        tabs: vec![Tab::NodeGraph(NodeGraph::default())],
+                    })),
+                }),
+                b: Box::new(PanelContext::<Pane>::Pane(Pane {
+                    active_tab: 0,
+                    tabs: vec![Tabs::Properties.into()],
+                })),
+            }),
             style_editor: StyleEditor::default(),
             style_editor_visible: false,
         }

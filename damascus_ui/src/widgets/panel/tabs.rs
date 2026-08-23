@@ -158,10 +158,18 @@ impl Widget<TabMessage> for Tab {
 
     fn view<'a>(
         &'a self,
-        _window_id: iced::window::Id,
-        _style: &'a Style,
+        window_id: iced::window::Id,
+        style: &'a Style,
     ) -> iced::Element<'a, TabMessage> {
-        // TODO
-        None::<iced::Element<'a, TabMessage>>.into()
+        match self {
+            Self::NodeGraph(node_graph) => node_graph
+                .view(window_id, style)
+                .map(|node_graph_message| node_graph_message.into()),
+            Self::Viewport(viewport) => viewport
+                .view(window_id, style)
+                .map(|viewport_message| viewport_message.into()),
+            Self::Properties => style.text("Properties").into(),
+            _ => None::<iced::Element<'a, TabMessage>>.into(),
+        }
     }
 }

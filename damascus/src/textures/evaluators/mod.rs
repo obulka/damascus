@@ -839,7 +839,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
             // Pass our potentially updated data to the GPU
 
             let buffer_data: BufferData = self.buffer_data();
-            if let Some(render_resource) = self.render_resource_mut() {
+            if let Some(render_resource) = self.render_resource() {
                 render_resource.write_bind_groups(queue, &buffer_data);
             }
 
@@ -866,7 +866,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
                 occlusion_query_set: None,
             };
 
-            if let Some(render_resource) = self.render_resource_mut() {
+            if let Some(render_resource) = self.render_resource() {
                 render_resource.paint(&mut encoder.begin_render_pass(&render_pass_desc));
             }
 

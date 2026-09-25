@@ -178,6 +178,11 @@ impl TextureEvaluator for TextureViewer {
         }
     }
 
+    fn output_texture_format(&self) -> wgpu::TextureFormat {
+        // TODO make this a match on the Texture type
+        wgpu::TextureFormat::Bgra8Unorm
+    }
+
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
         if !self.construction_data.input_texture_views.is_empty() {
             Some(wgpu::Extent3d {

@@ -1702,6 +1702,10 @@ mod tests {
         let mut texture_viewer = TextureEvaluators::TextureViewer(
             TextureViewer::default()
                 .with_input_texture_view(output_texture_view.clone())
+                .with_output_resolution(UVec2::new(
+                    output_texture_view.texture_view.texture().width(),
+                    output_texture_view.texture_view.texture().height(),
+                ))
                 .grade(Grade::default().gain(1.))
                 .finalized(&device),
         );

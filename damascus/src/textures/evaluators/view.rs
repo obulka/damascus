@@ -111,16 +111,20 @@ pub struct TextureViewer {
 
 impl TextureViewer {
     pub fn set_input_texture_view(&mut self, input_texture_view: TextureView) {
-        // TODO this should be the viewport, not texture, resolution
-        self.render_data.resolution = UVec2::new(
-            input_texture_view.texture_view.texture().width(),
-            input_texture_view.texture_view.texture().height(),
-        );
         self.construction_data.input_texture_views = vec![input_texture_view];
     }
 
     pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
         self.set_input_texture_view(input_texture_view);
+        self
+    }
+
+    pub fn set_output_resolution(&mut self, output_resolution: UVec2) {
+        self.render_data.resolution = output_resolution;
+    }
+
+    pub fn with_output_resolution(mut self, output_resolution: UVec2) -> Self {
+        self.set_output_resolution(output_resolution);
         self
     }
 
@@ -166,6 +170,10 @@ impl TextureEvaluator for TextureViewer {
 
     fn frame_counter_mut(&mut self) -> &mut FrameCounter {
         &mut self.frame_counter
+    }
+
+    fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
+        to_key_with_ordered_float(&self.render_data)
     }
 
     fn input_texture_views(&self) -> Vec<TextureView> {

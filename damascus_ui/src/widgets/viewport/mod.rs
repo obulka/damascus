@@ -68,7 +68,6 @@ impl iced::widget::shader::Pipeline for Pipeline {
         Self {
             texture_evaluator: TextureViewer::default()
                 .with_input_texture_view(output_texture_view.clone())
-                .grade(Grade::default().gain(1.0))
                 .finalized(device),
         }
     }
@@ -82,13 +81,16 @@ pub enum ViewportMessage {
     Exit,
     MoveCursor(glam::Vec2),
     Resize(glam::Vec2),
+    GainChanged(f32),
+    GammaChanged(f32),
     None,
 }
 
-#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct ViewportPrimitive {
     zoom: f32,
     pan: glam::Vec2,
+    grade: Grade,
 }
 
 impl Default for ViewportPrimitive {
@@ -96,6 +98,7 @@ impl Default for ViewportPrimitive {
         Self {
             zoom: 1.0,
             pan: glam::Vec2::ZERO,
+            grade: Grade::default(),
         }
     }
 }
@@ -117,6 +120,8 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 
         pipeline.texture_evaluator.zoom = self.zoom;
         pipeline.texture_evaluator.pan = self.pan;
+        pipeline.texture_evaluator.grade.gain = self.grade.gain;
+        pipeline.texture_evaluator.grade.gamma = self.grade.gamma;
 
         let buffer_data: BufferData = pipeline.texture_evaluator.buffer_data();
         if let Some(render_resource) = pipeline.texture_evaluator.render_resource() {
@@ -162,7 +167,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
     }
 }
 
-#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Viewport {
     viewport_primitive: ViewportPrimitive,
     scroll_to_zoom: f32,
@@ -220,6 +225,8 @@ impl Widget<ViewportMessage> for Viewport {
                 self.last_cursor_position = cursor_position;
             }
             ViewportMessage::Resize(bounds) => self.bounds = bounds,
+            ViewportMessage::GainChanged(gain) => self.viewport_primitive.grade.gain = gain,
+            ViewportMessage::GammaChanged(gamma) => self.viewport_primitive.grade.gamma = gamma,
             _ => {}
         }
         iced::Task::none()
@@ -230,6 +237,29 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
+        let gain = style.slider(
+            "f/4",
+            0.0..=64.0,
+            ..,
+            self.viewport_primitive.grade.gain,
+            style.float_input_step,
+            |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
+            ViewportMessage::GainChanged(self.viewport_primitive.grade.gain),
+            "The gain to apply in the viewer.",
+        );
+        let gamma = style.slider(
+            "γ",
+            0.01..=64.0,
+            0.01..,
+            self.viewport_primitive.grade.gamma,
+            style.float_input_step,
+            |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
+            ViewportMessage::GammaChanged(self.viewport_primitive.grade.gamma),
+            "The gamma to apply in the viewer.",
+        );
+
+        let toolbar = iced::widget::row![gain, gamma];
+
         let shader = iced::widget::mouse_area(
             iced::widget::shader(self)
                 .width(iced::Length::Fill)
@@ -246,7 +276,7 @@ impl Widget<ViewportMessage> for Viewport {
         .on_exit(ViewportMessage::Exit)
         .on_move(|point| ViewportMessage::MoveCursor(glam::Vec2::new(point.x, point.y)));
 
-        iced::widget::container(iced::widget::column![shader])
+        iced::widget::container(iced::widget::column![toolbar, shader])
             .padding(style.padding)
             .into()
     }
@@ -279,6 +309,6 @@ impl iced::widget::shader::Program<ViewportMessage> for Viewport {
         _cursor: iced::mouse::Cursor,
         _bounds: iced::Rectangle,
     ) -> Self::Primitive {
-        self.viewport_primitive
+        self.viewport_primitive.clone()
     }
 }

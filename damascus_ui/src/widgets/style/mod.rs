@@ -88,6 +88,29 @@ impl Style {
             .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
     }
 
+    pub fn tooltip<'a, Message>(
+        &'a self,
+        message: impl iced::widget::text::IntoFragment<'a>,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+        message_width: iced::Length,
+    ) -> iced::widget::Tooltip<'a, Message>
+    where
+        Message: 'a,
+    {
+        iced::widget::tooltip(
+            self.text(message)
+                .align_y(iced::alignment::Vertical::Center)
+                .width(message_width),
+            iced::widget::container(
+                self.text(tooltip)
+                    .align_y(iced::alignment::Vertical::Center),
+            )
+            .style(iced::widget::container::bordered_box)
+            .padding(self.padding),
+            iced::widget::tooltip::Position::Bottom,
+        )
+    }
+
     pub fn heading<'a, Message>(
         &'a self,
         message: impl iced::widget::text::IntoFragment<'a>,
@@ -321,6 +344,7 @@ impl Style {
         step: T,
         on_change: F,
         on_release: Message,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -339,9 +363,7 @@ impl Style {
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.text(name)
-                .align_y(iced::alignment::Vertical::Center)
-                .width(iced::Length::FillPortion(2)),
+            self.tooltip(name, tooltip, iced::Length::FillPortion(2)),
             iced_aw::widget::number_input(&value, limit_range, on_change)
                 .step(step) // TODO dynamic based on highlight?
                 .ignore_buttons(true)

@@ -179,6 +179,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
             StyleEditorData::TextSize(style.text_size).into(),
+            "text_size",
         );
         let scale = style.slider(
             StyleEditorFields::Scale.variant_label(),
@@ -188,6 +189,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
             StyleEditorData::Scale(style.scale).into(),
+            "scale",
         );
         let border_width = style.slider(
             StyleEditorFields::BorderWidth.variant_label(),
@@ -197,6 +199,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
             StyleEditorData::BorderWidth(style.border_width).into(),
+            "border_width",
         );
         let spacing = style.slider(
             StyleEditorFields::Spacing.variant_label(),
@@ -206,6 +209,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
             StyleEditorData::Spacing(style.spacing).into(),
+            "spacing",
         );
         let padding = style.slider(
             StyleEditorFields::Padding.variant_label(),
@@ -215,6 +219,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
             StyleEditorData::Padding(style.padding).into(),
+            "padding",
         );
         let icon_size = style.slider(
             StyleEditorFields::IconSize.variant_label(),
@@ -224,6 +229,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             1,
             |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
             StyleEditorData::IconSize(style.icon_size).into(),
+            "icon_size",
         );
         let leeway = style.slider(
             StyleEditorFields::Leeway.variant_label(),
@@ -233,6 +239,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             1.,
             |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
             StyleEditorData::Leeway(style.leeway).into(),
+            "leeway",
         );
         let modal_opacity = style.slider(
             StyleEditorFields::ModalOpacity.variant_label(),
@@ -242,6 +249,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
             StyleEditorData::ModalOpacity(style.modal_opacity).into(),
+            "modal_opacity",
         );
         let float_input_step = style.slider(
             StyleEditorFields::FloatInputStep.variant_label(),
@@ -251,6 +259,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
             StyleEditorData::FloatInputStep(style.float_input_step).into(),
+            "float_input_step",
         );
 
         iced::widget::column![

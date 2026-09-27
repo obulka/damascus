@@ -18,7 +18,7 @@ use damascus::{
         },
         outputs::OutputId,
     },
-    textures::evaluators::{GPUTextureEvaluator, view::TextureViewer},
+    textures::evaluators::{GPUTextureEvaluator, grade::Grade, view::TextureViewer},
 };
 
 use crate::{app::Context, widgets::Style};
@@ -68,6 +68,7 @@ impl iced::widget::shader::Pipeline for Pipeline {
         Self {
             texture_evaluator: TextureViewer::default()
                 .with_input_texture_view(output_texture_view.clone())
+                .grade(Grade::default().gain(1.0))
                 .finalized(device),
         }
     }

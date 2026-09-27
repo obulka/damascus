@@ -18,11 +18,11 @@ struct FragmentInput {
 
 @fragment
 fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
-    var pixel_colour = textureLoad(
+    var pixel_colour: vec4f = textureLoad(
         _texture,
         vec2u(in.texture_coordinate.xy),
         0,
     );
 
-    return grade_vec4(pixel_colour, _viewer_grade);
+    return grade_vec4(linear_to_srgb(pixel_colour), _viewer_grade);
 }

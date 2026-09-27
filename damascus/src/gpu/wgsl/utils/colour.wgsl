@@ -39,3 +39,21 @@ fn transform_colour4f(
 ) -> vec4f {
     return abs(YIQA_TO_RGBA * (transform * (RGBA_TO_YIQA * colour)));
 }
+
+fn linear_to_srgb(linear: vec4f) -> vec4f {
+    let high_low_selection: vec3<bool> = linear.xyz < vec3(0.0031308);
+
+    let high: vec3f = 1.055 * pow(linear.xyz, vec3(0.41666666666)) - 0.055;
+    let low: vec3f = linear.xyz * 12.92;
+
+    return vec4(select(high, low, high_low_selection), linear.a);
+}
+
+fn srgb_to_linear(srgb: vec4f) -> vec4f {
+    let high_low_selection: vec3<bool> = srgb.xyz < vec3(0.04045);
+
+    let high: vec3f = pow(0.94786729857 * (srgb.xyz + 0.055), vec3(2.4));
+    let low: vec3f = srgb.xyz * 0.0773993808;
+
+    return vec4(select(high, low, high_low_selection), srgb.a);
+}

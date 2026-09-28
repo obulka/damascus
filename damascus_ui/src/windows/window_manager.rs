@@ -103,7 +103,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         FileMessage::OptionSelected(option) => {
                             match option {
                                 FileMenuOptions::Save | FileMenuOptions::SaveAs => {
-                                    (*context).window_manager_context =
+                                    (*context).persistent.window_manager_context =
                                         WindowManagerContext::from_window_manager(self);
                                 }
                                 _ => {}
@@ -123,7 +123,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                     },
                     ToolbarMessage::RestoreWindows => {
                         let mut windows_to_restore: std::slice::Iter<'_, Window> =
-                            context.window_manager_context.windows.iter();
+                            context.persistent.window_manager_context.windows.iter();
 
                         if let Some(main_window_id) = &self.main_window_id
                             && let Some(window) = self.windows.get_mut(main_window_id)
@@ -271,7 +271,7 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         iced::Task::none()
                     }
                     WindowMessage::UpdateTitle => {
-                        let title: String = context.window_title();
+                        let title: String = context.persistent.window_title();
                         for (_id, window) in &mut self.windows {
                             window.title = title.clone();
                         }

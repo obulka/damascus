@@ -158,7 +158,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
         context: &mut Context,
         message: StyleEditorMessage,
     ) -> iced::Task<StyleEditorMessage> {
-        self.update_style(&mut context.default_style, message)
+        self.update_style(&mut context.persistent.default_style, message)
     }
 
     fn view<'a>(
@@ -166,6 +166,9 @@ impl Widget<StyleEditorMessage> for StyleEditor {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, StyleEditorMessage> {
+        let parameter_name_length = iced::Length::FillPortion(2);
+        let horizontal_text_alignment = iced::alignment::Horizontal::Left;
+
         let theme = style.pick_list(
             StyleEditorFields::Theme.variant_label(),
             style.theme,
@@ -180,6 +183,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
             StyleEditorData::TextSize(style.text_size).into(),
             "text_size",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let scale = style.slider(
             StyleEditorFields::Scale.variant_label(),
@@ -190,6 +195,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
             StyleEditorData::Scale(style.scale).into(),
             "scale",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let border_width = style.slider(
             StyleEditorFields::BorderWidth.variant_label(),
@@ -200,6 +207,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
             StyleEditorData::BorderWidth(style.border_width).into(),
             "border_width",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let spacing = style.slider(
             StyleEditorFields::Spacing.variant_label(),
@@ -210,6 +219,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
             StyleEditorData::Spacing(style.spacing).into(),
             "spacing",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let padding = style.slider(
             StyleEditorFields::Padding.variant_label(),
@@ -220,6 +231,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
             StyleEditorData::Padding(style.padding).into(),
             "padding",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let icon_size = style.slider(
             StyleEditorFields::IconSize.variant_label(),
@@ -230,6 +243,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
             StyleEditorData::IconSize(style.icon_size).into(),
             "icon_size",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let leeway = style.slider(
             StyleEditorFields::Leeway.variant_label(),
@@ -240,6 +255,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
             StyleEditorData::Leeway(style.leeway).into(),
             "leeway",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let modal_opacity = style.slider(
             StyleEditorFields::ModalOpacity.variant_label(),
@@ -250,6 +267,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
             StyleEditorData::ModalOpacity(style.modal_opacity).into(),
             "modal_opacity",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let float_input_step = style.slider(
             StyleEditorFields::FloatInputStep.variant_label(),
@@ -260,6 +279,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
             StyleEditorData::FloatInputStep(style.float_input_step).into(),
             "float_input_step",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
 
         iced::widget::column![

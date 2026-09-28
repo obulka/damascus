@@ -17,6 +17,7 @@ use crate::{
     icons::Icons,
     widgets::{
         Widget,
+        node_graph::NodeGraphMessage,
         style::Style,
         tab_bar::{TabBar, TabLabel},
     },
@@ -26,7 +27,7 @@ pub mod pane;
 pub mod tabs;
 
 use pane::{Pane, PaneMessage};
-use tabs::{TabMessage, Tabs};
+use tabs::{Tab, TabMessage, Tabs};
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -331,10 +332,27 @@ impl Widget<PanelMessage> for Panel {
                 iced::Task::none()
             }
             PanelMessage::Pane(pane, pane_message) => {
-                if let Some(pane_widget) = self.panes.get_mut(pane) {
+                let mut final_pane = pane;
+
+                match pane_message {
+                    PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewTexture(_))) => {
+                        for viewport_pane in self.panes.iter() {
+                            for tab in &viewport_pane.1.tabs {
+                                match tab {
+                                    Tab::Viewport(_) => {
+                                        final_pane = *viewport_pane.0;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+                if let Some(pane_widget) = self.panes.get_mut(final_pane) {
                     pane_widget
                         .update(context, pane_message)
-                        .map(move |pane_message| PanelMessage::Pane(pane, pane_message))
+                        .map(move |pane_message| PanelMessage::Pane(final_pane, pane_message))
                 } else {
                     iced::Task::none()
                 }

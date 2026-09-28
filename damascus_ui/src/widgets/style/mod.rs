@@ -92,7 +92,8 @@ impl Style {
         &'a self,
         message: impl iced::widget::text::IntoFragment<'a>,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        message_width: iced::Length,
+        message_length: iced::Length,
+        message_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::widget::Tooltip<'a, Message>
     where
         Message: 'a,
@@ -100,7 +101,8 @@ impl Style {
         iced::widget::tooltip(
             self.text(message)
                 .align_y(iced::alignment::Vertical::Center)
-                .width(message_width),
+                .align_x(message_horizontal_alignment)
+                .width(message_length),
             iced::widget::container(
                 self.text(tooltip)
                     .align_y(iced::alignment::Vertical::Center),
@@ -345,6 +347,8 @@ impl Style {
         on_change: F,
         on_release: Message,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
+        name_length: iced::Length,
+        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -363,7 +367,7 @@ impl Style {
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.tooltip(name, tooltip, iced::Length::FillPortion(2)),
+            self.tooltip(name, tooltip, name_length, name_horizontal_alignment),
             iced_aw::widget::number_input(&value, limit_range, on_change)
                 .step(step) // TODO dynamic based on highlight?
                 .ignore_buttons(true)

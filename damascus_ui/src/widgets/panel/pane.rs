@@ -7,8 +7,10 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
+        node_graph::NodeGraphMessage,
         panel::tabs::{Tab, TabMessage, TabResult},
         style::Style,
+        viewport::ViewportMessage,
     },
 };
 
@@ -62,6 +64,24 @@ impl Widget<PaneMessage> for Pane {
                     }
                     TabMessage::New(ref tab) => {
                         self.tabs.push(tab.clone().into());
+                    }
+                    TabMessage::NodeGraph(NodeGraphMessage::ViewTexture(ref texture_view)) => {
+                        println!("Tab redirect");
+                        for tab in &mut self.tabs {
+                            match tab {
+                                Tab::Viewport(_) => {
+                                    return tab
+                                        .update(
+                                            context,
+                                            TabMessage::Viewport(ViewportMessage::ViewTexture(
+                                                texture_view.clone(),
+                                            )),
+                                        )
+                                        .map(|tab_message| tab_message.into());
+                                }
+                                _ => {}
+                            }
+                        }
                     }
                     _ => {}
                 }

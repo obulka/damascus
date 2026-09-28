@@ -187,7 +187,7 @@ impl TextureEvaluator for TextureViewer {
     }
 
     fn output_texture_format(&self) -> wgpu::TextureFormat {
-        // TODO make this a match on the Texture type
+        // This output is directly outputted to screen
         wgpu::TextureFormat::Bgra8Unorm
     }
 

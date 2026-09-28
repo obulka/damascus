@@ -8,7 +8,7 @@ use iced;
 use wgpu;
 
 use damascus::{
-    gpu::resources::BufferData,
+    gpu::resources::{BufferData, TextureView},
     graph::node_graph::{
         NodeGraph,
         inputs::input_data::InputData,
@@ -18,7 +18,9 @@ use damascus::{
         },
         outputs::OutputId,
     },
-    textures::evaluators::{GPUTextureEvaluator, grade::Grade, view::TextureViewer},
+    textures::evaluators::{
+        GPUTextureEvaluator, TextureEvaluator, grade::Grade, view::TextureViewer,
+    },
 };
 
 use crate::{app::Context, widgets::Style};
@@ -31,44 +33,10 @@ pub struct Pipeline {
 }
 
 impl iced::widget::shader::Pipeline for Pipeline {
-    fn new(device: &wgpu::Device, queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
-        // TODO this shouldnt be hardcoded, duh
-        let mut graph = NodeGraph::new();
-
-        let read_id: NodeId = graph.add_node(NodeData::TextureRead);
-
-        let Ok(_input_id) = graph.set_input_data(
-            &read_id,
-            &TextureReadInputData::Filepath,
-            InputData::Filepath("/home/ob1/software/rust/damascus/damascus/image.exr".to_string()),
-        ) else {
-            panic!("read could not set filepath.");
-        };
-
-        let read_output_id: OutputId = *graph.nodes_first_output_id(&read_id).unwrap();
-
-        let mut encoder: wgpu::CommandEncoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
-
-        let Ok(input_data) = graph.evaluate_output(&device, &queue, &mut encoder, &read_output_id)
-        else {
-            panic!("read did not produce an output.");
-        };
-
-        let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
-            panic!("read output was not a texture evaluator id.");
-        };
-
-        let Some(output_texture_view) =
-            graph.scene_graph()[texture_evaluator_id].output_texture_view()
-        else {
-            panic!("read did not produce an output TextureView.");
-        };
-
+    fn new(_device: &wgpu::Device, _queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
         Self {
-            texture_evaluator: TextureViewer::default()
-                .with_input_texture_view(output_texture_view.clone())
-                .finalized(device),
+            texture_evaluator: TextureViewer::default(), // .with_input_texture_view(output_texture_view.clone())
+                                                         // .finalized(device),
         }
     }
 }
@@ -83,6 +51,8 @@ pub enum ViewportMessage {
     Resize(glam::Vec2),
     GainChanged(f32),
     GammaChanged(f32),
+    #[serde(skip)]
+    ViewTexture(TextureView),
     None,
 }
 
@@ -91,6 +61,8 @@ pub struct ViewportPrimitive {
     zoom: f32,
     pan: glam::Vec2,
     grade: Grade,
+    #[serde(skip)]
+    input_texture: Option<TextureView>,
 }
 
 impl Default for ViewportPrimitive {
@@ -99,6 +71,7 @@ impl Default for ViewportPrimitive {
             zoom: 1.0,
             pan: glam::Vec2::ZERO,
             grade: Grade::default(),
+            input_texture: None,
         }
     }
 }
@@ -109,7 +82,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
     fn prepare(
         &self,
         pipeline: &mut Self::Pipeline,
-        _device: &wgpu::Device,
+        device: &wgpu::Device,
         queue: &wgpu::Queue,
         bounds: &iced::Rectangle,
         _viewport: &iced::widget::shader::Viewport,
@@ -122,6 +95,23 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         pipeline.texture_evaluator.pan = self.pan;
         pipeline.texture_evaluator.grade.gain = self.grade.gain;
         pipeline.texture_evaluator.grade.gamma = self.grade.gamma;
+
+        if let Some(ref input_texture) = self.input_texture
+            && (pipeline.texture_evaluator.input_texture_views().is_empty()
+                || *input_texture != pipeline.texture_evaluator.input_texture_views()[0])
+        {
+            pipeline
+                .texture_evaluator
+                .set_input_texture_view(input_texture.clone());
+
+            if !pipeline.texture_evaluator.update_if_hash_changed(device) {
+                // No new data triggered a reset/recompile/reconstruction of
+                // the pipeline, therefore we can build on top of the previous
+                // render pass
+
+                pipeline.texture_evaluator.update_for_reevaluation(device);
+            }
+        }
 
         let buffer_data: BufferData = pipeline.texture_evaluator.buffer_data();
         if let Some(render_resource) = pipeline.texture_evaluator.render_resource() {
@@ -194,6 +184,7 @@ impl Widget<ViewportMessage> for Viewport {
         _context: &mut Context,
         message: ViewportMessage,
     ) -> iced::Task<ViewportMessage> {
+        println!("Viewport");
         match message {
             ViewportMessage::Zoom(zoom) => {
                 let cursor_position = glam::Vec2::new(
@@ -227,6 +218,9 @@ impl Widget<ViewportMessage> for Viewport {
             ViewportMessage::Resize(bounds) => self.bounds = bounds,
             ViewportMessage::GainChanged(gain) => self.viewport_primitive.grade.gain = gain,
             ViewportMessage::GammaChanged(gamma) => self.viewport_primitive.grade.gamma = gamma,
+            ViewportMessage::ViewTexture(texture_view) => {
+                self.viewport_primitive.input_texture = Some(texture_view);
+            }
             _ => {}
         }
         iced::Task::none()
@@ -237,6 +231,9 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
+        let parameter_name_length = iced::Length::Fill;
+        let horizontal_text_alignment = iced::alignment::Horizontal::Center;
+
         let gain = style.slider(
             "f/4",
             0.0..=64.0,
@@ -246,6 +243,8 @@ impl Widget<ViewportMessage> for Viewport {
             |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
             ViewportMessage::GainChanged(self.viewport_primitive.grade.gain),
             "The gain to apply in the viewer.",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
         let gamma = style.slider(
             "γ",
@@ -256,6 +255,8 @@ impl Widget<ViewportMessage> for Viewport {
             |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
             ViewportMessage::GammaChanged(self.viewport_primitive.grade.gamma),
             "The gamma to apply in the viewer.",
+            parameter_name_length,
+            horizontal_text_alignment,
         );
 
         let toolbar = iced::widget::row![gain, gamma];

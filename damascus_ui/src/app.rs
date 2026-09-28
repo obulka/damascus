@@ -7,6 +7,20 @@ use std::time::{Duration, SystemTime};
 
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
+use wgpu;
+
+use damascus::{
+    gpu::{GPUResult, get_device_queue, resources::TextureView},
+    graph::node_graph::{
+        self,
+        inputs::input_data::InputData,
+        nodes::{
+            NodeId,
+            node_data::{NodeData, TextureReadInputData},
+        },
+        outputs::OutputId,
+    },
+};
 
 use crate::{
     widgets::{
@@ -34,6 +48,7 @@ pub enum Message {
     WindowManager(WindowManagerMessage),
     NodeGraph(NodeGraphMessage),
     Viewport(ViewportMessage),
+    DeviceAndQueue(GPUResult<(wgpu::Device, wgpu::Queue)>),
 }
 
 impl From<WindowMessage> for Message {
@@ -68,14 +83,14 @@ impl From<FileMessage> for Message {
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
-pub struct Context {
+pub struct PersistentContext {
     pub default_style: Style,
     working_file: Option<String>,
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub window_manager_context: WindowManagerContext,
 }
 
-impl Context {
+impl PersistentContext {
     pub fn window_title(&self) -> String {
         if let Some(working_file) = &self.working_file {
             format!(
@@ -116,6 +131,12 @@ impl Context {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct Context {
+    pub persistent: PersistentContext,
+    pub device_queue: Option<(wgpu::Device, wgpu::Queue)>,
+}
+
 pub struct Damascus {
     last_lazy_update: SystemTime,
     context: Context,
@@ -128,7 +149,7 @@ impl Damascus {
     pub fn new() -> (Self, iced::Task<Message>) {
         let args: Vec<String> = std::env::args().collect();
 
-        let persistent_data = Context::default();
+        let context = Context::default();
 
         let (_, open) = iced::window::open(iced::window::Settings::default());
 
@@ -136,10 +157,14 @@ impl Damascus {
             Self {
                 last_lazy_update: SystemTime::now()
                     - Duration::from_millis((Self::LAZY_UPDATE_DELAY * 1000.0) as u64),
-                context: persistent_data,
+                context: context,
                 window_manager: WindowManager::new(),
             },
             open.map(|id| WindowMessage::Opened(id, None).into())
+                .chain(iced::Task::perform(
+                    get_device_queue(),
+                    Message::DeviceAndQueue,
+                ))
                 .chain(if args.len() > 1 {
                     iced::Task::done(FileMessage::Restore(args[args.len() - 1].clone()).into())
                 } else {
@@ -172,6 +197,10 @@ impl Damascus {
                     .window_manager
                     .update(&mut self.context, window_manager_message)
                     .map(|window_message| window_message.into()),
+                Message::DeviceAndQueue(Ok((device, queue))) => {
+                    self.context.device_queue = Some((device, queue));
+                    iced::Task::none()
+                }
                 _ => iced::Task::none(),
             })
             .chain(std::iter::once(lazy_task)),
@@ -180,7 +209,7 @@ impl Damascus {
 
     pub fn view(&self, window_id: iced::window::Id) -> iced::Element<'_, Message> {
         self.window_manager
-            .view(window_id, &self.context.default_style)
+            .view(window_id, &self.context.persistent.default_style)
             .map(|window_manager_message| window_manager_message.into())
     }
 

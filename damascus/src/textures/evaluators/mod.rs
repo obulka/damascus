@@ -272,6 +272,7 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
     fn reconstruct_if_hash_changed(&mut self, device: &wgpu::Device) -> bool {
         if self.update_reconstruction_hash() {
+            println!("reconstruct");
             if self.dynamic_recompilation_enabled() {
                 self.update_directives();
             }

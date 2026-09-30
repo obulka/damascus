@@ -86,20 +86,20 @@ pub enum FileMessage {
 }
 
 pub fn save(context: &mut Context) -> FileResult<bool> {
-    let Some(file_path) = context.persistent.working_file() else {
+    let Some(file_path) = context.working_file() else {
         return Ok(false);
     };
 
     let Ok(mut file) = File::create(file_path) else {
         return Err(FileErrors::FileCreationError(file_path.to_string()));
     };
-    match serde_json::to_string_pretty(&context.persistent) {
+    match serde_json::to_string_pretty(context) {
         Ok(serialization) => {
             let Ok(_) = file.write_all(serialization.as_bytes()) else {
                 return Err(FileErrors::FileWriteError(file_path.to_string()));
             };
 
-            context.persistent.update_hash();
+            context.update_hash();
 
             Ok(true)
         }
@@ -112,7 +112,7 @@ pub fn save_as(context: &mut Context) -> FileResult<bool> {
         .set_title("save to file")
         .add_filter("damascus", &["dam"]);
 
-    if let Some(file_path) = context.persistent.working_file() {
+    if let Some(file_path) = context.working_file() {
         if let Some(directory) = std::path::Path::new(file_path).parent() {
             file_dialog = file_dialog.set_directory(directory);
         }
@@ -120,9 +120,7 @@ pub fn save_as(context: &mut Context) -> FileResult<bool> {
     }
 
     if let Some(path) = file_dialog.save_file() {
-        context
-            .persistent
-            .set_working_file(path.display().to_string());
+        context.set_working_file(path.display().to_string());
         save(context)
     } else {
         Ok(false)
@@ -141,8 +139,8 @@ pub fn load_path(context: &mut Context, file_path: String) -> FileResult<bool> {
 
     match serde_json::from_str(&contents) {
         Ok(state) => {
-            context.persistent = state;
-            context.persistent.update(file_path);
+            *context = state;
+            context.update(file_path);
 
             Ok(true)
         }
@@ -155,7 +153,7 @@ pub fn load(context: &mut Context) -> FileResult<bool> {
         .set_title("load from file")
         .add_filter("damascus", &["dam"]);
 
-    if let Some(file_path) = &context.persistent.working_file() {
+    if let Some(file_path) = &context.working_file() {
         if let Some(directory) = std::path::Path::new(file_path).parent() {
             file_dialog = file_dialog.set_directory(directory);
         }

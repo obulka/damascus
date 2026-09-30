@@ -139,7 +139,6 @@ impl From<Tab> for Tabs {
 
 impl Widget<TabMessage> for Tab {
     fn update(&mut self, context: &mut Context, message: TabMessage) -> iced::Task<TabMessage> {
-        println!("Tab");
         match self {
             Self::NodeGraph(node_graph) => match message {
                 TabMessage::NodeGraph(node_graph_message) => node_graph

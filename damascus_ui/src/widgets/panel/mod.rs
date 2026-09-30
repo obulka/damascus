@@ -20,6 +20,7 @@ use crate::{
         node_graph::NodeGraphMessage,
         style::Style,
         tab_bar::{TabBar, TabLabel},
+        viewport::ViewportMessage,
     },
 };
 
@@ -133,8 +134,8 @@ where
 
 #[derive(Clone, Debug)]
 pub struct Panel {
-    focus: Option<iced::widget::pane_grid::Pane>,
-    panes: iced::widget::pane_grid::State<Pane>,
+    pub focus: Option<iced::widget::pane_grid::Pane>,
+    pub panes: iced::widget::pane_grid::State<Pane>,
 }
 
 impl serde::Serialize for Panel {
@@ -333,14 +334,18 @@ impl Widget<PanelMessage> for Panel {
             }
             PanelMessage::Pane(pane, pane_message) => {
                 let mut final_pane = pane;
+                let mut final_message = pane_message;
 
-                match pane_message {
-                    PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewTexture(_))) => {
+                match final_message {
+                    PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewActiveNode)) => {
                         for viewport_pane in self.panes.iter() {
                             for tab in &viewport_pane.1.tabs {
                                 match tab {
                                     Tab::Viewport(_) => {
                                         final_pane = *viewport_pane.0;
+                                        final_message = PaneMessage::Tab(TabMessage::Viewport(
+                                            ViewportMessage::ViewActiveNode,
+                                        ))
                                     }
                                     _ => {}
                                 }
@@ -351,7 +356,7 @@ impl Widget<PanelMessage> for Panel {
                 }
                 if let Some(pane_widget) = self.panes.get_mut(final_pane) {
                     pane_widget
-                        .update(context, pane_message)
+                        .update(context, final_message)
                         .map(move |pane_message| PanelMessage::Pane(final_pane, pane_message))
                 } else {
                     iced::Task::none()

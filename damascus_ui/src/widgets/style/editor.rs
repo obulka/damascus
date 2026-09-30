@@ -158,7 +158,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
         context: &mut Context,
         message: StyleEditorMessage,
     ) -> iced::Task<StyleEditorMessage> {
-        self.update_style(&mut context.persistent.default_style, message)
+        self.update_style(&mut context.default_style, message)
     }
 
     fn view<'a>(

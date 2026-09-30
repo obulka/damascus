@@ -149,21 +149,17 @@ impl Widget<ToolbarMessage> for Toolbar {
                         let dialog: Option<Dialog> = match file::save_as(context) {
                             Ok(saved) => {
                                 if saved {
-                                    Some(
-                                        if let Some(working_file) =
-                                            context.persistent.working_file()
-                                        {
-                                            Dialog::Success(format!(
-                                                "Successfully saved file at path '{}'.",
-                                                working_file
-                                            ))
-                                        } else {
-                                            Dialog::Error(
-                                                "File saved, but working file was not updated."
-                                                    .to_string(),
-                                            )
-                                        },
-                                    )
+                                    Some(if let Some(working_file) = context.working_file() {
+                                        Dialog::Success(format!(
+                                            "Successfully saved file at path '{}'.",
+                                            working_file
+                                        ))
+                                    } else {
+                                        Dialog::Error(
+                                            "File saved, but working file was not updated."
+                                                .to_string(),
+                                        )
+                                    })
                                 } else {
                                     None
                                 }

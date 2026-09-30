@@ -13,6 +13,10 @@ where
 {
     fn node_count(&self) -> usize;
 
+    fn is_empty(&self) -> bool {
+        self.node_count() == 0
+    }
+
     fn clear(&mut self);
 
     fn iter_children<'a>(&'a self, node: &'a Node) -> impl Iterator<Item = &'a Node> + 'a

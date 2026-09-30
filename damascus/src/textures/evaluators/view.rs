@@ -64,7 +64,7 @@ pub struct TextureViewerRenderData {
 impl Default for TextureViewerRenderData {
     fn default() -> Self {
         Self {
-            resolution: UVec2::ZERO,
+            resolution: UVec2::ONE,
             frame: 1001,
         }
     }
@@ -192,21 +192,11 @@ impl TextureEvaluator for TextureViewer {
     }
 
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
-        if !self.construction_data.input_texture_views.is_empty() {
-            Some(wgpu::Extent3d {
-                width: self.construction_data.input_texture_views[0]
-                    .texture_view
-                    .texture()
-                    .width(),
-                height: self.construction_data.input_texture_views[0]
-                    .texture_view
-                    .texture()
-                    .height(),
-                depth_or_array_layers: 1,
-            })
-        } else {
-            None
-        }
+        Some(wgpu::Extent3d {
+            width: self.render_data.resolution.x,
+            height: self.render_data.resolution.y,
+            depth_or_array_layers: 1,
+        })
     }
 
     fn set_output_texture_view(&mut self, output_texture_view: TextureView) {

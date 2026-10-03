@@ -3,7 +3,7 @@
 // https://github.com/iced-rs/iced/blob/0.14.0/widget/src/pick_list.rs
 //
 
-use std::{borrow::Borrow, f32};
+use std::borrow::Borrow;
 
 use iced;
 use iced::widget::overlay::menu::{self, Menu};

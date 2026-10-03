@@ -10,26 +10,12 @@ use std::{
 
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
-use wgpu;
-
-use damascus::{
-    gpu::{GPUResult, get_device_queue, resources::TextureView},
-    graph::node_graph::{
-        self,
-        inputs::input_data::InputData,
-        nodes::{
-            NodeId,
-            node_data::{NodeData, TextureReadInputData},
-        },
-        outputs::OutputId,
-    },
-};
 
 use crate::{
     widgets::{
         Widget,
         node_graph::{NodeGraph, NodeGraphMessage},
-        panel::{PanelMessage, tabs::Tab},
+        panel::PanelMessage,
         style::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},

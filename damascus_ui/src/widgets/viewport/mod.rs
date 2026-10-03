@@ -10,21 +10,9 @@ use iced;
 use wgpu;
 
 use damascus::{
-    gpu::resources::{BufferData, TextureView},
-    graph::{
-        BidirectedGraph,
-        node_graph::{
-            inputs::input_data::InputData,
-            nodes::{
-                NodeId,
-                node_data::{NodeData, TextureReadInputData},
-            },
-            outputs::OutputId,
-        },
-    },
-    textures::evaluators::{
-        GPUTextureEvaluator, TextureEvaluator, grade::Grade, view::TextureViewer,
-    },
+    gpu::resources::BufferData,
+    graph::node_graph::outputs::OutputId,
+    textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
 use crate::{
@@ -57,7 +45,7 @@ pub struct ViewportPrimitive {
 impl Default for ViewportPrimitive {
     fn default() -> Self {
         Self {
-            texture_evaluator: TextureViewer::default(),
+            texture_evaluator: TextureViewer::default().output_srgb(),
             node_graph: Arc::default(),
         }
     }
@@ -104,7 +92,6 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
             let mut node_graph = self.node_graph.lock().unwrap();
 
             if let Some(active_node_id) = node_graph.active_node {
-                println!("nodes: {:?}", node_graph.node_graph.node_count());
                 let active_output_id: OutputId = *node_graph
                     .node_graph
                     .nodes_first_output_id(&active_node_id)
@@ -122,6 +109,8 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
                     panic!("Active node did not produce an output.");
                 };
 
+                queue.submit(Some(encoder.finish()));
+
                 let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
                     panic!("Active node output was not a texture evaluator id.");
                 };
@@ -137,11 +126,15 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
                     .set_input_texture_view(input_texture.clone());
             }
 
-            if !pipeline.texture_evaluator.update_if_hash_changed(device) {
-                // No new data triggered a reset/recompile/reconstruction of
-                // the pipeline, therefore we can build on top of the previous
-                // render pass
-
+            if pipeline
+                .texture_evaluator
+                .reconstruct_if_hash_changed(device)
+            {
+                pipeline.texture_evaluator.update_recompilation_hash();
+                pipeline.texture_evaluator.update_reset_hash();
+            } else if pipeline.texture_evaluator.recompile_if_hash_changed(device) {
+                pipeline.texture_evaluator.update_reset_hash();
+            } else if pipeline.texture_evaluator.reset_if_hash_changed() {
                 pipeline.texture_evaluator.update_for_reevaluation(device);
             }
         }

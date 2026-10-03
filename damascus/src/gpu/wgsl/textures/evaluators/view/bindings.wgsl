@@ -5,6 +5,9 @@
 
 // ------- Flag bit masks --------
 
+// RenderState
+const CONVERT_TO_SRGB: u32 = 1u;
+
 struct RenderParameters {
     resolution: vec2f, // Resolution of the entire view area, not the image or its display size
     frame: u32,

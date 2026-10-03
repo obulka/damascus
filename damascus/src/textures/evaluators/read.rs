@@ -122,6 +122,10 @@ impl TextureEvaluator for TextureReader {
     }
 
     fn evaluate_texture(&mut self, device: &wgpu::Device) {
+        if !self.reset_if_hash_changed() {
+            return;
+        }
+
         let Ok(image) = ImageReader::open(&self.render_data.filepath) else {
             self.reset();
             return;

@@ -24,5 +24,9 @@ fn fs_main(in: FragmentInput) -> @location(PIXEL_COLOUR_LOCATION) vec4f {
         0,
     );
 
-    return grade_vec4(linear_to_srgb(pixel_colour), _viewer_grade);
+    if bool(_render_parameters.flags & CONVERT_TO_SRGB) {
+        pixel_colour = linear_to_srgb(pixel_colour);
+    }
+
+    return grade_vec4(pixel_colour, _viewer_grade);
 }

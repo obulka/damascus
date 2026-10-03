@@ -3,7 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::BTreeSet;
+use std::{
+    collections::BTreeSet,
+    hash::{DefaultHasher, Hash, Hasher},
+    sync::Arc,
+};
 
 use crevice::std430::AsStd430;
 use glam::{UVec2, Vec2};
@@ -28,23 +32,52 @@ pub enum TextureViewerPreprocessorDirectives {
     None,
 }
 
-// A change in the data within this struct will trigger the pass to
-// reconstruct its pipeline
-#[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct TextureViewerConstructionData {
-    #[serde(skip_deserializing)]
-    pub input_texture_views: Vec<TextureView>,
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct TextureViewerResetData {
+    frame: u32,
+    texture_views: Vec<TextureView>,
 }
 
-impl Default for TextureViewerConstructionData {
-    fn default() -> Self {
-        Self {
-            input_texture_views: vec![],
-        }
+impl serde::Serialize for TextureViewerResetData {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        serializer.serialize_u64(hasher.finish())
     }
 }
 
-impl TextureViewerConstructionData {}
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+struct TextureViewerConstructionData {
+    data: Arc<Vec<u8>>,
+    visibility: wgpu::ShaderStages,
+    view_dimension: wgpu::TextureViewDimension,
+    format: wgpu::TextureFormat,
+}
+
+impl serde::Serialize for TextureViewerConstructionData {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut hasher = DefaultHasher::new();
+        self.hash(&mut hasher);
+        serializer.serialize_u64(hasher.finish())
+    }
+}
+
+impl From<&TextureView> for TextureViewerConstructionData {
+    fn from(texture_view: &TextureView) -> Self {
+        Self {
+            data: texture_view.data.clone(),
+            visibility: texture_view.visibility,
+            view_dimension: texture_view.view_dimension,
+            format: texture_view.format,
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, AsStd430, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -59,6 +92,7 @@ pub struct GPUTextureViewerRenderData {
 pub struct TextureViewerRenderData {
     pub resolution: UVec2,
     pub frame: u32,
+    pub output_srgb: bool,
 }
 
 impl Default for TextureViewerRenderData {
@@ -66,6 +100,7 @@ impl Default for TextureViewerRenderData {
         Self {
             resolution: UVec2::ONE,
             frame: 1001,
+            output_srgb: false,
         }
     }
 }
@@ -79,7 +114,7 @@ impl DualDevice<GPUTextureViewerRenderData, Std430GPUTextureViewerRenderData>
         GPUTextureViewerRenderData {
             resolution: self.resolution.as_vec2(),
             frame: self.frame,
-            flags: 0,
+            flags: self.output_srgb as u32,
         }
     }
 }
@@ -100,9 +135,10 @@ pub struct TextureViewer {
     pub grade: Grade,
     pub frame_counter: FrameCounter,
     render_data: TextureViewerRenderData,
-    construction_data: TextureViewerConstructionData,
     hashes: TextureEvaluatorHashes,
     preprocessor_directives: BTreeSet<TextureViewerPreprocessorDirectives>,
+    #[serde(skip_deserializing)]
+    pub input_texture_views: Vec<TextureView>,
     #[serde(skip)]
     output_texture_view: Option<TextureView>,
     #[serde(skip)]
@@ -111,7 +147,7 @@ pub struct TextureViewer {
 
 impl TextureViewer {
     pub fn set_input_texture_view(&mut self, input_texture_view: TextureView) {
-        self.construction_data.input_texture_views = vec![input_texture_view];
+        self.input_texture_views = vec![input_texture_view];
     }
 
     pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
@@ -128,6 +164,11 @@ impl TextureViewer {
         self
     }
 
+    pub fn output_srgb(mut self) -> Self {
+        self.render_data.output_srgb = true;
+        self
+    }
+
     pub fn grade(mut self, grade: Grade) -> Self {
         self.grade = grade;
         self
@@ -138,13 +179,13 @@ impl Default for TextureViewer {
     fn default() -> Self {
         Self {
             render_data: TextureViewerRenderData::default(),
-            construction_data: TextureViewerConstructionData::default(),
             pan: Vec2::ZERO,
             zoom: 1.0,
             grade: Grade::default(),
             frame_counter: FrameCounter::default(),
             hashes: TextureEvaluatorHashes::default(),
             preprocessor_directives: BTreeSet::<TextureViewerPreprocessorDirectives>::new(),
+            input_texture_views: vec![],
             output_texture_view: None,
             render_resource: None,
         }
@@ -173,11 +214,14 @@ impl TextureEvaluator for TextureViewer {
     }
 
     fn create_reset_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.render_data)
+        to_key_with_ordered_float(&TextureViewerResetData {
+            texture_views: self.input_texture_views(),
+            frame: self.render_data.frame,
+        })
     }
 
     fn input_texture_views(&self) -> Vec<TextureView> {
-        self.construction_data.input_texture_views.clone()
+        self.input_texture_views.clone()
     }
 
     fn set_input_texture_views(&mut self, mut input_texture_views: Vec<TextureView>) {
@@ -187,8 +231,11 @@ impl TextureEvaluator for TextureViewer {
     }
 
     fn output_texture_format(&self) -> wgpu::TextureFormat {
-        // This output is directly outputted to screen
-        wgpu::TextureFormat::Bgra8Unorm
+        if self.render_data.output_srgb {
+            wgpu::TextureFormat::Bgra8Unorm
+        } else {
+            wgpu::TextureFormat::Rgba32Float
+        }
     }
 
     fn output_texture_dimensions(&self) -> Option<wgpu::Extent3d> {
@@ -242,7 +289,11 @@ impl ShaderSource<TextureViewerPreprocessorDirectives> for TextureViewer {
 
 impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer {
     fn create_reconstruction_hash(&mut self) -> Result<Key<OrderedFloatPolicy>, Error> {
-        to_key_with_ordered_float(&self.construction_data)
+        let mut construction_data = Vec::<TextureViewerConstructionData>::new();
+        for texture_view in &self.input_texture_views {
+            construction_data.push(texture_view.into());
+        }
+        to_key_with_ordered_float(&construction_data)
     }
 
     fn render_resource(&self) -> &Option<RenderResource> {
@@ -258,7 +309,7 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
             BufferDescriptor {
                 data: bytemuck::cast_slice(&[self.render_data.as_std430()]).to_vec(),
                 usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
-                visibility: wgpu::ShaderStages::VERTEX,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
             },
             BufferDescriptor {
                 data: bytemuck::cast_slice(&[self.as_std430()]).to_vec(),
@@ -275,5 +326,22 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
 
     fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
         self.input_texture_views()
+    }
+
+    fn update_for_reevaluation(&mut self, device: &wgpu::Device) {
+        // No new data triggered a reset/recompile/reconstruction of
+        // the pipeline, therefore we can build on top of the previous
+        // render pass. To do so we must pass the previous output
+        // TextureView as an input to this render pass
+
+        let texture_views = self.create_texture_views(device);
+
+        let bind_group = self.create_texture_view_bind_group(device, texture_views);
+
+        if let Some(render_resource) = self.render_resource_mut()
+            && let Some(texture_bind_group) = &mut render_resource.bind_groups.texture_bind_group
+        {
+            *texture_bind_group = bind_group;
+        }
     }
 }

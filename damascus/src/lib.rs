@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 #![allow(long_running_const_eval)]
+#![recursion_limit = "256"]
 
 use std::{
     fmt::{Debug, Display},

@@ -7,10 +7,8 @@ use crate::{
     app::Context,
     widgets::{
         Widget,
-        node_graph::NodeGraphMessage,
         panel::tabs::{Tab, TabMessage, TabResult},
         style::Style,
-        viewport::ViewportMessage,
     },
 };
 

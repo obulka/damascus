@@ -11,7 +11,6 @@ use wgpu;
 
 use damascus::{
     gpu::resources::BufferData,
-    graph::node_graph::outputs::OutputId,
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
@@ -88,55 +87,44 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         pipeline.texture_evaluator.grade.gain = self.texture_evaluator.grade.gain;
         pipeline.texture_evaluator.grade.gamma = self.texture_evaluator.grade.gamma;
 
+        let mut encoder: wgpu::CommandEncoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+
+        if let Ok(mut node_graph) = self.node_graph.lock()
+            && let Some(active_node_id) = node_graph.active_node
+            && let Some(active_output_id) = node_graph
+                .node_graph
+                .nodes_first_output_id(&active_node_id)
+                .copied()
+            && let Ok(input_data) = node_graph.node_graph.evaluate_output(
+                &device,
+                &queue,
+                &mut encoder,
+                &active_output_id,
+            )
         {
-            let mut node_graph = self.node_graph.lock().unwrap();
+            queue.submit(Some(encoder.finish()));
 
-            if let Some(active_node_id) = node_graph.active_node {
-                let active_output_id: OutputId = *node_graph
-                    .node_graph
-                    .nodes_first_output_id(&active_node_id)
-                    .unwrap();
-
-                let mut encoder: wgpu::CommandEncoder =
-                    device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
-
-                let Ok(input_data) = node_graph.node_graph.evaluate_output(
-                    &device,
-                    &queue,
-                    &mut encoder,
-                    &active_output_id,
-                ) else {
-                    panic!("Active node did not produce an output.");
-                };
-
-                queue.submit(Some(encoder.finish()));
-
-                let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id() else {
-                    panic!("Active node output was not a texture evaluator id.");
-                };
-
-                let Some(input_texture) =
+            if let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
+                && let Some(input_texture) =
                     node_graph.node_graph.scene_graph()[texture_evaluator_id].output_texture_view()
-                else {
-                    panic!("Active node did not produce an output TextureView.");
-                };
-
+            {
                 pipeline
                     .texture_evaluator
                     .set_input_texture_view(input_texture.clone());
             }
+        }
 
-            if pipeline
-                .texture_evaluator
-                .reconstruct_if_hash_changed(device)
-            {
-                pipeline.texture_evaluator.update_recompilation_hash();
-                pipeline.texture_evaluator.update_reset_hash();
-            } else if pipeline.texture_evaluator.recompile_if_hash_changed(device) {
-                pipeline.texture_evaluator.update_reset_hash();
-            } else if pipeline.texture_evaluator.reset_if_hash_changed() {
-                pipeline.texture_evaluator.update_for_reevaluation(device);
-            }
+        if pipeline
+            .texture_evaluator
+            .reconstruct_if_hash_changed(device)
+        {
+            pipeline.texture_evaluator.update_recompilation_hash();
+            pipeline.texture_evaluator.update_reset_hash();
+        } else if pipeline.texture_evaluator.recompile_if_hash_changed(device) {
+            pipeline.texture_evaluator.update_reset_hash();
+        } else if pipeline.texture_evaluator.reset_if_hash_changed() {
+            pipeline.texture_evaluator.update_for_reevaluation(device);
         }
 
         let buffer_data: BufferData = pipeline.texture_evaluator.buffer_data();
@@ -195,7 +183,6 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Viewport {
     viewport_primitive: ViewportPrimitive,
-    scroll_to_zoom: f32,
     panning: bool,
     last_cursor_position: glam::Vec2,
     bounds: glam::Vec2,
@@ -205,7 +192,6 @@ impl Default for Viewport {
     fn default() -> Self {
         Self {
             viewport_primitive: ViewportPrimitive::default(),
-            scroll_to_zoom: 0.1,
             panning: false,
             last_cursor_position: glam::Vec2::ZERO,
             bounds: glam::Vec2::ZERO,
@@ -309,8 +295,8 @@ impl Widget<ViewportMessage> for Viewport {
         )
         .on_scroll(|scroll_delta| {
             ViewportMessage::Zoom(match scroll_delta {
-                iced::mouse::ScrollDelta::Lines { y, .. } => y * self.scroll_to_zoom,
-                iced::mouse::ScrollDelta::Pixels { .. } => 0.0,
+                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,
+                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity,
             })
         })
         .on_middle_press(ViewportMessage::BeginPan)

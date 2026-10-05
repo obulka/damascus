@@ -40,6 +40,7 @@ pub enum StyleEditorFields {
     Leeway,
     ModalOpacity,
     FloatInputStep,
+    ViewerZoomSensitivity,
 }
 
 impl StyleEditorFields {
@@ -55,6 +56,9 @@ impl StyleEditorFields {
             Self::Leeway => style.leeway += style.float_input_step,
             Self::ModalOpacity => style.modal_opacity += style.float_input_step,
             Self::FloatInputStep => style.float_input_step += style.float_input_step,
+            Self::ViewerZoomSensitivity => {
+                style.viewer_zoom_sensitivity += style.viewer_zoom_sensitivity
+            }
         }
     }
 
@@ -70,6 +74,9 @@ impl StyleEditorFields {
             Self::Leeway => style.leeway -= style.float_input_step,
             Self::ModalOpacity => style.modal_opacity -= style.float_input_step,
             Self::FloatInputStep => style.float_input_step -= style.float_input_step,
+            Self::ViewerZoomSensitivity => {
+                style.viewer_zoom_sensitivity -= style.viewer_zoom_sensitivity
+            }
         }
     }
 }
@@ -86,6 +93,7 @@ pub enum StyleEditorData {
     Leeway(f32),
     ModalOpacity(f32),
     FloatInputStep(f32),
+    ViewerZoomSensitivity(f32),
 }
 
 impl StyleEditorData {
@@ -101,6 +109,9 @@ impl StyleEditorData {
             Self::Leeway(leeway) => style.leeway = *leeway,
             Self::ModalOpacity(modal_opacity) => style.modal_opacity = *modal_opacity,
             Self::FloatInputStep(float_input_step) => style.float_input_step = *float_input_step,
+            Self::ViewerZoomSensitivity(viewer_zoom_sensitivity) => {
+                style.viewer_zoom_sensitivity = *viewer_zoom_sensitivity
+            }
         }
     }
 }
@@ -173,6 +184,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorFields::Theme.variant_label(),
             style.theme,
             |theme| -> StyleEditorMessage { StyleEditorData::Theme(theme).into() },
+            "The colour scheme of the UI",
+            horizontal_text_alignment,
         );
         let text_size = style.slider(
             StyleEditorFields::TextSize.variant_label(),
@@ -182,7 +195,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
             StyleEditorData::TextSize(style.text_size).into(),
-            "text_size",
+            "The default global text size",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -194,7 +207,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
             StyleEditorData::Scale(style.scale).into(),
-            "scale",
+            "Scale the UI up or down",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -206,7 +219,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
             StyleEditorData::BorderWidth(style.border_width).into(),
-            "border_width",
+            "The width of borders in the UI",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -218,7 +231,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
             StyleEditorData::Spacing(style.spacing).into(),
-            "spacing",
+            "The spacing between UI elements",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -230,7 +243,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
             StyleEditorData::Padding(style.padding).into(),
-            "padding",
+            "The padding around UI elements",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -242,7 +255,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             1,
             |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
             StyleEditorData::IconSize(style.icon_size).into(),
-            "icon_size",
+            "The size of icon buttons",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -254,7 +267,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             1.,
             |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
             StyleEditorData::Leeway(style.leeway).into(),
-            "leeway",
+            "The tolerance around grabbable elements",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -266,7 +279,19 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             style.float_input_step,
             |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
             StyleEditorData::ModalOpacity(style.modal_opacity).into(),
-            "modal_opacity",
+            "The opacity of the background when in a modal context",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let viewer_zoom_sensitivity = style.slider(
+            StyleEditorFields::ViewerZoomSensitivity.variant_label(),
+            1e-3..=2.0,
+            ..,
+            style.viewer_zoom_sensitivity,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::ViewerZoomSensitivity(value).into() },
+            StyleEditorData::ViewerZoomSensitivity(style.viewer_zoom_sensitivity).into(),
+            "The sensitivity of the mouse scroll wheel when zooming in the viewer",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -275,10 +300,10 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             1e-32..=1e-1,
             ..,
             style.float_input_step,
-            style.float_input_step,
+            1e-32,
             |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
             StyleEditorData::FloatInputStep(style.float_input_step).into(),
-            "float_input_step",
+            "The minimum step between floating point numbers when dragging sliders",
             parameter_name_length,
             horizontal_text_alignment,
         );
@@ -293,6 +318,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             icon_size,
             leeway,
             modal_opacity,
+            viewer_zoom_sensitivity,
             float_input_step,
         ]
         .spacing(style.spacing)

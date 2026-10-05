@@ -35,6 +35,7 @@ pub struct Style {
     pub leeway: f32,
     pub modal_opacity: f32,
     pub float_input_step: f32,
+    pub viewer_zoom_sensitivity: f32,
 }
 
 impl Default for Style {
@@ -51,6 +52,7 @@ impl Default for Style {
             leeway: 5.0,
             modal_opacity: 0.69,
             float_input_step: 1e-4,
+            viewer_zoom_sensitivity: 0.1,
         }
     }
 }
@@ -290,6 +292,8 @@ impl Style {
         name: impl iced::widget::text::IntoFragment<'a>,
         picked: T,
         on_change: F,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::Element<'a, Message>
     where
         T: Enumerator,
@@ -297,9 +301,12 @@ impl Style {
         Message: Clone + 'a,
     {
         iced::widget::row![
-            self.text(name)
-                .width(iced::Length::FillPortion(1))
-                .align_y(iced::alignment::Vertical::Center),
+            self.tooltip(
+                name,
+                tooltip,
+                iced::Length::FillPortion(1),
+                name_horizontal_alignment
+            ),
             iced::widget::pick_list(
                 T::iter()
                     .map(|variant| variant.variant_pascal_label())

@@ -10,7 +10,6 @@ use damascus::{
     graph::{
         BidirectedGraph,
         node_graph::{
-            self,
             inputs::{InputId, input_data::InputData},
             nodes::{
                 NodeId,
@@ -29,28 +28,19 @@ use super::Widget;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
-    SetActiveNode(NodeId),
-    ClearActiveNode,
     InputValueChanged(NodeId, String),
     CheckPreprocessorDirectives,
     ReconstructRenderResources,
     TestReadNode,
     TestLiveRender,
-    ViewActiveNode,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct NodeGraph {
-    pub active_node: Option<NodeId>,
-    pub node_graph: node_graph::NodeGraph,
-}
+pub struct NodeGraph {}
 
 impl Default for NodeGraph {
     fn default() -> Self {
-        Self {
-            active_node: None,
-            node_graph: node_graph::NodeGraph::new(),
-        }
+        Self {}
     }
 }
 
@@ -63,12 +53,12 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         // TODO these shouldnt be hardcoded, duh
         match message {
             NodeGraphMessage::TestReadNode => {
-                let mut graph = context.node_graph.lock().unwrap();
-                graph.node_graph.clear();
+                let mut node_graph = context.node_graph.lock().unwrap();
+                node_graph.clear();
 
-                let read_id: NodeId = graph.node_graph.add_node(NodeData::TextureRead);
+                let read_id: NodeId = node_graph.add_node(NodeData::TextureRead);
 
-                let Ok(_input_id) = graph.node_graph.set_input_data(
+                let Ok(_input_id) = node_graph.set_input_data(
                     &read_id,
                     &TextureReadInputData::Filepath,
                     InputData::Filepath(
@@ -78,67 +68,58 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     panic!("read could not set filepath.");
                 };
 
-                graph.active_node = Some(read_id);
-
-                iced::Task::done(NodeGraphMessage::ViewActiveNode)
+                node_graph.set_active_node(read_id);
             }
             NodeGraphMessage::TestLiveRender => {
-                let mut graph = context.node_graph.lock().unwrap();
-                graph.node_graph.clear();
+                let mut node_graph = context.node_graph.lock().unwrap();
+                node_graph.clear();
 
-                let primary_camera_axis_id: NodeId = graph.node_graph.add_node(NodeData::Axis);
-                let secondary_camera_axis_id: NodeId = graph.node_graph.add_node(NodeData::Axis);
-                let camera_id: NodeId = graph.node_graph.add_node(NodeData::Camera);
+                let primary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+                let secondary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+                let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
 
-                let light_id: NodeId = graph.node_graph.add_node(NodeData::Light);
+                let light_id: NodeId = node_graph.add_node(NodeData::Light);
 
-                let primitive_id: NodeId = graph.node_graph.add_node(NodeData::Primitive);
-                let primitive_axis_id: NodeId = graph.node_graph.add_node(NodeData::Axis);
-                let primitive_material_id: NodeId = graph.node_graph.add_node(NodeData::Material);
+                let primitive_id: NodeId = node_graph.add_node(NodeData::Primitive);
+                let primitive_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
+                let primitive_material_id: NodeId = node_graph.add_node(NodeData::Material);
 
-                let scene_id: NodeId = graph.node_graph.add_node(NodeData::Scene);
+                let scene_id: NodeId = node_graph.add_node(NodeData::Scene);
 
-                let ray_marcher_id: NodeId = graph.node_graph.add_node(NodeData::RayMarcher);
+                let ray_marcher_id: NodeId = node_graph.add_node(NodeData::RayMarcher);
 
                 // Connect camera to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
 
-                let secondary_camera_axis_input_id: InputId = graph
-                    .node_graph
+                let secondary_camera_axis_input_id: InputId = node_graph
                     .node_input_id(&secondary_camera_axis_id, &AxisInputData::Axis)
                     .unwrap();
-                graph.node_graph.connect_node_to_input(
+                node_graph.connect_node_to_input(
                     &primary_camera_axis_id,
                     &secondary_camera_axis_input_id,
                 );
 
-                let camera_axis_input_id: InputId = graph
-                    .node_graph
+                let camera_axis_input_id: InputId = node_graph
                     .node_input_id(&camera_id, &CameraInputData::Axis)
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&secondary_camera_axis_id, &camera_axis_input_id);
 
-                let scene_render_camera_input_id: InputId = graph
-                    .node_graph
+                node_graph.connect_node_to_input(&secondary_camera_axis_id, &camera_axis_input_id);
+
+                let scene_render_camera_input_id: InputId = node_graph
                     .node_input_id(&scene_id, &SceneInputData::RenderCamera)
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&camera_id, &scene_render_camera_input_id);
+
+                node_graph.connect_node_to_input(&camera_id, &scene_render_camera_input_id);
 
                 // Connect light to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
                 // |           |     /light
 
-                let scene_light_input_id: InputId = graph
-                    .node_graph
+                let scene_light_input_id: InputId = node_graph
                     .node_input_id(&scene_id, &SceneInputData::Scene)
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&light_id, &scene_light_input_id);
+
+                node_graph.connect_node_to_input(&light_id, &scene_light_input_id);
 
                 // Connect primitives to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
@@ -150,49 +131,42 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 // |           |     /primitive1/axis1
                 // |           |     |          /material1
 
-                let primitive_input_id: InputId = graph
-                    .node_graph
+                let primitive_input_id: InputId = node_graph
                     .node_input_id(&primitive_id, &PrimitiveInputData::Axis)
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&primitive_axis_id, &primitive_input_id);
 
-                let primitive_material_input_id: InputId = graph
-                    .node_graph
+                node_graph.connect_node_to_input(&primitive_axis_id, &primitive_input_id);
+
+                let primitive_material_input_id: InputId = node_graph
                     .node_input_id(&primitive_id, &PrimitiveInputData::Material)
                     .unwrap();
-                graph
-                    .node_graph
+
+                node_graph
                     .connect_node_to_input(&primitive_material_id, &primitive_material_input_id);
 
-                let scene_primitive_input_id: InputId = graph
-                    .node_graph
+                let scene_primitive_input_id: InputId = node_graph
                     .node_input_id_from_str(&scene_id, "Scene1")
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&primitive_id, &scene_primitive_input_id);
+
+                node_graph.connect_node_to_input(&primitive_id, &scene_primitive_input_id);
 
                 // Connect scene to ray marcher
 
-                let ray_marcher_scene_input_id: InputId = graph
-                    .node_graph
+                let ray_marcher_scene_input_id: InputId = node_graph
                     .node_input_id(&ray_marcher_id, &RayMarcherInputData::SceneRoot)
                     .unwrap();
-                graph
-                    .node_graph
-                    .connect_node_to_input(&scene_id, &ray_marcher_scene_input_id);
+
+                node_graph.connect_node_to_input(&scene_id, &ray_marcher_scene_input_id);
 
                 // Modify camera data
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &camera_id,
                     &CameraInputData::SensorResolution,
                     InputData::UVec2(glam::UVec2::new(2048u32, 1024u32)),
                 );
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &secondary_camera_axis_id,
                     &AxisInputData::Translate,
                     InputData::Vec3(glam::Vec3::Z * 10.),
@@ -200,7 +174,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 // Modify light data
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &light_id,
                     &LightInputData::Colour,
                     InputData::Vec3(glam::Vec3::new(1., 0.1, 0.1)),
@@ -208,30 +182,30 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 // Modify primitive data
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &primitive_material_id,
                     &MaterialInputData::DiffuseColour,
                     InputData::Vec3(glam::Vec3::new(0.1, 0.1, 1.)),
                 );
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::Shape,
                     InputData::Enum(Shapes::Capsule.into()),
                 );
 
-                let _ = graph.node_graph.set_input_data(
+                let _ = node_graph.set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::BlendStrength,
                     InputData::Float(0.5),
                 );
 
-                graph.active_node = Some(ray_marcher_id);
-
-                iced::Task::done(NodeGraphMessage::ViewActiveNode)
+                node_graph.set_active_node(ray_marcher_id);
             }
-            _ => iced::Task::none(),
+            _ => {}
         }
+
+        iced::Task::none()
     }
 
     fn view<'a>(
@@ -247,7 +221,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .button("live render")
                 .on_press(NodeGraphMessage::TestLiveRender)
         ]
-        .spacing(10)
+        .spacing(style.spacing)
         .into()
     }
 }

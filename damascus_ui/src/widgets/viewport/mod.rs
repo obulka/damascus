@@ -11,13 +11,11 @@ use wgpu;
 
 use damascus::{
     gpu::resources::BufferData,
+    graph::node_graph::NodeGraph,
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
-use crate::{
-    app::Context,
-    widgets::{Style, node_graph::NodeGraph},
-};
+use crate::{app::Context, widgets::Style};
 
 use super::Widget;
 
@@ -31,7 +29,6 @@ pub enum ViewportMessage {
     Resize(glam::Vec2),
     GainChanged(f32),
     GammaChanged(f32),
-    ViewActiveNode,
     None,
 }
 
@@ -91,23 +88,16 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
         if let Ok(mut node_graph) = self.node_graph.lock()
-            && let Some(active_node_id) = node_graph.active_node
-            && let Some(active_output_id) = node_graph
-                .node_graph
-                .nodes_first_output_id(&active_node_id)
-                .copied()
-            && let Ok(input_data) = node_graph.node_graph.evaluate_output(
-                &device,
-                &queue,
-                &mut encoder,
-                &active_output_id,
-            )
+            && let Ok(mut input_data) =
+                node_graph.evaluate_active_node(&device, &queue, &mut encoder)
         {
             queue.submit(Some(encoder.finish()));
 
-            if let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
+            if let Some(last_output_input_data) = input_data.pop()
+                && let Ok(texture_evaluator_id) =
+                    last_output_input_data.try_to_texture_evaluator_id()
                 && let Some(input_texture) =
-                    node_graph.node_graph.scene_graph()[texture_evaluator_id].output_texture_view()
+                    node_graph.scene_graph()[texture_evaluator_id].output_texture_view()
             {
                 pipeline
                     .texture_evaluator
@@ -205,6 +195,10 @@ impl Widget<ViewportMessage> for Viewport {
         context: &mut Context,
         message: ViewportMessage,
     ) -> iced::Task<ViewportMessage> {
+        if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
+            self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
+        }
+
         match message {
             ViewportMessage::Zoom(zoom) => {
                 let cursor_position = glam::Vec2::new(
@@ -244,9 +238,6 @@ impl Widget<ViewportMessage> for Viewport {
             }
             ViewportMessage::GammaChanged(gamma) => {
                 self.viewport_primitive.texture_evaluator.grade.gamma = gamma
-            }
-            ViewportMessage::ViewActiveNode => {
-                self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
             }
             _ => {}
         }

@@ -11,10 +11,12 @@ use std::{
 use iced;
 use serde_hashkey::{Key, OrderedFloatPolicy, to_key_with_ordered_float};
 
+use damascus::graph::node_graph::NodeGraph;
+
 use crate::{
     widgets::{
         Widget,
-        node_graph::{NodeGraph, NodeGraphMessage},
+        node_graph::NodeGraphMessage,
         panel::PanelMessage,
         style::{
             Style,

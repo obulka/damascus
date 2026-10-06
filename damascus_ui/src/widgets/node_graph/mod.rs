@@ -6,7 +6,7 @@
 use glam;
 
 use damascus::{
-    geometry::primitives::Shapes,
+    geometry::{primitives::Shapes, rectangle::Rectangle},
     graph::{
         BidirectedGraph,
         node_graph::{
@@ -26,21 +26,64 @@ use crate::{app::Context, widgets::Style};
 
 use super::Widget;
 
+pub mod node;
+use node::{NodeGraphUIState, node_data::NodeData as NodeUIData};
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
     CheckPreprocessorDirectives,
     ReconstructRenderResources,
-    TestReadNode,
+    CreateReadNode,
     TestLiveRender,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct NodeGraph {}
+pub struct NodeGraph {
+    state: NodeGraphUIState,
+}
 
 impl Default for NodeGraph {
     fn default() -> Self {
-        Self {}
+        Self {
+            state: NodeGraphUIState::default(),
+        }
+    }
+}
+
+impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
+    type State = ();
+
+    fn draw(
+        &self,
+        _state: &Self::State,
+        renderer: &iced::Renderer,
+        _theme: &iced::Theme,
+        bounds: iced::Rectangle,
+        _cursor: iced::mouse::Cursor,
+    ) -> Vec<iced::widget::canvas::Geometry<iced::Renderer>> {
+        let mut frame = iced::widget::canvas::Frame::new(renderer, bounds.size());
+        for node_data in self.state.values() {
+            let node: iced::widget::canvas::Path = iced::widget::canvas::Path::rectangle(
+                node_data.canvas_space_top_left(bounds),
+                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y),
+            );
+            frame.fill(
+                &node,
+                iced::Color::from_rgb(node_data.colour.x, node_data.colour.y, node_data.colour.z),
+            );
+            frame.fill_text(iced::widget::canvas::Text {
+                content: node_data.label.clone(),
+                position: node_data.canvas_space_center(bounds),
+                color: iced::Color::WHITE,
+                size: iced::Pixels(16.0),
+                align_x: iced::advanced::text::Alignment::Center,
+                align_y: iced::alignment::Vertical::Center,
+                ..iced::widget::canvas::Text::default()
+            });
+        }
+
+        vec![frame.into_geometry()]
     }
 }
 
@@ -52,9 +95,8 @@ impl Widget<NodeGraphMessage> for NodeGraph {
     ) -> iced::Task<NodeGraphMessage> {
         // TODO these shouldnt be hardcoded, duh
         match message {
-            NodeGraphMessage::TestReadNode => {
+            NodeGraphMessage::CreateReadNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
-                node_graph.clear();
 
                 let read_id: NodeId = node_graph.add_node(NodeData::TextureRead);
 
@@ -69,6 +111,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 };
 
                 node_graph.set_active_node(read_id);
+
+                self.state.insert(
+                    read_id,
+                    NodeUIData::new(format!("Read{:?}", read_id))
+                        .shape(Rectangle::default().size(glam::Vec2::new(100.0, 33.0)))
+                        .colour(context.default_style.default_node_colour),
+                );
             }
             NodeGraphMessage::TestLiveRender => {
                 let mut node_graph = context.node_graph.lock().unwrap();
@@ -213,15 +262,12 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, NodeGraphMessage> {
-        iced::widget::row![
-            style
-                .button("read from file")
-                .on_press(NodeGraphMessage::TestReadNode),
-            style
-                .button("live render")
-                .on_press(NodeGraphMessage::TestLiveRender)
-        ]
-        .spacing(style.spacing)
+        iced::widget::mouse_area(
+            iced::widget::canvas::Canvas::new(self)
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill),
+        )
+        .on_middle_press(NodeGraphMessage::CreateReadNode)
         .into()
     }
 }

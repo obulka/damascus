@@ -10,6 +10,7 @@ use macro_rules_attribute::derive;
 use crate::EnumHashTraits;
 
 pub mod primitives;
+pub mod rectangle;
 pub mod vertex;
 
 #[repr(C)]

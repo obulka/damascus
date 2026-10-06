@@ -3,6 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use glam::Vec4;
 use iced;
 use macro_rules_attribute::derive;
 use strum::Display;
@@ -41,6 +42,7 @@ pub enum StyleEditorFields {
     ModalOpacity,
     FloatInputStep,
     ViewerZoomSensitivity,
+    DefaultNodeColour,
 }
 
 impl StyleEditorFields {
@@ -59,6 +61,7 @@ impl StyleEditorFields {
             Self::ViewerZoomSensitivity => {
                 style.viewer_zoom_sensitivity += style.viewer_zoom_sensitivity
             }
+            _ => {}
         }
     }
 
@@ -77,6 +80,16 @@ impl StyleEditorFields {
             Self::ViewerZoomSensitivity => {
                 style.viewer_zoom_sensitivity -= style.viewer_zoom_sensitivity
             }
+            _ => {}
+        }
+    }
+
+    fn toggle(&self, style: &mut Style) {
+        match self {
+            Self::DefaultNodeColour => {
+                style.picking_default_node_colour = !style.picking_default_node_colour;
+            }
+            _ => {}
         }
     }
 }
@@ -94,6 +107,7 @@ pub enum StyleEditorData {
     ModalOpacity(f32),
     FloatInputStep(f32),
     ViewerZoomSensitivity(f32),
+    DefaultNodeColour(Vec4),
 }
 
 impl StyleEditorData {
@@ -112,6 +126,10 @@ impl StyleEditorData {
             Self::ViewerZoomSensitivity(viewer_zoom_sensitivity) => {
                 style.viewer_zoom_sensitivity = *viewer_zoom_sensitivity
             }
+            Self::DefaultNodeColour(colour) => {
+                style.default_node_colour = *colour;
+                style.picking_default_node_colour = !style.picking_default_node_colour;
+            }
         }
     }
 }
@@ -121,6 +139,7 @@ pub enum StyleEditorMessage {
     Increment(StyleEditorFields),
     Decrement(StyleEditorFields),
     Set(StyleEditorData),
+    Toggle(StyleEditorFields),
     Error(StyleEditorErrors),
 }
 
@@ -155,6 +174,9 @@ impl StyleEditor {
             }
             StyleEditorMessage::Decrement(field) => {
                 field.decrement(style);
+            }
+            StyleEditorMessage::Toggle(field) => {
+                field.toggle(style);
             }
             _ => {}
         }
@@ -307,6 +329,25 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             parameter_name_length,
             horizontal_text_alignment,
         );
+        let default_node_colour = style.colour_picker(
+            StyleEditorFields::DefaultNodeColour.variant_label(),
+            style.picking_default_node_colour,
+            iced::Color::from_rgba(
+                style.default_node_colour.x,
+                style.default_node_colour.y,
+                style.default_node_colour.z,
+                style.default_node_colour.w,
+            ),
+            StyleEditorMessage::Toggle(StyleEditorFields::DefaultNodeColour),
+            |colour| -> StyleEditorMessage {
+                StyleEditorData::DefaultNodeColour(Vec4::new(
+                    colour.r, colour.g, colour.b, colour.a,
+                ))
+                .into()
+            },
+            "The default colour of nodes",
+            horizontal_text_alignment,
+        );
 
         iced::widget::column![
             text_size,
@@ -320,6 +361,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             modal_opacity,
             viewer_zoom_sensitivity,
             float_input_step,
+            default_node_colour,
         ]
         .spacing(style.spacing)
         .into()

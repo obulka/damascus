@@ -10,7 +10,9 @@ use std::{
     str::FromStr,
 };
 
+use glam::Vec4;
 use iced;
+use iced_aw;
 use macro_rules_attribute::derive;
 use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
@@ -36,6 +38,8 @@ pub struct Style {
     pub modal_opacity: f32,
     pub float_input_step: f32,
     pub viewer_zoom_sensitivity: f32,
+    pub picking_default_node_colour: bool,
+    pub default_node_colour: Vec4,
 }
 
 impl Default for Style {
@@ -53,6 +57,8 @@ impl Default for Style {
             modal_opacity: 0.69,
             float_input_step: 1e-4,
             viewer_zoom_sensitivity: 0.1,
+            picking_default_node_colour: false,
+            default_node_colour: Vec4::splat(0.3),
         }
     }
 }
@@ -425,6 +431,45 @@ impl Style {
                 }
             })
             .into()
+    }
+
+    pub fn colour_picker<'a, Message: Clone + 'static>(
+        &'a self,
+        name: impl iced::widget::text::IntoFragment<'a>,
+        picking: bool,
+        color: iced::Color,
+        toggle_message: Message,
+        submit_message: impl Fn(iced::Color) -> Message + 'static,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
+    ) -> iced::Element<'a, Message> {
+        // TODO this should probably be absorbed for more control over behaviour
+
+        iced::widget::row![
+            self.tooltip(
+                name,
+                tooltip,
+                iced::Length::FillPortion(2),
+                name_horizontal_alignment
+            ),
+            iced_aw::helpers::color_picker(
+                picking,
+                color,
+                self.button(" ")
+                    .style(move |theme, status| {
+                        iced::widget::button::Style {
+                            background: Some(iced::Background::Color(color)),
+                            ..iced::widget::button::Style::default()
+                        }
+                    })
+                    .padding(self.padding)
+                    .width(iced::Length::FillPortion(1))
+                    .on_press(toggle_message.clone()),
+                toggle_message,
+                submit_message,
+            ),
+        ]
+        .into()
     }
 
     pub fn none<'a, Message>() -> iced::Element<'a, Message> {

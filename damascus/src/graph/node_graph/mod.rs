@@ -36,7 +36,6 @@ pub type Edges = SingleParentBidirectedEdges<OutputId, InputId>;
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct NodeGraph {
-    active_node_id: Option<NodeId>,
     nodes: Nodes,
     inputs: Inputs,
     outputs: Outputs,
@@ -54,7 +53,6 @@ impl BidirectedGraph<NodeId> for NodeGraph {
 
     fn clear(&mut self) {
         self.clear_cache();
-        self.clear_active_node();
 
         self.nodes.clear();
         self.inputs.clear();
@@ -88,7 +86,6 @@ impl BidirectedGraph<NodeId> for NodeGraph {
 impl NodeGraph {
     pub fn new() -> Self {
         Self {
-            active_node_id: None,
             nodes: Nodes::default(),
             inputs: Inputs::default(),
             outputs: Outputs::default(),
@@ -96,18 +93,6 @@ impl NodeGraph {
             scene_graph: SceneGraph::default(),
             cache: OutputCache::default(),
         }
-    }
-
-    pub fn clear_active_node(&mut self) {
-        self.active_node_id = None;
-    }
-
-    pub fn set_active_node(&mut self, node_id: NodeId) {
-        self.active_node_id = Some(node_id);
-    }
-
-    pub fn active_node(&mut self) -> Option<NodeId> {
-        self.active_node_id
     }
 
     pub fn scene_graph(&self) -> &SceneGraph {
@@ -167,29 +152,24 @@ impl NodeGraph {
         self.scene_graph.clear();
     }
 
-    pub fn evaluate_active_node(
+    pub fn evaluate_node(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
+        node_id: &NodeId,
     ) -> NodeResult<Vec<InputData>> {
         let mut result = Vec::<InputData>::new();
-
-        let Some(active_node_id) = self.active_node_id else {
-            return Ok(result);
-        };
-
-        for output_id in self[active_node_id].output_ids.clone().iter() {
+        for output_id in self[*node_id].output_ids.clone().iter() {
             match self.evaluate_output(&device, &queue, encoder, &output_id) {
                 Ok(input_data) => result.push(input_data),
                 Err(err) => return Err(err),
             }
         }
-
         Ok(result)
     }
 
-    fn evaluate_node(
+    fn evaluate(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -245,7 +225,7 @@ impl NodeGraph {
 
         // All input data for the node has been collected
         // so its time to process the data and start descending the graph
-        self.evaluate_node(device, queue, encoder, output_id, all_input_data_for_node)
+        self.evaluate(device, queue, encoder, output_id, all_input_data_for_node)
     }
 
     pub fn evaluate_input(
@@ -1462,6 +1442,8 @@ mod tests {
     async fn test_ray_marcher() {
         let mut graph = NodeGraph::new();
 
+        let texture_viewer_id: NodeId = graph.add_node(NodeData::TextureViewer);
+
         let primary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let secondary_camera_axis_id: NodeId = graph.add_node(NodeData::Axis);
         let camera_id: NodeId = graph.add_node(NodeData::Camera);
@@ -1596,6 +1578,15 @@ mod tests {
                 .unwrap(),
         );
 
+        // Connect ray marcher to viewer
+
+        graph.connect_node_to_input(
+            &ray_marcher_id,
+            &graph
+                .node_input_id(&texture_viewer_id, &TextureViewerInputData::Texture)
+                .unwrap(),
+        );
+
         // Modify camera data
 
         assert!(
@@ -1704,6 +1695,9 @@ mod tests {
         let ray_marcher_output_id: OutputId =
             *graph.nodes_first_output_id(&ray_marcher_id).unwrap();
 
+        let texture_viewer_output_id: OutputId =
+            *graph.nodes_first_output_id(&texture_viewer_id).unwrap();
+
         // Evaluate the graph
 
         let Ok((device, queue)) = get_device_queue().await else {
@@ -1715,9 +1709,9 @@ mod tests {
 
         let paths_per_pixel: u32 = 3;
         for _ in 1..paths_per_pixel {
+            let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
             queue.submit(Some(encoder.finish()));
             encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
-            let _ = graph.evaluate_output(&device, &queue, &mut encoder, &ray_marcher_output_id);
         }
 
         let Ok(input_data) =
@@ -1735,6 +1729,8 @@ mod tests {
         else {
             panic!("Ray marcher render did not produce an output TextureView.");
         };
+
+        // Test a texture viewer outside the node graph
 
         let mut texture_viewer = TextureEvaluators::TextureViewer(
             TextureViewer::default()

@@ -19,7 +19,7 @@ use crate::{
     DualDevice, PreprocessorDirectivesTraits,
     gpu::{
         ShaderSource,
-        resources::{BufferDescriptor, RenderResource, TextureView},
+        resources::{BufferData, BufferDescriptor, RenderResource, TextureView},
     },
     textures::evaluators::{
         FrameCounter, GPUTextureEvaluator, TextureEvaluator, TextureEvaluatorHashes, grade::Grade,
@@ -153,6 +153,10 @@ impl TextureViewer {
     pub fn with_input_texture_view(mut self, input_texture_view: TextureView) -> Self {
         self.set_input_texture_view(input_texture_view);
         self
+    }
+
+    pub fn output_resolution(&self) -> UVec2 {
+        self.render_data.resolution
     }
 
     pub fn set_output_resolution(&mut self, output_resolution: UVec2) {
@@ -342,6 +346,27 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
             && let Some(texture_bind_group) = &mut render_resource.bind_groups.texture_bind_group
         {
             *texture_bind_group = bind_group;
+        }
+    }
+
+    fn evaluate(
+        &mut self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+        encoder: &mut wgpu::CommandEncoder,
+    ) {
+        if self.reconstruct_if_hash_changed(device) {
+            self.update_recompilation_hash();
+            self.update_reset_hash();
+        } else if self.recompile_if_hash_changed(device) {
+            self.update_reset_hash();
+        } else if self.reset_if_hash_changed() {
+            self.update_for_reevaluation(device);
+        }
+
+        let buffer_data: BufferData = self.buffer_data();
+        if let Some(render_resource) = self.render_resource() {
+            render_resource.write_bind_groups(queue, &buffer_data);
         }
     }
 }

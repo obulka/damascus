@@ -15,6 +15,7 @@ use crate::graph::{
                 GradeOutputData, LightNode, LightOutputData, MaterialNode, MaterialOutputData,
                 NodeData, PrimitiveNode, PrimitiveOutputData, RayMarcherNode, RayMarcherOutputData,
                 SceneNode, SceneOutputData, TextureReadNode, TextureReadOutputData,
+                TextureViewerNode, TextureViewerOutputData,
             },
         },
         outputs::OutputId,
@@ -137,6 +138,16 @@ impl Node {
                 &mut data_map,
                 cached_input_data,
                 TextureReadOutputData::from_str(&output_name)
+                    .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
+            ),
+            NodeData::TextureViewer => TextureViewerNode::evaluate(
+                device,
+                queue,
+                encoder,
+                scene_graph,
+                &mut data_map,
+                cached_input_data,
+                TextureViewerOutputData::from_str(&output_name)
                     .map_err(|error| NodeErrors::ParseOutputError(error.to_string()))?,
             ),
         }

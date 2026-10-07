@@ -3,7 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::sync::{Arc, Mutex};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use glam;
 use iced;
@@ -11,8 +14,11 @@ use wgpu;
 
 use damascus::{
     gpu::resources::BufferData,
-    graph::node_graph::NodeGraph,
-    textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
+    graph::node_graph::{
+        NodeGraph,
+        nodes::{NodeId, node_data::NodeData},
+        outputs::OutputId,
+    },
 };
 
 use crate::{app::Context, widgets::Style};
@@ -34,33 +40,36 @@ pub enum ViewportMessage {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct ViewportPrimitive {
-    texture_evaluator: TextureViewer,
+    active_texture_viewer_output_id: Option<OutputId>,
+    texture_viewer_output_ids: HashMap<u32, OutputId>,
     node_graph: Arc<Mutex<NodeGraph>>,
 }
 
 impl Default for ViewportPrimitive {
     fn default() -> Self {
         Self {
-            texture_evaluator: TextureViewer::default().output_srgb(),
+            active_texture_viewer_output_id: None,
+            texture_viewer_output_ids: HashMap::default(),
             node_graph: Arc::default(),
         }
     }
 }
 
 impl iced::widget::shader::Pipeline for ViewportPrimitive {
-    fn new(device: &wgpu::Device, _queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
-        let mut viewport_primitive = Self::default();
+    fn new(_device: &wgpu::Device, _queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
+        // let mut viewport_primitive = Self::default();
 
-        if let Some(input_texture) = viewport_primitive
-            .texture_evaluator
-            .create_output_texture_view(device)
-        {
-            viewport_primitive
-                .texture_evaluator
-                .set_input_texture_view(input_texture);
-        }
+        // if let Some(input_texture) = viewport_primitive
+        //     .texture_evaluator
+        //     .create_output_texture_view(device)
+        // {
+        //     viewport_primitive
+        //         .texture_evaluator
+        //         .set_input_texture_view(input_texture);
+        // }
 
-        viewport_primitive
+        // viewport_primitive
+        Self::default()
     }
 }
 
@@ -75,55 +84,45 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         bounds: &iced::Rectangle,
         _viewport: &iced::widget::shader::Viewport,
     ) {
-        pipeline
-            .texture_evaluator
-            .set_output_resolution(glam::UVec2::new(bounds.width as u32, bounds.height as u32));
-
-        pipeline.texture_evaluator.zoom = self.texture_evaluator.zoom;
-        pipeline.texture_evaluator.pan = self.texture_evaluator.pan;
-        pipeline.texture_evaluator.grade.gain = self.texture_evaluator.grade.gain;
-        pipeline.texture_evaluator.grade.gamma = self.texture_evaluator.grade.gamma;
+        let Some(active_texture_viewer_output_id) = self.active_texture_viewer_output_id.as_ref()
+        else {
+            return;
+        };
 
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        if let Ok(mut node_graph) = self.node_graph.lock()
-            && let Ok(mut input_data) =
-                node_graph.evaluate_active_node(&device, &queue, &mut encoder)
         {
-            queue.submit(Some(encoder.finish()));
+            let Ok(mut node_graph) = self.node_graph.lock() else {
+                return;
+            };
 
-            if let Some(last_output_input_data) = input_data.pop()
-                && let Ok(texture_evaluator_id) =
-                    last_output_input_data.try_to_texture_evaluator_id()
-                && let Some(input_texture) =
-                    node_graph.scene_graph()[texture_evaluator_id].output_texture_view()
-            {
-                pipeline
-                    .texture_evaluator
-                    .set_input_texture_view(input_texture.clone());
-            }
+            let Ok(input_data) = node_graph.evaluate_output(
+                &device,
+                &queue,
+                &mut encoder,
+                active_texture_viewer_output_id,
+            ) else {
+                return;
+            };
         }
 
-        if pipeline
-            .texture_evaluator
-            .reconstruct_if_hash_changed(device)
-        {
-            pipeline.texture_evaluator.update_recompilation_hash();
-            pipeline.texture_evaluator.update_reset_hash();
-        } else if pipeline.texture_evaluator.recompile_if_hash_changed(device) {
-            pipeline.texture_evaluator.update_reset_hash();
-        } else if pipeline.texture_evaluator.reset_if_hash_changed() {
-            pipeline.texture_evaluator.update_for_reevaluation(device);
-        }
-
-        let buffer_data: BufferData = pipeline.texture_evaluator.buffer_data();
-        if let Some(render_resource) = pipeline.texture_evaluator.render_resource() {
-            render_resource.write_bind_groups(queue, &buffer_data);
-        }
+        // TODO this is gonna need to go into the node evaluation yeah?
+        queue.submit(Some(encoder.finish()));
     }
 
     fn draw(&self, pipeline: &Self::Pipeline, render_pass: &mut wgpu::RenderPass<'_>) -> bool {
+        let Some(active_texture_viewer_output_id) = self.active_texture_viewer_output_id.as_ref()
+        else {
+            return false;
+        };
+
+        let Ok(mut node_graph) = self.node_graph.lock() else {
+            return false;
+        };
+
+        node_graph[node_graph[active_texture_viewer_output_id].node_id]
+
         if let Some(render_resource) = pipeline.texture_evaluator.render_resource() {
             render_resource.paint(render_pass);
             true
@@ -197,47 +196,74 @@ impl Widget<ViewportMessage> for Viewport {
     ) -> iced::Task<ViewportMessage> {
         if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
+
+            if self.viewport_primitive.texture_viewer_output_ids.is_empty()
+                && let Ok(mut node_graph) = self.viewport_primitive.node_graph.lock()
+            {
+                let texture_viewer_id: NodeId = node_graph.add_node(NodeData::TextureViewer);
+                if let Some(texture_viewer_output_id) =
+                    node_graph.nodes_first_output_id(&texture_viewer_id)
+                {
+                    self.viewport_primitive
+                        .texture_viewer_output_ids
+                        .insert(1, *texture_viewer_output_id);
+                    self.viewport_primitive.active_texture_viewer_output_id =
+                        Some(*texture_viewer_output_id)
+                }
+            }
         }
 
         match message {
             ViewportMessage::Zoom(zoom) => {
-                let cursor_position = glam::Vec2::new(
-                    self.last_cursor_position.x - self.bounds.x * 0.5,
-                    self.bounds.y * 0.5 - self.last_cursor_position.y,
-                );
+                // let cursor_position = glam::Vec2::new(
+                //     self.last_cursor_position.x - self.bounds.x * 0.5,
+                //     self.bounds.y * 0.5 - self.last_cursor_position.y,
+                // );
 
-                let hovered_image_pixel_before: glam::Vec2 = cursor_position
-                    * self.viewport_primitive.texture_evaluator.zoom
-                    - self.viewport_primitive.texture_evaluator.pan;
+                // let hovered_image_pixel_before: glam::Vec2 = cursor_position
+                //     * self.viewport_primitive.texture_evaluator.zoom
+                //     - self.viewport_primitive.texture_evaluator.pan;
 
-                self.viewport_primitive.texture_evaluator.zoom /= zoom.exp();
+                // self.viewport_primitive.texture_evaluator.zoom /= zoom.exp();
 
-                let hovered_image_pixel: glam::Vec2 = cursor_position
-                    * self.viewport_primitive.texture_evaluator.zoom
-                    - self.viewport_primitive.texture_evaluator.pan;
+                // let hovered_image_pixel: glam::Vec2 = cursor_position
+                //     * self.viewport_primitive.texture_evaluator.zoom
+                //     - self.viewport_primitive.texture_evaluator.pan;
 
-                self.viewport_primitive.texture_evaluator.pan +=
-                    hovered_image_pixel - hovered_image_pixel_before;
+                // self.viewport_primitive.texture_evaluator.pan +=
+                //     hovered_image_pixel - hovered_image_pixel_before;
             }
             ViewportMessage::BeginPan => self.panning = true,
             ViewportMessage::EndPan => self.panning = false,
             ViewportMessage::Exit => self.panning = false,
             ViewportMessage::MoveCursor(cursor_position) => {
-                if self.panning {
-                    let drag_delta: glam::Vec2 = (cursor_position - self.last_cursor_position)
-                        * self.viewport_primitive.texture_evaluator.zoom;
-                    self.viewport_primitive.texture_evaluator.pan.x += drag_delta.x;
-                    self.viewport_primitive.texture_evaluator.pan.y -= drag_delta.y;
-                }
+                // if self.panning {
+                //     let drag_delta: glam::Vec2 = (cursor_position - self.last_cursor_position)
+                //         * self.viewport_primitive.texture_evaluator.zoom;
+                //     self.viewport_primitive.texture_evaluator.pan.x += drag_delta.x;
+                //     self.viewport_primitive.texture_evaluator.pan.y -= drag_delta.y;
+                // }
 
-                self.last_cursor_position = cursor_position;
+                // self.last_cursor_position = cursor_position;
             }
-            ViewportMessage::Resize(bounds) => self.bounds = bounds,
+            ViewportMessage::Resize(bounds) => {
+                self.bounds = bounds;
+                if let Some(active_texture_viewer_output_id) =
+                    self.viewport_primitive.active_texture_viewer_output_id
+                    && let Ok(mut node_graph) = self.viewport_primitive.node_graph.lock()
+                {
+                    node_graph.set_input_data(
+                        &node_graph[active_texture_viewer_output_id].node_id,
+                        &TextureViewerInputData::OutputResolution,
+                        InputData::UVec2(self.bounds.as_u32()),
+                    );
+                }
+            }
             ViewportMessage::GainChanged(gain) => {
-                self.viewport_primitive.texture_evaluator.grade.gain = gain
+                // self.viewport_primitive.texture_evaluator.grade.gain = gain
             }
             ViewportMessage::GammaChanged(gamma) => {
-                self.viewport_primitive.texture_evaluator.grade.gamma = gamma
+                // self.viewport_primitive.texture_evaluator.grade.gamma = gamma
             }
             _ => {}
         }
@@ -252,32 +278,32 @@ impl Widget<ViewportMessage> for Viewport {
         let parameter_name_length = iced::Length::Fill;
         let horizontal_text_alignment = iced::alignment::Horizontal::Center;
 
-        let gain = style.slider(
-            "f/4",
-            0.0..=64.0,
-            ..,
-            self.viewport_primitive.texture_evaluator.grade.gain,
-            style.float_input_step,
-            |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
-            ViewportMessage::GainChanged(self.viewport_primitive.texture_evaluator.grade.gain),
-            "The gain to apply in the viewer.",
-            parameter_name_length,
-            horizontal_text_alignment,
-        );
-        let gamma = style.slider(
-            "γ",
-            0.01..=64.0,
-            0.01..,
-            self.viewport_primitive.texture_evaluator.grade.gamma,
-            style.float_input_step,
-            |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
-            ViewportMessage::GammaChanged(self.viewport_primitive.texture_evaluator.grade.gamma),
-            "The gamma to apply in the viewer.",
-            parameter_name_length,
-            horizontal_text_alignment,
-        );
+        // let gain = style.slider(
+        //     "f/4",
+        //     0.0..=64.0,
+        //     ..,
+        //     self.viewport_primitive.texture_evaluator.grade.gain,
+        //     style.float_input_step,
+        //     |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
+        //     ViewportMessage::GainChanged(self.viewport_primitive.texture_evaluator.grade.gain),
+        //     "The gain to apply in the viewer.",
+        //     parameter_name_length,
+        //     horizontal_text_alignment,
+        // );
+        // let gamma = style.slider(
+        //     "γ",
+        //     0.01..=64.0,
+        //     0.01..,
+        //     self.viewport_primitive.texture_evaluator.grade.gamma,
+        //     style.float_input_step,
+        //     |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
+        //     ViewportMessage::GammaChanged(self.viewport_primitive.texture_evaluator.grade.gamma),
+        //     "The gamma to apply in the viewer.",
+        //     parameter_name_length,
+        //     horizontal_text_alignment,
+        // );
 
-        let toolbar = iced::widget::row![gain, gamma];
+        let toolbar = iced::widget::row![]; //gain, gamma];
 
         let shader = iced::widget::mouse_area(
             iced::widget::shader(self)

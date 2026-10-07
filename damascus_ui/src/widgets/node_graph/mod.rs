@@ -110,8 +110,6 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     panic!("read could not set filepath.");
                 };
 
-                node_graph.set_active_node(read_id);
-
                 self.state.insert(
                     read_id,
                     NodeUIData::new(format!("Read{:?}", read_id))
@@ -248,8 +246,6 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     &PrimitiveInputData::BlendStrength,
                     InputData::Float(0.5),
                 );
-
-                node_graph.set_active_node(ray_marcher_id);
             }
             _ => {}
         }

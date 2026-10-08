@@ -233,7 +233,7 @@ impl NodeGraph {
                 continue;
             }
 
-            // If an error has occured, bail and propogate it
+            // If an error has occurred, bail and propogate it
             return result;
         }
 

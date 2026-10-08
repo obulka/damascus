@@ -250,7 +250,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 self.state.insert(
                     ray_marcher_id,
                     NodeUIData::new(format!("RayMarcher{:?}", ray_marcher_id))
-                        .shape(Rectangle::default().size(glam::Vec2::new(100.0, 33.0)))
+                        .shape(
+                            Rectangle::default()
+                                .center(glam::Vec2::new(125.0, 0.0))
+                                .size(glam::Vec2::new(100.0, 33.0)),
+                        )
                         .colour(context.default_style.default_node_colour),
                 );
             }

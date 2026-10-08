@@ -35,7 +35,7 @@ pub enum NodeGraphMessage {
     CheckPreprocessorDirectives,
     ReconstructRenderResources,
     CreateReadNode,
-    TestLiveRender,
+    CreateLiveNode,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -110,8 +110,6 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     panic!("read could not set filepath.");
                 };
 
-                node_graph.set_active_node(read_id);
-
                 self.state.insert(
                     read_id,
                     NodeUIData::new(format!("Read{:?}", read_id))
@@ -119,7 +117,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                         .colour(context.default_style.default_node_colour),
                 );
             }
-            NodeGraphMessage::TestLiveRender => {
+            NodeGraphMessage::CreateLiveNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
                 node_graph.clear();
 
@@ -249,7 +247,12 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     InputData::Float(0.5),
                 );
 
-                node_graph.set_active_node(ray_marcher_id);
+                self.state.insert(
+                    ray_marcher_id,
+                    NodeUIData::new(format!("RayMarcher{:?}", ray_marcher_id))
+                        .shape(Rectangle::default().size(glam::Vec2::new(100.0, 33.0)))
+                        .colour(context.default_style.default_node_colour),
+                );
             }
             _ => {}
         }
@@ -268,6 +271,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .height(iced::Length::Fill),
         )
         .on_middle_press(NodeGraphMessage::CreateReadNode)
+        .on_press(NodeGraphMessage::CreateLiveNode)
         .into()
     }
 }

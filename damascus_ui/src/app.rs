@@ -344,6 +344,11 @@ impl Damascus {
         }
     }
 
+    fn handle_mouse_movement(position: iced::Point) -> Option<Message> {
+        // println!("{:?}", position);
+        None
+    }
+
     pub fn subscription(&self) -> iced::Subscription<Message> {
         iced::Subscription::batch(
             std::iter::once(iced::keyboard::listen().filter_map(|event| {
@@ -359,7 +364,14 @@ impl Damascus {
             ))
             .chain(std::iter::once(
                 iced::window::events().map(|(id, event)| WindowMessage::Event(id, event).into()),
-            )),
+            ))
+            .chain(std::iter::once(iced::event::listen().filter_map(|event| {
+                let iced::Event::Mouse(iced::mouse::Event::CursorMoved { position }) = event else {
+                    return None;
+                };
+
+                Self::handle_mouse_movement(position)
+            }))),
         )
     }
 }

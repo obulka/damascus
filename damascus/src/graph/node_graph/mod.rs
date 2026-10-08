@@ -36,7 +36,6 @@ pub type Edges = SingleParentBidirectedEdges<OutputId, InputId>;
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct NodeGraph {
-    active_node_id: Option<NodeId>,
     nodes: Nodes,
     inputs: Inputs,
     outputs: Outputs,
@@ -54,7 +53,6 @@ impl BidirectedGraph<NodeId> for NodeGraph {
 
     fn clear(&mut self) {
         self.clear_cache();
-        self.clear_active_node();
 
         self.nodes.clear();
         self.inputs.clear();
@@ -88,7 +86,6 @@ impl BidirectedGraph<NodeId> for NodeGraph {
 impl NodeGraph {
     pub fn new() -> Self {
         Self {
-            active_node_id: None,
             nodes: Nodes::default(),
             inputs: Inputs::default(),
             outputs: Outputs::default(),
@@ -98,16 +95,16 @@ impl NodeGraph {
         }
     }
 
-    pub fn clear_active_node(&mut self) {
-        self.active_node_id = None;
+    pub fn node_id_is_valid(&self, node_id: NodeId) -> bool {
+        self.nodes.contains_key(node_id)
     }
 
-    pub fn set_active_node(&mut self, node_id: NodeId) {
-        self.active_node_id = Some(node_id);
+    pub fn input_id_is_valid(&self, input_id: InputId) -> bool {
+        self.inputs.contains_key(input_id)
     }
 
-    pub fn active_node(&mut self) -> Option<NodeId> {
-        self.active_node_id
+    pub fn output_id_is_valid(&self, output_id: OutputId) -> bool {
+        self.outputs.contains_key(output_id)
     }
 
     pub fn scene_graph(&self) -> &SceneGraph {
@@ -167,19 +164,16 @@ impl NodeGraph {
         self.scene_graph.clear();
     }
 
-    pub fn evaluate_active_node(
+    pub fn evaluate_node(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         encoder: &mut wgpu::CommandEncoder,
+        node_id: &NodeId,
     ) -> NodeResult<Vec<InputData>> {
         let mut result = Vec::<InputData>::new();
 
-        let Some(active_node_id) = self.active_node_id else {
-            return Ok(result);
-        };
-
-        for output_id in self[active_node_id].output_ids.clone().iter() {
+        for output_id in self[*node_id].output_ids.clone().iter() {
             match self.evaluate_output(&device, &queue, encoder, &output_id) {
                 Ok(input_data) => result.push(input_data),
                 Err(err) => return Err(err),
@@ -189,7 +183,7 @@ impl NodeGraph {
         Ok(result)
     }
 
-    fn evaluate_node(
+    fn evaluate(
         &mut self,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -245,7 +239,7 @@ impl NodeGraph {
 
         // All input data for the node has been collected
         // so its time to process the data and start descending the graph
-        self.evaluate_node(device, queue, encoder, output_id, all_input_data_for_node)
+        self.evaluate(device, queue, encoder, output_id, all_input_data_for_node)
     }
 
     pub fn evaluate_input(

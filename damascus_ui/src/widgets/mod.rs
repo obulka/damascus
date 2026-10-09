@@ -12,6 +12,7 @@ use crate::app::Context;
 pub mod dialog;
 pub mod menu;
 pub mod node_graph;
+pub mod pan_zoom;
 pub mod panel;
 pub mod style;
 pub mod tab_bar;

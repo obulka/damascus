@@ -41,4 +41,22 @@ impl Rectangle {
         self.size = size;
         self
     }
+
+    pub fn half_size(&self) -> Vec2 {
+        0.5 * self.size
+    }
+
+    pub fn top_left(&self) -> Vec2 {
+        let half_size: Vec2 = self.half_size();
+        Vec2::new(self.center.x - half_size.x, self.center.y + half_size.y)
+    }
+
+    pub fn contains(&self, point: Vec2) -> bool {
+        let half_size: Vec2 = 0.5 * self.size;
+
+        point.x >= self.center.x - half_size.x
+            && point.x <= self.center.x + half_size.x
+            && point.y >= self.center.y - half_size.y
+            && point.y <= self.center.y + half_size.y
+    }
 }

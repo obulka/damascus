@@ -3,20 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use glam;
+use glam::{UVec2, Vec2, Vec3};
 
 use damascus::{
     geometry::{primitives::Shapes, rectangle::Rectangle},
-    graph::{
-        BidirectedGraph,
-        node_graph::{
-            inputs::{InputId, input_data::InputData},
-            nodes::{
-                NodeId,
-                node_data::{
-                    AxisInputData, CameraInputData, LightInputData, MaterialInputData, NodeData,
-                    PrimitiveInputData, RayMarcherInputData, SceneInputData, TextureReadInputData,
-                },
+    graph::node_graph::{
+        inputs::{InputId, input_data::InputData},
+        nodes::{
+            NodeId,
+            node_data::{
+                AxisInputData, CameraInputData, LightInputData, MaterialInputData, NodeData,
+                PrimitiveInputData, RayMarcherInputData, SceneInputData, TextureReadInputData,
             },
         },
     },
@@ -24,7 +21,10 @@ use damascus::{
 
 use crate::{app::Context, widgets::Style};
 
-use super::Widget;
+use super::{
+    Widget,
+    pan_zoom::{PanZoom, PanZoomMessage},
+};
 
 pub mod node;
 use node::{NodeGraphUIState, node_data::NodeData as NodeUIData};
@@ -32,27 +32,118 @@ use node::{NodeGraphUIState, node_data::NodeData as NodeUIData};
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
-    CheckPreprocessorDirectives,
-    ReconstructRenderResources,
     CreateReadNode,
     CreateLiveNode,
+    PanZoom(PanZoomMessage),
+}
+
+impl From<PanZoomMessage> for NodeGraphMessage {
+    fn from(pan_zoom_message: PanZoomMessage) -> Self {
+        Self::PanZoom(pan_zoom_message)
+    }
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NodeGraph {
     state: NodeGraphUIState,
+    pan_zoom: PanZoom,
 }
 
 impl Default for NodeGraph {
     fn default() -> Self {
         Self {
             state: NodeGraphUIState::default(),
+            pan_zoom: PanZoom::default(),
+        }
+    }
+}
+
+impl NodeGraph {
+    pub fn handle_mouse_event(&self, mouse_event: &iced::mouse::Event) -> Option<NodeGraphMessage> {
+        match mouse_event {
+            iced::mouse::Event::CursorEntered => None,
+            iced::mouse::Event::CursorLeft => None,
+            iced::mouse::Event::CursorMoved { position } => {
+                Some(PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into())
+            }
+            iced::mouse::Event::ButtonPressed(button) => match button {
+                iced::mouse::Button::Left => None,
+                iced::mouse::Button::Right => None,
+                iced::mouse::Button::Middle => Some(PanZoomMessage::BeginPan.into()),
+                iced::mouse::Button::Back => None,
+                iced::mouse::Button::Forward => None,
+                _ => None,
+            },
+            iced::mouse::Event::ButtonReleased(button) => match button {
+                iced::mouse::Button::Left => None,
+                iced::mouse::Button::Right => None,
+                iced::mouse::Button::Middle => Some(PanZoomMessage::EndPan.into()),
+                iced::mouse::Button::Back => None,
+                iced::mouse::Button::Forward => None,
+                _ => None,
+            },
+            iced::mouse::Event::WheelScrolled { delta: _ } => None,
+        }
+    }
+
+    pub fn handle_keyboard_event(
+        &self,
+        keyboard_event: &iced::keyboard::Event,
+    ) -> Option<NodeGraphMessage> {
+        match keyboard_event {
+            iced::keyboard::Event::KeyPressed { .. } => None,
+            iced::keyboard::Event::KeyReleased {
+                key,
+                modified_key: _,
+                physical_key: _,
+                location: _,
+                modifiers: _,
+            } => match key {
+                iced::keyboard::Key::Character(character) => {
+                    if character == "r" {
+                        Some(NodeGraphMessage::CreateReadNode)
+                    } else if character == "l" {
+                        Some(NodeGraphMessage::CreateLiveNode)
+                    } else {
+                        None
+                    }
+                }
+                _ => None,
+            },
+            iced::keyboard::Event::ModifiersChanged(_modifiers) => None,
         }
     }
 }
 
 impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
-    type State = ();
+    type State = iced::Rectangle;
+
+    fn update(
+        &self,
+        state: &mut Self::State,
+        event: &iced::Event,
+        bounds: iced::Rectangle,
+        _cursor: iced::mouse::Cursor,
+    ) -> Option<iced::widget::Action<NodeGraphMessage>> {
+        if *state != bounds {
+            *state = bounds;
+            Some(iced::widget::Action::publish(
+                PanZoomMessage::Resize(Rectangle {
+                    center: Vec2::new(bounds.center_x(), bounds.center_y()),
+                    size: Vec2::new(bounds.width, bounds.height),
+                })
+                .into(),
+            ))
+        } else if let Some(message) = match event {
+            iced::Event::Mouse(mouse_event) => self.handle_mouse_event(mouse_event),
+            iced::Event::Keyboard(keyboard_event) => self.handle_keyboard_event(keyboard_event),
+            _ => None,
+        } {
+            Some(iced::widget::Action::publish(message))
+        } else {
+            None
+        }
+    }
 
     fn draw(
         &self,
@@ -64,8 +155,10 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
     ) -> Vec<iced::widget::canvas::Geometry<iced::Renderer>> {
         let mut frame = iced::widget::canvas::Frame::new(renderer, bounds.size());
         for node_data in self.state.values() {
+            let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.center);
+            let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
             let node: iced::widget::canvas::Path = iced::widget::canvas::Path::rectangle(
-                node_data.canvas_space_top_left(bounds),
+                iced::Point::new(node_top_left.x, node_top_left.y),
                 iced::Size::new(node_data.shape.size.x, node_data.shape.size.y),
             );
             frame.fill(
@@ -74,7 +167,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
             );
             frame.fill_text(iced::widget::canvas::Text {
                 content: node_data.label.clone(),
-                position: node_data.canvas_space_center(bounds),
+                position: iced::Point::new(node_center.x, node_center.y),
                 color: iced::Color::WHITE,
                 size: iced::Pixels(16.0),
                 align_x: iced::advanced::text::Alignment::Center,
@@ -93,8 +186,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         context: &mut Context,
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
-        // TODO these shouldnt be hardcoded, duh
         match message {
+            NodeGraphMessage::PanZoom(pan_zoom_message) => self
+                .pan_zoom
+                .update(context, pan_zoom_message)
+                .map(|pan_zoom_message| pan_zoom_message.into()),
             NodeGraphMessage::CreateReadNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
 
@@ -113,13 +209,18 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 self.state.insert(
                     read_id,
                     NodeUIData::new(format!("Read{:?}", read_id))
-                        .shape(Rectangle::default().size(glam::Vec2::new(100.0, 33.0)))
+                        .shape(
+                            Rectangle::default()
+                                .center(self.pan_zoom.local_cursor_position)
+                                .size(Vec2::new(100.0, 33.0)),
+                        )
                         .colour(context.default_style.default_node_colour),
                 );
+
+                iced::Task::none()
             }
             NodeGraphMessage::CreateLiveNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
-                node_graph.clear();
 
                 let primary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
                 let secondary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
@@ -210,13 +311,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 let _ = node_graph.set_input_data(
                     &camera_id,
                     &CameraInputData::SensorResolution,
-                    InputData::UVec2(glam::UVec2::new(2048u32, 1024u32)),
+                    InputData::UVec2(UVec2::new(2048u32, 1024u32)),
                 );
 
                 let _ = node_graph.set_input_data(
                     &secondary_camera_axis_id,
                     &AxisInputData::Translate,
-                    InputData::Vec3(glam::Vec3::Z * 10.),
+                    InputData::Vec3(Vec3::Z * 10.),
                 );
 
                 // Modify light data
@@ -224,7 +325,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 let _ = node_graph.set_input_data(
                     &light_id,
                     &LightInputData::Colour,
-                    InputData::Vec3(glam::Vec3::new(1., 0.1, 0.1)),
+                    InputData::Vec3(Vec3::new(1., 0.1, 0.1)),
                 );
 
                 // Modify primitive data
@@ -232,7 +333,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 let _ = node_graph.set_input_data(
                     &primitive_material_id,
                     &MaterialInputData::DiffuseColour,
-                    InputData::Vec3(glam::Vec3::new(0.1, 0.1, 1.)),
+                    InputData::Vec3(Vec3::new(0.1, 0.1, 1.)),
                 );
 
                 let _ = node_graph.set_input_data(
@@ -252,16 +353,16 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     NodeUIData::new(format!("RayMarcher{:?}", ray_marcher_id))
                         .shape(
                             Rectangle::default()
-                                .center(glam::Vec2::new(125.0, 0.0))
-                                .size(glam::Vec2::new(100.0, 33.0)),
+                                .center(self.pan_zoom.local_cursor_position)
+                                .size(Vec2::new(100.0, 33.0)),
                         )
                         .colour(context.default_style.default_node_colour),
                 );
-            }
-            _ => {}
-        }
 
-        iced::Task::none()
+                iced::Task::none()
+            }
+            _ => iced::Task::none(),
+        }
     }
 
     fn view<'a>(
@@ -274,8 +375,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill),
         )
-        .on_middle_press(NodeGraphMessage::CreateReadNode)
-        .on_press(NodeGraphMessage::CreateLiveNode)
+        .on_scroll(|scroll_delta| {
+            PanZoomMessage::Zoom(match scroll_delta {
+                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,
+                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity,
+            })
+            .into()
+        })
         .into()
     }
 }

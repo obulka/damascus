@@ -58,6 +58,8 @@ impl BidirectedGraph<NodeId> for NodeGraph {
         self.inputs.clear();
         self.outputs.clear();
         self.edges.clear();
+
+        self.scene_graph.clear();
     }
 
     fn iter_children<'a>(&'a self, node_id: &'a NodeId) -> impl Iterator<Item = &'a NodeId> + 'a

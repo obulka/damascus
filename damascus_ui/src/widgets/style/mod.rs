@@ -456,7 +456,7 @@ impl Style {
                 picking,
                 color,
                 self.button(" ")
-                    .style(move |theme, status| {
+                    .style(move |_theme, _status| {
                         iced::widget::button::Style {
                             background: Some(iced::Background::Color(color)),
                             ..iced::widget::button::Style::default()

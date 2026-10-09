@@ -13,6 +13,7 @@ use iced;
 use wgpu;
 
 use damascus::{
+    geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
     graph::node_graph::{NodeGraph, outputs::OutputId},
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
@@ -20,21 +21,26 @@ use damascus::{
 
 use crate::{app::Context, widgets::Style};
 
-use super::Widget;
+use super::{
+    Widget,
+    pan_zoom::{PanZoom, PanZoomMessage},
+};
 
 pub type ViewMap = HashMap<u32, OutputId>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
-    Zoom(f32),
-    BeginPan,
-    EndPan,
-    Exit,
-    MoveCursor(Vec2),
+    PanZoom(PanZoomMessage),
     Resize(Vec2),
     GainChanged(f32),
     GammaChanged(f32),
     None,
+}
+
+impl From<PanZoomMessage> for ViewportMessage {
+    fn from(pan_zoom_message: PanZoomMessage) -> Self {
+        Self::PanZoom(pan_zoom_message)
+    }
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -201,9 +207,7 @@ pub struct Viewport {
     active_view: Option<u32>,
     view_map: ViewMap,
     viewport_primitive: ViewportPrimitive,
-    panning: bool,
-    last_cursor_position: Vec2,
-    bounds: Vec2,
+    pan_zoom: PanZoom,
 }
 
 impl Default for Viewport {
@@ -212,9 +216,7 @@ impl Default for Viewport {
             active_view: None,
             view_map: ViewMap::default(),
             viewport_primitive: ViewportPrimitive::default(),
-            panning: false,
-            last_cursor_position: Vec2::ZERO,
-            bounds: Vec2::ZERO,
+            pan_zoom: PanZoom::default(),
         }
     }
 }
@@ -226,6 +228,101 @@ impl Viewport {
         } else {
             None
         }
+    }
+
+    pub fn handle_mouse_event(&self, mouse_event: &iced::mouse::Event) -> Option<ViewportMessage> {
+        match mouse_event {
+            iced::mouse::Event::CursorEntered => None,
+            iced::mouse::Event::CursorLeft => None,
+            iced::mouse::Event::CursorMoved { position } => {
+                Some(PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into())
+            }
+            iced::mouse::Event::ButtonPressed(button) => match button {
+                iced::mouse::Button::Left => None,
+                iced::mouse::Button::Right => None,
+                iced::mouse::Button::Middle => Some(PanZoomMessage::BeginPan.into()),
+                iced::mouse::Button::Back => None,
+                iced::mouse::Button::Forward => None,
+                _ => None,
+            },
+            iced::mouse::Event::ButtonReleased(button) => match button {
+                iced::mouse::Button::Left => None,
+                iced::mouse::Button::Right => None,
+                iced::mouse::Button::Middle => Some(PanZoomMessage::EndPan.into()),
+                iced::mouse::Button::Back => None,
+                iced::mouse::Button::Forward => None,
+                _ => None,
+            },
+            iced::mouse::Event::WheelScrolled { delta: _ } => None,
+        }
+    }
+
+    pub fn handle_keyboard_event(
+        &self,
+        _keyboard_event: &iced::keyboard::Event,
+    ) -> Option<ViewportMessage> {
+        // println!("{:?}", keyboard_event);
+        // match keyboard_event {
+        //     iced::keyboard::Event::KeyPressed { .. } => None,
+        //     iced::keyboard::Event::KeyReleased {
+        //         key,
+        //         modified_key: _,
+        //         physical_key: _,
+        //         location: _,
+        //         modifiers: _,
+        //     } => match key {
+        //         iced::keyboard::Key::Character(character) => {
+        //         }
+        //         _ => None,
+        //     },
+        //     iced::keyboard::Event::ModifiersChanged(_modifiers) => None,
+        // }
+        None
+    }
+}
+
+impl iced::widget::shader::Program<ViewportMessage> for Viewport {
+    type State = iced::Rectangle;
+    type Primitive = ViewportPrimitive;
+
+    fn update(
+        &self,
+        state: &mut Self::State,
+        event: &iced::Event,
+        bounds: iced::Rectangle,
+        _cursor: iced::mouse::Cursor,
+    ) -> Option<iced::widget::Action<ViewportMessage>> {
+        if *state != bounds {
+            *state = bounds;
+            Some(iced::widget::Action::publish(
+                PanZoomMessage::Resize(Rectangle {
+                    center: Vec2::new(bounds.center_x(), bounds.center_y()),
+                    size: Vec2::new(bounds.width, bounds.height),
+                })
+                .into(),
+            ))
+        } else if let Some(message) = match event {
+            iced::Event::Mouse(mouse_event) => self.handle_mouse_event(mouse_event),
+            iced::Event::Keyboard(keyboard_event) => self.handle_keyboard_event(keyboard_event),
+            _ => None,
+        } {
+            Some(iced::widget::Action::publish(message))
+        } else {
+            None
+        }
+    }
+
+    fn draw(
+        &self,
+        _state: &Self::State,
+        _cursor: iced::mouse::Cursor,
+        _bounds: iced::Rectangle,
+    ) -> Self::Primitive {
+        let mut viewport_primitive: ViewportPrimitive = self.viewport_primitive.clone();
+        viewport_primitive.active_output_id = self.active_output_id().copied();
+        viewport_primitive.pan = self.pan_zoom.pan;
+        viewport_primitive.zoom = self.pan_zoom.zoom;
+        viewport_primitive
     }
 }
 
@@ -240,7 +337,7 @@ impl Widget<ViewportMessage> for Viewport {
         }
 
         // TODO nuh uh uh
-        if let Ok(mut node_graph) = self.viewport_primitive.node_graph.lock() {
+        if let Ok(node_graph) = self.viewport_primitive.node_graph.lock() {
             for (index, node_id) in node_graph.iter().enumerate() {
                 if let Some(output_id) = node_graph.nodes_first_output_id(&node_id) {
                     self.view_map.insert(index as u32 + 1, *output_id);
@@ -250,41 +347,20 @@ impl Widget<ViewportMessage> for Viewport {
         }
 
         match message {
-            ViewportMessage::Zoom(zoom) => {
-                let cursor_position = Vec2::new(
-                    self.last_cursor_position.x - self.bounds.x * 0.5,
-                    self.bounds.y * 0.5 - self.last_cursor_position.y,
-                );
-
-                let hovered_image_pixel_before: Vec2 =
-                    cursor_position * self.viewport_primitive.zoom - self.viewport_primitive.pan;
-
-                self.viewport_primitive.zoom /= zoom.exp();
-
-                let hovered_image_pixel: Vec2 =
-                    cursor_position * self.viewport_primitive.zoom - self.viewport_primitive.pan;
-
-                self.viewport_primitive.pan += hovered_image_pixel - hovered_image_pixel_before;
+            ViewportMessage::PanZoom(pan_zoom_message) => self
+                .pan_zoom
+                .update(context, pan_zoom_message)
+                .map(|pan_zoom_message| pan_zoom_message.into()),
+            ViewportMessage::GainChanged(gain) => {
+                self.viewport_primitive.gain = gain;
+                iced::Task::none()
             }
-            ViewportMessage::BeginPan => self.panning = true,
-            ViewportMessage::EndPan => self.panning = false,
-            ViewportMessage::Exit => self.panning = false,
-            ViewportMessage::MoveCursor(cursor_position) => {
-                if self.panning {
-                    let drag_delta: Vec2 = (cursor_position - self.last_cursor_position)
-                        * self.viewport_primitive.zoom;
-                    self.viewport_primitive.pan.x += drag_delta.x;
-                    self.viewport_primitive.pan.y -= drag_delta.y;
-                }
-
-                self.last_cursor_position = cursor_position;
+            ViewportMessage::GammaChanged(gamma) => {
+                self.viewport_primitive.gamma = gamma;
+                iced::Task::none()
             }
-            ViewportMessage::Resize(bounds) => self.bounds = bounds,
-            ViewportMessage::GainChanged(gain) => self.viewport_primitive.gain = gain,
-            ViewportMessage::GammaChanged(gamma) => self.viewport_primitive.gamma = gamma,
-            _ => {}
+            _ => iced::Task::none(),
         }
-        iced::Task::none()
     }
 
     fn view<'a>(
@@ -328,51 +404,15 @@ impl Widget<ViewportMessage> for Viewport {
                 .height(iced::Length::Fill),
         )
         .on_scroll(|scroll_delta| {
-            ViewportMessage::Zoom(match scroll_delta {
+            PanZoomMessage::Zoom(match scroll_delta {
                 iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,
                 iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity,
             })
-        })
-        .on_middle_press(ViewportMessage::BeginPan)
-        .on_middle_release(ViewportMessage::EndPan)
-        .on_exit(ViewportMessage::Exit)
-        .on_move(|point| ViewportMessage::MoveCursor(Vec2::new(point.x, point.y)));
+            .into()
+        });
 
         iced::widget::container(iced::widget::column![toolbar, shader])
             .padding(style.padding)
             .into()
-    }
-}
-
-impl iced::widget::shader::Program<ViewportMessage> for Viewport {
-    type State = iced::Rectangle;
-    type Primitive = ViewportPrimitive;
-
-    fn update(
-        &self,
-        state: &mut Self::State,
-        _event: &iced::Event,
-        bounds: iced::Rectangle,
-        _cursor: iced::mouse::Cursor,
-    ) -> Option<iced::widget::Action<ViewportMessage>> {
-        if *state != bounds {
-            *state = bounds;
-            Some(iced::widget::Action::publish(ViewportMessage::Resize(
-                Vec2::new(bounds.width, bounds.height),
-            )))
-        } else {
-            None
-        }
-    }
-
-    fn draw(
-        &self,
-        _state: &Self::State,
-        _cursor: iced::mouse::Cursor,
-        _bounds: iced::Rectangle,
-    ) -> Self::Primitive {
-        let mut viewport_primitive: ViewportPrimitive = self.viewport_primitive.clone();
-        viewport_primitive.active_output_id = self.active_output_id().copied();
-        viewport_primitive
     }
 }

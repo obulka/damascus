@@ -26,8 +26,7 @@ pub struct PanZoom {
     pub panning: bool,
     pub zoom: f32,
     pub pan: Vec2,
-    pub global_cursor_position: Vec2,
-    pub local_cursor_position: Vec2,
+    pub cursor_position: Vec2,
     pub bounds: Rectangle,
 }
 
@@ -37,39 +36,44 @@ impl Default for PanZoom {
             panning: false,
             zoom: 1.0,
             pan: Vec2::ZERO,
-            global_cursor_position: Vec2::ZERO,
-            local_cursor_position: Vec2::ZERO,
+            cursor_position: Vec2::ZERO,
             bounds: Rectangle::default(),
         }
     }
 }
 
 impl PanZoom {
-    pub fn global_to_local(&self, position: Vec2) -> Vec2 {
-        Vec2::new(
-            position.x - self.bounds.center.x,
-            self.bounds.center.y - position.y,
-        )
+    pub fn local_cursor_position(&self) -> Vec2 {
+        self.canvas_to_local(self.canvas_cursor_position())
     }
 
-    pub fn local_to_global(&self, position: Vec2) -> Vec2 {
-        Vec2::new(
-            position.x + self.bounds.center.x,
-            self.bounds.center.y - position.y,
-        )
+    pub fn canvas_cursor_position(&self) -> Vec2 {
+        self.global_to_canvas(self.global_cursor_position())
+    }
+
+    pub fn global_cursor_position(&self) -> Vec2 {
+        self.cursor_position
+    }
+
+    pub fn global_to_canvas(&self, position: Vec2) -> Vec2 {
+        position - self.bounds.center + self.bounds.half_size()
+    }
+
+    pub fn canvas_to_global(&self, position: Vec2) -> Vec2 {
+        position + self.bounds.center - self.bounds.half_size()
     }
 
     pub fn local_to_canvas(&self, position: Vec2) -> Vec2 {
         Vec2::new(
-            position.x + 0.5 * self.bounds.size.x,
-            0.5 * self.bounds.size.y - position.y,
+            (position.x + self.pan.x) / self.zoom + 0.5 * self.bounds.size.x,
+            0.5 * self.bounds.size.y - (position.y + self.pan.y) / self.zoom,
         )
     }
 
     pub fn canvas_to_local(&self, position: Vec2) -> Vec2 {
         Vec2::new(
-            position.x - 0.5 * self.bounds.size.x,
-            0.5 * self.bounds.size.y - position.y,
+            self.zoom * (position.x - 0.5 * self.bounds.size.x) - self.pan.x,
+            self.zoom * (0.5 * self.bounds.size.y - position.y) - self.pan.y,
         )
     }
 }
@@ -82,33 +86,30 @@ impl Widget<PanZoomMessage> for PanZoom {
     ) -> iced::Task<PanZoomMessage> {
         match message {
             PanZoomMessage::Zoom(zoom) => {
-                let cursor_position_before: Vec2 =
-                    self.local_cursor_position * self.zoom - self.pan;
+                let cursor_position_before: Vec2 = self.local_cursor_position();
 
                 self.zoom /= zoom.exp();
 
-                let cursor_position: Vec2 = self.local_cursor_position * self.zoom - self.pan;
+                let cursor_position: Vec2 = self.local_cursor_position();
 
                 self.pan += cursor_position - cursor_position_before;
             }
             PanZoomMessage::BeginPan => {
-                if self.bounds.contains(self.global_cursor_position) {
+                if self.bounds.contains(self.cursor_position) {
                     self.panning = true;
                 }
             }
             PanZoomMessage::EndPan => self.panning = false,
-            PanZoomMessage::MoveCursor(global_cursor_position) => {
-                self.global_cursor_position = global_cursor_position;
-
-                let local_cursor_position: Vec2 = self.global_to_local(global_cursor_position);
-
+            PanZoomMessage::MoveCursor(cursor_position) => {
                 if self.panning {
-                    let drag_delta: Vec2 =
-                        (local_cursor_position - self.local_cursor_position) * self.zoom;
+                    let drag_delta: Vec2 = Vec2::new(
+                        cursor_position.x - self.cursor_position.x,
+                        self.cursor_position.y - cursor_position.y,
+                    ) * self.zoom;
                     self.pan += drag_delta;
                 }
 
-                self.local_cursor_position = local_cursor_position;
+                self.cursor_position = cursor_position;
             }
             PanZoomMessage::Resize(bounds) => self.bounds = bounds,
         }

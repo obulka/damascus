@@ -159,7 +159,8 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
             let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
             let node: iced::widget::canvas::Path = iced::widget::canvas::Path::rectangle(
                 iced::Point::new(node_top_left.x, node_top_left.y),
-                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y),
+                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y)
+                    / self.pan_zoom.zoom,
             );
             frame.fill(
                 &node,
@@ -169,7 +170,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 content: node_data.label.clone(),
                 position: iced::Point::new(node_center.x, node_center.y),
                 color: iced::Color::WHITE,
-                size: iced::Pixels(16.0),
+                size: iced::Pixels(16.0 / self.pan_zoom.zoom),
                 align_x: iced::advanced::text::Alignment::Center,
                 align_y: iced::alignment::Vertical::Center,
                 ..iced::widget::canvas::Text::default()
@@ -211,7 +212,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     NodeUIData::new(format!("Read{:?}", read_id))
                         .shape(
                             Rectangle::default()
-                                .center(self.pan_zoom.local_cursor_position)
+                                .center(self.pan_zoom.local_cursor_position())
                                 .size(Vec2::new(100.0, 33.0)),
                         )
                         .colour(context.default_style.default_node_colour),
@@ -353,7 +354,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     NodeUIData::new(format!("RayMarcher{:?}", ray_marcher_id))
                         .shape(
                             Rectangle::default()
-                                .center(self.pan_zoom.local_cursor_position)
+                                .center(self.pan_zoom.local_cursor_position())
                                 .size(Vec2::new(100.0, 33.0)),
                         )
                         .colour(context.default_style.default_node_colour),

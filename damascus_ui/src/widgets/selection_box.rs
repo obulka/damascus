@@ -17,7 +17,6 @@ pub enum SelectionBoxMessage {
     BeginSelection(Vec2),
     EndSelection,
     MoveCursor(Vec2),
-    Resize(Rectangle),
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -25,7 +24,6 @@ pub struct SelectionBox {
     pub selecting: bool,
     pub initial_cursor_position: Vec2,
     pub current_cursor_position: Vec2,
-    pub widget_bounds: Rectangle,
 }
 
 impl Default for SelectionBox {
@@ -34,7 +32,6 @@ impl Default for SelectionBox {
             selecting: false,
             initial_cursor_position: Vec2::ZERO,
             current_cursor_position: Vec2::ZERO,
-            widget_bounds: Rectangle::default(),
         }
     }
 }
@@ -53,17 +50,14 @@ impl Widget<SelectionBoxMessage> for SelectionBox {
     ) -> iced::Task<SelectionBoxMessage> {
         match message {
             SelectionBoxMessage::BeginSelection(cursor_position) => {
-                // if self.widget_bounds.contains(cursor_position) {
                 self.selecting = true;
                 self.initial_cursor_position = cursor_position;
                 self.current_cursor_position = cursor_position;
-                // }
             }
             SelectionBoxMessage::EndSelection => self.selecting = false,
             SelectionBoxMessage::MoveCursor(cursor_position) => {
                 self.current_cursor_position = cursor_position;
             }
-            SelectionBoxMessage::Resize(widget_bounds) => self.widget_bounds = widget_bounds,
         }
         iced::Task::none()
     }

@@ -38,7 +38,7 @@ pub enum NodeGraphMessage {
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
     #[serde(skip)]
-    MouseEvent(iced::mouse::Event),
+    CanvasEvent(iced::Event),
 }
 
 impl From<PanZoomMessage> for NodeGraphMessage {
@@ -91,10 +91,18 @@ impl NodeGraph {
                 ))),
             ),
             iced::mouse::Event::ButtonPressed(button) => match button {
-                iced::mouse::Button::Left => iced::Task::done(
-                    SelectionBoxMessage::BeginSelection(self.pan_zoom.local_cursor_position())
-                        .into(),
-                ),
+                iced::mouse::Button::Left => {
+                    if self.pan_zoom.bounds.contains(self.pan_zoom.cursor_position) {
+                        iced::Task::done(
+                            SelectionBoxMessage::BeginSelection(
+                                self.pan_zoom.local_cursor_position(),
+                            )
+                            .into(),
+                        )
+                    } else {
+                        iced::Task::none()
+                    }
+                }
                 iced::mouse::Button::Right => iced::Task::none(),
                 iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::BeginPan.into()),
                 iced::mouse::Button::Back => iced::Task::none(),
@@ -118,9 +126,9 @@ impl NodeGraph {
     pub fn handle_keyboard_event(
         &self,
         keyboard_event: &iced::keyboard::Event,
-    ) -> Option<NodeGraphMessage> {
+    ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
-            iced::keyboard::Event::KeyPressed { .. } => None,
+            iced::keyboard::Event::KeyPressed { .. } => iced::Task::none(),
             iced::keyboard::Event::KeyReleased {
                 key,
                 modified_key: _,
@@ -130,16 +138,16 @@ impl NodeGraph {
             } => match key {
                 iced::keyboard::Key::Character(character) => {
                     if character == "r" {
-                        Some(NodeGraphMessage::CreateReadNode)
+                        iced::Task::done(NodeGraphMessage::CreateReadNode)
                     } else if character == "l" {
-                        Some(NodeGraphMessage::CreateLiveNode)
+                        iced::Task::done(NodeGraphMessage::CreateLiveNode)
                     } else {
-                        None
+                        iced::Task::none()
                     }
                 }
-                _ => None,
+                _ => iced::Task::none(),
             },
-            iced::keyboard::Event::ModifiersChanged(_modifiers) => None,
+            iced::keyboard::Event::ModifiersChanged(_modifiers) => iced::Task::none(),
         }
     }
 }
@@ -164,8 +172,8 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 .into(),
             ))
         } else if let Some(message) = match event {
-            iced::Event::Mouse(mouse_event) => Some(NodeGraphMessage::MouseEvent(*mouse_event)),
-            iced::Event::Keyboard(keyboard_event) => self.handle_keyboard_event(keyboard_event),
+            iced::Event::Mouse(_) => Some(NodeGraphMessage::CanvasEvent(event.clone())),
+            iced::Event::Keyboard(_) => Some(NodeGraphMessage::CanvasEvent(event.clone())),
             _ => None,
         } {
             Some(iced::widget::Action::publish(message))
@@ -233,7 +241,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
         match message {
-            NodeGraphMessage::MouseEvent(mouse_event) => self.handle_mouse_event(&mouse_event),
+            NodeGraphMessage::CanvasEvent(event) => match event {
+                iced::Event::Mouse(mouse_event) => self.handle_mouse_event(&mouse_event),
+                iced::Event::Keyboard(keyboard_event) => {
+                    self.handle_keyboard_event(&keyboard_event)
+                }
+                _ => iced::Task::none(),
+            },
             NodeGraphMessage::PanZoom(pan_zoom_message) => self
                 .pan_zoom
                 .update(context, pan_zoom_message)

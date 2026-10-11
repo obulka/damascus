@@ -84,6 +84,17 @@ impl PanZoom {
     pub fn local_to_global(&self, position: Vec2) -> Vec2 {
         self.local_to_canvas(self.canvas_to_global(position))
     }
+
+    pub fn local_bounds(&self) -> Rectangle {
+        self.global_to_local_rectangle(self.bounds)
+    }
+
+    pub fn global_to_local_rectangle(&self, bounds: Rectangle) -> Rectangle {
+        let mut local_bounds: Rectangle = bounds;
+        local_bounds.center = self.global_to_local(local_bounds.center);
+        local_bounds.size *= self.zoom;
+        local_bounds
+    }
 }
 
 impl Widget<PanZoomMessage> for PanZoom {

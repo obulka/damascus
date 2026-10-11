@@ -32,6 +32,13 @@ pub struct Rectangle {
 }
 
 impl Rectangle {
+    pub fn from_corners(point0: Vec2, point1: Vec2) -> Self {
+        Self {
+            center: 0.5 * (point1 - point0) + point0,
+            size: (point1 - point0).abs(),
+        }
+    }
+
     pub fn center(mut self, center: Vec2) -> Self {
         self.center = center;
         self

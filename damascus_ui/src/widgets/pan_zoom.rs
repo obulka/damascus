@@ -76,6 +76,14 @@ impl PanZoom {
             self.zoom * (0.5 * self.bounds.size.y - position.y) - self.pan.y,
         )
     }
+
+    pub fn global_to_local(&self, position: Vec2) -> Vec2 {
+        self.canvas_to_local(self.global_to_canvas(position))
+    }
+
+    pub fn local_to_global(&self, position: Vec2) -> Vec2 {
+        self.local_to_canvas(self.canvas_to_global(position))
+    }
 }
 
 impl Widget<PanZoomMessage> for PanZoom {

@@ -24,6 +24,7 @@ use crate::{app::Context, widgets::Style};
 use super::{
     Widget,
     pan_zoom::{PanZoom, PanZoomMessage},
+    selection_box::{SelectionBox, SelectionBoxMessage},
 };
 
 pub mod node;
@@ -35,6 +36,9 @@ pub enum NodeGraphMessage {
     CreateReadNode,
     CreateLiveNode,
     PanZoom(PanZoomMessage),
+    SelectionBox(SelectionBoxMessage),
+    #[serde(skip)]
+    MouseEvent(iced::mouse::Event),
 }
 
 impl From<PanZoomMessage> for NodeGraphMessage {
@@ -43,10 +47,17 @@ impl From<PanZoomMessage> for NodeGraphMessage {
     }
 }
 
+impl From<SelectionBoxMessage> for NodeGraphMessage {
+    fn from(selection_box_message: SelectionBoxMessage) -> Self {
+        Self::SelectionBox(selection_box_message)
+    }
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NodeGraph {
     state: NodeGraphUIState,
     pan_zoom: PanZoom,
+    selection_box: SelectionBox,
 }
 
 impl Default for NodeGraph {
@@ -54,35 +65,53 @@ impl Default for NodeGraph {
         Self {
             state: NodeGraphUIState::default(),
             pan_zoom: PanZoom::default(),
+            selection_box: SelectionBox::default(),
         }
     }
 }
 
 impl NodeGraph {
-    pub fn handle_mouse_event(&self, mouse_event: &iced::mouse::Event) -> Option<NodeGraphMessage> {
+    pub fn handle_mouse_event(
+        &self,
+        mouse_event: &iced::mouse::Event,
+    ) -> iced::Task<NodeGraphMessage> {
         match mouse_event {
-            iced::mouse::Event::CursorEntered => None,
-            iced::mouse::Event::CursorLeft => None,
-            iced::mouse::Event::CursorMoved { position } => {
-                Some(PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into())
-            }
+            iced::mouse::Event::CursorEntered => iced::Task::none(),
+            iced::mouse::Event::CursorLeft => iced::Task::none(),
+            iced::mouse::Event::CursorMoved { position } => iced::Task::batch(
+                std::iter::once(iced::Task::done(
+                    PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into(),
+                ))
+                .chain(std::iter::once(iced::Task::done(
+                    SelectionBoxMessage::MoveCursor(
+                        self.pan_zoom
+                            .global_to_local(Vec2::new(position.x, position.y)),
+                    )
+                    .into(),
+                ))),
+            ),
             iced::mouse::Event::ButtonPressed(button) => match button {
-                iced::mouse::Button::Left => None,
-                iced::mouse::Button::Right => None,
-                iced::mouse::Button::Middle => Some(PanZoomMessage::BeginPan.into()),
-                iced::mouse::Button::Back => None,
-                iced::mouse::Button::Forward => None,
-                _ => None,
+                iced::mouse::Button::Left => iced::Task::done(
+                    SelectionBoxMessage::BeginSelection(self.pan_zoom.local_cursor_position())
+                        .into(),
+                ),
+                iced::mouse::Button::Right => iced::Task::none(),
+                iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::BeginPan.into()),
+                iced::mouse::Button::Back => iced::Task::none(),
+                iced::mouse::Button::Forward => iced::Task::none(),
+                _ => iced::Task::none(),
             },
             iced::mouse::Event::ButtonReleased(button) => match button {
-                iced::mouse::Button::Left => None,
-                iced::mouse::Button::Right => None,
-                iced::mouse::Button::Middle => Some(PanZoomMessage::EndPan.into()),
-                iced::mouse::Button::Back => None,
-                iced::mouse::Button::Forward => None,
-                _ => None,
+                iced::mouse::Button::Left => {
+                    iced::Task::done(SelectionBoxMessage::EndSelection.into())
+                }
+                iced::mouse::Button::Right => iced::Task::none(),
+                iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::EndPan.into()),
+                iced::mouse::Button::Back => iced::Task::none(),
+                iced::mouse::Button::Forward => iced::Task::none(),
+                _ => iced::Task::none(),
             },
-            iced::mouse::Event::WheelScrolled { delta: _ } => None,
+            iced::mouse::Event::WheelScrolled { delta: _ } => iced::Task::none(),
         }
     }
 
@@ -135,7 +164,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 .into(),
             ))
         } else if let Some(message) = match event {
-            iced::Event::Mouse(mouse_event) => self.handle_mouse_event(mouse_event),
+            iced::Event::Mouse(mouse_event) => Some(NodeGraphMessage::MouseEvent(*mouse_event)),
             iced::Event::Keyboard(keyboard_event) => self.handle_keyboard_event(keyboard_event),
             _ => None,
         } {
@@ -157,7 +186,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         for node_data in self.state.values() {
             let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.center);
             let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
-            let node: iced::widget::canvas::Path = iced::widget::canvas::Path::rectangle(
+            let node = iced::widget::canvas::Path::rectangle(
                 iced::Point::new(node_top_left.x, node_top_left.y),
                 iced::Size::new(node_data.shape.size.x, node_data.shape.size.y)
                     / self.pan_zoom.zoom,
@@ -177,6 +206,22 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
             });
         }
 
+        if self.selection_box.selecting {
+            let bounds: Rectangle = self.selection_box.bounds();
+            let selection_box_top_left: Vec2 = self.pan_zoom.local_to_canvas(bounds.top_left());
+            let selection_box = iced::widget::canvas::Path::rectangle(
+                iced::Point::new(selection_box_top_left.x, selection_box_top_left.y),
+                iced::Size::new(bounds.size.x, bounds.size.y) / self.pan_zoom.zoom,
+            );
+            frame.fill(&selection_box, iced::Color::from_rgba(1.0, 1.0, 1.0, 0.1));
+            frame.stroke(
+                &selection_box,
+                iced::widget::canvas::Stroke::default()
+                    .with_width(1.)
+                    .with_color(iced::Color::WHITE),
+            );
+        }
+
         vec![frame.into_geometry()]
     }
 }
@@ -188,10 +233,15 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
         match message {
+            NodeGraphMessage::MouseEvent(mouse_event) => self.handle_mouse_event(&mouse_event),
             NodeGraphMessage::PanZoom(pan_zoom_message) => self
                 .pan_zoom
                 .update(context, pan_zoom_message)
                 .map(|pan_zoom_message| pan_zoom_message.into()),
+            NodeGraphMessage::SelectionBox(selection_box_message) => self
+                .selection_box
+                .update(context, selection_box_message)
+                .map(|selection_box_message| selection_box_message.into()),
             NodeGraphMessage::CreateReadNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
 

@@ -40,6 +40,14 @@ impl SelectionBox {
     pub fn bounds(&self) -> Rectangle {
         Rectangle::from_corners(self.initial_cursor_position, self.current_cursor_position)
     }
+
+    pub fn contains(&self, point: Vec2) -> bool {
+        if self.selecting {
+            self.bounds().contains(point)
+        } else {
+            false
+        }
+    }
 }
 
 impl Widget<SelectionBoxMessage> for SelectionBox {

@@ -3,6 +3,8 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
+use std::collections::HashSet;
+
 use glam::{UVec2, Vec2, Vec3};
 
 use damascus::{
@@ -37,6 +39,8 @@ pub enum NodeGraphMessage {
     CreateLiveNode,
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
+    ClearSelection,
+    UpdateSelection,
     #[serde(skip)]
     CanvasEvent(iced::Event),
 }
@@ -53,11 +57,18 @@ impl From<SelectionBoxMessage> for NodeGraphMessage {
     }
 }
 
+impl From<NodeGraphMessage> for iced::Task<NodeGraphMessage> {
+    fn from(message: NodeGraphMessage) -> Self {
+        iced::Task::done(message)
+    }
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NodeGraph {
     state: NodeGraphUIState,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
+    selected_nodes: HashSet<NodeId>,
 }
 
 impl Default for NodeGraph {
@@ -66,39 +77,94 @@ impl Default for NodeGraph {
             state: NodeGraphUIState::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
+            selected_nodes: HashSet::<NodeId>::default(),
         }
     }
 }
 
 impl NodeGraph {
+    pub fn clear_selection(&mut self) {
+        self.selected_nodes.clear();
+    }
+
+    pub fn update_selection(&mut self, context: &mut Context) {
+        for (node_id, node_data) in self.state.iter() {
+            if self.selection_box.contains(node_data.shape.center) {
+                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                    self.selected_nodes.remove(&node_id);
+                } else {
+                    self.selected_nodes.insert(node_id);
+                }
+            }
+        }
+    }
+
     pub fn handle_mouse_event(
-        &self,
+        &mut self,
+        context: &mut Context,
         mouse_event: &iced::mouse::Event,
     ) -> iced::Task<NodeGraphMessage> {
         match mouse_event {
             iced::mouse::Event::CursorEntered => iced::Task::none(),
             iced::mouse::Event::CursorLeft => iced::Task::none(),
             iced::mouse::Event::CursorMoved { position } => iced::Task::batch(
-                std::iter::once(iced::Task::done(
-                    PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into(),
-                ))
-                .chain(std::iter::once(iced::Task::done(
-                    SelectionBoxMessage::MoveCursor(
-                        self.pan_zoom
-                            .global_to_local(Vec2::new(position.x, position.y)),
-                    )
-                    .into(),
-                ))),
+                std::iter::once(
+                    // Update the PanZoom widget with the new global
+                    // cursor position
+                    self.pan_zoom
+                        .update(
+                            context,
+                            PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)),
+                        )
+                        .map(|pan_zoom_message| pan_zoom_message.into()),
+                )
+                .chain(if self.selection_box.selecting {
+                    // If a selection box is active, update its bounds
+                    // with the new local cursor position
+                    let task: iced::Task<NodeGraphMessage> = self
+                        .selection_box
+                        .update(
+                            context,
+                            SelectionBoxMessage::MoveCursor(
+                                self.pan_zoom
+                                    .global_to_local(Vec2::new(position.x, position.y)),
+                            ),
+                        )
+                        .map(|selection_box_message| selection_box_message.into());
+
+                    // Update the selection based on the selection box  bounds
+                    if !context.keyboard_modifiers.control() {
+                        self.clear_selection();
+                    }
+                    self.update_selection(context);
+
+                    // Pass the selection box task back to the application
+                    Some(task).into_iter()
+                } else {
+                    None.into_iter()
+                }),
             ),
             iced::mouse::Event::ButtonPressed(button) => match button {
                 iced::mouse::Button::Left => {
                     if self.pan_zoom.bounds.contains(self.pan_zoom.cursor_position) {
-                        iced::Task::done(
-                            SelectionBoxMessage::BeginSelection(
-                                self.pan_zoom.local_cursor_position(),
+                        // Initiate a box selection
+                        let task: iced::Task<NodeGraphMessage> = self
+                            .selection_box
+                            .update(
+                                context,
+                                SelectionBoxMessage::BeginSelection(
+                                    self.pan_zoom.local_cursor_position(),
+                                ),
                             )
-                            .into(),
-                        )
+                            .map(|selection_box_message| selection_box_message.into());
+
+                        // Potentially reset the selection
+
+                        if !context.keyboard_modifiers.control() {
+                            self.clear_selection();
+                        }
+
+                        task
                     } else {
                         iced::Task::none()
                     }
@@ -124,7 +190,8 @@ impl NodeGraph {
     }
 
     pub fn handle_keyboard_event(
-        &self,
+        &mut self,
+        _context: &mut Context,
         keyboard_event: &iced::keyboard::Event,
     ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
@@ -191,7 +258,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         _cursor: iced::mouse::Cursor,
     ) -> Vec<iced::widget::canvas::Geometry<iced::Renderer>> {
         let mut frame = iced::widget::canvas::Frame::new(renderer, bounds.size());
-        for node_data in self.state.values() {
+        for (node_id, node_data) in self.state.iter() {
             let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.center);
             let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
             let node = iced::widget::canvas::Path::rectangle(
@@ -203,6 +270,14 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 &node,
                 iced::Color::from_rgb(node_data.colour.x, node_data.colour.y, node_data.colour.z),
             );
+            if self.selected_nodes.contains(&node_id) {
+                frame.stroke(
+                    &node,
+                    iced::widget::canvas::Stroke::default()
+                        .with_width(1.)
+                        .with_color(iced::Color::WHITE),
+                );
+            }
             frame.fill_text(iced::widget::canvas::Text {
                 content: node_data.label.clone(),
                 position: iced::Point::new(node_center.x, node_center.y),
@@ -242,9 +317,9 @@ impl Widget<NodeGraphMessage> for NodeGraph {
     ) -> iced::Task<NodeGraphMessage> {
         match message {
             NodeGraphMessage::CanvasEvent(event) => match event {
-                iced::Event::Mouse(mouse_event) => self.handle_mouse_event(&mouse_event),
+                iced::Event::Mouse(mouse_event) => self.handle_mouse_event(context, &mouse_event),
                 iced::Event::Keyboard(keyboard_event) => {
-                    self.handle_keyboard_event(&keyboard_event)
+                    self.handle_keyboard_event(context, &keyboard_event)
                 }
                 _ => iced::Task::none(),
             },
@@ -256,6 +331,20 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .selection_box
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
+            NodeGraphMessage::ClearSelection => {
+                self.selected_nodes.clear();
+
+                iced::Task::none()
+            }
+            NodeGraphMessage::UpdateSelection => {
+                for (node_id, node_data) in self.state.iter() {
+                    if self.selection_box.contains(node_data.shape.center) {
+                        self.selected_nodes.insert(node_id);
+                    }
+                }
+
+                iced::Task::none()
+            }
             NodeGraphMessage::CreateReadNode => {
                 let mut node_graph = context.node_graph.lock().unwrap();
 

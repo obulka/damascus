@@ -39,6 +39,7 @@ pub enum Message {
     WindowManager(WindowManagerMessage),
     NodeGraph(NodeGraphMessage),
     Viewport(ViewportMessage),
+    IcedEvent(iced::Event),
 }
 
 impl From<WindowMessage> for Message {
@@ -71,6 +72,42 @@ impl From<FileMessage> for Message {
     }
 }
 
+impl From<Message> for iced::Task<Message> {
+    fn from(message: Message) -> Self {
+        iced::Task::done(message)
+    }
+}
+
+impl From<WindowMessage> for iced::Task<Message> {
+    fn from(window_message: WindowMessage) -> Self {
+        <WindowMessage as Into<Message>>::into(window_message).into()
+    }
+}
+
+impl From<StyleEditorMessage> for iced::Task<Message> {
+    fn from(style_editor_message: StyleEditorMessage) -> Self {
+        <StyleEditorMessage as Into<Message>>::into(style_editor_message).into()
+    }
+}
+
+impl From<WindowManagerMessage> for iced::Task<Message> {
+    fn from(window_manager_message: WindowManagerMessage) -> Self {
+        <WindowManagerMessage as Into<Message>>::into(window_manager_message).into()
+    }
+}
+
+impl From<FileMenuOptions> for iced::Task<Message> {
+    fn from(file_option: FileMenuOptions) -> Self {
+        <FileMenuOptions as Into<Message>>::into(file_option).into()
+    }
+}
+
+impl From<FileMessage> for iced::Task<Message> {
+    fn from(file_message: FileMessage) -> Self {
+        <FileMessage as Into<Message>>::into(file_message).into()
+    }
+}
+
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 #[serde(default)]
 pub struct Context {
@@ -79,6 +116,8 @@ pub struct Context {
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub window_manager_context: WindowManagerContext,
     pub node_graph: Arc<Mutex<NodeGraph>>,
+    #[serde(skip)]
+    pub keyboard_modifiers: iced::keyboard::Modifiers,
 }
 
 impl Default for Context {
@@ -89,6 +128,7 @@ impl Default for Context {
             working_file_hash: None,
             window_manager_context: WindowManagerContext::default(),
             node_graph: Arc::new(Mutex::new(NodeGraph::new())),
+            keyboard_modifiers: iced::keyboard::Modifiers::NONE,
         }
     }
 }
@@ -186,6 +226,7 @@ impl Damascus {
 
         iced::Task::batch(
             std::iter::once(match message {
+                Message::IcedEvent(event) => self.handle_iced_event(event),
                 Message::WindowManager(window_manager_message) => self
                     .window_manager
                     .update(&mut self.context, window_manager_message)
@@ -234,52 +275,48 @@ impl Damascus {
             .unwrap_or(1.0)
     }
 
-    fn handle_ctrl_alt_shift_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_ctrl_alt_shift_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_ctrl_shift_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_ctrl_shift_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            iced::keyboard::key::Key::Character("s") => Some(FileMenuOptions::SaveAs.into()),
-            _ => None,
+            iced::keyboard::key::Key::Character("s") => FileMenuOptions::SaveAs.into(),
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_ctrl_alt_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_ctrl_alt_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_alt_shift_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_alt_shift_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_ctrl_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_ctrl_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            iced::keyboard::key::Key::Character("s") => Some(FileMenuOptions::Save.into()),
-            iced::keyboard::key::Key::Character("l") => Some(FileMenuOptions::Load.into()),
+            iced::keyboard::key::Key::Character("s") => FileMenuOptions::Save.into(),
+            iced::keyboard::key::Key::Character("l") => FileMenuOptions::Load.into(),
             iced::keyboard::key::Key::Character("w") => {
-                Some(WindowMessage::Panel(None, PanelMessage::CloseFocused).into())
+                WindowMessage::Panel(None, PanelMessage::CloseFocused).into()
             }
-            iced::keyboard::key::Key::Character("=") => Some(
-                WindowMessage::StyleEditor(
-                    None,
-                    StyleEditorMessage::Increment(StyleEditorFields::Scale),
-                )
-                .into(),
-            ),
-            iced::keyboard::key::Key::Character("-") => Some(
-                WindowMessage::StyleEditor(
-                    None,
-                    StyleEditorMessage::Decrement(StyleEditorFields::Scale),
-                )
-                .into(),
-            ),
+            iced::keyboard::key::Key::Character("=") => WindowMessage::StyleEditor(
+                None,
+                StyleEditorMessage::Increment(StyleEditorFields::Scale),
+            )
+            .into(),
+            iced::keyboard::key::Key::Character("-") => WindowMessage::StyleEditor(
+                None,
+                StyleEditorMessage::Decrement(StyleEditorFields::Scale),
+            )
+            .into(),
             iced::keyboard::key::Key::Named(key) => {
                 if let Some(direction) = match key {
                     iced::keyboard::key::Named::ArrowUp => {
@@ -296,31 +333,31 @@ impl Damascus {
                     }
                     _ => None,
                 } {
-                    Some(WindowMessage::Panel(None, PanelMessage::FocusAdjacent(direction)).into())
+                    WindowMessage::Panel(None, PanelMessage::FocusAdjacent(direction)).into()
                 } else {
-                    None
+                    iced::Task::none()
                 }
             }
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_shift_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_shift_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
-    fn handle_alt_hotkey(key: iced::keyboard::Key) -> Option<Message> {
+    fn handle_alt_hotkey(key: iced::keyboard::Key) -> iced::Task<Message> {
         match key.as_ref() {
-            _ => None,
+            _ => iced::Task::none(),
         }
     }
 
     fn handle_hotkeys(
         modifiers: iced::keyboard::Modifiers,
         key: iced::keyboard::Key,
-    ) -> Option<Message> {
+    ) -> iced::Task<Message> {
         let ctrl_down: bool = modifiers.command();
         let shift_down: bool = modifiers.shift();
         let alt_down: bool = modifiers.alt();
@@ -340,18 +377,33 @@ impl Damascus {
         } else if shift_down {
             Self::handle_shift_hotkey(key)
         } else {
-            None
+            iced::Task::none()
+        }
+    }
+
+    pub fn handle_iced_event(&mut self, event: iced::Event) -> iced::Task<Message> {
+        match event {
+            iced::Event::Mouse(_) => iced::Task::none(),
+            iced::Event::Keyboard(keyboard_event) => match keyboard_event {
+                iced::keyboard::Event::KeyPressed { key, modifiers, .. } => {
+                    Self::handle_hotkeys(modifiers, key)
+                }
+                iced::keyboard::Event::ModifiersChanged(modifiers) => {
+                    self.context.keyboard_modifiers = modifiers;
+                    iced::Task::none()
+                }
+                _ => iced::Task::none(),
+            },
+            _ => iced::Task::none(),
         }
     }
 
     pub fn subscription(&self) -> iced::Subscription<Message> {
         iced::Subscription::batch(
-            std::iter::once(iced::keyboard::listen().filter_map(|event| {
-                let iced::keyboard::Event::KeyPressed { key, modifiers, .. } = event else {
-                    return None;
-                };
-
-                Self::handle_hotkeys(modifiers, key)
+            std::iter::once(iced::event::listen().filter_map(|event| match event {
+                iced::Event::Mouse(_) => Some(Message::IcedEvent(event.clone())),
+                iced::Event::Keyboard(_) => Some(Message::IcedEvent(event.clone())),
+                _ => None,
             }))
             .chain(std::iter::once(
                 iced::window::close_events()

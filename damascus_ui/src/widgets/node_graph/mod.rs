@@ -18,6 +18,7 @@ use damascus::{
                 PrimitiveInputData, RayMarcherInputData, SceneInputData, TextureReadInputData,
             },
         },
+        outputs::OutputId,
     },
 };
 
@@ -41,6 +42,7 @@ pub enum NodeGraphMessage {
     SelectionBox(SelectionBoxMessage),
     ClearSelection,
     UpdateSelection,
+    ViewNodeOutput(u32, Option<OutputId>),
     #[serde(skip)]
     CanvasEvent(iced::Event),
 }
@@ -191,11 +193,29 @@ impl NodeGraph {
 
     pub fn handle_keyboard_event(
         &mut self,
-        _context: &mut Context,
+        context: &mut Context,
         keyboard_event: &iced::keyboard::Event,
     ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
-            iced::keyboard::Event::KeyPressed { .. } => iced::Task::none(),
+            iced::keyboard::Event::KeyPressed { key, .. } => match key {
+                iced::keyboard::Key::Character(character) => {
+                    if let Ok(digits) = character.as_str().parse() {
+                        iced::Task::done(
+                            if let Some(node_id) = self.selected_nodes.iter().next()
+                                && let Ok(node_graph) = context.node_graph.lock()
+                                && let Some(output_id) = node_graph.nodes_first_output_id(node_id)
+                            {
+                                NodeGraphMessage::ViewNodeOutput(digits, Some(*output_id))
+                            } else {
+                                NodeGraphMessage::ViewNodeOutput(digits, None)
+                            },
+                        )
+                    } else {
+                        iced::Task::none()
+                    }
+                }
+                _ => iced::Task::none(),
+            },
             iced::keyboard::Event::KeyReleased {
                 key,
                 modified_key: _,
@@ -362,7 +382,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 self.state.insert(
                     read_id,
-                    NodeUIData::new(format!("Read{:?}", read_id))
+                    NodeUIData::new(format!("Read{}", read_id))
                         .shape(
                             Rectangle::default()
                                 .center(self.pan_zoom.local_cursor_position())
@@ -504,7 +524,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 self.state.insert(
                     ray_marcher_id,
-                    NodeUIData::new(format!("RayMarcher{:?}", ray_marcher_id))
+                    NodeUIData::new(format!("RayMarcher{}", ray_marcher_id))
                         .shape(
                             Rectangle::default()
                                 .center(self.pan_zoom.local_cursor_position())

@@ -19,6 +19,12 @@ use node::Node;
 
 slotmap::new_key_type! { pub struct NodeId; }
 
+impl fmt::Display for NodeId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+
 pub type Nodes = SlotMap<NodeId, Node>;
 
 #[derive(Default, ErrorTraits!)]

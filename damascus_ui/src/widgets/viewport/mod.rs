@@ -30,6 +30,7 @@ pub type ViewMap = HashMap<u32, OutputId>;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
+    ViewNodeOutput(u32, Option<OutputId>),
     PanZoom(PanZoomMessage),
     Resize(Vec2),
     GainChanged(f32),
@@ -336,17 +337,16 @@ impl Widget<ViewportMessage> for Viewport {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
         }
 
-        // TODO nuh uh uh
-        if let Ok(node_graph) = self.viewport_primitive.node_graph.lock() {
-            for (index, node_id) in node_graph.iter().enumerate() {
-                if let Some(output_id) = node_graph.nodes_first_output_id(&node_id) {
-                    self.view_map.insert(index as u32 + 1, *output_id);
-                    self.active_view = Some(index as u32 + 1);
-                }
-            }
-        }
-
         match message {
+            ViewportMessage::ViewNodeOutput(viewer_id, output_id) => {
+                if let Some(output) = output_id {
+                    self.view_map.insert(viewer_id, output);
+                }
+
+                self.active_view = Some(viewer_id);
+
+                iced::Task::none()
+            }
             ViewportMessage::PanZoom(pan_zoom_message) => self
                 .pan_zoom
                 .update(context, pan_zoom_message)

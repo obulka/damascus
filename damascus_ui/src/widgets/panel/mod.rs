@@ -17,8 +17,10 @@ use crate::{
     icons::Icons,
     widgets::{
         Widget,
+        node_graph::NodeGraphMessage,
         style::Style,
         tab_bar::{TabBar, TabLabel},
+        viewport::ViewportMessage,
     },
 };
 
@@ -26,7 +28,7 @@ pub mod pane;
 pub mod tabs;
 
 use pane::{Pane, PaneMessage};
-use tabs::{TabMessage, Tabs};
+use tabs::{Tab, TabMessage, Tabs};
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -331,10 +333,34 @@ impl Widget<PanelMessage> for Panel {
                 iced::Task::none()
             }
             PanelMessage::Pane(pane, pane_message) => {
-                if let Some(pane_widget) = self.panes.get_mut(pane) {
+                let mut final_pane = pane;
+                let mut final_message = pane_message;
+
+                match final_message {
+                    PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewNodeOutput(
+                        viewer_id,
+                        output_id,
+                    ))) => {
+                        for viewport_pane in self.panes.iter() {
+                            for tab in &viewport_pane.1.tabs {
+                                match tab {
+                                    Tab::Viewport(_) => {
+                                        final_pane = *viewport_pane.0;
+                                        final_message = PaneMessage::Tab(TabMessage::Viewport(
+                                            ViewportMessage::ViewNodeOutput(viewer_id, output_id),
+                                        ))
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+                if let Some(pane_widget) = self.panes.get_mut(final_pane) {
                     pane_widget
-                        .update(context, pane_message)
-                        .map(move |pane_message| PanelMessage::Pane(pane, pane_message))
+                        .update(context, final_message)
+                        .map(move |pane_message| PanelMessage::Pane(final_pane, pane_message))
                 } else {
                     iced::Task::none()
                 }

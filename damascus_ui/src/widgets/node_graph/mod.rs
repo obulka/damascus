@@ -97,7 +97,7 @@ impl NodeGraph {
         self.selected_nodes.clear();
     }
 
-    pub fn update_selection(&mut self, context: &mut Context) {
+    pub fn drag_select(&mut self, context: &mut Context) {
         for (node_id, node_data) in self.state.iter() {
             if self.selection_box.contains(node_data.shape.center) {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
@@ -109,20 +109,22 @@ impl NodeGraph {
         }
     }
 
-    pub fn handle_click(&mut self, context: &mut Context) -> iced::Task<NodeGraphMessage> {
-        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
+    pub fn click_select(&mut self, context: &mut Context) -> bool {
+        let mut any_selected = false;
 
+        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
         for (node_id, node_data) in self.state.iter() {
             if node_data.shape.contains(cursor_position) {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                     self.selected_nodes.remove(&node_id);
                 } else {
                     self.selected_nodes.insert(node_id);
+                    any_selected = true;
                 }
             }
         }
 
-        iced::Task::none()
+        any_selected
     }
 
     pub fn handle_mouse_event(
@@ -162,7 +164,7 @@ impl NodeGraph {
                     if !context.keyboard_modifiers.control() {
                         self.clear_selection();
                     }
-                    self.update_selection(context);
+                    self.drag_select(context);
 
                     // Pass the selection box task back to the application
                     Some(task).into_iter()
@@ -173,24 +175,28 @@ impl NodeGraph {
             iced::mouse::Event::ButtonPressed(button) => match button {
                 iced::mouse::Button::Left => {
                     if self.pan_zoom.cursor_in_bounds() {
-                        // Initiate a box selection
-                        let task: iced::Task<NodeGraphMessage> = self
-                            .selection_box
-                            .update(
-                                context,
-                                SelectionBoxMessage::BeginSelection(
-                                    self.pan_zoom.local_cursor_position(),
-                                ),
-                            )
-                            .map(|selection_box_message| selection_box_message.into());
-
                         // Potentially reset the selection
-
                         if !context.keyboard_modifiers.control() {
                             self.clear_selection();
                         }
 
-                        task
+                        if self.click_select(context) {
+                            // TODO begin dragging of nodes
+                            iced::Task::none()
+                        } else {
+                            // Initiate a box selection
+                            let task: iced::Task<NodeGraphMessage> = self
+                                .selection_box
+                                .update(
+                                    context,
+                                    SelectionBoxMessage::BeginSelection(
+                                        self.pan_zoom.local_cursor_position(),
+                                    ),
+                                )
+                                .map(|selection_box_message| selection_box_message.into());
+
+                            task
+                        }
                     } else {
                         iced::Task::none()
                     }
@@ -205,16 +211,10 @@ impl NodeGraph {
                 iced::mouse::Button::Left => {
                     // End the drag selection, if there was minimal drag
                     // handle the event as a click
-                    let mut task: iced::Task<NodeGraphMessage> = self
+                    let task: iced::Task<NodeGraphMessage> = self
                         .selection_box
                         .update(context, SelectionBoxMessage::EndSelection)
                         .map(|selection_box_message| selection_box_message.into());
-
-                    if self.selection_box.bounds().size.length()
-                        < context.default_style.click_sensitivity
-                    {
-                        task = task.chain(self.handle_click(context));
-                    }
 
                     task
                 }

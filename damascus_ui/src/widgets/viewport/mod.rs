@@ -28,13 +28,16 @@ use super::{
 
 pub type ViewMap = HashMap<u32, OutputId>;
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
     ViewNodeOutput(u32, Option<OutputId>),
     PanZoom(PanZoomMessage),
     Resize(Vec2),
     GainChanged(f32),
     GammaChanged(f32),
+    #[serde(skip)]
+    ProgramEvent(iced::Event),
+    #[default]
     None,
 }
 
@@ -231,37 +234,40 @@ impl Viewport {
         }
     }
 
-    pub fn handle_mouse_event(&self, mouse_event: &iced::mouse::Event) -> Option<ViewportMessage> {
+    pub fn handle_mouse_event(
+        &self,
+        mouse_event: &iced::mouse::Event,
+    ) -> iced::Task<ViewportMessage> {
         match mouse_event {
-            iced::mouse::Event::CursorEntered => None,
-            iced::mouse::Event::CursorLeft => None,
-            iced::mouse::Event::CursorMoved { position } => {
-                Some(PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into())
-            }
+            iced::mouse::Event::CursorEntered => iced::Task::none(),
+            iced::mouse::Event::CursorLeft => iced::Task::none(),
+            iced::mouse::Event::CursorMoved { position } => iced::Task::done(
+                PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)).into(),
+            ),
             iced::mouse::Event::ButtonPressed(button) => match button {
-                iced::mouse::Button::Left => None,
-                iced::mouse::Button::Right => None,
-                iced::mouse::Button::Middle => Some(PanZoomMessage::BeginPan.into()),
-                iced::mouse::Button::Back => None,
-                iced::mouse::Button::Forward => None,
-                _ => None,
+                iced::mouse::Button::Left => iced::Task::none(),
+                iced::mouse::Button::Right => iced::Task::none(),
+                iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::BeginPan.into()),
+                iced::mouse::Button::Back => iced::Task::none(),
+                iced::mouse::Button::Forward => iced::Task::none(),
+                _ => iced::Task::none(),
             },
             iced::mouse::Event::ButtonReleased(button) => match button {
-                iced::mouse::Button::Left => None,
-                iced::mouse::Button::Right => None,
-                iced::mouse::Button::Middle => Some(PanZoomMessage::EndPan.into()),
-                iced::mouse::Button::Back => None,
-                iced::mouse::Button::Forward => None,
-                _ => None,
+                iced::mouse::Button::Left => iced::Task::none(),
+                iced::mouse::Button::Right => iced::Task::none(),
+                iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::EndPan.into()),
+                iced::mouse::Button::Back => iced::Task::none(),
+                iced::mouse::Button::Forward => iced::Task::none(),
+                _ => iced::Task::none(),
             },
-            iced::mouse::Event::WheelScrolled { delta: _ } => None,
+            iced::mouse::Event::WheelScrolled { delta: _ } => iced::Task::none(),
         }
     }
 
     pub fn handle_keyboard_event(
         &self,
         _keyboard_event: &iced::keyboard::Event,
-    ) -> Option<ViewportMessage> {
+    ) -> iced::Task<ViewportMessage> {
         // println!("{:?}", keyboard_event);
         // match keyboard_event {
         //     iced::keyboard::Event::KeyPressed { .. } => None,
@@ -278,7 +284,7 @@ impl Viewport {
         //     },
         //     iced::keyboard::Event::ModifiersChanged(_modifiers) => None,
         // }
-        None
+        iced::Task::none()
     }
 }
 
@@ -302,14 +308,13 @@ impl iced::widget::shader::Program<ViewportMessage> for Viewport {
                 })
                 .into(),
             ))
-        } else if let Some(message) = match event {
-            iced::Event::Mouse(mouse_event) => self.handle_mouse_event(mouse_event),
-            iced::Event::Keyboard(keyboard_event) => self.handle_keyboard_event(keyboard_event),
-            _ => None,
-        } {
-            Some(iced::widget::Action::publish(message))
         } else {
-            None
+            match event {
+                iced::Event::Mouse(_) | iced::Event::Keyboard(_) => Some(
+                    iced::widget::Action::publish(ViewportMessage::ProgramEvent(event.clone())),
+                ),
+                _ => None,
+            }
         }
     }
 
@@ -338,6 +343,17 @@ impl Widget<ViewportMessage> for Viewport {
         }
 
         match message {
+            ViewportMessage::ProgramEvent(event) => match event {
+                iced::Event::Mouse(mouse_event) => self.handle_mouse_event(&mouse_event),
+                iced::Event::Keyboard(keyboard_event) => {
+                    if self.pan_zoom.cursor_in_bounds() {
+                        self.handle_keyboard_event(&keyboard_event)
+                    } else {
+                        iced::Task::none()
+                    }
+                }
+                _ => iced::Task::none(),
+            },
             ViewportMessage::ViewNodeOutput(viewer_id, output_id) => {
                 if let Some(output) = output_id {
                     self.view_map.insert(viewer_id, output);
@@ -368,7 +384,7 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
-        let parameter_name_length = iced::Length::Fill;
+        let parameter_name_length = iced::Length::FillPortion(1);
         let horizontal_text_alignment = iced::alignment::Horizontal::Center;
 
         let gain = style.slider(

@@ -33,7 +33,7 @@ use super::{
 pub mod node;
 use node::{NodeGraphUIState, node_data::NodeData as NodeUIData};
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
     CreateReadNode,
@@ -45,6 +45,8 @@ pub enum NodeGraphMessage {
     ViewNodeOutput(u32, Option<OutputId>),
     #[serde(skip)]
     CanvasEvent(iced::Event),
+    #[default]
+    None,
 }
 
 impl From<PanZoomMessage> for NodeGraphMessage {
@@ -148,7 +150,7 @@ impl NodeGraph {
             ),
             iced::mouse::Event::ButtonPressed(button) => match button {
                 iced::mouse::Button::Left => {
-                    if self.pan_zoom.bounds.contains(self.pan_zoom.cursor_position) {
+                    if self.pan_zoom.cursor_in_bounds() {
                         // Initiate a box selection
                         let task: iced::Task<NodeGraphMessage> = self
                             .selection_box
@@ -258,14 +260,13 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 })
                 .into(),
             ))
-        } else if let Some(message) = match event {
-            iced::Event::Mouse(_) => Some(NodeGraphMessage::CanvasEvent(event.clone())),
-            iced::Event::Keyboard(_) => Some(NodeGraphMessage::CanvasEvent(event.clone())),
-            _ => None,
-        } {
-            Some(iced::widget::Action::publish(message))
         } else {
-            None
+            match event {
+                iced::Event::Mouse(_) | iced::Event::Keyboard(_) => Some(
+                    iced::widget::Action::publish(NodeGraphMessage::CanvasEvent(event.clone())),
+                ),
+                _ => None,
+            }
         }
     }
 
@@ -339,7 +340,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
             NodeGraphMessage::CanvasEvent(event) => match event {
                 iced::Event::Mouse(mouse_event) => self.handle_mouse_event(context, &mouse_event),
                 iced::Event::Keyboard(keyboard_event) => {
-                    self.handle_keyboard_event(context, &keyboard_event)
+                    if self.pan_zoom.cursor_in_bounds() {
+                        self.handle_keyboard_event(context, &keyboard_event)
+                    } else {
+                        iced::Task::none()
+                    }
                 }
                 _ => iced::Task::none(),
             },

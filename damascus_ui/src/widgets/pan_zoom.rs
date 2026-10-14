@@ -95,6 +95,10 @@ impl PanZoom {
         local_bounds.size *= self.zoom;
         local_bounds
     }
+
+    pub fn cursor_in_bounds(&self) -> bool {
+        self.bounds.contains(self.cursor_position)
+    }
 }
 
 impl Widget<PanZoomMessage> for PanZoom {

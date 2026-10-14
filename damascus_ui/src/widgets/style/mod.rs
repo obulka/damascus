@@ -381,6 +381,8 @@ impl Style {
     {
         iced::widget::row![
             self.tooltip(name, tooltip, name_length, name_horizontal_alignment),
+            // TODO BUG when highlighting ex 123 and hitting 1 can panic
+            // bring this in so we can fix and add better editing control
             iced_aw::widget::number_input(&value, limit_range, on_change)
                 .step(step) // TODO dynamic based on highlight?
                 .ignore_buttons(true)

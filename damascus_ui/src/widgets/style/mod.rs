@@ -40,6 +40,7 @@ pub struct Style {
     pub viewer_zoom_sensitivity: f32,
     pub picking_default_node_colour: bool,
     pub default_node_colour: Vec4,
+    pub click_sensitivity: f32,
 }
 
 impl Default for Style {
@@ -59,6 +60,7 @@ impl Default for Style {
             viewer_zoom_sensitivity: 0.1,
             picking_default_node_colour: false,
             default_node_colour: Vec4::splat(0.3),
+            click_sensitivity: 3.0,
         }
     }
 }

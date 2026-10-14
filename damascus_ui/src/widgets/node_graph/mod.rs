@@ -3,13 +3,17 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    sync::{Arc, Mutex},
+};
 
 use glam::{UVec2, Vec2, Vec3};
 
 use damascus::{
     geometry::{primitives::Shapes, rectangle::Rectangle},
     graph::node_graph::{
+        NodeGraph as Graph,
         inputs::{InputId, input_data::InputData},
         nodes::{
             NodeId,
@@ -69,6 +73,7 @@ impl From<NodeGraphMessage> for iced::Task<NodeGraphMessage> {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NodeGraph {
+    node_graph: Arc<Mutex<Graph>>,
     state: NodeGraphUIState,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
@@ -78,6 +83,7 @@ pub struct NodeGraph {
 impl Default for NodeGraph {
     fn default() -> Self {
         Self {
+            node_graph: Arc::default(),
             state: NodeGraphUIState::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
@@ -101,6 +107,22 @@ impl NodeGraph {
                 }
             }
         }
+    }
+
+    pub fn handle_click(&mut self, context: &mut Context) -> iced::Task<NodeGraphMessage> {
+        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
+
+        for (node_id, node_data) in self.state.iter() {
+            if node_data.shape.contains(cursor_position) {
+                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                    self.selected_nodes.remove(&node_id);
+                } else {
+                    self.selected_nodes.insert(node_id);
+                }
+            }
+        }
+
+        iced::Task::none()
     }
 
     pub fn handle_mouse_event(
@@ -181,7 +203,20 @@ impl NodeGraph {
             },
             iced::mouse::Event::ButtonReleased(button) => match button {
                 iced::mouse::Button::Left => {
-                    iced::Task::done(SelectionBoxMessage::EndSelection.into())
+                    // End the drag selection, if there was minimal drag
+                    // handle the event as a click
+                    let mut task: iced::Task<NodeGraphMessage> = self
+                        .selection_box
+                        .update(context, SelectionBoxMessage::EndSelection)
+                        .map(|selection_box_message| selection_box_message.into());
+
+                    if self.selection_box.bounds().size.length()
+                        < context.default_style.click_sensitivity
+                    {
+                        task = task.chain(self.handle_click(context));
+                    }
+
+                    task
                 }
                 iced::mouse::Button::Right => iced::Task::none(),
                 iced::mouse::Button::Middle => iced::Task::done(PanZoomMessage::EndPan.into()),
@@ -195,7 +230,7 @@ impl NodeGraph {
 
     pub fn handle_keyboard_event(
         &mut self,
-        context: &mut Context,
+        _context: &mut Context,
         keyboard_event: &iced::keyboard::Event,
     ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
@@ -204,7 +239,7 @@ impl NodeGraph {
                     if let Ok(digits) = character.as_str().parse() {
                         iced::Task::done(
                             if let Some(node_id) = self.selected_nodes.iter().next()
-                                && let Ok(node_graph) = context.node_graph.lock()
+                                && let Ok(node_graph) = self.node_graph.lock()
                                 && let Some(output_id) = node_graph.nodes_first_output_id(node_id)
                             {
                                 NodeGraphMessage::ViewNodeOutput(digits, Some(*output_id))
@@ -279,13 +314,20 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         _cursor: iced::mouse::Cursor,
     ) -> Vec<iced::widget::canvas::Geometry<iced::Renderer>> {
         let mut frame = iced::widget::canvas::Frame::new(renderer, bounds.size());
+
+        let reciprocal_zoom: f32 = 1.0 / self.pan_zoom.zoom;
+        let input_path_radius: f32 = 5.0 * reciprocal_zoom;
+        let output_path_radius: f32 = 5.0 * reciprocal_zoom;
+        let text_size = iced::Pixels(16.0 * reciprocal_zoom);
+
         for (node_id, node_data) in self.state.iter() {
             let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.center);
             let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
+            let node_bottom_left: Vec2 =
+                self.pan_zoom.local_to_canvas(node_data.shape.bottom_left());
             let node = iced::widget::canvas::Path::rectangle(
                 iced::Point::new(node_top_left.x, node_top_left.y),
-                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y)
-                    / self.pan_zoom.zoom,
+                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y) * reciprocal_zoom,
             );
             frame.fill(
                 &node,
@@ -303,11 +345,72 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 content: node_data.label.clone(),
                 position: iced::Point::new(node_center.x, node_center.y),
                 color: iced::Color::WHITE,
-                size: iced::Pixels(16.0 / self.pan_zoom.zoom),
+                size: text_size,
                 align_x: iced::advanced::text::Alignment::Center,
                 align_y: iced::alignment::Vertical::Center,
                 ..iced::widget::canvas::Text::default()
             });
+
+            if let Ok(node_graph) = self.node_graph.lock()
+                && node_graph.node_id_is_valid(node_id)
+            {
+                // TODO fn handle_inputs()
+                {
+                    let connectable_input_count: usize =
+                        node_graph.scene_graph_input_count(&node_id);
+                    let step_size: f32 =
+                        node_data.shape.size.x * reciprocal_zoom / (connectable_input_count as f32);
+                    let half_step_size: f32 = 0.5 * step_size;
+                    for index in 0..connectable_input_count {
+                        let input = iced::widget::canvas::Path::circle(
+                            iced::Point::new(
+                                node_top_left.x + (index as f32) * step_size + half_step_size,
+                                node_top_left.y,
+                            ),
+                            input_path_radius,
+                        );
+
+                        // if node_graph.get_node_input(node_id, index).is_connected() {
+                        //     frame.stroke(
+                        //         &input,
+                        //         iced::widget::canvas::Stroke::default()
+                        //             .with_width(1.)
+                        //             .with_color(iced::Color::WHITE),
+                        //     );
+                        // } else {
+                        frame.fill(&input, iced::Color::WHITE);
+                        // }
+                    }
+                }
+
+                // TODO fn handle_outputs()
+                {
+                    let output_count: usize = node_graph[node_id].output_count();
+                    let step_size: f32 =
+                        node_data.shape.size.x * reciprocal_zoom / (output_count as f32);
+                    let half_step_size: f32 = 0.5 * step_size;
+                    for index in 0..output_count {
+                        let output = iced::widget::canvas::Path::circle(
+                            iced::Point::new(
+                                node_bottom_left.x + (index as f32) * step_size + half_step_size,
+                                node_bottom_left.y,
+                            ),
+                            output_path_radius,
+                        );
+
+                        // if node_graph.get_node_input(node_id, index).is_connected() {
+                        //     frame.stroke(
+                        //         &input,
+                        //         iced::widget::canvas::Stroke::default()
+                        //             .with_width(1.)
+                        //             .with_color(iced::Color::WHITE),
+                        //     );
+                        // } else {
+                        frame.fill(&output, iced::Color::WHITE);
+                        // }
+                    }
+                }
+            }
         }
 
         if self.selection_box.selecting {
@@ -336,6 +439,10 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         context: &mut Context,
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
+        if !Arc::ptr_eq(&self.node_graph, &context.node_graph) {
+            self.node_graph = Arc::clone(&context.node_graph);
+        }
+
         match message {
             NodeGraphMessage::CanvasEvent(event) => match event {
                 iced::Event::Mouse(mouse_event) => self.handle_mouse_event(context, &mouse_event),
@@ -371,7 +478,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 iced::Task::none()
             }
             NodeGraphMessage::CreateReadNode => {
-                let mut node_graph = context.node_graph.lock().unwrap();
+                let mut node_graph = self.node_graph.lock().unwrap();
 
                 let read_id: NodeId = node_graph.add_node(NodeData::TextureRead);
 
@@ -399,7 +506,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 iced::Task::none()
             }
             NodeGraphMessage::CreateLiveNode => {
-                let mut node_graph = context.node_graph.lock().unwrap();
+                let mut node_graph = self.node_graph.lock().unwrap();
 
                 let primary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
                 let secondary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);

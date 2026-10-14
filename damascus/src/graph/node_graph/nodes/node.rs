@@ -38,6 +38,14 @@ impl Node {
         }
     }
 
+    pub fn input_count(&self) -> usize {
+        self.input_ids.len()
+    }
+
+    pub fn output_count(&self) -> usize {
+        self.output_ids.len()
+    }
+
     pub fn evaluate(
         device: &wgpu::Device,
         queue: &wgpu::Queue,

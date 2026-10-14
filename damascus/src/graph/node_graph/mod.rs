@@ -653,6 +653,32 @@ impl NodeGraph {
             Err(error) => Err(error),
         }
     }
+
+    pub fn scene_graph_input_count(&self, node_id: &NodeId) -> usize {
+        let mut input_count: usize = 0;
+        for (_input_id, input) in self.node_inputs(node_id) {
+            match input.data {
+                InputData::SceneGraphId(_id) => {
+                    input_count += 1;
+                }
+                _ => {}
+            }
+        }
+        input_count
+    }
+
+    pub fn scene_graph_output_count(&self, node_id: &NodeId) -> usize {
+        let mut output_count: usize = 0;
+        for (_output_id, output) in self.node_outputs(node_id) {
+            match output.data {
+                OutputData::SceneGraphId(_id) => {
+                    output_count += 1;
+                }
+                _ => {}
+            }
+        }
+        output_count
+    }
 }
 
 impl Default for NodeGraph {

@@ -89,11 +89,10 @@ impl PanZoom {
         self.global_to_local_rectangle(self.bounds)
     }
 
-    pub fn global_to_local_rectangle(&self, bounds: Rectangle) -> Rectangle {
-        let mut local_bounds: Rectangle = bounds;
-        local_bounds.center = self.global_to_local(local_bounds.center);
-        local_bounds.size *= self.zoom;
-        local_bounds
+    pub fn global_to_local_rectangle(&self, mut bounds: Rectangle) -> Rectangle {
+        bounds.center = self.global_to_local(bounds.center);
+        bounds.size *= self.zoom;
+        bounds
     }
 
     pub fn cursor_in_bounds(&self) -> bool {

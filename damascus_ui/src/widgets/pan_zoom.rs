@@ -26,6 +26,7 @@ pub struct PanZoom {
     pub panning: bool,
     pub zoom: f32,
     pub pan: Vec2,
+    pub previous_cursor_position: Vec2,
     pub cursor_position: Vec2,
     pub bounds: Rectangle,
 }
@@ -36,6 +37,7 @@ impl Default for PanZoom {
             panning: false,
             zoom: 1.0,
             pan: Vec2::ZERO,
+            previous_cursor_position: Vec2::ZERO,
             cursor_position: Vec2::ZERO,
             bounds: Rectangle::default(),
         }
@@ -43,16 +45,36 @@ impl Default for PanZoom {
 }
 
 impl PanZoom {
+    pub fn local_cursor_velocity(&self) -> Vec2 {
+        self.local_cursor_position() - self.previous_local_cursor_position()
+    }
+
+    pub fn global_cursor_velocity(&self) -> Vec2 {
+        self.cursor_position - self.previous_cursor_position
+    }
+
     pub fn local_cursor_position(&self) -> Vec2 {
         self.canvas_to_local(self.canvas_cursor_position())
+    }
+
+    pub fn previous_local_cursor_position(&self) -> Vec2 {
+        self.canvas_to_local(self.previous_canvas_cursor_position())
     }
 
     pub fn canvas_cursor_position(&self) -> Vec2 {
         self.global_to_canvas(self.global_cursor_position())
     }
 
+    pub fn previous_canvas_cursor_position(&self) -> Vec2 {
+        self.global_to_canvas(self.previous_global_cursor_position())
+    }
+
     pub fn global_cursor_position(&self) -> Vec2 {
         self.cursor_position
+    }
+
+    pub fn previous_global_cursor_position(&self) -> Vec2 {
+        self.previous_cursor_position
     }
 
     pub fn global_to_canvas(&self, position: Vec2) -> Vec2 {
@@ -130,7 +152,7 @@ impl Widget<PanZoomMessage> for PanZoom {
                     ) * self.zoom;
                     self.pan += drag_delta;
                 }
-
+                self.previous_cursor_position = self.cursor_position;
                 self.cursor_position = cursor_position;
             }
             PanZoomMessage::Resize(bounds) => self.bounds = bounds,

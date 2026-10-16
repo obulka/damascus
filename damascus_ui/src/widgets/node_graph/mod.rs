@@ -78,6 +78,7 @@ pub struct NodeGraph {
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
     selected_nodes: HashSet<NodeId>,
+    dragging_nodes: bool,
 }
 
 impl Default for NodeGraph {
@@ -88,6 +89,7 @@ impl Default for NodeGraph {
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
             selected_nodes: HashSet::<NodeId>::default(),
+            dragging_nodes: false,
         }
     }
 }
@@ -135,21 +137,28 @@ impl NodeGraph {
         match mouse_event {
             iced::mouse::Event::CursorEntered => iced::Task::none(),
             iced::mouse::Event::CursorLeft => iced::Task::none(),
-            iced::mouse::Event::CursorMoved { position } => iced::Task::batch(
-                std::iter::once(
-                    // Update the PanZoom widget with the new global
-                    // cursor position
-                    self.pan_zoom
-                        .update(
-                            context,
-                            PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)),
-                        )
-                        .map(|pan_zoom_message| pan_zoom_message.into()),
-                )
-                .chain(if self.selection_box.selecting {
+            iced::mouse::Event::CursorMoved { position } => {
+                let mut task: iced::Task<NodeGraphMessage> = self
+                    .pan_zoom
+                    .update(
+                        context,
+                        PanZoomMessage::MoveCursor(Vec2::new(position.x, position.y)),
+                    )
+                    .map(|pan_zoom_message| pan_zoom_message.into());
+
+                if self.dragging_nodes {
+                    for (node_id, node_data) in self.state.iter_mut() {
+                        if !self.selected_nodes.contains(&node_id) {
+                            continue;
+                        }
+                        node_data.shape.center += self.pan_zoom.local_cursor_velocity();
+                    }
+                }
+
+                if self.selection_box.selecting {
                     // If a selection box is active, update its bounds
                     // with the new local cursor position
-                    let task: iced::Task<NodeGraphMessage> = self
+                    let selection_task: iced::Task<NodeGraphMessage> = self
                         .selection_box
                         .update(
                             context,
@@ -167,11 +176,11 @@ impl NodeGraph {
                     self.drag_select(context);
 
                     // Pass the selection box task back to the application
-                    Some(task).into_iter()
-                } else {
-                    None.into_iter()
-                }),
-            ),
+                    task = task.chain(selection_task)
+                }
+
+                task
+            }
             iced::mouse::Event::ButtonPressed(button) => match button {
                 iced::mouse::Button::Left => {
                     if self.pan_zoom.cursor_in_bounds() {
@@ -181,7 +190,8 @@ impl NodeGraph {
                         }
 
                         if self.click_select(context) {
-                            // TODO begin dragging of nodes
+                            self.dragging_nodes = true;
+
                             iced::Task::none()
                         } else {
                             // Initiate a box selection
@@ -209,6 +219,8 @@ impl NodeGraph {
             },
             iced::mouse::Event::ButtonReleased(button) => match button {
                 iced::mouse::Button::Left => {
+                    self.dragging_nodes = false;
+
                     // End the drag selection, if there was minimal drag
                     // handle the event as a click
                     let task: iced::Task<NodeGraphMessage> = self

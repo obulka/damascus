@@ -17,7 +17,11 @@ use crate::{
     widgets::{
         Widget,
         node_graph::NodeGraphMessage,
-        panel::PanelMessage,
+        panel::{
+            PanelMessage,
+            pane::PaneMessage,
+            tabs::{Tab, TabMessage},
+        },
         style::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},
@@ -26,7 +30,7 @@ use crate::{
             ToolbarMessage,
             file::{FileMenuOptions, FileMessage},
         },
-        viewport::ViewportMessage,
+        viewport::{ViewportId, ViewportMessage, Viewports, Views},
     },
     windows::{
         window::{Window, WindowMessage},
@@ -116,6 +120,7 @@ pub struct Context {
     working_file_hash: Option<Key<OrderedFloatPolicy>>,
     pub window_manager_context: WindowManagerContext,
     pub node_graph: Arc<Mutex<NodeGraph>>,
+    pub viewports: Arc<Mutex<Viewports>>,
     #[serde(skip)]
     pub keyboard_modifiers: iced::keyboard::Modifiers,
 }
@@ -128,6 +133,7 @@ impl Default for Context {
             working_file_hash: None,
             window_manager_context: WindowManagerContext::default(),
             node_graph: Arc::new(Mutex::new(NodeGraph::new())),
+            viewports: Arc::new(Mutex::new(Viewports::default())),
             keyboard_modifiers: iced::keyboard::Modifiers::NONE,
         }
     }
@@ -227,6 +233,114 @@ impl Damascus {
         iced::Task::batch(
             std::iter::once(match message {
                 Message::IcedEvent(event) => self.handle_iced_event(event),
+                Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
+                    _window,
+                    PanelMessage::Pane(
+                        _pane,
+                        PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewNodeOutput(
+                            viewport_id,
+                            view_index,
+                            node_output_id,
+                        ))),
+                    ),
+                ))) => {
+                    if let Ok(mut viewports) = self.context.viewports.lock() {
+                        let mut viewport_id: Option<ViewportId> = viewport_id;
+                        if viewport_id.is_none() {
+                            for (_window_id, window) in self.window_manager.windows.iter_mut() {
+                                for (_, pane) in window.panel.panes.iter_mut() {
+                                    if pane.active_tab < pane.tabs.len()
+                                        && let Tab::Viewport(ref mut viewport) =
+                                            pane.tabs[pane.active_tab]
+                                    {
+                                        viewport_id = *viewport.id();
+
+                                        if viewport_id.is_some() {
+                                            break;
+                                        }
+
+                                        let mut views = Views::default();
+                                        if let Some(output_id) = node_output_id {
+                                            views.views.insert(view_index, output_id);
+                                        }
+                                        views.active_view = Some(view_index);
+
+                                        let id: ViewportId = viewports.insert(views);
+                                        viewport.set_id(id);
+                                        viewport_id = Some(id);
+
+                                        break;
+                                    }
+                                }
+                                if viewport_id.is_some() {
+                                    break;
+                                }
+                            }
+                        }
+                        if viewport_id.is_none() {
+                            for (_window_id, window) in self.window_manager.windows.iter_mut() {
+                                for (_, pane) in window.panel.panes.iter_mut() {
+                                    for tab in pane.tabs.iter_mut() {
+                                        match tab {
+                                            Tab::Viewport(viewport) => {
+                                                viewport_id = *viewport.id();
+
+                                                if viewport_id.is_some() {
+                                                    break;
+                                                }
+
+                                                let mut views = Views::default();
+                                                if let Some(output_id) = node_output_id {
+                                                    views.views.insert(view_index, output_id);
+                                                }
+                                                views.active_view = Some(view_index);
+
+                                                let id: ViewportId = viewports.insert(views);
+                                                viewport.set_id(id);
+                                                viewport_id = Some(id);
+
+                                                break;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                    if viewport_id.is_some() {
+                                        break;
+                                    }
+                                }
+                                if viewport_id.is_some() {
+                                    break;
+                                }
+                            }
+                        }
+
+                        if let Some(id) = viewport_id
+                            && let Some(views) = viewports.get_mut(id)
+                        {
+                            if let Some(output_id) = node_output_id {
+                                views.views.insert(view_index, output_id);
+                            }
+                            views.active_view = Some(view_index);
+                        }
+                        if let Some((_viewport_id, views)) = viewports.iter_mut().next() {
+                            if let Some(output_id) = node_output_id {
+                                views.views.insert(view_index, output_id);
+                            }
+                            views.active_view = Some(view_index);
+                        } else {
+                            let mut views = Views::default();
+                            if let Some(output_id) = node_output_id {
+                                views.views.insert(view_index, output_id);
+                            }
+                            views.active_view = Some(view_index);
+
+                            let _viewport_id: ViewportId = viewports.insert(views);
+
+                            // TODO spawn window with this viewport
+                        }
+                    }
+                    iced::Task::none()
+                }
                 Message::WindowManager(window_manager_message) => self
                     .window_manager
                     .update(&mut self.context, window_manager_message)

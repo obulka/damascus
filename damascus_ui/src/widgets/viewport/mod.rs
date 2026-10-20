@@ -10,6 +10,7 @@ use std::{
 
 use glam::{UVec2, Vec2};
 use iced;
+use slotmap;
 use wgpu;
 
 use damascus::{
@@ -26,11 +27,18 @@ use super::{
     pan_zoom::{PanZoom, PanZoomMessage},
 };
 
-pub type ViewMap = HashMap<u32, OutputId>;
+slotmap::new_key_type! { pub struct ViewportId; }
+
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct Views {
+    pub active_view: Option<u32>,
+    pub views: HashMap<u32, OutputId>,
+}
+
+pub type Viewports = slotmap::SlotMap<ViewportId, Views>;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
-    ViewNodeOutput(u32, Option<OutputId>),
     PanZoom(PanZoomMessage),
     Resize(Vec2),
     GainChanged(f32),
@@ -208,8 +216,8 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Viewport {
-    active_view: Option<u32>,
-    view_map: ViewMap,
+    id: Option<ViewportId>,
+    viewports: Arc<Mutex<Viewports>>,
     viewport_primitive: ViewportPrimitive,
     pan_zoom: PanZoom,
 }
@@ -217,8 +225,8 @@ pub struct Viewport {
 impl Default for Viewport {
     fn default() -> Self {
         Self {
-            active_view: None,
-            view_map: ViewMap::default(),
+            id: None,
+            viewports: Arc::default(),
             viewport_primitive: ViewportPrimitive::default(),
             pan_zoom: PanZoom::default(),
         }
@@ -226,9 +234,21 @@ impl Default for Viewport {
 }
 
 impl Viewport {
-    pub fn active_output_id(&self) -> Option<&OutputId> {
-        if let Some(active_view) = self.active_view {
-            self.view_map.get(&active_view)
+    pub fn id(&self) -> &Option<ViewportId> {
+        &self.id
+    }
+
+    pub fn set_id(&mut self, id: ViewportId) {
+        self.id = Some(id);
+    }
+
+    pub fn active_output_id(&self) -> Option<OutputId> {
+        if let Some(id) = self.id
+            && let Ok(viewports) = self.viewports.lock()
+            && let Some(viewport) = viewports.get(id)
+            && let Some(ref active_view) = viewport.active_view
+        {
+            viewport.views.get(active_view).copied()
         } else {
             None
         }
@@ -325,7 +345,7 @@ impl iced::widget::shader::Program<ViewportMessage> for Viewport {
         _bounds: iced::Rectangle,
     ) -> Self::Primitive {
         let mut viewport_primitive: ViewportPrimitive = self.viewport_primitive.clone();
-        viewport_primitive.active_output_id = self.active_output_id().copied();
+        viewport_primitive.active_output_id = self.active_output_id();
         viewport_primitive.pan = self.pan_zoom.pan;
         viewport_primitive.zoom = self.pan_zoom.zoom;
         viewport_primitive
@@ -341,6 +361,9 @@ impl Widget<ViewportMessage> for Viewport {
         if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
         }
+        if !Arc::ptr_eq(&self.viewports, &context.viewports) {
+            self.viewports = Arc::clone(&context.viewports);
+        }
 
         match message {
             ViewportMessage::ProgramEvent(event) => match event {
@@ -354,15 +377,6 @@ impl Widget<ViewportMessage> for Viewport {
                 }
                 _ => iced::Task::none(),
             },
-            ViewportMessage::ViewNodeOutput(viewer_id, output_id) => {
-                if let Some(output) = output_id {
-                    self.view_map.insert(viewer_id, output);
-                }
-
-                self.active_view = Some(viewer_id);
-
-                iced::Task::none()
-            }
             ViewportMessage::PanZoom(pan_zoom_message) => self
                 .pan_zoom
                 .update(context, pan_zoom_message)

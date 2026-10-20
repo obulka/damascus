@@ -17,10 +17,8 @@ use crate::{
     icons::Icons,
     widgets::{
         Widget,
-        node_graph::NodeGraphMessage,
         style::Style,
         tab_bar::{TabBar, TabLabel},
-        viewport::ViewportMessage,
     },
 };
 
@@ -28,7 +26,7 @@ pub mod pane;
 pub mod tabs;
 
 use pane::{Pane, PaneMessage};
-use tabs::{Tab, TabMessage, Tabs};
+use tabs::{TabMessage, Tabs};
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -247,9 +245,12 @@ impl Panel {
 
 impl Widget<PanelMessage> for Panel {
     fn new() -> Self {
-        let (panes, _) = iced::widget::pane_grid::State::new(Pane::default());
+        let (panes, pane) = iced::widget::pane_grid::State::new(Pane::default());
 
-        Self { focus: None, panes }
+        Self {
+            focus: Some(pane),
+            panes,
+        }
     }
 
     fn update(&mut self, context: &mut Context, message: PanelMessage) -> iced::Task<PanelMessage> {
@@ -326,41 +327,19 @@ impl Widget<PanelMessage> for Panel {
                 iced::Task::none()
             }
             PanelMessage::Detach(pane) => {
-                if let Some((_, sibling)) = self.panes.close(pane) {
-                    self.focus = Some(sibling);
+                self.panes.close(pane);
+                if let Some(focused_pane) = self.focus
+                    && focused_pane == pane
+                {
+                    self.focus = None;
                 }
-
                 iced::Task::none()
             }
             PanelMessage::Pane(pane, pane_message) => {
-                let mut final_pane = pane;
-                let mut final_message = pane_message;
-
-                match final_message {
-                    PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewNodeOutput(
-                        viewer_id,
-                        output_id,
-                    ))) => {
-                        for viewport_pane in self.panes.iter() {
-                            for tab in &viewport_pane.1.tabs {
-                                match tab {
-                                    Tab::Viewport(_) => {
-                                        final_pane = *viewport_pane.0;
-                                        final_message = PaneMessage::Tab(TabMessage::Viewport(
-                                            ViewportMessage::ViewNodeOutput(viewer_id, output_id),
-                                        ))
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-                if let Some(pane_widget) = self.panes.get_mut(final_pane) {
+                if let Some(pane_widget) = self.panes.get_mut(pane) {
                     pane_widget
-                        .update(context, final_message)
-                        .map(move |pane_message| PanelMessage::Pane(final_pane, pane_message))
+                        .update(context, pane_message)
+                        .map(move |pane_message| PanelMessage::Pane(pane, pane_message))
                 } else {
                     iced::Task::none()
                 }

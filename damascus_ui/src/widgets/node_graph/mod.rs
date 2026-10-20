@@ -26,7 +26,10 @@ use damascus::{
     },
 };
 
-use crate::{app::Context, widgets::Style};
+use crate::{
+    app::Context,
+    widgets::{Style, viewport::ViewportId},
+};
 
 use super::{
     Widget,
@@ -46,7 +49,7 @@ pub enum NodeGraphMessage {
     SelectionBox(SelectionBoxMessage),
     ClearSelection,
     UpdateSelection,
-    ViewNodeOutput(u32, Option<OutputId>),
+    ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
     #[serde(skip)]
     CanvasEvent(iced::Event),
     #[default]
@@ -254,9 +257,9 @@ impl NodeGraph {
                                 && let Ok(node_graph) = self.node_graph.lock()
                                 && let Some(output_id) = node_graph.nodes_first_output_id(node_id)
                             {
-                                NodeGraphMessage::ViewNodeOutput(digits, Some(*output_id))
+                                NodeGraphMessage::ViewNodeOutput(None, digits, Some(*output_id))
                             } else {
-                                NodeGraphMessage::ViewNodeOutput(digits, None)
+                                NodeGraphMessage::ViewNodeOutput(None, digits, None)
                             },
                         )
                     } else {

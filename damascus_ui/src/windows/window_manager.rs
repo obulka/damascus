@@ -284,17 +284,39 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         };
 
                         let task: iced::Task<WindowMessage> = match panel_message {
-                            PanelMessage::Detach(_) => {
-                                let mut window: Option<Window> = self.windows.get(&id).cloned();
+                            PanelMessage::Detach(detached_pane) => {
+                                // Get the window that we will detach a pane from
+                                let window_to_detach_from: Option<&Window> = self.windows.get(&id);
 
-                                if let Some(ref mut window) = window {
-                                    if let Some(ref mut position) = window.position {
+                                // Clone it so that the new window matches the style
+                                let mut detached_window: Option<Window> =
+                                    window_to_detach_from.cloned();
+
+                                if let Some(ref mut detached_window) = detached_window {
+                                    // Offset the new window from the old
+                                    // TODO place it at the cursor position or something
+                                    if let Some(ref mut position) = detached_window.position {
                                         *position += glam::Vec2::splat(20.0);
                                     }
-                                    window.panel = Panel::default();
+
+                                    // Reset the panel to default
+                                    detached_window.panel = Panel::default();
+
+                                    // Put the detached pane state into the new window's
+                                    // pane
+                                    if let Some(pane) = detached_window.panel.focus
+                                        && let Some(state) =
+                                            detached_window.panel.panes.get_mut(pane)
+                                        && let Some(window_to_detach_from) = window_to_detach_from
+                                        && let Some(detached_state) =
+                                            window_to_detach_from.panel.panes.get(detached_pane)
+                                    {
+                                        *state = detached_state.clone();
+                                    }
                                 }
 
-                                iced::Task::done(WindowMessage::Open(window).into())
+                                // Trigger the new window to open
+                                iced::Task::done(WindowMessage::Open(detached_window).into())
                             }
                             _ => iced::Task::none(),
                         };

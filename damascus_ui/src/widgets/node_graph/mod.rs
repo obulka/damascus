@@ -9,6 +9,7 @@ use std::{
 };
 
 use glam::{UVec2, Vec2, Vec3};
+use slotmap::SparseSecondaryMap;
 
 use damascus::{
     geometry::{primitives::Shapes, rectangle::Rectangle},
@@ -28,7 +29,10 @@ use damascus::{
 
 use crate::{
     app::Context,
-    widgets::{Style, viewport::ViewportId},
+    widgets::{
+        Style,
+        viewport::{ViewportId, Viewports},
+    },
 };
 
 use super::{
@@ -38,7 +42,14 @@ use super::{
 };
 
 pub mod node;
-use node::{NodeGraphUIState, node_data::NodeData as NodeUIData};
+use node::NodeContext;
+
+// This is the data of which a single instance will be shared among widgets
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct NodeGraphContext {
+    pub context: SparseSecondaryMap<NodeId, NodeContext>,
+    pub graph: Graph,
+}
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
@@ -76,23 +87,27 @@ impl From<NodeGraphMessage> for iced::Task<NodeGraphMessage> {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct NodeGraph {
-    node_graph: Arc<Mutex<Graph>>,
-    state: NodeGraphUIState,
+    context: Arc<Mutex<NodeGraphContext>>,
+    viewport_context: Arc<Mutex<Viewports>>,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
     selected_nodes: HashSet<NodeId>,
     dragging_nodes: bool,
+    selected_viewports: HashSet<ViewportId>,
+    active_viewport: Option<ViewportId>,
 }
 
 impl Default for NodeGraph {
     fn default() -> Self {
         Self {
-            node_graph: Arc::default(),
-            state: NodeGraphUIState::default(),
+            context: Arc::default(),
+            viewport_context: Arc::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
             selected_nodes: HashSet::<NodeId>::default(),
             dragging_nodes: false,
+            selected_viewports: HashSet::<ViewportId>::default(),
+            active_viewport: None,
         }
     }
 }
@@ -100,11 +115,15 @@ impl Default for NodeGraph {
 impl NodeGraph {
     pub fn clear_selection(&mut self) {
         self.selected_nodes.clear();
+        self.selected_viewports.clear();
     }
 
-    pub fn drag_select(&mut self, context: &mut Context) {
-        for (node_id, node_data) in self.state.iter() {
-            if self.selection_box.contains(node_data.shape.center) {
+    pub fn drag_select_nodes(&mut self, context: &mut Context) {
+        let Ok(node_graph) = context.node_graph.lock() else {
+            return;
+        };
+        for (node_id, node_context) in node_graph.context.iter() {
+            if self.selection_box.contains(node_context.shape.center) {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                     self.selected_nodes.remove(&node_id);
                 } else {
@@ -114,12 +133,40 @@ impl NodeGraph {
         }
     }
 
-    pub fn click_select(&mut self, context: &mut Context) -> bool {
+    pub fn drag_select_viewports(&mut self, context: &mut Context) {
+        let Ok(viewports) = context.viewports.lock() else {
+            return;
+        };
+        for (viewport_id, viewport_context) in viewports.iter() {
+            if self
+                .selection_box
+                .contains(viewport_context.node_context.shape.center)
+            {
+                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                    self.selected_viewports.remove(&viewport_id);
+                } else {
+                    self.selected_viewports.insert(viewport_id);
+                    self.active_viewport = Some(viewport_id);
+                }
+            }
+        }
+    }
+
+    pub fn drag_select(&mut self, context: &mut Context) {
+        self.drag_select_nodes(context);
+        self.drag_select_viewports(context);
+    }
+
+    pub fn click_select_nodes(&mut self, context: &mut Context) -> bool {
+        let Ok(node_graph) = context.node_graph.lock() else {
+            return false;
+        };
+
         let mut any_selected = false;
 
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
-        for (node_id, node_data) in self.state.iter() {
-            if node_data.shape.contains(cursor_position) {
+        for (node_id, node_context) in node_graph.context.iter() {
+            if node_context.shape.contains(cursor_position) {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                     self.selected_nodes.remove(&node_id);
                 } else {
@@ -130,6 +177,68 @@ impl NodeGraph {
         }
 
         any_selected
+    }
+
+    pub fn click_select_viewports(&mut self, context: &mut Context) -> bool {
+        let Ok(viewports) = context.viewports.lock() else {
+            return false;
+        };
+
+        let mut any_selected = false;
+
+        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
+        for (viewport_id, viewport_context) in viewports.iter() {
+            if viewport_context
+                .node_context
+                .shape
+                .contains(cursor_position)
+            {
+                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                    self.selected_viewports.remove(&viewport_id);
+                } else {
+                    self.selected_viewports.insert(viewport_id);
+                    self.active_viewport = Some(viewport_id);
+                    any_selected = true;
+                }
+            }
+        }
+
+        any_selected
+    }
+
+    pub fn click_select(&mut self, context: &mut Context) -> bool {
+        self.click_select_nodes(context) || self.click_select_viewports(context)
+    }
+
+    pub fn drag_nodes(&mut self, context: &mut Context) {
+        if self.dragging_nodes
+            && let Ok(mut node_graph) = context.node_graph.lock()
+        {
+            for (node_id, node_context) in node_graph.context.iter_mut() {
+                if !self.selected_nodes.contains(&node_id) {
+                    continue;
+                }
+                node_context.shape.center += self.pan_zoom.local_cursor_velocity();
+            }
+        }
+    }
+
+    pub fn drag_viewports(&mut self, context: &mut Context) {
+        if self.dragging_nodes
+            && let Ok(mut viewports) = context.viewports.lock()
+        {
+            for (viewport_id, viewport_context) in viewports.iter_mut() {
+                if !self.selected_viewports.contains(&viewport_id) {
+                    continue;
+                }
+                viewport_context.node_context.shape.center += self.pan_zoom.local_cursor_velocity();
+            }
+        }
+    }
+
+    pub fn drag(&mut self, context: &mut Context) {
+        self.drag_nodes(context);
+        self.drag_viewports(context);
     }
 
     pub fn handle_mouse_event(
@@ -149,14 +258,7 @@ impl NodeGraph {
                     )
                     .map(|pan_zoom_message| pan_zoom_message.into());
 
-                if self.dragging_nodes {
-                    for (node_id, node_data) in self.state.iter_mut() {
-                        if !self.selected_nodes.contains(&node_id) {
-                            continue;
-                        }
-                        node_data.shape.center += self.pan_zoom.local_cursor_velocity();
-                    }
-                }
+                self.drag(context);
 
                 if self.selection_box.selecting {
                     // If a selection box is active, update its bounds
@@ -245,21 +347,32 @@ impl NodeGraph {
 
     pub fn handle_keyboard_event(
         &mut self,
-        _context: &mut Context,
+        context: &mut Context,
         keyboard_event: &iced::keyboard::Event,
     ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
             iced::keyboard::Event::KeyPressed { key, .. } => match key {
                 iced::keyboard::Key::Character(character) => {
                     if let Ok(digits) = character.as_str().parse() {
+                        if self.active_viewport.is_none()
+                            && let Ok(viewports) = context.viewports.lock()
+                            && let Some(id) = viewports.keys().next()
+                        {
+                            self.active_viewport = Some(id);
+                        }
                         iced::Task::done(
                             if let Some(node_id) = self.selected_nodes.iter().next()
-                                && let Ok(node_graph) = self.node_graph.lock()
-                                && let Some(output_id) = node_graph.nodes_first_output_id(node_id)
+                                && let Ok(node_graph) = self.context.lock()
+                                && let Some(output_id) =
+                                    node_graph.graph.nodes_first_output_id(node_id)
                             {
-                                NodeGraphMessage::ViewNodeOutput(None, digits, Some(*output_id))
+                                NodeGraphMessage::ViewNodeOutput(
+                                    self.active_viewport,
+                                    digits,
+                                    Some(*output_id),
+                                )
                             } else {
-                                NodeGraphMessage::ViewNodeOutput(None, digits, None)
+                                NodeGraphMessage::ViewNodeOutput(self.active_viewport, digits, None)
                             },
                         )
                     } else {
@@ -335,96 +448,148 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         let output_path_radius: f32 = 5.0 * reciprocal_zoom;
         let text_size = iced::Pixels(16.0 * reciprocal_zoom);
 
-        for (node_id, node_data) in self.state.iter() {
-            let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.center);
-            let node_top_left: Vec2 = self.pan_zoom.local_to_canvas(node_data.shape.top_left());
-            let node_bottom_left: Vec2 =
-                self.pan_zoom.local_to_canvas(node_data.shape.bottom_left());
-            let node = iced::widget::canvas::Path::rectangle(
-                iced::Point::new(node_top_left.x, node_top_left.y),
-                iced::Size::new(node_data.shape.size.x, node_data.shape.size.y) * reciprocal_zoom,
-            );
-            frame.fill(
-                &node,
-                iced::Color::from_rgb(node_data.colour.x, node_data.colour.y, node_data.colour.z),
-            );
-            if self.selected_nodes.contains(&node_id) {
-                frame.stroke(
-                    &node,
-                    iced::widget::canvas::Stroke::default()
-                        .with_width(1.)
-                        .with_color(iced::Color::WHITE),
+        if let Ok(node_graph) = self.context.lock() {
+            for (node_id, node_context) in node_graph.context.iter() {
+                let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_context.shape.center);
+                let node_top_left: Vec2 =
+                    self.pan_zoom.local_to_canvas(node_context.shape.top_left());
+                let node_bottom_left: Vec2 = self
+                    .pan_zoom
+                    .local_to_canvas(node_context.shape.bottom_left());
+                let node = iced::widget::canvas::Path::rectangle(
+                    iced::Point::new(node_top_left.x, node_top_left.y),
+                    iced::Size::new(node_context.shape.size.x, node_context.shape.size.y)
+                        * reciprocal_zoom,
                 );
+                frame.fill(
+                    &node,
+                    iced::Color::from_rgb(
+                        node_context.colour.x,
+                        node_context.colour.y,
+                        node_context.colour.z,
+                    ),
+                );
+                if self.selected_nodes.contains(&node_id) {
+                    frame.stroke(
+                        &node,
+                        iced::widget::canvas::Stroke::default()
+                            .with_width(1.)
+                            .with_color(iced::Color::WHITE),
+                    );
+                }
+                frame.fill_text(iced::widget::canvas::Text {
+                    content: node_context.label.clone(),
+                    position: iced::Point::new(node_center.x, node_center.y),
+                    color: iced::Color::WHITE,
+                    size: text_size,
+                    align_x: iced::advanced::text::Alignment::Center,
+                    align_y: iced::alignment::Vertical::Center,
+                    ..iced::widget::canvas::Text::default()
+                });
+
+                if node_graph.graph.node_id_is_valid(node_id) {
+                    // TODO fn handle_inputs()
+                    {
+                        let connectable_input_count: usize =
+                            node_graph.graph.scene_graph_input_count(&node_id);
+                        let step_size: f32 = node_context.shape.size.x * reciprocal_zoom
+                            / (connectable_input_count as f32);
+                        let half_step_size: f32 = 0.5 * step_size;
+                        for index in 0..connectable_input_count {
+                            let input = iced::widget::canvas::Path::circle(
+                                iced::Point::new(
+                                    node_top_left.x + (index as f32) * step_size + half_step_size,
+                                    node_top_left.y,
+                                ),
+                                input_path_radius,
+                            );
+
+                            // if node_graph.graph.get_node_input(node_id, index).is_connected() {
+                            //     frame.stroke(
+                            //         &input,
+                            //         iced::widget::canvas::Stroke::default()
+                            //             .with_width(1.)
+                            //             .with_color(iced::Color::WHITE),
+                            //     );
+                            // } else {
+                            frame.fill(&input, iced::Color::WHITE);
+                            // }
+                        }
+                    }
+
+                    // TODO fn handle_outputs()
+                    {
+                        let output_count: usize = node_graph.graph[node_id].output_count();
+                        let step_size: f32 =
+                            node_context.shape.size.x * reciprocal_zoom / (output_count as f32);
+                        let half_step_size: f32 = 0.5 * step_size;
+                        for index in 0..output_count {
+                            let output = iced::widget::canvas::Path::circle(
+                                iced::Point::new(
+                                    node_bottom_left.x
+                                        + (index as f32) * step_size
+                                        + half_step_size,
+                                    node_bottom_left.y,
+                                ),
+                                output_path_radius,
+                            );
+
+                            // if node_graph.graph.get_node_input(node_id, index).is_connected() {
+                            //     frame.stroke(
+                            //         &input,
+                            //         iced::widget::canvas::Stroke::default()
+                            //             .with_width(1.)
+                            //             .with_color(iced::Color::WHITE),
+                            //     );
+                            // } else {
+                            frame.fill(&output, iced::Color::WHITE);
+                            // }
+                        }
+                    }
+                }
             }
-            frame.fill_text(iced::widget::canvas::Text {
-                content: node_data.label.clone(),
-                position: iced::Point::new(node_center.x, node_center.y),
-                color: iced::Color::WHITE,
-                size: text_size,
-                align_x: iced::advanced::text::Alignment::Center,
-                align_y: iced::alignment::Vertical::Center,
-                ..iced::widget::canvas::Text::default()
-            });
+        }
 
-            if let Ok(node_graph) = self.node_graph.lock()
-                && node_graph.node_id_is_valid(node_id)
-            {
-                // TODO fn handle_inputs()
-                {
-                    let connectable_input_count: usize =
-                        node_graph.scene_graph_input_count(&node_id);
-                    let step_size: f32 =
-                        node_data.shape.size.x * reciprocal_zoom / (connectable_input_count as f32);
-                    let half_step_size: f32 = 0.5 * step_size;
-                    for index in 0..connectable_input_count {
-                        let input = iced::widget::canvas::Path::circle(
-                            iced::Point::new(
-                                node_top_left.x + (index as f32) * step_size + half_step_size,
-                                node_top_left.y,
-                            ),
-                            input_path_radius,
-                        );
-
-                        // if node_graph.get_node_input(node_id, index).is_connected() {
-                        //     frame.stroke(
-                        //         &input,
-                        //         iced::widget::canvas::Stroke::default()
-                        //             .with_width(1.)
-                        //             .with_color(iced::Color::WHITE),
-                        //     );
-                        // } else {
-                        frame.fill(&input, iced::Color::WHITE);
-                        // }
-                    }
+        if let Ok(viewports) = self.viewport_context.lock() {
+            for (viewport_id, viewport_context) in viewports.iter() {
+                let node_center: Vec2 = self
+                    .pan_zoom
+                    .local_to_canvas(viewport_context.node_context.shape.center);
+                let node_top_left: Vec2 = self
+                    .pan_zoom
+                    .local_to_canvas(viewport_context.node_context.shape.top_left());
+                let node = iced::widget::canvas::Path::rectangle(
+                    iced::Point::new(node_top_left.x, node_top_left.y),
+                    iced::Size::new(
+                        viewport_context.node_context.shape.size.x,
+                        viewport_context.node_context.shape.size.y,
+                    ) * reciprocal_zoom,
+                );
+                frame.fill(
+                    &node,
+                    iced::Color::from_rgb(
+                        viewport_context.node_context.colour.x,
+                        viewport_context.node_context.colour.y,
+                        viewport_context.node_context.colour.z,
+                    ),
+                );
+                if self.selected_viewports.contains(&viewport_id) {
+                    frame.stroke(
+                        &node,
+                        iced::widget::canvas::Stroke::default()
+                            .with_width(1.)
+                            .with_color(iced::Color::WHITE),
+                    );
                 }
-
-                // TODO fn handle_outputs()
-                {
-                    let output_count: usize = node_graph[node_id].output_count();
-                    let step_size: f32 =
-                        node_data.shape.size.x * reciprocal_zoom / (output_count as f32);
-                    let half_step_size: f32 = 0.5 * step_size;
-                    for index in 0..output_count {
-                        let output = iced::widget::canvas::Path::circle(
-                            iced::Point::new(
-                                node_bottom_left.x + (index as f32) * step_size + half_step_size,
-                                node_bottom_left.y,
-                            ),
-                            output_path_radius,
-                        );
-
-                        // if node_graph.get_node_input(node_id, index).is_connected() {
-                        //     frame.stroke(
-                        //         &input,
-                        //         iced::widget::canvas::Stroke::default()
-                        //             .with_width(1.)
-                        //             .with_color(iced::Color::WHITE),
-                        //     );
-                        // } else {
-                        frame.fill(&output, iced::Color::WHITE);
-                        // }
-                    }
-                }
+                frame.fill_text(iced::widget::canvas::Text {
+                    content: viewport_context.node_context.label.clone(),
+                    position: iced::Point::new(node_center.x, node_center.y),
+                    color: iced::Color::WHITE,
+                    size: text_size,
+                    align_x: iced::advanced::text::Alignment::Center,
+                    align_y: iced::alignment::Vertical::Center,
+                    ..iced::widget::canvas::Text::default()
+                });
             }
         }
 
@@ -454,8 +619,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         context: &mut Context,
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
-        if !Arc::ptr_eq(&self.node_graph, &context.node_graph) {
-            self.node_graph = Arc::clone(&context.node_graph);
+        if !Arc::ptr_eq(&self.context, &context.node_graph) {
+            self.context = Arc::clone(&context.node_graph);
+        }
+        if !Arc::ptr_eq(&self.viewport_context, &context.viewports) {
+            self.viewport_context = Arc::clone(&context.viewports);
         }
 
         match message {
@@ -484,8 +652,12 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 iced::Task::none()
             }
             NodeGraphMessage::UpdateSelection => {
-                for (node_id, node_data) in self.state.iter() {
-                    if self.selection_box.contains(node_data.shape.center) {
+                let Ok(node_graph) = self.context.lock() else {
+                    return iced::Task::none();
+                };
+
+                for (node_id, node_context) in node_graph.context.iter() {
+                    if self.selection_box.contains(node_context.shape.center) {
                         self.selected_nodes.insert(node_id);
                     }
                 }
@@ -493,11 +665,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 iced::Task::none()
             }
             NodeGraphMessage::CreateReadNode => {
-                let mut node_graph = self.node_graph.lock().unwrap();
+                let Ok(mut node_graph) = self.context.lock() else {
+                    return iced::Task::none();
+                };
 
-                let read_id: NodeId = node_graph.add_node(NodeData::TextureRead);
+                let read_id: NodeId = node_graph.graph.add_node(NodeData::TextureRead);
 
-                let Ok(_input_id) = node_graph.set_input_data(
+                let Ok(_input_id) = node_graph.graph.set_input_data(
                     &read_id,
                     &TextureReadInputData::Filepath,
                     InputData::Filepath(
@@ -507,68 +681,76 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                     panic!("read could not set filepath.");
                 };
 
-                self.state.insert(
+                node_graph.context.insert(
                     read_id,
-                    NodeUIData::new(format!("Read{}", read_id))
-                        .shape(
-                            Rectangle::default()
-                                .center(self.pan_zoom.local_cursor_position())
-                                .size(Vec2::new(100.0, 33.0)),
-                        )
+                    NodeContext::new(format!("Read{}", read_id))
+                        .position(self.pan_zoom.local_cursor_position())
                         .colour(context.default_style.default_node_colour),
                 );
 
                 iced::Task::none()
             }
             NodeGraphMessage::CreateLiveNode => {
-                let mut node_graph = self.node_graph.lock().unwrap();
+                let Ok(mut node_graph) = self.context.lock() else {
+                    return iced::Task::none();
+                };
 
-                let primary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-                let secondary_camera_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-                let camera_id: NodeId = node_graph.add_node(NodeData::Camera);
+                let primary_camera_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
+                let secondary_camera_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
+                let camera_id: NodeId = node_graph.graph.add_node(NodeData::Camera);
 
-                let light_id: NodeId = node_graph.add_node(NodeData::Light);
+                let light_id: NodeId = node_graph.graph.add_node(NodeData::Light);
 
-                let primitive_id: NodeId = node_graph.add_node(NodeData::Primitive);
-                let primitive_axis_id: NodeId = node_graph.add_node(NodeData::Axis);
-                let primitive_material_id: NodeId = node_graph.add_node(NodeData::Material);
+                let primitive_id: NodeId = node_graph.graph.add_node(NodeData::Primitive);
+                let primitive_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
+                let primitive_material_id: NodeId = node_graph.graph.add_node(NodeData::Material);
 
-                let scene_id: NodeId = node_graph.add_node(NodeData::Scene);
+                let scene_id: NodeId = node_graph.graph.add_node(NodeData::Scene);
 
-                let ray_marcher_id: NodeId = node_graph.add_node(NodeData::RayMarcher);
+                let ray_marcher_id: NodeId = node_graph.graph.add_node(NodeData::RayMarcher);
 
                 // Connect camera to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
 
                 let secondary_camera_axis_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&secondary_camera_axis_id, &AxisInputData::Axis)
                     .unwrap();
-                node_graph.connect_node_to_input(
+                node_graph.graph.connect_node_to_input(
                     &primary_camera_axis_id,
                     &secondary_camera_axis_input_id,
                 );
 
                 let camera_axis_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&camera_id, &CameraInputData::Axis)
                     .unwrap();
 
-                node_graph.connect_node_to_input(&secondary_camera_axis_id, &camera_axis_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&secondary_camera_axis_id, &camera_axis_input_id);
 
                 let scene_render_camera_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&scene_id, &SceneInputData::RenderCamera)
                     .unwrap();
 
-                node_graph.connect_node_to_input(&camera_id, &scene_render_camera_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&camera_id, &scene_render_camera_input_id);
 
                 // Connect light to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
                 // |           |     /light
 
                 let scene_light_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&scene_id, &SceneInputData::Scene)
                     .unwrap();
 
-                node_graph.connect_node_to_input(&light_id, &scene_light_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&light_id, &scene_light_input_id);
 
                 // Connect primitives to scene
                 // /ray_marcher/scene/camera/secondary_axis/primary_axis
@@ -581,41 +763,52 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 // |           |     |          /material1
 
                 let primitive_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&primitive_id, &PrimitiveInputData::Axis)
                     .unwrap();
 
-                node_graph.connect_node_to_input(&primitive_axis_id, &primitive_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&primitive_axis_id, &primitive_input_id);
 
                 let primitive_material_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&primitive_id, &PrimitiveInputData::Material)
                     .unwrap();
 
                 node_graph
+                    .graph
                     .connect_node_to_input(&primitive_material_id, &primitive_material_input_id);
 
                 let scene_primitive_input_id: InputId = node_graph
+                    .graph
                     .node_input_id_from_str(&scene_id, "Scene1")
                     .unwrap();
 
-                node_graph.connect_node_to_input(&primitive_id, &scene_primitive_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&primitive_id, &scene_primitive_input_id);
 
                 // Connect scene to ray marcher
 
                 let ray_marcher_scene_input_id: InputId = node_graph
+                    .graph
                     .node_input_id(&ray_marcher_id, &RayMarcherInputData::SceneRoot)
                     .unwrap();
 
-                node_graph.connect_node_to_input(&scene_id, &ray_marcher_scene_input_id);
+                node_graph
+                    .graph
+                    .connect_node_to_input(&scene_id, &ray_marcher_scene_input_id);
 
                 // Modify camera data
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &camera_id,
                     &CameraInputData::SensorResolution,
                     InputData::UVec2(UVec2::new(2048u32, 1024u32)),
                 );
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &secondary_camera_axis_id,
                     &AxisInputData::Translate,
                     InputData::Vec3(Vec3::Z * 10.),
@@ -623,7 +816,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 // Modify light data
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &light_id,
                     &LightInputData::Colour,
                     InputData::Vec3(Vec3::new(1., 0.1, 0.1)),
@@ -631,32 +824,28 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 // Modify primitive data
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &primitive_material_id,
                     &MaterialInputData::DiffuseColour,
                     InputData::Vec3(Vec3::new(0.1, 0.1, 1.)),
                 );
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::Shape,
                     InputData::Enum(Shapes::Capsule.into()),
                 );
 
-                let _ = node_graph.set_input_data(
+                let _ = node_graph.graph.set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::BlendStrength,
                     InputData::Float(0.5),
                 );
 
-                self.state.insert(
+                node_graph.context.insert(
                     ray_marcher_id,
-                    NodeUIData::new(format!("RayMarcher{}", ray_marcher_id))
-                        .shape(
-                            Rectangle::default()
-                                .center(self.pan_zoom.local_cursor_position())
-                                .size(Vec2::new(100.0, 33.0)),
-                        )
+                    NodeContext::new(format!("RayMarcher{}", ray_marcher_id))
+                        .position(self.pan_zoom.local_cursor_position())
                         .colour(context.default_style.default_node_colour),
                 );
 

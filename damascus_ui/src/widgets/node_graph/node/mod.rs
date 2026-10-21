@@ -3,12 +3,56 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use slotmap::SparseSecondaryMap;
+use glam::{Vec2, Vec4};
 
-use damascus::graph::node_graph::nodes::NodeId;
+use damascus::geometry::rectangle::Rectangle;
 
-pub mod node_data;
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct NodeContext {
+    pub label: String,
+    pub shape: Rectangle,
+    pub colour: Vec4,
+}
 
-pub use node_data::NodeData;
+impl NodeContext {
+    pub fn new(label: String) -> Self {
+        Self {
+            label: label,
+            shape: Rectangle::default().size(Vec2::new(100.0, 33.0)),
+            ..Default::default()
+        }
+    }
 
-pub type NodeGraphUIState = SparseSecondaryMap<NodeId, NodeData>;
+    pub fn position(mut self, position: Vec2) -> Self {
+        self.shape.center = position;
+        self
+    }
+
+    pub fn shape(mut self, shape: Rectangle) -> Self {
+        self.shape = shape;
+        self
+    }
+
+    pub fn colour(mut self, colour: Vec4) -> Self {
+        self.colour = colour;
+        self
+    }
+
+    pub fn top_left(&self) -> Vec2 {
+        self.shape.top_left()
+    }
+
+    pub fn canvas_space_center(&self, bounds: iced::Rectangle) -> iced::Point {
+        iced::Point::new(
+            self.shape.center.x + 0.5 * bounds.width,
+            0.5 * bounds.height - self.shape.center.y,
+        )
+    }
+
+    pub fn canvas_space_top_left(&self, bounds: iced::Rectangle) -> iced::Point {
+        iced::Point::new(
+            self.shape.center.x + 0.5 * (bounds.width - self.shape.size.x),
+            0.5 * (bounds.height - self.shape.size.y) - self.shape.center.y,
+        )
+    }
+}

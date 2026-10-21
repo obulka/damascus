@@ -20,7 +20,7 @@ use node::Node;
 slotmap::new_key_type! { pub struct NodeId; }
 
 impl fmt::Display for NodeId {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self.0)
     }
 }
@@ -56,7 +56,7 @@ pub enum NodeErrors {
 pub type NodeResult<T> = std::result::Result<T, NodeErrors>;
 
 impl fmt::Display for NodeErrors {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InputDowncastError {
                 data,

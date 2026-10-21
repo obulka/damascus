@@ -37,7 +37,7 @@ pub enum RayMarcherPreprocessorDirectives {
 }
 
 impl Display for RayMarcherPreprocessorDirectives {
-    fn fmt(&self, formatter: &mut Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::SceneDirective(scene_directive) => {
                 write!(formatter, "{:?}", scene_directive)

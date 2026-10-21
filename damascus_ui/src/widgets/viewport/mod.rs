@@ -5,6 +5,7 @@
 
 use std::{
     collections::HashMap,
+    fmt,
     sync::{Arc, Mutex},
 };
 
@@ -16,26 +17,34 @@ use wgpu;
 use damascus::{
     geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
-    graph::node_graph::{NodeGraph, outputs::OutputId},
+    graph::node_graph::outputs::OutputId,
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
-use crate::{app::Context, widgets::Style};
+use crate::app::Context;
 
 use super::{
-    Widget,
+    Style, Widget,
+    node_graph::{NodeGraphContext as NodeGraph, node::NodeContext},
     pan_zoom::{PanZoom, PanZoomMessage},
 };
 
 slotmap::new_key_type! { pub struct ViewportId; }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
-pub struct Views {
-    pub active_view: Option<u32>,
-    pub views: HashMap<u32, OutputId>,
+impl fmt::Display for ViewportId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
 }
 
-pub type Viewports = slotmap::SlotMap<ViewportId, Views>;
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct ViewportContext {
+    pub active_view: Option<u32>,
+    pub views: HashMap<u32, OutputId>,
+    pub node_context: NodeContext,
+}
+
+pub type Viewports = slotmap::SlotMap<ViewportId, ViewportContext>;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
@@ -136,15 +145,17 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
         if let Ok(mut node_graph) = self.node_graph.lock()
-            && node_graph.output_id_is_valid(active_output_id)
+            && node_graph.graph.output_id_is_valid(active_output_id)
             && let Ok(input_data) =
-                node_graph.evaluate_output(&device, &queue, &mut encoder, &active_output_id)
+                node_graph
+                    .graph
+                    .evaluate_output(&device, &queue, &mut encoder, &active_output_id)
         {
             queue.submit(Some(encoder.finish()));
 
             if let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
                 && let Some(input_texture) =
-                    node_graph.scene_graph()[texture_evaluator_id].output_texture_view()
+                    node_graph.graph.scene_graph()[texture_evaluator_id].output_texture_view()
             {
                 pipeline
                     .texture_viewer
@@ -168,6 +179,10 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
     }
 
     fn draw(&self, pipeline: &Self::Pipeline, render_pass: &mut wgpu::RenderPass<'_>) -> bool {
+        if self.active_output_id.is_none() {
+            return true;
+        }
+
         if let Some(render_resource) = pipeline.texture_viewer.render_resource() {
             render_resource.paint(render_pass);
             true
@@ -217,7 +232,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Viewport {
     id: Option<ViewportId>,
-    viewports: Arc<Mutex<Viewports>>,
+    context: Arc<Mutex<Viewports>>,
     viewport_primitive: ViewportPrimitive,
     pan_zoom: PanZoom,
 }
@@ -226,7 +241,7 @@ impl Default for Viewport {
     fn default() -> Self {
         Self {
             id: None,
-            viewports: Arc::default(),
+            context: Arc::default(),
             viewport_primitive: ViewportPrimitive::default(),
             pan_zoom: PanZoom::default(),
         }
@@ -244,7 +259,7 @@ impl Viewport {
 
     pub fn active_output_id(&self) -> Option<OutputId> {
         if let Some(id) = self.id
-            && let Ok(viewports) = self.viewports.lock()
+            && let Ok(viewports) = self.context.lock()
             && let Some(viewport) = viewports.get(id)
             && let Some(ref active_view) = viewport.active_view
         {
@@ -361,8 +376,18 @@ impl Widget<ViewportMessage> for Viewport {
         if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
         }
-        if !Arc::ptr_eq(&self.viewports, &context.viewports) {
-            self.viewports = Arc::clone(&context.viewports);
+        if !Arc::ptr_eq(&self.context, &context.viewports) {
+            self.context = Arc::clone(&context.viewports);
+        }
+        if self.id.is_none()
+            && let Ok(mut viewports) = self.context.lock()
+        {
+            self.id = Some(viewports.insert_with_key(|id| {
+                let mut viewport_context = ViewportContext::default();
+                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
+                    .colour(context.default_style.default_node_colour);
+                viewport_context
+            }));
         }
 
         match message {

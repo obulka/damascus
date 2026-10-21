@@ -26,7 +26,7 @@ pub enum GPUErrors {
 pub type GPUResult<T> = std::result::Result<T, GPUErrors>;
 
 impl fmt::Display for GPUErrors {
-    fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ImageError(error) => {
                 write!(formatter, "{}: {}", self.variant(), error)

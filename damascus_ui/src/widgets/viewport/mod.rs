@@ -11,7 +11,7 @@ use std::{
 
 use glam::{UVec2, Vec2};
 use iced;
-use slotmap;
+use slotmap::{SecondaryMap, SlotMap};
 use wgpu;
 
 use damascus::{
@@ -44,7 +44,8 @@ pub struct ViewportContext {
     pub node_context: NodeContext,
 }
 
-pub type Viewports = slotmap::SlotMap<ViewportId, ViewportContext>;
+pub type Viewports = SlotMap<ViewportId, ViewportContext>;
+pub type TextureViewers = SecondaryMap<ViewportId, TextureViewer>;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum ViewportMessage {
@@ -66,19 +67,20 @@ impl From<PanZoomMessage> for ViewportMessage {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct ViewportPipeline {
-    texture_viewer: TextureViewer,
+    texture_viewers: TextureViewers,
 }
 
 impl Default for ViewportPipeline {
     fn default() -> Self {
         Self {
-            texture_viewer: TextureViewer::default().output_srgb(),
+            texture_viewers: TextureViewers::default(),
         }
     }
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct ViewportPrimitive {
+    viewport_id: Option<ViewportId>,
     node_graph: Arc<Mutex<NodeGraph>>,
     active_output_id: Option<OutputId>,
     zoom: f32,
@@ -90,6 +92,7 @@ pub struct ViewportPrimitive {
 impl Default for ViewportPrimitive {
     fn default() -> Self {
         Self {
+            viewport_id: None,
             node_graph: Arc::default(),
             active_output_id: None,
             zoom: 1.0,
@@ -101,19 +104,8 @@ impl Default for ViewportPrimitive {
 }
 
 impl iced::widget::shader::Pipeline for ViewportPipeline {
-    fn new(device: &wgpu::Device, _queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
-        let mut viewport_pipeline = Self::default();
-
-        if let Some(input_texture) = viewport_pipeline
-            .texture_viewer
-            .create_output_texture_view(device)
-        {
-            viewport_pipeline
-                .texture_viewer
-                .set_input_texture_view(input_texture);
-        }
-
-        viewport_pipeline
+    fn new(_device: &wgpu::Device, _queue: &wgpu::Queue, _format: wgpu::TextureFormat) -> Self {
+        Self::default()
     }
 }
 
@@ -131,15 +123,26 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         let Some(active_output_id) = self.active_output_id else {
             return;
         };
+        let Some(viewport_id) = self.viewport_id else {
+            return;
+        };
 
-        pipeline
-            .texture_viewer
-            .set_output_resolution(UVec2::new(bounds.width as u32, bounds.height as u32));
+        if !pipeline.texture_viewers.contains_key(viewport_id) {
+            pipeline
+                .texture_viewers
+                .insert(viewport_id, TextureViewer::default().output_srgb());
+        }
 
-        pipeline.texture_viewer.zoom = self.zoom;
-        pipeline.texture_viewer.pan = self.pan;
-        pipeline.texture_viewer.grade.gain = self.gain;
-        pipeline.texture_viewer.grade.gamma = self.gamma;
+        let Some(texture_viewer) = pipeline.texture_viewers.get_mut(viewport_id) else {
+            return;
+        };
+
+        texture_viewer.set_output_resolution(UVec2::new(bounds.width as u32, bounds.height as u32));
+
+        texture_viewer.zoom = self.zoom;
+        texture_viewer.pan = self.pan;
+        texture_viewer.grade.gain = self.gain;
+        texture_viewer.grade.gamma = self.gamma;
 
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
@@ -157,23 +160,21 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
                 && let Some(input_texture) =
                     node_graph.graph.scene_graph()[texture_evaluator_id].output_texture_view()
             {
-                pipeline
-                    .texture_viewer
-                    .set_input_texture_view(input_texture.clone());
+                texture_viewer.set_input_texture_view(input_texture.clone());
             }
         }
 
-        if pipeline.texture_viewer.reconstruct_if_hash_changed(device) {
-            pipeline.texture_viewer.update_recompilation_hash();
-            pipeline.texture_viewer.update_reset_hash();
-        } else if pipeline.texture_viewer.recompile_if_hash_changed(device) {
-            pipeline.texture_viewer.update_reset_hash();
-        } else if pipeline.texture_viewer.reset_if_hash_changed() {
-            pipeline.texture_viewer.update_for_reevaluation(device);
+        if texture_viewer.reconstruct_if_hash_changed(device) {
+            texture_viewer.update_recompilation_hash();
+            texture_viewer.update_reset_hash();
+        } else if texture_viewer.recompile_if_hash_changed(device) {
+            texture_viewer.update_reset_hash();
+        } else if texture_viewer.reset_if_hash_changed() {
+            texture_viewer.update_for_reevaluation(device);
         }
 
-        let buffer_data: BufferData = pipeline.texture_viewer.buffer_data();
-        if let Some(render_resource) = pipeline.texture_viewer.render_resource() {
+        let buffer_data: BufferData = texture_viewer.buffer_data();
+        if let Some(render_resource) = texture_viewer.render_resource() {
             render_resource.write_bind_groups(queue, &buffer_data);
         }
     }
@@ -182,8 +183,14 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         if self.active_output_id.is_none() {
             return true;
         }
+        let Some(viewport_id) = self.viewport_id else {
+            return true;
+        };
+        let Some(texture_viewer) = pipeline.texture_viewers.get(viewport_id) else {
+            return true;
+        };
 
-        if let Some(render_resource) = pipeline.texture_viewer.render_resource() {
+        if let Some(render_resource) = texture_viewer.render_resource() {
             render_resource.paint(render_pass);
             true
         } else {
@@ -198,6 +205,13 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         target: &wgpu::TextureView,
         clip_bounds: &iced::Rectangle<u32>,
     ) {
+        let Some(viewport_id) = self.viewport_id else {
+            return;
+        };
+        let Some(texture_viewer) = pipeline.texture_viewers.get(viewport_id) else {
+            return;
+        };
+
         let render_pass_desc = wgpu::RenderPassDescriptor {
             label: Some("Render Pass"),
             color_attachments: &[Some(wgpu::RenderPassColorAttachment {
@@ -214,7 +228,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
             occlusion_query_set: None,
         };
 
-        if let Some(render_resource) = pipeline.texture_viewer.render_resource() {
+        if let Some(render_resource) = texture_viewer.render_resource() {
             let mut pass = encoder.begin_render_pass(&render_pass_desc);
             pass.set_viewport(
                 clip_bounds.x as f32,
@@ -231,7 +245,6 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct Viewport {
-    id: Option<ViewportId>,
     context: Arc<Mutex<Viewports>>,
     viewport_primitive: ViewportPrimitive,
     pan_zoom: PanZoom,
@@ -240,7 +253,6 @@ pub struct Viewport {
 impl Default for Viewport {
     fn default() -> Self {
         Self {
-            id: None,
             context: Arc::default(),
             viewport_primitive: ViewportPrimitive::default(),
             pan_zoom: PanZoom::default(),
@@ -250,15 +262,15 @@ impl Default for Viewport {
 
 impl Viewport {
     pub fn id(&self) -> &Option<ViewportId> {
-        &self.id
+        &self.viewport_primitive.viewport_id
     }
 
     pub fn set_id(&mut self, id: ViewportId) {
-        self.id = Some(id);
+        self.viewport_primitive.viewport_id = Some(id);
     }
 
     pub fn active_output_id(&self) -> Option<OutputId> {
-        if let Some(id) = self.id
+        if let Some(id) = self.viewport_primitive.viewport_id
             && let Ok(viewports) = self.context.lock()
             && let Some(viewport) = viewports.get(id)
             && let Some(ref active_view) = viewport.active_view
@@ -379,10 +391,10 @@ impl Widget<ViewportMessage> for Viewport {
         if !Arc::ptr_eq(&self.context, &context.viewports) {
             self.context = Arc::clone(&context.viewports);
         }
-        if self.id.is_none()
+        if self.viewport_primitive.viewport_id.is_none()
             && let Ok(mut viewports) = self.context.lock()
         {
-            self.id = Some(viewports.insert_with_key(|id| {
+            self.viewport_primitive.viewport_id = Some(viewports.insert_with_key(|id| {
                 let mut viewport_context = ViewportContext::default();
                 viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
                     .colour(context.default_style.default_node_colour);

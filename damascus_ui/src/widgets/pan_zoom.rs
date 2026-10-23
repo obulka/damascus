@@ -117,6 +117,12 @@ impl PanZoom {
         bounds
     }
 
+    pub fn local_to_canvas_rectangle(&self, mut bounds: Rectangle) -> Rectangle {
+        bounds.center = self.local_to_canvas(bounds.center);
+        bounds.size *= self.zoom;
+        bounds
+    }
+
     pub fn cursor_in_bounds(&self) -> bool {
         self.bounds.contains(self.cursor_position)
     }

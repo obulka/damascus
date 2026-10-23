@@ -12,12 +12,13 @@ use glam::{UVec2, Vec2, Vec3};
 use slotmap::SparseSecondaryMap;
 
 use damascus::{
-    geometry::{primitives::Shapes, rectangle::Rectangle},
+    geometry::{primitives::Shapes, ray::Ray2d, rectangle::Rectangle},
     graph::node_graph::{
         NodeGraph as Graph,
         inputs::{InputId, input_data::InputData},
         nodes::{
             NodeId,
+            node::Node,
             node_data::{
                 AxisInputData, CameraInputData, LightInputData, MaterialInputData, NodeData,
                 PrimitiveInputData, RayMarcherInputData, SceneInputData, TextureReadInputData,
@@ -446,7 +447,114 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         let reciprocal_zoom: f32 = 1.0 / self.pan_zoom.zoom;
         let input_path_radius: f32 = 5.0 * reciprocal_zoom;
         let output_path_radius: f32 = 5.0 * reciprocal_zoom;
+        let connection_line_width: f32 = 3.0 * reciprocal_zoom;
+        let inactive_connection_line_width: f32 = connection_line_width * 0.5;
+
         let text_size = iced::Pixels(16.0 * reciprocal_zoom);
+
+        let dashed_line_segment_length = 2. * inactive_connection_line_width;
+        let dashed_line_pattern: &[f32] = &[
+            dashed_line_segment_length,
+            dashed_line_segment_length,
+            1e-12,
+            dashed_line_segment_length,
+        ];
+
+        let connection_stroke = iced::widget::canvas::Stroke::default()
+            .with_width(connection_line_width)
+            .with_color(iced::Color::WHITE);
+        let mut inactive_view_connection_stroke = iced::widget::canvas::Stroke::default()
+            .with_width(inactive_connection_line_width)
+            .with_line_cap(iced::widget::canvas::LineCap::Round)
+            .with_color(iced::Color::WHITE);
+        inactive_view_connection_stroke.line_dash = iced::widget::canvas::LineDash {
+            segments: dashed_line_pattern,
+            offset: 0,
+        };
+
+        if let Ok(viewports) = self.viewport_context.lock()
+            && let Ok(node_graph) = self.context.lock()
+        {
+            for (_viewport_id, viewport_context) in viewports.iter() {
+                for (view, output_id) in viewport_context.views.iter() {
+                    if !node_graph.graph.output_id_is_valid(*output_id) {
+                        continue;
+                    }
+
+                    let node_id: NodeId = node_graph.graph[*output_id].node_id;
+                    let Some(node_context) = node_graph.context.get(node_id) else {
+                        continue;
+                    };
+
+                    let node: &Node = &node_graph.graph[node_id];
+                    let Some(output_index) = node.output_index(output_id) else {
+                        continue;
+                    };
+
+                    let node_bottom_left: Vec2 = self
+                        .pan_zoom
+                        .local_to_canvas(node_context.shape.bottom_left());
+
+                    let output_count: usize = node.output_count();
+                    let step_size: f32 =
+                        node_context.shape.size.x * reciprocal_zoom / (output_count as f32);
+                    let half_step_size: f32 = 0.5 * step_size;
+
+                    let output_position = Vec2::new(
+                        node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
+                        node_bottom_left.y,
+                    );
+
+                    let viewport_center: Vec2 = self
+                        .pan_zoom
+                        .local_to_canvas(viewport_context.node_context.shape.center);
+
+                    let connection = iced::widget::canvas::Path::line(
+                        iced::Point::new(output_position.x, output_position.y),
+                        iced::Point::new(viewport_center.x, viewport_center.y),
+                    );
+
+                    if let Some(active_view) = viewport_context.active_view
+                        && active_view == *view
+                    {
+                        frame.stroke(&connection, connection_stroke);
+                    } else {
+                        frame.stroke(&connection, inactive_view_connection_stroke);
+                    }
+
+                    let ray = Ray2d::new(viewport_center, output_position - viewport_center);
+
+                    let Some(intersection_distances) = ray.intersect_rectangle(
+                        &self
+                            .pan_zoom
+                            .local_to_canvas_rectangle(viewport_context.node_context.shape),
+                    ) else {
+                        continue;
+                    };
+
+                    let text_position: Vec2 =
+                        ray.position_at_distance(
+                            0.5 * node_context.shape.size.y * reciprocal_zoom
+                                + intersection_distances.y,
+                        ) + 0.5 * node_context.shape.size.y * ray.perpendicular_direction();
+
+                    // let input_label_offset: Vec2 = 0.666666666666
+                    //     * node_context.shape.size.x
+                    //     * reciprocal_zoom
+                    //     * (output_position - viewport_center).normalize();
+
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: format!("{:?}", view),
+                        position: iced::Point::new(text_position.x, text_position.y),
+                        color: iced::Color::WHITE,
+                        size: text_size,
+                        align_x: iced::advanced::text::Alignment::Center,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
+            }
+        }
 
         if let Ok(node_graph) = self.context.lock() {
             for (node_id, node_context) in node_graph.context.iter() {
@@ -552,7 +660,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
 
         if let Ok(viewports) = self.viewport_context.lock() {
             for (viewport_id, viewport_context) in viewports.iter() {
-                let node_center: Vec2 = self
+                let viewport_center: Vec2 = self
                     .pan_zoom
                     .local_to_canvas(viewport_context.node_context.shape.center);
                 let node_top_left: Vec2 = self
@@ -583,7 +691,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 }
                 frame.fill_text(iced::widget::canvas::Text {
                     content: viewport_context.node_context.label.clone(),
-                    position: iced::Point::new(node_center.x, node_center.y),
+                    position: iced::Point::new(viewport_center.x, viewport_center.y),
                     color: iced::Color::WHITE,
                     size: text_size,
                     align_x: iced::advanced::text::Alignment::Center,

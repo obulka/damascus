@@ -46,6 +46,14 @@ impl Node {
         self.output_ids.len()
     }
 
+    pub fn input_index(&self, input_id: &InputId) -> Option<usize> {
+        self.input_ids.iter().position(|id| id == input_id)
+    }
+
+    pub fn output_index(&self, output_id: &OutputId) -> Option<usize> {
+        self.output_ids.iter().position(|id| id == output_id)
+    }
+
     pub fn evaluate(
         device: &wgpu::Device,
         queue: &wgpu::Queue,

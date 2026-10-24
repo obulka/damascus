@@ -450,7 +450,10 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         let connection_line_width: f32 = 3.0 * reciprocal_zoom;
         let inactive_connection_line_width: f32 = connection_line_width * 0.5;
 
-        let text_size = iced::Pixels(16.0 * reciprocal_zoom);
+        let text_zoom_cutoff = 4.5;
+        let render_text: bool = self.pan_zoom.zoom <= text_zoom_cutoff;
+        let text_size = 16.0;
+        let text_size_pixels = iced::Pixels(text_size * reciprocal_zoom);
 
         let dashed_line_segment_length = 2. * inactive_connection_line_width;
         let dashed_line_pattern: &[f32] = &[
@@ -491,27 +494,26 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                         continue;
                     };
 
-                    let node_bottom_left: Vec2 = self
-                        .pan_zoom
-                        .local_to_canvas(node_context.shape.bottom_left());
+                    let node_bottom_left: Vec2 = node_context.shape.bottom_left();
 
                     let output_count: usize = node.output_count();
-                    let step_size: f32 =
-                        node_context.shape.size.x * reciprocal_zoom / (output_count as f32);
+                    let step_size: f32 = node_context.shape.size.x / (output_count as f32);
                     let half_step_size: f32 = 0.5 * step_size;
 
                     let output_position = Vec2::new(
                         node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
                         node_bottom_left.y,
                     );
+                    let canvas_output_position: Vec2 =
+                        self.pan_zoom.local_to_canvas(output_position);
 
-                    let viewport_center: Vec2 = self
-                        .pan_zoom
-                        .local_to_canvas(viewport_context.node_context.shape.center);
+                    let viewport_center: Vec2 = viewport_context.node_context.shape.center;
+                    let canvas_viewport_center: Vec2 =
+                        self.pan_zoom.local_to_canvas(viewport_center);
 
                     let connection = iced::widget::canvas::Path::line(
-                        iced::Point::new(output_position.x, output_position.y),
-                        iced::Point::new(viewport_center.x, viewport_center.y),
+                        iced::Point::new(canvas_output_position.x, canvas_output_position.y),
+                        iced::Point::new(canvas_viewport_center.x, canvas_viewport_center.y),
                     );
 
                     if let Some(active_view) = viewport_context.active_view
@@ -522,33 +524,42 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                         frame.stroke(&connection, inactive_view_connection_stroke);
                     }
 
-                    let ray = Ray2d::new(viewport_center, output_position - viewport_center);
+                    if !render_text {
+                        continue;
+                    }
 
-                    let Some(intersection_distances) = ray.intersect_rectangle(
-                        &self
-                            .pan_zoom
-                            .local_to_canvas_rectangle(viewport_context.node_context.shape),
-                    ) else {
+                    let connection_vector: Vec2 = output_position - viewport_center;
+                    let mut ray = Ray2d::new(viewport_center, connection_vector);
+                    ray.advance_in_direction(
+                        text_size,
+                        if ray.direction().y > 0. {
+                            ray.perpendicular_direction_ccw()
+                        } else {
+                            ray.perpendicular_direction_cw()
+                        },
+                    );
+
+                    let view_display: u32 = if *view == 0 { 10 } else { *view };
+
+                    let mut text_path: Rectangle = viewport_context.node_context.shape;
+                    text_path.uniform_expansion(
+                        (connection_vector.length() - text_path.half_size().length())
+                            .min(1.5 * (view_display as f32) * text_size)
+                            .max(0.),
+                    );
+
+                    let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
                         continue;
                     };
+                    ray.advance(intersection_distances.y);
 
-                    let text_position: Vec2 =
-                        ray.position_at_distance(
-                            0.5 * node_context.shape.size.y * reciprocal_zoom
-                                + intersection_distances.y,
-                        ) + 0.5 * node_context.shape.size.y * ray.perpendicular_direction();
-
-                    // let input_label_offset: Vec2 = 0.666666666666
-                    //     * node_context.shape.size.x
-                    //     * reciprocal_zoom
-                    //     * (output_position - viewport_center).normalize();
-
+                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
                     frame.fill_text(iced::widget::canvas::Text {
-                        content: format!("{:?}", view),
-                        position: iced::Point::new(text_position.x, text_position.y),
+                        content: view_display.to_string(),
+                        position: iced::Point::new(canvas_text_position.x, canvas_text_position.y),
                         color: iced::Color::WHITE,
-                        size: text_size,
-                        align_x: iced::advanced::text::Alignment::Center,
+                        size: text_size_pixels,
+                        align_x: iced::advanced::text::Alignment::Right,
                         align_y: iced::alignment::Vertical::Center,
                         ..iced::widget::canvas::Text::default()
                     });
@@ -558,16 +569,15 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
 
         if let Ok(node_graph) = self.context.lock() {
             for (node_id, node_context) in node_graph.context.iter() {
-                let node_center: Vec2 = self.pan_zoom.local_to_canvas(node_context.shape.center);
-                let node_top_left: Vec2 =
-                    self.pan_zoom.local_to_canvas(node_context.shape.top_left());
-                let node_bottom_left: Vec2 = self
-                    .pan_zoom
-                    .local_to_canvas(node_context.shape.bottom_left());
+                let node_shape: Rectangle =
+                    self.pan_zoom.local_to_canvas_rectangle(&node_context.shape);
+
+                let node_bottom_left: Vec2 = node_shape.top_left();
+                let node_top_left: Vec2 = node_shape.bottom_left();
+
                 let node = iced::widget::canvas::Path::rectangle(
                     iced::Point::new(node_top_left.x, node_top_left.y),
-                    iced::Size::new(node_context.shape.size.x, node_context.shape.size.y)
-                        * reciprocal_zoom,
+                    iced::Size::new(node_shape.size.x, node_shape.size.y),
                 );
                 frame.fill(
                     &node,
@@ -585,15 +595,18 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                             .with_color(iced::Color::WHITE),
                     );
                 }
-                frame.fill_text(iced::widget::canvas::Text {
-                    content: node_context.label.clone(),
-                    position: iced::Point::new(node_center.x, node_center.y),
-                    color: iced::Color::WHITE,
-                    size: text_size,
-                    align_x: iced::advanced::text::Alignment::Center,
-                    align_y: iced::alignment::Vertical::Center,
-                    ..iced::widget::canvas::Text::default()
-                });
+
+                if render_text {
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: node_context.label.clone(),
+                        position: iced::Point::new(node_shape.center.x, node_shape.center.y),
+                        color: iced::Color::WHITE,
+                        size: text_size_pixels,
+                        align_x: iced::advanced::text::Alignment::Center,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
 
                 if node_graph.graph.node_id_is_valid(node_id) {
                     // TODO fn handle_inputs()
@@ -689,15 +702,17 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                             .with_color(iced::Color::WHITE),
                     );
                 }
-                frame.fill_text(iced::widget::canvas::Text {
-                    content: viewport_context.node_context.label.clone(),
-                    position: iced::Point::new(viewport_center.x, viewport_center.y),
-                    color: iced::Color::WHITE,
-                    size: text_size,
-                    align_x: iced::advanced::text::Alignment::Center,
-                    align_y: iced::alignment::Vertical::Center,
-                    ..iced::widget::canvas::Text::default()
-                });
+                if render_text {
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: viewport_context.node_context.label.clone(),
+                        position: iced::Point::new(viewport_center.x, viewport_center.y),
+                        color: iced::Color::WHITE,
+                        size: text_size_pixels,
+                        align_x: iced::advanced::text::Alignment::Center,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
             }
         }
 

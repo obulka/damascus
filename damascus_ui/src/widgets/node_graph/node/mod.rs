@@ -41,18 +41,4 @@ impl NodeContext {
     pub fn top_left(&self) -> Vec2 {
         self.shape.top_left()
     }
-
-    pub fn canvas_space_center(&self, bounds: iced::Rectangle) -> iced::Point {
-        iced::Point::new(
-            self.shape.center.x + 0.5 * bounds.width,
-            0.5 * bounds.height - self.shape.center.y,
-        )
-    }
-
-    pub fn canvas_space_top_left(&self, bounds: iced::Rectangle) -> iced::Point {
-        iced::Point::new(
-            self.shape.center.x + 0.5 * (bounds.width - self.shape.size.x),
-            0.5 * (bounds.height - self.shape.size.y) - self.shape.center.y,
-        )
-    }
 }

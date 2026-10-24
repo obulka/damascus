@@ -25,6 +25,7 @@ pub mod gpu;
 pub mod graph;
 pub mod lights;
 pub mod materials;
+pub mod math;
 pub mod textures;
 pub mod time;
 

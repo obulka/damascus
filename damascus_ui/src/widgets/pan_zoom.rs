@@ -108,19 +108,21 @@ impl PanZoom {
     }
 
     pub fn local_bounds(&self) -> Rectangle {
-        self.global_to_local_rectangle(self.bounds)
+        self.global_to_local_rectangle(&self.bounds)
     }
 
-    pub fn global_to_local_rectangle(&self, mut bounds: Rectangle) -> Rectangle {
-        bounds.center = self.global_to_local(bounds.center);
-        bounds.size *= self.zoom;
-        bounds
+    pub fn global_to_local_rectangle(&self, bounds: &Rectangle) -> Rectangle {
+        Rectangle {
+            center: self.global_to_local(bounds.center),
+            size: bounds.size * self.zoom,
+        }
     }
 
-    pub fn local_to_canvas_rectangle(&self, mut bounds: Rectangle) -> Rectangle {
-        bounds.center = self.local_to_canvas(bounds.center);
-        bounds.size *= self.zoom;
-        bounds
+    pub fn local_to_canvas_rectangle(&self, bounds: &Rectangle) -> Rectangle {
+        Rectangle {
+            center: self.local_to_canvas(bounds.center),
+            size: bounds.size / self.zoom,
+        }
     }
 
     pub fn cursor_in_bounds(&self) -> bool {

@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 damascus = { path = "../damascus" }
 
-glam = { version = "0.30", features = ["serde"] }
+glam = { version = "0.33", features = ["serde"] }
 iced_core = { version = "0.14", features = ["serde"] }
 iced = { version = "0.14", features = ["default", "advanced", "image", "svg"] }
 iced_aw = { version = "0.14", features = ["color_picker", "number_input", "tab_bar"] }

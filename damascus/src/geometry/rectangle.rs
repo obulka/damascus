@@ -49,6 +49,22 @@ impl Rectangle {
         self
     }
 
+    pub fn uniform_scale(&mut self, scale: f32) {
+        self.size *= scale;
+    }
+
+    pub fn scale(&mut self, scale: Vec2) {
+        self.size *= scale;
+    }
+
+    pub fn uniform_expansion(&mut self, expansion: f32) {
+        self.size += expansion;
+    }
+
+    pub fn expand(&mut self, expansion: Vec2) {
+        self.size += expansion;
+    }
+
     pub fn half_size(&self) -> Vec2 {
         0.5 * self.size
     }

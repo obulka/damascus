@@ -7,8 +7,8 @@ edition = "2024"
 
 [dependencies]
 bytemuck = "1.23"
-crevice = { version = "0.18.0", features = ["glam"] }
-glam = { version = "0.30", features = ["serde"] }
+crevice = { version = "0.20", features = ["glam"] }
+glam = { version = "0.33", features = ["serde"] }
 image = { version = "0.25" }
 indoc = "2"
 macro_rules_attribute = { version = "0.2" }

@@ -15,7 +15,11 @@ use crate::{
     widgets::{
         Widget,
         node_graph::{NodeGraphContext, NodeGraphMessage},
-        panel::{PanelMessage, pane::PaneMessage, tabs::TabMessage},
+        panel::{
+            PanelMessage,
+            pane::PaneMessage,
+            tabs::{Tab, TabMessage},
+        },
         style::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},
@@ -24,7 +28,7 @@ use crate::{
             ToolbarMessage,
             file::{FileMenuOptions, FileMessage},
         },
-        viewport::{ViewportMessage, Viewports},
+        viewport::{Viewport, ViewportMessage, Viewports},
     },
     windows::{
         window::{Window, WindowMessage},
@@ -231,6 +235,60 @@ impl Damascus {
                     _window,
                     PanelMessage::Pane(
                         _pane,
+                        PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::NewViewport(
+                            new_viewport_id,
+                        ))),
+                    ),
+                ))) => {
+                    // Create a new tab for a newly created viewport
+                    for window in self.window_manager.windows.values_mut() {
+                        for pane in window.panel.panes.panes.values_mut() {
+                            pane.tabs
+                                .push(Tab::Viewport(Viewport::default().with_id(new_viewport_id)));
+
+                            return iced::Task::none();
+                        }
+                    }
+                    iced::Task::none()
+                }
+                Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
+                    _window,
+                    PanelMessage::Pane(
+                        _pane,
+                        PaneMessage::Tab(TabMessage::NodeGraph(
+                            NodeGraphMessage::RemovedViewports(viewport_ids),
+                        )),
+                    ),
+                ))) => {
+                    // Close the tab widget of a recently removed viewport
+                    let mut tasks = Vec::<Message>::new();
+                    for (window_id, window) in self.window_manager.windows.iter_mut() {
+                        for (pane_id, pane) in window.panel.panes.panes.iter_mut() {
+                            for (tab_index, tab) in pane.tabs.iter_mut().enumerate() {
+                                if let Tab::Viewport(viewport) = tab
+                                    && let Some(viewport_id) = viewport.id()
+                                    && viewport_ids.contains(viewport_id)
+                                {
+                                    tasks.push(Message::WindowManager(
+                                        WindowManagerMessage::Window(WindowMessage::Panel(
+                                            Some(*window_id),
+                                            PanelMessage::Pane(
+                                                *pane_id,
+                                                PaneMessage::Tab(TabMessage::Closed(tab_index)),
+                                            ),
+                                        )),
+                                    ))
+                                }
+                            }
+                        }
+                    }
+
+                    iced::Task::batch(tasks.into_iter().map(|message| iced::Task::done(message)))
+                }
+                Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
+                    _window,
+                    PanelMessage::Pane(
+                        _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewNodeOutput(
                             viewport_id,
                             view_index,
@@ -238,6 +296,7 @@ impl Damascus {
                         ))),
                     ),
                 ))) => {
+                    // Update the active output of a viewport
                     if let Ok(mut viewports) = self.context.viewports.lock() {
                         if let Some(id) = viewport_id
                             && let Some(viewport_context) = viewports.get_mut(id)
@@ -247,17 +306,6 @@ impl Damascus {
                             }
                             viewport_context.active_view = Some(view_index);
                         }
-                        // else {
-                        //     let mut viewport_context = ViewportContext::default();
-                        //     if let Some(output_id) = node_output_id {
-                        //         viewport_context.views.insert(view_index, output_id);
-                        //     }
-                        //     viewport_context.active_view = Some(view_index);
-
-                        //     let _viewport_id: ViewportId = viewports.insert(viewport_context);
-
-                        //     // TODO spawn window with this viewport
-                        // }
                     }
                     iced::Task::none()
                 }

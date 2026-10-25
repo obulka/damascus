@@ -32,7 +32,7 @@ use crate::{
     app::Context,
     widgets::{
         Style,
-        viewport::{ViewportId, Viewports},
+        viewport::{ViewportContext, ViewportId, Viewports},
     },
 };
 
@@ -55,15 +55,35 @@ pub struct NodeGraphContext {
     pub active_viewport: Option<ViewportId>,
 }
 
+impl NodeGraphContext {
+    pub fn clear_selection(&mut self) {
+        self.selected_nodes.clear();
+        self.selected_viewports.clear();
+    }
+
+    pub fn viewport_removed(&mut self, viewport_id: &ViewportId) {
+        if let Some(active_viewport) = self.active_viewport
+            && active_viewport == *viewport_id
+        {
+            self.active_viewport = None;
+        }
+
+        self.selected_viewports.remove(viewport_id);
+    }
+}
+
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
     CreateReadNode,
     CreateLiveNode,
+    ViewportCreated(ViewportId),
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
     ClearSelection,
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
+    RemovedViewports(HashSet<ViewportId>),
+    NewViewport(ViewportId),
     #[serde(skip)]
     CanvasEvent(iced::Event),
     #[default]
@@ -110,16 +130,15 @@ impl Default for NodeGraph {
 }
 
 impl NodeGraph {
-    pub fn clear_selection(&mut self) {
+    pub fn clear_selection(&self) {
         let Ok(mut node_graph) = self.context.lock() else {
             return;
         };
 
-        node_graph.selected_nodes.clear();
-        node_graph.selected_viewports.clear();
+        node_graph.clear_selection();
     }
 
-    pub fn drag_select_nodes(&mut self, context: &mut Context) {
+    pub fn drag_select_nodes(&self, context: &Context) {
         let Ok(mut node_graph) = self.context.lock() else {
             return;
         };
@@ -145,7 +164,7 @@ impl NodeGraph {
         }
     }
 
-    pub fn drag_select_viewports(&mut self, context: &mut Context) {
+    pub fn drag_select_viewports(&self, context: &Context) {
         let Ok(viewports) = context.viewports.lock() else {
             return;
         };
@@ -167,12 +186,12 @@ impl NodeGraph {
         }
     }
 
-    pub fn drag_select(&mut self, context: &mut Context) {
+    pub fn drag_select(&self, context: &Context) {
         self.drag_select_nodes(context);
         self.drag_select_viewports(context);
     }
 
-    pub fn click_select_nodes(&mut self, context: &mut Context) -> bool {
+    pub fn click_select_nodes(&self, context: &Context) -> bool {
         let Ok(mut node_graph) = context.node_graph.lock() else {
             return false;
         };
@@ -181,7 +200,7 @@ impl NodeGraph {
 
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
 
-        for node_id in node_graph
+        if let Some(node_id) = node_graph
             .context
             .iter()
             .filter_map(|(node_id, node_context)| {
@@ -191,13 +210,12 @@ impl NodeGraph {
                     None
                 }
             })
-            .collect::<Vec<_>>()
-            .iter()
+            .next()
         {
             if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
-                node_graph.selected_nodes.remove(node_id);
+                node_graph.selected_nodes.remove(&node_id);
             } else {
-                node_graph.selected_nodes.insert(*node_id);
+                node_graph.selected_nodes.insert(node_id);
                 any_selected = true;
             }
         }
@@ -205,7 +223,7 @@ impl NodeGraph {
         any_selected
     }
 
-    pub fn click_select_viewports(&mut self, context: &mut Context) -> bool {
+    pub fn click_select_viewports(&self, context: &Context) -> bool {
         let Ok(viewports) = context.viewports.lock() else {
             return false;
         };
@@ -229,17 +247,18 @@ impl NodeGraph {
                     node_graph.active_viewport = Some(viewport_id);
                     any_selected = true;
                 }
+                break;
             }
         }
 
         any_selected
     }
 
-    pub fn click_select(&mut self, context: &mut Context) -> bool {
+    pub fn click_select(&mut self, context: &Context) -> bool {
         self.click_select_nodes(context) || self.click_select_viewports(context)
     }
 
-    pub fn drag_nodes(&mut self, context: &mut Context) {
+    pub fn drag_nodes(&self, context: &Context) {
         if self.dragging_nodes
             && let Ok(mut node_graph) = context.node_graph.lock()
         {
@@ -263,7 +282,7 @@ impl NodeGraph {
         }
     }
 
-    pub fn drag_viewports(&mut self, context: &mut Context) {
+    pub fn drag_viewports(&self, context: &Context) {
         if self.dragging_nodes
             && let Ok(mut viewports) = context.viewports.lock()
             && let Ok(node_graph) = context.node_graph.lock()
@@ -277,25 +296,31 @@ impl NodeGraph {
         }
     }
 
-    pub fn drag(&mut self, context: &mut Context) {
+    pub fn drag(&self, context: &Context) {
         self.drag_nodes(context);
         self.drag_viewports(context);
     }
 
-    pub fn remove_selected(&mut self) -> iced::Task<NodeGraphMessage> {
+    pub fn remove_selected(&self) -> iced::Task<NodeGraphMessage> {
         let Ok(mut node_graph) = self.context.lock() else {
             return iced::Task::none();
         };
 
-        if !node_graph.selected_viewports.is_empty()
+        let task: iced::Task<NodeGraphMessage> = if !node_graph.selected_viewports.is_empty()
             && let Ok(mut viewports) = self.viewport_context.lock()
         {
-            for viewport_id in node_graph.selected_viewports.iter() {
+            let removed_viewports: HashSet<ViewportId> = node_graph.selected_viewports.clone();
+            for viewport_id in removed_viewports.iter() {
                 viewports.remove(*viewport_id);
+                node_graph.viewport_removed(viewport_id);
             }
 
             node_graph.selected_viewports.clear();
-        }
+
+            iced::Task::done(NodeGraphMessage::RemovedViewports(removed_viewports))
+        } else {
+            iced::Task::none()
+        };
 
         if !node_graph.selected_nodes.is_empty() {
             for node_id in node_graph.selected_nodes.clone().iter() {
@@ -315,21 +340,20 @@ impl NodeGraph {
             node_graph.selected_nodes.clear();
         }
 
-        iced::Task::none()
+        task
     }
 
-    pub fn viewport_removed(&mut self, viewport_id: &ViewportId) {
-        let Ok(mut node_graph) = self.context.lock() else {
-            return;
+    pub fn create_viewport(&self, context: &Context) -> Option<ViewportId> {
+        let Ok(mut viewports) = self.viewport_context.lock() else {
+            return None;
         };
 
-        if let Some(active_viewport) = node_graph.active_viewport
-            && active_viewport == *viewport_id
-        {
-            node_graph.active_viewport = None;
-        }
-
-        node_graph.selected_viewports.remove(viewport_id);
+        Some(viewports.insert_with_key(|id| {
+            let mut viewport_context = ViewportContext::default();
+            viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
+                .colour(context.default_style.default_node_colour);
+            viewport_context
+        }))
     }
 
     pub fn handle_mouse_event(
@@ -452,30 +476,46 @@ impl NodeGraph {
                 iced::keyboard::Key::Character(character) => {
                     if let Ok(digits) = character.as_str().parse() {
                         if let Ok(mut node_graph) = self.context.lock() {
-                            if node_graph.active_viewport.is_none()
-                                && let Ok(viewports) = context.viewports.lock()
-                                && let Some(id) = viewports.keys().next()
-                            {
-                                node_graph.active_viewport = Some(id);
-                            }
-                            iced::Task::done(
-                                if let Some(node_id) = node_graph.selected_nodes.iter().next()
-                                    && let Some(output_id) =
-                                        node_graph.graph.nodes_first_output_id(node_id)
-                                {
-                                    NodeGraphMessage::ViewNodeOutput(
-                                        node_graph.active_viewport,
-                                        digits,
-                                        Some(*output_id),
-                                    )
+                            let task: iced::Task<NodeGraphMessage> =
+                                if node_graph.active_viewport.is_none() {
+                                    if let Ok(viewports) = context.viewports.lock()
+                                        && let Some(id) = viewports.keys().next()
+                                    {
+                                        node_graph.active_viewport = Some(id);
+                                        iced::Task::none()
+                                    } else {
+                                        node_graph.active_viewport = self.create_viewport(context);
+                                        if let Some(new_viewport) = node_graph.active_viewport {
+                                            iced::Task::done(NodeGraphMessage::NewViewport(
+                                                new_viewport,
+                                            ))
+                                        } else {
+                                            iced::Task::none()
+                                        }
+                                    }
                                 } else {
-                                    NodeGraphMessage::ViewNodeOutput(
-                                        node_graph.active_viewport,
-                                        digits,
-                                        None,
-                                    )
-                                },
-                            )
+                                    iced::Task::none()
+                                };
+                            iced::Task::batch(std::iter::once(task).chain(std::iter::once(
+                                iced::Task::done(
+                                    if let Some(node_id) = node_graph.selected_nodes.iter().next()
+                                        && let Some(output_id) =
+                                            node_graph.graph.nodes_first_output_id(node_id)
+                                    {
+                                        NodeGraphMessage::ViewNodeOutput(
+                                            node_graph.active_viewport,
+                                            digits,
+                                            Some(*output_id),
+                                        )
+                                    } else {
+                                        NodeGraphMessage::ViewNodeOutput(
+                                            node_graph.active_viewport,
+                                            digits,
+                                            None,
+                                        )
+                                    },
+                                ),
+                            )))
                         } else {
                             iced::Task::none()
                         }

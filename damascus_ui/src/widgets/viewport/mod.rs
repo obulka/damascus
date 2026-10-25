@@ -296,6 +296,11 @@ impl Viewport {
         self.viewport_primitive.viewport_id = Some(id);
     }
 
+    pub fn with_id(mut self, id: ViewportId) -> Self {
+        self.set_id(id);
+        self
+    }
+
     pub fn active_output_id(&self) -> Option<OutputId> {
         if let Some(id) = self.viewport_primitive.viewport_id
             && let Ok(viewports) = self.context.lock()
@@ -308,14 +313,32 @@ impl Viewport {
         }
     }
 
-    pub fn closed(&mut self) -> iced::Task<ViewportMessage> {
+    pub fn closed(&mut self, _context: &mut Context) -> iced::Task<ViewportMessage> {
         if let Some(viewport_id) = self.viewport_primitive.viewport_id
             && let Ok(mut viewports) = self.context.lock()
+            && let Ok(mut node_graph) = self.viewport_primitive.node_graph.lock()
         {
+            node_graph.viewport_removed(&viewport_id);
             viewports.remove(viewport_id);
             self.viewport_primitive.viewport_id = None;
         }
         iced::Task::none()
+    }
+
+    pub fn create_viewport(&mut self, context: &mut Context) {
+        if self.viewport_primitive.viewport_id.is_none()
+            && let Ok(mut viewports) = context.viewports.lock()
+            && let Ok(mut node_graph) = context.node_graph.lock()
+        {
+            self.viewport_primitive.viewport_id = Some(viewports.insert_with_key(|id| {
+                let mut viewport_context = ViewportContext::default();
+                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
+                    .colour(context.default_style.default_node_colour);
+                viewport_context
+            }));
+
+            node_graph.active_viewport = self.viewport_primitive.viewport_id;
+        }
     }
 
     pub fn handle_mouse_event(
@@ -424,19 +447,10 @@ impl Widget<ViewportMessage> for Viewport {
     ) -> iced::Task<ViewportMessage> {
         if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
+            self.create_viewport(context);
         }
         if !Arc::ptr_eq(&self.context, &context.viewports) {
             self.context = Arc::clone(&context.viewports);
-        }
-        if self.viewport_primitive.viewport_id.is_none()
-            && let Ok(mut viewports) = self.context.lock()
-        {
-            self.viewport_primitive.viewport_id = Some(viewports.insert_with_key(|id| {
-                let mut viewport_context = ViewportContext::default();
-                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
-                    .colour(context.default_style.default_node_colour);
-                viewport_context
-            }));
         }
 
         match message {

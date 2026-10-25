@@ -179,6 +179,29 @@ impl Panel {
         }
     }
 
+    pub fn close_pane(
+        &mut self,
+        context: &mut Context,
+        pane_id: iced::widget::pane_grid::Pane,
+    ) -> iced::Task<PanelMessage> {
+        let tasks: iced::Task<PanelMessage> = iced::Task::batch(
+            self.panes
+                .get_mut(pane_id)
+                .iter_mut()
+                .flat_map(|pane| pane.tabs.iter_mut())
+                .map(|tab| {
+                    tab.closed(context)
+                        .map(move |message| PanelMessage::Pane(pane_id, message.into()))
+                }),
+        );
+
+        if let Some((_, sibling)) = self.panes.close(pane_id) {
+            self.focus = Some(sibling);
+        }
+
+        tasks
+    }
+
     fn view_controls<'a>(
         style: &'a Style,
         pane: iced::widget::pane_grid::Pane,
@@ -310,36 +333,28 @@ impl Widget<PanelMessage> for Panel {
 
                 iced::Task::none()
             }
-            PanelMessage::Close(pane) => {
-                if let Some((_, sibling)) = self.panes.close(pane) {
-                    self.focus = Some(sibling);
-                }
-
-                iced::Task::none()
-            }
+            PanelMessage::Close(pane_id) => self.close_pane(context, pane_id),
             PanelMessage::CloseFocused => {
-                if let Some(pane) = self.focus
-                    && let Some((_, sibling)) = self.panes.close(pane)
-                {
-                    self.focus = Some(sibling);
+                if let Some(pane_id) = self.focus {
+                    self.close_pane(context, pane_id)
+                } else {
+                    iced::Task::none()
                 }
-
-                iced::Task::none()
             }
-            PanelMessage::Detach(pane) => {
-                self.panes.close(pane);
+            PanelMessage::Detach(pane_id) => {
+                self.panes.close(pane_id);
                 if let Some(focused_pane) = self.focus
-                    && focused_pane == pane
+                    && focused_pane == pane_id
                 {
                     self.focus = None;
                 }
                 iced::Task::none()
             }
-            PanelMessage::Pane(pane, pane_message) => {
-                if let Some(pane_widget) = self.panes.get_mut(pane) {
+            PanelMessage::Pane(pane_id, pane_message) => {
+                if let Some(pane_widget) = self.panes.get_mut(pane_id) {
                     pane_widget
                         .update(context, pane_message)
-                        .map(move |pane_message| PanelMessage::Pane(pane, pane_message))
+                        .map(move |pane_message| PanelMessage::Pane(pane_id, pane_message))
                 } else {
                     iced::Task::none()
                 }

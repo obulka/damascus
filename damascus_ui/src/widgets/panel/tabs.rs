@@ -115,9 +115,9 @@ impl Tab {
         }
     }
 
-    pub fn closed(&mut self) -> iced::Task<TabMessage> {
+    pub fn closed(&mut self, context: &mut Context) -> iced::Task<TabMessage> {
         match self {
-            Self::Viewport(viewport) => viewport.closed().map(|message| message.into()),
+            Self::Viewport(viewport) => viewport.closed(context).map(|message| message.into()),
             _ => iced::Task::none(),
         }
     }

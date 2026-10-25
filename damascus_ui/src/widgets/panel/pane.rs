@@ -55,10 +55,13 @@ impl Widget<PaneMessage> for Pane {
                     }
                     TabMessage::Closed(tab_index) => {
                         let task = if tab_index < self.tabs.len() {
-                            self.tabs[tab_index].closed().map(|message| message.into())
+                            self.tabs[tab_index]
+                                .closed(context)
+                                .map(|message| message.into())
                         } else {
                             iced::Task::none()
                         };
+
                         self.tabs.remove(tab_index);
                         self.active_tab = if self.tabs.is_empty() {
                             0

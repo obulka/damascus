@@ -44,6 +44,33 @@ pub struct ViewportContext {
     pub node_context: NodeContext,
 }
 
+impl ViewportContext {
+    pub fn active_output_id(&self) -> Option<&OutputId> {
+        if let Some(view) = self.active_view {
+            self.views.get(&view)
+        } else {
+            None
+        }
+    }
+
+    pub fn clear_active_view_if_invalid(&mut self) -> Option<u32> {
+        if let Some(active_view) = self.active_view
+            && !self.views.contains_key(&active_view)
+        {
+            self.active_view = None;
+
+            Some(active_view)
+        } else {
+            None
+        }
+    }
+
+    pub fn clear_output_id(&mut self, output_id: OutputId) -> Option<u32> {
+        self.views.retain(|_key, value| output_id != *value);
+        self.clear_active_view_if_invalid()
+    }
+}
+
 pub type Viewports = SlotMap<ViewportId, ViewportContext>;
 pub type TextureViewers = SecondaryMap<ViewportId, TextureViewer>;
 
@@ -279,6 +306,16 @@ impl Viewport {
         } else {
             None
         }
+    }
+
+    pub fn closed(&mut self) -> iced::Task<ViewportMessage> {
+        if let Some(viewport_id) = self.viewport_primitive.viewport_id
+            && let Ok(mut viewports) = self.context.lock()
+        {
+            viewports.remove(viewport_id);
+            self.viewport_primitive.viewport_id = None;
+        }
+        iced::Task::none()
     }
 
     pub fn handle_mouse_event(

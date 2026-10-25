@@ -50,6 +50,9 @@ use node::NodeContext;
 pub struct NodeGraphContext {
     pub context: SparseSecondaryMap<NodeId, NodeContext>,
     pub graph: Graph,
+    pub selected_nodes: HashSet<NodeId>,
+    pub selected_viewports: HashSet<ViewportId>,
+    pub active_viewport: Option<ViewportId>,
 }
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
@@ -60,7 +63,6 @@ pub enum NodeGraphMessage {
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
     ClearSelection,
-    UpdateSelection,
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
     #[serde(skip)]
     CanvasEvent(iced::Event),
@@ -92,10 +94,7 @@ pub struct NodeGraph {
     viewport_context: Arc<Mutex<Viewports>>,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
-    selected_nodes: HashSet<NodeId>,
     dragging_nodes: bool,
-    selected_viewports: HashSet<ViewportId>,
-    active_viewport: Option<ViewportId>,
 }
 
 impl Default for NodeGraph {
@@ -105,31 +104,43 @@ impl Default for NodeGraph {
             viewport_context: Arc::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
-            selected_nodes: HashSet::<NodeId>::default(),
             dragging_nodes: false,
-            selected_viewports: HashSet::<ViewportId>::default(),
-            active_viewport: None,
         }
     }
 }
 
 impl NodeGraph {
     pub fn clear_selection(&mut self) {
-        self.selected_nodes.clear();
-        self.selected_viewports.clear();
+        let Ok(mut node_graph) = self.context.lock() else {
+            return;
+        };
+
+        node_graph.selected_nodes.clear();
+        node_graph.selected_viewports.clear();
     }
 
     pub fn drag_select_nodes(&mut self, context: &mut Context) {
-        let Ok(node_graph) = context.node_graph.lock() else {
+        let Ok(mut node_graph) = self.context.lock() else {
             return;
         };
-        for (node_id, node_context) in node_graph.context.iter() {
-            if self.selection_box.contains(node_context.shape.center) {
-                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
-                    self.selected_nodes.remove(&node_id);
+
+        for node_id in node_graph
+            .context
+            .iter()
+            .filter_map(|(node_id, node_context)| {
+                if self.selection_box.contains(node_context.shape.center) {
+                    Some(node_id)
                 } else {
-                    self.selected_nodes.insert(node_id);
+                    None
                 }
+            })
+            .collect::<Vec<_>>()
+            .iter()
+        {
+            if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                node_graph.selected_nodes.remove(node_id);
+            } else {
+                node_graph.selected_nodes.insert(*node_id);
             }
         }
     }
@@ -138,16 +149,19 @@ impl NodeGraph {
         let Ok(viewports) = context.viewports.lock() else {
             return;
         };
+        let Ok(mut node_graph) = context.node_graph.lock() else {
+            return;
+        };
         for (viewport_id, viewport_context) in viewports.iter() {
             if self
                 .selection_box
                 .contains(viewport_context.node_context.shape.center)
             {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
-                    self.selected_viewports.remove(&viewport_id);
+                    node_graph.selected_viewports.remove(&viewport_id);
                 } else {
-                    self.selected_viewports.insert(viewport_id);
-                    self.active_viewport = Some(viewport_id);
+                    node_graph.selected_viewports.insert(viewport_id);
+                    node_graph.active_viewport = Some(viewport_id);
                 }
             }
         }
@@ -159,21 +173,32 @@ impl NodeGraph {
     }
 
     pub fn click_select_nodes(&mut self, context: &mut Context) -> bool {
-        let Ok(node_graph) = context.node_graph.lock() else {
+        let Ok(mut node_graph) = context.node_graph.lock() else {
             return false;
         };
 
         let mut any_selected = false;
 
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
-        for (node_id, node_context) in node_graph.context.iter() {
-            if node_context.shape.contains(cursor_position) {
-                if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
-                    self.selected_nodes.remove(&node_id);
+
+        for node_id in node_graph
+            .context
+            .iter()
+            .filter_map(|(node_id, node_context)| {
+                if node_context.shape.contains(cursor_position) {
+                    Some(node_id)
                 } else {
-                    self.selected_nodes.insert(node_id);
-                    any_selected = true;
+                    None
                 }
+            })
+            .collect::<Vec<_>>()
+            .iter()
+        {
+            if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
+                node_graph.selected_nodes.remove(node_id);
+            } else {
+                node_graph.selected_nodes.insert(*node_id);
+                any_selected = true;
             }
         }
 
@@ -182,6 +207,9 @@ impl NodeGraph {
 
     pub fn click_select_viewports(&mut self, context: &mut Context) -> bool {
         let Ok(viewports) = context.viewports.lock() else {
+            return false;
+        };
+        let Ok(mut node_graph) = context.node_graph.lock() else {
             return false;
         };
 
@@ -195,10 +223,10 @@ impl NodeGraph {
                 .contains(cursor_position)
             {
                 if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
-                    self.selected_viewports.remove(&viewport_id);
+                    node_graph.selected_viewports.remove(&viewport_id);
                 } else {
-                    self.selected_viewports.insert(viewport_id);
-                    self.active_viewport = Some(viewport_id);
+                    node_graph.selected_viewports.insert(viewport_id);
+                    node_graph.active_viewport = Some(viewport_id);
                     any_selected = true;
                 }
             }
@@ -215,11 +243,22 @@ impl NodeGraph {
         if self.dragging_nodes
             && let Ok(mut node_graph) = context.node_graph.lock()
         {
-            for (node_id, node_context) in node_graph.context.iter_mut() {
-                if !self.selected_nodes.contains(&node_id) {
-                    continue;
+            for node_id in node_graph
+                .context
+                .iter()
+                .filter_map(|(node_id, _node_context)| {
+                    if node_graph.selected_nodes.contains(&node_id) {
+                        Some(node_id)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>()
+                .iter()
+            {
+                if let Some(node_context) = node_graph.context.get_mut(*node_id) {
+                    node_context.shape.center += self.pan_zoom.local_cursor_velocity();
                 }
-                node_context.shape.center += self.pan_zoom.local_cursor_velocity();
             }
         }
     }
@@ -227,9 +266,10 @@ impl NodeGraph {
     pub fn drag_viewports(&mut self, context: &mut Context) {
         if self.dragging_nodes
             && let Ok(mut viewports) = context.viewports.lock()
+            && let Ok(node_graph) = context.node_graph.lock()
         {
             for (viewport_id, viewport_context) in viewports.iter_mut() {
-                if !self.selected_viewports.contains(&viewport_id) {
+                if !node_graph.selected_viewports.contains(&viewport_id) {
                     continue;
                 }
                 viewport_context.node_context.shape.center += self.pan_zoom.local_cursor_velocity();
@@ -240,6 +280,56 @@ impl NodeGraph {
     pub fn drag(&mut self, context: &mut Context) {
         self.drag_nodes(context);
         self.drag_viewports(context);
+    }
+
+    pub fn remove_selected(&mut self) -> iced::Task<NodeGraphMessage> {
+        let Ok(mut node_graph) = self.context.lock() else {
+            return iced::Task::none();
+        };
+
+        if !node_graph.selected_viewports.is_empty()
+            && let Ok(mut viewports) = self.viewport_context.lock()
+        {
+            for viewport_id in node_graph.selected_viewports.iter() {
+                viewports.remove(*viewport_id);
+            }
+
+            node_graph.selected_viewports.clear();
+        }
+
+        if !node_graph.selected_nodes.is_empty() {
+            for node_id in node_graph.selected_nodes.clone().iter() {
+                node_graph.graph.remove_node(*node_id);
+                node_graph.context.remove(*node_id);
+            }
+
+            if let Ok(mut viewports) = self.viewport_context.lock() {
+                for viewport in viewports.values_mut() {
+                    viewport
+                        .views
+                        .retain(|_, output_id| node_graph.graph.output_id_is_valid(*output_id));
+                    viewport.clear_active_view_if_invalid();
+                }
+            }
+
+            node_graph.selected_nodes.clear();
+        }
+
+        iced::Task::none()
+    }
+
+    pub fn viewport_removed(&mut self, viewport_id: &ViewportId) {
+        let Ok(mut node_graph) = self.context.lock() else {
+            return;
+        };
+
+        if let Some(active_viewport) = node_graph.active_viewport
+            && active_viewport == *viewport_id
+        {
+            node_graph.active_viewport = None;
+        }
+
+        node_graph.selected_viewports.remove(viewport_id);
     }
 
     pub fn handle_mouse_event(
@@ -353,29 +443,42 @@ impl NodeGraph {
     ) -> iced::Task<NodeGraphMessage> {
         match keyboard_event {
             iced::keyboard::Event::KeyPressed { key, .. } => match key {
+                iced::keyboard::Key::Named(key) => match key {
+                    iced::keyboard::key::Named::Delete | iced::keyboard::key::Named::Backspace => {
+                        self.remove_selected()
+                    }
+                    _ => iced::Task::none(),
+                },
                 iced::keyboard::Key::Character(character) => {
                     if let Ok(digits) = character.as_str().parse() {
-                        if self.active_viewport.is_none()
-                            && let Ok(viewports) = context.viewports.lock()
-                            && let Some(id) = viewports.keys().next()
-                        {
-                            self.active_viewport = Some(id);
-                        }
-                        iced::Task::done(
-                            if let Some(node_id) = self.selected_nodes.iter().next()
-                                && let Ok(node_graph) = self.context.lock()
-                                && let Some(output_id) =
-                                    node_graph.graph.nodes_first_output_id(node_id)
+                        if let Ok(mut node_graph) = self.context.lock() {
+                            if node_graph.active_viewport.is_none()
+                                && let Ok(viewports) = context.viewports.lock()
+                                && let Some(id) = viewports.keys().next()
                             {
-                                NodeGraphMessage::ViewNodeOutput(
-                                    self.active_viewport,
-                                    digits,
-                                    Some(*output_id),
-                                )
-                            } else {
-                                NodeGraphMessage::ViewNodeOutput(self.active_viewport, digits, None)
-                            },
-                        )
+                                node_graph.active_viewport = Some(id);
+                            }
+                            iced::Task::done(
+                                if let Some(node_id) = node_graph.selected_nodes.iter().next()
+                                    && let Some(output_id) =
+                                        node_graph.graph.nodes_first_output_id(node_id)
+                                {
+                                    NodeGraphMessage::ViewNodeOutput(
+                                        node_graph.active_viewport,
+                                        digits,
+                                        Some(*output_id),
+                                    )
+                                } else {
+                                    NodeGraphMessage::ViewNodeOutput(
+                                        node_graph.active_viewport,
+                                        digits,
+                                        None,
+                                    )
+                                },
+                            )
+                        } else {
+                            iced::Task::none()
+                        }
                     } else {
                         iced::Task::none()
                     }
@@ -587,7 +690,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                         node_context.colour.z,
                     ),
                 );
-                if self.selected_nodes.contains(&node_id) {
+                if node_graph.selected_nodes.contains(&node_id) {
                     frame.stroke(
                         &node,
                         iced::widget::canvas::Stroke::default()
@@ -669,49 +772,49 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                     }
                 }
             }
-        }
 
-        if let Ok(viewports) = self.viewport_context.lock() {
-            for (viewport_id, viewport_context) in viewports.iter() {
-                let viewport_center: Vec2 = self
-                    .pan_zoom
-                    .local_to_canvas(viewport_context.node_context.shape.center);
-                let node_top_left: Vec2 = self
-                    .pan_zoom
-                    .local_to_canvas(viewport_context.node_context.shape.top_left());
-                let node = iced::widget::canvas::Path::rectangle(
-                    iced::Point::new(node_top_left.x, node_top_left.y),
-                    iced::Size::new(
-                        viewport_context.node_context.shape.size.x,
-                        viewport_context.node_context.shape.size.y,
-                    ) * reciprocal_zoom,
-                );
-                frame.fill(
-                    &node,
-                    iced::Color::from_rgb(
-                        viewport_context.node_context.colour.x,
-                        viewport_context.node_context.colour.y,
-                        viewport_context.node_context.colour.z,
-                    ),
-                );
-                if self.selected_viewports.contains(&viewport_id) {
-                    frame.stroke(
-                        &node,
-                        iced::widget::canvas::Stroke::default()
-                            .with_width(1.)
-                            .with_color(iced::Color::WHITE),
+            if let Ok(viewports) = self.viewport_context.lock() {
+                for (viewport_id, viewport_context) in viewports.iter() {
+                    let viewport_center: Vec2 = self
+                        .pan_zoom
+                        .local_to_canvas(viewport_context.node_context.shape.center);
+                    let node_top_left: Vec2 = self
+                        .pan_zoom
+                        .local_to_canvas(viewport_context.node_context.shape.top_left());
+                    let node = iced::widget::canvas::Path::rectangle(
+                        iced::Point::new(node_top_left.x, node_top_left.y),
+                        iced::Size::new(
+                            viewport_context.node_context.shape.size.x,
+                            viewport_context.node_context.shape.size.y,
+                        ) * reciprocal_zoom,
                     );
-                }
-                if render_text {
-                    frame.fill_text(iced::widget::canvas::Text {
-                        content: viewport_context.node_context.label.clone(),
-                        position: iced::Point::new(viewport_center.x, viewport_center.y),
-                        color: iced::Color::WHITE,
-                        size: text_size_pixels,
-                        align_x: iced::advanced::text::Alignment::Center,
-                        align_y: iced::alignment::Vertical::Center,
-                        ..iced::widget::canvas::Text::default()
-                    });
+                    frame.fill(
+                        &node,
+                        iced::Color::from_rgb(
+                            viewport_context.node_context.colour.x,
+                            viewport_context.node_context.colour.y,
+                            viewport_context.node_context.colour.z,
+                        ),
+                    );
+                    if node_graph.selected_viewports.contains(&viewport_id) {
+                        frame.stroke(
+                            &node,
+                            iced::widget::canvas::Stroke::default()
+                                .with_width(1.)
+                                .with_color(iced::Color::WHITE),
+                        );
+                    }
+                    if render_text {
+                        frame.fill_text(iced::widget::canvas::Text {
+                            content: viewport_context.node_context.label.clone(),
+                            position: iced::Point::new(viewport_center.x, viewport_center.y),
+                            color: iced::Color::WHITE,
+                            size: text_size_pixels,
+                            align_x: iced::advanced::text::Alignment::Center,
+                            align_y: iced::alignment::Vertical::Center,
+                            ..iced::widget::canvas::Text::default()
+                        });
+                    }
                 }
             }
         }
@@ -770,20 +873,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
             NodeGraphMessage::ClearSelection => {
-                self.selected_nodes.clear();
-
-                iced::Task::none()
-            }
-            NodeGraphMessage::UpdateSelection => {
-                let Ok(node_graph) = self.context.lock() else {
+                let Ok(mut node_graph) = self.context.lock() else {
                     return iced::Task::none();
                 };
 
-                for (node_id, node_context) in node_graph.context.iter() {
-                    if self.selection_box.contains(node_context.shape.center) {
-                        self.selected_nodes.insert(node_id);
-                    }
-                }
+                node_graph.selected_nodes.clear();
 
                 iced::Task::none()
             }

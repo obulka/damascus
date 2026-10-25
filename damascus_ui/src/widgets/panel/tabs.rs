@@ -114,6 +114,13 @@ impl Tab {
             _ => Tabs::default(),
         }
     }
+
+    pub fn closed(&mut self) -> iced::Task<TabMessage> {
+        match self {
+            Self::Viewport(viewport) => viewport.closed().map(|message| message.into()),
+            _ => iced::Task::none(),
+        }
+    }
 }
 
 impl From<Tabs> for Tab {

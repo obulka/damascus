@@ -48,29 +48,40 @@ impl Widget<PaneMessage> for Pane {
     fn update(&mut self, context: &mut Context, message: PaneMessage) -> iced::Task<PaneMessage> {
         match message {
             PaneMessage::Tab(tab_message) => {
-                match tab_message {
+                let task: iced::Task<PaneMessage> = match tab_message {
                     TabMessage::Selected(tab_index) => {
                         self.active_tab = tab_index;
+                        iced::Task::none()
                     }
                     TabMessage::Closed(tab_index) => {
+                        let task = if tab_index < self.tabs.len() {
+                            self.tabs[tab_index].closed().map(|message| message.into())
+                        } else {
+                            iced::Task::none()
+                        };
                         self.tabs.remove(tab_index);
                         self.active_tab = if self.tabs.is_empty() {
                             0
                         } else {
                             usize::max(0, usize::min(self.active_tab, self.tabs.len() - 1))
                         };
+
+                        task
                     }
                     TabMessage::New(ref tab) => {
                         self.tabs.push(tab.clone().into());
+                        iced::Task::none()
                     }
-                    _ => {}
-                }
+                    _ => iced::Task::none(),
+                };
                 if self.tabs.len() > self.active_tab {
-                    self.tabs[self.active_tab]
-                        .update(context, tab_message)
-                        .map(|tab_message| tab_message.into())
+                    task.chain(
+                        self.tabs[self.active_tab]
+                            .update(context, tab_message)
+                            .map(|tab_message| tab_message.into()),
+                    )
                 } else {
-                    iced::Task::none()
+                    task
                 }
             }
         }

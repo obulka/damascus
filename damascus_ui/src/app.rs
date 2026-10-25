@@ -231,8 +231,54 @@ impl Damascus {
         iced::Task::batch(
             std::iter::once(match message {
                 Message::IcedEvent(event) => self.handle_iced_event(event),
+                Message::WindowManager(WindowManagerMessage::Window(
+                    WindowMessage::StyleEditor(mut window_id, StyleEditorMessage::StyleChanged),
+                )) => {
+                    if window_id.is_none() {
+                        window_id = self.window_manager.focused_window_id;
+                    }
+                    if let Some(window_id) = window_id
+                        && let Some(window) = self.window_manager.windows.get_mut(&window_id)
+                    {
+                        let mut tasks = Vec::<(
+                            iced::window::Id,
+                            iced::widget::pane_grid::Pane,
+                            iced::Task<NodeGraphMessage>,
+                        )>::new();
+                        for (pane_id, pane) in window.panel.panes.panes.iter_mut() {
+                            for tab in pane.tabs.iter_mut() {
+                                let Tab::NodeGraph(node_graph) = tab else {
+                                    continue;
+                                };
+                                self.context.default_style = window.style.clone();
+                                tasks.push((
+                                    window_id,
+                                    *pane_id,
+                                    node_graph
+                                        .update(&mut self.context, NodeGraphMessage::UpdateStyle),
+                                ))
+                            }
+                        }
+
+                        iced::Task::batch(tasks.into_iter().map(|(window_id, pane_id, task)| {
+                            task.map(move |message| {
+                                Message::WindowManager(WindowManagerMessage::Window(
+                                    WindowMessage::Panel(
+                                        Some(window_id),
+                                        PanelMessage::Pane(
+                                            pane_id,
+                                            PaneMessage::Tab(message.into()),
+                                        ),
+                                    ),
+                                ))
+                            })
+                        }))
+                    } else {
+                        iced::Task::none()
+                    }
+                }
                 Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
-                    _window,
+                    _window_id,
                     PanelMessage::Pane(
                         _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::NewViewport(
@@ -252,7 +298,7 @@ impl Damascus {
                     iced::Task::none()
                 }
                 Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
-                    _window,
+                    _window_id,
                     PanelMessage::Pane(
                         _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(
@@ -286,7 +332,7 @@ impl Damascus {
                     iced::Task::batch(tasks.into_iter().map(|message| iced::Task::done(message)))
                 }
                 Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
-                    _window,
+                    _window_id,
                     PanelMessage::Pane(
                         _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::ViewNodeOutput(

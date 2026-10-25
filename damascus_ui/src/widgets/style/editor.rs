@@ -141,6 +141,7 @@ pub enum StyleEditorMessage {
     Set(StyleEditorData),
     Toggle(StyleEditorFields),
     Error(StyleEditorErrors),
+    StyleChanged,
 }
 
 impl From<StyleEditorErrors> for StyleEditorMessage {
@@ -165,23 +166,31 @@ impl StyleEditor {
         style: &mut Style,
         message: StyleEditorMessage,
     ) -> iced::Task<StyleEditorMessage> {
-        match message {
+        let changed: bool = match message {
             StyleEditorMessage::Set(field) => {
                 field.set(style);
+                true
             }
             StyleEditorMessage::Increment(field) => {
                 field.increment(style);
+                true
             }
             StyleEditorMessage::Decrement(field) => {
                 field.decrement(style);
+                true
             }
             StyleEditorMessage::Toggle(field) => {
                 field.toggle(style);
+                true
             }
-            _ => {}
-        }
+            _ => false,
+        };
 
-        iced::Task::none()
+        if changed {
+            iced::Task::done(StyleEditorMessage::StyleChanged)
+        } else {
+            iced::Task::none()
+        }
     }
 }
 

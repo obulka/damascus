@@ -7,6 +7,8 @@ use glam::{Vec2, Vec4};
 
 use damascus::geometry::rectangle::Rectangle;
 
+use crate::{type_conversion::ToPath, widgets::pan_zoom::PanZoom};
+
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct NodeContext {
     pub label: String,
@@ -40,5 +42,13 @@ impl NodeContext {
 
     pub fn top_left(&self) -> Vec2 {
         self.shape.top_left()
+    }
+
+    pub fn local_to_canvas_path(&self, pan_zoom: &PanZoom) -> iced::widget::canvas::Path {
+        pan_zoom.local_to_canvas_rectangle(&self.shape).to_path()
+    }
+
+    pub fn local_path(&self) -> iced::widget::canvas::Path {
+        self.shape.to_path()
     }
 }

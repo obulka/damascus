@@ -14,6 +14,7 @@ use damascus::{Enumerator, Errors};
 
 pub mod app;
 pub mod icons;
+pub mod type_conversion;
 pub mod widgets;
 pub mod windows;
 

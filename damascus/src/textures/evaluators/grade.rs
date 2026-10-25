@@ -6,7 +6,7 @@
 use std::collections::BTreeSet;
 
 use crevice::std430::AsStd430;
-use glam::Mat4;
+use glam::{Mat4, UVec3};
 use macro_rules_attribute::derive;
 use serde_hashkey::{Error, Key, OrderedFloatPolicy, Result, to_key_with_ordered_float};
 use wgpu;
@@ -68,6 +68,7 @@ pub struct Grade {
     pub gamma: f32,
     pub invert: bool,
     pub transform: Mat4,
+    pub default_output_dimensions: UVec3,
     pub frame_counter: FrameCounter,
     construction_data: GradeConstructionData,
     hashes: TextureEvaluatorHashes,
@@ -88,6 +89,7 @@ impl Default for Grade {
             gamma: 1.,
             invert: false,
             transform: Mat4::IDENTITY,
+            default_output_dimensions: UVec3::splat(1),
             frame_counter: FrameCounter::default(),
             construction_data: GradeConstructionData::default(),
             hashes: TextureEvaluatorHashes::default(),
@@ -200,7 +202,11 @@ impl TextureEvaluator for Grade {
                 depth_or_array_layers: 1,
             })
         } else {
-            None
+            Some(wgpu::Extent3d {
+                width: self.default_output_dimensions.x,
+                height: self.default_output_dimensions.y,
+                depth_or_array_layers: self.default_output_dimensions.z,
+            })
         }
     }
 
@@ -256,7 +262,13 @@ impl GPUTextureEvaluator<GradePreprocessorDirectives> for Grade {
         }]
     }
 
-    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
-        self.input_texture_views()
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        let mut input_texture_views: Vec<TextureView> = self.input_texture_views();
+        if input_texture_views.is_empty()
+            && let Some(texture_view) = self.create_output_texture_view(device)
+        {
+            input_texture_views.push(texture_view);
+        }
+        input_texture_views
     }
 }

@@ -75,7 +75,7 @@ impl NodeGraphContext {
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
-    CreateReadNode,
+    CreateNode(NodeData),
     CreateLiveNode,
     ViewportCreated(ViewportId),
     PanZoom(PanZoomMessage),
@@ -534,7 +534,9 @@ impl NodeGraph {
             } => match key {
                 iced::keyboard::Key::Character(character) => {
                     if character == "r" {
-                        iced::Task::done(NodeGraphMessage::CreateReadNode)
+                        iced::Task::done(NodeGraphMessage::CreateNode(NodeData::TextureRead))
+                    } else if character == "g" {
+                        iced::Task::done(NodeGraphMessage::CreateNode(NodeData::Grade))
                     } else if character == "l" {
                         iced::Task::done(NodeGraphMessage::CreateLiveNode)
                     } else {
@@ -921,26 +923,30 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
                 iced::Task::none()
             }
-            NodeGraphMessage::CreateReadNode => {
+            NodeGraphMessage::CreateNode(node_data) => {
                 let Ok(mut node_graph) = self.context.lock() else {
                     return iced::Task::none();
                 };
 
-                let read_id: NodeId = node_graph.graph.add_node(NodeData::TextureRead);
-
-                let Ok(_input_id) = node_graph.graph.set_input_data(
-                    &read_id,
-                    &TextureReadInputData::Filepath,
-                    InputData::Filepath(
-                        "/home/ob1/software/rust/damascus/damascus/image.exr".to_string(),
-                    ),
-                ) else {
-                    panic!("read could not set filepath.");
-                };
+                let node_id: NodeId = node_graph.graph.add_node(node_data);
+                match node_data {
+                    NodeData::TextureRead => {
+                        let Ok(_input_id) = node_graph.graph.set_input_data(
+                            &node_id,
+                            &TextureReadInputData::Filepath,
+                            InputData::Filepath(
+                                "/home/ob1/software/rust/damascus/damascus/image.exr".to_string(),
+                            ),
+                        ) else {
+                            panic!("read could not set filepath.");
+                        };
+                    }
+                    _ => {}
+                }
 
                 node_graph.context.insert(
-                    read_id,
-                    NodeContext::new(format!("Read{}", read_id))
+                    node_id,
+                    NodeContext::new(format!("{}{}", node_data, node_id))
                         .position(self.pan_zoom.local_cursor_position())
                         .colour(context.default_style.default_node_colour),
                 );

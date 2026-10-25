@@ -234,6 +234,7 @@ impl Damascus {
                 Message::WindowManager(WindowManagerMessage::Window(
                     WindowMessage::StyleEditor(mut window_id, StyleEditorMessage::StyleChanged),
                 )) => {
+                    // Update node graph styles
                     if window_id.is_none() {
                         window_id = self.window_manager.focused_window_id;
                     }

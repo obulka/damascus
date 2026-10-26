@@ -86,6 +86,8 @@ pub enum NodeGraphMessage {
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
     RemovedViewports(HashSet<ViewportId>),
     NewViewport(ViewportId),
+    OpenProperties(NodeId),
+    DoubleClick,
     #[serde(skip)]
     CanvasEvent(iced::Event),
     #[default]
@@ -268,16 +270,10 @@ impl NodeGraph {
         self.click_select_selected_nodes(context) || self.click_select_selected_viewports(context)
     }
 
-    pub fn click_select_nodes(&self, context: &Context) -> bool {
-        let Ok(mut node_graph) = context.node_graph.lock() else {
-            return false;
-        };
-
-        let mut any_selected = false;
-
+    pub fn hovered_node(&self, node_graph: &mut NodeGraphContext) -> Option<NodeId> {
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
 
-        if let Some(node_id) = node_graph
+        node_graph
             .context
             .iter()
             .filter_map(|(node_id, node_context)| {
@@ -288,7 +284,16 @@ impl NodeGraph {
                 }
             })
             .next()
-        {
+    }
+
+    pub fn click_select_nodes(&self, context: &Context) -> bool {
+        let mut any_selected = false;
+
+        let Ok(mut node_graph) = context.node_graph.lock() else {
+            return any_selected;
+        };
+
+        if let Some(node_id) = self.hovered_node(&mut node_graph) {
             if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                 node_graph.selected_nodes.remove(&node_id);
             } else {
@@ -632,6 +637,21 @@ impl NodeGraph {
                 _ => iced::Task::none(),
             },
             iced::keyboard::Event::ModifiersChanged(_modifiers) => iced::Task::none(),
+        }
+    }
+
+    pub fn handle_double_click_event(
+        &mut self,
+        context: &mut Context,
+    ) -> iced::Task<NodeGraphMessage> {
+        let Ok(mut node_graph) = context.node_graph.lock() else {
+            return iced::Task::none();
+        };
+
+        if let Some(node_id) = self.hovered_node(&mut node_graph) {
+            iced::Task::done(NodeGraphMessage::OpenProperties(node_id))
+        } else {
+            iced::Task::none()
         }
     }
 
@@ -1046,6 +1066,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .selection_box
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
+            NodeGraphMessage::DoubleClick => self.handle_double_click_event(context),
             NodeGraphMessage::ClearSelection => {
                 let Ok(mut node_graph) = self.context.lock() else {
                     return iced::Task::none();
@@ -1260,6 +1281,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .width(iced::Length::Fill)
                 .height(iced::Length::Fill),
         )
+        .on_double_click(NodeGraphMessage::DoubleClick)
         .on_scroll(|scroll_delta| {
             PanZoomMessage::Zoom(match scroll_delta {
                 iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,

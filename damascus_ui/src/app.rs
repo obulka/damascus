@@ -282,6 +282,18 @@ impl Damascus {
                     _window_id,
                     PanelMessage::Pane(
                         _pane,
+                        PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::OpenProperties(
+                            node_id,
+                        ))),
+                    ),
+                ))) => {
+                    println!("Open {:?}'s properties", node_id);
+                    iced::Task::none()
+                }
+                Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
+                    _window_id,
+                    PanelMessage::Pane(
+                        _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::NewViewport(
                             new_viewport_id,
                         ))),

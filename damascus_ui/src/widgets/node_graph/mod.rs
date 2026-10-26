@@ -918,12 +918,13 @@ impl NodeGraph {
                     },
                 );
 
-                let view_display: u32 = if *view == 0 { 10 } else { *view };
-
                 let mut text_path: Rectangle = viewport_context.node_context.shape;
                 text_path.uniform_expansion(
                     (connection_vector.length() - text_path.half_size().length())
-                        .min(1.5 * (view_display as f32) * self.style.text_size)
+                        .min(
+                            1.5 * (if *view == 0 { 10. } else { *view as f32 })
+                                * self.style.text_size,
+                        )
                         .max(0.),
                 );
 
@@ -934,7 +935,7 @@ impl NodeGraph {
 
                 let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
                 frame.fill_text(iced::widget::canvas::Text {
-                    content: view_display.to_string(),
+                    content: view.to_string(),
                     position: iced::Point::from_glam(&canvas_text_position),
                     color: text_colour,
                     size: text_size,

@@ -119,6 +119,7 @@ pub struct NodeGraph {
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
     dragging_nodes: bool,
+    dragged_nodes: bool,
     style: Style,
 }
 
@@ -130,6 +131,7 @@ impl Default for NodeGraph {
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
             dragging_nodes: false,
+            dragged_nodes: false,
             style: Style::default(),
         }
     }
@@ -197,7 +199,11 @@ impl NodeGraph {
         self.drag_select_viewports(context);
     }
 
-    pub fn click_select_selected_viewports(&self, context: &Context) -> bool {
+    pub fn click_select_selected_viewports(
+        &self,
+        context: &Context,
+        clear_selection: bool,
+    ) -> bool {
         let Ok(viewports) = context.viewports.lock() else {
             return false;
         };
@@ -221,6 +227,11 @@ impl NodeGraph {
                 continue;
             }
 
+            if clear_selection {
+                node_graph.selected_nodes.clear();
+                node_graph.selected_viewports.clear();
+            }
+
             if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                 node_graph.selected_viewports.remove(viewport_id);
             } else {
@@ -235,7 +246,7 @@ impl NodeGraph {
         any_selected
     }
 
-    pub fn click_select_selected_nodes(&self, context: &Context) -> bool {
+    pub fn click_select_selected_nodes(&self, context: &Context, clear_selection: bool) -> bool {
         let Ok(mut node_graph) = context.node_graph.lock() else {
             return false;
         };
@@ -253,6 +264,11 @@ impl NodeGraph {
                 continue;
             }
 
+            if clear_selection {
+                node_graph.selected_nodes.clear();
+                node_graph.selected_viewports.clear();
+            }
+
             if context.keyboard_modifiers.control() && context.keyboard_modifiers.shift() {
                 node_graph.selected_nodes.remove(node_id);
             } else {
@@ -266,8 +282,9 @@ impl NodeGraph {
         any_selected
     }
 
-    pub fn click_select_selected(&mut self, context: &Context) -> bool {
-        self.click_select_selected_nodes(context) || self.click_select_selected_viewports(context)
+    pub fn click_select_selected(&mut self, context: &Context, clear_selection: bool) -> bool {
+        self.click_select_selected_nodes(context, clear_selection)
+            || self.click_select_selected_viewports(context, clear_selection)
     }
 
     pub fn hovered_node(&self, node_graph: &mut NodeGraphContext) -> Option<NodeId> {
@@ -343,7 +360,7 @@ impl NodeGraph {
         self.click_select_nodes(context) || self.click_select_viewports(context)
     }
 
-    pub fn drag_nodes(&self, context: &Context) {
+    pub fn drag_nodes(&mut self, context: &Context) {
         if self.dragging_nodes
             && let Ok(mut node_graph) = context.node_graph.lock()
         {
@@ -362,12 +379,13 @@ impl NodeGraph {
             {
                 if let Some(node_context) = node_graph.context.get_mut(*node_id) {
                     node_context.shape.center += self.pan_zoom.local_cursor_velocity();
+                    self.dragged_nodes = true;
                 }
             }
         }
     }
 
-    pub fn drag_viewports(&self, context: &Context) {
+    pub fn drag_viewports(&mut self, context: &Context) {
         if self.dragging_nodes
             && let Ok(mut viewports) = context.viewports.lock()
             && let Ok(node_graph) = context.node_graph.lock()
@@ -377,11 +395,12 @@ impl NodeGraph {
                     continue;
                 }
                 viewport_context.node_context.shape.center += self.pan_zoom.local_cursor_velocity();
+                self.dragged_nodes = true;
             }
         }
     }
 
-    pub fn drag(&self, context: &Context) {
+    pub fn drag(&mut self, context: &Context) {
         self.drag_nodes(context);
         self.drag_viewports(context);
     }
@@ -491,7 +510,7 @@ impl NodeGraph {
                     if self.pan_zoom.cursor_in_bounds() {
                         let mut node_clicked = false;
 
-                        if !self.click_select_selected(context) {
+                        if !self.click_select_selected(context, false) {
                             // Potentially reset the selection
                             if !context.keyboard_modifiers.control() {
                                 self.clear_selection();
@@ -506,6 +525,8 @@ impl NodeGraph {
 
                         if node_clicked {
                             self.dragging_nodes = true;
+                            self.dragged_nodes = false;
+
                             iced::Task::none()
                         } else {
                             // Initiate a box selection
@@ -530,10 +551,11 @@ impl NodeGraph {
             },
             iced::mouse::Event::ButtonReleased(button) => match button {
                 iced::mouse::Button::Left => {
+                    if self.dragging_nodes && !self.dragged_nodes {
+                        self.click_select_selected(context, true);
+                    }
                     self.dragging_nodes = false;
 
-                    // End the drag selection, if there was minimal drag
-                    // handle the event as a click
                     let task: iced::Task<NodeGraphMessage> = self
                         .selection_box
                         .update(context, SelectionBoxMessage::EndSelection)

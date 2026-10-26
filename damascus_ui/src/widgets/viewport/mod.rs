@@ -108,7 +108,7 @@ impl Default for ViewportPipeline {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 pub struct ViewportPrimitive {
     viewport_id: Option<ViewportId>,
-    node_graph: Arc<Mutex<NodeGraph>>,
+    node_graph_context: Arc<Mutex<NodeGraph>>,
     active_output_id: Option<OutputId>,
     zoom: f32,
     pan: Vec2,
@@ -120,7 +120,7 @@ impl Default for ViewportPrimitive {
     fn default() -> Self {
         Self {
             viewport_id: None,
-            node_graph: Arc::default(),
+            node_graph_context: Arc::default(),
             active_output_id: None,
             zoom: 1.0,
             pan: Vec2::ZERO,
@@ -174,7 +174,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
 
-        if let Ok(mut node_graph) = self.node_graph.lock()
+        if let Ok(mut node_graph) = self.node_graph_context.lock()
             && node_graph.graph.output_id_is_valid(active_output_id)
             && let Ok(input_data) =
                 node_graph
@@ -316,7 +316,7 @@ impl Viewport {
     pub fn closed(&mut self, _context: &mut Context) -> iced::Task<ViewportMessage> {
         if let Some(viewport_id) = self.viewport_primitive.viewport_id
             && let Ok(mut viewports) = self.context.lock()
-            && let Ok(mut node_graph) = self.viewport_primitive.node_graph.lock()
+            && let Ok(mut node_graph) = self.viewport_primitive.node_graph_context.lock()
         {
             node_graph.viewport_removed(&viewport_id);
             viewports.remove(viewport_id);
@@ -446,8 +446,11 @@ impl Widget<ViewportMessage> for Viewport {
         message: ViewportMessage,
     ) -> iced::Task<ViewportMessage> {
         // Initialize our pointers to the shared app data
-        if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
-            self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
+        if !Arc::ptr_eq(
+            &self.viewport_primitive.node_graph_context,
+            &context.node_graph,
+        ) {
+            self.viewport_primitive.node_graph_context = Arc::clone(&context.node_graph);
             self.create_viewport(context);
         }
         if !Arc::ptr_eq(&self.context, &context.viewports) {

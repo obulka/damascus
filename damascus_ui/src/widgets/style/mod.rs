@@ -46,6 +46,8 @@ pub struct Style {
     pub node_input_radius: f32,
     pub node_output_radius: f32,
     pub node_selected_border_width: f32,
+    pub selection_box_border_width: f32,
+    pub selection_box_alpha: f32,
 }
 
 impl Default for Style {
@@ -71,6 +73,8 @@ impl Default for Style {
             node_input_radius: 5.0,
             node_output_radius: 5.0,
             node_selected_border_width: 3.,
+            selection_box_border_width: 2.,
+            selection_box_alpha: 0.1,
         }
     }
 }

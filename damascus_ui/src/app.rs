@@ -20,6 +20,7 @@ use crate::{
             pane::PaneMessage,
             tabs::{Tab, TabMessage},
         },
+        properties::PropertiesMessage,
         style::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},
@@ -287,8 +288,49 @@ impl Damascus {
                         ))),
                     ),
                 ))) => {
-                    println!("Open {:?}'s properties", node_id);
-                    iced::Task::none()
+                    let mut task: Option<(
+                        iced::window::Id,
+                        iced::widget::pane_grid::Pane,
+                        iced::Task<PropertiesMessage>,
+                    )> = None;
+                    for (window_id, window) in self.window_manager.windows.iter_mut() {
+                        for (pane_id, pane) in window.panel.panes.panes.iter_mut() {
+                            for tab in pane.tabs.iter_mut() {
+                                let Tab::Properties(properties) = tab else {
+                                    continue;
+                                };
+
+                                task = Some((
+                                    *window_id,
+                                    *pane_id,
+                                    properties.update(
+                                        &mut self.context,
+                                        PropertiesMessage::OpenNodeProperties(node_id),
+                                    ),
+                                ));
+
+                                break;
+                            }
+                            if task.is_some() {
+                                break;
+                            }
+                        }
+                        if task.is_some() {
+                            break;
+                        }
+                    }
+                    if let Some((window_id, pane_id, task)) = task {
+                        task.map(move |message| {
+                            Message::WindowManager(WindowManagerMessage::Window(
+                                WindowMessage::Panel(
+                                    Some(window_id),
+                                    PanelMessage::Pane(pane_id, PaneMessage::Tab(message.into())),
+                                ),
+                            ))
+                        })
+                    } else {
+                        iced::Task::none()
+                    }
                 }
                 Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
                     _window_id,

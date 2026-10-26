@@ -49,6 +49,8 @@ pub enum StyleEditorFields {
     NodeInputRadius,
     NodeOutputRadius,
     NodeSelectedBorderWidth,
+    SelectionBoxBorderWidth,
+    SelectionBoxAlpha,
 }
 
 impl StyleEditorFields {
@@ -77,6 +79,10 @@ impl StyleEditorFields {
             Self::NodeSelectedBorderWidth => {
                 style.node_selected_border_width += style.node_selected_border_width
             }
+            Self::SelectionBoxBorderWidth => {
+                style.selection_box_border_width += style.selection_box_border_width
+            }
+            Self::SelectionBoxAlpha => style.selection_box_alpha += style.selection_box_alpha,
             _ => {}
         }
     }
@@ -106,6 +112,10 @@ impl StyleEditorFields {
             Self::NodeSelectedBorderWidth => {
                 style.node_selected_border_width -= style.node_selected_border_width
             }
+            Self::SelectionBoxBorderWidth => {
+                style.selection_box_border_width -= style.selection_box_border_width
+            }
+            Self::SelectionBoxAlpha => style.selection_box_alpha -= style.selection_box_alpha,
             _ => {}
         }
     }
@@ -140,6 +150,8 @@ pub enum StyleEditorData {
     NodeInputRadius(f32),
     NodeOutputRadius(f32),
     NodeSelectedBorderWidth(f32),
+    SelectionBoxBorderWidth(f32),
+    SelectionBoxAlpha(f32),
 }
 
 impl StyleEditorData {
@@ -177,6 +189,12 @@ impl StyleEditorData {
             }
             Self::NodeSelectedBorderWidth(node_selected_border_width) => {
                 style.node_selected_border_width = *node_selected_border_width
+            }
+            Self::SelectionBoxBorderWidth(selection_box_border_width) => {
+                style.selection_box_border_width = *selection_box_border_width
+            }
+            Self::SelectionBoxAlpha(selection_box_alpha) => {
+                style.selection_box_alpha = *selection_box_alpha
             }
         }
     }
@@ -484,6 +502,32 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             horizontal_text_alignment,
         );
 
+        let selection_box_border_width = style.slider(
+            StyleEditorFields::SelectionBoxBorderWidth.variant_label(),
+            0.0..=10.0,
+            ..,
+            style.selection_box_border_width,
+            style.float_input_step,
+            |value| -> StyleEditorMessage {
+                StyleEditorData::SelectionBoxBorderWidth(value).into()
+            },
+            StyleEditorData::SelectionBoxBorderWidth(style.selection_box_border_width).into(),
+            "The opaque border width of any selection boxes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let selection_box_alpha = style.slider(
+            StyleEditorFields::SelectionBoxAlpha.variant_label(),
+            0.0..=1.0,
+            ..,
+            style.selection_box_alpha,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::SelectionBoxAlpha(value).into() },
+            StyleEditorData::SelectionBoxAlpha(style.selection_box_alpha).into(),
+            "The opacity of any selection boxes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
         iced::widget::scrollable(
             iced::widget::column![
                 text_size,
@@ -504,6 +548,8 @@ impl Widget<StyleEditorMessage> for StyleEditor {
                 node_input_radius,
                 node_output_radius,
                 node_selected_border_width,
+                selection_box_border_width,
+                selection_box_alpha,
             ]
             .spacing(style.spacing),
         )

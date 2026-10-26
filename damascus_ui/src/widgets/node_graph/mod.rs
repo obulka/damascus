@@ -691,11 +691,17 @@ impl NodeGraph {
             .local_to_canvas_rectangle(&self.selection_box.bounds())
             .to_path();
 
-        frame.fill(&selection_box, theme.palette().primary.scale_alpha(0.1));
+        frame.fill(
+            &selection_box,
+            theme
+                .palette()
+                .primary
+                .scale_alpha(self.style.selection_box_alpha),
+        );
         frame.stroke(
             &selection_box,
             iced::widget::canvas::Stroke::default()
-                .with_width(1.)
+                .with_width(self.style.selection_box_border_width)
                 .with_color(theme.palette().primary),
         );
     }

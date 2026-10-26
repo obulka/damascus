@@ -15,6 +15,7 @@ use crate::{
     widgets::{
         Style, Widget,
         node_graph::{NodeGraph, NodeGraphMessage},
+        properties::{Properties, PropertiesMessage},
         viewport::{Viewport, ViewportMessage},
     },
 };
@@ -46,7 +47,7 @@ pub type TabResult<T> = Result<T, TabErrors>;
 pub enum TabMessage {
     NodeGraph(NodeGraphMessage),
     Viewport(ViewportMessage),
-    Properties,
+    Properties(PropertiesMessage),
     Selected(usize),
     Closed(usize),
     New(Tabs),
@@ -88,6 +89,12 @@ impl From<ViewportMessage> for TabMessage {
     }
 }
 
+impl From<PropertiesMessage> for TabMessage {
+    fn from(properties_message: PropertiesMessage) -> Self {
+        Self::Properties(properties_message)
+    }
+}
+
 #[derive(Default, EnumTraits!)]
 pub enum Tabs {
     #[default]
@@ -100,7 +107,7 @@ pub enum Tabs {
 pub enum Tab {
     NodeGraph(NodeGraph),
     Viewport(Viewport),
-    Properties,
+    Properties(Properties),
     #[default]
     None,
 }
@@ -110,7 +117,7 @@ impl Tab {
         match self {
             Self::NodeGraph(_) => Tabs::NodeGraph,
             Self::Viewport(_) => Tabs::Viewport,
-            Self::Properties => Tabs::Properties,
+            Self::Properties(_) => Tabs::Properties,
             _ => Tabs::default(),
         }
     }
@@ -128,7 +135,7 @@ impl From<Tabs> for Tab {
         match tab {
             Tabs::NodeGraph => Self::NodeGraph(NodeGraph::default()),
             Tabs::Viewport => Self::Viewport(Viewport::default()),
-            Tabs::Properties => Self::Properties,
+            Tabs::Properties => Self::Properties(Properties::default()),
         }
     }
 }
@@ -138,7 +145,7 @@ impl From<Tab> for Tabs {
         match tab {
             Tab::NodeGraph(_) => Self::NodeGraph,
             Tab::Viewport(_) => Self::Viewport,
-            Tab::Properties => Self::Properties,
+            Tab::Properties(_) => Self::Properties,
             _ => Self::default(),
         }
     }
@@ -159,6 +166,12 @@ impl Widget<TabMessage> for Tab {
                     .map(|viewport_message| viewport_message.into()),
                 _ => iced::Task::none(),
             },
+            Self::Properties(properties) => match message {
+                TabMessage::Properties(properties_message) => properties
+                    .update(context, properties_message)
+                    .map(|properties_message| properties_message.into()),
+                _ => iced::Task::none(),
+            },
             _ => iced::Task::none(),
         }
     }
@@ -175,7 +188,9 @@ impl Widget<TabMessage> for Tab {
             Self::Viewport(viewport) => viewport
                 .view(window_id, style)
                 .map(|viewport_message| viewport_message.into()),
-            Self::Properties => style.text("Properties").into(),
+            Self::Properties(properties) => properties
+                .view(window_id, style)
+                .map(|properties_message| properties_message.into()),
             _ => None::<iced::Element<'a, TabMessage>>.into(),
         }
     }

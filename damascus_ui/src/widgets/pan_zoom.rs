@@ -24,7 +24,8 @@ pub enum PanZoomMessage {
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct PanZoom {
     pub panning: bool,
-    pub zoom: f32,
+    zoom: f32,
+    reciprocal_zoom: f32,
     pub pan: Vec2,
     pub previous_cursor_position: Vec2,
     pub cursor_position: Vec2,
@@ -36,6 +37,7 @@ impl Default for PanZoom {
         Self {
             panning: false,
             zoom: 1.0,
+            reciprocal_zoom: 1.0,
             pan: Vec2::ZERO,
             previous_cursor_position: Vec2::ZERO,
             cursor_position: Vec2::ZERO,
@@ -45,6 +47,14 @@ impl Default for PanZoom {
 }
 
 impl PanZoom {
+    pub fn zoom(&self) -> f32 {
+        self.zoom
+    }
+
+    pub fn reciprocal_zoom(&self) -> f32 {
+        self.reciprocal_zoom
+    }
+
     pub fn local_cursor_velocity(&self) -> Vec2 {
         self.local_cursor_position() - self.previous_local_cursor_position()
     }
@@ -87,8 +97,8 @@ impl PanZoom {
 
     pub fn local_to_canvas(&self, position: Vec2) -> Vec2 {
         Vec2::new(
-            (position.x + self.pan.x) / self.zoom + 0.5 * self.bounds.size.x,
-            0.5 * self.bounds.size.y - (position.y + self.pan.y) / self.zoom,
+            (position.x + self.pan.x) * self.reciprocal_zoom + 0.5 * self.bounds.size.x,
+            0.5 * self.bounds.size.y - (position.y + self.pan.y) * self.reciprocal_zoom,
         )
     }
 
@@ -121,7 +131,7 @@ impl PanZoom {
     pub fn local_to_canvas_rectangle(&self, bounds: &Rectangle) -> Rectangle {
         Rectangle {
             center: self.local_to_canvas(bounds.center),
-            size: bounds.size / self.zoom,
+            size: bounds.size * self.reciprocal_zoom,
         }
     }
 
@@ -141,6 +151,7 @@ impl Widget<PanZoomMessage> for PanZoom {
                 let cursor_position_before: Vec2 = self.local_cursor_position();
 
                 self.zoom /= zoom.exp();
+                self.reciprocal_zoom = 1. / self.zoom;
 
                 let cursor_position: Vec2 = self.local_cursor_position();
 

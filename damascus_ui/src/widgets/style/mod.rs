@@ -43,6 +43,8 @@ pub struct Style {
     pub text_zoom_cutoff: f32,
     pub connection_line_width: f32,
     pub inactive_connection_line_scale: f32,
+    pub node_input_radius: f32,
+    pub node_output_radius: f32,
 }
 
 impl Default for Style {
@@ -65,6 +67,8 @@ impl Default for Style {
             text_zoom_cutoff: 4.5,
             connection_line_width: 3.0,
             inactive_connection_line_scale: 0.5,
+            node_input_radius: 5.0,
+            node_output_radius: 5.0,
         }
     }
 }

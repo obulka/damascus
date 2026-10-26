@@ -434,7 +434,7 @@ impl iced::widget::shader::Program<ViewportMessage> for Viewport {
         let mut viewport_primitive: ViewportPrimitive = self.viewport_primitive.clone();
         viewport_primitive.active_output_id = self.active_output_id();
         viewport_primitive.pan = self.pan_zoom.pan;
-        viewport_primitive.zoom = self.pan_zoom.zoom;
+        viewport_primitive.zoom = self.pan_zoom.zoom();
         viewport_primitive
     }
 }
@@ -445,6 +445,7 @@ impl Widget<ViewportMessage> for Viewport {
         context: &mut Context,
         message: ViewportMessage,
     ) -> iced::Task<ViewportMessage> {
+        // Initialize our pointers to the shared app data
         if !Arc::ptr_eq(&self.viewport_primitive.node_graph, &context.node_graph) {
             self.viewport_primitive.node_graph = Arc::clone(&context.node_graph);
             self.create_viewport(context);

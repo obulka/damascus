@@ -43,6 +43,12 @@ pub enum StyleEditorFields {
     FloatInputStep,
     ViewerZoomSensitivity,
     DefaultNodeColour,
+    TextZoomCutoff,
+    ConnectionLineWidth,
+    InactiveConnectionLineScale,
+    NodeInputRadius,
+    NodeOutputRadius,
+    NodeSelectedBorderWidth,
 }
 
 impl StyleEditorFields {
@@ -60,6 +66,16 @@ impl StyleEditorFields {
             Self::FloatInputStep => style.float_input_step += style.float_input_step,
             Self::ViewerZoomSensitivity => {
                 style.viewer_zoom_sensitivity += style.viewer_zoom_sensitivity
+            }
+            Self::TextZoomCutoff => style.text_zoom_cutoff += style.text_zoom_cutoff,
+            Self::ConnectionLineWidth => style.connection_line_width += style.connection_line_width,
+            Self::InactiveConnectionLineScale => {
+                style.inactive_connection_line_scale += style.inactive_connection_line_scale
+            }
+            Self::NodeInputRadius => style.node_input_radius += style.node_input_radius,
+            Self::NodeOutputRadius => style.node_output_radius += style.node_output_radius,
+            Self::NodeSelectedBorderWidth => {
+                style.node_selected_border_width += style.node_selected_border_width
             }
             _ => {}
         }
@@ -79,6 +95,16 @@ impl StyleEditorFields {
             Self::FloatInputStep => style.float_input_step -= style.float_input_step,
             Self::ViewerZoomSensitivity => {
                 style.viewer_zoom_sensitivity -= style.viewer_zoom_sensitivity
+            }
+            Self::TextZoomCutoff => style.text_zoom_cutoff -= style.text_zoom_cutoff,
+            Self::ConnectionLineWidth => style.connection_line_width -= style.connection_line_width,
+            Self::InactiveConnectionLineScale => {
+                style.inactive_connection_line_scale -= style.inactive_connection_line_scale
+            }
+            Self::NodeInputRadius => style.node_input_radius -= style.node_input_radius,
+            Self::NodeOutputRadius => style.node_output_radius -= style.node_output_radius,
+            Self::NodeSelectedBorderWidth => {
+                style.node_selected_border_width -= style.node_selected_border_width
             }
             _ => {}
         }
@@ -108,6 +134,12 @@ pub enum StyleEditorData {
     FloatInputStep(f32),
     ViewerZoomSensitivity(f32),
     DefaultNodeColour(Vec4),
+    TextZoomCutoff(f32),
+    ConnectionLineWidth(f32),
+    InactiveConnectionLineScale(f32),
+    NodeInputRadius(f32),
+    NodeOutputRadius(f32),
+    NodeSelectedBorderWidth(f32),
 }
 
 impl StyleEditorData {
@@ -129,6 +161,22 @@ impl StyleEditorData {
             Self::DefaultNodeColour(colour) => {
                 style.default_node_colour = *colour;
                 style.picking_default_node_colour = !style.picking_default_node_colour;
+            }
+            Self::TextZoomCutoff(text_zoom_cutoff) => style.text_zoom_cutoff = *text_zoom_cutoff,
+            Self::ConnectionLineWidth(connection_line_width) => {
+                style.connection_line_width = *connection_line_width
+            }
+            Self::InactiveConnectionLineScale(inactive_connection_line_scale) => {
+                style.inactive_connection_line_scale = *inactive_connection_line_scale
+            }
+            Self::NodeInputRadius(node_input_radius) => {
+                style.node_input_radius = *node_input_radius
+            }
+            Self::NodeOutputRadius(node_output_radius) => {
+                style.node_output_radius = *node_output_radius
+            }
+            Self::NodeSelectedBorderWidth(node_selected_border_width) => {
+                style.node_selected_border_width = *node_selected_border_width
             }
         }
     }
@@ -358,21 +406,107 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             horizontal_text_alignment,
         );
 
-        iced::widget::column![
-            text_size,
-            scale,
-            theme,
-            border_width,
-            spacing,
-            padding,
-            icon_size,
-            leeway,
-            modal_opacity,
-            viewer_zoom_sensitivity,
-            float_input_step,
-            default_node_colour,
-        ]
-        .spacing(style.spacing)
+        let text_zoom_cutoff = style.slider(
+            StyleEditorFields::TextZoomCutoff.variant_label(),
+            1.0..=10.,
+            ..,
+            style.text_zoom_cutoff,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::TextZoomCutoff(value).into() },
+            StyleEditorData::TextZoomCutoff(style.text_zoom_cutoff).into(),
+            "If you zoom out past this value, text will stop rendering in the node graph",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let connection_line_width = style.slider(
+            StyleEditorFields::ConnectionLineWidth.variant_label(),
+            0.5..=10.,
+            ..,
+            style.connection_line_width,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::ConnectionLineWidth(value).into() },
+            StyleEditorData::ConnectionLineWidth(style.connection_line_width).into(),
+            "The width of the lines representing connections between nodes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let inactive_connection_line_scale = style.slider(
+            StyleEditorFields::InactiveConnectionLineScale.variant_label(),
+            0.1..=1.0,
+            ..,
+            style.inactive_connection_line_scale,
+            style.float_input_step,
+            |value| -> StyleEditorMessage {
+                StyleEditorData::InactiveConnectionLineScale(value).into()
+            },
+            StyleEditorData::InactiveConnectionLineScale(style.inactive_connection_line_scale)
+                .into(),
+            "The width of lines representing the inactive viewport connections",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let node_input_radius = style.slider(
+            StyleEditorFields::NodeInputRadius.variant_label(),
+            1.0..=10.0,
+            ..,
+            style.node_input_radius,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::NodeInputRadius(value).into() },
+            StyleEditorData::NodeInputRadius(style.node_input_radius).into(),
+            "The radius of the circular inputs on nodes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let node_output_radius = style.slider(
+            StyleEditorFields::NodeOutputRadius.variant_label(),
+            1.0..=10.0,
+            ..,
+            style.node_output_radius,
+            style.float_input_step,
+            |value| -> StyleEditorMessage { StyleEditorData::NodeOutputRadius(value).into() },
+            StyleEditorData::NodeOutputRadius(style.node_output_radius).into(),
+            "The radius of the circular outputs on nodes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+        let node_selected_border_width = style.slider(
+            StyleEditorFields::NodeSelectedBorderWidth.variant_label(),
+            1.0..=10.0,
+            ..,
+            style.node_selected_border_width,
+            style.float_input_step,
+            |value| -> StyleEditorMessage {
+                StyleEditorData::NodeSelectedBorderWidth(value).into()
+            },
+            StyleEditorData::NodeSelectedBorderWidth(style.node_selected_border_width).into(),
+            "The width of the border that is drawn on selected nodes",
+            parameter_name_length,
+            horizontal_text_alignment,
+        );
+
+        iced::widget::scrollable(
+            iced::widget::column![
+                text_size,
+                scale,
+                theme,
+                border_width,
+                spacing,
+                padding,
+                icon_size,
+                leeway,
+                modal_opacity,
+                viewer_zoom_sensitivity,
+                float_input_step,
+                default_node_colour,
+                text_zoom_cutoff,
+                connection_line_width,
+                inactive_connection_line_scale,
+                node_input_radius,
+                node_output_radius,
+                node_selected_border_width,
+            ]
+            .spacing(style.spacing),
+        )
         .into()
     }
 }

@@ -45,6 +45,7 @@ pub struct Style {
     pub inactive_connection_line_scale: f32,
     pub node_input_radius: f32,
     pub node_output_radius: f32,
+    pub node_selected_border_width: f32,
 }
 
 impl Default for Style {
@@ -63,12 +64,13 @@ impl Default for Style {
             float_input_step: 1e-4,
             viewer_zoom_sensitivity: 0.1,
             picking_default_node_colour: false,
-            default_node_colour: Vec4::new(0.3, 0.3, 0.3, 1.),
+            default_node_colour: Vec4::new(0.35, 0.35, 0.35, 1.),
             text_zoom_cutoff: 4.5,
             connection_line_width: 3.0,
             inactive_connection_line_scale: 0.5,
             node_input_radius: 5.0,
             node_output_radius: 5.0,
+            node_selected_border_width: 3.,
         }
     }
 }

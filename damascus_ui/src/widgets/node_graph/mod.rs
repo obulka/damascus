@@ -687,16 +687,41 @@ impl NodeGraph {
                 input_path_radius,
             );
 
-            // if node_graph.graph.get_node_input(node_id, index).is_connected() {
-            //     frame.stroke(
-            //         &input,
-            //         iced::widget::canvas::Stroke::default()
-            //             .with_width(1.)
-            //             .with_color(iced::Color::WHITE),
-            //     );
-            // } else {
             frame.fill(&input, theme.palette().primary);
-            // }
+        }
+    }
+
+    pub fn draw_node_outputs(
+        &self,
+        frame: &mut iced::widget::canvas::Frame,
+        node_graph: &NodeGraphContext,
+        node_id: &NodeId,
+        node_shape: &Rectangle,
+        theme: &iced::theme::Theme,
+    ) {
+        let output_count: usize = node_graph.graph[*node_id].output_count();
+        if output_count == 0 {
+            return;
+        }
+
+        let output_path_radius: f32 =
+            self.style.node_output_radius * self.pan_zoom.reciprocal_zoom();
+
+        let node_top_left: Vec2 = node_shape.top_left();
+
+        let step_size: f32 = node_shape.size.x / (output_count as f32);
+        let half_step_size: f32 = 0.5 * step_size;
+
+        for index in 0..output_count {
+            let output = iced::widget::canvas::Path::circle(
+                iced::Point::new(
+                    node_top_left.x + (index as f32) * step_size + half_step_size,
+                    node_top_left.y,
+                ),
+                output_path_radius,
+            );
+
+            frame.fill(&output, theme.palette().primary);
         }
     }
 
@@ -709,8 +734,8 @@ impl NodeGraph {
         let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
         let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
 
-        let output_path_radius: f32 =
-            self.style.node_output_radius * self.pan_zoom.reciprocal_zoom();
+        let node_selected_border_width =
+            self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
 
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
@@ -719,15 +744,13 @@ impl NodeGraph {
             let node_shape: Rectangle =
                 self.pan_zoom.local_to_canvas_rectangle(&node_context.shape);
 
-            let node_top_left: Vec2 = node_shape.top_left();
-
             let node: iced::widget::canvas::Path = node_shape.to_path();
             frame.fill(&node, iced::Color::from_glam(&node_context.colour));
             if node_graph.selected_nodes.contains(&node_id) {
                 frame.stroke(
                     &node,
                     iced::widget::canvas::Stroke::default()
-                        .with_width(1.)
+                        .with_width(node_selected_border_width)
                         .with_color(primary_colour),
                 );
             }
@@ -746,33 +769,7 @@ impl NodeGraph {
 
             if node_graph.graph.node_id_is_valid(node_id) {
                 self.draw_node_inputs(frame, node_graph, &node_id, &node_shape, &theme);
-
-                // TODO fn handle_outputs()
-                {
-                    let output_count: usize = node_graph.graph[node_id].output_count();
-                    let step_size: f32 = node_shape.size.x / (output_count as f32);
-                    let half_step_size: f32 = 0.5 * step_size;
-                    for index in 0..output_count {
-                        let output = iced::widget::canvas::Path::circle(
-                            iced::Point::new(
-                                node_top_left.x + (index as f32) * step_size + half_step_size,
-                                node_top_left.y,
-                            ),
-                            output_path_radius,
-                        );
-
-                        // if node_graph.graph.get_node_input(node_id, index).is_connected() {
-                        //     frame.stroke(
-                        //         &input,
-                        //         iced::widget::canvas::Stroke::default()
-                        //             .with_width(1.)
-                        //             .with_color(iced::Color::WHITE),
-                        //     );
-                        // } else {
-                        frame.fill(&output, primary_colour);
-                        // }
-                    }
-                }
+                self.draw_node_outputs(frame, node_graph, &node_id, &node_shape, &theme);
             }
         }
     }
@@ -786,6 +783,9 @@ impl NodeGraph {
     ) {
         let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
         let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+
+        let node_selected_border_width =
+            self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
 
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
@@ -803,7 +803,7 @@ impl NodeGraph {
                 frame.stroke(
                     &node,
                     iced::widget::canvas::Stroke::default()
-                        .with_width(1.)
+                        .with_width(node_selected_border_width)
                         .with_color(primary_colour),
                 );
             }

@@ -654,6 +654,17 @@ impl NodeGraph {
         }
     }
 
+    pub fn non_scene_graph_inputs(
+        &self,
+        node_id: &NodeId,
+    ) -> impl Iterator<Item = (&InputId, &Input)> {
+        self.node_inputs(node_id)
+            .filter(|(_input_id, input)| match input.data {
+                InputData::SceneGraphId(_id) => false,
+                _ => true,
+            })
+    }
+
     pub fn scene_graph_input_count(&self, node_id: &NodeId) -> usize {
         let mut input_count: usize = 0;
         for (_input_id, input) in self.node_inputs(node_id) {

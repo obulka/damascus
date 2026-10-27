@@ -26,8 +26,16 @@ pub mod graph;
 pub mod lights;
 pub mod materials;
 pub mod math;
+pub mod naming_convensions;
 pub mod textures;
 pub mod time;
+
+use naming_convensions::{
+    camel_from_pascal, camel_snake_from_pascal, cobol_from_pascal, flat_from_pascal,
+    kebab_from_pascal, label_from_pascal, pascal_label_from_pascal, pascal_snake_from_pascal,
+    screaming_snake_from_pascal, snake_from_pascal, split_pascal_words, train_from_pascal,
+    upper_flat_from_pascal,
+};
 
 pub trait DualDevice<
     G: Copy
@@ -66,22 +74,7 @@ pub trait Enumerator:
     }
 
     fn variant_split_words(&self) -> Vec<String> {
-        let mut words = Vec::<String>::new();
-        let mut word = String::new();
-
-        for character in self.to_string().chars() {
-            if character.is_uppercase() && !word.is_empty() {
-                words.push(word.clone());
-                word.clear();
-            }
-            word.push_str(&character.to_string());
-        }
-
-        if !word.is_empty() {
-            words.push(word);
-        }
-
-        words
+        split_pascal_words(self.to_string())
     }
 
     fn variant_pascal_case(&self) -> String {
@@ -89,87 +82,51 @@ pub trait Enumerator:
     }
 
     fn variant_screaming_snake_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_uppercase())
-            .collect::<Vec<_>>()
-            .join("_")
+        screaming_snake_from_pascal(self.to_string())
     }
 
     fn variant_pascal_snake_case(&self) -> String {
-        self.variant_split_words().join("_")
+        pascal_snake_from_pascal(self.to_string())
     }
 
     fn variant_snake_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_lowercase())
-            .collect::<Vec<_>>()
-            .join("_")
+        snake_from_pascal(self.to_string())
     }
 
     fn variant_kebab_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_lowercase())
-            .collect::<Vec<_>>()
-            .join("-")
+        kebab_from_pascal(self.to_string())
     }
 
     fn variant_camel_case(&self) -> String {
-        let mut words: Vec<String> = self.variant_split_words();
-        if !words.is_empty() {
-            words[0] = words[0].to_lowercase();
-        }
-        words.join("")
+        camel_from_pascal(self.to_string())
     }
 
     fn variant_flat_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_lowercase())
-            .collect::<Vec<_>>()
-            .join("")
+        flat_from_pascal(self.to_string())
     }
 
     fn variant_upper_flat_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_uppercase())
-            .collect::<Vec<_>>()
-            .join("")
+        upper_flat_from_pascal(self.to_string())
     }
 
     fn variant_camel_snake_case(&self) -> String {
-        let mut words: Vec<String> = self.variant_split_words();
-        if !words.is_empty() {
-            words[0] = words[0].to_lowercase();
-        }
-        words.join("_")
+        camel_snake_from_pascal(self.to_string())
     }
 
     fn variant_train_case(&self) -> String {
-        self.variant_split_words().join("-")
+        train_from_pascal(self.to_string())
     }
 
     fn variant_cobol_case(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_uppercase())
-            .collect::<Vec<_>>()
-            .join("-")
+        cobol_from_pascal(self.to_string())
     }
 
     fn variant_label(&self) -> String {
-        self.variant_split_words()
-            .into_iter()
-            .map(|word| word.to_lowercase())
-            .collect::<Vec<_>>()
-            .join(" ")
+        label_from_pascal(self.to_string())
     }
 
     fn variant_pascal_label(&self) -> String {
-        self.variant_split_words().join(" ")
+        pascal_label_from_pascal(self.to_string())
     }
 }
 

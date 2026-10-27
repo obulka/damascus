@@ -10,7 +10,10 @@ use iced;
 use indexmap::IndexSet;
 use slotmap::{SecondaryMap, SlotMap};
 
-use damascus::graph::node_graph::nodes::NodeId;
+use damascus::{
+    graph::node_graph::nodes::{NodeId, node_data::NodeData},
+    naming_convensions::label_from_pascal,
+};
 
 use crate::app::Context;
 
@@ -49,6 +52,47 @@ impl Properties {
 
         iced::Task::none()
     }
+
+    pub fn input_widgets_for_node<'a>(
+        &'a self,
+        style: &'a Style,
+        node_graph: &NodeGraphContext,
+        node_id: &NodeId,
+    ) -> impl Iterator<Item = iced::Element<'a, PropertiesMessage>> {
+        node_graph
+            .graph
+            .non_scene_graph_inputs(node_id)
+            .map(|(_input_id, input)| style.text(label_from_pascal(input.name.clone())).into())
+    }
+
+    pub fn widgets_for_node<'a>(
+        &'a self,
+        style: &'a Style,
+        node_id: &NodeId,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        let Ok(node_graph) = self.node_graph_context.lock() else {
+            return None::<iced::Element<'a, PropertiesMessage>>.into();
+        };
+
+        if !node_graph.graph.node_id_is_valid(*node_id) {
+            return None::<iced::Element<'a, PropertiesMessage>>.into();
+        }
+
+        let label: String = if let Some(node_data) = node_graph.context.get(*node_id) {
+            node_data.label.clone()
+        } else {
+            node_id.to_string()
+        };
+
+        iced::widget::column(
+            std::iter::once(style.text(label).into()).chain(self.input_widgets_for_node(
+                style,
+                &node_graph,
+                node_id,
+            )),
+        )
+        .into()
+    }
 }
 
 impl Widget<PropertiesMessage> for Properties {
@@ -74,14 +118,16 @@ impl Widget<PropertiesMessage> for Properties {
         style: &'a Style,
     ) -> iced::Element<'a, PropertiesMessage> {
         let toolbar = iced::widget::row![];
-        let properties = iced::widget::column(
-            self.open_properties
-                .iter()
-                .rev()
-                .map(|value| style.text(value.to_string()).into()),
-        );
-        iced::widget::container(iced::widget::column![toolbar, properties])
-            .padding(style.padding)
-            .into()
+        iced::widget::container(iced::widget::column![
+            toolbar,
+            iced::widget::column(
+                self.open_properties
+                    .iter()
+                    .rev()
+                    .map(|node_id| self.widgets_for_node(style, &node_id)),
+            )
+        ])
+        .padding(style.padding)
+        .into()
     }
 }

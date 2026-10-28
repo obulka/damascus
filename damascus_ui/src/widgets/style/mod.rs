@@ -139,7 +139,7 @@ impl Style {
 
     pub fn filepath<'a, Message: Clone + 'a>(
         &'a self,
-        label: String,
+        label: impl iced::widget::text::IntoFragment<'a>,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
         path: &str,
         on_input: impl Fn(String) -> Message + 'a,
@@ -157,6 +157,32 @@ impl Style {
                 .size(self.text_size)
                 .on_input(on_input)
         ]
+        .align_y(iced::Alignment::Center)
+        .spacing(self.spacing)
+        .into()
+    }
+
+    pub fn checkbox<'a, Message: 'a>(
+        &'a self,
+        label: impl iced::widget::text::IntoFragment<'a>,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+        value: bool,
+        on_toggle: impl Fn(bool) -> Message + 'a,
+    ) -> iced::Element<'a, Message> {
+        iced::widget::row![
+            self.tooltip(
+                label,
+                tooltip,
+                iced::Length::FillPortion(1),
+                iced::alignment::Horizontal::Left
+            ),
+            iced::widget::checkbox(value)
+                .spacing(self.spacing)
+                .text_size(self.text_size)
+                .width(iced::Length::FillPortion(4))
+                .on_toggle(on_toggle),
+        ]
+        .align_y(iced::Alignment::Center)
         .spacing(self.spacing)
         .into()
     }
@@ -386,6 +412,7 @@ impl Style {
                 }
             })
         ]
+        .align_y(iced::Alignment::Center)
         .spacing(self.spacing)
         .into()
     }
@@ -446,6 +473,7 @@ impl Style {
                 .height(self.text_size + 2. * self.padding)
                 .on_release(on_release),
         ]
+        .align_y(iced::Alignment::Center)
         .spacing(self.spacing)
         .into()
     }
@@ -491,7 +519,7 @@ impl Style {
             self.tooltip(
                 name,
                 tooltip,
-                iced::Length::FillPortion(2),
+                iced::Length::FillPortion(1),
                 name_horizontal_alignment
             ),
             iced_aw::helpers::color_picker(
@@ -505,12 +533,14 @@ impl Style {
                         }
                     })
                     .padding(self.padding)
-                    .width(iced::Length::FillPortion(1))
+                    .width(iced::Length::FillPortion(4))
                     .on_press(toggle_message.clone()),
                 toggle_message,
                 submit_message,
             ),
         ]
+        .spacing(self.spacing)
+        .align_y(iced::Alignment::Center)
         .into()
     }
 

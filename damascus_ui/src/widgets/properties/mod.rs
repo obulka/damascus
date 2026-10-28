@@ -61,6 +61,20 @@ impl Properties {
         iced::Task::none()
     }
 
+    pub fn bool_widget<'a>(
+        style: &'a Style,
+        input_id: InputId,
+        label: String,
+        value: bool,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        style.checkbox(
+            label,
+            "Checkbox. TODO bring in context aware tooltips!",
+            value,
+            move |value| PropertiesMessage::InputDataChanged(input_id, InputData::Bool(value)),
+        )
+    }
+
     pub fn filepath_widget<'a>(
         style: &'a Style,
         input_id: InputId,
@@ -106,9 +120,7 @@ impl Properties {
     ) -> iced::Element<'a, PropertiesMessage> {
         let label: String = label_from_pascal(input.name.clone());
         match input.data {
-            // InputData::Bool(value) => {
-            //     Self::bool_widget(style, label, &value)
-            // }
+            InputData::Bool(value) => Self::bool_widget(style, input_id, label, value),
             // InputData::BVec3(value) => {
             //     Self::bvec3_widget(style, label, &value)
             // }

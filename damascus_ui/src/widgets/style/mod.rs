@@ -108,25 +108,25 @@ impl Style {
         Message: iced::widget::text::Catalog + 'a,
     {
         iced::widget::text(message)
-            .size(self.text_size())
+            .size(self.text_size)
             .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
     }
 
-    pub fn tooltip<'a, Message>(
+    pub fn tooltip<'a, Message: 'a>(
         &'a self,
         message: impl iced::widget::text::IntoFragment<'a>,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        message_length: iced::Length,
+        message_length: iced::Length, // TODO make these self.message_.. with dropdowns in editor
         message_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
-    ) -> iced::widget::Tooltip<'a, Message>
-    where
-        Message: 'a,
-    {
+    ) -> iced::widget::Tooltip<'a, Message> {
         iced::widget::tooltip(
-            self.text(message)
-                .align_y(iced::alignment::Vertical::Center)
-                .align_x(message_horizontal_alignment)
-                .width(message_length),
+            iced::widget::container(
+                self.text(message)
+                    .align_y(iced::alignment::Vertical::Center)
+                    .align_x(message_horizontal_alignment)
+                    .width(message_length),
+            )
+            .padding(self.padding),
             iced::widget::container(
                 self.text(tooltip)
                     .align_y(iced::alignment::Vertical::Center),
@@ -135,6 +135,30 @@ impl Style {
             .padding(self.padding),
             iced::widget::tooltip::Position::Bottom,
         )
+    }
+
+    pub fn filepath<'a, Message: Clone + 'a>(
+        &'a self,
+        label: String,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+        path: &str,
+        on_input: impl Fn(String) -> Message + 'a,
+    ) -> iced::Element<'a, Message> {
+        iced::widget::row![
+            self.tooltip(
+                label,
+                tooltip,
+                iced::Length::FillPortion(1),
+                iced::alignment::Horizontal::Left
+            ),
+            iced::widget::text_input("", &path)
+                .width(iced::Length::FillPortion(4))
+                .padding(self.padding)
+                .size(self.text_size)
+                .on_input(on_input)
+        ]
+        .spacing(self.spacing)
+        .into()
     }
 
     pub fn heading<'a, Message>(

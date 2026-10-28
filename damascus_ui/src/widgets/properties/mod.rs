@@ -12,22 +12,22 @@ use itertools::intersperse_with;
 use slotmap::{SecondaryMap, SlotMap};
 
 use damascus::{
-    graph::node_graph::nodes::{NodeId, node_data::NodeData},
+    graph::node_graph::{
+        inputs::{InputId, input::Input, input_data::InputData},
+        nodes::NodeId,
+    },
     naming_convensions::label_from_pascal,
 };
 
 use crate::app::Context;
 
-use super::{
-    Style, Widget,
-    node_graph::{NodeGraphContext, node::NodeContext},
-    pan_zoom::{PanZoom, PanZoomMessage},
-};
+use super::{Style, Widget, node_graph::NodeGraphContext};
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum PropertiesMessage {
     OpenNodeProperties(NodeId),
     CloseNodeProperties(NodeId),
+    InputDataChanged(InputId, InputData),
     #[default]
     None,
 }
@@ -61,8 +61,94 @@ impl Properties {
         iced::Task::none()
     }
 
+    pub fn filepath_widget<'a>(
+        style: &'a Style,
+        input_id: InputId,
+        label: String,
+        value: &str,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        style.filepath(
+            label,
+            "Path to a file. TODO bring in context aware tooltips!",
+            value,
+            move |value| PropertiesMessage::InputDataChanged(input_id, InputData::Filepath(value)),
+        )
+    }
+
+    pub fn float_widget<'a>(
+        style: &'a Style,
+        input_id: InputId,
+        label: String,
+        value: f32,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        let parameter_name_length = iced::Length::FillPortion(2);
+        let horizontal_text_alignment = iced::alignment::Horizontal::Left;
+        style.slider(
+            label,
+            0.0..=1.0,
+            ..,
+            value,
+            style.float_input_step,
+            move |value| -> PropertiesMessage {
+                PropertiesMessage::InputDataChanged(input_id, InputData::Float(value))
+            },
+            PropertiesMessage::InputDataChanged(input_id, InputData::Float(value)),
+            "Float! TODO bring in context aware tooltips!",
+            parameter_name_length,
+            horizontal_text_alignment,
+        )
+    }
+
+    pub fn widget_for_input<'a>(
+        style: &'a Style,
+        input_id: InputId,
+        input: &Input,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        let label: String = label_from_pascal(input.name.clone());
+        match input.data {
+            // InputData::Bool(value) => {
+            //     Self::bool_widget(style, label, &value)
+            // }
+            // InputData::BVec3(value) => {
+            //     Self::bvec3_widget(style, label, &value)
+            // }
+            // InputData::Int(value) => {
+            //     Self::int_widget(style, label, &value)
+            // }
+            // InputData::UInt(value) => {
+            //     Self::uint_widget(style, label, &value)
+            // }
+            // InputData::UVec2(value) => {
+            //     Self::uvec2_widget(style, label, &value)
+            // }
+            // InputData::UVec3(value) => {
+            //     Self::uvec3_widget(style, label, &value)
+            // }
+            InputData::Float(value) => Self::float_widget(style, input_id, label, value),
+            // InputData::Vec2(value) => {
+            //     Self::vec2_widget(style, label, &value)
+            // }
+            // InputData::Vec3(value) => {
+            //     Self::vec3_widget(style, label, &value)
+            // }
+            // InputData::Vec4(value) => {
+            //     Self::vec4_widget(style, label, &value)
+            // }
+            // InputData::Mat3(value) => {
+            //     Self::mat3_widget(style, label, &value)
+            // }
+            // InputData::Mat4(value) => {
+            //     Self::mat4_widget(style, label, &value)
+            // }
+            // InputData::Enum(value) => {
+            //     Self::enum_widget(style, label, &value)
+            // }
+            InputData::Filepath(ref value) => Self::filepath_widget(style, input_id, label, value),
+            _ => style.text(label_from_pascal(input.name.clone())).into(),
+        }
+    }
+
     pub fn input_widgets_for_node<'a>(
-        &'a self,
         style: &'a Style,
         node_graph: &NodeGraphContext,
         node_id: &NodeId,
@@ -70,13 +156,30 @@ impl Properties {
         node_graph
             .graph
             .non_scene_graph_inputs(node_id)
-            .map(|(_input_id, input)| style.text(label_from_pascal(input.name.clone())).into())
+            .map(|(input_id, input)| Self::widget_for_input(style, *input_id, input))
+    }
+
+    pub fn node_title_bar<'a>(
+        style: &'a Style,
+        node_id: NodeId,
+        label: String,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        iced::widget::row![
+            style.text(label),
+            Style::horizontal_spacer(),
+            style
+                .close_button()
+                .style(iced::widget::button::background)
+                .on_press(PropertiesMessage::CloseNodeProperties(node_id)),
+        ]
+        .spacing(style.spacing)
+        .into()
     }
 
     pub fn widgets_for_node<'a>(
         &'a self,
         style: &'a Style,
-        node_id: &'a NodeId,
+        node_id: &NodeId,
     ) -> iced::Element<'a, PropertiesMessage> {
         let Ok(node_graph) = self.node_graph_context.lock() else {
             return Style::none();
@@ -95,10 +198,10 @@ impl Properties {
         let node_is_selected: bool = node_graph.selected_nodes.contains(node_id);
 
         iced::widget::container(iced::widget::column(
-            std::iter::once(Self::title_bar(style, *node_id, label))
-                .chain(self.input_widgets_for_node(style, &node_graph, node_id)),
+            std::iter::once(Self::node_title_bar(style, *node_id, label))
+                .chain(Self::input_widgets_for_node(style, &node_graph, node_id)),
         ))
-        .padding(style.padding)
+        .padding(style.border_width + style.padding)
         .style(move |theme| iced::widget::container::Style {
             border: if node_is_selected {
                 iced::Border::default()
@@ -109,23 +212,6 @@ impl Properties {
             },
             ..iced::widget::container::Style::default()
         })
-        .into()
-    }
-
-    pub fn title_bar<'a>(
-        style: &'a Style,
-        node_id: NodeId,
-        label: String,
-    ) -> iced::Element<'a, PropertiesMessage> {
-        iced::widget::row![
-            style.text(label),
-            Style::horizontal_spacer(),
-            style
-                .close_button()
-                .style(iced::widget::button::background)
-                .on_press(PropertiesMessage::CloseNodeProperties(node_id)),
-        ]
-        .spacing(style.spacing)
         .into()
     }
 }
@@ -144,6 +230,19 @@ impl Widget<PropertiesMessage> for Properties {
         match message {
             PropertiesMessage::OpenNodeProperties(node_id) => self.open(node_id),
             PropertiesMessage::CloseNodeProperties(node_id) => self.close(node_id),
+            PropertiesMessage::InputDataChanged(input_id, input_data) => {
+                let Ok(mut node_graph) = self.node_graph_context.lock() else {
+                    return iced::Task::none();
+                };
+
+                if !node_graph.graph.input_id_is_valid(input_id) {
+                    return iced::Task::none();
+                }
+
+                node_graph.graph[input_id].data = input_data;
+
+                iced::Task::none()
+            }
             _ => iced::Task::none(),
         }
     }
@@ -159,7 +258,14 @@ impl Widget<PropertiesMessage> for Properties {
                     iced::widget::column![self.widgets_for_node(style, node_id)].into()
                 }),
                 || -> iced::Element<'a, PropertiesMessage> {
-                    iced::widget::rule::horizontal(2).into()
+                    iced::widget::rule::horizontal(style.border_width)
+                        .style(|theme: &iced::Theme| iced::widget::rule::Style {
+                            color: theme.extended_palette().background.strong.color,
+                            radius: (0.5 * style.border_width).into(),
+                            fill_mode: iced::widget::rule::FillMode::Full,
+                            snap: false,
+                        })
+                        .into()
                 },
             ))
             .padding(style.padding)

@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 use glam::{UVec2, Vec2};
 use iced;
 use indexmap::IndexSet;
+use itertools::intersperse_with;
 use slotmap::{SecondaryMap, SlotMap};
 
 use damascus::{
@@ -26,6 +27,7 @@ use super::{
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum PropertiesMessage {
     OpenNodeProperties(NodeId),
+    CloseNodeProperties(NodeId),
     #[default]
     None,
 }
@@ -53,6 +55,12 @@ impl Properties {
         iced::Task::none()
     }
 
+    pub fn close(&mut self, node_id: NodeId) -> iced::Task<PropertiesMessage> {
+        self.open_properties.shift_remove(&node_id);
+
+        iced::Task::none()
+    }
+
     pub fn input_widgets_for_node<'a>(
         &'a self,
         style: &'a Style,
@@ -68,14 +76,14 @@ impl Properties {
     pub fn widgets_for_node<'a>(
         &'a self,
         style: &'a Style,
-        node_id: &NodeId,
+        node_id: &'a NodeId,
     ) -> iced::Element<'a, PropertiesMessage> {
         let Ok(node_graph) = self.node_graph_context.lock() else {
-            return None::<iced::Element<'a, PropertiesMessage>>.into();
+            return Style::none();
         };
 
         if !node_graph.graph.node_id_is_valid(*node_id) {
-            return None::<iced::Element<'a, PropertiesMessage>>.into();
+            return Style::none();
         }
 
         let label: String = if let Some(node_data) = node_graph.context.get(*node_id) {
@@ -84,13 +92,40 @@ impl Properties {
             node_id.to_string()
         };
 
-        iced::widget::column(
-            std::iter::once(style.text(label).into()).chain(self.input_widgets_for_node(
-                style,
-                &node_graph,
-                node_id,
-            )),
-        )
+        let node_is_selected: bool = node_graph.selected_nodes.contains(node_id);
+
+        iced::widget::container(iced::widget::column(
+            std::iter::once(Self::title_bar(style, *node_id, label))
+                .chain(self.input_widgets_for_node(style, &node_graph, node_id)),
+        ))
+        .padding(style.padding)
+        .style(move |theme| iced::widget::container::Style {
+            border: if node_is_selected {
+                iced::Border::default()
+                    .color(theme.palette().primary)
+                    .width(style.border_width)
+            } else {
+                iced::Border::default()
+            },
+            ..iced::widget::container::Style::default()
+        })
+        .into()
+    }
+
+    pub fn title_bar<'a>(
+        style: &'a Style,
+        node_id: NodeId,
+        label: String,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        iced::widget::row![
+            style.text(label),
+            Style::horizontal_spacer(),
+            style
+                .close_button()
+                .style(iced::widget::button::background)
+                .on_press(PropertiesMessage::CloseNodeProperties(node_id)),
+        ]
+        .spacing(style.spacing)
         .into()
     }
 }
@@ -108,6 +143,7 @@ impl Widget<PropertiesMessage> for Properties {
 
         match message {
             PropertiesMessage::OpenNodeProperties(node_id) => self.open(node_id),
+            PropertiesMessage::CloseNodeProperties(node_id) => self.close(node_id),
             _ => iced::Task::none(),
         }
     }
@@ -117,17 +153,19 @@ impl Widget<PropertiesMessage> for Properties {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, PropertiesMessage> {
-        let toolbar = iced::widget::row![];
-        iced::widget::container(iced::widget::column![
-            toolbar,
-            iced::widget::column(
-                self.open_properties
-                    .iter()
-                    .rev()
-                    .map(|node_id| self.widgets_for_node(style, &node_id)),
-            )
-        ])
-        .padding(style.padding)
+        iced::widget::scrollable(
+            iced::widget::column(intersperse_with(
+                self.open_properties.iter().rev().map(|node_id| {
+                    iced::widget::column![self.widgets_for_node(style, node_id)].into()
+                }),
+                || -> iced::Element<'a, PropertiesMessage> {
+                    iced::widget::rule::horizontal(2).into()
+                },
+            ))
+            .padding(style.padding)
+            .spacing(style.spacing),
+        )
+        .spacing(style.spacing)
         .into()
     }
 }

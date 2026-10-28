@@ -490,6 +490,29 @@ impl Style {
         .into()
     }
 
+    pub fn iced_theme(&self) -> iced::Theme {
+        self.theme.into()
+    }
+
+    pub fn spacer<'a, Message: 'a>() -> iced::Element<'a, Message> {
+        iced::widget::container(Self::none())
+            .height(iced::Fill)
+            .width(iced::Fill)
+            .into()
+    }
+
+    pub fn horizontal_spacer<'a, Message: 'a>() -> iced::Element<'a, Message> {
+        iced::widget::container(Self::none())
+            .width(iced::Fill)
+            .into()
+    }
+
+    pub fn vertical_spacer<'a, Message: 'a>() -> iced::Element<'a, Message> {
+        iced::widget::container(Self::none())
+            .height(iced::Fill)
+            .into()
+    }
+
     pub fn none<'a, Message>() -> iced::Element<'a, Message> {
         None::<iced::Element<'a, Message>>.into()
     }

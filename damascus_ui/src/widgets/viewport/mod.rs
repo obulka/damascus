@@ -106,8 +106,10 @@ impl Default for ViewportPipeline {
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct ViewportPrimitive {
     viewport_id: Option<ViewportId>,
+    #[serde(skip)]
     node_graph_context: Arc<Mutex<NodeGraph>>,
     active_output_id: Option<OutputId>,
     zoom: f32,
@@ -271,7 +273,9 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Viewport {
+    #[serde(skip)]
     context: Arc<Mutex<Viewports>>,
     viewport_primitive: ViewportPrimitive,
     pan_zoom: PanZoom,

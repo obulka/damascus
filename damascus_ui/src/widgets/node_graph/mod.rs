@@ -48,6 +48,7 @@ use node::NodeContext;
 
 // This is the data of which a single instance will be shared among widgets
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct NodeGraphContext {
     pub context: SparseSecondaryMap<NodeId, NodeContext>,
     pub graph: Graph,
@@ -113,13 +114,19 @@ impl From<NodeGraphMessage> for iced::Task<NodeGraphMessage> {
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct NodeGraph {
+    #[serde(skip)]
     context: Arc<Mutex<NodeGraphContext>>,
+    #[serde(skip)]
     viewport_context: Arc<Mutex<Viewports>>,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
+    #[serde(skip)]
     dragging_nodes: bool,
+    #[serde(skip)]
     dragged_nodes: bool,
+    #[serde(skip)]
     style: Style,
 }
 

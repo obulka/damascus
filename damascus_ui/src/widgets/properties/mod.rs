@@ -33,7 +33,9 @@ pub enum PropertiesMessage {
 }
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct Properties {
+    #[serde(skip)]
     node_graph_context: Arc<Mutex<NodeGraphContext>>,
     open_properties: IndexSet<NodeId>,
 }

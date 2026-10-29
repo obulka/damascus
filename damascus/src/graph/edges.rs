@@ -9,6 +9,8 @@ use std::{
     hash::Hash,
 };
 
+use serde_json_any_key::any_key_map;
+
 /// The following data structures allow the connection of two
 /// pieces of data forming a hierarchical relationship while
 /// maintaining efficient traversal in both directions, up or down
@@ -140,15 +142,19 @@ where
 #[serde(default)]
 pub struct SingleParentBidirectedEdges<Parent, Child>
 where
-    Parent: Clone + Hash + Ord,
-    Child: Clone + Hash + Ord,
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize + 'static,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize + 'static,
 {
+    #[serde(with = "any_key_map")]
     parents: HashMap<Child, Parent>,
+    #[serde(with = "any_key_map")]
     children: HashMap<Parent, BTreeSet<Child>>,
 }
 
-impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Parent, Child>
-    for SingleParentBidirectedEdges<Parent, Child>
+impl<
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+> BidirectedEdges<Parent, Child> for SingleParentBidirectedEdges<Parent, Child>
 {
     fn parent_count(&self) -> usize {
         self.parents.len()
@@ -242,8 +248,10 @@ impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Pare
     }
 }
 
-impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord>
-    SingleParentBidirectedEdges<Parent, Child>
+impl<
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+> SingleParentBidirectedEdges<Parent, Child>
 {
     pub fn new() -> Self {
         Self {
@@ -271,15 +279,19 @@ impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord>
 #[serde(default)]
 pub struct MultiParentBidirectedEdges<Parent, Child>
 where
-    Parent: Clone + Hash + Ord,
-    Child: Clone + Hash + Ord,
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize + 'static,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize + 'static,
 {
+    #[serde(with = "any_key_map")]
     parents: HashMap<Child, BTreeSet<Parent>>,
+    #[serde(with = "any_key_map")]
     children: HashMap<Parent, BTreeSet<Child>>,
 }
 
-impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Parent, Child>
-    for MultiParentBidirectedEdges<Parent, Child>
+impl<
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+> BidirectedEdges<Parent, Child> for MultiParentBidirectedEdges<Parent, Child>
 {
     fn parent_count(&self) -> usize {
         self.parents.len()
@@ -373,8 +385,10 @@ impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord> BidirectedEdges<Pare
     }
 }
 
-impl<Parent: Clone + Hash + Ord, Child: Clone + Hash + Ord>
-    MultiParentBidirectedEdges<Parent, Child>
+impl<
+    Parent: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+    Child: Clone + Hash + Ord + for<'a> serde::Deserialize<'a> + serde::Serialize,
+> MultiParentBidirectedEdges<Parent, Child>
 {
     pub fn new() -> Self {
         Self {

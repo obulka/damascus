@@ -67,34 +67,31 @@ impl Properties {
         style: &'a Style,
         input_id: InputId,
         label: String,
+        tooltip: String,
         value: bool,
     ) -> iced::Element<'a, PropertiesMessage> {
-        style.checkbox(
-            label,
-            "Checkbox. TODO bring in context aware tooltips!",
-            value,
-            move |value| PropertiesMessage::InputDataChanged(input_id, InputData::Bool(value)),
-        )
+        style.checkbox(label, tooltip, value, move |value| {
+            PropertiesMessage::InputDataChanged(input_id, InputData::Bool(value))
+        })
     }
 
     pub fn filepath_widget<'a>(
         style: &'a Style,
         input_id: InputId,
         label: String,
+        tooltip: String,
         value: &str,
     ) -> iced::Element<'a, PropertiesMessage> {
-        style.filepath(
-            label,
-            "Path to a file. TODO bring in context aware tooltips!",
-            value,
-            move |value| PropertiesMessage::InputDataChanged(input_id, InputData::Filepath(value)),
-        )
+        style.filepath(label, tooltip, value, move |value| {
+            PropertiesMessage::InputDataChanged(input_id, InputData::Filepath(value))
+        })
     }
 
     pub fn float_widget<'a>(
         style: &'a Style,
         input_id: InputId,
         label: String,
+        tooltip: String,
         value: f32,
     ) -> iced::Element<'a, PropertiesMessage> {
         let parameter_name_length = iced::Length::FillPortion(2);
@@ -109,7 +106,7 @@ impl Properties {
                 PropertiesMessage::InputDataChanged(input_id, InputData::Float(value))
             },
             PropertiesMessage::InputDataChanged(input_id, InputData::Float(value)),
-            "Float! TODO bring in context aware tooltips!",
+            tooltip,
             parameter_name_length,
             horizontal_text_alignment,
         )
@@ -117,12 +114,14 @@ impl Properties {
 
     pub fn widget_for_input<'a>(
         style: &'a Style,
+        node_graph: &NodeGraphContext,
         input_id: InputId,
         input: &Input,
     ) -> iced::Element<'a, PropertiesMessage> {
         let label: String = label_from_pascal(input.name.clone());
+        let tooltip: String = input.input_help(&node_graph.graph);
         match input.data {
-            InputData::Bool(value) => Self::bool_widget(style, input_id, label, value),
+            InputData::Bool(value) => Self::bool_widget(style, input_id, label, tooltip, value),
             // InputData::BVec3(value) => {
             //     Self::bvec3_widget(style, label, &value)
             // }
@@ -138,7 +137,7 @@ impl Properties {
             // InputData::UVec3(value) => {
             //     Self::uvec3_widget(style, label, &value)
             // }
-            InputData::Float(value) => Self::float_widget(style, input_id, label, value),
+            InputData::Float(value) => Self::float_widget(style, input_id, label, tooltip, value),
             // InputData::Vec2(value) => {
             //     Self::vec2_widget(style, label, &value)
             // }
@@ -157,7 +156,9 @@ impl Properties {
             // InputData::Enum(value) => {
             //     Self::enum_widget(style, label, &value)
             // }
-            InputData::Filepath(ref value) => Self::filepath_widget(style, input_id, label, value),
+            InputData::Filepath(ref value) => {
+                Self::filepath_widget(style, input_id, label, tooltip, value)
+            }
             _ => style.text(label_from_pascal(input.name.clone())).into(),
         }
     }
@@ -170,7 +171,7 @@ impl Properties {
         node_graph
             .graph
             .non_scene_graph_inputs(node_id)
-            .map(|(input_id, input)| Self::widget_for_input(style, *input_id, input))
+            .map(|(input_id, input)| Self::widget_for_input(style, node_graph, *input_id, input))
     }
 
     pub fn node_title_bar<'a>(

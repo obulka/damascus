@@ -87,7 +87,7 @@ impl NodeInputData for MaterialInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::DiffuseColour => "The diffuse colour of the material.",
             Self::DiffuseColourTexture => {
@@ -158,7 +158,7 @@ impl NodeOutputData for MaterialOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Id => "A material.",
         }

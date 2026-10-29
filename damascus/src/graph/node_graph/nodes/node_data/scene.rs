@@ -39,7 +39,7 @@ impl NodeInputData for SceneInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Scene => "The children scenes to merge.",
             Self::RenderCamera => "The camera to render the scene through.",
@@ -64,7 +64,7 @@ impl NodeOutputData for SceneOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::RootId => "A renderable scene.",
         }

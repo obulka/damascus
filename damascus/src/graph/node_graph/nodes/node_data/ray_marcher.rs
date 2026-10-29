@@ -71,7 +71,7 @@ impl NodeInputData for RayMarcherInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::SceneRoot => "The scene to render.",
             Self::MaxRaySteps => {
@@ -169,7 +169,7 @@ impl NodeOutputData for RayMarcherOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Render => "A texture containing a ray marched scene.",
         }

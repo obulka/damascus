@@ -32,10 +32,10 @@ pub trait NodeOutputData: Enumerator + Eq {
         self.variant_label()
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         indoc! {
             "The one who built this node was selfish and lazy, and did
-                not bother to write a tooltip."
+                not bother to write a help message."
         }
     }
 

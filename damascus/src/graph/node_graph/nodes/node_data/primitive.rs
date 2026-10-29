@@ -126,7 +126,7 @@ impl NodeInputData for PrimitiveInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Child => indoc! {
                 "The children of this primitive.\n
@@ -313,7 +313,7 @@ impl NodeOutputData for PrimitiveOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Id => "A primitive geometry object.",
         }

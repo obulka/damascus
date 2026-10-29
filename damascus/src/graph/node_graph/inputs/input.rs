@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::graph::node_graph::{inputs::input_data::InputData, nodes::NodeId};
+use crate::graph::node_graph::{NodeGraph, inputs::input_data::InputData, nodes::NodeId};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct Input {
@@ -19,5 +19,9 @@ impl Input {
             name: name,
             data: data,
         }
+    }
+
+    pub fn input_help(&self, node_graph: &NodeGraph) -> String {
+        node_graph[self.node_id].data.input_help(&self.name)
     }
 }

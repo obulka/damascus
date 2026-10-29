@@ -40,7 +40,7 @@ impl NodeInputData for AxisInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Axis => "The parent axis.",
             Self::Translate => "The translation of this axis.",
@@ -67,7 +67,7 @@ impl NodeOutputData for AxisOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Axis => "A transformation matrix.",
         }

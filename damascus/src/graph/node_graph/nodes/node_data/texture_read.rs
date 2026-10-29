@@ -33,7 +33,7 @@ impl NodeInputData for TextureReadInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Filepath => "The path to the texture.",
         }
@@ -53,7 +53,7 @@ impl NodeOutputData for TextureReadOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Texture => "A texture that has been loaded from disk.",
         }

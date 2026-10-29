@@ -56,7 +56,7 @@ impl NodeInputData for LightInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Child => indoc! {
                 "Chain other non-physical lights in the scene, their axes will
@@ -110,7 +110,7 @@ impl NodeOutputData for LightOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Id => indoc! {
                 "An non-physical light. For a physical light use an emissive

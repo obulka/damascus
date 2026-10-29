@@ -53,7 +53,7 @@ impl NodeInputData for CameraInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::FocalLength => "The focal length of the camera.",
             Self::FocalDistance => "The focal distance of the camera.",
@@ -85,7 +85,7 @@ impl NodeOutputData for CameraOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Id => "A camera.",
         }

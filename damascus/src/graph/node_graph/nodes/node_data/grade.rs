@@ -50,7 +50,7 @@ impl NodeInputData for GradeInputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Texture => indoc! {
                 "A render pass which results in the production of the texture
@@ -83,7 +83,7 @@ impl NodeOutputData for GradeOutputData {
         }
     }
 
-    fn tooltip(&self) -> &str {
+    fn help(&self) -> &str {
         match self {
             Self::Grade => "A graded image.",
         }

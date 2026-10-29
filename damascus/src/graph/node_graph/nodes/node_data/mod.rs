@@ -47,6 +47,13 @@ pub trait EvaluableNode {
     type Inputs: NodeInputData;
     type Outputs: NodeOutputData;
 
+    fn input_help(input_name: &str) -> String {
+        match Self::Inputs::from_str(input_name) {
+            Ok(variant) => variant.help().to_string(),
+            Err(_parse_error) => input_name.to_string(),
+        }
+    }
+
     fn add_to_node_graph(node_graph: &mut NodeGraph, node_id: NodeId) {
         Self::Inputs::add_to_node(node_graph, node_id);
         Self::Outputs::add_to_node(node_graph, node_id);
@@ -239,6 +246,20 @@ pub enum NodeData {
 }
 
 impl NodeData {
+    pub fn input_help(&self, input_name: &str) -> String {
+        match self {
+            Self::Axis => AxisNode::input_help(input_name),
+            Self::Camera => CameraNode::input_help(input_name),
+            Self::Grade => GradeNode::input_help(input_name),
+            Self::Light => LightNode::input_help(input_name),
+            Self::Material => MaterialNode::input_help(input_name),
+            Self::Primitive => PrimitiveNode::input_help(input_name),
+            Self::RayMarcher => RayMarcherNode::input_help(input_name),
+            Self::Scene => SceneNode::input_help(input_name),
+            Self::TextureRead => TextureReadNode::input_help(input_name),
+        }
+    }
+
     pub fn dynamic_input_connected(&self, node_graph: &mut NodeGraph, input_id: InputId) {
         match self {
             Self::Light => {

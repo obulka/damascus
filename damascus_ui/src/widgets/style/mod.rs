@@ -116,15 +116,13 @@ impl Style {
         &'a self,
         message: impl iced::widget::text::IntoFragment<'a>,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        message_length: iced::Length, // TODO make these self.message_.. with dropdowns in editor
-        message_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::widget::Tooltip<'a, Message> {
         iced::widget::tooltip(
             iced::widget::container(
                 self.text(message)
                     .align_y(iced::alignment::Vertical::Center)
-                    .align_x(message_horizontal_alignment)
-                    .width(message_length),
+                    .align_x(iced::alignment::Horizontal::Right)
+                    .width(iced::Length::FillPortion(1)),
             )
             .padding(self.padding),
             iced::widget::container(
@@ -145,12 +143,7 @@ impl Style {
         on_input: impl Fn(String) -> Message + 'a,
     ) -> iced::Element<'a, Message> {
         iced::widget::row![
-            self.tooltip(
-                label,
-                tooltip,
-                iced::Length::FillPortion(1),
-                iced::alignment::Horizontal::Left
-            ),
+            self.tooltip(label, tooltip,),
             iced::widget::text_input("", &path)
                 .width(iced::Length::FillPortion(4))
                 .padding(self.padding)
@@ -170,12 +163,7 @@ impl Style {
         on_toggle: impl Fn(bool) -> Message + 'a,
     ) -> iced::Element<'a, Message> {
         iced::widget::row![
-            self.tooltip(
-                label,
-                tooltip,
-                iced::Length::FillPortion(1),
-                iced::alignment::Horizontal::Left
-            ),
+            self.tooltip(label, tooltip,),
             iced::widget::checkbox(value)
                 .spacing(self.spacing)
                 .text_size(self.text_size)
@@ -365,7 +353,6 @@ impl Style {
         picked: T,
         on_change: F,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::Element<'a, Message>
     where
         T: Enumerator,
@@ -373,12 +360,7 @@ impl Style {
         Message: Clone + 'a,
     {
         iced::widget::row![
-            self.tooltip(
-                name,
-                tooltip,
-                iced::Length::FillPortion(1),
-                name_horizontal_alignment
-            ),
+            self.tooltip(name, tooltip,),
             iced::widget::pick_list(
                 T::iter()
                     .map(|variant| variant.variant_pascal_label())
@@ -392,7 +374,7 @@ impl Style {
                     })
                 },
             )
-            .width(iced::Length::FillPortion(2))
+            .width(iced::Length::FillPortion(4))
             .style(
                 |theme: &iced::Theme, status| -> iced::widget::pick_list::Style {
                     let base: iced::widget::pick_list::Style =
@@ -427,8 +409,6 @@ impl Style {
         on_change: F,
         on_release: Message,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        name_length: iced::Length,
-        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -447,7 +427,7 @@ impl Style {
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.tooltip(name, tooltip, name_length, name_horizontal_alignment),
+            self.tooltip(name, tooltip),
             // TODO BUG when highlighting ex 123 and hitting 1 can panic
             // bring this in so we can fix and add better editing control
             iced_aw::widget::number_input(&value, limit_range, on_change)
@@ -511,17 +491,11 @@ impl Style {
         toggle_message: Message,
         submit_message: impl Fn(iced::Color) -> Message + 'static,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
-        name_horizontal_alignment: impl Into<iced::widget::text::Alignment>,
     ) -> iced::Element<'a, Message> {
         // TODO this should probably be absorbed for more control over behaviour
 
         iced::widget::row![
-            self.tooltip(
-                name,
-                tooltip,
-                iced::Length::FillPortion(1),
-                name_horizontal_alignment
-            ),
+            self.tooltip(name, tooltip,),
             iced_aw::helpers::color_picker(
                 picking,
                 color,

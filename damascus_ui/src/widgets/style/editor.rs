@@ -274,15 +274,11 @@ impl Widget<StyleEditorMessage> for StyleEditor {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, StyleEditorMessage> {
-        let parameter_name_length = iced::Length::FillPortion(2);
-        let horizontal_text_alignment = iced::alignment::Horizontal::Left;
-
         let theme = style.pick_list(
             StyleEditorFields::Theme.variant_label(),
             style.theme,
             |theme| -> StyleEditorMessage { StyleEditorData::Theme(theme).into() },
             "The colour scheme of the UI",
-            horizontal_text_alignment,
         );
         let text_size = style.slider(
             StyleEditorFields::TextSize.variant_label(),
@@ -293,8 +289,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
             StyleEditorData::TextSize(style.text_size).into(),
             "The default global text size",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let scale = style.slider(
             StyleEditorFields::Scale.variant_label(),
@@ -305,8 +299,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
             StyleEditorData::Scale(style.scale).into(),
             "Scale the UI up or down",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let border_width = style.slider(
             StyleEditorFields::BorderWidth.variant_label(),
@@ -317,8 +309,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
             StyleEditorData::BorderWidth(style.border_width).into(),
             "The width of borders in the UI",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let spacing = style.slider(
             StyleEditorFields::Spacing.variant_label(),
@@ -329,8 +319,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
             StyleEditorData::Spacing(style.spacing).into(),
             "The spacing between UI elements",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let padding = style.slider(
             StyleEditorFields::Padding.variant_label(),
@@ -341,8 +329,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
             StyleEditorData::Padding(style.padding).into(),
             "The padding around UI elements",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let icon_size = style.slider(
             StyleEditorFields::IconSize.variant_label(),
@@ -353,8 +339,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
             StyleEditorData::IconSize(style.icon_size).into(),
             "The size of icon buttons",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let leeway = style.slider(
             StyleEditorFields::Leeway.variant_label(),
@@ -365,8 +349,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
             StyleEditorData::Leeway(style.leeway).into(),
             "The tolerance around grabbable elements",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let modal_opacity = style.slider(
             StyleEditorFields::ModalOpacity.variant_label(),
@@ -377,8 +359,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
             StyleEditorData::ModalOpacity(style.modal_opacity).into(),
             "The opacity of the background when in a modal context",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let viewer_zoom_sensitivity = style.slider(
             StyleEditorFields::ViewerZoomSensitivity.variant_label(),
@@ -389,8 +369,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::ViewerZoomSensitivity(value).into() },
             StyleEditorData::ViewerZoomSensitivity(style.viewer_zoom_sensitivity).into(),
             "The sensitivity of the mouse scroll wheel when zooming in the viewer",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let float_input_step = style.slider(
             StyleEditorFields::FloatInputStep.variant_label(),
@@ -401,8 +379,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
             StyleEditorData::FloatInputStep(style.float_input_step).into(),
             "The minimum step between floating point numbers when dragging sliders",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let default_node_colour = style.colour_picker(
             StyleEditorFields::DefaultNodeColour.variant_label(),
@@ -421,7 +397,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
                 .into()
             },
             "The default colour of nodes",
-            horizontal_text_alignment,
         );
 
         let text_zoom_cutoff = style.slider(
@@ -433,8 +408,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::TextZoomCutoff(value).into() },
             StyleEditorData::TextZoomCutoff(style.text_zoom_cutoff).into(),
             "If you zoom out past this value, text will stop rendering in the node graph",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let connection_line_width = style.slider(
             StyleEditorFields::ConnectionLineWidth.variant_label(),
@@ -445,8 +418,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::ConnectionLineWidth(value).into() },
             StyleEditorData::ConnectionLineWidth(style.connection_line_width).into(),
             "The width of the lines representing connections between nodes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let inactive_connection_line_scale = style.slider(
             StyleEditorFields::InactiveConnectionLineScale.variant_label(),
@@ -460,8 +431,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::InactiveConnectionLineScale(style.inactive_connection_line_scale)
                 .into(),
             "The width of lines representing the inactive viewport connections",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let node_input_radius = style.slider(
             StyleEditorFields::NodeInputRadius.variant_label(),
@@ -472,8 +441,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::NodeInputRadius(value).into() },
             StyleEditorData::NodeInputRadius(style.node_input_radius).into(),
             "The radius of the circular inputs on nodes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let node_output_radius = style.slider(
             StyleEditorFields::NodeOutputRadius.variant_label(),
@@ -484,8 +451,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::NodeOutputRadius(value).into() },
             StyleEditorData::NodeOutputRadius(style.node_output_radius).into(),
             "The radius of the circular outputs on nodes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let node_selected_border_width = style.slider(
             StyleEditorFields::NodeSelectedBorderWidth.variant_label(),
@@ -498,8 +463,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             },
             StyleEditorData::NodeSelectedBorderWidth(style.node_selected_border_width).into(),
             "The width of the border that is drawn on selected nodes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
 
         let selection_box_border_width = style.slider(
@@ -513,8 +476,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             },
             StyleEditorData::SelectionBoxBorderWidth(style.selection_box_border_width).into(),
             "The opaque border width of any selection boxes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let selection_box_alpha = style.slider(
             StyleEditorFields::SelectionBoxAlpha.variant_label(),
@@ -525,8 +486,6 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |value| -> StyleEditorMessage { StyleEditorData::SelectionBoxAlpha(value).into() },
             StyleEditorData::SelectionBoxAlpha(style.selection_box_alpha).into(),
             "The opacity of any selection boxes",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         iced::widget::scrollable(
             iced::widget::column![

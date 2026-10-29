@@ -494,9 +494,6 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
-        let parameter_name_length = iced::Length::FillPortion(1);
-        let horizontal_text_alignment = iced::alignment::Horizontal::Center;
-
         let gain = style.slider(
             "f/4",
             0.0..=64.0,
@@ -506,8 +503,6 @@ impl Widget<ViewportMessage> for Viewport {
             |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
             ViewportMessage::GainChanged(self.viewport_primitive.gain),
             "The gain to apply in the viewer.",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
         let gamma = style.slider(
             "γ",
@@ -518,8 +513,6 @@ impl Widget<ViewportMessage> for Viewport {
             |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
             ViewportMessage::GammaChanged(self.viewport_primitive.gamma),
             "The gamma to apply in the viewer.",
-            parameter_name_length,
-            horizontal_text_alignment,
         );
 
         let toolbar = iced::widget::row![gain, gamma];

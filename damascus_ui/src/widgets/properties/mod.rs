@@ -94,8 +94,6 @@ impl Properties {
         tooltip: String,
         value: f32,
     ) -> iced::Element<'a, PropertiesMessage> {
-        let parameter_name_length = iced::Length::FillPortion(2);
-        let horizontal_text_alignment = iced::alignment::Horizontal::Left;
         style.slider(
             label,
             0.0..=1.0,
@@ -107,8 +105,6 @@ impl Properties {
             },
             PropertiesMessage::InputDataChanged(input_id, InputData::Float(value)),
             tooltip,
-            parameter_name_length,
-            horizontal_text_alignment,
         )
     }
 

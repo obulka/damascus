@@ -34,6 +34,11 @@ where
     fn disconnect(&mut self, parent: &Parent, child: &Child) -> bool;
     fn connect(&mut self, parent: Parent, child: Child) -> bool;
 
+    fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a Child, &'a Parent)> + 'a
+    where
+        Parent: 'a,
+        Child: 'a;
+
     fn iter_parents<'a>(&'a self, child: &'a Child) -> impl Iterator<Item = &'a Parent> + 'a
     where
         Parent: 'a,
@@ -167,6 +172,14 @@ impl<
     fn clear(&mut self) {
         self.parents.clear();
         self.children.clear();
+    }
+
+    fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a Child, &'a Parent)> + 'a
+    where
+        Parent: 'a,
+        Child: 'a,
+    {
+        self.parents.iter()
     }
 
     fn iter_parents<'a>(&'a self, child: &'a Child) -> impl Iterator<Item = &'a Parent> + 'a
@@ -304,6 +317,16 @@ impl<
     fn clear(&mut self) {
         self.children.clear();
         self.parents.clear();
+    }
+
+    fn iter<'a>(&'a self) -> impl Iterator<Item = (&'a Child, &'a Parent)> + 'a
+    where
+        Parent: 'a,
+        Child: 'a,
+    {
+        self.parents
+            .iter()
+            .flat_map(move |(child, parents)| parents.iter().map(move |parent| (child, parent)))
     }
 
     fn iter_parents<'a>(&'a self, child: &'a Child) -> impl Iterator<Item = &'a Parent> + 'a

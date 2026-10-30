@@ -125,6 +125,14 @@ impl NodeGraph {
         self.edges.parent_count()
     }
 
+    pub fn iter_connections<'a>(&'a self) -> impl Iterator<Item = (&'a InputId, &'a OutputId)> + 'a
+    where
+        InputId: 'a,
+        OutputId: 'a,
+    {
+        self.edges.iter()
+    }
+
     pub fn input_count(&self) -> usize {
         self.inputs.len()
     }
@@ -654,6 +662,15 @@ impl NodeGraph {
         }
     }
 
+    pub fn non_scene_graph_input_count(&self, node_id: &NodeId) -> usize {
+        self.non_scene_graph_inputs(node_id).count()
+    }
+
+    pub fn non_scene_graph_input_index(&self, input_id: &InputId) -> Option<usize> {
+        self.non_scene_graph_inputs(&self[*input_id].node_id)
+            .position(|(id, _)| id == input_id)
+    }
+
     pub fn non_scene_graph_inputs(
         &self,
         node_id: &NodeId,
@@ -666,29 +683,40 @@ impl NodeGraph {
     }
 
     pub fn scene_graph_input_count(&self, node_id: &NodeId) -> usize {
-        let mut input_count: usize = 0;
-        for (_input_id, input) in self.node_inputs(node_id) {
-            match input.data {
-                InputData::SceneGraphId(_id) => {
-                    input_count += 1;
-                }
-                _ => {}
-            }
-        }
-        input_count
+        self.scene_graph_inputs(node_id).count()
+    }
+
+    pub fn scene_graph_input_index(&self, input_id: &InputId) -> Option<usize> {
+        self.scene_graph_inputs(&self[*input_id].node_id)
+            .position(|(id, _)| id == input_id)
+    }
+
+    pub fn scene_graph_inputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
+        self.node_inputs(node_id)
+            .filter(|(_input_id, input)| match input.data {
+                InputData::SceneGraphId(_id) => true,
+                _ => false,
+            })
     }
 
     pub fn scene_graph_output_count(&self, node_id: &NodeId) -> usize {
-        let mut output_count: usize = 0;
-        for (_output_id, output) in self.node_outputs(node_id) {
-            match output.data {
-                OutputData::SceneGraphId(_id) => {
-                    output_count += 1;
-                }
-                _ => {}
-            }
-        }
-        output_count
+        self.scene_graph_outputs(node_id).count()
+    }
+
+    pub fn scene_graph_output_index(&self, output_id: &OutputId) -> Option<usize> {
+        self.scene_graph_outputs(&self[*output_id].node_id)
+            .position(|(id, _)| id == output_id)
+    }
+
+    pub fn scene_graph_outputs(
+        &self,
+        node_id: &NodeId,
+    ) -> impl Iterator<Item = (&OutputId, &Output)> {
+        self.node_outputs(node_id)
+            .filter(|(_input_id, input)| match input.data {
+                OutputData::SceneGraphId(_id) => true,
+                _ => false,
+            })
     }
 }
 

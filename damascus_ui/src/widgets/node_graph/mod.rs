@@ -123,6 +123,8 @@ pub struct NodeGraph {
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
     #[serde(skip)]
+    connection_in_progress: (Option<InputId>, Option<OutputId>),
+    #[serde(skip)]
     dragging_nodes: bool,
     #[serde(skip)]
     dragged_nodes: bool,
@@ -137,6 +139,7 @@ impl Default for NodeGraph {
             viewport_context: Arc::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
+            connection_in_progress: (None, None),
             dragging_nodes: false,
             dragged_nodes: false,
             style: Style::default(),
@@ -412,6 +415,137 @@ impl NodeGraph {
         self.drag_viewports(context);
     }
 
+    pub fn is_connection_in_progress(&self) -> bool {
+        self.connection_in_progress.0.is_some() || self.connection_in_progress.1.is_some()
+    }
+
+    pub fn initiate_connection(&mut self, context: &Context) -> bool {
+        let Ok(node_graph) = context.node_graph.lock() else {
+            return false;
+        };
+
+        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
+        let input_path_radius: f32 = self.style.node_input_radius + self.style.leeway;
+        let output_path_radius: f32 = self.style.node_output_radius + self.style.leeway;
+
+        for (node_id, node_context) in node_graph.context.iter() {
+            let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
+            if connectable_input_count > 0 {
+                let node_top_left: Vec2 = node_context.shape.top_left();
+
+                let step_size: f32 = node_context.shape.size.x / (connectable_input_count as f32);
+                let half_step_size: f32 = 0.5 * step_size;
+
+                for index in 0..connectable_input_count {
+                    let input_position = Vec2::new(
+                        node_top_left.x + (index as f32) * step_size + half_step_size,
+                        node_top_left.y,
+                    );
+
+                    if (input_position - cursor_position).length() <= input_path_radius {
+                        self.connection_in_progress =
+                            (Some(node_graph.graph[node_id].input_ids[index]), None);
+                        return true;
+                    }
+                }
+            }
+
+            let output_count: usize = node_graph.graph[node_id].output_count();
+            if output_count > 0 {
+                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
+
+                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
+                let half_step_size: f32 = 0.5 * step_size;
+
+                for index in 0..output_count {
+                    let output_position = Vec2::new(
+                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
+                        node_bottom_left.y,
+                    );
+
+                    if (output_position - cursor_position).length() <= output_path_radius {
+                        self.connection_in_progress =
+                            (None, Some(node_graph.graph[node_id].output_ids[index]));
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn complete_connection(&mut self, context: &Context) -> bool {
+        if !self.is_connection_in_progress() {
+            return false;
+        }
+        let Ok(mut node_graph) = context.node_graph.lock() else {
+            return false;
+        };
+
+        let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
+        let input_path_radius: f32 = self.style.node_input_radius + self.style.leeway;
+        let output_path_radius: f32 = self.style.node_output_radius + self.style.leeway;
+
+        for (node_id, node_context) in node_graph.context.iter() {
+            if let Some(output_id) = self.connection_in_progress.1 {
+                let connectable_input_count: usize =
+                    node_graph.graph.scene_graph_input_count(&node_id);
+
+                if connectable_input_count == 0 {
+                    continue;
+                }
+
+                let node_top_left: Vec2 = node_context.shape.top_left();
+
+                let step_size: f32 = node_context.shape.size.x / (connectable_input_count as f32);
+                let half_step_size: f32 = 0.5 * step_size;
+
+                for index in 0..connectable_input_count {
+                    let input_position = Vec2::new(
+                        node_top_left.x + (index as f32) * step_size + half_step_size,
+                        node_top_left.y,
+                    );
+
+                    if (input_position - cursor_position).length() <= input_path_radius {
+                        let input_id: InputId = node_graph.graph[node_id].input_ids[index];
+                        self.connection_in_progress.0 = Some(input_id);
+
+                        return node_graph
+                            .graph
+                            .connect_output_to_input(output_id, input_id);
+                    }
+                }
+            } else if let Some(input_id) = self.connection_in_progress.0 {
+                let output_count: usize = node_graph.graph[node_id].output_count();
+                if output_count == 0 {
+                    continue;
+                }
+
+                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
+
+                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
+                let half_step_size: f32 = 0.5 * step_size;
+
+                for index in 0..output_count {
+                    let output_position = Vec2::new(
+                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
+                        node_bottom_left.y,
+                    );
+
+                    if (output_position - cursor_position).length() <= output_path_radius {
+                        let output_id: OutputId = node_graph.graph[node_id].output_ids[index];
+                        self.connection_in_progress.1 = Some(output_id);
+
+                        return node_graph
+                            .graph
+                            .connect_output_to_input(output_id, input_id);
+                    }
+                }
+            }
+        }
+        false
+    }
+
     pub fn remove_selected(&self) -> iced::Task<NodeGraphMessage> {
         let Ok(mut node_graph) = self.context.lock() else {
             return iced::Task::none();
@@ -517,6 +651,10 @@ impl NodeGraph {
                     if self.pan_zoom.cursor_in_bounds() {
                         let mut node_clicked = false;
 
+                        if self.initiate_connection(context) {
+                            return iced::Task::none();
+                        }
+
                         if !self.click_select_selected(context, false) {
                             // Potentially reset the selection
                             if !context.keyboard_modifiers.control() {
@@ -567,6 +705,10 @@ impl NodeGraph {
                         .selection_box
                         .update(context, SelectionBoxMessage::EndSelection)
                         .map(|selection_box_message| selection_box_message.into());
+
+                    self.complete_connection(context);
+
+                    self.connection_in_progress = (None, None);
 
                     task
                 }
@@ -876,6 +1018,341 @@ impl NodeGraph {
         }
     }
 
+    pub fn draw_connection_in_progress(
+        &self,
+        frame: &mut iced::widget::canvas::Frame,
+        node_graph: &NodeGraphContext,
+        theme: &iced::theme::Theme,
+    ) {
+        if !self.is_connection_in_progress() {
+            return;
+        }
+
+        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+
+        let primary_colour: iced::Color = theme.palette().primary;
+        let text_colour: iced::Color = theme.palette().text;
+
+        let connection_line_width: f32 =
+            self.style.connection_line_width * self.pan_zoom.reciprocal_zoom();
+
+        let connection_stroke = iced::widget::canvas::Stroke::default()
+            .with_width(connection_line_width)
+            .with_color(primary_colour);
+
+        if let Some(input_id) = self.connection_in_progress.0 {
+            if !node_graph.graph.input_id_is_valid(input_id) {
+                return;
+            }
+
+            let node_id: NodeId = node_graph.graph[input_id].node_id;
+            let Some(node_context) = node_graph.context.get(node_id) else {
+                return;
+            };
+
+            let Some(input_index) = node_graph.graph.scene_graph_input_index(&input_id) else {
+                return;
+            };
+
+            let node_top_left: Vec2 = node_context.shape.top_left();
+
+            let input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
+            let step_size: f32 = node_context.shape.size.x / (input_count as f32);
+            let half_step_size: f32 = 0.5 * step_size;
+
+            let input_position = Vec2::new(
+                node_top_left.x + (input_index as f32) * step_size + half_step_size,
+                node_top_left.y,
+            );
+            let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
+
+            let connection = iced::widget::canvas::Path::line(
+                iced::Point::from_glam(&canvas_input_position),
+                iced::Point::from_glam(&self.pan_zoom.canvas_cursor_position()),
+            );
+
+            frame.stroke(&connection, connection_stroke);
+
+            // if !render_text {
+            //     continue;
+            // }
+
+            // let connection_vector: Vec2 = output_position - viewport_center;
+            // let mut ray = Ray2d::new(viewport_center, connection_vector);
+            // ray.advance_in_direction(
+            //     self.style.text_size,
+            //     if ray.direction().y > 0. {
+            //         ray.perpendicular_direction_ccw()
+            //     } else {
+            //         ray.perpendicular_direction_cw()
+            //     },
+            // );
+
+            // let mut text_path: Rectangle = viewport_context.node_context.shape;
+            // text_path.uniform_expansion(
+            //     (connection_vector.length() - text_path.half_size().length())
+            //         .min(
+            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
+            //                 * self.style.text_size,
+            //         )
+            //         .max(0.),
+            // );
+
+            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
+            //     continue;
+            // };
+            // ray.advance(intersection_distances.y);
+
+            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+            // frame.fill_text(iced::widget::canvas::Text {
+            //     content: view.to_string(),
+            //     position: iced::Point::from_glam(&canvas_text_position),
+            //     color: text_colour,
+            //     size: text_size,
+            //     align_x: iced::advanced::text::Alignment::Right,
+            //     align_y: iced::alignment::Vertical::Center,
+            //     ..iced::widget::canvas::Text::default()
+            // });
+        }
+
+        if let Some(output_id) = self.connection_in_progress.1 {
+            if !node_graph.graph.output_id_is_valid(output_id) {
+                return;
+            }
+
+            let node_id: NodeId = node_graph.graph[output_id].node_id;
+            let Some(node_context) = node_graph.context.get(node_id) else {
+                return;
+            };
+
+            let node: &Node = &node_graph.graph[node_id];
+            let Some(output_index) = node.output_index(&output_id) else {
+                return;
+            };
+
+            let node_bottom_left: Vec2 = node_context.shape.bottom_left();
+
+            let output_count: usize = node.output_count();
+            let step_size: f32 = node_context.shape.size.x / (output_count as f32);
+            let half_step_size: f32 = 0.5 * step_size;
+
+            let output_position = Vec2::new(
+                node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
+                node_bottom_left.y,
+            );
+            let canvas_output_position: Vec2 = self.pan_zoom.local_to_canvas(output_position);
+
+            let connection = iced::widget::canvas::Path::line(
+                iced::Point::from_glam(&canvas_output_position),
+                iced::Point::from_glam(&self.pan_zoom.canvas_cursor_position()),
+            );
+
+            frame.stroke(&connection, connection_stroke);
+
+            // if !render_text {
+            //     continue;
+            // }
+
+            // let connection_vector: Vec2 = output_position - viewport_center;
+            // let mut ray = Ray2d::new(viewport_center, connection_vector);
+            // ray.advance_in_direction(
+            //     self.style.text_size,
+            //     if ray.direction().y > 0. {
+            //         ray.perpendicular_direction_ccw()
+            //     } else {
+            //         ray.perpendicular_direction_cw()
+            //     },
+            // );
+
+            // let mut text_path: Rectangle = viewport_context.node_context.shape;
+            // text_path.uniform_expansion(
+            //     (connection_vector.length() - text_path.half_size().length())
+            //         .min(
+            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
+            //                 * self.style.text_size,
+            //         )
+            //         .max(0.),
+            // );
+
+            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
+            //     continue;
+            // };
+            // ray.advance(intersection_distances.y);
+
+            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+            // frame.fill_text(iced::widget::canvas::Text {
+            //     content: view.to_string(),
+            //     position: iced::Point::from_glam(&canvas_text_position),
+            //     color: text_colour,
+            //     size: text_size,
+            //     align_x: iced::advanced::text::Alignment::Right,
+            //     align_y: iced::alignment::Vertical::Center,
+            //     ..iced::widget::canvas::Text::default()
+            // });
+        }
+    }
+
+    pub fn draw_node_connections(
+        &self,
+        frame: &mut iced::widget::canvas::Frame,
+        node_graph: &NodeGraphContext,
+        theme: &iced::theme::Theme,
+    ) {
+        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+
+        let primary_colour: iced::Color = theme.palette().primary;
+        let text_colour: iced::Color = theme.palette().text;
+
+        let connection_line_width: f32 =
+            self.style.connection_line_width * self.pan_zoom.reciprocal_zoom();
+
+        let connection_stroke = iced::widget::canvas::Stroke::default()
+            .with_width(connection_line_width)
+            .with_color(primary_colour);
+
+        for (input_id, output_id) in node_graph.graph.iter_connections() {
+            if !node_graph.graph.input_id_is_valid(*input_id)
+                || !node_graph.graph.output_id_is_valid(*output_id)
+            {
+                continue;
+            }
+
+            let input_node_id: NodeId = node_graph.graph[*input_id].node_id;
+            let Some(input_node_context) = node_graph.context.get(input_node_id) else {
+                continue;
+            };
+
+            let Some(input_index) = node_graph.graph.scene_graph_input_index(&input_id) else {
+                continue;
+            };
+
+            let node_top_left: Vec2 = input_node_context.shape.top_left();
+
+            let input_count: usize = node_graph.graph.scene_graph_input_count(&input_node_id);
+            let step_size: f32 = input_node_context.shape.size.x / (input_count as f32);
+            let half_step_size: f32 = 0.5 * step_size;
+
+            let input_position = Vec2::new(
+                node_top_left.x + (input_index as f32) * step_size + half_step_size,
+                node_top_left.y,
+            );
+            let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
+
+            // if !render_text {
+            //     continue;
+            // }
+
+            // let connection_vector: Vec2 = output_position - viewport_center;
+            // let mut ray = Ray2d::new(viewport_center, connection_vector);
+            // ray.advance_in_direction(
+            //     self.style.text_size,
+            //     if ray.direction().y > 0. {
+            //         ray.perpendicular_direction_ccw()
+            //     } else {
+            //         ray.perpendicular_direction_cw()
+            //     },
+            // );
+
+            // let mut text_path: Rectangle = viewport_context.node_context.shape;
+            // text_path.uniform_expansion(
+            //     (connection_vector.length() - text_path.half_size().length())
+            //         .min(
+            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
+            //                 * self.style.text_size,
+            //         )
+            //         .max(0.),
+            // );
+
+            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
+            //     continue;
+            // };
+            // ray.advance(intersection_distances.y);
+
+            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+            // frame.fill_text(iced::widget::canvas::Text {
+            //     content: view.to_string(),
+            //     position: iced::Point::from_glam(&canvas_text_position),
+            //     color: text_colour,
+            //     size: text_size,
+            //     align_x: iced::advanced::text::Alignment::Right,
+            //     align_y: iced::alignment::Vertical::Center,
+            //     ..iced::widget::canvas::Text::default()
+            // });
+
+            let output_node_id: NodeId = node_graph.graph[*output_id].node_id;
+            let node: &Node = &node_graph.graph[output_node_id];
+            let Some(output_index) = node.output_index(&output_id) else {
+                continue;
+            };
+
+            let Some(output_node_context) = node_graph.context.get(output_node_id) else {
+                continue;
+            };
+
+            let node_bottom_left: Vec2 = output_node_context.shape.bottom_left();
+
+            let output_count: usize = node.output_count();
+            let step_size: f32 = output_node_context.shape.size.x / (output_count as f32);
+            let half_step_size: f32 = 0.5 * step_size;
+
+            let output_position = Vec2::new(
+                node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
+                node_bottom_left.y,
+            );
+            let canvas_output_position: Vec2 = self.pan_zoom.local_to_canvas(output_position);
+
+            let connection = iced::widget::canvas::Path::line(
+                iced::Point::from_glam(&canvas_output_position),
+                iced::Point::from_glam(&canvas_input_position),
+            );
+
+            frame.stroke(&connection, connection_stroke);
+
+            // if !render_text {
+            //     continue;
+            // }
+
+            // let connection_vector: Vec2 = output_position - viewport_center;
+            // let mut ray = Ray2d::new(viewport_center, connection_vector);
+            // ray.advance_in_direction(
+            //     self.style.text_size,
+            //     if ray.direction().y > 0. {
+            //         ray.perpendicular_direction_ccw()
+            //     } else {
+            //         ray.perpendicular_direction_cw()
+            //     },
+            // );
+
+            // let mut text_path: Rectangle = viewport_context.node_context.shape;
+            // text_path.uniform_expansion(
+            //     (connection_vector.length() - text_path.half_size().length())
+            //         .min(
+            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
+            //                 * self.style.text_size,
+            //         )
+            //         .max(0.),
+            // );
+
+            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
+            //     continue;
+            // };
+            // ray.advance(intersection_distances.y);
+
+            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+            // frame.fill_text(iced::widget::canvas::Text {
+            //     content: view.to_string(),
+            //     position: iced::Point::from_glam(&canvas_text_position),
+            //     color: text_colour,
+            //     size: text_size,
+            //     align_x: iced::advanced::text::Alignment::Right,
+            //     align_y: iced::alignment::Vertical::Center,
+            //     ..iced::widget::canvas::Text::default()
+            // });
+        }
+    }
+
     pub fn draw_viewport_connections(
         &self,
         frame: &mut iced::widget::canvas::Frame,
@@ -1049,11 +1526,15 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
         }
 
         if let Ok(node_graph) = self.context.lock() {
+            self.draw_node_connections(&mut frame, &node_graph, theme);
+
             self.draw_nodes(&mut frame, &node_graph, theme);
 
             if let Ok(viewports) = self.viewport_context.lock() {
                 self.draw_viewport_nodes(&mut frame, &node_graph, &viewports, theme);
             }
+
+            self.draw_connection_in_progress(&mut frame, &node_graph, theme);
         }
 
         self.draw_selection_box(&mut frame, theme);

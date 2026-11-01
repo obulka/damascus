@@ -259,7 +259,7 @@ impl NodeGraph {
         encoder: &mut wgpu::CommandEncoder,
         input_id: &InputId,
     ) -> NodeResult<InputData> {
-        if let Some(output_id) = self.edges.parent(input_id) {
+        if let Some(output_id) = self.connected_output(input_id) {
             self.evaluate_output(device, queue, encoder, &output_id.clone())
         } else {
             // Input is not connected
@@ -609,8 +609,12 @@ impl NodeGraph {
         self.disconnect_named_node_input(node_id, &node_input_data.name())
     }
 
-    pub fn input_is_connected(&self, input_id: InputId) -> bool {
-        self.edges.parent(&input_id).is_some()
+    pub fn connected_output(&self, input_id: &InputId) -> Option<&OutputId> {
+        self.edges.parent(input_id)
+    }
+
+    pub fn input_is_connected(&self, input_id: &InputId) -> bool {
+        self.connected_output(input_id).is_some()
     }
 
     pub fn node_input_is_connected<I: NodeInputData>(
@@ -619,7 +623,7 @@ impl NodeGraph {
         node_input_data: &I,
     ) -> bool {
         match self.node_input_id(node_id, node_input_data) {
-            Ok(input_id) => self.input_is_connected(input_id),
+            Ok(input_id) => self.input_is_connected(&input_id),
             Err(_) => false,
         }
     }

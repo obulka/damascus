@@ -420,7 +420,7 @@ impl NodeGraph {
     }
 
     pub fn initiate_connection(&mut self, context: &Context) -> bool {
-        let Ok(node_graph) = context.node_graph.lock() else {
+        let Ok(mut node_graph) = context.node_graph.lock() else {
             return false;
         };
 
@@ -443,8 +443,12 @@ impl NodeGraph {
                     );
 
                     if (input_position - cursor_position).length() <= input_path_radius {
-                        self.connection_in_progress =
-                            (Some(node_graph.graph[node_id].input_ids[index]), None);
+                        let input_id: InputId = node_graph.graph[node_id].input_ids[index];
+                        if let Some(output_id) = node_graph.graph.disconnect_input_id(&input_id) {
+                            self.connection_in_progress = (None, Some(output_id));
+                        } else {
+                            self.connection_in_progress = (Some(input_id), None);
+                        }
                         return true;
                     }
                 }

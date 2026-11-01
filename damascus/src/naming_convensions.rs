@@ -3,8 +3,6 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use itertools::Itertools;
-
 pub fn split_pascal_words(pascal: String) -> Vec<String> {
     let mut words = Vec::<String>::new();
     let mut word = String::new();

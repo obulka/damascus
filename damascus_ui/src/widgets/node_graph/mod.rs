@@ -26,6 +26,7 @@ use damascus::{
         },
         outputs::OutputId,
     },
+    naming_convensions::snake_from_pascal,
 };
 
 use crate::{
@@ -1078,46 +1079,34 @@ impl NodeGraph {
 
             frame.stroke(&connection, connection_stroke);
 
-            // if !render_text {
-            //     continue;
-            // }
+            if render_text {
+                let connection_vector: Vec2 =
+                    self.pan_zoom.local_cursor_position() - input_position;
+                let mut ray = Ray2d::new(input_position, connection_vector);
+                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-            // let connection_vector: Vec2 = output_position - viewport_center;
-            // let mut ray = Ray2d::new(viewport_center, connection_vector);
-            // ray.advance_in_direction(
-            //     self.style.text_size,
-            //     if ray.direction().y > 0. {
-            //         ray.perpendicular_direction_ccw()
-            //     } else {
-            //         ray.perpendicular_direction_cw()
-            //     },
-            // );
+                let mut text_path: Rectangle = node_context.shape;
+                text_path.uniform_expansion(
+                    (connection_vector.length())
+                        .min(1.5 * (input_index as f32 + 1.) * self.style.text_size)
+                        .max(0.),
+                );
 
-            // let mut text_path: Rectangle = viewport_context.node_context.shape;
-            // text_path.uniform_expansion(
-            //     (connection_vector.length() - text_path.half_size().length())
-            //         .min(
-            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
-            //                 * self.style.text_size,
-            //         )
-            //         .max(0.),
-            // );
+                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                    ray.advance(intersection_distances.y);
 
-            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
-            //     continue;
-            // };
-            // ray.advance(intersection_distances.y);
-
-            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
-            // frame.fill_text(iced::widget::canvas::Text {
-            //     content: view.to_string(),
-            //     position: iced::Point::from_glam(&canvas_text_position),
-            //     color: text_colour,
-            //     size: text_size,
-            //     align_x: iced::advanced::text::Alignment::Right,
-            //     align_y: iced::alignment::Vertical::Center,
-            //     ..iced::widget::canvas::Text::default()
-            // });
+                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: snake_from_pascal(&node_graph.graph[input_id].name),
+                        position: iced::Point::from_glam(&canvas_text_position),
+                        color: text_colour,
+                        size: text_size,
+                        align_x: iced::advanced::text::Alignment::Right,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
+            }
         }
 
         if let Some(output_id) = self.connection_in_progress.1 {
@@ -1154,46 +1143,34 @@ impl NodeGraph {
 
             frame.stroke(&connection, connection_stroke);
 
-            // if !render_text {
-            //     continue;
-            // }
+            if render_text {
+                let connection_vector: Vec2 =
+                    self.pan_zoom.local_cursor_position() - output_position;
+                let mut ray = Ray2d::new(output_position, connection_vector);
+                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-            // let connection_vector: Vec2 = output_position - viewport_center;
-            // let mut ray = Ray2d::new(viewport_center, connection_vector);
-            // ray.advance_in_direction(
-            //     self.style.text_size,
-            //     if ray.direction().y > 0. {
-            //         ray.perpendicular_direction_ccw()
-            //     } else {
-            //         ray.perpendicular_direction_cw()
-            //     },
-            // );
+                let mut text_path: Rectangle = node_context.shape;
+                text_path.uniform_expansion(
+                    (connection_vector.length())
+                        .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
+                        .max(0.),
+                );
 
-            // let mut text_path: Rectangle = viewport_context.node_context.shape;
-            // text_path.uniform_expansion(
-            //     (connection_vector.length() - text_path.half_size().length())
-            //         .min(
-            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
-            //                 * self.style.text_size,
-            //         )
-            //         .max(0.),
-            // );
+                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                    ray.advance(intersection_distances.y);
 
-            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
-            //     continue;
-            // };
-            // ray.advance(intersection_distances.y);
-
-            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
-            // frame.fill_text(iced::widget::canvas::Text {
-            //     content: view.to_string(),
-            //     position: iced::Point::from_glam(&canvas_text_position),
-            //     color: text_colour,
-            //     size: text_size,
-            //     align_x: iced::advanced::text::Alignment::Right,
-            //     align_y: iced::alignment::Vertical::Center,
-            //     ..iced::widget::canvas::Text::default()
-            // });
+                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: snake_from_pascal(&node_graph.graph[output_id].name),
+                        position: iced::Point::from_glam(&canvas_text_position),
+                        color: text_colour,
+                        size: text_size,
+                        align_x: iced::advanced::text::Alignment::Right,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
+            }
         }
     }
 
@@ -1215,6 +1192,8 @@ impl NodeGraph {
         let connection_stroke = iced::widget::canvas::Stroke::default()
             .with_width(connection_line_width)
             .with_color(primary_colour);
+
+        let mut outputs_with_text = HashSet::<OutputId>::new();
 
         for (input_id, output_id) in node_graph.graph.iter_connections() {
             if !node_graph.graph.input_id_is_valid(*input_id)
@@ -1243,47 +1222,6 @@ impl NodeGraph {
                 node_top_left.y,
             );
             let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
-
-            // if !render_text {
-            //     continue;
-            // }
-
-            // let connection_vector: Vec2 = output_position - viewport_center;
-            // let mut ray = Ray2d::new(viewport_center, connection_vector);
-            // ray.advance_in_direction(
-            //     self.style.text_size,
-            //     if ray.direction().y > 0. {
-            //         ray.perpendicular_direction_ccw()
-            //     } else {
-            //         ray.perpendicular_direction_cw()
-            //     },
-            // );
-
-            // let mut text_path: Rectangle = viewport_context.node_context.shape;
-            // text_path.uniform_expansion(
-            //     (connection_vector.length() - text_path.half_size().length())
-            //         .min(
-            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
-            //                 * self.style.text_size,
-            //         )
-            //         .max(0.),
-            // );
-
-            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
-            //     continue;
-            // };
-            // ray.advance(intersection_distances.y);
-
-            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
-            // frame.fill_text(iced::widget::canvas::Text {
-            //     content: view.to_string(),
-            //     position: iced::Point::from_glam(&canvas_text_position),
-            //     color: text_colour,
-            //     size: text_size,
-            //     align_x: iced::advanced::text::Alignment::Right,
-            //     align_y: iced::alignment::Vertical::Center,
-            //     ..iced::widget::canvas::Text::default()
-            // });
 
             let output_node_id: NodeId = node_graph.graph[*output_id].node_id;
             let node: &Node = &node_graph.graph[output_node_id];
@@ -1314,46 +1252,73 @@ impl NodeGraph {
 
             frame.stroke(&connection, connection_stroke);
 
-            // if !render_text {
-            //     continue;
-            // }
+            if !render_text {
+                continue;
+            }
 
-            // let connection_vector: Vec2 = output_position - viewport_center;
-            // let mut ray = Ray2d::new(viewport_center, connection_vector);
-            // ray.advance_in_direction(
-            //     self.style.text_size,
-            //     if ray.direction().y > 0. {
-            //         ray.perpendicular_direction_ccw()
-            //     } else {
-            //         ray.perpendicular_direction_cw()
-            //     },
-            // );
+            let mut connection_vector: Vec2 = output_position - input_position;
+            let mut ray = Ray2d::new(input_position, connection_vector);
+            ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-            // let mut text_path: Rectangle = viewport_context.node_context.shape;
-            // text_path.uniform_expansion(
-            //     (connection_vector.length() - text_path.half_size().length())
-            //         .min(
-            //             1.5 * (if *view == 0 { 10. } else { *view as f32 })
-            //                 * self.style.text_size,
-            //         )
-            //         .max(0.),
-            // );
+            let mut text_path: Rectangle = input_node_context.shape;
+            text_path.uniform_expansion(
+                (connection_vector.length())
+                    .min(1.5 * (input_index as f32 + 1.) * self.style.text_size)
+                    .max(0.),
+            );
 
-            // let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
-            //     continue;
-            // };
-            // ray.advance(intersection_distances.y);
+            if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                ray.advance(intersection_distances.y);
 
-            // let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
-            // frame.fill_text(iced::widget::canvas::Text {
-            //     content: view.to_string(),
-            //     position: iced::Point::from_glam(&canvas_text_position),
-            //     color: text_colour,
-            //     size: text_size,
-            //     align_x: iced::advanced::text::Alignment::Right,
-            //     align_y: iced::alignment::Vertical::Center,
-            //     ..iced::widget::canvas::Text::default()
-            // });
+                let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                frame.fill_text(iced::widget::canvas::Text {
+                    content: snake_from_pascal(&node_graph.graph[*input_id].name),
+                    position: iced::Point::from_glam(&canvas_text_position),
+                    color: text_colour,
+                    size: text_size,
+                    align_x: iced::advanced::text::Alignment::Right,
+                    align_y: iced::alignment::Vertical::Center,
+                    ..iced::widget::canvas::Text::default()
+                });
+            }
+
+            if let Some(connecting_output_id) = self.connection_in_progress.1
+                && *output_id == connecting_output_id
+            {
+                continue;
+            }
+
+            if outputs_with_text.contains(output_id) {
+                continue;
+            }
+
+            connection_vector *= -1.;
+            ray = Ray2d::new(output_position, connection_vector);
+            ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
+
+            text_path = output_node_context.shape;
+            text_path.uniform_expansion(
+                (connection_vector.length())
+                    .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
+                    .max(0.),
+            );
+
+            if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                ray.advance(intersection_distances.y);
+
+                let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                frame.fill_text(iced::widget::canvas::Text {
+                    content: snake_from_pascal(&node_graph.graph[*output_id].name),
+                    position: iced::Point::from_glam(&canvas_text_position),
+                    color: text_colour,
+                    size: text_size,
+                    align_x: iced::advanced::text::Alignment::Right,
+                    align_y: iced::alignment::Vertical::Center,
+                    ..iced::widget::canvas::Text::default()
+                });
+
+                outputs_with_text.insert(*output_id);
+            }
         }
     }
 
@@ -1394,6 +1359,8 @@ impl NodeGraph {
             segments: dashed_line_pattern,
             offset: 0,
         };
+
+        let mut outputs_with_text = HashSet::<OutputId>::new();
 
         for (_viewport_id, viewport_context) in viewports.iter() {
             for (view, output_id) in viewport_context.views.iter() {
@@ -1443,7 +1410,7 @@ impl NodeGraph {
                     continue;
                 }
 
-                let connection_vector: Vec2 = output_position - viewport_center;
+                let mut connection_vector: Vec2 = output_position - viewport_center;
                 let mut ray = Ray2d::new(viewport_center, connection_vector);
                 ray.advance_in_direction(
                     self.style.text_size,
@@ -1464,21 +1431,60 @@ impl NodeGraph {
                         .max(0.),
                 );
 
-                let Some(intersection_distances) = ray.intersect_rectangle(&text_path) else {
-                    continue;
-                };
-                ray.advance(intersection_distances.y);
+                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                    ray.advance(intersection_distances.y);
 
-                let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
-                frame.fill_text(iced::widget::canvas::Text {
-                    content: view.to_string(),
-                    position: iced::Point::from_glam(&canvas_text_position),
-                    color: text_colour,
-                    size: text_size,
-                    align_x: iced::advanced::text::Alignment::Right,
-                    align_y: iced::alignment::Vertical::Center,
-                    ..iced::widget::canvas::Text::default()
-                });
+                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: view.to_string(),
+                        position: iced::Point::from_glam(&canvas_text_position),
+                        color: text_colour,
+                        size: text_size,
+                        align_x: iced::advanced::text::Alignment::Right,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+                }
+
+                if let Some(connecting_output_id) = self.connection_in_progress.1
+                    && *output_id == connecting_output_id
+                {
+                    continue;
+                }
+
+                if node_graph.graph.output_is_connected(output_id)
+                    || outputs_with_text.contains(output_id)
+                {
+                    continue;
+                }
+
+                connection_vector *= -1.;
+                ray = Ray2d::new(output_position, connection_vector);
+                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
+
+                text_path = node_context.shape;
+                text_path.uniform_expansion(
+                    (connection_vector.length())
+                        .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
+                        .max(0.),
+                );
+
+                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+                    ray.advance(intersection_distances.y);
+
+                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    frame.fill_text(iced::widget::canvas::Text {
+                        content: snake_from_pascal(&node_graph.graph[*output_id].name),
+                        position: iced::Point::from_glam(&canvas_text_position),
+                        color: text_colour,
+                        size: text_size,
+                        align_x: iced::advanced::text::Alignment::Right,
+                        align_y: iced::alignment::Vertical::Center,
+                        ..iced::widget::canvas::Text::default()
+                    });
+
+                    outputs_with_text.insert(*output_id);
+                }
             }
         }
     }

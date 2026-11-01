@@ -54,7 +54,7 @@ impl Default for Style {
     fn default() -> Self {
         let theme = Theme::default();
         Self {
-            text_size: 16.0,
+            text_size: 14.0,
             scale: 1.0,
             border_width: 2.0,
             theme: theme,

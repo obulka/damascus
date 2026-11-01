@@ -114,7 +114,7 @@ impl Properties {
         input_id: InputId,
         input: &Input,
     ) -> iced::Element<'a, PropertiesMessage> {
-        let label: String = label_from_pascal(input.name.clone());
+        let label: String = label_from_pascal(&input.name);
         let tooltip: String = input.input_help(&node_graph.graph);
         match input.data {
             InputData::Bool(value) => Self::bool_widget(style, input_id, label, tooltip, value),
@@ -155,7 +155,7 @@ impl Properties {
             InputData::Filepath(ref value) => {
                 Self::filepath_widget(style, input_id, label, tooltip, value)
             }
-            _ => style.text(label_from_pascal(input.name.clone())).into(),
+            _ => style.text(label_from_pascal(&input.name)).into(),
         }
     }
 

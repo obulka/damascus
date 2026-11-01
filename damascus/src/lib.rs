@@ -74,7 +74,7 @@ pub trait Enumerator:
     }
 
     fn variant_split_words(&self) -> Vec<String> {
-        split_pascal_words(self.to_string())
+        split_pascal_words(&self.to_string())
     }
 
     fn variant_pascal_case(&self) -> String {
@@ -82,51 +82,51 @@ pub trait Enumerator:
     }
 
     fn variant_screaming_snake_case(&self) -> String {
-        screaming_snake_from_pascal(self.to_string())
+        screaming_snake_from_pascal(&self.to_string())
     }
 
     fn variant_pascal_snake_case(&self) -> String {
-        pascal_snake_from_pascal(self.to_string())
+        pascal_snake_from_pascal(&self.to_string())
     }
 
     fn variant_snake_case(&self) -> String {
-        snake_from_pascal(self.to_string())
+        snake_from_pascal(&self.to_string())
     }
 
     fn variant_kebab_case(&self) -> String {
-        kebab_from_pascal(self.to_string())
+        kebab_from_pascal(&self.to_string())
     }
 
     fn variant_camel_case(&self) -> String {
-        camel_from_pascal(self.to_string())
+        camel_from_pascal(&self.to_string())
     }
 
     fn variant_flat_case(&self) -> String {
-        flat_from_pascal(self.to_string())
+        flat_from_pascal(&self.to_string())
     }
 
     fn variant_upper_flat_case(&self) -> String {
-        upper_flat_from_pascal(self.to_string())
+        upper_flat_from_pascal(&self.to_string())
     }
 
     fn variant_camel_snake_case(&self) -> String {
-        camel_snake_from_pascal(self.to_string())
+        camel_snake_from_pascal(&self.to_string())
     }
 
     fn variant_train_case(&self) -> String {
-        train_from_pascal(self.to_string())
+        train_from_pascal(&self.to_string())
     }
 
     fn variant_cobol_case(&self) -> String {
-        cobol_from_pascal(self.to_string())
+        cobol_from_pascal(&self.to_string())
     }
 
     fn variant_label(&self) -> String {
-        label_from_pascal(self.to_string())
+        label_from_pascal(&self.to_string())
     }
 
     fn variant_pascal_label(&self) -> String {
-        pascal_label_from_pascal(self.to_string())
+        pascal_label_from_pascal(&self.to_string())
     }
 }
 

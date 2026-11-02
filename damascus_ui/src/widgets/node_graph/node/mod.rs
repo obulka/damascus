@@ -5,7 +5,7 @@
 
 use glam::{Vec2, Vec4};
 
-use damascus::geometry::{primitives::Shapes, ray::Ray2d, rectangle::Rectangle};
+use damascus::geometry::{ray::Ray2d, rectangle::Rectangle};
 
 use crate::{type_conversion::ToPath, widgets::pan_zoom::PanZoom};
 

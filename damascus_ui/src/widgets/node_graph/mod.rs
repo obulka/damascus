@@ -1350,22 +1350,23 @@ impl NodeGraph {
                     },
                 );
 
-                let mut text_path: Rectangle =
+                let text_path: Rectangle =
                     viewport_context
                         .node_context
                         .orbit_path(self.style.node_text_orbit_distance(
                             connection_vector.length()
                                 - viewport_context.node_context.shape.half_size().length(),
-                            if *view == 0 { 10 } else { *view as usize },
+                            if *view == 0 { 9 } else { (*view - 1) as usize },
                         ));
 
                 if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                    ray.advance(intersection_distances.y);
-
-                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
                     frame.fill_text(iced::widget::canvas::Text {
                         content: view.to_string(),
-                        position: iced::Point::from_glam(&canvas_text_position),
+                        position: iced::Point::from_glam(
+                            &self.pan_zoom.local_to_canvas(
+                                ray.position_at_distance(intersection_distances.y),
+                            ),
+                        ),
                         color: text_colour,
                         size: text_size,
                         align_x: iced::advanced::text::Alignment::Right,

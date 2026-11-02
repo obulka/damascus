@@ -702,7 +702,7 @@ impl NodeGraph {
             iced::mouse::Event::ButtonReleased(button) => match button {
                 iced::mouse::Button::Left => {
                     if self.dragging_nodes && !self.dragged_nodes {
-                        self.click_select_selected(context, true);
+                        self.click_select_selected(context, !context.keyboard_modifiers.control());
                     }
                     self.dragging_nodes = false;
 
@@ -1299,30 +1299,17 @@ impl NodeGraph {
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
 
-        let connection_line_width: f32 =
-            self.style.connection_line_width * self.pan_zoom.reciprocal_zoom();
-        let inactive_connection_line_width: f32 =
-            connection_line_width * self.style.inactive_connection_line_scale;
+        let connection_stroke: iced::widget::canvas::Stroke<'_> = self
+            .style
+            .connection_stroke(self.pan_zoom.reciprocal_zoom(), primary_colour);
 
-        let dashed_line_segment_length = 2. * inactive_connection_line_width;
-        let dashed_line_pattern: &[f32] = &[
-            dashed_line_segment_length,
-            dashed_line_segment_length,
-            1e-12,
-            dashed_line_segment_length,
-        ];
-
-        let connection_stroke = iced::widget::canvas::Stroke::default()
-            .with_width(connection_line_width)
-            .with_color(primary_colour);
-        let mut inactive_view_connection_stroke = iced::widget::canvas::Stroke::default()
-            .with_width(inactive_connection_line_width)
-            .with_line_cap(iced::widget::canvas::LineCap::Round)
-            .with_color(primary_colour);
-        inactive_view_connection_stroke.line_dash = iced::widget::canvas::LineDash {
-            segments: dashed_line_pattern,
-            offset: 0,
-        };
+        let mut dashed_line_segments = Vec::<f32>::new();
+        let inactive_view_connection_stroke: iced::widget::canvas::Stroke<'_> =
+            self.style.inactive_connection_stroke(
+                self.pan_zoom.reciprocal_zoom(),
+                primary_colour,
+                &mut dashed_line_segments,
+            );
 
         let mut outputs_with_text = HashSet::<OutputId>::new();
 

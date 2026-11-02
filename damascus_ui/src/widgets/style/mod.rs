@@ -80,6 +80,8 @@ impl Default for Style {
 }
 
 impl Style {
+    pub const MINIMUM_DASHED_LINE_SEGMENT_LENGTH: f32 = 1e-12;
+
     pub fn text_size(&self) -> f32 {
         self.text_size
     }
@@ -545,6 +547,44 @@ impl Style {
         max_distance
             .min(1.5 * self.text_size * (index + 1) as f32)
             .max(0.)
+    }
+
+    pub fn connection_stroke(
+        &self,
+        reciprocal_zoom: f32,
+        colour: iced::Color,
+    ) -> iced::widget::canvas::Stroke<'_> {
+        iced::widget::canvas::Stroke::default()
+            .with_width(self.connection_line_width * reciprocal_zoom)
+            .with_color(colour)
+    }
+
+    pub fn inactive_connection_stroke<'a>(
+        &'a self,
+        reciprocal_zoom: f32,
+        colour: iced::Color,
+        segments: &'a mut Vec<f32>,
+    ) -> iced::widget::canvas::Stroke<'a> {
+        let inactive_connection_line_width: f32 =
+            self.connection_line_width * reciprocal_zoom * self.inactive_connection_line_scale;
+
+        let dashed_line_segment_length = 2. * inactive_connection_line_width;
+
+        segments.push(dashed_line_segment_length);
+        segments.push(dashed_line_segment_length);
+        segments.push(Self::MINIMUM_DASHED_LINE_SEGMENT_LENGTH);
+        segments.push(dashed_line_segment_length);
+
+        let mut inactive_view_connection_stroke = iced::widget::canvas::Stroke::default()
+            .with_width(inactive_connection_line_width)
+            .with_line_cap(iced::widget::canvas::LineCap::Round)
+            .with_color(colour);
+        inactive_view_connection_stroke.line_dash = iced::widget::canvas::LineDash {
+            segments: segments,
+            offset: 0,
+        };
+
+        inactive_view_connection_stroke
     }
 
     pub fn none<'a, Message>() -> iced::Element<'a, Message> {

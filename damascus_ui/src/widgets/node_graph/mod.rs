@@ -1060,15 +1060,9 @@ impl NodeGraph {
                 return;
             };
 
-            let node_top_left: Vec2 = node_context.shape.top_left();
-
-            let input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
-            let step_size: f32 = node_context.shape.size.x / (input_count as f32);
-            let half_step_size: f32 = 0.5 * step_size;
-
-            let input_position = Vec2::new(
-                node_top_left.x + (input_index as f32) * step_size + half_step_size,
-                node_top_left.y,
+            let input_position = node_context.input_position(
+                input_index as f32,
+                node_graph.graph.scene_graph_input_count(&node_id) as f32,
             );
             let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
 
@@ -1085,11 +1079,9 @@ impl NodeGraph {
                 let mut ray = Ray2d::new(input_position, connection_vector);
                 ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-                let mut text_path: Rectangle = node_context.shape;
-                text_path.uniform_expansion(
-                    (connection_vector.length())
-                        .min(1.5 * (input_index as f32 + 1.) * self.style.text_size)
-                        .max(0.),
+                let text_path: Rectangle = node_context.orbit_path(
+                    self.style
+                        .node_text_orbit_distance(connection_vector.length(), input_index),
                 );
 
                 if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
@@ -1141,11 +1133,9 @@ impl NodeGraph {
                 let mut ray = Ray2d::new(output_position, connection_vector);
                 ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-                let mut text_path: Rectangle = node_context.shape;
-                text_path.uniform_expansion(
-                    (connection_vector.length())
-                        .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
-                        .max(0.),
+                let text_path: Rectangle = node_context.orbit_path(
+                    self.style
+                        .node_text_orbit_distance(connection_vector.length(), output_index),
                 );
 
                 if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
@@ -1203,15 +1193,9 @@ impl NodeGraph {
                 continue;
             };
 
-            let node_top_left: Vec2 = input_node_context.shape.top_left();
-
-            let input_count: usize = node_graph.graph.scene_graph_input_count(&input_node_id);
-            let step_size: f32 = input_node_context.shape.size.x / (input_count as f32);
-            let half_step_size: f32 = 0.5 * step_size;
-
-            let input_position = Vec2::new(
-                node_top_left.x + (input_index as f32) * step_size + half_step_size,
-                node_top_left.y,
+            let input_position = input_node_context.input_position(
+                input_index as f32,
+                node_graph.graph.scene_graph_input_count(&input_node_id) as f32,
             );
             let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
 
@@ -1225,16 +1209,8 @@ impl NodeGraph {
                 continue;
             };
 
-            let node_bottom_left: Vec2 = output_node_context.shape.bottom_left();
-
-            let output_count: usize = node.output_count();
-            let step_size: f32 = output_node_context.shape.size.x / (output_count as f32);
-            let half_step_size: f32 = 0.5 * step_size;
-
-            let output_position = Vec2::new(
-                node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
-                node_bottom_left.y,
-            );
+            let output_position = output_node_context
+                .output_position(output_index as f32, node.output_count() as f32);
             let canvas_output_position: Vec2 = self.pan_zoom.local_to_canvas(output_position);
 
             let connection = iced::widget::canvas::Path::line(
@@ -1252,11 +1228,9 @@ impl NodeGraph {
             let mut ray = Ray2d::new(input_position, connection_vector);
             ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-            let mut text_path: Rectangle = input_node_context.shape;
-            text_path.uniform_expansion(
-                (connection_vector.length())
-                    .min(1.5 * (input_index as f32 + 1.) * self.style.text_size)
-                    .max(0.),
+            let text_path: Rectangle = input_node_context.orbit_path(
+                self.style
+                    .node_text_orbit_distance(connection_vector.length(), input_index),
             );
 
             if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
@@ -1288,11 +1262,9 @@ impl NodeGraph {
             ray = Ray2d::new(output_position, connection_vector);
             ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-            text_path = output_node_context.shape;
-            text_path.uniform_expansion(
-                (connection_vector.length())
-                    .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
-                    .max(0.),
+            let text_path: Rectangle = output_node_context.orbit_path(
+                self.style
+                    .node_text_orbit_distance(connection_vector.length(), output_index),
             );
 
             if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
@@ -1370,16 +1342,8 @@ impl NodeGraph {
                     continue;
                 };
 
-                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
-
-                let output_count: usize = node.output_count();
-                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                let output_position = Vec2::new(
-                    node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
-                    node_bottom_left.y,
-                );
+                let output_position =
+                    node_context.output_position(output_index as f32, node.output_count() as f32);
                 let canvas_output_position: Vec2 = self.pan_zoom.local_to_canvas(output_position);
 
                 let viewport_center: Vec2 = viewport_context.node_context.shape.center;
@@ -1413,15 +1377,14 @@ impl NodeGraph {
                     },
                 );
 
-                let mut text_path: Rectangle = viewport_context.node_context.shape;
-                text_path.uniform_expansion(
-                    (connection_vector.length() - text_path.half_size().length())
-                        .min(
-                            1.5 * (if *view == 0 { 10. } else { *view as f32 })
-                                * self.style.text_size,
-                        )
-                        .max(0.),
-                );
+                let mut text_path: Rectangle =
+                    viewport_context
+                        .node_context
+                        .orbit_path(self.style.node_text_orbit_distance(
+                            connection_vector.length()
+                                - viewport_context.node_context.shape.half_size().length(),
+                            if *view == 0 { 10 } else { *view as usize },
+                        ));
 
                 if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
                     ray.advance(intersection_distances.y);
@@ -1454,11 +1417,9 @@ impl NodeGraph {
                 ray = Ray2d::new(output_position, connection_vector);
                 ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-                text_path = node_context.shape;
-                text_path.uniform_expansion(
-                    (connection_vector.length())
-                        .min(1.5 * (output_index as f32 + 1.) * self.style.text_size)
-                        .max(0.),
+                text_path = node_context.orbit_path(
+                    self.style
+                        .node_text_orbit_distance(connection_vector.length(), output_index),
                 );
 
                 if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {

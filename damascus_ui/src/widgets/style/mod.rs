@@ -541,6 +541,12 @@ impl Style {
             .into()
     }
 
+    pub fn node_text_orbit_distance(&self, max_distance: f32, index: usize) -> f32 {
+        max_distance
+            .min(1.5 * self.text_size * (index + 1) as f32)
+            .max(0.)
+    }
+
     pub fn none<'a, Message>() -> iced::Element<'a, Message> {
         None::<iced::Element<'a, Message>>.into()
     }

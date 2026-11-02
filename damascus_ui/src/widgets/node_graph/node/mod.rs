@@ -75,4 +75,10 @@ impl NodeContext {
             node_bottom_left.y,
         )
     }
+
+    pub fn orbit_path(&self, distance: f32) -> Rectangle {
+        let mut orbit_path: Rectangle = self.shape;
+        orbit_path.uniform_expansion(distance);
+        orbit_path
+    }
 }

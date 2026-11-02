@@ -51,4 +51,28 @@ impl NodeContext {
     pub fn local_path(&self) -> iced::widget::canvas::Path {
         self.shape.to_path()
     }
+
+    pub fn input_position(&self, input_index: f32, input_count: f32) -> Vec2 {
+        let node_top_left: Vec2 = self.shape.top_left();
+
+        let step_size: f32 = self.shape.size.x / input_count;
+        let half_step_size: f32 = 0.5 * step_size;
+
+        Vec2::new(
+            node_top_left.x + input_index * step_size + half_step_size,
+            node_top_left.y,
+        )
+    }
+
+    pub fn output_position(&self, output_index: f32, output_count: f32) -> Vec2 {
+        let node_bottom_left: Vec2 = self.shape.bottom_left();
+
+        let step_size: f32 = self.shape.size.x / output_count;
+        let half_step_size: f32 = 0.5 * step_size;
+
+        Vec2::new(
+            node_bottom_left.x + output_index * step_size + half_step_size,
+            node_bottom_left.y,
+        )
+    }
 }

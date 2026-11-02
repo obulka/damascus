@@ -1124,16 +1124,8 @@ impl NodeGraph {
                 return;
             };
 
-            let node_bottom_left: Vec2 = node_context.shape.bottom_left();
-
-            let output_count: usize = node.output_count();
-            let step_size: f32 = node_context.shape.size.x / (output_count as f32);
-            let half_step_size: f32 = 0.5 * step_size;
-
-            let output_position = Vec2::new(
-                node_bottom_left.x + (output_index as f32) * step_size + half_step_size,
-                node_bottom_left.y,
-            );
+            let output_position =
+                node_context.output_position(output_index as f32, node.output_count() as f32);
             let canvas_output_position: Vec2 = self.pan_zoom.local_to_canvas(output_position);
 
             let connection = iced::widget::canvas::Path::line(

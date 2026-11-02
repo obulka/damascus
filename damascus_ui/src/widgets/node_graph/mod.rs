@@ -1076,21 +1076,19 @@ impl NodeGraph {
             if render_text {
                 let connection_vector: Vec2 =
                     self.pan_zoom.local_cursor_position() - input_position;
-                let mut ray = Ray2d::new(input_position, connection_vector);
-                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-                let text_path: Rectangle = node_context.orbit_path(
+                if let Some(text_position) = node_context.orbiting_text_position(
+                    input_position,
+                    connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), input_index),
-                );
-
-                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                    ray.advance(intersection_distances.y);
-
-                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    self.style.text_size,
+                ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[input_id].name),
-                        position: iced::Point::from_glam(&canvas_text_position),
+                        position: iced::Point::from_glam(
+                            &self.pan_zoom.local_to_canvas(text_position),
+                        ),
                         color: text_colour,
                         size: text_size,
                         align_x: iced::advanced::text::Alignment::Right,
@@ -1130,21 +1128,19 @@ impl NodeGraph {
             if render_text {
                 let connection_vector: Vec2 =
                     self.pan_zoom.local_cursor_position() - output_position;
-                let mut ray = Ray2d::new(output_position, connection_vector);
-                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
 
-                let text_path: Rectangle = node_context.orbit_path(
+                if let Some(text_position) = node_context.orbiting_text_position(
+                    output_position,
+                    connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), output_index),
-                );
-
-                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                    ray.advance(intersection_distances.y);
-
-                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    self.style.text_size,
+                ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[output_id].name),
-                        position: iced::Point::from_glam(&canvas_text_position),
+                        position: iced::Point::from_glam(
+                            &self.pan_zoom.local_to_canvas(text_position),
+                        ),
                         color: text_colour,
                         size: text_size,
                         align_x: iced::advanced::text::Alignment::Right,
@@ -1225,21 +1221,16 @@ impl NodeGraph {
             }
 
             let mut connection_vector: Vec2 = output_position - input_position;
-            let mut ray = Ray2d::new(input_position, connection_vector);
-            ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
-
-            let text_path: Rectangle = input_node_context.orbit_path(
+            if let Some(text_position) = input_node_context.orbiting_text_position(
+                input_position,
+                connection_vector,
                 self.style
                     .node_text_orbit_distance(connection_vector.length(), input_index),
-            );
-
-            if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                ray.advance(intersection_distances.y);
-
-                let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                self.style.text_size,
+            ) {
                 frame.fill_text(iced::widget::canvas::Text {
                     content: snake_from_pascal(&node_graph.graph[*input_id].name),
-                    position: iced::Point::from_glam(&canvas_text_position),
+                    position: iced::Point::from_glam(&self.pan_zoom.local_to_canvas(text_position)),
                     color: text_colour,
                     size: text_size,
                     align_x: iced::advanced::text::Alignment::Right,
@@ -1259,21 +1250,16 @@ impl NodeGraph {
             }
 
             connection_vector *= -1.;
-            ray = Ray2d::new(output_position, connection_vector);
-            ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
-
-            let text_path: Rectangle = output_node_context.orbit_path(
+            if let Some(text_position) = output_node_context.orbiting_text_position(
+                output_position,
+                connection_vector,
                 self.style
                     .node_text_orbit_distance(connection_vector.length(), output_index),
-            );
-
-            if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                ray.advance(intersection_distances.y);
-
-                let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                self.style.text_size,
+            ) {
                 frame.fill_text(iced::widget::canvas::Text {
                     content: snake_from_pascal(&node_graph.graph[*output_id].name),
-                    position: iced::Point::from_glam(&canvas_text_position),
+                    position: iced::Point::from_glam(&self.pan_zoom.local_to_canvas(text_position)),
                     color: text_colour,
                     size: text_size,
                     align_x: iced::advanced::text::Alignment::Right,
@@ -1401,21 +1387,18 @@ impl NodeGraph {
                 }
 
                 connection_vector *= -1.;
-                ray = Ray2d::new(output_position, connection_vector);
-                ray.advance_in_direction(self.style.text_size, Vec2::NEG_X);
-
-                text_path = node_context.orbit_path(
+                if let Some(text_position) = node_context.orbiting_text_position(
+                    output_position,
+                    connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), output_index),
-                );
-
-                if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
-                    ray.advance(intersection_distances.y);
-
-                    let canvas_text_position: Vec2 = self.pan_zoom.local_to_canvas(*ray.origin());
+                    self.style.text_size,
+                ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[*output_id].name),
-                        position: iced::Point::from_glam(&canvas_text_position),
+                        position: iced::Point::from_glam(
+                            &self.pan_zoom.local_to_canvas(text_position),
+                        ),
                         color: text_colour,
                         size: text_size,
                         align_x: iced::advanced::text::Alignment::Right,

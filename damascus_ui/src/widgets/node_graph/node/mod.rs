@@ -5,7 +5,7 @@
 
 use glam::{Vec2, Vec4};
 
-use damascus::geometry::rectangle::Rectangle;
+use damascus::geometry::{primitives::Shapes, ray::Ray2d, rectangle::Rectangle};
 
 use crate::{type_conversion::ToPath, widgets::pan_zoom::PanZoom};
 
@@ -76,9 +76,28 @@ impl NodeContext {
         )
     }
 
-    pub fn orbit_path(&self, distance: f32) -> Rectangle {
+    pub fn orbit_path(&self, orbit_distance: f32) -> Rectangle {
         let mut orbit_path: Rectangle = self.shape;
-        orbit_path.uniform_expansion(distance);
+        orbit_path.uniform_expansion(orbit_distance);
         orbit_path
+    }
+
+    pub fn orbiting_text_position(
+        &self,
+        origin: Vec2,
+        direction: Vec2,
+        orbit_distance: f32,
+        offset: f32,
+    ) -> Option<Vec2> {
+        let mut ray = Ray2d::new(origin, direction);
+        ray.advance_in_direction(offset, Vec2::NEG_X);
+
+        let text_path: Rectangle = self.orbit_path(orbit_distance);
+
+        if let Some(intersection_distances) = ray.intersect_rectangle(&text_path) {
+            Some(ray.position_at_distance(intersection_distances.y))
+        } else {
+            None
+        }
     }
 }

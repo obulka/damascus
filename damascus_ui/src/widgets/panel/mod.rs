@@ -400,7 +400,7 @@ impl Widget<PanelMessage> for Panel {
                     .spacing(style.spacing)
                     .padding(style.padding)
                     .text_size(style.text_size)
-                    .icon_size(style.icon_size as f32)
+                    .minimum_height(style.icon_size as f32)
                     .close_size(style.text_size as f32 * 0.69),
             ])
             .controls(iced::widget::pane_grid::Controls::dynamic(

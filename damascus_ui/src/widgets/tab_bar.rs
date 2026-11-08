@@ -116,10 +116,8 @@ pub struct TabBar<
     tab_width: iced::Length,
     /// The width of the [`TabBar`].
     height: iced::Length,
-    /// The maximum height of the [`TabBar`].
-    max_height: f32,
-    /// The icon size.
-    icon_size: f32,
+    /// The minimum height.
+    minimum_height: f32,
     /// The text size.
     text_size: f32,
     /// The size of the close icon.
@@ -183,8 +181,7 @@ where
             width: iced::Length::Fill,
             tab_width: iced::Length::Fill,
             height: iced::Length::Shrink,
-            max_height: u32::MAX as f32,
-            icon_size: default_style.icon_size as f32,
+            minimum_height: (default_style.icon_size as f32).max(default_style.text_size),
             text_size: default_style.text_size,
             close_size: default_style.icon_size as f32,
             padding: default_style.padding.into(),
@@ -243,17 +240,10 @@ where
         self
     }
 
-    /// Sets the icon size of the tabs of the [`TabBar`].
+    /// Sets the minimum height of the tabs of the [`TabBar`].
     #[must_use]
-    pub fn icon_size(mut self, icon_size: f32) -> Self {
-        self.icon_size = icon_size;
-        self
-    }
-
-    /// Sets the maximum height of the [`TabBar`].
-    #[must_use]
-    pub fn max_height(mut self, max_height: f32) -> Self {
-        self.max_height = max_height;
+    pub fn minimum_height(mut self, minimum_height: f32) -> Self {
+        self.minimum_height = minimum_height;
         self
     }
 
@@ -400,7 +390,9 @@ where
                         label_row = label_row.push(
                             iced::widget::Row::new()
                                 .width(iced::Length::Fixed(self.close_size))
-                                .height(iced::Length::Fixed(self.close_size))
+                                .height(iced::Length::Fixed(
+                                    self.close_size.max(self.minimum_height),
+                                ))
                                 .align_y(iced::Alignment::Center),
                         );
                     }
@@ -561,16 +553,68 @@ where
                 continue;
             };
 
-            draw_tab(
-                renderer,
-                tab_label,
-                tab_status,
-                layout,
-                theme,
-                &self.class,
-                (self.text_font.unwrap_or_default(), self.text_size),
-                viewport,
-            );
+            let bounds = layout.bounds();
+
+            let style =
+                Catalog::style(theme, &self.class, tab_status.0.unwrap_or(Status::Disabled));
+
+            if bounds.intersects(viewport) {
+                renderer.fill_quad(
+                    iced_core::renderer::Quad {
+                        bounds,
+                        ..iced_core::renderer::Quad::default()
+                    },
+                    style.background,
+                );
+            }
+
+            let mut children = layout.children();
+
+            if let Some(label_layout) = children.next() {
+                let text_bounds: iced::Rectangle = label_layout.bounds();
+
+                renderer.fill_text(
+                    iced_core::text::Text {
+                        content: tab_label.to_string(),
+                        bounds: iced::Size::new(text_bounds.width, text_bounds.height),
+                        size: self.text_size.into(),
+                        font: self.text_font.unwrap_or_default(),
+                        align_x: iced::widget::text::Alignment::Center,
+                        align_y: iced::alignment::Vertical::Center,
+                        line_height: iced::widget::text::LineHeight::Relative(1.3),
+                        shaping: iced_core::text::Shaping::Advanced,
+                        wrapping: iced::widget::text::Wrapping::default(),
+                    },
+                    iced::Point::new(text_bounds.center_x(), text_bounds.center_y()),
+                    style.text_color,
+                    text_bounds,
+                );
+            }
+
+            if let Some(cross_layout) = children.next() {
+                let cross_bounds = cross_layout.bounds();
+                let is_mouse_over_cross = tab_status.1.unwrap_or(false);
+
+                renderer.draw_svg(
+                    Icons::Close.as_core_svg(),
+                    iced::Rectangle {
+                        y: cross_bounds.center_y() - 0.5 * self.close_size,
+                        height: self.close_size,
+                        ..cross_bounds
+                    },
+                    cross_bounds,
+                );
+
+                if is_mouse_over_cross && cross_bounds.intersects(viewport) {
+                    renderer.fill_quad(
+                        iced_core::renderer::Quad {
+                            bounds: cross_bounds,
+                            ..iced_core::renderer::Quad::default()
+                        },
+                        style.background,
+                    );
+                }
+            }
         }
     }
 
@@ -629,76 +673,6 @@ where
     }
 }
 
-fn draw_tab<Theme, Renderer>(
-    renderer: &mut Renderer,
-    tab_label: &str,
-    tab_status: &(Option<Status>, Option<bool>),
-    layout: iced::advanced::layout::Layout<'_>,
-    theme: &Theme,
-    class: &<Theme as Catalog>::Class<'_>,
-    text_data: (iced::Font, f32),
-    viewport: &iced::Rectangle,
-) where
-    Renderer: iced_core::renderer::Renderer
-        + iced_core::text::Renderer<Font = iced_core::Font>
-        + iced_core::svg::Renderer,
-    Theme: Catalog + iced::widget::text::Catalog + iced::widget::svg::Catalog,
-{
-    let bounds = layout.bounds();
-
-    let style = Catalog::style(theme, class, tab_status.0.unwrap_or(Status::Disabled));
-
-    if bounds.intersects(viewport) {
-        renderer.fill_quad(
-            iced_core::renderer::Quad {
-                bounds,
-                ..iced_core::renderer::Quad::default()
-            },
-            style.background,
-        );
-    }
-
-    let mut children = layout.children();
-
-    if let Some(label_layout) = children.next() {
-        let text_bounds: iced::Rectangle = label_layout.bounds();
-
-        renderer.fill_text(
-            iced_core::text::Text {
-                content: tab_label.to_string(),
-                bounds: iced::Size::new(text_bounds.width, text_bounds.height),
-                size: iced::Pixels(text_data.1),
-                font: text_data.0,
-                align_x: iced::widget::text::Alignment::Center,
-                align_y: iced::alignment::Vertical::Center,
-                line_height: iced::widget::text::LineHeight::Relative(1.3),
-                shaping: iced_core::text::Shaping::Advanced,
-                wrapping: iced::widget::text::Wrapping::default(),
-            },
-            iced::Point::new(text_bounds.center_x(), text_bounds.center_y()),
-            style.text_color,
-            text_bounds,
-        );
-    }
-
-    if let Some(cross_layout) = children.next() {
-        let cross_bounds = cross_layout.bounds();
-        let is_mouse_over_cross = tab_status.1.unwrap_or(false);
-
-        renderer.draw_svg(Icons::Close.as_core_svg(), cross_bounds, cross_bounds);
-
-        if is_mouse_over_cross && cross_bounds.intersects(viewport) {
-            renderer.fill_quad(
-                iced_core::renderer::Quad {
-                    bounds: cross_bounds,
-                    ..iced_core::renderer::Quad::default()
-                },
-                style.background,
-            );
-        }
-    }
-}
-
 impl<'a, Message, TabId, Theme, Renderer> From<TabBar<'a, Message, TabId, Theme, Renderer>>
     for iced::Element<'a, Message, Theme, Renderer>
 where
@@ -747,7 +721,7 @@ mod tests {
         assert_eq!(tab_bar.tab_indices.len(), 0);
         assert_eq!(tab_bar.width, iced::Length::Fill);
         assert_eq!(tab_bar.height, iced::Length::Shrink);
-        assert!((tab_bar.icon_size - default_style.icon_size as f32).abs() < f32::EPSILON);
+        assert!((tab_bar.minimum_height - default_style.icon_size as f32).abs() < f32::EPSILON);
         assert!((tab_bar.text_size - default_style.text_size).abs() < f32::EPSILON);
         assert!((tab_bar.close_size - default_style.icon_size as f32).abs() < f32::EPSILON);
     }
@@ -818,9 +792,9 @@ mod tests {
     }
 
     #[test]
-    fn tab_bar_icon_size_sets_value() {
-        let tab_bar = TestTabBar::new(TestMessage::TabSelected).icon_size(24.0);
-        assert!((tab_bar.icon_size - 24.0).abs() < f32::EPSILON);
+    fn tab_bar_minimum_height_sets_value() {
+        let tab_bar = TestTabBar::new(TestMessage::TabSelected).minimum_height(24.0);
+        assert!((tab_bar.minimum_height - 24.0).abs() < f32::EPSILON);
     }
 
     #[test]
@@ -860,12 +834,6 @@ mod tests {
         let tab_bar =
             TestTabBar::new(TestMessage::TabSelected).tab_width(iced::Length::Fixed(100.0));
         assert_eq!(tab_bar.tab_width, iced::Length::Fixed(100.0));
-    }
-
-    #[test]
-    fn tab_bar_max_height_sets_value() {
-        let tab_bar = TestTabBar::new(TestMessage::TabSelected).max_height(200.0);
-        assert!((tab_bar.max_height - 200.0).abs() < f32::EPSILON);
     }
 
     #[test]

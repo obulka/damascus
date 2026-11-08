@@ -492,7 +492,33 @@ impl NodeGraph {
         let output_path_radius: f32 = self.style.node_output_radius + self.style.leeway;
 
         for (node_id, node_context) in node_graph.context.iter() {
-            if let Some(output_id) = self.connection_in_progress.1 {
+            if let Some(input_id) = self.connection_in_progress.0 {
+                let output_count: usize = node_graph.graph[node_id].output_count();
+                if output_count == 0 {
+                    continue;
+                }
+
+                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
+
+                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
+                let half_step_size: f32 = 0.5 * step_size;
+
+                for index in 0..output_count {
+                    let output_position = Vec2::new(
+                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
+                        node_bottom_left.y,
+                    );
+
+                    if (output_position - cursor_position).length() <= output_path_radius {
+                        let output_id: OutputId = node_graph.graph[node_id].output_ids[index];
+                        self.connection_in_progress.1 = Some(output_id);
+
+                        return node_graph
+                            .graph
+                            .connect_output_to_input(output_id, input_id);
+                    }
+                }
+            } else if let Some(output_id) = self.connection_in_progress.1 {
                 let connectable_input_count: usize =
                     node_graph.graph.scene_graph_input_count(&node_id);
 
@@ -514,32 +540,6 @@ impl NodeGraph {
                     if (input_position - cursor_position).length() <= input_path_radius {
                         let input_id: InputId = node_graph.graph[node_id].input_ids[index];
                         self.connection_in_progress.0 = Some(input_id);
-
-                        return node_graph
-                            .graph
-                            .connect_output_to_input(output_id, input_id);
-                    }
-                }
-            } else if let Some(input_id) = self.connection_in_progress.0 {
-                let output_count: usize = node_graph.graph[node_id].output_count();
-                if output_count == 0 {
-                    continue;
-                }
-
-                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
-
-                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                for index in 0..output_count {
-                    let output_position = Vec2::new(
-                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
-                        node_bottom_left.y,
-                    );
-
-                    if (output_position - cursor_position).length() <= output_path_radius {
-                        let output_id: OutputId = node_graph.graph[node_id].output_ids[index];
-                        self.connection_in_progress.1 = Some(output_id);
 
                         return node_graph
                             .graph

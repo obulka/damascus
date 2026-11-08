@@ -201,14 +201,12 @@ impl EvaluableNode for RayMarcherNode {
     ) -> NodeResult<()> {
         let texture_evaluator_id: &TextureEvaluatorId = input_data.as_texture_evaluator_id()?;
 
-        let gpu_scene: GPUScene = if let Ok(root_id) = Self::Inputs::SceneRoot
-            .from_data_map(data_map)?
-            .try_to_root_id()
-        {
-            scene_graph.as_gpu_scene(root_id)
-        } else {
-            GPUScene::default()
-        };
+        let gpu_scene: GPUScene = scene_graph.as_gpu_scene(
+            Self::Inputs::SceneRoot
+                .from_data_map(data_map)?
+                .try_to_root_id()
+                .ok(),
+        );
 
         match &mut scene_graph[*texture_evaluator_id] {
             TextureEvaluators::RayMarcher(ray_marcher) => {

@@ -15,11 +15,7 @@ use crate::{
     EnumTraits,
     app::Context,
     icons::Icons,
-    widgets::{
-        Widget,
-        style::Style,
-        tab_bar::{TabBar, TabLabel},
-    },
+    widgets::{Widget, style::Style, tab_bar::TabBar},
 };
 
 pub mod pane;
@@ -392,10 +388,7 @@ impl Widget<PanelMessage> for Panel {
                         }),
                         |tab_bar, tab| {
                             let tab_count = tab_bar.size();
-                            tab_bar.push(
-                                tab_count,
-                                TabLabel::Text(tab.as_tabs().variant_pascal_label()),
-                            )
+                            tab_bar.push(tab_count, tab.as_tabs().variant_pascal_label())
                         },
                     )
                     .set_active_tab(&pane.active_tab)

@@ -378,7 +378,8 @@ impl Widget<PanelMessage> for Panel {
                     Tabs::iter()
                         .map(|variant| variant.variant_pascal_label())
                         .collect::<Vec<String>>(),
-                    "+".to_string(), // TODO use icon
+                    String::new(),
+                    Some(Icons::Close.as_core_svg()),
                     move |option| -> PanelMessage {
                         PanelMessage::Pane(id, TabMessage::from_str(&option).into())
                     },
@@ -388,8 +389,7 @@ impl Widget<PanelMessage> for Panel {
                     .fold(
                         TabBar::new(move |tab_index| {
                             PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
-                        })
-                        .padding(0.),
+                        }),
                         |tab_bar, tab| {
                             let tab_count = tab_bar.size();
                             tab_bar.push(

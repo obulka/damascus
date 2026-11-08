@@ -49,7 +49,7 @@ impl Icons {
         })
     }
 
-    pub fn as_core_svg<Theme: iced::widget::svg::Catalog>(&self) -> iced_core::Svg {
+    pub fn as_core_svg(&self) -> iced_core::Svg {
         iced_core::Svg::new(match *self {
             Self::ArrowLeft => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/arrow_left.svg"),
             Self::ArrowRight => {

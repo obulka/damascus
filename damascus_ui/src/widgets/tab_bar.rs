@@ -1151,11 +1151,7 @@ fn draw_tab<Theme, Renderer>(
         let cross_bounds = cross_layout.bounds();
         let is_mouse_over_cross = tab_status.1.unwrap_or(false);
 
-        renderer.draw_svg(
-            Icons::Close.as_core_svg::<Theme>(),
-            cross_bounds,
-            cross_bounds,
-        );
+        renderer.draw_svg(Icons::Close.as_core_svg(), cross_bounds, cross_bounds);
 
         if is_mouse_over_cross && cross_bounds.intersects(viewport) {
             renderer.fill_quad(

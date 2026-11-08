@@ -7,6 +7,7 @@ use std::borrow::Borrow;
 
 use iced;
 use iced::widget::overlay::menu::{self, Menu};
+use iced_core;
 use iced_core::alignment;
 use iced_core::keyboard;
 use iced_core::layout;
@@ -35,8 +36,11 @@ where
     on_close: Option<Message>,
     options: L,
     menu_title: String,
+    icon: Option<iced_core::Svg>,
     width: Length,
     padding: Padding,
+    spacing: f32,
+    icon_size: u32,
     text_size: Option<Pixels>,
     text_line_height: text::LineHeight,
     text_shaping: text::Shaping,
@@ -57,15 +61,23 @@ where
 {
     /// Creates a new [`DropdownMenu`] with the given list of options, the current
     /// selected value, and the message to produce when an option is selected.
-    pub fn new(options: L, menu_title: String, on_select: impl Fn(T) -> Message + 'a) -> Self {
+    pub fn new(
+        options: L,
+        menu_title: String,
+        icon: Option<iced_core::Svg>,
+        on_select: impl Fn(T) -> Message + 'a,
+    ) -> Self {
         Self {
             on_select: Box::new(on_select),
             on_open: None,
             on_close: None,
             options,
             menu_title,
+            icon,
             width: Length::Shrink,
             padding: iced::widget::button::DEFAULT_PADDING,
+            spacing: 0.,
+            icon_size: 0,
             text_size: None,
             text_line_height: text::LineHeight::default(),
             text_shaping: text::Shaping::default(),
@@ -80,6 +92,24 @@ where
     /// Sets the menu_title of the [`DropdownMenu`].
     pub fn menu_title(mut self, menu_title: impl Into<String>) -> Self {
         self.menu_title = menu_title.into();
+        self
+    }
+
+    /// Sets the icon of the [`DropdownMenu`].
+    pub fn icon(mut self, icon: iced_core::Svg) -> Self {
+        self.icon = Some(icon);
+        self
+    }
+
+    /// Sets the icon_size of the [`DropdownMenu`].
+    pub fn icon_size(mut self, icon_size: u32) -> Self {
+        self.icon_size = icon_size;
+        self
+    }
+
+    /// Sets the spacing of the [`DropdownMenu`].
+    pub fn spacing(mut self, spacing: f32) -> Self {
+        self.spacing = spacing;
         self
     }
 
@@ -165,7 +195,7 @@ where
     L: Borrow<[T]>,
     Message: Clone + 'a,
     Theme: Catalog + 'a,
-    Renderer: text::Renderer + 'a,
+    Renderer: text::Renderer + iced_core::svg::Renderer + 'a,
 {
     fn tag(&self) -> tree::Tag {
         tree::Tag::of::<State<Renderer::Paragraph>>()
@@ -228,14 +258,22 @@ where
         }
 
         let max_width = match self.width {
-            Length::Shrink => state.menu_title.min_width(),
+            Length::Shrink => {
+                state.menu_title.min_width()
+                    + self.icon_size as f32
+                    + if self.menu_title.is_empty() {
+                        0.
+                    } else {
+                        self.spacing
+                    }
+            }
             _ => 0.0,
         };
 
         let size = {
             let intrinsic = Size::new(
                 max_width.ceil(),
-                f32::from(self.text_line_height.to_absolute(text_size)),
+                f32::from(self.text_line_height.to_absolute(text_size)).max(self.icon_size as f32),
             );
 
             limits
@@ -341,14 +379,14 @@ where
         _cursor: mouse::Cursor,
         viewport: &Rectangle,
     ) {
-        let font = self.font.unwrap_or_else(|| renderer.default_font());
-        let bounds = layout.bounds();
-
         let style = Catalog::style(
             theme,
             &self.class,
             self.last_status.unwrap_or(Status::Active),
         );
+
+        let font = self.font.unwrap_or_else(|| renderer.default_font());
+        let bounds: iced::Rectangle = layout.bounds();
 
         renderer.fill_quad(
             renderer::Quad {
@@ -380,6 +418,19 @@ where
                 Point::new(bounds.x + self.padding.left, bounds.center_y()),
                 style.menu_title_color,
                 *viewport,
+            );
+        }
+
+        if let Some(ref icon) = self.icon {
+            renderer.draw_svg(
+                icon.clone(),
+                iced::Rectangle {
+                    x: bounds.x + bounds.width - self.icon_size as f32 - self.padding.left,
+                    y: bounds.center_y() - self.icon_size as f32 * 0.5,
+                    width: self.icon_size as f32,
+                    height: self.icon_size as f32,
+                },
+                bounds,
             );
         }
     }
@@ -450,7 +501,7 @@ where
     L: Borrow<[T]> + 'a,
     Message: Clone + 'a,
     Theme: Catalog + 'a,
-    Renderer: text::Renderer + 'a,
+    Renderer: text::Renderer + iced_core::svg::Renderer + 'a,
 {
     fn from(dropdown_menu: DropdownMenu<'a, T, L, Message, Theme, Renderer>) -> Self {
         Self::new(dropdown_menu)

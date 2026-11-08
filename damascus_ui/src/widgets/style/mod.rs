@@ -464,6 +464,7 @@ impl Style {
         &'a self,
         options: L,
         menu_title: String,
+        icon: Option<iced_core::Svg>,
         on_select: impl Fn(T) -> Message + 'a,
     ) -> iced::Element<'a, Message>
     where
@@ -471,9 +472,12 @@ impl Style {
         L: Borrow<[T]> + 'a,
         Message: Clone + 'a,
     {
-        menu::DropdownMenu::new(options, menu_title, on_select)
+        let icon_size: u32 = if icon.is_some() { self.icon_size } else { 0 };
+        menu::DropdownMenu::new(options, menu_title, icon, on_select)
             .padding(self.padding)
             .text_size(self.text_size)
+            .spacing(self.spacing)
+            .icon_size(icon_size)
             .style(|theme: &iced::Theme, status| -> menu::Style { menu::default(theme, status) })
             .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
                 let palette = theme.extended_palette();

@@ -225,6 +225,7 @@ impl Widget<ToolbarMessage> for Toolbar {
             style.dropdown_menu(
                 menu_option.menu_options(),
                 menu_option.variant(),
+                None,
                 |option| -> ToolbarMessage { ToolbarMessage::from_str(&option).into() },
             )
         }))

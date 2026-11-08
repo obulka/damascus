@@ -388,7 +388,8 @@ impl Widget<PanelMessage> for Panel {
                     .fold(
                         TabBar::new(move |tab_index| {
                             PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
-                        }),
+                        })
+                        .padding(0.),
                         |tab_bar, tab| {
                             let tab_count = tab_bar.size();
                             tab_bar.push(
@@ -417,7 +418,12 @@ impl Widget<PanelMessage> for Panel {
                     None
                 }),
             ))
-            .padding(style.padding)
+            .padding(iced::Padding {
+                top: style.padding,
+                right: style.padding,
+                bottom: 2.,
+                left: style.padding,
+            })
             .style(move |_theme| {
                 if is_focused {
                     style.title_bar_focused()

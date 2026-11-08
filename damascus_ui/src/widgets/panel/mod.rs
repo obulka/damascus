@@ -419,10 +419,10 @@ impl Widget<PanelMessage> for Panel {
                 }),
             ))
             .padding(iced::Padding {
-                top: style.padding,
-                right: style.padding,
-                bottom: 2.,
-                left: style.padding,
+                top: style.border_width + style.padding,
+                right: style.border_width + style.padding,
+                bottom: style.border_width,
+                left: style.border_width + style.padding,
             })
             .style(move |_theme| {
                 if is_focused {

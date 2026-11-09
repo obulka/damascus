@@ -643,22 +643,7 @@ where
                         .font(self.text_font.unwrap_or_default())
                         .into();
 
-                let mut label_row =
-                    iced::widget::Row::<Message, Theme, Renderer>::new().push(label_content);
-
-                // Add close button if present
-                if self.on_close.is_some() {
-                    label_row = label_row.push(<iced::widget::Svg<'_, Theme> as Into<
-                        iced::Element<'_, Message, Theme, Renderer>,
-                    >>::into(
-                        Icons::Close
-                            .as_svg()
-                            .width(self.close_size)
-                            .height(self.close_size),
-                    ));
-                }
-
-                row.push(label_row)
+                row.push(label_content)
             },
         );
 

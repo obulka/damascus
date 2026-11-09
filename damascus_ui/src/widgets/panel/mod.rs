@@ -375,7 +375,7 @@ impl Widget<PanelMessage> for Panel {
                         .map(|variant| variant.variant_pascal_label())
                         .collect::<Vec<String>>(),
                     String::new(),
-                    Some(Icons::Close.as_core_svg()),
+                    Some(Icons::Plus.as_core_svg()),
                     move |option| -> PanelMessage {
                         PanelMessage::Pane(id, TabMessage::from_str(&option).into())
                     },

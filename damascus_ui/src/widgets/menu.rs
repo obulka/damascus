@@ -6,30 +6,14 @@
 use std::borrow::Borrow;
 
 use iced;
-use iced::widget::overlay::menu::{self, Menu};
 use iced_core;
-use iced_core::alignment;
-use iced_core::keyboard;
-use iced_core::layout;
-use iced_core::mouse;
-use iced_core::overlay;
-use iced_core::renderer;
-use iced_core::text::paragraph;
-use iced_core::text::{self, Text};
-use iced_core::touch;
-use iced_core::widget::tree::{self, Tree};
-use iced_core::window;
-use iced_core::{
-    Background, Border, Clipboard, Color, Element, Event, Layout, Length, Padding, Pixels, Point,
-    Rectangle, Shell, Size, Theme, Vector, Widget,
-};
 
 pub struct DropdownMenu<'a, T, L, Message, Theme = iced::Theme, Renderer = iced::Renderer>
 where
     T: ToString + PartialEq + Clone,
     L: Borrow<[T]> + 'a,
     Theme: Catalog,
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
     on_select: Box<dyn Fn(T) -> Message + 'a>,
     on_open: Option<Message>,
@@ -37,18 +21,18 @@ where
     options: L,
     menu_title: String,
     icon: Option<iced_core::Svg>,
-    width: Length,
-    padding: Padding,
+    width: iced::Length,
+    padding: iced::Padding,
     spacing: f32,
     icon_size: u32,
-    text_size: Option<Pixels>,
-    text_line_height: text::LineHeight,
-    text_shaping: text::Shaping,
+    text_size: Option<iced::Pixels>,
+    text_line_height: iced_core::text::LineHeight,
+    text_shaping: iced_core::text::Shaping,
     font: Option<Renderer::Font>,
     class: <Theme as Catalog>::Class<'a>,
-    menu_class: <Theme as menu::Catalog>::Class<'a>,
+    menu_class: <Theme as iced::widget::overlay::menu::Catalog>::Class<'a>,
     last_status: Option<Status>,
-    menu_height: Length,
+    menu_height: iced::Length,
 }
 
 impl<'a, T, L, Message, Theme, Renderer> DropdownMenu<'a, T, L, Message, Theme, Renderer>
@@ -57,7 +41,7 @@ where
     L: Borrow<[T]> + 'a,
     Message: Clone,
     Theme: Catalog,
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
     /// Creates a new [`DropdownMenu`] with the given list of options, the current
     /// selected value, and the message to produce when an option is selected.
@@ -74,18 +58,18 @@ where
             options,
             menu_title,
             icon,
-            width: Length::Shrink,
+            width: iced::Length::Shrink,
             padding: iced::widget::button::DEFAULT_PADDING,
             spacing: 0.,
             icon_size: 0,
             text_size: None,
-            text_line_height: text::LineHeight::default(),
-            text_shaping: text::Shaping::default(),
+            text_line_height: iced_core::text::LineHeight::default(),
+            text_shaping: iced_core::text::Shaping::default(),
             font: None,
             class: <Theme as Catalog>::default(),
             menu_class: <Theme as Catalog>::default_menu(),
             last_status: None,
-            menu_height: Length::Shrink,
+            menu_height: iced::Length::Shrink,
         }
     }
 
@@ -114,37 +98,37 @@ where
     }
 
     /// Sets the width of the [`DropdownMenu`].
-    pub fn width(mut self, width: impl Into<Length>) -> Self {
+    pub fn width(mut self, width: impl Into<iced::Length>) -> Self {
         self.width = width.into();
         self
     }
 
     /// Sets the height of the [`Menu`].
-    pub fn menu_height(mut self, menu_height: impl Into<Length>) -> Self {
+    pub fn menu_height(mut self, menu_height: impl Into<iced::Length>) -> Self {
         self.menu_height = menu_height.into();
         self
     }
 
     /// Sets the [`Padding`] of the [`DropdownMenu`].
-    pub fn padding<P: Into<Padding>>(mut self, padding: P) -> Self {
+    pub fn padding<P: Into<iced::Padding>>(mut self, padding: P) -> Self {
         self.padding = padding.into();
         self
     }
 
     /// Sets the text size of the [`DropdownMenu`].
-    pub fn text_size(mut self, size: impl Into<Pixels>) -> Self {
+    pub fn text_size(mut self, size: impl Into<iced::Pixels>) -> Self {
         self.text_size = Some(size.into());
         self
     }
 
-    /// Sets the text [`text::LineHeight`] of the [`DropdownMenu`].
-    pub fn text_line_height(mut self, line_height: impl Into<text::LineHeight>) -> Self {
+    /// Sets the text [`iced_core::text::LineHeight`] of the [`DropdownMenu`].
+    pub fn text_line_height(mut self, line_height: impl Into<iced_core::text::LineHeight>) -> Self {
         self.text_line_height = line_height.into();
         self
     }
 
-    /// Sets the [`text::Shaping`] strategy of the [`DropdownMenu`].
-    pub fn text_shaping(mut self, shaping: text::Shaping) -> Self {
+    /// Sets the [`iced_core::text::Shaping`] strategy of the [`DropdownMenu`].
+    pub fn text_shaping(mut self, shaping: iced_core::text::Shaping) -> Self {
         self.text_shaping = shaping;
         self
     }
@@ -179,45 +163,50 @@ where
 
     /// Sets the style of the [`Menu`].
     #[must_use]
-    pub fn menu_style(mut self, style: impl Fn(&Theme) -> menu::Style + 'a) -> Self
+    pub fn menu_style(
+        mut self,
+        style: impl Fn(&Theme) -> iced::widget::overlay::menu::Style + 'a,
+    ) -> Self
     where
-        <Theme as menu::Catalog>::Class<'a>: From<menu::StyleFn<'a, Theme>>,
+        <Theme as iced::widget::overlay::menu::Catalog>::Class<'a>:
+            From<iced::widget::overlay::menu::StyleFn<'a, Theme>>,
     {
-        self.menu_class = (Box::new(style) as menu::StyleFn<'a, Theme>).into();
+        self.menu_class =
+            (Box::new(style) as iced::widget::overlay::menu::StyleFn<'a, Theme>).into();
         self
     }
 }
 
-impl<'a, T, L, Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+impl<'a, T, L, Message, Theme, Renderer> iced_core::Widget<Message, Theme, Renderer>
     for DropdownMenu<'a, T, L, Message, Theme, Renderer>
 where
     T: Clone + ToString + PartialEq + 'a,
     L: Borrow<[T]>,
     Message: Clone + 'a,
     Theme: Catalog + 'a,
-    Renderer: text::Renderer + iced_core::svg::Renderer + 'a,
+    Renderer: iced_core::text::Renderer + iced_core::svg::Renderer + 'a,
 {
-    fn tag(&self) -> tree::Tag {
-        tree::Tag::of::<State<Renderer::Paragraph>>()
+    fn tag(&self) -> iced_core::widget::tree::Tag {
+        iced_core::widget::tree::Tag::of::<State<Renderer::Paragraph>>()
     }
 
-    fn state(&self) -> tree::State {
-        tree::State::new(State::<Renderer::Paragraph>::new())
+    fn state(&self) -> iced_core::widget::tree::State {
+        iced_core::widget::tree::State::new(State::<Renderer::Paragraph>::new())
     }
 
-    fn size(&self) -> Size<Length> {
-        Size {
+    fn size(&self) -> iced::Size<iced::Length> {
+        iced::Size {
             width: self.width,
-            height: Length::Shrink,
+            height: iced::Length::Shrink,
         }
     }
 
     fn layout(
         &mut self,
-        tree: &mut Tree,
+        tree: &mut iced_core::widget::tree::Tree,
         renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+        limits: &iced_core::layout::Limits,
+    ) -> iced_core::layout::Node {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
         let font = self.font.unwrap_or_else(|| renderer.default_font());
@@ -226,42 +215,46 @@ where
 
         state.options.resize_with(options.len(), Default::default);
 
-        let option_text = Text {
+        let option_text = iced_core::text::Text {
             content: "",
-            bounds: Size::new(
+            bounds: iced::Size::new(
                 f32::INFINITY,
                 self.text_line_height.to_absolute(text_size).into(),
             ),
             size: text_size,
             line_height: self.text_line_height,
             font,
-            align_x: text::Alignment::Default,
-            align_y: alignment::Vertical::Center,
+            align_x: iced_core::text::Alignment::Default,
+            align_y: iced_core::alignment::Vertical::Center,
             shaping: self.text_shaping,
-            wrapping: text::Wrapping::default(),
+            wrapping: iced_core::text::Wrapping::default(),
         };
 
         for (option, paragraph) in options.iter().zip(state.options.iter_mut()) {
             let label = option.to_string();
 
-            let _ = paragraph.update(Text {
+            let _ = paragraph.update(iced_core::text::Text {
                 content: &label,
                 ..option_text
             });
         }
 
         if !self.menu_title.is_empty() {
-            let _ = state.menu_title.update(Text {
+            let _ = state.menu_title.update(iced_core::text::Text {
                 content: &self.menu_title,
                 ..option_text
             });
         }
 
         let max_width = match self.width {
-            Length::Shrink => {
+            iced::Length::Shrink => {
                 state.menu_title.min_width()
-                    + self.icon_size as f32
-                    + if self.menu_title.is_empty() {
+                    + if self.icon.is_some() {
+                        self.icon_size as f32
+                    } else {
+                        0.
+                    }
+                    + if self.menu_title.is_empty() || self.icon.is_none() {
                         0.
                     } else {
                         self.spacing
@@ -271,37 +264,37 @@ where
         };
 
         let size = {
-            let intrinsic = Size::new(
+            let intrinsic = iced::Size::new(
                 max_width.ceil(),
                 f32::from(self.text_line_height.to_absolute(text_size)).max(self.icon_size as f32),
             );
 
             limits
-                .width(self.width)
-                .shrink(self.padding)
-                .resolve(self.width, Length::Shrink, intrinsic)
+                .resolve(self.width, iced::Length::Shrink, intrinsic)
                 .expand(self.padding)
         };
 
-        layout::Node::new(size)
+        iced_core::layout::Node::new(size)
     }
 
     fn update(
         &mut self,
-        tree: &mut Tree,
-        event: &Event,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
+        tree: &mut iced_core::widget::tree::Tree,
+        event: &iced::Event,
+        layout: iced_core::Layout<'_>,
+        cursor: iced_core::mouse::Cursor,
         _renderer: &Renderer,
-        _clipboard: &mut dyn Clipboard,
-        shell: &mut Shell<'_, Message>,
-        _viewport: &Rectangle,
+        _clipboard: &mut dyn iced_core::Clipboard,
+        shell: &mut iced_core::Shell<'_, Message>,
+        _viewport: &iced::Rectangle,
     ) {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
         match event {
-            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-            | Event::Touch(touch::Event::FingerPressed { .. }) => {
+            iced::Event::Mouse(iced_core::mouse::Event::ButtonPressed(
+                iced_core::mouse::Button::Left,
+            ))
+            | iced::Event::Touch(iced_core::touch::Event::FingerPressed { .. }) => {
                 if state.is_open {
                     // Event wasn't processed by overlay, so cursor was clicked either outside its
                     // bounds or on the drop-down, either way we close the overlay.
@@ -323,7 +316,7 @@ where
                     shell.capture_event();
                 }
             }
-            Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) => {
+            iced::Event::Keyboard(iced_core::keyboard::Event::ModifiersChanged(modifiers)) => {
                 state.keyboard_modifiers = *modifiers;
             }
             _ => {}
@@ -341,7 +334,7 @@ where
             }
         };
 
-        if let Event::Window(window::Event::RedrawRequested(_now)) = event {
+        if let iced::Event::Window(iced_core::window::Event::RedrawRequested(_now)) = event {
             self.last_status = Some(status);
         } else if self
             .last_status
@@ -353,31 +346,31 @@ where
 
     fn mouse_interaction(
         &self,
-        _tree: &Tree,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        _viewport: &Rectangle,
+        _tree: &iced_core::widget::tree::Tree,
+        layout: iced_core::Layout<'_>,
+        cursor: iced_core::mouse::Cursor,
+        _viewport: &iced::Rectangle,
         _renderer: &Renderer,
-    ) -> mouse::Interaction {
+    ) -> iced_core::mouse::Interaction {
         let bounds = layout.bounds();
         let is_mouse_over = cursor.is_over(bounds);
 
         if is_mouse_over {
-            mouse::Interaction::Pointer
+            iced_core::mouse::Interaction::Pointer
         } else {
-            mouse::Interaction::default()
+            iced_core::mouse::Interaction::default()
         }
     }
 
     fn draw(
         &self,
-        _tree: &Tree,
+        _tree: &iced_core::widget::tree::Tree,
         renderer: &mut Renderer,
         theme: &Theme,
-        _style: &renderer::Style,
-        layout: Layout<'_>,
-        _cursor: mouse::Cursor,
-        viewport: &Rectangle,
+        _style: &iced_core::renderer::Style,
+        layout: iced_core::Layout<'_>,
+        _cursor: iced_core::mouse::Cursor,
+        viewport: &iced::Rectangle,
     ) {
         let style = Catalog::style(
             theme,
@@ -389,10 +382,10 @@ where
         let bounds: iced::Rectangle = layout.bounds();
 
         renderer.fill_quad(
-            renderer::Quad {
+            iced_core::renderer::Quad {
                 bounds,
                 border: style.border,
-                ..renderer::Quad::default()
+                ..iced_core::renderer::Quad::default()
             },
             style.background,
         );
@@ -401,54 +394,51 @@ where
             let text_size = self.text_size.unwrap_or_else(|| renderer.default_size());
 
             renderer.fill_text(
-                Text {
+                iced_core::text::Text {
                     content: self.menu_title.clone(),
                     size: text_size,
                     line_height: self.text_line_height,
                     font,
-                    bounds: Size::new(
+                    bounds: iced::Size::new(
                         bounds.width - self.padding.x(),
                         f32::from(self.text_line_height.to_absolute(text_size)),
                     ),
-                    align_x: text::Alignment::Default,
-                    align_y: alignment::Vertical::Center,
+                    align_x: iced_core::text::Alignment::Default,
+                    align_y: iced_core::alignment::Vertical::Center,
                     shaping: self.text_shaping,
-                    wrapping: text::Wrapping::default(),
+                    wrapping: iced_core::text::Wrapping::default(),
                 },
-                Point::new(bounds.x + self.padding.left, bounds.center_y()),
+                iced::Point::new(bounds.x + self.padding.left, bounds.center_y()),
                 style.menu_title_color,
                 *viewport,
             );
         }
 
         if let Some(ref icon) = self.icon {
-            renderer.draw_svg(
-                icon.clone(),
-                iced::Rectangle {
-                    x: bounds.x + bounds.width - self.icon_size as f32 - self.padding.left,
-                    y: bounds.center_y() - self.icon_size as f32 * 0.5,
-                    width: self.icon_size as f32,
-                    height: self.icon_size as f32,
-                },
-                bounds,
-            );
+            let icon_bounds = iced::Rectangle {
+                x: bounds.x + bounds.width - self.icon_size as f32 - self.padding.right,
+                y: bounds.center_y() - self.icon_size as f32 * 0.5,
+                width: self.icon_size as f32,
+                height: self.icon_size as f32,
+            };
+            renderer.draw_svg(icon.clone(), icon_bounds, icon_bounds);
         }
     }
 
     fn overlay<'b>(
         &'b mut self,
-        tree: &'b mut Tree,
-        layout: Layout<'_>,
+        tree: &'b mut iced_core::widget::tree::Tree,
+        layout: iced_core::Layout<'_>,
         renderer: &Renderer,
-        viewport: &Rectangle,
-        translation: Vector,
-    ) -> Option<overlay::Element<'b, Message, Theme, Renderer>> {
+        viewport: &iced::Rectangle,
+        translation: iced::Vector,
+    ) -> Option<iced_core::overlay::Element<'b, Message, Theme, Renderer>> {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
         let font = self.font.unwrap_or_else(|| renderer.default_font());
 
         if state.is_open {
             let max_width = match self.width {
-                Length::Shrink => state.options.iter().fold(0.0, |width, paragraph| {
+                iced::Length::Shrink => state.options.iter().fold(0.0, |width, paragraph| {
                     f32::max(width, paragraph.min_width())
                 }),
                 _ => 0.0,
@@ -458,7 +448,7 @@ where
 
             let on_select = &self.on_select;
 
-            let mut menu = Menu::new(
+            let mut menu = iced::widget::overlay::menu::Menu::new(
                 &mut state.menu,
                 self.options.borrow(),
                 &mut state.hovered_option,
@@ -495,13 +485,13 @@ where
 }
 
 impl<'a, T, L, Message, Theme, Renderer> From<DropdownMenu<'a, T, L, Message, Theme, Renderer>>
-    for Element<'a, Message, Theme, Renderer>
+    for iced::Element<'a, Message, Theme, Renderer>
 where
     T: Clone + ToString + PartialEq + 'a,
     L: Borrow<[T]> + 'a,
     Message: Clone + 'a,
     Theme: Catalog + 'a,
-    Renderer: text::Renderer + iced_core::svg::Renderer + 'a,
+    Renderer: iced_core::text::Renderer + iced_core::svg::Renderer + 'a,
 {
     fn from(dropdown_menu: DropdownMenu<'a, T, L, Message, Theme, Renderer>) -> Self {
         Self::new(dropdown_menu)
@@ -509,30 +499,30 @@ where
 }
 
 #[derive(Debug)]
-struct State<P: text::Paragraph> {
-    menu: menu::State,
-    keyboard_modifiers: keyboard::Modifiers,
+struct State<P: iced_core::text::Paragraph> {
+    menu: iced::widget::overlay::menu::State,
+    keyboard_modifiers: iced_core::keyboard::Modifiers,
     is_open: bool,
     hovered_option: Option<usize>,
-    options: Vec<paragraph::Plain<P>>,
-    menu_title: paragraph::Plain<P>,
+    options: Vec<iced_core::text::paragraph::Plain<P>>,
+    menu_title: iced_core::text::paragraph::Plain<P>,
 }
 
-impl<P: text::Paragraph> State<P> {
+impl<P: iced_core::text::Paragraph> State<P> {
     /// Creates a new [`State`] for a [`DropdownMenu`].
     fn new() -> Self {
         Self {
-            menu: menu::State::default(),
-            keyboard_modifiers: keyboard::Modifiers::default(),
+            menu: iced::widget::overlay::menu::State::default(),
+            keyboard_modifiers: iced_core::keyboard::Modifiers::default(),
             is_open: bool::default(),
             hovered_option: Option::default(),
             options: Vec::new(),
-            menu_title: paragraph::Plain::default(),
+            menu_title: iced_core::text::paragraph::Plain::default(),
         }
     }
 }
 
-impl<P: text::Paragraph> Default for State<P> {
+impl<P: iced_core::text::Paragraph> Default for State<P> {
     fn default() -> Self {
         Self::new()
     }
@@ -556,17 +546,17 @@ pub enum Status {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Style {
     /// The text [`Color`] of the pick list.
-    pub text_color: Color,
+    pub text_color: iced::Color,
     /// The menu_title [`Color`] of the pick list.
-    pub menu_title_color: Color,
+    pub menu_title_color: iced::Color,
     /// The [`Background`] of the pick list.
-    pub background: Background,
+    pub background: iced_core::Background,
     /// The [`Border`] of the pick list.
-    pub border: Border,
+    pub border: iced::Border,
 }
 
 /// The theme catalog of a [`DropdownMenu`].
-pub trait Catalog: menu::Catalog {
+pub trait Catalog: iced::widget::overlay::menu::Catalog {
     /// The item class of the [`Catalog`].
     type Class<'a>;
 
@@ -574,8 +564,8 @@ pub trait Catalog: menu::Catalog {
     fn default<'a>() -> <Self as Catalog>::Class<'a>;
 
     /// The default class for the menu of the [`DropdownMenu`].
-    fn default_menu<'a>() -> <Self as menu::Catalog>::Class<'a> {
-        <Self as menu::Catalog>::default()
+    fn default_menu<'a>() -> <Self as iced::widget::overlay::menu::Catalog>::Class<'a> {
+        <Self as iced::widget::overlay::menu::Catalog>::default()
     }
 
     /// The [`Style`] of a class with the given status.
@@ -587,7 +577,7 @@ pub trait Catalog: menu::Catalog {
 /// This is just a boxed closure: `Fn(&Theme, Status) -> Style`.
 pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
-impl Catalog for Theme {
+impl Catalog for iced::Theme {
     type Class<'a> = StyleFn<'a, Self>;
 
     fn default<'a>() -> StyleFn<'a, Self> {
@@ -600,7 +590,7 @@ impl Catalog for Theme {
 }
 
 /// The default style of the field of a [`DropdownMenu`].
-pub fn default(theme: &Theme, status: Status) -> Style {
+pub fn default(theme: &iced::Theme, status: Status) -> Style {
     let palette = theme.extended_palette();
 
     let base = Style {

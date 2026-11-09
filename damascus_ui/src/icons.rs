@@ -19,6 +19,7 @@ pub enum Icons {
     Minimize,
     Pause,
     Play,
+    Plus,
     Refresh,
     VerticalSplit,
 }
@@ -41,6 +42,7 @@ impl Icons {
             Self::Minimize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/minimize.svg"),
             Self::Pause => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/pause.svg"),
             Self::Play => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/play.svg"),
+            Self::Plus => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/plus.svg"),
             Self::Refresh => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/refresh.svg"),
             Self::VerticalSplit => concat!(
                 env!("CARGO_MANIFEST_DIR"),
@@ -66,6 +68,7 @@ impl Icons {
             Self::Minimize => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/minimize.svg"),
             Self::Pause => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/pause.svg"),
             Self::Play => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/play.svg"),
+            Self::Plus => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/plus.svg"),
             Self::Refresh => concat!(env!("CARGO_MANIFEST_DIR"), "/assets/icons/refresh.svg"),
             Self::VerticalSplit => concat!(
                 env!("CARGO_MANIFEST_DIR"),

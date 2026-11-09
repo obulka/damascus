@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    sodipodi:docname="icons.svg"
-   inkscape:export-filename="../damascus_ui/assets/icons/horizontal_split.svg"
+   inkscape:export-filename="../damascus_ui/assets/icons/plus.svg"
    inkscape:export-xdpi="126.88"
    inkscape:export-ydpi="126.88"
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
@@ -30,14 +30,14 @@
      showgrid="true"
      showguides="true"
      inkscape:zoom="14"
-     inkscape:cx="23.214286"
-     inkscape:cy="49.607143"
+     inkscape:cx="43.071429"
+     inkscape:cy="50.107143"
      inkscape:window-width="3440"
      inkscape:window-height="1403"
-     inkscape:window-x="1920"
-     inkscape:window-y="340"
+     inkscape:window-x="2520"
+     inkscape:window-y="557"
      inkscape:window-maximized="1"
-     inkscape:current-layer="g3285">
+     inkscape:current-layer="g5298">
     <inkscape:grid
        type="xygrid"
        id="grid132"
@@ -499,6 +499,16 @@
        x2="81"
        y2="48"
        gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5400"
+       id="linearGradient429"
+       gradientUnits="userSpaceOnUse"
+       x1="24.5"
+       y1="52"
+       x2="91.5"
+       y2="52"
+       gradientTransform="matrix(1.0071988,0,0,0.92266565,-0.35993919,6.4080578)" />
   </defs>
   <g
      inkscape:groupmode="layer"
@@ -648,7 +658,7 @@
      inkscape:groupmode="layer"
      id="g3285"
      inkscape:label="horizontal_split"
-     style="display:inline">
+     style="display:none">
     <g
        inkscape:groupmode="layer"
        id="g3279"
@@ -673,6 +683,64 @@
          style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
          d="M 83,50 H 13"
          id="path3281"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="g5298"
+     inkscape:label="plus"
+     style="display:inline">
+    <g
+       inkscape:groupmode="layer"
+       id="g5292"
+       inkscape:label="plus_h shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 94,52 H 24"
+         id="path5290"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g5458"
+       inkscape:label="plus_v shadow"
+       style="display:inline;fill:url(#linearGradient7405);fill-opacity:1"
+       transform="translate(-6)"
+       inkscape:export-filename="../damascus_ui/assets/icons/play.svg"
+       inkscape:export-xdpi="126.87919"
+       inkscape:export-ydpi="126.87919">
+      <path
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 61,85 V 15"
+         id="path5456"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g5296"
+       inkscape:label="plus_h icon"
+       style="stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 83,50 H 13"
+         id="path5294"
+         sodipodi:nodetypes="cc" />
+    </g>
+    <g
+       inkscape:groupmode="layer"
+       id="g5452"
+       inkscape:label="plus_v icon"
+       style="display:inline;stroke:none">
+      <path
+         style="opacity:1;fill:none;fill-opacity:1;stroke:url(#linearGradient5408);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;paint-order:normal"
+         d="M 50,83 V 13"
+         id="path5450"
          sodipodi:nodetypes="cc" />
     </g>
   </g>
@@ -776,8 +844,8 @@
        inkscape:export-xdpi="126.87919"
        inkscape:export-ydpi="126.87919">
       <path
-         style="fill:none;fill-opacity:1;stroke:url(#linearGradient5402);stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-         d="M 30,33 V 81 H 70 V 33 Z"
+         style="fill:none;fill-opacity:1;stroke:url(#linearGradient429);stroke-width:7.71205;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
+         d="M 29.856024,36.856024 V 81.143976 H 70.143976 V 36.856024 Z"
          id="path6201"
          sodipodi:nodetypes="ccccc" />
       <path

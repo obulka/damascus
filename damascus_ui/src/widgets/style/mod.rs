@@ -60,7 +60,7 @@ impl Default for Style {
             theme: theme,
             spacing: 3.0,
             padding: 3.0,
-            icon_size: 16,
+            icon_size: 14,
             leeway: 5.0,
             modal_opacity: 0.69,
             float_input_step: 1e-4,
@@ -281,7 +281,7 @@ impl Style {
                 .width(self.icon_size)
                 .height(self.icon_size),
         )
-        .style(iced::widget::button::secondary)
+        .style(iced::widget::button::subtle)
         .padding(self.padding)
     }
 
@@ -334,7 +334,7 @@ impl Style {
             .width(self.icon_size)
             .height(self.icon_size),
         )
-        .style(iced::widget::button::secondary)
+        .style(iced::widget::button::subtle)
         .padding(self.padding)
     }
 
@@ -345,7 +345,29 @@ impl Style {
                 .width(self.icon_size)
                 .height(self.icon_size),
         )
-        .style(iced::widget::button::secondary)
+        .style(iced::widget::button::subtle)
+        .padding(self.padding)
+    }
+
+    pub fn horizontal_split_button<'a, Message>(&'a self) -> iced::widget::Button<'a, Message> {
+        iced::widget::button(
+            Icons::HorizontalSplit
+                .as_svg()
+                .width(self.icon_size)
+                .height(self.icon_size),
+        )
+        .style(iced::widget::button::subtle)
+        .padding(self.padding)
+    }
+
+    pub fn vertical_split_button<'a, Message>(&'a self) -> iced::widget::Button<'a, Message> {
+        iced::widget::button(
+            Icons::VerticalSplit
+                .as_svg()
+                .width(self.icon_size)
+                .height(self.icon_size),
+        )
+        .style(iced::widget::button::subtle)
         .padding(self.padding)
     }
 

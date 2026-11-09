@@ -382,7 +382,10 @@ where
         );
 
         let font = self.font.unwrap_or_else(|| renderer.default_font());
-        let bounds: iced::Rectangle = layout.bounds();
+        let mut bounds: iced::Rectangle = layout.bounds();
+        if self.menu_title.is_empty() && self.icon.is_some() {
+            bounds.height = bounds.width;
+        }
 
         renderer.fill_quad(
             iced_core::renderer::Quad {
@@ -595,7 +598,7 @@ pub fn default(theme: &iced::Theme, status: Status) -> Style {
     let base = Style {
         background: palette.background.weakest.color.into(),
         text_color: palette.background.weakest.text,
-        border: iced::Border::default(),
+        border: iced::border::rounded(2),
         menu_title_color: palette.background.weakest.text,
     };
 

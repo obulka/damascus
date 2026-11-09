@@ -204,61 +204,43 @@ impl Panel {
         total_panes: usize,
         is_maximized: bool,
     ) -> iced::Element<'a, PanelMessage> {
-        let horizontal_split = iced::widget::button(
-            Icons::HorizontalSplit
-                .as_svg()
-                .width(style.icon_size)
-                .height(style.icon_size),
-        )
-        .style(iced::widget::button::secondary)
-        .padding(style.padding)
-        .on_press(PanelMessage::Split(
-            iced::widget::pane_grid::Axis::Horizontal,
-            pane,
-        ));
-
-        let vertical_split = iced::widget::button(
-            Icons::VerticalSplit
-                .as_svg()
-                .width(style.icon_size)
-                .height(style.icon_size),
-        )
-        .style(iced::widget::button::secondary)
-        .padding(style.padding)
-        .on_press(PanelMessage::Split(
-            iced::widget::pane_grid::Axis::Vertical,
-            pane,
-        ));
-
-        let maximize = if total_panes > 1 {
-            Some(
-                style
-                    .maximize_button(is_maximized)
-                    .on_press(if is_maximized {
-                        PanelMessage::Restore
-                    } else {
-                        PanelMessage::Maximize(pane)
-                    }),
-            )
-        } else {
-            None
-        };
-
-        let detach = style.detach_button().on_press_maybe(if total_panes > 1 {
-            Some(PanelMessage::Detach(pane))
-        } else {
-            None
-        });
-
-        let close = style.close_button().on_press_maybe(if total_panes > 1 {
-            Some(PanelMessage::Close(pane))
-        } else {
-            None
-        });
-
-        iced::widget::row![horizontal_split, vertical_split, maximize, detach, close]
-            .spacing(style.spacing)
-            .into()
+        iced::widget::row![
+            style
+                .horizontal_split_button()
+                .on_press(PanelMessage::Split(
+                    iced::widget::pane_grid::Axis::Horizontal,
+                    pane,
+                )),
+            style.vertical_split_button().on_press(PanelMessage::Split(
+                iced::widget::pane_grid::Axis::Vertical,
+                pane,
+            )),
+            if total_panes > 1 {
+                Some(
+                    style
+                        .maximize_button(is_maximized)
+                        .on_press(if is_maximized {
+                            PanelMessage::Restore
+                        } else {
+                            PanelMessage::Maximize(pane)
+                        }),
+                )
+            } else {
+                None
+            },
+            style.detach_button().on_press_maybe(if total_panes > 1 {
+                Some(PanelMessage::Detach(pane))
+            } else {
+                None
+            }),
+            style.close_button().on_press_maybe(if total_panes > 1 {
+                Some(PanelMessage::Close(pane))
+            } else {
+                None
+            }),
+        ]
+        .spacing(style.spacing)
+        .into()
     }
 }
 
@@ -369,40 +351,43 @@ impl Widget<PanelMessage> for Panel {
         let pane_grid = iced::widget::PaneGrid::new(&self.panes, |id, pane, is_maximized| {
             let is_focused = focus == Some(id);
 
-            let title_bar = iced::widget::pane_grid::TitleBar::new(iced::widget::row![
-                style.dropdown_menu(
-                    Tabs::iter()
-                        .map(|variant| variant.variant_pascal_label())
-                        .collect::<Vec<String>>(),
-                    String::new(),
-                    Some(Icons::Plus.as_core_svg()),
-                    move |option| -> PanelMessage {
-                        PanelMessage::Pane(id, TabMessage::from_str(&option).into())
-                    },
-                ),
-                pane.tabs
-                    .iter()
-                    .fold(
-                        TabBar::new(move |tab_index| {
-                            PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
-                        }),
-                        |tab_bar, tab| {
-                            let tab_count = tab_bar.size();
-                            tab_bar.push(tab_count, tab.as_tabs().variant_pascal_label())
+            let title_bar = iced::widget::pane_grid::TitleBar::new(
+                iced::widget::row![
+                    style.dropdown_menu(
+                        Tabs::iter()
+                            .map(|variant| variant.variant_pascal_label())
+                            .collect::<Vec<String>>(),
+                        String::new(),
+                        Some(Icons::Plus.as_core_svg()),
+                        move |option| -> PanelMessage {
+                            PanelMessage::Pane(id, TabMessage::from_str(&option).into())
                         },
-                    )
-                    .set_active_tab(&pane.active_tab)
-                    .on_close(move |tab_index| {
-                        PanelMessage::Pane(id, TabMessage::Closed(tab_index).into())
-                    })
-                    .tab_width(iced::Length::Shrink)
-                    .width(iced::Length::Shrink)
-                    .spacing(style.spacing)
-                    .padding(style.padding)
-                    .text_size(style.text_size)
-                    .minimum_height(style.icon_size as f32)
-                    .close_size(style.text_size as f32 * 0.69),
-            ])
+                    ),
+                    pane.tabs
+                        .iter()
+                        .fold(
+                            TabBar::new(move |tab_index| {
+                                PanelMessage::Pane(id, TabMessage::Selected(tab_index).into())
+                            }),
+                            |tab_bar, tab| {
+                                let tab_count = tab_bar.size();
+                                tab_bar.push(tab_count, tab.as_tabs().variant_pascal_label())
+                            },
+                        )
+                        .set_active_tab(&pane.active_tab)
+                        .on_close(move |tab_index| {
+                            PanelMessage::Pane(id, TabMessage::Closed(tab_index).into())
+                        })
+                        .tab_width(iced::Length::Shrink)
+                        .width(iced::Length::Shrink)
+                        .spacing(style.spacing)
+                        .padding(style.padding)
+                        .text_size(style.text_size)
+                        .minimum_height(style.icon_size as f32)
+                        .close_size(style.text_size as f32 * 0.69),
+                ]
+                .spacing(style.spacing),
+            )
             .controls(iced::widget::pane_grid::Controls::dynamic(
                 Self::view_controls(style, id, total_panes, is_maximized),
                 style.close_button().on_press_maybe(if total_panes > 1 {

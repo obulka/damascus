@@ -431,48 +431,32 @@ impl NodeGraph {
 
         for (node_id, node_context) in node_graph.context.iter() {
             let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
-            if connectable_input_count > 0 {
-                let node_top_left: Vec2 = node_context.shape.top_left();
+            for input_index in 0..connectable_input_count {
+                let input_position =
+                    node_context.input_position(input_index as f32, connectable_input_count as f32);
 
-                let step_size: f32 = node_context.shape.size.x / (connectable_input_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                for index in 0..connectable_input_count {
-                    let input_position = Vec2::new(
-                        node_top_left.x + (index as f32) * step_size + half_step_size,
-                        node_top_left.y,
-                    );
-
-                    if (input_position - cursor_position).length() <= input_path_radius {
-                        let input_id: InputId = node_graph.graph[node_id].input_ids[index];
-                        if let Some(output_id) = node_graph.graph.disconnect_input_id(&input_id) {
-                            self.connection_in_progress = (None, Some(output_id));
-                        } else {
-                            self.connection_in_progress = (Some(input_id), None);
-                        }
-                        return true;
+                if (input_position - cursor_position).length() <= input_path_radius {
+                    let input_id: InputId = node_graph.graph[node_id].input_ids[input_index];
+                    if let Some(output_id) = node_graph.graph.disconnect_input_id(&input_id) {
+                        self.connection_in_progress = (None, Some(output_id));
+                    } else {
+                        self.connection_in_progress = (Some(input_id), None);
                     }
+                    return true;
                 }
             }
 
             let output_count: usize = node_graph.graph[node_id].output_count();
-            if output_count > 0 {
-                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
+            for output_index in 0..output_count {
+                let output_position =
+                    node_context.output_position(output_index as f32, output_count as f32);
 
-                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                for index in 0..output_count {
-                    let output_position = Vec2::new(
-                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
-                        node_bottom_left.y,
+                if (output_position - cursor_position).length() <= output_path_radius {
+                    self.connection_in_progress = (
+                        None,
+                        Some(node_graph.graph[node_id].output_ids[output_index]),
                     );
-
-                    if (output_position - cursor_position).length() <= output_path_radius {
-                        self.connection_in_progress =
-                            (None, Some(node_graph.graph[node_id].output_ids[index]));
-                        return true;
-                    }
+                    return true;
                 }
             }
         }
@@ -498,19 +482,13 @@ impl NodeGraph {
                     continue;
                 }
 
-                let node_bottom_left: Vec2 = node_context.shape.bottom_left();
-
-                let step_size: f32 = node_context.shape.size.x / (output_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                for index in 0..output_count {
-                    let output_position = Vec2::new(
-                        node_bottom_left.x + (index as f32) * step_size + half_step_size,
-                        node_bottom_left.y,
-                    );
+                for output_index in 0..output_count {
+                    let output_position =
+                        node_context.output_position(output_index as f32, output_count as f32);
 
                     if (output_position - cursor_position).length() <= output_path_radius {
-                        let output_id: OutputId = node_graph.graph[node_id].output_ids[index];
+                        let output_id: OutputId =
+                            node_graph.graph[node_id].output_ids[output_index];
                         self.connection_in_progress.1 = Some(output_id);
 
                         return node_graph
@@ -526,19 +504,12 @@ impl NodeGraph {
                     continue;
                 }
 
-                let node_top_left: Vec2 = node_context.shape.top_left();
-
-                let step_size: f32 = node_context.shape.size.x / (connectable_input_count as f32);
-                let half_step_size: f32 = 0.5 * step_size;
-
-                for index in 0..connectable_input_count {
-                    let input_position = Vec2::new(
-                        node_top_left.x + (index as f32) * step_size + half_step_size,
-                        node_top_left.y,
-                    );
+                for input_index in 0..connectable_input_count {
+                    let input_position = node_context
+                        .input_position(input_index as f32, connectable_input_count as f32);
 
                     if (input_position - cursor_position).length() <= input_path_radius {
-                        let input_id: InputId = node_graph.graph[node_id].input_ids[index];
+                        let input_id: InputId = node_graph.graph[node_id].input_ids[input_index];
                         self.connection_in_progress.0 = Some(input_id);
 
                         return node_graph
@@ -865,7 +836,7 @@ impl NodeGraph {
         frame: &mut iced::widget::canvas::Frame,
         node_graph: &NodeGraphContext,
         node_id: &NodeId,
-        node_shape: &Rectangle,
+        node_context: &NodeContext,
         theme: &iced::theme::Theme,
     ) {
         let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(node_id);
@@ -875,17 +846,11 @@ impl NodeGraph {
 
         let input_path_radius: f32 = self.style.node_input_radius * self.pan_zoom.reciprocal_zoom();
 
-        let node_bottom_left: Vec2 = node_shape.bottom_left();
-
-        let step_size: f32 = node_shape.size.x / (connectable_input_count as f32);
-        let half_step_size: f32 = 0.5 * step_size;
-
-        for index in 0..connectable_input_count {
+        for input_index in 0..connectable_input_count {
             let input = iced::widget::canvas::Path::circle(
-                iced::Point::new(
-                    node_bottom_left.x + (index as f32) * step_size + half_step_size,
-                    node_bottom_left.y,
-                ),
+                iced::Point::from_glam(&self.pan_zoom.local_to_canvas(
+                    node_context.input_position(input_index as f32, connectable_input_count as f32),
+                )),
                 input_path_radius,
             );
 
@@ -898,7 +863,7 @@ impl NodeGraph {
         frame: &mut iced::widget::canvas::Frame,
         node_graph: &NodeGraphContext,
         node_id: &NodeId,
-        node_shape: &Rectangle,
+        node_context: &NodeContext,
         theme: &iced::theme::Theme,
     ) {
         let output_count: usize = node_graph.graph[*node_id].output_count();
@@ -909,17 +874,11 @@ impl NodeGraph {
         let output_path_radius: f32 =
             self.style.node_output_radius * self.pan_zoom.reciprocal_zoom();
 
-        let node_top_left: Vec2 = node_shape.top_left();
-
-        let step_size: f32 = node_shape.size.x / (output_count as f32);
-        let half_step_size: f32 = 0.5 * step_size;
-
-        for index in 0..output_count {
+        for output_index in 0..output_count {
             let output = iced::widget::canvas::Path::circle(
-                iced::Point::new(
-                    node_top_left.x + (index as f32) * step_size + half_step_size,
-                    node_top_left.y,
-                ),
+                iced::Point::from_glam(&self.pan_zoom.local_to_canvas(
+                    node_context.output_position(output_index as f32, output_count as f32),
+                )),
                 output_path_radius,
             );
 
@@ -970,8 +929,8 @@ impl NodeGraph {
             }
 
             if node_graph.graph.node_id_is_valid(node_id) {
-                self.draw_node_inputs(frame, node_graph, &node_id, &node_shape, &theme);
-                self.draw_node_outputs(frame, node_graph, &node_id, &node_shape, &theme);
+                self.draw_node_inputs(frame, node_graph, &node_id, &node_context, &theme);
+                self.draw_node_outputs(frame, node_graph, &node_id, &node_context, &theme);
             }
         }
     }
@@ -1438,6 +1397,14 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
                 iced::Event::Mouse(_) | iced::Event::Keyboard(_) => Some(
                     iced::widget::Action::publish(NodeGraphMessage::CanvasEvent(event.clone())),
                 ),
+                // TODO
+                // iced::Event::Touch(iced_core::touch::Event::FingerPressed { .. }) => {
+                //     Some(iced::widget::Action::publish(
+                //         NodeGraphMessage::CanvasEvent(iced::Event::Mouse(
+                //             iced::mouse::Event::ButtonPressed(iced::mouse::Button::Left),
+                //         )),
+                //     ))
+                // }
                 _ => None,
             }
         }

@@ -24,14 +24,14 @@ pub type StyleFn<'a, Theme, Style> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 #[derive(Clone, Copy, Debug)]
 pub struct Style {
     pub background: iced::Background,
-    pub text_color: iced::Color,
+    pub text_colour: iced::Color,
 }
 
 impl Default for Style {
     fn default() -> Self {
         Self {
             background: iced::Background::Color(iced::Color::WHITE),
-            text_color: iced::Color::BLACK,
+            text_colour: iced::Color::BLACK,
         }
     }
 }
@@ -42,19 +42,19 @@ pub fn primary(theme: &iced::Theme, status: Status) -> Style {
     let mut base = Style::default();
     let palette = theme.extended_palette();
 
-    base.text_color = palette.background.base.text;
+    base.text_colour = palette.background.base.text;
 
     match status {
         Status::Inactive => {
-            base.text_color = palette.background.weakest.text;
+            base.text_colour = palette.background.weakest.text;
             base.background = iced::Background::Color(palette.background.weakest.color);
         }
         Status::Hovered => {
-            base.text_color = palette.background.weaker.text;
+            base.text_colour = palette.background.weaker.text;
             base.background = iced::Background::Color(palette.background.weaker.color);
         }
         _ => {
-            base.text_color = palette.background.base.text;
+            base.text_colour = palette.background.neutral.text;
             base.background = iced::Background::Color(palette.background.base.color);
         }
     }
@@ -588,7 +588,7 @@ where
                         wrapping: iced::widget::text::Wrapping::default(),
                     },
                     iced::Point::new(text_bounds.center_x(), text_bounds.center_y()),
-                    style.text_color,
+                    style.text_colour,
                     text_bounds,
                 );
             }

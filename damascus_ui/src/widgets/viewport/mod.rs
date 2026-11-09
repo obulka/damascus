@@ -336,8 +336,7 @@ impl Viewport {
         {
             self.viewport_primitive.viewport_id = Some(viewports.insert_with_key(|id| {
                 let mut viewport_context = ViewportContext::default();
-                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
-                    .colour(context.default_style.default_node_colour);
+                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id));
                 viewport_context
             }));
 

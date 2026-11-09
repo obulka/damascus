@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use glam::Vec4;
+// use glam::Vec4;
 use iced;
 use macro_rules_attribute::derive;
 use strum::Display;
@@ -42,7 +42,7 @@ pub enum StyleEditorFields {
     ModalOpacity,
     FloatInputStep,
     ViewerZoomSensitivity,
-    DefaultNodeColour,
+    // ExampleColour,
     TextZoomCutoff,
     ConnectionLineWidth,
     InactiveConnectionLineScale,
@@ -83,7 +83,7 @@ impl StyleEditorFields {
                 style.selection_box_border_width += style.selection_box_border_width
             }
             Self::SelectionBoxAlpha => style.selection_box_alpha += style.selection_box_alpha,
-            _ => {}
+            // _ => {}
         }
     }
 
@@ -116,15 +116,15 @@ impl StyleEditorFields {
                 style.selection_box_border_width -= style.selection_box_border_width
             }
             Self::SelectionBoxAlpha => style.selection_box_alpha -= style.selection_box_alpha,
-            _ => {}
+            // _ => {}
         }
     }
 
-    fn toggle(&self, style: &mut Style) {
+    fn toggle(&self, _style: &mut Style) {
         match self {
-            Self::DefaultNodeColour => {
-                style.picking_default_node_colour = !style.picking_default_node_colour;
-            }
+            // Self::ExampleColour => {
+            //     style.picking_example_colour = !style.picking_example_colour;
+            // }
             _ => {}
         }
     }
@@ -143,7 +143,7 @@ pub enum StyleEditorData {
     ModalOpacity(f32),
     FloatInputStep(f32),
     ViewerZoomSensitivity(f32),
-    DefaultNodeColour(Vec4),
+    // ExampleColour(Vec4),
     TextZoomCutoff(f32),
     ConnectionLineWidth(f32),
     InactiveConnectionLineScale(f32),
@@ -170,10 +170,10 @@ impl StyleEditorData {
             Self::ViewerZoomSensitivity(viewer_zoom_sensitivity) => {
                 style.viewer_zoom_sensitivity = *viewer_zoom_sensitivity
             }
-            Self::DefaultNodeColour(colour) => {
-                style.default_node_colour = *colour;
-                style.picking_default_node_colour = !style.picking_default_node_colour;
-            }
+            // Self::ExampleColour(colour) => {
+            //     style.example_colour = *colour;
+            //     style.picking_example_colour = !style.picking_example_colour;
+            // }
             Self::TextZoomCutoff(text_zoom_cutoff) => style.text_zoom_cutoff = *text_zoom_cutoff,
             Self::ConnectionLineWidth(connection_line_width) => {
                 style.connection_line_width = *connection_line_width
@@ -380,24 +380,24 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             StyleEditorData::FloatInputStep(style.float_input_step).into(),
             "The minimum step between floating point numbers when dragging sliders",
         );
-        let default_node_colour = style.colour_picker(
-            StyleEditorFields::DefaultNodeColour.variant_label(),
-            style.picking_default_node_colour,
-            iced::Color::from_rgba(
-                style.default_node_colour.x,
-                style.default_node_colour.y,
-                style.default_node_colour.z,
-                style.default_node_colour.w,
-            ),
-            StyleEditorMessage::Toggle(StyleEditorFields::DefaultNodeColour),
-            |colour| -> StyleEditorMessage {
-                StyleEditorData::DefaultNodeColour(Vec4::new(
-                    colour.r, colour.g, colour.b, colour.a,
-                ))
-                .into()
-            },
-            "The default colour of nodes",
-        );
+        // let example_colour = style.colour_picker(
+        //     StyleEditorFields::ExampleColour.variant_label(),
+        //     style.picking_example_colour,
+        //     iced::Color::from_rgba(
+        //         style.example_colour.x,
+        //         style.example_colour.y,
+        //         style.example_colour.z,
+        //         style.example_colour.w,
+        //     ),
+        //     StyleEditorMessage::Toggle(StyleEditorFields::ExampleColour),
+        //     |colour| -> StyleEditorMessage {
+        //         StyleEditorData::ExampleColour(Vec4::new(
+        //             colour.r, colour.g, colour.b, colour.a,
+        //         ))
+        //         .into()
+        //     },
+        //     "An example colour",
+        // );
 
         let text_zoom_cutoff = style.slider(
             StyleEditorFields::TextZoomCutoff.variant_label(),
@@ -500,7 +500,7 @@ impl Widget<StyleEditorMessage> for StyleEditor {
                 modal_opacity,
                 viewer_zoom_sensitivity,
                 float_input_step,
-                default_node_colour,
+                // example_colour,
                 text_zoom_cutoff,
                 connection_line_width,
                 inactive_connection_line_scale,

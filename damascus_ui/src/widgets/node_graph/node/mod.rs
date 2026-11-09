@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use glam::{Vec2, Vec4};
+use glam::Vec2;
 
 use damascus::geometry::{ray::Ray2d, rectangle::Rectangle};
 
@@ -13,7 +13,6 @@ use crate::{type_conversion::ToPath, widgets::pan_zoom::PanZoom};
 pub struct NodeContext {
     pub label: String,
     pub shape: Rectangle,
-    pub colour: Vec4,
 }
 
 impl NodeContext {
@@ -21,7 +20,6 @@ impl NodeContext {
         Self {
             label: label,
             shape: Rectangle::default().size(Vec2::new(100.0, 33.0)),
-            ..Default::default()
         }
     }
 
@@ -32,11 +30,6 @@ impl NodeContext {
 
     pub fn shape(mut self, shape: Rectangle) -> Self {
         self.shape = shape;
-        self
-    }
-
-    pub fn colour(mut self, colour: Vec4) -> Self {
-        self.colour = colour;
         self
     }
 

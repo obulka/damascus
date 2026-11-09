@@ -564,15 +564,14 @@ impl NodeGraph {
         task
     }
 
-    pub fn create_viewport(&self, context: &Context) -> Option<ViewportId> {
+    pub fn create_viewport(&self, _context: &Context) -> Option<ViewportId> {
         let Ok(mut viewports) = self.viewport_context.lock() else {
             return None;
         };
 
         Some(viewports.insert_with_key(|id| {
             let mut viewport_context = ViewportContext::default();
-            viewport_context.node_context = NodeContext::new(format!("Viewport{}", id))
-                .colour(context.default_style.default_node_colour);
+            viewport_context.node_context = NodeContext::new(format!("Viewport{}", id));
             viewport_context
         }))
     }
@@ -898,15 +897,18 @@ impl NodeGraph {
         let node_selected_border_width =
             self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
 
+        let palette = theme.extended_palette();
+
         let primary_colour: iced::Color = theme.palette().primary;
-        let text_colour: iced::Color = theme.palette().text;
+        let text_colour: iced::Color = palette.background.neutral.text;
+        let node_colour: iced::Color = palette.background.neutral.color;
 
         for (node_id, node_context) in node_graph.context.iter() {
             let node_shape: Rectangle =
                 self.pan_zoom.local_to_canvas_rectangle(&node_context.shape);
 
             let node: iced::widget::canvas::Path = node_shape.to_path();
-            frame.fill(&node, iced::Color::from_glam(&node_context.colour));
+            frame.fill(&node, node_colour);
             if node_graph.selected_nodes.contains(&node_id) {
                 frame.stroke(
                     &node,
@@ -948,18 +950,18 @@ impl NodeGraph {
         let node_selected_border_width =
             self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
 
+        let palette = theme.extended_palette();
+
         let primary_colour: iced::Color = theme.palette().primary;
-        let text_colour: iced::Color = theme.palette().text;
+        let text_colour: iced::Color = palette.background.neutral.text;
+        let viewport_colour: iced::Color = palette.background.neutral.color;
 
         for (viewport_id, viewport_context) in viewports.iter() {
             let viewport_shape: Rectangle = self
                 .pan_zoom
                 .local_to_canvas_rectangle(&viewport_context.node_context.shape);
             let node = viewport_shape.to_path();
-            frame.fill(
-                &node,
-                iced::Color::from_glam(&viewport_context.node_context.colour),
-            );
+            frame.fill(&node, viewport_colour);
             if node_graph.selected_viewports.contains(&viewport_id) {
                 frame.stroke(
                     &node,
@@ -1517,8 +1519,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 node_graph.context.insert(
                     node_id,
                     NodeContext::new(format!("{}{}", node_data, node_id))
-                        .position(self.pan_zoom.local_cursor_position())
-                        .colour(context.default_style.default_node_colour),
+                        .position(self.pan_zoom.local_cursor_position()),
                 );
 
                 iced::Task::none()
@@ -1678,8 +1679,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 node_graph.context.insert(
                     ray_marcher_id,
                     NodeContext::new(format!("RayMarcher{}", ray_marcher_id))
-                        .position(self.pan_zoom.local_cursor_position())
-                        .colour(context.default_style.default_node_colour),
+                        .position(self.pan_zoom.local_cursor_position()),
                 );
 
                 iced::Task::none()

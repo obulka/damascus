@@ -413,7 +413,7 @@ where
                     wrapping: iced_core::text::Wrapping::default(),
                 },
                 iced::Point::new(bounds.x + self.padding.left, bounds.center_y()),
-                style.menu_title_color,
+                style.text_colour,
                 *viewport,
             );
         }
@@ -547,10 +547,8 @@ pub enum Status {
 /// The appearance of a pick list.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Style {
-    /// The text [`Color`] of the pick list.
-    pub text_color: iced::Color,
     /// The menu_title [`Color`] of the pick list.
-    pub menu_title_color: iced::Color,
+    pub text_colour: iced::Color,
     /// The [`Background`] of the pick list.
     pub background: iced_core::Background,
     /// The [`Border`] of the pick list.
@@ -596,10 +594,9 @@ pub fn default(theme: &iced::Theme, status: Status) -> Style {
     let palette = theme.extended_palette();
 
     let base = Style {
-        background: palette.background.weakest.color.into(),
-        text_color: palette.background.weakest.text,
+        background: iced::Color::TRANSPARENT.into(),
         border: iced::border::rounded(2),
-        menu_title_color: palette.background.weakest.text,
+        text_colour: palette.background.weakest.text,
     };
 
     match status {

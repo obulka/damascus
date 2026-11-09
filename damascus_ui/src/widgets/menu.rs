@@ -8,6 +8,8 @@ use std::borrow::Borrow;
 use iced;
 use iced_core;
 
+use super::style::Style as DefaultStyle;
+
 pub struct DropdownMenu<'a, T, L, Message, Theme = iced::Theme, Renderer = iced::Renderer>
 where
     T: ToString + PartialEq + Clone,
@@ -25,7 +27,7 @@ where
     padding: iced::Padding,
     spacing: f32,
     icon_size: u32,
-    text_size: Option<iced::Pixels>,
+    text_size: iced::Pixels,
     text_line_height: iced_core::text::LineHeight,
     text_shaping: iced_core::text::Shaping,
     font: Option<Renderer::Font>,
@@ -51,6 +53,7 @@ where
         icon: Option<iced_core::Svg>,
         on_select: impl Fn(T) -> Message + 'a,
     ) -> Self {
+        let default_style = DefaultStyle::default();
         Self {
             on_select: Box::new(on_select),
             on_open: None,
@@ -59,10 +62,10 @@ where
             menu_title,
             icon,
             width: iced::Length::Shrink,
-            padding: iced::widget::button::DEFAULT_PADDING,
-            spacing: 0.,
-            icon_size: 0,
-            text_size: None,
+            padding: default_style.padding.into(),
+            spacing: default_style.padding,
+            icon_size: default_style.icon_size,
+            text_size: default_style.text_size.into(),
             text_line_height: iced_core::text::LineHeight::default(),
             text_shaping: iced_core::text::Shaping::default(),
             font: None,
@@ -117,7 +120,7 @@ where
 
     /// Sets the text size of the [`DropdownMenu`].
     pub fn text_size(mut self, size: impl Into<iced::Pixels>) -> Self {
-        self.text_size = Some(size.into());
+        self.text_size = size.into();
         self
     }
 
@@ -210,7 +213,6 @@ where
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
         let font = self.font.unwrap_or_else(|| renderer.default_font());
-        let text_size = self.text_size.unwrap_or_else(|| renderer.default_size());
         let options = self.options.borrow();
 
         state.options.resize_with(options.len(), Default::default);
@@ -219,9 +221,9 @@ where
             content: "",
             bounds: iced::Size::new(
                 f32::INFINITY,
-                self.text_line_height.to_absolute(text_size).into(),
+                self.text_line_height.to_absolute(self.text_size).into(),
             ),
-            size: text_size,
+            size: self.text_size,
             line_height: self.text_line_height,
             font,
             align_x: iced_core::text::Alignment::Default,
@@ -266,7 +268,8 @@ where
         let size = {
             let intrinsic = iced::Size::new(
                 max_width.ceil(),
-                f32::from(self.text_line_height.to_absolute(text_size)).max(self.icon_size as f32),
+                f32::from(self.text_line_height.to_absolute(self.text_size))
+                    .max(self.icon_size as f32),
             );
 
             limits
@@ -391,17 +394,15 @@ where
         );
 
         if !self.menu_title.is_empty() {
-            let text_size = self.text_size.unwrap_or_else(|| renderer.default_size());
-
             renderer.fill_text(
                 iced_core::text::Text {
                     content: self.menu_title.clone(),
-                    size: text_size,
+                    size: self.text_size,
                     line_height: self.text_line_height,
                     font,
                     bounds: iced::Size::new(
                         bounds.width - self.padding.x(),
-                        f32::from(self.text_line_height.to_absolute(text_size)),
+                        f32::from(self.text_line_height.to_absolute(self.text_size)),
                     ),
                     align_x: iced_core::text::Alignment::Default,
                     align_y: iced_core::alignment::Vertical::Center,
@@ -468,9 +469,7 @@ where
             .font(font)
             .text_shaping(self.text_shaping);
 
-            if let Some(text_size) = self.text_size {
-                menu = menu.text_size(text_size);
-            }
+            menu = menu.text_size(self.text_size);
 
             Some(menu.overlay(
                 layout.position() + translation,

@@ -14,7 +14,7 @@ pub enum Status {
     Active,
     Hovered,
     Pressed,
-    Disabled,
+    Inactive,
     Focused,
     Selected,
 }
@@ -45,7 +45,7 @@ pub fn primary(theme: &iced::Theme, status: Status) -> Style {
     base.text_color = palette.background.base.text;
 
     match status {
-        Status::Disabled => {
+        Status::Inactive => {
             base.text_color = palette.background.weakest.text;
             base.background = iced::Background::Color(palette.background.weakest.color);
         }
@@ -104,8 +104,8 @@ pub struct TabBar<
     tab_labels: Vec<String>,
     /// The vector containing the indices of the tabs.
     tab_indices: Vec<TabId>,
-    /// The statuses of the tab and cross
-    tab_statuses: Vec<(Option<Status>, Option<bool>)>,
+    /// The statuses of the tab and close_button
+    tab_statuses: Vec<(Option<Status>, bool)>,
     /// The function that produces the message when a tab is selected.
     on_select: Box<dyn Fn(TabId) -> Message>,
     /// The function that produces the message when the close icon was pressed.
@@ -174,7 +174,7 @@ where
         Self {
             active_tab: 0,
             tab_indices: tab_labels.iter().map(|(id, _)| id.clone()).collect(),
-            tab_statuses: tab_labels.iter().map(|_| (None, None)).collect(),
+            tab_statuses: tab_labels.iter().map(|_| (None, false)).collect(),
             tab_labels: tab_labels.into_iter().map(|(_, label)| label).collect(),
             on_select: Box::new(on_select),
             on_close: None,
@@ -272,7 +272,7 @@ where
     pub fn push(mut self, id: TabId, tab_label: String) -> Self {
         self.tab_labels.push(tab_label);
         self.tab_indices.push(id);
-        self.tab_statuses.push((None, None));
+        self.tab_statuses.push((None, false));
         self
     }
 
@@ -389,9 +389,9 @@ where
                     if self.on_close.is_some() {
                         label_row = label_row.push(
                             iced::widget::Row::new()
-                                .width(iced::Length::Fixed(self.close_size))
+                                .width(iced::Length::Fixed(self.close_size + self.padding.x()))
                                 .height(iced::Length::Fixed(
-                                    self.close_size.max(self.minimum_height),
+                                    (self.close_size + self.padding.y()).max(self.minimum_height),
                                 ))
                                 .align_y(iced::Alignment::Center),
                         );
@@ -455,14 +455,14 @@ where
                                 let tab_layout = layout.children().nth(new_selected).expect(
                                     "widget: Layout should have a tab layout at the selected index",
                                 );
-                                let cross_layout = tab_layout
+                                let close_button_layout = tab_layout
                                     .children()
                                     .nth(1)
                                     .expect("widget: Layout should have a close layout");
 
                                 cursor
                                     .position()
-                                    .is_some_and(|pos| cross_layout.bounds().contains(pos))
+                                    .is_some_and(|pos| close_button_layout.bounds().contains(pos))
                             })
                             .map_or_else(
                                 || (self.on_select)(self.tab_indices[new_selected].clone()),
@@ -479,26 +479,29 @@ where
         let children = layout.children();
         for ((i, _tab), layout) in self.tab_labels.iter().enumerate().zip(children) {
             let active_idx = self.get_active_tab_idx();
-            let tab_status = self.tab_statuses.get_mut(i).expect("Should have a status.");
+            let Some((tab_status, close_button_hovered)) = self.tab_statuses.get_mut(i) else {
+                continue;
+            };
 
             let current_status = if i == active_idx {
                 Status::Active
             } else if cursor.is_over(layout.bounds()) {
                 Status::Hovered
             } else {
-                Status::Disabled
+                Status::Inactive
             };
 
-            let mut is_cross_hovered = None;
+            let mut is_close_button_hovered = false;
             let mut children = layout.children();
-            if let Some(cross_layout) = children.next_back() {
-                is_cross_hovered = Some(cursor.is_over(cross_layout.bounds()));
+            if let Some(close_button_layout) = children.next_back() {
+                is_close_button_hovered = cursor.is_over(close_button_layout.bounds());
             }
 
             if let iced::Event::Window(iced::window::Event::RedrawRequested(_now)) = event {
-                *tab_status = (Some(current_status), is_cross_hovered);
-            } else if tab_status.0.is_some_and(|status| status != current_status)
-                || tab_status.1 != is_cross_hovered
+                *tab_status = Some(current_status);
+                *close_button_hovered = is_close_button_hovered;
+            } else if tab_status.is_some_and(|status| status != current_status)
+                || *close_button_hovered != is_close_button_hovered
             {
                 request_redraw = true;
             }
@@ -549,14 +552,13 @@ where
         viewport: &iced::Rectangle,
     ) {
         for ((id, tab_label), layout) in self.tab_labels.iter().enumerate().zip(layout.children()) {
-            let Some(tab_status) = self.tab_statuses.get(id) else {
+            let Some((tab_status, close_button_hovered)) = self.tab_statuses.get(id) else {
                 continue;
             };
 
             let bounds = layout.bounds();
 
-            let style =
-                Catalog::style(theme, &self.class, tab_status.0.unwrap_or(Status::Disabled));
+            let style = Catalog::style(theme, &self.class, tab_status.unwrap_or(Status::Inactive));
 
             if bounds.intersects(viewport) {
                 renderer.fill_quad(
@@ -581,7 +583,7 @@ where
                         font: self.text_font.unwrap_or_default(),
                         align_x: iced::widget::text::Alignment::Center,
                         align_y: iced::alignment::Vertical::Center,
-                        line_height: iced::widget::text::LineHeight::Relative(1.3),
+                        line_height: iced::widget::text::LineHeight::Relative(1.),
                         shaping: iced_core::text::Shaping::Advanced,
                         wrapping: iced::widget::text::Wrapping::default(),
                     },
@@ -591,28 +593,31 @@ where
                 );
             }
 
-            if let Some(cross_layout) = children.next() {
-                let cross_bounds = cross_layout.bounds();
-                let is_mouse_over_cross = tab_status.1.unwrap_or(false);
+            if let Some(close_button_layout) = children.next() {
+                let close_button_style = Catalog::style(theme, &self.class, Status::Inactive);
 
-                renderer.draw_svg(
-                    Icons::Close.as_core_svg(),
-                    iced::Rectangle {
-                        y: cross_bounds.center_y() - 0.5 * self.close_size,
-                        height: self.close_size,
-                        ..cross_bounds
-                    },
-                    cross_bounds,
-                );
+                let half_close_size: f32 = 0.5 * self.close_size;
 
-                if is_mouse_over_cross && cross_bounds.intersects(viewport) {
-                    renderer.fill_quad(
-                        iced_core::renderer::Quad {
-                            bounds: cross_bounds,
-                            ..iced_core::renderer::Quad::default()
-                        },
-                        style.background,
-                    );
+                let mut close_button_bounds = close_button_layout.bounds();
+                close_button_bounds.x = close_button_bounds.center_x() - half_close_size;
+                close_button_bounds.y = close_button_bounds.center_y() - half_close_size;
+                close_button_bounds.height = self.close_size;
+                close_button_bounds.width = self.close_size;
+
+                if close_button_bounds.is_within(viewport) {
+                    renderer.draw_svg(Icons::Close.as_core_svg(), close_button_bounds, *viewport);
+
+                    if *close_button_hovered {
+                        close_button_bounds = close_button_bounds.expand(self.padding);
+
+                        renderer.fill_quad(
+                            iced_core::renderer::Quad {
+                                bounds: close_button_bounds,
+                                ..iced_core::renderer::Quad::default()
+                            },
+                            close_button_style.background,
+                        );
+                    }
                 }
             }
         }

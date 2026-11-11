@@ -3,7 +3,12 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashMap, iter, str::FromStr};
+use std::{
+    collections::HashMap,
+    iter,
+    ops::{Range, RangeInclusive},
+    str::FromStr,
+};
 
 use macro_rules_attribute::derive;
 
@@ -51,6 +56,20 @@ pub trait EvaluableNode {
         match Self::Inputs::from_str(input_name) {
             Ok(variant) => variant.help().to_string(),
             Err(_parse_error) => input_name.to_string(),
+        }
+    }
+
+    fn input_suggested_range(input_name: &str) -> Option<RangeInclusive<f64>> {
+        match Self::Inputs::from_str(input_name) {
+            Ok(variant) => variant.suggested_range(),
+            Err(_parse_error) => None,
+        }
+    }
+
+    fn input_range(input_name: &str) -> Option<Range<f64>> {
+        match Self::Inputs::from_str(input_name) {
+            Ok(variant) => variant.range(),
+            Err(_parse_error) => None,
         }
     }
 
@@ -257,6 +276,34 @@ impl NodeData {
             Self::RayMarcher => RayMarcherNode::input_help(input_name),
             Self::Scene => SceneNode::input_help(input_name),
             Self::TextureRead => TextureReadNode::input_help(input_name),
+        }
+    }
+
+    pub fn input_suggested_range(&self, input_name: &str) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::Axis => AxisNode::input_suggested_range(input_name),
+            Self::Camera => CameraNode::input_suggested_range(input_name),
+            Self::Grade => GradeNode::input_suggested_range(input_name),
+            Self::Light => LightNode::input_suggested_range(input_name),
+            Self::Material => MaterialNode::input_suggested_range(input_name),
+            Self::Primitive => PrimitiveNode::input_suggested_range(input_name),
+            Self::RayMarcher => RayMarcherNode::input_suggested_range(input_name),
+            Self::Scene => SceneNode::input_suggested_range(input_name),
+            Self::TextureRead => TextureReadNode::input_suggested_range(input_name),
+        }
+    }
+
+    pub fn input_range(&self, input_name: &str) -> Option<Range<f64>> {
+        match self {
+            Self::Axis => AxisNode::input_range(input_name),
+            Self::Camera => CameraNode::input_range(input_name),
+            Self::Grade => GradeNode::input_range(input_name),
+            Self::Light => LightNode::input_range(input_name),
+            Self::Material => MaterialNode::input_range(input_name),
+            Self::Primitive => PrimitiveNode::input_range(input_name),
+            Self::RayMarcher => RayMarcherNode::input_range(input_name),
+            Self::Scene => SceneNode::input_range(input_name),
+            Self::TextureRead => TextureReadNode::input_range(input_name),
         }
     }
 

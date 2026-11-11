@@ -3,7 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::sync::{Arc, Mutex};
+use std::{
+    ops::{Range, RangeInclusive},
+    sync::{Arc, Mutex},
+};
 
 use glam::{UVec2, Vec2};
 use iced;
@@ -92,20 +95,40 @@ impl Properties {
         input_id: InputId,
         label: String,
         tooltip: String,
+        suggested_range: Option<RangeInclusive<f64>>,
+        range: Option<Range<f64>>,
         value: f32,
     ) -> iced::Element<'a, PropertiesMessage> {
-        style.slider(
-            label,
-            0.0..=1.0,
-            ..,
-            value,
-            style.float_input_step,
-            move |value| -> PropertiesMessage {
-                PropertiesMessage::InputDataChanged(input_id, InputData::Float(value))
-            },
-            PropertiesMessage::InputDataChanged(input_id, InputData::Float(value)),
-            tooltip,
-        )
+        let suggested_range: RangeInclusive<f64> = suggested_range.unwrap_or(0.0..=1.0);
+
+        let on_change = move |value| -> PropertiesMessage {
+            PropertiesMessage::InputDataChanged(input_id, InputData::Float(value as f32))
+        };
+        let on_release = PropertiesMessage::InputDataChanged(input_id, InputData::Float(value));
+
+        if let Some(range) = range {
+            style.slider(
+                label,
+                suggested_range,
+                range,
+                value.into(),
+                style.float_input_step.into(),
+                on_change,
+                on_release,
+                tooltip,
+            )
+        } else {
+            style.slider(
+                label,
+                suggested_range,
+                ..,
+                value.into(),
+                style.float_input_step.into(),
+                on_change,
+                on_release,
+                tooltip,
+            )
+        }
     }
 
     pub fn widget_for_input<'a>(
@@ -116,6 +139,9 @@ impl Properties {
     ) -> iced::Element<'a, PropertiesMessage> {
         let label: String = label_from_pascal(&input.name);
         let tooltip: String = input.input_help(&node_graph.graph);
+        let suggested_range: Option<RangeInclusive<f64>> =
+            input.input_suggested_range(&node_graph.graph);
+        let range: Option<Range<f64>> = input.input_range(&node_graph.graph);
         match input.data {
             InputData::Bool(value) => Self::bool_widget(style, input_id, label, tooltip, value),
             // InputData::BVec3(value) => {
@@ -133,7 +159,15 @@ impl Properties {
             // InputData::UVec3(value) => {
             //     Self::uvec3_widget(style, label, &value)
             // }
-            InputData::Float(value) => Self::float_widget(style, input_id, label, tooltip, value),
+            InputData::Float(value) => Self::float_widget(
+                style,
+                input_id,
+                label,
+                tooltip,
+                suggested_range,
+                range,
+                value,
+            ),
             // InputData::Vec2(value) => {
             //     Self::vec2_widget(style, label, &value)
             // }

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use indoc::indoc;
 use macro_rules_attribute::derive;
@@ -66,6 +66,15 @@ impl NodeInputData for GradeInputData {
             },
             Self::Invert => "Invert the colour.",
             Self::Transform => "A transormation matrix to apply in colour space",
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::BlackPoint | Self::WhitePoint | Self::Lift => Some(0.0..=1.0),
+            Self::Gain => Some(1e-4..=10.),
+            Self::Gamma => Some(1e-2..=2.),
+            _ => None,
         }
     }
 }

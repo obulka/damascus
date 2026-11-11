@@ -3,7 +3,11 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{any::type_name, collections::HashMap};
+use std::{
+    any::type_name,
+    collections::HashMap,
+    ops::{Range, RangeInclusive},
+};
 
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use indoc::indoc;
@@ -448,6 +452,14 @@ pub trait NodeInputData: Enumerator + Eq {
             "The one who built this node was selfish and lazy, and did
                 not bother to write a help message."
         }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        None
+    }
+
+    fn range(&self) -> Option<Range<f64>> {
+        None
     }
 
     fn hidden_by_default(&self) -> bool {

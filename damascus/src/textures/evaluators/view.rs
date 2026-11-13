@@ -232,7 +232,7 @@ impl TextureEvaluator for TextureViewer {
 
     fn output_texture_format(&self) -> wgpu::TextureFormat {
         if self.render_data.output_srgb {
-            wgpu::TextureFormat::Bgra8Unorm
+            wgpu::TextureFormat::Rgba8Unorm
         } else {
             wgpu::TextureFormat::Rgba32Float
         }

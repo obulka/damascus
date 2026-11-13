@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use glam::{Vec3, Vec4};
 use indoc::indoc;
@@ -258,6 +258,37 @@ impl NodeInputData for PrimitiveInputData {
             Self::Elongate => "Enable the elongation of the object.",
             Self::Elongation => "The elongation of the object along the respective axes.",
             Self::Axis => "The world matrix/axis of the primitive.",
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::Radius
+            | Self::Height
+            | Self::HollowRadius
+            | Self::HollowHeight
+            | Self::Width
+            | Self::Depth
+            | Self::Thickness
+            | Self::CornerRadius
+            | Self::Base
+            | Self::NegativeHeight
+            | Self::PositiveHeight
+            | Self::LowerRadius
+            | Self::UpperRadius
+            | Self::RingRadius
+            | Self::RadialExtent => Some(0.0..=10.),
+            Self::SolidAngle | Self::CapAngle => Some(0.0..=180.),
+            Self::Angle => Some(0.0..=90.),
+            Self::TubeRadius => Some(0.0..=5.),
+            Self::Power => Some(2.0..=30.),
+            Self::Iterations => Some(1.0..=30.),
+            Self::MaxSquareRadius => Some(1.0..=9.),
+            Self::Scale => Some(-5.0..=5.),
+            Self::MinSquareRadius => Some(0.001..=1.),
+            Self::FoldingLimit => Some(0.01..=2.),
+            Self::WallThickness => Some(0.001..=1.),
+            _ => None,
         }
     }
 

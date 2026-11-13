@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use indoc::indoc;
 use macro_rules_attribute::derive;
@@ -141,6 +141,14 @@ impl NodeInputData for MaterialInputData {
             Self::ScatteringColourTexture => {
                 "Texture that affects the scattering colour of this material."
             }
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::EmissiveIntensity => Some(0.0..=100.0),
+            Self::RefractiveIndex => Some(0.1..=5.),
+            _ => None,
         }
     }
 }

@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use indoc::indoc;
 use macro_rules_attribute::derive;
@@ -68,6 +68,19 @@ impl NodeInputData for CameraInputData {
             Self::EnableDepthOfField => "If enabled, this camera will render with depth of field.",
             Self::Latlong => "Output a LatLong, 360 degree field of view image.",
             Self::Axis => "The world matrix/axis of the camera.",
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::FocalLength => Some(5.0..=100.),
+            Self::FocalDistance => Some(0.1..=10.),
+            Self::FStop => Some(0.1..=30.),
+            Self::HorizontalAperture => Some(0.1..=50.),
+            Self::NearPlane => Some(0.1..=10.),
+            Self::FarPlane => Some(11.0..=10000.),
+            Self::SensorResolution => Some(1.0..=4096.),
+            _ => None,
         }
     }
 }

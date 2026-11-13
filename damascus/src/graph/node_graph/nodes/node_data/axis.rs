@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::{collections::HashMap, f32::consts::PI};
+use std::{collections::HashMap, f32::consts::PI, ops::RangeInclusive};
 
 use glam::{EulerRot, Mat4, Quat, Vec3};
 use indoc::indoc;
@@ -50,6 +50,13 @@ impl NodeInputData for AxisInputData {
                     We use uniform scale because the signed distance
                     fields cannot have their individual axes scaled."
             },
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::UniformScale => Some(0.01..=10.0),
+            _ => None,
         }
     }
 }

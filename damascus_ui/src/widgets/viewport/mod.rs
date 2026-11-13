@@ -258,8 +258,9 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         };
 
         if let Some(render_resource) = texture_viewer.render_resource() {
-            let mut pass = encoder.begin_render_pass(&render_pass_desc);
-            pass.set_viewport(
+            let mut render_pass: wgpu::RenderPass<'_> =
+                encoder.begin_render_pass(&render_pass_desc);
+            render_pass.set_viewport(
                 clip_bounds.x as f32,
                 clip_bounds.y as f32,
                 clip_bounds.width as f32,
@@ -267,7 +268,7 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
                 0.0,
                 1.0,
             );
-            render_resource.paint(&mut pass);
+            render_resource.paint(&mut render_pass);
         }
     }
 }

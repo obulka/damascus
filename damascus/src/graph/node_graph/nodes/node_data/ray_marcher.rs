@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use indoc::indoc;
 use macro_rules_attribute::derive;
@@ -142,6 +142,20 @@ impl NodeInputData for RayMarcherInputData {
                     and the distance travelled in the blue channel.
                     Each is displayed as a fraction of the maximums."
             },
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::MaxRaySteps => Some(100.0..=100000.),
+            Self::MaxBounces => Some(1.0..=100.),
+            Self::HitTolerance => Some(0.00001..=0.1),
+            Self::ShadowBias => Some(1.0..=5.),
+            Self::MaxBrightness => Some(1.0..=1000000.),
+            Self::Seed => Some(0.0..=100.),
+            Self::EquiangularSamples => Some(0.0..=10.),
+            Self::MaxLightSamplingBounces => Some(0.0..=50.),
+            _ => None,
         }
     }
 

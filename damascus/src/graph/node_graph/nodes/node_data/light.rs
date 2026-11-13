@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::RangeInclusive};
 
 use glam::{Mat4, Vec3, Vec4, Vec4Swizzles};
 use indoc::indoc;
@@ -86,6 +86,16 @@ impl NodeInputData for LightInputData {
                     \tPoint: Will affect the position of the light.\n
                     \tDirectional: Will affect the direction vector of the light."
             },
+        }
+    }
+
+    fn suggested_range(&self) -> Option<RangeInclusive<f64>> {
+        match self {
+            Self::Iterations => Some(1.0..=10.),
+            Self::Intensity => Some(0.0..=10.),
+            Self::Falloff => Some(0.0..=4.),
+            Self::ShadowHardness => Some(1.0..=100.),
+            _ => None,
         }
     }
 

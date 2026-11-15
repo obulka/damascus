@@ -22,7 +22,7 @@ pub mod pane;
 pub mod tabs;
 
 use pane::{Pane, PaneMessage};
-use tabs::{TabMessage, Tabs};
+use tabs::{Tab, TabMessage, Tabs};
 
 #[derive(Debug, Clone)]
 pub enum PanelMessage {
@@ -371,7 +371,13 @@ impl Widget<PanelMessage> for Panel {
                             }),
                             |tab_bar, tab| {
                                 let tab_count = tab_bar.size();
-                                tab_bar.push(tab_count, tab.as_tabs().variant_pascal_label())
+                                tab_bar.push(
+                                    tab_count,
+                                    match tab {
+                                        Tab::Viewport(viewport) => viewport.label(),
+                                        _ => tab.as_tabs().variant_pascal_label(),
+                                    },
+                                )
                             },
                         )
                         .set_active_tab(&pane.active_tab)

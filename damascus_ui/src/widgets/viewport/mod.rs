@@ -306,10 +306,21 @@ impl Viewport {
         self
     }
 
-    pub fn active_output_id(&self) -> Option<OutputId> {
-        if let Some(id) = self.viewport_primitive.viewport_id
+    pub fn label(&self) -> String {
+        if let Some(viewport_id) = self.viewport_primitive.viewport_id
             && let Ok(viewports) = self.context.lock()
-            && let Some(viewport) = viewports.get(id)
+            && let Some(viewport) = viewports.get(viewport_id)
+        {
+            viewport.node_context.label.clone()
+        } else {
+            "Viewport".to_string()
+        }
+    }
+
+    pub fn active_output_id(&self) -> Option<OutputId> {
+        if let Some(viewport_id) = self.viewport_primitive.viewport_id
+            && let Ok(viewports) = self.context.lock()
+            && let Some(viewport) = viewports.get(viewport_id)
             && let Some(ref active_view) = viewport.active_view
         {
             viewport.views.get(active_view).copied()

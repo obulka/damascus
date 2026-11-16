@@ -73,6 +73,7 @@ impl Widget<PaneMessage> for Pane {
                     }
                     TabMessage::New(ref tab) => {
                         self.tabs.push(tab.clone().into());
+                        self.active_tab = self.tabs.len() - 1;
                         iced::Task::none()
                     }
                     _ => iced::Task::none(),

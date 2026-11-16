@@ -10,6 +10,7 @@ use iced;
 use super::window::{Window, WindowMessage};
 use crate::{
     app::Context,
+    type_conversion::FromGlam,
     widgets::{
         Widget,
         panel::{Panel, PanelMessage},
@@ -125,14 +126,36 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         let mut windows_to_restore: std::slice::Iter<'_, Window> =
                             context.window_manager_context.windows.iter();
 
+                        let mut task = iced::Task::none();
+
                         if let Some(main_window_id) = &self.main_window_id
                             && let Some(window) = self.windows.get_mut(main_window_id)
                             && let Some(window_context) = windows_to_restore.next()
                         {
-                            *window = window_context.clone();
+                            task = iced::Task::done(
+                                WindowMessage::Opened(
+                                    *main_window_id,
+                                    Some(window_context.clone()),
+                                )
+                                .into(),
+                            );
+
+                            if let Some(window_position) = window.position {
+                                // TODO this doesnt work on wayland
+                                task = task.chain(iced::window::move_to(
+                                    *main_window_id,
+                                    iced::Point::from_glam(&window_position),
+                                ));
+                            }
+                            if let Some(window_size) = window.size {
+                                task = task.chain(iced::window::resize(
+                                    *main_window_id,
+                                    iced::Size::from_glam(&window_size),
+                                ));
+                            }
                         }
 
-                        iced::Task::batch(
+                        task = task.chain(iced::Task::batch(
                             self.windows
                                 .iter()
                                 .flat_map(|(id, _window)| {
@@ -144,13 +167,12 @@ impl Widget<WindowManagerMessage> for WindowManager {
                                         Some(*id)
                                     }
                                 })
-                                .map(|id| iced::Task::done(WindowMessage::Close(id).into()))
-                                .chain(windows_to_restore.map(|window| {
-                                    iced::Task::done(
-                                        WindowMessage::Open(Some(window.clone())).into(),
-                                    )
-                                })),
-                        )
+                                .map(|id| iced::Task::done(WindowMessage::Close(id).into())),
+                        ));
+
+                        task.chain(iced::Task::batch(windows_to_restore.map(|window| {
+                            iced::Task::done(WindowMessage::Open(Some(window.clone())).into())
+                        })))
                     }
                     _ => iced::Task::none(),
                 };
@@ -172,12 +194,12 @@ impl Widget<WindowManagerMessage> for WindowManager {
                             // iced::window::Event::Closed,
                             iced::window::Event::Moved(point) => {
                                 if let Some(window) = self.windows.get_mut(&id) {
-                                    window.position = Some(glam::Vec2::new(point.x, point.y));
+                                    window.position = Some(point.to_glam());
                                 }
                             }
                             iced::window::Event::Resized(size) => {
                                 if let Some(window) = self.windows.get_mut(&id) {
-                                    window.size = Some(glam::Vec2::new(size.width, size.height));
+                                    window.size = Some(size.to_glam());
                                 }
                             }
                             // iced::window::Event::Rescaled(scale) => {
@@ -203,13 +225,12 @@ impl Widget<WindowManagerMessage> for WindowManager {
                         let mut size = iced::Size::default();
                         if let Some(ref window) = window {
                             if let Some(window_position) = window.position {
-                                position = iced::window::Position::Specific(iced::Point::new(
-                                    window_position.x,
-                                    window_position.y,
-                                ));
+                                position = iced::window::Position::Specific(
+                                    iced::Point::from_glam(&window_position),
+                                );
                             }
                             if let Some(window_size) = window.size {
-                                size = iced::Size::new(window_size.x, window_size.y);
+                                size = iced::Size::from_glam(&window_size);
                             }
                         }
 
@@ -230,6 +251,10 @@ impl Widget<WindowManagerMessage> for WindowManager {
 
                         self.windows
                             .insert(id, window.map_or(Window::new(), |window| window));
+
+                        if let Some(window) = self.windows.get_mut(&id) {
+                            window.on_create(context);
+                        }
 
                         iced::Task::batch(std::iter::once(focus_input).chain(std::iter::once(
                             iced::Task::done(WindowMessage::UpdateTitle),

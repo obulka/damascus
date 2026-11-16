@@ -462,12 +462,11 @@ impl iced::widget::shader::Program<ViewportMessage> for Viewport {
 }
 
 impl Widget<ViewportMessage> for Viewport {
-    fn update(
-        &mut self,
-        context: &mut Context,
-        message: ViewportMessage,
-    ) -> iced::Task<ViewportMessage> {
+    fn on_create(&mut self, context: &mut Context) {
         // Initialize our pointers to the shared app data
+        if !Arc::ptr_eq(&self.context, &context.viewports) {
+            self.context = Arc::clone(&context.viewports);
+        }
         if !Arc::ptr_eq(
             &self.viewport_primitive.node_graph_context,
             &context.node_graph,
@@ -475,10 +474,13 @@ impl Widget<ViewportMessage> for Viewport {
             self.viewport_primitive.node_graph_context = Arc::clone(&context.node_graph);
             self.create_viewport(context);
         }
-        if !Arc::ptr_eq(&self.context, &context.viewports) {
-            self.context = Arc::clone(&context.viewports);
-        }
+    }
 
+    fn update(
+        &mut self,
+        context: &mut Context,
+        message: ViewportMessage,
+    ) -> iced::Task<ViewportMessage> {
         match message {
             ViewportMessage::ProgramEvent(event) => match event {
                 iced::Event::Mouse(mouse_event) => self.handle_mouse_event(&mouse_event),

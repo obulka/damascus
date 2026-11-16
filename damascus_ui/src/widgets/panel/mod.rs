@@ -37,6 +37,7 @@ pub enum PanelMessage {
     Close(iced::widget::pane_grid::Pane),
     CloseFocused,
     Detach(iced::widget::pane_grid::Pane),
+    FocusChanged,
     Pane(iced::widget::pane_grid::Pane, PaneMessage),
 }
 
@@ -261,9 +262,10 @@ impl Widget<PanelMessage> for Panel {
 
                 if let Some((pane, _)) = result {
                     self.focus = Some(pane);
+                    iced::Task::done(PanelMessage::FocusChanged)
+                } else {
+                    iced::Task::none()
                 }
-
-                iced::Task::none()
             }
             PanelMessage::SplitFocused(axis) => {
                 if let Some(pane) = self.focus {
@@ -271,24 +273,28 @@ impl Widget<PanelMessage> for Panel {
 
                     if let Some((pane, _)) = result {
                         self.focus = Some(pane);
+                        iced::Task::done(PanelMessage::FocusChanged)
+                    } else {
+                        iced::Task::none()
                     }
+                } else {
+                    iced::Task::none()
                 }
-
-                iced::Task::none()
             }
             PanelMessage::FocusAdjacent(direction) => {
                 if let Some(pane) = self.focus
                     && let Some(adjacent) = self.panes.adjacent(pane, direction)
                 {
                     self.focus = Some(adjacent);
+                    iced::Task::done(PanelMessage::FocusChanged)
+                } else {
+                    iced::Task::none()
                 }
-
-                iced::Task::none()
             }
             PanelMessage::Clicked(pane) => {
                 self.focus = Some(pane);
 
-                iced::Task::none()
+                iced::Task::done(PanelMessage::FocusChanged)
             }
             PanelMessage::Resized(iced::widget::pane_grid::ResizeEvent { split, ratio }) => {
                 self.panes.resize(split, ratio);
@@ -319,14 +325,32 @@ impl Widget<PanelMessage> for Panel {
                     iced::Task::none()
                 }
             }
+            PanelMessage::FocusChanged => {
+                if let Some(pane) = self.focus
+                    && let Some(pane_widget) = self.panes.get_mut(pane)
+                    && let Some(tab) = pane_widget.active_tab_mut()
+                    && let Tab::Properties(properties) = tab
+                {
+                    if let Some(properties_id) = properties.id()
+                        && let Ok(mut node_graph) = context.node_graph.lock()
+                    {
+                        node_graph.active_properties = Some(*properties_id);
+                    } else {
+                        properties.create_properties(context);
+                    }
+                }
+                iced::Task::none()
+            }
             PanelMessage::Detach(pane_id) => {
                 self.panes.close(pane_id);
                 if let Some(focused_pane) = self.focus
                     && focused_pane == pane_id
                 {
                     self.focus = None;
+                    iced::Task::done(PanelMessage::FocusChanged)
+                } else {
+                    iced::Task::none()
                 }
-                iced::Task::none()
             }
             PanelMessage::Pane(pane_id, pane_message) => {
                 if let Some(pane_widget) = self.panes.get_mut(pane_id) {
@@ -375,6 +399,7 @@ impl Widget<PanelMessage> for Panel {
                                     tab_count,
                                     match tab {
                                         Tab::Viewport(viewport) => viewport.label(),
+                                        Tab::Properties(properties) => properties.label(),
                                         _ => tab.as_tabs().variant_pascal_label(),
                                     },
                                 )

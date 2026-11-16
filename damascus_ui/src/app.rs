@@ -20,7 +20,7 @@ use crate::{
             pane::PaneMessage,
             tabs::{Tab, TabMessage},
         },
-        properties::PropertiesMessage,
+        properties::{PropertiesContexts as Properties, PropertiesMessage},
         style::{
             Style,
             editor::{StyleEditorFields, StyleEditorMessage},
@@ -120,6 +120,7 @@ pub struct Context {
     pub window_manager_context: WindowManagerContext,
     pub node_graph: Arc<Mutex<NodeGraphContext>>,
     pub viewports: Arc<Mutex<Viewports>>,
+    pub properties: Arc<Mutex<Properties>>,
     #[serde(skip)]
     pub keyboard_modifiers: iced::keyboard::Modifiers,
 }
@@ -133,6 +134,7 @@ impl Default for Context {
             window_manager_context: WindowManagerContext::default(),
             node_graph: Arc::new(Mutex::new(NodeGraphContext::default())),
             viewports: Arc::new(Mutex::new(Viewports::default())),
+            properties: Arc::new(Mutex::new(Properties::default())),
             keyboard_modifiers: iced::keyboard::Modifiers::NONE,
         }
     }
@@ -193,7 +195,13 @@ impl Damascus {
 
         let context = Context::default();
 
-        let (_, open) = iced::window::open(iced::window::Settings::default());
+        let (_, open) = iced::window::open(iced::window::Settings {
+            platform_specific: iced::window::settings::PlatformSpecific {
+                application_id: "com.damascus.app".to_string(),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
 
         (
             Self {
@@ -284,53 +292,35 @@ impl Damascus {
                     PanelMessage::Pane(
                         _pane,
                         PaneMessage::Tab(TabMessage::NodeGraph(NodeGraphMessage::OpenProperties(
+                            properties_id,
                             node_id,
                         ))),
                     ),
                 ))) => {
-                    let mut task: Option<(
-                        iced::window::Id,
-                        iced::widget::pane_grid::Pane,
-                        iced::Task<PropertiesMessage>,
-                    )> = None;
+                    let mut tasks = Vec::<Message>::new();
                     for (window_id, window) in self.window_manager.windows.iter_mut() {
                         for (pane_id, pane) in window.panel.panes.panes.iter_mut() {
-                            for tab in pane.tabs.iter_mut() {
-                                let Tab::Properties(properties) = tab else {
-                                    continue;
-                                };
-
-                                task = Some((
-                                    *window_id,
-                                    *pane_id,
-                                    properties.update(
-                                        &mut self.context,
-                                        PropertiesMessage::OpenNodeProperties(node_id),
-                                    ),
-                                ));
-
-                                break;
-                            }
-                            if task.is_some() {
-                                break;
+                            for (_tab_index, tab) in pane.tabs.iter_mut().enumerate() {
+                                if let Tab::Properties(properties) = tab
+                                    && properties_id == *properties.id()
+                                {
+                                    tasks.push(Message::WindowManager(
+                                        WindowManagerMessage::Window(WindowMessage::Panel(
+                                            Some(*window_id),
+                                            PanelMessage::Pane(
+                                                *pane_id,
+                                                PaneMessage::Tab(TabMessage::Properties(
+                                                    PropertiesMessage::OpenNodeProperties(node_id),
+                                                )),
+                                            ),
+                                        )),
+                                    ))
+                                }
                             }
                         }
-                        if task.is_some() {
-                            break;
-                        }
                     }
-                    if let Some((window_id, pane_id, task)) = task {
-                        task.map(move |message| {
-                            Message::WindowManager(WindowManagerMessage::Window(
-                                WindowMessage::Panel(
-                                    Some(window_id),
-                                    PanelMessage::Pane(pane_id, PaneMessage::Tab(message.into())),
-                                ),
-                            ))
-                        })
-                    } else {
-                        iced::Task::none()
-                    }
+
+                    iced::Task::batch(tasks.into_iter().map(|message| iced::Task::done(message)))
                 }
                 Message::WindowManager(WindowManagerMessage::Window(WindowMessage::Panel(
                     _window_id,

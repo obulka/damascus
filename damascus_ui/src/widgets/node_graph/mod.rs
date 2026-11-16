@@ -33,6 +33,7 @@ use crate::{
     app::Context,
     type_conversion::{FromGlam, ToPath},
     widgets::{
+        properties::PropertiesId,
         style::Style,
         viewport::{ViewportContext, ViewportId, Viewports},
     },
@@ -56,6 +57,7 @@ pub struct NodeGraphContext {
     pub selected_nodes: HashSet<NodeId>,
     pub selected_viewports: HashSet<ViewportId>,
     pub active_viewport: Option<ViewportId>,
+    pub active_properties: Option<PropertiesId>,
 }
 
 impl NodeGraphContext {
@@ -88,7 +90,7 @@ pub enum NodeGraphMessage {
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
     RemovedViewports(HashSet<ViewportId>),
     NewViewport(ViewportId),
-    OpenProperties(NodeId),
+    OpenProperties(Option<PropertiesId>, NodeId),
     DoubleClick,
     #[serde(skip)]
     CanvasEvent(iced::Event),
@@ -795,7 +797,10 @@ impl NodeGraph {
         };
 
         if let Some(node_id) = self.hovered_node(&mut node_graph) {
-            iced::Task::done(NodeGraphMessage::OpenProperties(node_id))
+            iced::Task::done(NodeGraphMessage::OpenProperties(
+                node_graph.active_properties,
+                node_id,
+            ))
         } else {
             iced::Task::none()
         }
@@ -1447,11 +1452,7 @@ impl iced::widget::canvas::Program<NodeGraphMessage> for NodeGraph {
 }
 
 impl Widget<NodeGraphMessage> for NodeGraph {
-    fn update(
-        &mut self,
-        context: &mut Context,
-        message: NodeGraphMessage,
-    ) -> iced::Task<NodeGraphMessage> {
+    fn on_create(&mut self, context: &mut Context) {
         // Initialize our pointers to the shared app data
         if !Arc::ptr_eq(&self.context, &context.node_graph) {
             self.context = Arc::clone(&context.node_graph);
@@ -1460,7 +1461,13 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         if !Arc::ptr_eq(&self.viewport_context, &context.viewports) {
             self.viewport_context = Arc::clone(&context.viewports);
         }
+    }
 
+    fn update(
+        &mut self,
+        context: &mut Context,
+        message: NodeGraphMessage,
+    ) -> iced::Task<NodeGraphMessage> {
         match message {
             NodeGraphMessage::UpdateStyle => {
                 self.style = context.default_style.clone();

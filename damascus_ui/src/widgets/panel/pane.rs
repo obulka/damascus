@@ -44,7 +44,31 @@ impl Default for Pane {
     }
 }
 
+impl Pane {
+    pub fn active_tab(&self) -> Option<&Tab> {
+        if self.tabs.len() > self.active_tab {
+            Some(&self.tabs[self.active_tab])
+        } else {
+            None
+        }
+    }
+
+    pub fn active_tab_mut(&mut self) -> Option<&mut Tab> {
+        if self.tabs.len() > self.active_tab {
+            Some(&mut self.tabs[self.active_tab])
+        } else {
+            None
+        }
+    }
+}
+
 impl Widget<PaneMessage> for Pane {
+    fn on_create(&mut self, context: &mut Context) {
+        for tab in self.tabs.iter_mut() {
+            tab.on_create(context);
+        }
+    }
+
     fn update(&mut self, context: &mut Context, message: PaneMessage) -> iced::Task<PaneMessage> {
         match message {
             PaneMessage::Tab(tab_message) => {
@@ -74,6 +98,14 @@ impl Widget<PaneMessage> for Pane {
                     TabMessage::New(ref tab) => {
                         self.tabs.push(tab.clone().into());
                         self.active_tab = self.tabs.len() - 1;
+
+                        match self.tabs[self.active_tab] {
+                            Tab::Properties(ref mut properties) => {
+                                properties.on_create(context);
+                            }
+                            _ => {}
+                        }
+
                         iced::Task::none()
                     }
                     _ => iced::Task::none(),

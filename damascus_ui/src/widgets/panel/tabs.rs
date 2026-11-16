@@ -152,6 +152,15 @@ impl From<Tab> for Tabs {
 }
 
 impl Widget<TabMessage> for Tab {
+    fn on_create(&mut self, context: &mut Context) {
+        match self {
+            Self::NodeGraph(node_graph) => node_graph.on_create(context),
+            Self::Viewport(viewport) => viewport.on_create(context),
+            Self::Properties(properties) => properties.on_create(context),
+            _ => {}
+        }
+    }
+
     fn update(&mut self, context: &mut Context, message: TabMessage) -> iced::Task<TabMessage> {
         match self {
             Self::NodeGraph(node_graph) => match message {

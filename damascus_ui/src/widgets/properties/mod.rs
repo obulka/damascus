@@ -4,17 +4,18 @@
 // LICENSE file in the root directory of this source tree.
 
 use std::{
+    fmt,
     ops::{Range, RangeInclusive},
     sync::{Arc, Mutex},
 };
 
-use glam::{UVec2, Vec2};
 use iced;
 use indexmap::IndexSet;
 use itertools::intersperse_with;
-use slotmap::{SecondaryMap, SlotMap};
+use slotmap::SlotMap;
 
 use damascus::{
+    Enumerator,
     graph::node_graph::{
         inputs::{InputId, input::Input, input_data::InputData},
         nodes::NodeId,
@@ -24,12 +25,46 @@ use damascus::{
 
 use crate::app::Context;
 
-use super::{Style, Widget, node_graph::NodeGraphContext};
+use super::{Style, Widget, node_graph::NodeGraphContext, panel::tabs::Tabs};
+
+slotmap::new_key_type! { pub struct PropertiesId; }
+
+impl fmt::Display for PropertiesId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self.0)
+    }
+}
+
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+pub struct PropertiesContext {
+    pub open_properties: IndexSet<NodeId>,
+}
+
+impl Default for PropertiesContext {
+    fn default() -> Self {
+        Self {
+            open_properties: IndexSet::<NodeId>::new(),
+        }
+    }
+}
+
+impl PropertiesContext {
+    pub fn open(&mut self, node_id: NodeId) {
+        self.open_properties.shift_remove(&node_id);
+        self.open_properties.insert(node_id);
+    }
+
+    pub fn close(&mut self, node_id: NodeId) {
+        self.open_properties.shift_remove(&node_id);
+    }
+}
+
+pub type PropertiesContexts = SlotMap<PropertiesId, PropertiesContext>;
 
 #[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
 pub enum PropertiesMessage {
+    CloseNodeProperties(Option<PropertiesId>, NodeId),
     OpenNodeProperties(NodeId),
-    CloseNodeProperties(NodeId),
     InputDataChanged(InputId, InputData),
     #[default]
     None,
@@ -39,31 +74,46 @@ pub enum PropertiesMessage {
 #[serde(default)]
 pub struct Properties {
     #[serde(skip)]
+    context: Arc<Mutex<PropertiesContexts>>,
+    #[serde(skip)]
     node_graph_context: Arc<Mutex<NodeGraphContext>>,
-    open_properties: IndexSet<NodeId>,
+    properties_id: Option<PropertiesId>,
 }
 
 impl Default for Properties {
     fn default() -> Self {
         Self {
+            context: Arc::default(),
             node_graph_context: Arc::default(),
-            open_properties: IndexSet::<NodeId>::new(),
+            properties_id: None,
         }
     }
 }
 
 impl Properties {
-    pub fn open(&mut self, node_id: NodeId) -> iced::Task<PropertiesMessage> {
-        self.open_properties.shift_remove(&node_id);
-        self.open_properties.insert(node_id);
-
-        iced::Task::none()
+    pub fn id(&self) -> &Option<PropertiesId> {
+        &self.properties_id
     }
 
-    pub fn close(&mut self, node_id: NodeId) -> iced::Task<PropertiesMessage> {
-        self.open_properties.shift_remove(&node_id);
+    pub fn set_id(&mut self, id: PropertiesId) {
+        self.properties_id = Some(id);
+    }
 
-        iced::Task::none()
+    pub fn with_id(mut self, id: PropertiesId) -> Self {
+        self.set_id(id);
+        self
+    }
+
+    pub fn default_label() -> String {
+        Tabs::Properties.variant_pascal_label()
+    }
+
+    pub fn label(&self) -> String {
+        if let Some(properties_id) = self.properties_id {
+            format!("{}{}", Self::default_label(), properties_id)
+        } else {
+            Self::default_label()
+        }
     }
 
     pub fn bool_widget<'a>(
@@ -205,6 +255,7 @@ impl Properties {
     }
 
     pub fn node_title_bar<'a>(
+        &'a self,
         style: &'a Style,
         node_id: NodeId,
         label: String,
@@ -215,7 +266,10 @@ impl Properties {
             style
                 .close_button()
                 .style(iced::widget::button::background)
-                .on_press(PropertiesMessage::CloseNodeProperties(node_id)),
+                .on_press(PropertiesMessage::CloseNodeProperties(
+                    self.properties_id,
+                    node_id
+                )),
         ]
         .spacing(style.spacing)
         .into()
@@ -243,7 +297,7 @@ impl Properties {
         let node_is_selected: bool = node_graph.selected_nodes.contains(node_id);
 
         iced::widget::container(iced::widget::column(
-            std::iter::once(Self::node_title_bar(style, *node_id, label))
+            std::iter::once(self.node_title_bar(style, *node_id, label))
                 .chain(Self::input_widgets_for_node(style, &node_graph, node_id)),
         ))
         .padding(style.border_width + style.padding)
@@ -259,22 +313,57 @@ impl Properties {
         })
         .into()
     }
+
+    pub fn create_properties(&mut self, context: &mut Context) {
+        if self.properties_id.is_none()
+            && let Ok(mut properties) = context.properties.lock()
+            && let Ok(mut node_graph) = context.node_graph.lock()
+        {
+            self.properties_id = Some(properties.insert(PropertiesContext::default()));
+            node_graph.active_properties = self.properties_id;
+        }
+    }
 }
 
 impl Widget<PropertiesMessage> for Properties {
+    fn on_create(&mut self, context: &mut Context) {
+        // Initialize our pointers to the shared app data
+        if !Arc::ptr_eq(&self.node_graph_context, &context.node_graph) {
+            self.node_graph_context = Arc::clone(&context.node_graph);
+        }
+        if !Arc::ptr_eq(&self.context, &context.properties) {
+            self.context = Arc::clone(&context.properties);
+            self.create_properties(context);
+        }
+    }
+
     fn update(
         &mut self,
         context: &mut Context,
         message: PropertiesMessage,
     ) -> iced::Task<PropertiesMessage> {
-        // Initialize our pointers to the shared app data
-        if !Arc::ptr_eq(&self.node_graph_context, &context.node_graph) {
-            self.node_graph_context = Arc::clone(&context.node_graph);
-        }
-
         match message {
-            PropertiesMessage::OpenNodeProperties(node_id) => self.open(node_id),
-            PropertiesMessage::CloseNodeProperties(node_id) => self.close(node_id),
+            PropertiesMessage::OpenNodeProperties(node_id) => {
+                if let Ok(mut properties) = context.properties.lock()
+                    && let Some(properties_id) = self.properties_id
+                    && let Some(properties_context) = properties.get_mut(properties_id)
+                {
+                    properties_context.open(node_id);
+                }
+
+                iced::Task::none()
+            }
+            PropertiesMessage::CloseNodeProperties(properties_id, node_id) => {
+                if properties_id == self.properties_id
+                    && let Some(id) = properties_id
+                    && let Ok(mut properties) = context.properties.lock()
+                    && let Some(properties_context) = properties.get_mut(id)
+                {
+                    properties_context.close(node_id);
+                }
+
+                iced::Task::none()
+            }
             PropertiesMessage::InputDataChanged(input_id, input_data) => {
                 let Ok(mut node_graph) = self.node_graph_context.lock() else {
                     return iced::Task::none();
@@ -298,21 +387,32 @@ impl Widget<PropertiesMessage> for Properties {
         style: &'a Style,
     ) -> iced::Element<'a, PropertiesMessage> {
         iced::widget::scrollable(
-            iced::widget::column(intersperse_with(
-                self.open_properties.iter().rev().map(|node_id| {
-                    iced::widget::column![self.widgets_for_node(style, node_id)].into()
-                }),
-                || -> iced::Element<'a, PropertiesMessage> {
-                    iced::widget::rule::horizontal(style.border_width)
-                        .style(|theme: &iced::Theme| iced::widget::rule::Style {
-                            color: theme.extended_palette().background.strong.color,
-                            radius: (0.5 * style.border_width).into(),
-                            fill_mode: iced::widget::rule::FillMode::Full,
-                            snap: false,
-                        })
-                        .into()
-                },
-            ))
+            if let Some(properties_id) = self.properties_id
+                && let Ok(properties) = self.context.lock()
+                && let Some(properties_context) = properties.get(properties_id)
+            {
+                iced::widget::column(intersperse_with(
+                    properties_context
+                        .open_properties
+                        .iter()
+                        .rev()
+                        .map(|node_id| {
+                            iced::widget::column![self.widgets_for_node(style, node_id)].into()
+                        }),
+                    || -> iced::Element<'a, PropertiesMessage> {
+                        iced::widget::rule::horizontal(style.border_width)
+                            .style(|theme: &iced::Theme| iced::widget::rule::Style {
+                                color: theme.extended_palette().background.strong.color,
+                                radius: (0.5 * style.border_width).into(),
+                                fill_mode: iced::widget::rule::FillMode::Full,
+                                snap: false,
+                            })
+                            .into()
+                    },
+                ))
+            } else {
+                iced::widget::column![]
+            }
             .padding(style.padding)
             .spacing(style.spacing),
         )

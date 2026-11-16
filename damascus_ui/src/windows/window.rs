@@ -10,12 +10,7 @@ use crate::{
     app::Context,
     widgets::{
         Widget, modal,
-        node_graph::NodeGraph,
-        panel::{
-            Panel, PanelAxis, PanelContext, PanelMessage,
-            pane::Pane,
-            tabs::{Tab, Tabs},
-        },
+        panel::{Panel, PanelAxis, PanelContext, PanelMessage, pane::Pane, tabs::Tabs},
         style::{
             Style,
             editor::{StyleEditor, StyleEditorMessage},
@@ -84,7 +79,7 @@ impl Default for Window {
                     })),
                     b: Box::new(PanelContext::<Pane>::Pane(Pane {
                         active_tab: 0,
-                        tabs: vec![Tab::NodeGraph(NodeGraph::default())],
+                        tabs: vec![Tabs::NodeGraph.into()],
                     })),
                 }),
                 b: Box::new(PanelContext::<Pane>::Pane(Pane {
@@ -99,6 +94,12 @@ impl Default for Window {
 }
 
 impl Widget<WindowMessage> for Window {
+    fn on_create(&mut self, context: &mut Context) {
+        for (_pane_id, pane) in self.panel.panes.panes.iter_mut() {
+            pane.on_create(context);
+        }
+    }
+
     fn update(
         &mut self,
         _context: &mut Context,

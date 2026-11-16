@@ -30,6 +30,8 @@ pub trait Widget<WidgetMessage: Clone>:
         Self::default()
     }
 
+    fn on_create(&mut self, _context: &mut Context) {}
+
     fn update(
         &mut self,
         _context: &mut Context,

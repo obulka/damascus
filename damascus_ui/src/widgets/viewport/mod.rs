@@ -15,6 +15,7 @@ use slotmap::{SecondaryMap, SlotMap};
 use wgpu;
 
 use damascus::{
+    Enumerator,
     geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
     graph::node_graph::outputs::OutputId,
@@ -27,6 +28,7 @@ use super::{
     Style, Widget,
     node_graph::{NodeGraphContext as NodeGraph, node::NodeContext},
     pan_zoom::{PanZoom, PanZoomMessage},
+    panel::tabs::Tabs,
 };
 
 slotmap::new_key_type! { pub struct ViewportId; }
@@ -306,6 +308,10 @@ impl Viewport {
         self
     }
 
+    pub fn default_label() -> String {
+        Tabs::Viewport.variant_pascal_label()
+    }
+
     pub fn label(&self) -> String {
         if let Some(viewport_id) = self.viewport_primitive.viewport_id
             && let Ok(viewports) = self.context.lock()
@@ -313,7 +319,7 @@ impl Viewport {
         {
             viewport.node_context.label.clone()
         } else {
-            "Viewport".to_string()
+            Self::default_label()
         }
     }
 
@@ -348,7 +354,8 @@ impl Viewport {
         {
             self.viewport_primitive.viewport_id = Some(viewports.insert_with_key(|id| {
                 let mut viewport_context = ViewportContext::default();
-                viewport_context.node_context = NodeContext::new(format!("Viewport{}", id));
+                viewport_context.node_context =
+                    NodeContext::new(format!("{}{}", Self::default_label(), id));
                 viewport_context
             }));
 

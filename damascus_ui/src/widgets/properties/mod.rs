@@ -260,18 +260,34 @@ impl Properties {
         node_id: NodeId,
         label: String,
     ) -> iced::Element<'a, PropertiesMessage> {
-        iced::widget::row![
+        iced::widget::container(iced::widget::row![
             style.text(label),
             Style::horizontal_spacer(),
-            style
-                .close_button()
-                .style(iced::widget::button::background)
-                .on_press(PropertiesMessage::CloseNodeProperties(
-                    self.properties_id,
-                    node_id
-                )),
-        ]
-        .spacing(style.spacing)
+            style.tooltip(
+                style
+                    .close_button()
+                    .style(|theme, status| iced::widget::button::Style {
+                        background: Some(iced::Background::Color(match status {
+                            iced::widget::button::Status::Hovered =>
+                                theme.extended_palette().background.weaker.color,
+                            _ => theme.extended_palette().background.weakest.color,
+                        })),
+                        ..iced::widget::button::Style::default()
+                    })
+                    .on_press(PropertiesMessage::CloseNodeProperties(
+                        self.properties_id,
+                        node_id
+                    )),
+                "Close properties",
+            ),
+        ])
+        .style(|theme| iced::widget::container::Style {
+            background: Some(iced::Background::Color(
+                theme.extended_palette().background.weakest.color,
+            )),
+            ..iced::widget::container::Style::default()
+        })
+        .padding(style.padding)
         .into()
     }
 
@@ -297,10 +313,14 @@ impl Properties {
         let node_is_selected: bool = node_graph.selected_nodes.contains(node_id);
 
         iced::widget::container(iced::widget::column(
-            std::iter::once(self.node_title_bar(style, *node_id, label))
-                .chain(Self::input_widgets_for_node(style, &node_graph, node_id)),
+            std::iter::once(self.node_title_bar(style, *node_id, label)).chain(std::iter::once(
+                iced::widget::column(Self::input_widgets_for_node(style, &node_graph, node_id))
+                    .padding(style.padding)
+                    .spacing(style.spacing)
+                    .into(),
+            )),
         ))
-        .padding(style.border_width + style.padding)
+        .padding(style.border_width)
         .style(move |theme| iced::widget::container::Style {
             border: if node_is_selected {
                 iced::Border::default()

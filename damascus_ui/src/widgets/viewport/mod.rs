@@ -474,6 +474,8 @@ impl Widget<ViewportMessage> for Viewport {
             self.viewport_primitive.node_graph_context = Arc::clone(&context.node_graph);
             self.create_viewport(context);
         }
+
+        self.pan_zoom.on_create(context);
     }
 
     fn update(

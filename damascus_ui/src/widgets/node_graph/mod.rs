@@ -1461,6 +1461,9 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         if !Arc::ptr_eq(&self.viewport_context, &context.viewports) {
             self.viewport_context = Arc::clone(&context.viewports);
         }
+
+        self.pan_zoom.on_create(context);
+        self.selection_box.on_create(context);
     }
 
     fn update(

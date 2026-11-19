@@ -206,39 +206,50 @@ impl Panel {
         is_maximized: bool,
     ) -> iced::Element<'a, PanelMessage> {
         iced::widget::row![
-            style
-                .horizontal_split_button()
-                .on_press(PanelMessage::Split(
-                    iced::widget::pane_grid::Axis::Horizontal,
+            style.tooltip(
+                style
+                    .horizontal_split_button()
+                    .on_press(PanelMessage::Split(
+                        iced::widget::pane_grid::Axis::Horizontal,
+                        pane,
+                    )),
+                "Split pane horizontally",
+            ),
+            style.tooltip(
+                style.vertical_split_button().on_press(PanelMessage::Split(
+                    iced::widget::pane_grid::Axis::Vertical,
                     pane,
                 )),
-            style.vertical_split_button().on_press(PanelMessage::Split(
-                iced::widget::pane_grid::Axis::Vertical,
-                pane,
-            )),
+                "Split pane vertically",
+            ),
             if total_panes > 1 {
-                Some(
-                    style
-                        .maximize_button(is_maximized)
-                        .on_press(if is_maximized {
-                            PanelMessage::Restore
+                Some(iced::widget::row![
+                    style.tooltip(
+                        style
+                            .maximize_button(is_maximized)
+                            .on_press(if is_maximized {
+                                PanelMessage::Restore
+                            } else {
+                                PanelMessage::Maximize(pane)
+                            }),
+                        if is_maximized {
+                            "Exit full screen"
                         } else {
-                            PanelMessage::Maximize(pane)
-                        }),
-                )
+                            "Enter full screen"
+                        },
+                    ),
+                    style.tooltip(
+                        style.detach_button().on_press(PanelMessage::Detach(pane)),
+                        "Detach pane into new window",
+                    ),
+                    style.tooltip(
+                        style.close_button().on_press(PanelMessage::Close(pane)),
+                        "Close pane",
+                    ),
+                ])
             } else {
                 None
             },
-            style.detach_button().on_press_maybe(if total_panes > 1 {
-                Some(PanelMessage::Detach(pane))
-            } else {
-                None
-            }),
-            style.close_button().on_press_maybe(if total_panes > 1 {
-                Some(PanelMessage::Close(pane))
-            } else {
-                None
-            }),
         ]
         .spacing(style.spacing)
         .into()
@@ -377,15 +388,18 @@ impl Widget<PanelMessage> for Panel {
 
             let title_bar = iced::widget::pane_grid::TitleBar::new(
                 iced::widget::row![
-                    style.dropdown_menu(
-                        Tabs::iter()
-                            .map(|variant| variant.variant_pascal_label())
-                            .collect::<Vec<String>>(),
-                        String::new(),
-                        Some(Icons::Plus.as_core_svg()),
-                        move |option| -> PanelMessage {
-                            PanelMessage::Pane(id, TabMessage::from_str(&option).into())
-                        },
+                    style.tooltip(
+                        style.dropdown_menu(
+                            Tabs::iter()
+                                .map(|variant| variant.variant_pascal_label())
+                                .collect::<Vec<String>>(),
+                            String::new(),
+                            Some(Icons::Plus.as_core_svg()),
+                            move |option| -> PanelMessage {
+                                PanelMessage::Pane(id, TabMessage::from_str(&option).into())
+                            },
+                        ),
+                        "New tab"
                     ),
                     pane.tabs
                         .iter()

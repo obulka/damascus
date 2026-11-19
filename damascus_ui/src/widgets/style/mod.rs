@@ -109,7 +109,7 @@ impl Style {
             .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
     }
 
-    pub fn tooltip<'a, Message: 'a>(
+    pub fn tooltip_label<'a, Message: 'a>(
         &'a self,
         message: impl iced::widget::text::IntoFragment<'a>,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
@@ -132,6 +132,23 @@ impl Style {
         )
     }
 
+    pub fn tooltip<'a, Message: 'a>(
+        &'a self,
+        widget: impl Into<iced::Element<'a, Message>>,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::widget::Tooltip<'a, Message> {
+        iced::widget::tooltip(
+            widget,
+            iced::widget::container(
+                self.text(tooltip)
+                    .align_y(iced::alignment::Vertical::Center),
+            )
+            .style(iced::widget::container::bordered_box)
+            .padding(self.padding),
+            iced::widget::tooltip::Position::Bottom,
+        )
+    }
+
     pub fn filepath<'a, Message: Clone + 'a>(
         &'a self,
         label: impl iced::widget::text::IntoFragment<'a>,
@@ -140,7 +157,7 @@ impl Style {
         on_input: impl Fn(String) -> Message + 'a,
     ) -> iced::Element<'a, Message> {
         iced::widget::row![
-            self.tooltip(label, tooltip,),
+            self.tooltip_label(label, tooltip),
             iced::widget::text_input("", &path)
                 .width(iced::Length::FillPortion(4))
                 .padding(self.padding)
@@ -160,7 +177,7 @@ impl Style {
         on_toggle: impl Fn(bool) -> Message + 'a,
     ) -> iced::Element<'a, Message> {
         iced::widget::row![
-            self.tooltip(label, tooltip,),
+            self.tooltip_label(label, tooltip,),
             iced::widget::checkbox(value)
                 .spacing(self.spacing)
                 .text_size(self.text_size)
@@ -379,7 +396,7 @@ impl Style {
         Message: Clone + 'a,
     {
         iced::widget::row![
-            self.tooltip(name, tooltip,),
+            self.tooltip_label(name, tooltip),
             iced::widget::pick_list(
                 T::iter()
                     .map(|variant| variant.variant_pascal_label())
@@ -446,7 +463,7 @@ impl Style {
         f64: From<T> + 'a,
     {
         iced::widget::row![
-            self.tooltip(name, tooltip),
+            self.tooltip_label(name, tooltip),
             // TODO BUG when highlighting ex 123 and hitting 1 can panic
             // bring this in so we can fix and add better editing control
             iced_aw::widget::number_input(&value, limit_range, on_change)
@@ -518,7 +535,7 @@ impl Style {
         // TODO this should probably be absorbed for more control over behaviour
 
         iced::widget::row![
-            self.tooltip(name, tooltip,),
+            self.tooltip_label(name, tooltip),
             iced_aw::helpers::color_picker(
                 picking,
                 color,

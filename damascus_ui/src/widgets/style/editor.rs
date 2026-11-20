@@ -200,7 +200,7 @@ impl StyleEditorData {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub enum StyleEditorMessage {
     Increment(StyleEditorFields),
     Decrement(StyleEditorFields),
@@ -208,6 +208,8 @@ pub enum StyleEditorMessage {
     Toggle(StyleEditorFields),
     Error(StyleEditorErrors),
     StyleChanged,
+    #[default]
+    None,
 }
 
 impl From<StyleEditorErrors> for StyleEditorMessage {

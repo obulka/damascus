@@ -461,21 +461,24 @@ impl Style {
             + 'static,
         <T as FromStr>::Err: std::fmt::Debug,
         F: Fn(T) -> Message + Copy + 'static,
-        Message: Clone + 'a,
+        Message: Clone + Default + 'a,
         f64: From<T> + 'a,
     {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
             // TODO BUG when highlighting ex 123 and hitting 1 can panic
             // bring this in so we can fix and add better editing control
-            NumberInput::new(&format!("{:}", value))
+            NumberInput::new(&format!("{:.32}", value))
                 // .step(step) // TODO dynamic based on highlight?
                 .size(self.text_size)
                 .width(iced::Length::FillPortion(1))
                 .font(iced::Font::MONOSPACE)
                 .padding(self.padding)
                 .on_input(move |value_str| {
-                    on_change(T::from_str(&value_str).expect("My B")) // TODO bad
+                    match T::from_str(&value_str) {
+                        Ok(value) => on_change(value),
+                        Err(_) => Message::default(),
+                    }
                 })
                 .on_submit(on_release.clone())
                 .style(|theme: &iced::Theme, status| {

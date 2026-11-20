@@ -1,5 +1,5 @@
 //
-// The following widget was adapted from iced's NumberInput:
+// The following widget was adapted from iced's TextInput:
 // https://github.com/iced-rs/iced/blob/0.14.0/widget/src/text_input.rs
 //
 
@@ -55,8 +55,6 @@
 //! }
 //! ```
 
-use std::{borrow::Borrow, fmt::Display, ops::RangeBounds, str::FromStr};
-
 use iced_core::alignment;
 use iced_core::clipboard::{self, Clipboard};
 use iced_core::input_method;
@@ -77,8 +75,6 @@ use iced_core::{
     Alignment, Background, Border, Color, Element, Event, InputMethod, Layout, Length, Padding,
     Pixels, Point, Rectangle, Shell, Size, Theme, Vector, Widget,
 };
-use macro_rules_attribute::derive;
-use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
 pub mod cursor;
 pub mod editor;
@@ -473,8 +469,6 @@ where
                 *viewport,
             );
         }
-
-        let text = value.to_string();
 
         let (cursor, offset, is_selecting) = if let Some(focus) = state
             .is_focused

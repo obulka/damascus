@@ -11,13 +11,14 @@ use std::{
 };
 
 use iced;
-use iced_aw;
 use macro_rules_attribute::derive;
 use num_traits::{Bounded, FromPrimitive, Num, NumAssignOps};
 
 use damascus::Enumerator;
 
 use crate::{icons::Icons, widgets::menu};
+
+use super::number_input::{self, NumberInput};
 
 pub mod editor;
 pub mod theme;
@@ -439,7 +440,7 @@ impl Style {
         &'a self,
         name: impl iced::widget::text::IntoFragment<'a>,
         suggested_range: RangeInclusive<T>,
-        limit_range: impl RangeBounds<T>,
+        _limit_range: impl RangeBounds<T>,
         value: T,
         step: T,
         on_change: F,
@@ -458,6 +459,7 @@ impl Style {
             + From<u8>
             + Copy
             + 'static,
+        <T as FromStr>::Err: std::fmt::Debug,
         F: Fn(T) -> Message + Copy + 'static,
         Message: Clone + 'a,
         f64: From<T> + 'a,
@@ -466,21 +468,23 @@ impl Style {
             self.tooltip_label(name, tooltip),
             // TODO BUG when highlighting ex 123 and hitting 1 can panic
             // bring this in so we can fix and add better editing control
-            iced_aw::widget::number_input(&value, limit_range, on_change)
-                .step(step) // TODO dynamic based on highlight?
-                .ignore_buttons(true)
-                .set_size(self.text_size)
+            NumberInput::new(&format!("{:}", value))
+                // .step(step) // TODO dynamic based on highlight?
+                .size(self.text_size)
                 .width(iced::Length::FillPortion(1))
                 .font(iced::Font::MONOSPACE)
                 .padding(self.padding)
+                .on_input(move |value_str| {
+                    on_change(T::from_str(&value_str).expect("My B")) // TODO bad
+                })
                 .on_submit(on_release.clone())
-                .input_style(|theme: &iced::Theme, status| {
+                .style(|theme: &iced::Theme, status| {
                     let mut background_colour: iced::Color =
                         theme.extended_palette().background.base.color;
                     background_colour.a = 1.0;
-                    iced::widget::text_input::Style {
+                    number_input::Style {
                         background: background_colour.into(),
-                        ..iced::widget::text_input::default(theme, status)
+                        ..number_input::default(theme, status)
                     }
                 }),
             iced::widget::slider(suggested_range, value, on_change)
@@ -523,40 +527,40 @@ impl Style {
             .into()
     }
 
-    pub fn colour_picker<'a, Message: Clone + 'static>(
-        &'a self,
-        name: impl iced::widget::text::IntoFragment<'a>,
-        picking: bool,
-        color: iced::Color,
-        toggle_message: Message,
-        submit_message: impl Fn(iced::Color) -> Message + 'static,
-        tooltip: impl iced::widget::text::IntoFragment<'a>,
-    ) -> iced::Element<'a, Message> {
-        // TODO this should probably be absorbed for more control over behaviour
+    // pub fn colour_picker<'a, Message: Clone + 'static>(
+    //     &'a self,
+    //     name: impl iced::widget::text::IntoFragment<'a>,
+    //     picking: bool,
+    //     color: iced::Color,
+    //     toggle_message: Message,
+    //     submit_message: impl Fn(iced::Color) -> Message + 'static,
+    //     tooltip: impl iced::widget::text::IntoFragment<'a>,
+    // ) -> iced::Element<'a, Message> {
+    //     // TODO this should probably be absorbed for more control over behaviour
 
-        iced::widget::row![
-            self.tooltip_label(name, tooltip),
-            iced_aw::helpers::color_picker(
-                picking,
-                color,
-                self.button(" ")
-                    .style(move |_theme, _status| {
-                        iced::widget::button::Style {
-                            background: Some(iced::Background::Color(color)),
-                            ..iced::widget::button::Style::default()
-                        }
-                    })
-                    .padding(self.padding)
-                    .width(iced::Length::FillPortion(4))
-                    .on_press(toggle_message.clone()),
-                toggle_message,
-                submit_message,
-            ),
-        ]
-        .spacing(self.spacing)
-        .align_y(iced::Alignment::Center)
-        .into()
-    }
+    //     iced::widget::row![
+    //         self.tooltip_label(name, tooltip),
+    //         ColourPicker::new(
+    //             picking,
+    //             color,
+    //             self.button(" ")
+    //                 .style(move |_theme, _status| {
+    //                     iced::widget::button::Style {
+    //                         background: Some(iced::Background::Color(color)),
+    //                         ..iced::widget::button::Style::default()
+    //                     }
+    //                 })
+    //                 .padding(self.padding)
+    //                 .width(iced::Length::FillPortion(4))
+    //                 .on_press(toggle_message.clone()),
+    //             toggle_message,
+    //             submit_message,
+    //         ),
+    //     ]
+    //     .spacing(self.spacing)
+    //     .align_y(iced::Alignment::Center)
+    //     .into()
+    // }
 
     pub fn iced_theme(&self) -> iced::Theme {
         self.theme.into()

@@ -1,6 +1,6 @@
 //
 // The following widget was adapted from iced_aw's TabBar:
-// https://github.com/iced-rs/iced_aw/blob/v0.13.0/src/widget/tab_bar.rs
+// https://github.com/iced-rs/iced_aw/blob/v0.14.1/src/widget/tab_bar.rs
 //
 
 // MIT License

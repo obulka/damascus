@@ -29,7 +29,7 @@
 //! # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
 //! # pub type Element<'a, Message> = iced_widget::core::Element<'a, Message, iced_widget::Theme, iced_widget::Renderer>;
 //! #
-//! use iced::widget::text_input;
+//! use iced_core::widget::text_input;
 //!
 //! struct State {
 //!    content: String,
@@ -55,26 +55,10 @@
 //! }
 //! ```
 
-use iced_core::alignment;
-use iced_core::clipboard::{self, Clipboard};
-use iced_core::input_method;
-use iced_core::keyboard;
-use iced_core::keyboard::key;
-use iced_core::layout;
-use iced_core::mouse::{self, click};
-use iced_core::renderer;
-use iced_core::text::paragraph::{self, Paragraph as _};
-use iced_core::text::{self, Text};
-use iced_core::time::{Duration, Instant};
-use iced_core::touch;
-use iced_core::widget;
-use iced_core::widget::operation::{self, Operation};
-use iced_core::widget::tree::{self, Tree};
-use iced_core::window;
-use iced_core::{
-    Alignment, Background, Border, Color, Element, Event, InputMethod, Layout, Length, Padding,
-    Pixels, Point, Rectangle, Shell, Size, Theme, Vector, Widget,
-};
+use iced_core;
+use iced_core::text::paragraph::Paragraph as _;
+
+use super::style::Style as DefaultStyle;
 
 pub mod cursor;
 pub mod editor;
@@ -91,7 +75,7 @@ use value::Value;
 /// # mod iced { pub mod widget { pub use iced_widget::*; } pub use iced_widget::Renderer; pub use iced_widget::core::*; }
 /// # pub type Element<'a, Message> = iced_widget::core::Element<'a, Message, iced_widget::Theme, iced_widget::Renderer>;
 /// #
-/// use iced::widget::text_input;
+/// use iced_core::widget::text_input;
 ///
 /// struct State {
 ///    content: String,
@@ -116,67 +100,55 @@ use value::Value;
 ///     }
 /// }
 /// ```
-pub struct NumberInput<'a, Message, Theme = iced::Theme, Renderer = iced::Renderer>
+pub struct NumberInput<'a, Message, Theme = iced_core::Theme, Renderer = iced::Renderer>
 where
     Theme: Catalog,
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
-    id: Option<widget::Id>,
+    id: Option<iced_core::widget::Id>,
     value: Value,
-    is_secure: bool,
     font: Option<Renderer::Font>,
-    width: Length,
-    padding: Padding,
-    size: Option<Pixels>,
-    line_height: text::LineHeight,
-    alignment: alignment::Horizontal,
+    width: iced_core::Length,
+    padding: iced_core::Padding,
+    size: Option<iced_core::Pixels>,
+    line_height: iced_core::text::LineHeight,
+    alignment: iced_core::alignment::Horizontal,
     on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_paste: Option<Box<dyn Fn(String) -> Message + 'a>>,
     on_submit: Option<Message>,
-    icon: Option<Icon<Renderer::Font>>,
     class: Theme::Class<'a>,
     last_status: Option<Status>,
 }
-
-/// The default [`Padding`] of a [`NumberInput`].
-pub const DEFAULT_PADDING: Padding = Padding::new(5.0);
 
 impl<'a, Message, Theme, Renderer> NumberInput<'a, Message, Theme, Renderer>
 where
     Message: Clone,
     Theme: Catalog,
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
     /// Creates a new [`NumberInput`] with its current value.
     pub fn new(value: &str) -> Self {
+        let default_style = DefaultStyle::default();
         Self {
             id: None,
             value: Value::new(value),
-            is_secure: false,
             font: None,
-            width: Length::Fill,
-            padding: DEFAULT_PADDING,
-            size: None,
-            line_height: text::LineHeight::default(),
-            alignment: alignment::Horizontal::Left,
+            width: iced_core::Length::Fill,
+            padding: default_style.padding.into(),
+            size: Some(default_style.text_size.into()),
+            line_height: iced_core::text::LineHeight::default(),
+            alignment: iced_core::alignment::Horizontal::Left,
             on_input: None,
             on_paste: None,
             on_submit: None,
-            icon: None,
             class: Theme::default(),
             last_status: None,
         }
     }
 
-    /// Sets the [`widget::Id`] of the [`NumberInput`].
-    pub fn id(mut self, id: impl Into<widget::Id>) -> Self {
+    /// Sets the [`iced_core::widget::Id`] of the [`NumberInput`].
+    pub fn id(mut self, id: impl Into<iced_core::widget::Id>) -> Self {
         self.id = Some(id.into());
-        self
-    }
-
-    /// Converts the [`NumberInput`] into a secure password input.
-    pub fn secure(mut self, is_secure: bool) -> Self {
-        self.is_secure = is_secure;
         self
     }
 
@@ -228,44 +200,38 @@ where
 
     /// Sets the [`Font`] of the [`NumberInput`].
     ///
-    /// [`Font`]: text::Renderer::Font
+    /// [`Font`]: iced_core::text::Renderer::Font
     pub fn font(mut self, font: Renderer::Font) -> Self {
         self.font = Some(font);
         self
     }
 
-    /// Sets the [`Icon`] of the [`NumberInput`].
-    pub fn icon(mut self, icon: Icon<Renderer::Font>) -> Self {
-        self.icon = Some(icon);
-        self
-    }
-
     /// Sets the width of the [`NumberInput`].
-    pub fn width(mut self, width: impl Into<Length>) -> Self {
+    pub fn width(mut self, width: impl Into<iced_core::Length>) -> Self {
         self.width = width.into();
         self
     }
 
     /// Sets the [`Padding`] of the [`NumberInput`].
-    pub fn padding<P: Into<Padding>>(mut self, padding: P) -> Self {
+    pub fn padding<P: Into<iced_core::Padding>>(mut self, padding: P) -> Self {
         self.padding = padding.into();
         self
     }
 
     /// Sets the text size of the [`NumberInput`].
-    pub fn size(mut self, size: impl Into<Pixels>) -> Self {
+    pub fn size(mut self, size: impl Into<iced_core::Pixels>) -> Self {
         self.size = Some(size.into());
         self
     }
 
-    /// Sets the [`text::LineHeight`] of the [`NumberInput`].
-    pub fn line_height(mut self, line_height: impl Into<text::LineHeight>) -> Self {
+    /// Sets the [`iced_core::text::LineHeight`] of the [`NumberInput`].
+    pub fn line_height(mut self, line_height: impl Into<iced_core::text::LineHeight>) -> Self {
         self.line_height = line_height.into();
         self
     }
 
     /// Sets the horizontal alignment of the [`NumberInput`].
-    pub fn align_x(mut self, alignment: impl Into<alignment::Horizontal>) -> Self {
+    pub fn align_x(mut self, alignment: impl Into<iced_core::alignment::Horizontal>) -> Self {
         self.alignment = alignment.into();
         self
     }
@@ -289,102 +255,56 @@ where
 
     /// Lays out the [`NumberInput`], overriding its [`Value`] if provided.
     ///
-    /// [`Renderer`]: text::Renderer
+    /// [`Renderer`]: iced_core::text::Renderer
     pub fn layout(
         &mut self,
-        tree: &mut Tree,
+        tree: &mut iced_core::widget::Tree,
         renderer: &Renderer,
-        limits: &layout::Limits,
+        limits: &iced_core::layout::Limits,
         value: Option<&Value>,
-    ) -> layout::Node {
+    ) -> iced_core::layout::Node {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
         let value = value.unwrap_or(&self.value);
 
         let font = self.font.unwrap_or_else(|| renderer.default_font());
         let text_size = self.size.unwrap_or_else(|| renderer.default_size());
-        let padding = self.padding.fit(Size::ZERO, limits.max());
+        let padding = self.padding.fit(iced_core::Size::ZERO, limits.max());
         let height = self.line_height.to_absolute(text_size);
 
         let limits = limits.width(self.width).shrink(padding);
-        let text_bounds = limits.resolve(self.width, height, Size::ZERO);
+        let text_bounds = limits.resolve(self.width, height, iced_core::Size::ZERO);
 
-        let secure_value = self.is_secure.then(|| value.secure());
-        let value = secure_value.as_ref().unwrap_or(value);
-
-        let _ = state.value.update(Text {
+        let _ = state.value.update(iced_core::text::Text {
             font,
             line_height: self.line_height,
             content: &value.to_string(),
-            bounds: Size::new(f32::INFINITY, text_bounds.height),
+            bounds: iced_core::Size::new(f32::INFINITY, text_bounds.height),
             size: text_size,
-            align_x: text::Alignment::Default,
-            align_y: alignment::Vertical::Center,
-            shaping: text::Shaping::Advanced,
-            wrapping: text::Wrapping::default(),
+            align_x: iced_core::text::Alignment::Default,
+            align_y: iced_core::alignment::Vertical::Center,
+            shaping: iced_core::text::Shaping::Advanced,
+            wrapping: iced_core::text::Wrapping::default(),
         });
 
-        if let Some(icon) = &self.icon {
-            let mut content = [0; 4];
+        let text = iced_core::layout::Node::new(text_bounds)
+            .move_to(iced_core::Point::new(padding.left, padding.top));
 
-            let icon_text = Text {
-                line_height: self.line_height,
-                content: icon.code_point.encode_utf8(&mut content) as &_,
-                font: icon.font,
-                size: icon.size.unwrap_or_else(|| renderer.default_size()),
-                bounds: Size::new(f32::INFINITY, text_bounds.height),
-                align_x: text::Alignment::Center,
-                align_y: alignment::Vertical::Center,
-                shaping: text::Shaping::Advanced,
-                wrapping: text::Wrapping::default(),
-            };
-
-            let _ = state.icon.update(icon_text);
-
-            let icon_width = state.icon.min_width();
-
-            let (text_position, icon_position) = match icon.side {
-                Side::Left => (
-                    Point::new(padding.left + icon_width + icon.spacing, padding.top),
-                    Point::new(padding.left, padding.top),
-                ),
-                Side::Right => (
-                    Point::new(padding.left, padding.top),
-                    Point::new(padding.left + text_bounds.width - icon_width, padding.top),
-                ),
-            };
-
-            let text_node =
-                layout::Node::new(text_bounds - Size::new(icon_width + icon.spacing, 0.0))
-                    .move_to(text_position);
-
-            let icon_node =
-                layout::Node::new(Size::new(icon_width, text_bounds.height)).move_to(icon_position);
-
-            layout::Node::with_children(text_bounds.expand(padding), vec![text_node, icon_node])
-        } else {
-            let text =
-                layout::Node::new(text_bounds).move_to(Point::new(padding.left, padding.top));
-
-            layout::Node::with_children(text_bounds.expand(padding), vec![text])
-        }
+        iced_core::layout::Node::with_children(text_bounds.expand(padding), vec![text])
     }
 
     fn input_method<'b>(
         &self,
         state: &'b State<Renderer::Paragraph>,
-        layout: Layout<'_>,
+        layout: iced_core::Layout<'_>,
         value: &Value,
-    ) -> InputMethod<&'b str> {
+    ) -> iced_core::InputMethod<&'b str> {
         let Some(Focus {
             is_window_focused: true,
             ..
         }) = &state.is_focused
         else {
-            return InputMethod::Disabled;
+            return iced_core::InputMethod::Disabled;
         };
-
-        let secure_value = self.is_secure.then(|| value.secure());
-        let value = secure_value.as_ref().unwrap_or(value);
 
         let text_bounds = layout.children().next().unwrap().bounds();
 
@@ -402,40 +322,36 @@ where
 
         let x = (text_bounds.x + cursor_x).floor() - scroll_offset + alignment_offset;
 
-        InputMethod::Enabled {
-            cursor: Rectangle::new(
-                Point::new(x, text_bounds.y),
-                Size::new(1.0, text_bounds.height),
+        iced_core::InputMethod::Enabled {
+            cursor: iced_core::Rectangle::new(
+                iced_core::Point::new(x, text_bounds.y),
+                iced_core::Size::new(1.0, text_bounds.height),
             ),
-            purpose: if self.is_secure {
-                input_method::Purpose::Secure
-            } else {
-                input_method::Purpose::Normal
-            },
-            preedit: state.preedit.as_ref().map(input_method::Preedit::as_ref),
+            purpose: iced_core::input_method::Purpose::Normal,
+            preedit: state
+                .preedit
+                .as_ref()
+                .map(iced_core::input_method::Preedit::as_ref),
         }
     }
 
     /// Draws the [`NumberInput`] with the given [`Renderer`], overriding its
     /// [`Value`] if provided.
     ///
-    /// [`Renderer`]: text::Renderer
+    /// [`Renderer`]: iced_core::text::Renderer
     pub fn draw(
         &self,
-        tree: &Tree,
+        tree: &iced_core::widget::Tree,
         renderer: &mut Renderer,
         theme: &Theme,
-        layout: Layout<'_>,
-        _cursor: mouse::Cursor,
+        layout: iced_core::Layout<'_>,
+        _cursor: iced_core::mouse::Cursor,
         value: Option<&Value>,
-        viewport: &Rectangle,
+        viewport: &iced_core::Rectangle,
     ) {
         let state = tree.state.downcast_ref::<State<Renderer::Paragraph>>();
         let value = value.unwrap_or(&self.value);
         let is_disabled = self.on_input.is_none();
-
-        let secure_value = self.is_secure.then(|| value.secure());
-        let value = secure_value.as_ref().unwrap_or(value);
 
         let bounds = layout.bounds();
 
@@ -445,30 +361,13 @@ where
         let style = theme.style(&self.class, self.last_status.unwrap_or(Status::Disabled));
 
         renderer.fill_quad(
-            renderer::Quad {
+            iced_core::renderer::Quad {
                 bounds,
                 border: style.border,
-                ..renderer::Quad::default()
+                ..iced_core::renderer::Quad::default()
             },
             style.background,
         );
-
-        if self.icon.is_some() {
-            let icon_layout = children_layout.next().unwrap();
-
-            let icon = state.icon.raw();
-
-            renderer.fill_paragraph(
-                icon,
-                icon_layout.bounds().anchor(
-                    icon.min_bounds(),
-                    Alignment::Center,
-                    Alignment::Center,
-                ),
-                style.icon,
-                *viewport,
-            );
-        }
 
         let (cursor, offset, is_selecting) = if let Some(focus) = state
             .is_focused
@@ -487,14 +386,14 @@ where
 
                     let cursor = if is_cursor_visible {
                         Some((
-                            renderer::Quad {
-                                bounds: Rectangle {
+                            iced_core::renderer::Quad {
+                                bounds: iced_core::Rectangle {
                                     x: (text_bounds.x + text_value_width).floor(),
                                     y: text_bounds.y,
                                     width: 1.0,
                                     height: text_bounds.height,
                                 },
-                                ..renderer::Quad::default()
+                                ..iced_core::renderer::Quad::default()
                             },
                             style.value,
                         ))
@@ -518,14 +417,14 @@ where
 
                     (
                         Some((
-                            renderer::Quad {
-                                bounds: Rectangle {
+                            iced_core::renderer::Quad {
+                                bounds: iced_core::Rectangle {
                                     x: text_bounds.x + left_position,
                                     y: text_bounds.y,
                                     width,
                                     height: text_bounds.height,
                                 },
-                                ..renderer::Quad::default()
+                                ..iced_core::renderer::Quad::default()
                             },
                             style.selection,
                         )),
@@ -550,19 +449,22 @@ where
 
             if let Some((cursor, color)) = cursor {
                 renderer.with_translation(
-                    Vector::new(alignment_offset - offset, 0.0),
+                    iced_core::Vector::new(alignment_offset - offset, 0.0),
                     |renderer| {
                         renderer.fill_quad(cursor, color);
                     },
                 );
             } else {
-                renderer.with_translation(Vector::ZERO, |_| {});
+                renderer.with_translation(iced_core::Vector::ZERO, |_| {});
             }
 
             renderer.fill_paragraph(
                 paragraph,
-                text_bounds.anchor(paragraph.min_bounds(), Alignment::Start, Alignment::Center)
-                    + Vector::new(alignment_offset - offset, 0.0),
+                text_bounds.anchor(
+                    paragraph.min_bounds(),
+                    iced_core::Alignment::Start,
+                    iced_core::Alignment::Center,
+                ) + iced_core::Vector::new(alignment_offset - offset, 0.0),
                 style.value,
                 viewport,
             );
@@ -576,22 +478,22 @@ where
     }
 }
 
-impl<Message, Theme, Renderer> Widget<Message, Theme, Renderer>
+impl<Message, Theme, Renderer> iced_core::Widget<Message, Theme, Renderer>
     for NumberInput<'_, Message, Theme, Renderer>
 where
     Message: Clone,
     Theme: Catalog,
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
-    fn tag(&self) -> tree::Tag {
-        tree::Tag::of::<State<Renderer::Paragraph>>()
+    fn tag(&self) -> iced_core::widget::tree::Tag {
+        iced_core::widget::tree::Tag::of::<State<Renderer::Paragraph>>()
     }
 
-    fn state(&self) -> tree::State {
-        tree::State::new(State::<Renderer::Paragraph>::new())
+    fn state(&self) -> iced_core::widget::tree::State {
+        iced_core::widget::tree::State::new(State::<Renderer::Paragraph>::new())
     }
 
-    fn diff(&self, tree: &mut Tree) {
+    fn diff(&self, tree: &mut iced_core::widget::Tree) {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
         // Stop pasting if input becomes disabled
@@ -600,28 +502,28 @@ where
         }
     }
 
-    fn size(&self) -> Size<Length> {
-        Size {
+    fn size(&self) -> iced_core::Size<iced_core::Length> {
+        iced_core::Size {
             width: self.width,
-            height: Length::Shrink,
+            height: iced_core::Length::Shrink,
         }
     }
 
     fn layout(
         &mut self,
-        tree: &mut Tree,
+        tree: &mut iced_core::widget::Tree,
         renderer: &Renderer,
-        limits: &layout::Limits,
-    ) -> layout::Node {
+        limits: &iced_core::layout::Limits,
+    ) -> iced_core::layout::Node {
         self.layout(tree, renderer, limits, None)
     }
 
     fn operate(
         &mut self,
-        tree: &mut Tree,
-        layout: Layout<'_>,
+        tree: &mut iced_core::widget::Tree,
+        layout: iced_core::Layout<'_>,
         _renderer: &Renderer,
-        operation: &mut dyn Operation,
+        operation: &mut dyn iced_core::widget::operation::Operation,
     ) {
         let state = tree.state.downcast_mut::<State<Renderer::Paragraph>>();
 
@@ -631,14 +533,14 @@ where
 
     fn update(
         &mut self,
-        tree: &mut Tree,
-        event: &Event,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
+        tree: &mut iced_core::widget::Tree,
+        event: &iced_core::Event,
+        layout: iced_core::Layout<'_>,
+        cursor: iced_core::mouse::Cursor,
         renderer: &Renderer,
-        clipboard: &mut dyn Clipboard,
-        shell: &mut Shell<'_, Message>,
-        _viewport: &Rectangle,
+        clipboard: &mut dyn iced_core::clipboard::Clipboard,
+        shell: &mut iced_core::Shell<'_, Message>,
+        _viewport: &iced_core::Rectangle,
     ) {
         let update_cache = |state, value| {
             replace_paragraph(
@@ -653,15 +555,17 @@ where
         };
 
         match &event {
-            Event::Mouse(mouse::Event::ButtonPressed(mouse::Button::Left))
-            | Event::Touch(touch::Event::FingerPressed { .. }) => {
+            iced_core::Event::Mouse(iced_core::mouse::Event::ButtonPressed(
+                iced_core::mouse::Button::Left,
+            ))
+            | iced_core::Event::Touch(iced_core::touch::Event::FingerPressed { .. }) => {
                 let state = state::<Renderer>(tree);
                 let cursor_before = state.cursor;
 
                 let click_position = cursor.position_over(layout.bounds());
 
                 state.is_focused = if click_position.is_some() {
-                    let now = Instant::now();
+                    let now = iced_core::time::Instant::now();
 
                     Some(Focus {
                         updated_at: now,
@@ -687,19 +591,21 @@ where
                         cursor_position.x - text_bounds.x - alignment_offset
                     };
 
-                    let click =
-                        mouse::Click::new(cursor_position, mouse::Button::Left, state.last_click);
+                    let click = iced_core::mouse::Click::new(
+                        cursor_position,
+                        iced_core::mouse::Button::Left,
+                        state.last_click,
+                    );
 
                     match click.kind() {
-                        click::Kind::Single => {
+                        iced_core::mouse::click::Kind::Single => {
                             let position = if target > 0.0 {
-                                let value = if self.is_secure {
-                                    self.value.secure()
-                                } else {
-                                    self.value.clone()
-                                };
-
-                                find_cursor_position(text_layout.bounds(), &value, state, target)
+                                find_cursor_position(
+                                    text_layout.bounds(),
+                                    &self.value,
+                                    state,
+                                    target,
+                                )
                             } else {
                                 None
                             }
@@ -715,29 +621,23 @@ where
 
                             state.is_dragging = Some(Drag::Select);
                         }
-                        click::Kind::Double => {
-                            if self.is_secure {
-                                state.cursor.select_all(&self.value);
+                        iced_core::mouse::click::Kind::Double => {
+                            let position = find_cursor_position(
+                                text_layout.bounds(),
+                                &self.value,
+                                state,
+                                target,
+                            )
+                            .unwrap_or(0);
 
-                                state.is_dragging = None;
-                            } else {
-                                let position = find_cursor_position(
-                                    text_layout.bounds(),
-                                    &self.value,
-                                    state,
-                                    target,
-                                )
-                                .unwrap_or(0);
+                            state.cursor.select_range(
+                                self.value.previous_start_of_word(position),
+                                self.value.next_end_of_word(position),
+                            );
 
-                                state.cursor.select_range(
-                                    self.value.previous_start_of_word(position),
-                                    self.value.next_end_of_word(position),
-                                );
-
-                                state.is_dragging = Some(Drag::SelectWords { anchor: position });
-                            }
+                            state.is_dragging = Some(Drag::SelectWords { anchor: position });
                         }
-                        click::Kind::Triple => {
+                        iced_core::mouse::click::Kind::Triple => {
                             state.cursor.select_all(&self.value);
                             state.is_dragging = None;
                         }
@@ -752,13 +652,15 @@ where
                     shell.capture_event();
                 }
             }
-            Event::Mouse(mouse::Event::ButtonReleased(mouse::Button::Left))
-            | Event::Touch(touch::Event::FingerLifted { .. })
-            | Event::Touch(touch::Event::FingerLost { .. }) => {
+            iced_core::Event::Mouse(iced_core::mouse::Event::ButtonReleased(
+                iced_core::mouse::Button::Left,
+            ))
+            | iced_core::Event::Touch(iced_core::touch::Event::FingerLifted { .. })
+            | iced_core::Event::Touch(iced_core::touch::Event::FingerLost { .. }) => {
                 state::<Renderer>(tree).is_dragging = None;
             }
-            Event::Mouse(mouse::Event::CursorMoved { position })
-            | Event::Touch(touch::Event::FingerMoved { position, .. }) => {
+            iced_core::Event::Mouse(iced_core::mouse::Event::CursorMoved { position })
+            | iced_core::Event::Touch(iced_core::touch::Event::FingerMoved { position, .. }) => {
                 let state = state::<Renderer>(tree);
 
                 if let Some(is_dragging) = &state.is_dragging {
@@ -776,23 +678,17 @@ where
                         position.x - text_bounds.x - alignment_offset
                     };
 
-                    let value = if self.is_secure {
-                        self.value.secure()
-                    } else {
-                        self.value.clone()
-                    };
-
                     let position =
-                        find_cursor_position(text_layout.bounds(), &value, state, target)
+                        find_cursor_position(text_layout.bounds(), &self.value, state, target)
                             .unwrap_or(0);
 
-                    let selection_before = state.cursor.selection(&value);
+                    let selection_before = state.cursor.selection(&self.value);
 
                     match is_dragging {
                         Drag::Select => {
                             state
                                 .cursor
-                                .select_range(state.cursor.start(&value), position);
+                                .select_range(state.cursor.start(&self.value), position);
                         }
                         Drag::SelectWords { anchor } => {
                             if position < *anchor {
@@ -810,17 +706,17 @@ where
                     }
 
                     if let Some(focus) = &mut state.is_focused {
-                        focus.updated_at = Instant::now();
+                        focus.updated_at = iced_core::time::Instant::now();
                     }
 
-                    if selection_before != state.cursor.selection(&value) {
+                    if selection_before != state.cursor.selection(&self.value) {
                         shell.request_redraw();
                     }
 
                     shell.capture_event();
                 }
             }
-            Event::Keyboard(keyboard::Event::KeyPressed {
+            iced_core::Event::Keyboard(iced_core::keyboard::Event::KeyPressed {
                 key,
                 text,
                 modified_key,
@@ -833,10 +729,10 @@ where
                     let modifiers = state.keyboard_modifiers;
 
                     match key.to_latin(*physical_key) {
-                        Some('c') if state.keyboard_modifiers.command() && !self.is_secure => {
+                        Some('c') if state.keyboard_modifiers.command() => {
                             if let Some((start, end)) = state.cursor.selection(&self.value) {
                                 clipboard.write(
-                                    clipboard::Kind::Standard,
+                                    iced_core::clipboard::Kind::Standard,
                                     self.value.select(start, end).to_string(),
                                 );
                             }
@@ -844,14 +740,14 @@ where
                             shell.capture_event();
                             return;
                         }
-                        Some('x') if state.keyboard_modifiers.command() && !self.is_secure => {
+                        Some('x') if state.keyboard_modifiers.command() => {
                             let Some(on_input) = &self.on_input else {
                                 return;
                             };
 
                             if let Some((start, end)) = state.cursor.selection(&self.value) {
                                 clipboard.write(
-                                    clipboard::Kind::Standard,
+                                    iced_core::clipboard::Kind::Standard,
                                     self.value.select(start, end).to_string(),
                                 );
                             }
@@ -863,7 +759,7 @@ where
                             shell.publish(message);
                             shell.capture_event();
 
-                            focus.updated_at = Instant::now();
+                            focus.updated_at = iced_core::time::Instant::now();
                             update_cache(state, &self.value);
                             return;
                         }
@@ -879,7 +775,7 @@ where
                                 Some(content) => content,
                                 None => {
                                     let content: String = clipboard
-                                        .read(clipboard::Kind::Standard)
+                                        .read(iced_core::clipboard::Kind::Standard)
                                         .unwrap_or_default()
                                         .chars()
                                         .filter(|c| !c.is_control())
@@ -901,7 +797,7 @@ where
                             shell.capture_event();
 
                             state.is_pasting = Some(content);
-                            focus.updated_at = Instant::now();
+                            focus.updated_at = iced_core::time::Instant::now();
                             update_cache(state, &self.value);
                             return;
                         }
@@ -911,7 +807,7 @@ where
                             state.cursor.select_all(&self.value);
 
                             if cursor_before != state.cursor {
-                                focus.updated_at = Instant::now();
+                                focus.updated_at = iced_core::time::Instant::now();
 
                                 shell.request_redraw();
                             }
@@ -938,7 +834,7 @@ where
                             shell.publish(message);
                             shell.capture_event();
 
-                            focus.updated_at = Instant::now();
+                            focus.updated_at = iced_core::time::Instant::now();
                             update_cache(state, &self.value);
                             return;
                         }
@@ -951,20 +847,21 @@ where
                     let modified_key = macos_shortcut.as_ref().unwrap_or(modified_key);
 
                     match modified_key.as_ref() {
-                        keyboard::Key::Named(key::Named::Enter) => {
+                        iced_core::keyboard::Key::Named(iced_core::keyboard::key::Named::Enter) => {
                             if let Some(on_submit) = self.on_submit.clone() {
                                 shell.publish(on_submit);
                                 shell.capture_event();
                             }
                         }
-                        keyboard::Key::Named(key::Named::Backspace) => {
+                        iced_core::keyboard::Key::Named(
+                            iced_core::keyboard::key::Named::Backspace,
+                        ) => {
                             let Some(on_input) = &self.on_input else {
                                 return;
                             };
 
                             if state.cursor.selection(&self.value).is_none() {
-                                if (self.is_secure && modifiers.jump()) || modifiers.macos_command()
-                                {
+                                if modifiers.macos_command() {
                                     state
                                         .cursor
                                         .select_range(state.cursor.start(&self.value), 0);
@@ -980,17 +877,18 @@ where
                             shell.publish(message);
                             shell.capture_event();
 
-                            focus.updated_at = Instant::now();
+                            focus.updated_at = iced_core::time::Instant::now();
                             update_cache(state, &self.value);
                         }
-                        keyboard::Key::Named(key::Named::Delete) => {
+                        iced_core::keyboard::Key::Named(
+                            iced_core::keyboard::key::Named::Delete,
+                        ) => {
                             let Some(on_input) = &self.on_input else {
                                 return;
                             };
 
                             if state.cursor.selection(&self.value).is_none() {
-                                if (self.is_secure && modifiers.jump()) || modifiers.macos_command()
-                                {
+                                if modifiers.macos_command() {
                                     state.cursor.select_range(
                                         state.cursor.start(&self.value),
                                         self.value.len(),
@@ -1007,10 +905,10 @@ where
                             shell.publish(message);
                             shell.capture_event();
 
-                            focus.updated_at = Instant::now();
+                            focus.updated_at = iced_core::time::Instant::now();
                             update_cache(state, &self.value);
                         }
-                        keyboard::Key::Named(key::Named::Home) => {
+                        iced_core::keyboard::Key::Named(iced_core::keyboard::key::Named::Home) => {
                             let cursor_before = state.cursor;
 
                             if modifiers.shift() {
@@ -1022,14 +920,14 @@ where
                             }
 
                             if cursor_before != state.cursor {
-                                focus.updated_at = Instant::now();
+                                focus.updated_at = iced_core::time::Instant::now();
 
                                 shell.request_redraw();
                             }
 
                             shell.capture_event();
                         }
-                        keyboard::Key::Named(key::Named::End) => {
+                        iced_core::keyboard::Key::Named(iced_core::keyboard::key::Named::End) => {
                             let cursor_before = state.cursor;
 
                             if modifiers.shift() {
@@ -1042,17 +940,19 @@ where
                             }
 
                             if cursor_before != state.cursor {
-                                focus.updated_at = Instant::now();
+                                focus.updated_at = iced_core::time::Instant::now();
 
                                 shell.request_redraw();
                             }
 
                             shell.capture_event();
                         }
-                        keyboard::Key::Named(key::Named::ArrowLeft) => {
+                        iced_core::keyboard::Key::Named(
+                            iced_core::keyboard::key::Named::ArrowLeft,
+                        ) => {
                             let cursor_before = state.cursor;
 
-                            if (self.is_secure && modifiers.jump()) || modifiers.macos_command() {
+                            if modifiers.macos_command() {
                                 if modifiers.shift() {
                                     state
                                         .cursor
@@ -1073,17 +973,19 @@ where
                             }
 
                             if cursor_before != state.cursor {
-                                focus.updated_at = Instant::now();
+                                focus.updated_at = iced_core::time::Instant::now();
 
                                 shell.request_redraw();
                             }
 
                             shell.capture_event();
                         }
-                        keyboard::Key::Named(key::Named::ArrowRight) => {
+                        iced_core::keyboard::Key::Named(
+                            iced_core::keyboard::key::Named::ArrowRight,
+                        ) => {
                             let cursor_before = state.cursor;
 
-                            if (self.is_secure && modifiers.jump()) || modifiers.macos_command() {
+                            if modifiers.macos_command() {
                                 if modifiers.shift() {
                                     state.cursor.select_range(
                                         state.cursor.start(&self.value),
@@ -1105,19 +1007,21 @@ where
                             }
 
                             if cursor_before != state.cursor {
-                                focus.updated_at = Instant::now();
+                                focus.updated_at = iced_core::time::Instant::now();
 
                                 shell.request_redraw();
                             }
 
                             shell.capture_event();
                         }
-                        keyboard::Key::Named(key::Named::Escape) => {
+                        iced_core::keyboard::Key::Named(
+                            iced_core::keyboard::key::Named::Escape,
+                        ) => {
                             state.is_focused = None;
                             state.is_dragging = None;
                             state.is_pasting = None;
 
-                            state.keyboard_modifiers = keyboard::Modifiers::default();
+                            state.keyboard_modifiers = iced_core::keyboard::Modifiers::default();
 
                             shell.capture_event();
                         }
@@ -1125,11 +1029,11 @@ where
                     }
                 }
             }
-            Event::Keyboard(keyboard::Event::KeyReleased { key, .. }) => {
+            iced_core::Event::Keyboard(iced_core::keyboard::Event::KeyReleased { key, .. }) => {
                 let state = state::<Renderer>(tree);
 
                 if state.is_focused.is_some()
-                    && let keyboard::Key::Character("v") = key.as_ref()
+                    && let iced_core::keyboard::Key::Character("v") = key.as_ref()
                 {
                     state.is_pasting = None;
 
@@ -1138,25 +1042,25 @@ where
 
                 state.is_pasting = None;
             }
-            Event::Keyboard(keyboard::Event::ModifiersChanged(modifiers)) => {
+            iced_core::Event::Keyboard(iced_core::keyboard::Event::ModifiersChanged(modifiers)) => {
                 let state = state::<Renderer>(tree);
 
                 state.keyboard_modifiers = *modifiers;
             }
-            Event::InputMethod(event) => match event {
-                input_method::Event::Opened | input_method::Event::Closed => {
+            iced_core::Event::InputMethod(event) => match event {
+                iced_core::input_method::Event::Opened | iced_core::input_method::Event::Closed => {
                     let state = state::<Renderer>(tree);
 
-                    state.preedit = matches!(event, input_method::Event::Opened)
-                        .then(input_method::Preedit::new);
+                    state.preedit = matches!(event, iced_core::input_method::Event::Opened)
+                        .then(iced_core::input_method::Preedit::new);
 
                     shell.request_redraw();
                 }
-                input_method::Event::Preedit(content, selection) => {
+                iced_core::input_method::Event::Preedit(content, selection) => {
                     let state = state::<Renderer>(tree);
 
                     if state.is_focused.is_some() {
-                        state.preedit = Some(input_method::Preedit {
+                        state.preedit = Some(iced_core::input_method::Preedit {
                             content: content.to_owned(),
                             selection: selection.clone(),
                             text_size: self.size,
@@ -1165,7 +1069,7 @@ where
                         shell.request_redraw();
                     }
                 }
-                input_method::Event::Commit(text) => {
+                iced_core::input_method::Event::Commit(text) => {
                     let state = state::<Renderer>(tree);
 
                     if let Some(focus) = &mut state.is_focused {
@@ -1176,7 +1080,7 @@ where
                         let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                         editor.paste(Value::new(text));
 
-                        focus.updated_at = Instant::now();
+                        focus.updated_at = iced_core::time::Instant::now();
                         state.is_pasting = None;
 
                         let message = (on_input)(editor.contents());
@@ -1187,24 +1091,24 @@ where
                     }
                 }
             },
-            Event::Window(window::Event::Unfocused) => {
+            iced_core::Event::Window(iced_core::window::Event::Unfocused) => {
                 let state = state::<Renderer>(tree);
 
                 if let Some(focus) = &mut state.is_focused {
                     focus.is_window_focused = false;
                 }
             }
-            Event::Window(window::Event::Focused) => {
+            iced_core::Event::Window(iced_core::window::Event::Focused) => {
                 let state = state::<Renderer>(tree);
 
                 if let Some(focus) = &mut state.is_focused {
                     focus.is_window_focused = true;
-                    focus.updated_at = Instant::now();
+                    focus.updated_at = iced_core::time::Instant::now();
 
                     shell.request_redraw();
                 }
             }
-            Event::Window(window::Event::RedrawRequested(now)) => {
+            iced_core::Event::Window(iced_core::window::Event::RedrawRequested(now)) => {
                 let state = state::<Renderer>(tree);
 
                 if let Some(focus) = &mut state.is_focused
@@ -1217,7 +1121,9 @@ where
                             - (*now - focus.updated_at).as_millis() % CURSOR_BLINK_INTERVAL_MILLIS;
 
                         shell.request_redraw_at(
-                            *now + Duration::from_millis(millis_until_redraw as u64),
+                            *now + iced_core::time::Duration::from_millis(
+                                millis_until_redraw as u64,
+                            ),
                         );
                     }
 
@@ -1242,7 +1148,7 @@ where
             Status::Active
         };
 
-        if let Event::Window(window::Event::RedrawRequested(_now)) = event {
+        if let iced_core::Event::Window(iced_core::window::Event::RedrawRequested(_now)) = event {
             self.last_status = Some(status);
         } else if self
             .last_status
@@ -1254,64 +1160,49 @@ where
 
     fn draw(
         &self,
-        tree: &Tree,
+        tree: &iced_core::widget::Tree,
         renderer: &mut Renderer,
         theme: &Theme,
-        _style: &renderer::Style,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        viewport: &Rectangle,
+        _style: &iced_core::renderer::Style,
+        layout: iced_core::Layout<'_>,
+        cursor: iced_core::mouse::Cursor,
+        viewport: &iced_core::Rectangle,
     ) {
         self.draw(tree, renderer, theme, layout, cursor, None, viewport);
     }
 
     fn mouse_interaction(
         &self,
-        _tree: &Tree,
-        layout: Layout<'_>,
-        cursor: mouse::Cursor,
-        _viewport: &Rectangle,
+        _tree: &iced_core::widget::Tree,
+        layout: iced_core::Layout<'_>,
+        cursor: iced_core::mouse::Cursor,
+        _viewport: &iced_core::Rectangle,
         _renderer: &Renderer,
-    ) -> mouse::Interaction {
+    ) -> iced_core::mouse::Interaction {
         if cursor.is_over(layout.bounds()) {
             if self.on_input.is_none() {
-                mouse::Interaction::Idle
+                iced_core::mouse::Interaction::Idle
             } else {
-                mouse::Interaction::Text
+                iced_core::mouse::Interaction::Text
             }
         } else {
-            mouse::Interaction::default()
+            iced_core::mouse::Interaction::default()
         }
     }
 }
 
 impl<'a, Message, Theme, Renderer> From<NumberInput<'a, Message, Theme, Renderer>>
-    for Element<'a, Message, Theme, Renderer>
+    for iced_core::Element<'a, Message, Theme, Renderer>
 where
     Message: Clone + 'a,
     Theme: Catalog + 'a,
-    Renderer: text::Renderer + 'a,
+    Renderer: iced_core::text::Renderer + 'a,
 {
     fn from(
         text_input: NumberInput<'a, Message, Theme, Renderer>,
-    ) -> Element<'a, Message, Theme, Renderer> {
-        Element::new(text_input)
+    ) -> iced_core::Element<'a, Message, Theme, Renderer> {
+        iced_core::Element::new(text_input)
     }
-}
-
-/// The content of the [`Icon`].
-#[derive(Debug, Clone)]
-pub struct Icon<Font> {
-    /// The font that will be used to display the `code_point`.
-    pub font: Font,
-    /// The unicode code point that will be used as the icon.
-    pub code_point: char,
-    /// The font size of the content.
-    pub size: Option<Pixels>,
-    /// The spacing between the [`Icon`] and the text in a [`NumberInput`].
-    pub spacing: f32,
-    /// The side of a [`NumberInput`] where to display the [`Icon`].
-    pub side: Side,
 }
 
 /// The side of a [`NumberInput`].
@@ -1325,27 +1216,28 @@ pub enum Side {
 
 /// The state of a [`NumberInput`].
 #[derive(Debug, Default, Clone)]
-pub struct State<P: text::Paragraph> {
-    value: paragraph::Plain<P>,
-    icon: paragraph::Plain<P>,
+pub struct State<P: iced_core::text::Paragraph> {
+    value: iced_core::text::paragraph::Plain<P>,
     is_focused: Option<Focus>,
     is_dragging: Option<Drag>,
     is_pasting: Option<Value>,
-    preedit: Option<input_method::Preedit>,
-    last_click: Option<mouse::Click>,
+    preedit: Option<iced_core::input_method::Preedit>,
+    last_click: Option<iced_core::mouse::Click>,
     cursor: Cursor,
-    keyboard_modifiers: keyboard::Modifiers,
+    keyboard_modifiers: iced_core::keyboard::Modifiers,
     // TODO: Add stateful horizontal scrolling offset
 }
 
-fn state<Renderer: text::Renderer>(tree: &mut Tree) -> &mut State<Renderer::Paragraph> {
+fn state<Renderer: iced_core::text::Renderer>(
+    tree: &mut iced_core::widget::Tree,
+) -> &mut State<Renderer::Paragraph> {
     tree.state.downcast_mut::<State<Renderer::Paragraph>>()
 }
 
 #[derive(Debug, Clone)]
 struct Focus {
-    updated_at: Instant,
-    now: Instant,
+    updated_at: iced_core::time::Instant,
+    now: iced_core::time::Instant,
     is_window_focused: bool,
 }
 
@@ -1355,7 +1247,7 @@ enum Drag {
     SelectWords { anchor: usize },
 }
 
-impl<P: text::Paragraph> State<P> {
+impl<P: iced_core::text::Paragraph> State<P> {
     /// Creates a new [`State`], representing an unfocused [`NumberInput`].
     pub fn new() -> Self {
         Self::default()
@@ -1373,7 +1265,7 @@ impl<P: text::Paragraph> State<P> {
 
     /// Focuses the [`NumberInput`].
     pub fn focus(&mut self) {
-        let now = Instant::now();
+        let now = iced_core::time::Instant::now();
 
         self.is_focused = Some(Focus {
             updated_at: now,
@@ -1415,7 +1307,7 @@ impl<P: text::Paragraph> State<P> {
     }
 }
 
-impl<P: text::Paragraph> operation::Focusable for State<P> {
+impl<P: iced_core::text::Paragraph> iced_core::widget::operation::Focusable for State<P> {
     fn is_focused(&self) -> bool {
         State::is_focused(self)
     }
@@ -1429,7 +1321,7 @@ impl<P: text::Paragraph> operation::Focusable for State<P> {
     }
 }
 
-impl<P: text::Paragraph> operation::TextInput for State<P> {
+impl<P: iced_core::text::Paragraph> iced_core::widget::operation::TextInput for State<P> {
     fn text(&self) -> &str {
         self.value.content()
     }
@@ -1455,7 +1347,11 @@ impl<P: text::Paragraph> operation::TextInput for State<P> {
     }
 }
 
-fn offset<P: text::Paragraph>(text_bounds: Rectangle, value: &Value, state: &State<P>) -> f32 {
+fn offset<P: iced_core::text::Paragraph>(
+    text_bounds: iced_core::Rectangle,
+    value: &Value,
+    state: &State<P>,
+) -> f32 {
     if state.is_focused() {
         let cursor = state.cursor();
 
@@ -1474,13 +1370,13 @@ fn offset<P: text::Paragraph>(text_bounds: Rectangle, value: &Value, state: &Sta
 }
 
 fn measure_cursor_and_scroll_offset(
-    paragraph: &impl text::Paragraph,
-    text_bounds: Rectangle,
+    paragraph: &impl iced_core::text::Paragraph,
+    text_bounds: iced_core::Rectangle,
     cursor_index: usize,
 ) -> (f32, f32) {
     let grapheme_position = paragraph
         .grapheme_position(0, cursor_index)
-        .unwrap_or(Point::ORIGIN);
+        .unwrap_or(iced_core::Point::ORIGIN);
 
     let offset = ((grapheme_position.x + 5.0) - text_bounds.width).max(0.0);
 
@@ -1489,8 +1385,8 @@ fn measure_cursor_and_scroll_offset(
 
 /// Computes the position of the text cursor at the given X coordinate of
 /// a [`NumberInput`].
-fn find_cursor_position<P: text::Paragraph>(
-    text_bounds: Rectangle,
+fn find_cursor_position<P: iced_core::text::Paragraph>(
+    text_bounds: iced_core::Rectangle,
     value: &Value,
     state: &State<P>,
     x: f32,
@@ -1501,8 +1397,8 @@ fn find_cursor_position<P: text::Paragraph>(
     let char_offset = state
         .value
         .raw()
-        .hit_test(Point::new(x + offset, text_bounds.height / 2.0))
-        .map(text::Hit::cursor)?;
+        .hit_test(iced_core::Point::new(x + offset, text_bounds.height / 2.0))
+        .map(iced_core::text::Hit::cursor)?;
 
     Some(
         unicode_segmentation::UnicodeSegmentation::graphemes(
@@ -1516,13 +1412,13 @@ fn find_cursor_position<P: text::Paragraph>(
 fn replace_paragraph<Renderer>(
     renderer: &Renderer,
     state: &mut State<Renderer::Paragraph>,
-    layout: Layout<'_>,
+    layout: iced_core::Layout<'_>,
     value: &Value,
     font: Option<Renderer::Font>,
-    text_size: Option<Pixels>,
-    line_height: text::LineHeight,
+    text_size: Option<iced_core::Pixels>,
+    line_height: iced_core::text::LineHeight,
 ) where
-    Renderer: text::Renderer,
+    Renderer: iced_core::text::Renderer,
 {
     let font = font.unwrap_or_else(|| renderer.default_font());
     let text_size = text_size.unwrap_or_else(|| renderer.default_size());
@@ -1530,16 +1426,16 @@ fn replace_paragraph<Renderer>(
     let mut children_layout = layout.children();
     let text_bounds = children_layout.next().unwrap().bounds();
 
-    state.value = paragraph::Plain::new(Text {
+    state.value = iced_core::text::paragraph::Plain::new(iced_core::text::Text {
         font,
         line_height,
         content: value.to_string(),
-        bounds: Size::new(f32::INFINITY, text_bounds.height),
+        bounds: iced_core::Size::new(f32::INFINITY, text_bounds.height),
         size: text_size,
-        align_x: text::Alignment::Default,
-        align_y: alignment::Vertical::Center,
-        shaping: text::Shaping::Advanced,
-        wrapping: text::Wrapping::default(),
+        align_x: iced_core::text::Alignment::Default,
+        align_y: iced_core::alignment::Vertical::Center,
+        shaping: iced_core::text::Shaping::Advanced,
+        wrapping: iced_core::text::Wrapping::default(),
     });
 }
 
@@ -1565,15 +1461,13 @@ pub enum Status {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Style {
     /// The [`Background`] of the text input.
-    pub background: Background,
+    pub background: iced_core::Background,
     /// The [`Border`] of the text input.
-    pub border: Border,
-    /// The [`Color`] of the icon of the text input.
-    pub icon: Color,
+    pub border: iced_core::Border,
     /// The [`Color`] of the value of the text input.
-    pub value: Color,
+    pub value: iced_core::Color,
     /// The [`Color`] of the selection of the text input.
-    pub selection: Color,
+    pub selection: iced_core::Color,
 }
 
 /// The theme catalog of a [`NumberInput`].
@@ -1593,7 +1487,7 @@ pub trait Catalog: Sized {
 /// This is just a boxed closure: `Fn(&Theme, Status) -> Style`.
 pub type StyleFn<'a, Theme> = Box<dyn Fn(&Theme, Status) -> Style + 'a>;
 
-impl Catalog for Theme {
+impl Catalog for iced_core::Theme {
     type Class<'a> = StyleFn<'a, Self>;
 
     fn default<'a>() -> Self::Class<'a> {
@@ -1606,17 +1500,16 @@ impl Catalog for Theme {
 }
 
 /// The default style of a [`NumberInput`].
-pub fn default(theme: &Theme, status: Status) -> Style {
+pub fn default(theme: &iced_core::Theme, status: Status) -> Style {
     let palette = theme.extended_palette();
 
     let active = Style {
-        background: Background::Color(palette.background.base.color),
-        border: Border {
+        background: iced_core::Background::Color(palette.background.base.color),
+        border: iced_core::Border {
             radius: 2.0.into(),
             width: 1.0,
             color: palette.background.strong.color,
         },
-        icon: palette.background.weak.text,
         value: palette.background.base.text,
         selection: palette.primary.weak.color,
     };
@@ -1624,21 +1517,21 @@ pub fn default(theme: &Theme, status: Status) -> Style {
     match status {
         Status::Active => active,
         Status::Hovered => Style {
-            border: Border {
+            border: iced_core::Border {
                 color: palette.background.base.text,
                 ..active.border
             },
             ..active
         },
         Status::Focused { .. } => Style {
-            border: Border {
+            border: iced_core::Border {
                 color: palette.primary.strong.color,
                 ..active.border
             },
             ..active
         },
         Status::Disabled => Style {
-            background: Background::Color(palette.background.weak.color),
+            background: iced_core::Background::Color(palette.background.weak.color),
             value: palette.secondary.base.color,
             ..active
         },
@@ -1648,15 +1541,15 @@ pub fn default(theme: &Theme, status: Status) -> Style {
 fn alignment_offset(
     text_bounds_width: f32,
     text_min_width: f32,
-    alignment: alignment::Horizontal,
+    alignment: iced_core::alignment::Horizontal,
 ) -> f32 {
     if text_min_width > text_bounds_width {
         0.0
     } else {
         match alignment {
-            alignment::Horizontal::Left => 0.0,
-            alignment::Horizontal::Center => (text_bounds_width - text_min_width) / 2.0,
-            alignment::Horizontal::Right => text_bounds_width - text_min_width,
+            iced_core::alignment::Horizontal::Left => 0.0,
+            iced_core::alignment::Horizontal::Center => (text_bounds_width - text_min_width) / 2.0,
+            iced_core::alignment::Horizontal::Right => text_bounds_width - text_min_width,
         }
     }
 }

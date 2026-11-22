@@ -113,8 +113,8 @@ where
     size: Option<iced_core::Pixels>,
     line_height: iced_core::text::LineHeight,
     alignment: iced_core::alignment::Horizontal,
-    on_input: Option<Box<dyn Fn(String) -> Message + 'a>>,
-    on_paste: Option<Box<dyn Fn(String) -> Message + 'a>>,
+    on_input: Option<Box<dyn Fn(f64) -> Message + 'a>>,
+    on_paste: Option<Box<dyn Fn(f64) -> Message + 'a>>,
     on_submit: Option<Message>,
     class: Theme::Class<'a>,
     last_status: Option<Status>,
@@ -127,7 +127,7 @@ where
     Renderer: iced_core::text::Renderer,
 {
     /// Creates a new [`NumberInput`] with its current value.
-    pub fn new(value: &str) -> Self {
+    pub fn new(value: f64) -> Self {
         let default_style = DefaultStyle::default();
         Self {
             id: None,
@@ -156,7 +156,7 @@ where
     /// the [`NumberInput`].
     ///
     /// If this method is not called, the [`NumberInput`] will be disabled.
-    pub fn on_input(mut self, on_input: impl Fn(String) -> Message + 'a) -> Self {
+    pub fn on_input(mut self, on_input: impl Fn(f64) -> Message + 'a) -> Self {
         self.on_input = Some(Box::new(on_input));
         self
     }
@@ -165,7 +165,7 @@ where
     /// the [`NumberInput`], if `Some`.
     ///
     /// If `None`, the [`NumberInput`] will be disabled.
-    pub fn on_input_maybe(mut self, on_input: Option<impl Fn(String) -> Message + 'a>) -> Self {
+    pub fn on_input_maybe(mut self, on_input: Option<impl Fn(f64) -> Message + 'a>) -> Self {
         self.on_input = on_input.map(|f| Box::new(f) as _);
         self
     }
@@ -186,14 +186,14 @@ where
 
     /// Sets the message that should be produced when some text is pasted into
     /// the [`NumberInput`].
-    pub fn on_paste(mut self, on_paste: impl Fn(String) -> Message + 'a) -> Self {
+    pub fn on_paste(mut self, on_paste: impl Fn(f64) -> Message + 'a) -> Self {
         self.on_paste = Some(Box::new(on_paste));
         self
     }
 
     /// Sets the message that should be produced when some text is pasted into
     /// the [`NumberInput`], if `Some`.
-    pub fn on_paste_maybe(mut self, on_paste: Option<impl Fn(String) -> Message + 'a>) -> Self {
+    pub fn on_paste_maybe(mut self, on_paste: Option<impl Fn(f64) -> Message + 'a>) -> Self {
         self.on_paste = on_paste.map(|f| Box::new(f) as _);
         self
     }
@@ -755,7 +755,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.delete();
 
-                            let message = (on_input)(editor.contents());
+                            let message = (on_input)(editor.evaluation());
                             shell.publish(message);
                             shell.capture_event();
 
@@ -781,7 +781,7 @@ where
                                         .filter(|c| !c.is_control())
                                         .collect();
 
-                                    Value::new(&content)
+                                    Value::from_expression(&content, self.value.evaluation())
                                 }
                             };
 
@@ -789,9 +789,9 @@ where
                             editor.paste(content.clone());
 
                             let message = if let Some(paste) = &self.on_paste {
-                                (paste)(editor.contents())
+                                (paste)(editor.evaluation())
                             } else {
-                                (on_input)(editor.contents())
+                                (on_input)(editor.evaluation())
                             };
                             shell.publish(message);
                             shell.capture_event();
@@ -830,7 +830,7 @@ where
 
                             editor.insert(c);
 
-                            let message = (on_input)(editor.contents());
+                            let message = (on_input)(editor.evaluation());
                             shell.publish(message);
                             shell.capture_event();
 
@@ -873,7 +873,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.backspace();
 
-                            let message = (on_input)(editor.contents());
+                            let message = (on_input)(editor.evaluation());
                             shell.publish(message);
                             shell.capture_event();
 
@@ -901,7 +901,7 @@ where
                             let mut editor = Editor::new(&mut self.value, &mut state.cursor);
                             editor.delete();
 
-                            let message = (on_input)(editor.contents());
+                            let message = (on_input)(editor.evaluation());
                             shell.publish(message);
                             shell.capture_event();
 
@@ -1078,12 +1078,12 @@ where
                         };
 
                         let mut editor = Editor::new(&mut self.value, &mut state.cursor);
-                        editor.paste(Value::new(text));
+                        editor.paste(Value::from_expression(text, editor.evaluation()));
 
                         focus.updated_at = iced_core::time::Instant::now();
                         state.is_pasting = None;
 
-                        let message = (on_input)(editor.contents());
+                        let message = (on_input)(editor.evaluation());
                         shell.publish(message);
                         shell.capture_event();
 

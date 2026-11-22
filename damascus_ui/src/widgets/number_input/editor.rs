@@ -34,8 +34,8 @@ impl<'a> Editor<'a> {
         Editor { value, cursor }
     }
 
-    pub fn contents(&self) -> String {
-        self.value.to_string()
+    pub fn evaluation(&self) -> f64 {
+        self.value.evaluation()
     }
 
     pub fn insert(&mut self, character: char) {

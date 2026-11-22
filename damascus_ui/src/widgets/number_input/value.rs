@@ -22,6 +22,7 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+use meval;
 use unicode_segmentation::UnicodeSegmentation;
 
 /// The value of a [`TextInput`].
@@ -31,16 +32,58 @@ use unicode_segmentation::UnicodeSegmentation;
 #[derive(Debug, Clone)]
 pub struct Value {
     graphemes: Vec<String>,
+    evaluation: f64,
 }
 
 impl Value {
     /// Creates a new [`Value`] from a string slice.
-    pub fn new(string: &str) -> Self {
+    pub fn new(value: f64) -> Self {
+        Self {
+            graphemes: format!("{:}", value)
+                .graphemes(true)
+                .map(String::from)
+                .collect(),
+            evaluation: value,
+        }
+    }
+
+    /// Creates a new [`Value`] from a string slice.
+    pub fn from_expression(string: &str, default_value: f64) -> Self {
         let graphemes = UnicodeSegmentation::graphemes(string, true)
             .map(String::from)
             .collect();
+        match string.parse::<meval::Expr>() {
+            Ok(expression) => match expression.eval() {
+                Ok(value) => Self {
+                    graphemes: graphemes,
+                    evaluation: value,
+                },
+                Err(_error) => Self {
+                    graphemes: graphemes,
+                    evaluation: default_value,
+                },
+            },
+            Err(_error) => Self {
+                graphemes: graphemes,
+                evaluation: default_value,
+            },
+        }
+    }
 
-        Self { graphemes }
+    pub fn evaluation(&self) -> f64 {
+        self.evaluation
+    }
+
+    pub fn reevaluate(&mut self) {
+        match self.to_string().parse::<meval::Expr>() {
+            Ok(expression) => match expression.eval() {
+                Ok(value) => {
+                    self.evaluation = value;
+                }
+                _ => {}
+            },
+            _ => {}
+        }
     }
 
     /// Returns whether the [`Value`] is empty or not.
@@ -95,7 +138,10 @@ impl Value {
     pub fn select(&self, start: usize, end: usize) -> Self {
         let graphemes = self.graphemes[start.min(self.len())..end.min(self.len())].to_vec();
 
-        Self { graphemes }
+        Self {
+            graphemes,
+            evaluation: self.evaluation,
+        }
     }
 
     /// Returns a new [`Value`] containing the graphemes until the given
@@ -103,7 +149,10 @@ impl Value {
     pub fn until(&self, index: usize) -> Self {
         let graphemes = self.graphemes[..index.min(self.len())].to_vec();
 
-        Self { graphemes }
+        Self {
+            graphemes,
+            evaluation: self.evaluation,
+        }
     }
 
     /// Inserts a new `char` at the given grapheme `index`.
@@ -113,6 +162,8 @@ impl Value {
         self.graphemes = UnicodeSegmentation::graphemes(&self.to_string() as &str, true)
             .map(String::from)
             .collect();
+
+        self.reevaluate();
     }
 
     /// Inserts a bunch of graphemes at the given grapheme `index`.
@@ -120,16 +171,22 @@ impl Value {
         let _ = self
             .graphemes
             .splice(index..index, value.graphemes.drain(..));
+
+        self.reevaluate();
     }
 
     /// Removes the grapheme at the given `index`.
     pub fn remove(&mut self, index: usize) {
         let _ = self.graphemes.remove(index);
+
+        self.reevaluate();
     }
 
     /// Removes the graphemes from `start` to `end`.
     pub fn remove_many(&mut self, start: usize, end: usize) {
         let _ = self.graphemes.splice(start..end, std::iter::empty());
+
+        self.reevaluate();
     }
 }
 

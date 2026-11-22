@@ -12,7 +12,6 @@ use crate::app::Context;
 pub mod dialog;
 pub mod menu;
 pub mod node_graph;
-pub mod number_input;
 pub mod pan_zoom;
 pub mod panel;
 pub mod properties;

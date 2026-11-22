@@ -331,8 +331,7 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
     fn update_for_reevaluation(&mut self, device: &wgpu::Device) {
         // No new data triggered a reset/recompile/reconstruction of
         // the pipeline, therefore we can build on top of the previous
-        // render pass. To do so we must pass the previous output
-        // TextureView as an input to this render pass
+        // render pass.
 
         let texture_views = self.create_texture_views(device);
 

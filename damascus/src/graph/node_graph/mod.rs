@@ -651,6 +651,16 @@ impl NodeGraph {
                     .data
                     .input_data_compatible_with_input(&input_data, &node_input_data.name())
                 {
+                    match input_data {
+                        InputData::SceneGraphId(_) | InputData::None => {}
+                        _ => {
+                            // SceneGraph data uses internal hashes to
+                            // manage cache eviction, but other data types
+                            // do not
+                            self.remove_node_from_cache(node_id);
+                        }
+                    }
+
                     self[input_id].data = input_data;
                     Ok(input_id)
                 } else {

@@ -93,28 +93,33 @@ impl EvaluableNode for AxisNode {
         _encoder: &mut wgpu::CommandEncoder,
         _scene_graph: &mut SceneGraph,
         data_map: &mut HashMap<String, InputData>,
-        _cached_input_data: Option<InputData>,
+        cached_input_data: Option<InputData>,
         output: Self::Outputs,
     ) -> NodeResult<InputData> {
-        let rotate: Vec3 = Self::Inputs::Rotate
-            .from_data_map(data_map)?
-            .try_to_vec3()?
-            * PI
-            / 180.;
-        let quaternion = Quat::from_euler(EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
-
-        let axis: Mat4 = Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?
-            * Mat4::from_scale_rotation_translation(
-                Vec3::splat(
-                    Self::Inputs::UniformScale
-                        .from_data_map(data_map)?
-                        .try_to_float()?,
-                ),
-                quaternion,
-                Self::Inputs::Translate
+        let axis: Mat4 = match cached_input_data {
+            Some(input_data) => input_data.try_to_mat4()?,
+            None => {
+                let rotate: Vec3 = Self::Inputs::Rotate
                     .from_data_map(data_map)?
-                    .try_to_vec3()?,
-            );
+                    .try_to_vec3()?
+                    * PI
+                    / 180.;
+                let quaternion = Quat::from_euler(EulerRot::XYZ, rotate.x, rotate.y, rotate.z);
+
+                Self::Inputs::Axis.from_data_map(data_map)?.try_to_mat4()?
+                    * Mat4::from_scale_rotation_translation(
+                        Vec3::splat(
+                            Self::Inputs::UniformScale
+                                .from_data_map(data_map)?
+                                .try_to_float()?,
+                        ),
+                        quaternion,
+                        Self::Inputs::Translate
+                            .from_data_map(data_map)?
+                            .try_to_vec3()?,
+                    )
+            }
+        };
 
         match output {
             Self::Outputs::Axis => Ok(InputData::Mat4(axis)),

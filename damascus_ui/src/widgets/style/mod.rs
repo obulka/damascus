@@ -18,8 +18,6 @@ use damascus::Enumerator;
 
 use crate::{icons::Icons, widgets::menu};
 
-use super::number_input::{self, NumberInput};
-
 pub mod editor;
 pub mod theme;
 
@@ -466,20 +464,20 @@ impl Style {
     {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
-            NumberInput::new(value.into())
+            iced::widget::TextInput::new("", &format!("{:}", value)) // TODO this is broken
                 .size(self.text_size)
                 .width(iced::Length::FillPortion(1))
                 .font(iced::Font::MONOSPACE)
                 .padding(self.padding)
-                .on_input(move |new_value| on_change(new_value.as_()))
+                // .on_input(move |new_value| on_change(new_value.as_()))
                 .on_submit(on_release.clone())
                 .style(|theme: &iced::Theme, status| {
                     let mut background_colour: iced::Color =
                         theme.extended_palette().background.base.color;
                     background_colour.a = 1.0;
-                    number_input::Style {
+                    iced::widget::text_input::Style {
                         background: background_colour.into(),
-                        ..number_input::default(theme, status)
+                        ..iced::widget::text_input::default(theme, status)
                     }
                 }),
             iced::widget::slider(suggested_range, value, on_change)

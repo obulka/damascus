@@ -534,14 +534,14 @@ impl Style {
         Message: Clone + Default + 'a,
         f64: AsPrimitive<T> + From<T> + 'a,
     {
-        let placeholder: String = format!("{:}", value);
+        let default_expression: String = format!("{:}", value);
         iced::widget::row![
             self.tooltip_label(name, tooltip),
             self.tooltip(
                 iced::widget::TextInput::new(
                     "",
                     if expression.is_empty() {
-                        &placeholder
+                        &default_expression
                     } else {
                         expression
                     }

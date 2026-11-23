@@ -27,6 +27,8 @@ use std::borrow::Borrow;
 use iced;
 use iced_core;
 
+use damascus::data_types::ExpressionData;
+
 use super::style::Style as DefaultStyle;
 
 pub struct DropdownMenu<'a, T, L, Message, Theme = iced::Theme, Renderer = iced::Renderer>
@@ -81,10 +83,10 @@ where
             menu_title,
             icon,
             width: iced::Length::Shrink,
-            padding: default_style.padding.into(),
-            spacing: default_style.padding,
+            padding: default_style.padding.value().into(),
+            spacing: default_style.padding.value(),
             icon_size: default_style.icon_size,
-            text_size: default_style.text_size.into(),
+            text_size: default_style.text_size.value().into(),
             text_line_height: iced_core::text::LineHeight::default(),
             text_shaping: iced_core::text::Shaping::default(),
             font: None,

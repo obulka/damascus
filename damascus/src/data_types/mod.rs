@@ -3,7 +3,10 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Sub, SubAssign},
+};
 
 use meval;
 use num_traits::{AsPrimitive, FromPrimitive};
@@ -12,7 +15,25 @@ mod float;
 
 pub use float::Float;
 
-pub trait ExpressionData<T>: Default
+pub trait ExpressionData<T>:
+    Add
+    + Add<T>
+    + AddAssign
+    + AddAssign<T>
+    + Default
+    + Div
+    + Div<T>
+    + DivAssign
+    + DivAssign<T>
+    + From<T>
+    + Mul
+    + Mul<T>
+    + MulAssign
+    + MulAssign<T>
+    + Sub
+    + Sub<T>
+    + SubAssign
+    + SubAssign<T>
 where
     T: FromPrimitive + Copy + Debug + 'static,
     f64: AsPrimitive<T> + From<T>,
@@ -40,7 +61,7 @@ where
 
     fn deref(self) -> T;
 
-    fn value(&self) -> &T;
+    fn value(&self) -> T;
     fn set_value(&mut self, new_value: T);
 
     fn with_value(mut self, new_value: T) -> Self

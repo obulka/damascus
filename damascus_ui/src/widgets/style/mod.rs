@@ -14,7 +14,10 @@ use iced;
 use macro_rules_attribute::derive;
 use num_traits::{AsPrimitive, Bounded, FromPrimitive, Num, NumAssignOps};
 
-use damascus::{Enumerator, data_types::ExpressionData};
+use damascus::{
+    Enumerator,
+    data_types::{ExpressionData, Float},
+};
 
 use crate::{icons::Icons, widgets::menu};
 
@@ -25,50 +28,50 @@ use theme::Theme;
 
 #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
 pub struct Style {
-    pub text_size: f32,
-    pub scale: f32,
-    pub border_width: f32,
+    pub text_size: Float,
+    pub scale: Float,
+    pub border_width: Float,
     pub theme: Theme,
-    pub spacing: f32,
-    pub padding: f32,
+    pub spacing: Float,
+    pub padding: Float,
     pub icon_size: u32,
-    pub leeway: f32,
-    pub modal_opacity: f32,
-    pub float_input_step: f32,
-    pub viewer_zoom_sensitivity: f32,
-    pub text_zoom_cutoff: f32,
-    pub connection_line_width: f32,
-    pub inactive_connection_line_scale: f32,
-    pub node_input_radius: f32,
-    pub node_output_radius: f32,
-    pub node_selected_border_width: f32,
-    pub selection_box_border_width: f32,
-    pub selection_box_alpha: f32,
+    pub leeway: Float,
+    pub modal_opacity: Float,
+    pub float_input_step: Float,
+    pub viewer_zoom_sensitivity: Float,
+    pub text_zoom_cutoff: Float,
+    pub connection_line_width: Float,
+    pub inactive_connection_line_scale: Float,
+    pub node_input_radius: Float,
+    pub node_output_radius: Float,
+    pub node_selected_border_width: Float,
+    pub selection_box_border_width: Float,
+    pub selection_box_alpha: Float,
 }
 
 impl Default for Style {
     fn default() -> Self {
         let theme = Theme::default();
         Self {
-            text_size: 14.0,
-            scale: 1.0,
-            border_width: 2.0,
+            text_size: 14.0.into(),
+            scale: 1.0.into(),
+            border_width: 2.0.into(),
             theme: theme,
-            spacing: 3.0,
-            padding: 3.0,
+            spacing: 3.0.into(),
+            padding: 3.0.into(),
             icon_size: 14,
-            leeway: 5.0,
-            modal_opacity: 0.69,
-            float_input_step: 1e-4,
-            viewer_zoom_sensitivity: 0.1,
-            text_zoom_cutoff: 2.,
-            connection_line_width: 3.5,
-            inactive_connection_line_scale: 0.5,
-            node_input_radius: 5.0,
-            node_output_radius: 5.0,
-            node_selected_border_width: 3.,
-            selection_box_border_width: 2.,
-            selection_box_alpha: 0.1,
+            leeway: 5.0.into(),
+            modal_opacity: 0.69.into(),
+            float_input_step: 1e-4.into(),
+            viewer_zoom_sensitivity: 0.1.into(),
+            text_zoom_cutoff: 2.0.into(),
+            connection_line_width: 3.5.into(),
+            inactive_connection_line_scale: 0.5.into(),
+            node_input_radius: 5.0.into(),
+            node_output_radius: 5.0.into(),
+            node_selected_border_width: 3.0.into(),
+            selection_box_border_width: 2.0.into(),
+            selection_box_alpha: 0.1.into(),
         }
     }
 }
@@ -76,24 +79,92 @@ impl Default for Style {
 impl Style {
     pub const MINIMUM_DASHED_LINE_SEGMENT_LENGTH: f32 = 1e-12;
 
+    pub fn scale(&self) -> f32 {
+        self.scale.value()
+    }
+
+    pub fn border_width(&self) -> f32 {
+        self.border_width.value()
+    }
+
+    pub fn spacing(&self) -> f32 {
+        self.spacing.value()
+    }
+
+    pub fn padding(&self) -> f32 {
+        self.padding.value()
+    }
+
+    pub fn icon_size(&self) -> u32 {
+        self.icon_size //.value()
+    }
+
+    pub fn leeway(&self) -> f32 {
+        self.leeway.value()
+    }
+
+    pub fn modal_opacity(&self) -> f32 {
+        self.modal_opacity.value()
+    }
+
+    pub fn float_input_step(&self) -> f32 {
+        self.float_input_step.value()
+    }
+
+    pub fn viewer_zoom_sensitivity(&self) -> f32 {
+        self.viewer_zoom_sensitivity.value()
+    }
+
+    pub fn text_zoom_cutoff(&self) -> f32 {
+        self.text_zoom_cutoff.value()
+    }
+
+    pub fn connection_line_width(&self) -> f32 {
+        self.connection_line_width.value()
+    }
+
+    pub fn inactive_connection_line_scale(&self) -> f32 {
+        self.inactive_connection_line_scale.value()
+    }
+
+    pub fn node_input_radius(&self) -> f32 {
+        self.node_input_radius.value()
+    }
+
+    pub fn node_output_radius(&self) -> f32 {
+        self.node_output_radius.value()
+    }
+
+    pub fn node_selected_border_width(&self) -> f32 {
+        self.node_selected_border_width.value()
+    }
+
+    pub fn selection_box_border_width(&self) -> f32 {
+        self.selection_box_border_width.value()
+    }
+
+    pub fn selection_box_alpha(&self) -> f32 {
+        self.selection_box_alpha.value()
+    }
+
     pub fn text_size(&self) -> f32 {
-        self.text_size
+        self.text_size.value()
     }
 
     pub fn h1_size(&self) -> f32 {
-        1.5 * self.text_size
+        1.5 * self.text_size.value()
     }
 
     pub fn h2_size(&self) -> f32 {
-        1.375 * self.text_size
+        1.375 * self.text_size.value()
     }
 
     pub fn h3_size(&self) -> f32 {
-        1.25 * self.text_size
+        1.25 * self.text_size.value()
     }
 
     pub fn h4_size(&self) -> f32 {
-        1.125 * self.text_size
+        1.125 * self.text_size.value()
     }
 
     pub fn text<'a, Message>(
@@ -104,7 +175,7 @@ impl Style {
         Message: iced::widget::text::Catalog + 'a,
     {
         iced::widget::text(message)
-            .size(self.text_size)
+            .size(self.text_size())
             .wrapping(iced::widget::text::Wrapping::WordOrGlyph)
     }
 
@@ -120,13 +191,13 @@ impl Style {
                     .align_x(iced::alignment::Horizontal::Right)
                     .width(iced::Length::FillPortion(1)),
             )
-            .padding(self.padding),
+            .padding(self.padding()),
             iced::widget::container(
                 self.text(tooltip)
                     .align_y(iced::alignment::Vertical::Center),
             )
             .style(iced::widget::container::bordered_box)
-            .padding(self.padding),
+            .padding(self.padding()),
             iced::widget::tooltip::Position::Bottom,
         )
     }
@@ -143,7 +214,7 @@ impl Style {
                     .align_y(iced::alignment::Vertical::Center),
             )
             .style(iced::widget::container::bordered_box)
-            .padding(self.padding),
+            .padding(self.padding()),
             iced::widget::tooltip::Position::Bottom,
         )
     }
@@ -159,12 +230,12 @@ impl Style {
             self.tooltip_label(label, tooltip),
             iced::widget::text_input("", &path)
                 .width(iced::Length::FillPortion(4))
-                .padding(self.padding)
-                .size(self.text_size)
+                .padding(self.padding())
+                .size(self.text_size())
                 .on_input(on_input)
         ]
         .align_y(iced::Alignment::Center)
-        .spacing(self.spacing)
+        .spacing(self.spacing())
         .into()
     }
 
@@ -178,13 +249,13 @@ impl Style {
         iced::widget::row![
             self.tooltip_label(label, tooltip,),
             iced::widget::checkbox(value)
-                .spacing(self.spacing)
-                .text_size(self.text_size)
+                .spacing(self.spacing())
+                .text_size(self.text_size())
                 .width(iced::Length::FillPortion(4))
                 .on_toggle(on_toggle),
         ]
         .align_y(iced::Alignment::Center)
-        .spacing(self.spacing)
+        .spacing(self.spacing())
         .into()
     }
 
@@ -236,7 +307,7 @@ impl Style {
             text_color: Some(palette.background.weakest.text),
             background: Some(palette.background.weakest.color.into()),
             border: iced::Border {
-                width: self.border_width,
+                width: self.border_width(),
                 color: palette.background.base.color,
                 ..Default::default()
             },
@@ -248,7 +319,7 @@ impl Style {
         let mut style = self.title_bar();
 
         style.border = iced::Border {
-            width: self.border_width,
+            width: self.border_width(),
             color: iced::Color::TRANSPARENT,
             ..iced::Border::default()
         };
@@ -277,7 +348,7 @@ impl Style {
         let mut style = self.pane();
 
         style.border = iced::Border {
-            width: self.border_width,
+            width: self.border_width(),
             color: palette.primary.strong.color,
             ..iced::Border::default()
         };
@@ -289,11 +360,11 @@ impl Style {
         iced::widget::button(
             Icons::Close
                 .as_svg()
-                .width(self.icon_size)
-                .height(self.icon_size),
+                .width(self.icon_size())
+                .height(self.icon_size()),
         )
         .style(iced::widget::button::subtle)
-        .padding(self.padding)
+        .padding(self.padding())
     }
 
     pub fn error_button<'a, Message>(
@@ -302,7 +373,7 @@ impl Style {
     ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::danger)
-            .padding(self.padding)
+            .padding(self.padding())
     }
 
     pub fn button<'a, Message>(
@@ -311,7 +382,7 @@ impl Style {
     ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::secondary)
-            .padding(self.padding)
+            .padding(self.padding())
     }
 
     pub fn warning_button<'a, Message>(
@@ -320,7 +391,7 @@ impl Style {
     ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::warning)
-            .padding(self.padding)
+            .padding(self.padding())
     }
 
     pub fn success_button<'a, Message>(
@@ -329,7 +400,7 @@ impl Style {
     ) -> iced::widget::Button<'a, Message> {
         iced::widget::button(self.text(text))
             .style(iced::widget::button::success)
-            .padding(self.padding)
+            .padding(self.padding())
     }
 
     pub fn maximize_button<'a, Message>(
@@ -342,44 +413,44 @@ impl Style {
             } else {
                 Icons::Maximize.as_svg()
             }
-            .width(self.icon_size)
-            .height(self.icon_size),
+            .width(self.icon_size())
+            .height(self.icon_size()),
         )
         .style(iced::widget::button::subtle)
-        .padding(self.padding)
+        .padding(self.padding())
     }
 
     pub fn detach_button<'a, Message>(&'a self) -> iced::widget::Button<'a, Message> {
         iced::widget::button(
             Icons::Detach
                 .as_svg()
-                .width(self.icon_size)
-                .height(self.icon_size),
+                .width(self.icon_size())
+                .height(self.icon_size()),
         )
         .style(iced::widget::button::subtle)
-        .padding(self.padding)
+        .padding(self.padding())
     }
 
     pub fn horizontal_split_button<'a, Message>(&'a self) -> iced::widget::Button<'a, Message> {
         iced::widget::button(
             Icons::HorizontalSplit
                 .as_svg()
-                .width(self.icon_size)
-                .height(self.icon_size),
+                .width(self.icon_size())
+                .height(self.icon_size()),
         )
         .style(iced::widget::button::subtle)
-        .padding(self.padding)
+        .padding(self.padding())
     }
 
     pub fn vertical_split_button<'a, Message>(&'a self) -> iced::widget::Button<'a, Message> {
         iced::widget::button(
             Icons::VerticalSplit
                 .as_svg()
-                .width(self.icon_size)
-                .height(self.icon_size),
+                .width(self.icon_size())
+                .height(self.icon_size()),
         )
         .style(iced::widget::button::subtle)
-        .padding(self.padding)
+        .padding(self.padding())
     }
 
     pub fn pick_list<'a, T, F, Message>(
@@ -416,7 +487,7 @@ impl Style {
                         iced::widget::pick_list::default(theme, status);
 
                     iced::widget::pick_list::Style {
-                        border: iced::border::rounded(self.border_width),
+                        border: iced::border::rounded(self.border_width()),
                         ..base
                     }
                 },
@@ -430,7 +501,7 @@ impl Style {
             })
         ]
         .align_y(iced::Alignment::Center)
-        .spacing(self.spacing)
+        .spacing(self.spacing())
         .into()
     }
 
@@ -467,10 +538,10 @@ impl Style {
             self.tooltip_label(name, tooltip),
             self.tooltip(
                 iced::widget::TextInput::new(&format!("{:}", value), expression)
-                    .size(self.text_size)
+                    .size(self.text_size())
                     .width(iced::Length::FillPortion(scale_portion))
                     .font(iced::Font::MONOSPACE)
-                    .padding(self.padding)
+                    .padding(self.padding())
                     .on_input(on_input)
                     .style(|theme: &iced::Theme, status| {
                         let palette: &iced::theme::palette::Extended = theme.extended_palette();
@@ -488,10 +559,10 @@ impl Style {
             iced::widget::slider(suggested_range, value, on_change)
                 .step(step)
                 .width(iced::Length::FillPortion(3 * scale_portion))
-                .height(self.text_size + 2. * self.padding),
+                .height(self.text_size() + 2. * self.padding()),
         ]
         .align_y(iced::Alignment::Center)
-        .spacing(self.spacing)
+        .spacing(self.spacing())
         .into()
     }
 
@@ -507,11 +578,11 @@ impl Style {
         L: Borrow<[T]> + 'a,
         Message: Clone + 'a,
     {
-        let icon_size: u32 = if icon.is_some() { self.icon_size } else { 0 };
+        let icon_size: u32 = if icon.is_some() { self.icon_size() } else { 0 };
         menu::DropdownMenu::new(options, menu_title, icon, on_select)
-            .padding(self.padding)
-            .text_size(self.text_size)
-            .spacing(self.spacing)
+            .padding(self.padding())
+            .text_size(self.text_size())
+            .spacing(self.spacing())
             .icon_size(icon_size)
             .style(|theme: &iced::Theme, status| -> menu::Style { menu::default(theme, status) })
             .menu_style(|theme: &iced::Theme| -> iced::overlay::menu::Style {
@@ -584,7 +655,7 @@ impl Style {
 
     pub fn node_text_orbit_distance(&self, max_distance: f32, index: usize) -> f32 {
         max_distance
-            .min(1.5 * self.text_size * (index + 1) as f32)
+            .min(1.5 * self.text_size() * (index + 1) as f32)
             .max(0.)
     }
 
@@ -594,7 +665,7 @@ impl Style {
         colour: iced::Color,
     ) -> iced::widget::canvas::Stroke<'_> {
         iced::widget::canvas::Stroke::default()
-            .with_width(self.connection_line_width * reciprocal_zoom)
+            .with_width(self.connection_line_width() * reciprocal_zoom)
             .with_color(colour)
     }
 
@@ -605,7 +676,7 @@ impl Style {
         segments: &'a mut Vec<f32>,
     ) -> iced::widget::canvas::Stroke<'a> {
         let inactive_connection_line_width: f32 =
-            self.connection_line_width * reciprocal_zoom * self.inactive_connection_line_scale;
+            self.connection_line_width() * reciprocal_zoom * self.inactive_connection_line_scale();
 
         let dashed_line_segment_length = 2. * inactive_connection_line_width;
 

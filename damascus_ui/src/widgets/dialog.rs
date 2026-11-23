@@ -5,6 +5,8 @@
 
 use iced;
 
+use damascus::data_types::ExpressionData;
+
 use super::{modal, style::Style};
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
@@ -51,7 +53,7 @@ impl Dialog {
             ]
             .align_x(iced::alignment::Horizontal::Center),
         )
-        .padding(style.padding)
+        .padding(style.padding.value())
         .style(iced::widget::container::rounded_box)
         .into()
     }
@@ -69,7 +71,7 @@ impl Dialog {
             ]
             .align_x(iced::alignment::Horizontal::Center),
         )
-        .padding(style.padding)
+        .padding(style.padding.value())
         .style(iced::widget::container::rounded_box)
         .into()
     }
@@ -87,7 +89,7 @@ impl Dialog {
             ]
             .align_x(iced::alignment::Horizontal::Center),
         )
-        .padding(style.padding)
+        .padding(style.padding.value())
         .style(iced::widget::container::rounded_box)
         .into()
     }
@@ -105,7 +107,7 @@ impl Dialog {
             ]
             .align_x(iced::alignment::Horizontal::Center),
         )
-        .padding(style.padding)
+        .padding(style.padding.value())
         .style(iced::widget::container::rounded_box)
         .into()
     }

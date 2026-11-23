@@ -444,7 +444,7 @@ impl Damascus {
         self.window_manager
             .windows
             .get(&window)
-            .map(|window| window.style.scale)
+            .map(|window| window.style.scale())
             .unwrap_or(1.0)
     }
 

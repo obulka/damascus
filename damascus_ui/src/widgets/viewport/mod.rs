@@ -173,8 +173,8 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 
         texture_viewer.zoom = self.zoom;
         texture_viewer.pan = self.pan;
-        texture_viewer.grade.gain = *self.gain.value();
-        texture_viewer.grade.gamma = *self.gamma.value();
+        texture_viewer.grade.gain = self.gain.value();
+        texture_viewer.grade.gamma = self.gamma.value();
 
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
@@ -517,14 +517,14 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
-        let current_gain: f32 = *self.viewport_primitive.gain.value();
+        let current_gain: f32 = self.viewport_primitive.gain.value();
         let gain = style.slider(
             "f/4",
             0.0..=64.0,
             ..,
             current_gain,
             self.viewport_primitive.gain.expression(),
-            style.float_input_step,
+            style.float_input_step(),
             move |expression| -> ViewportMessage {
                 ViewportMessage::GainChanged(Float::new(current_gain).with_expression(expression))
             },
@@ -532,14 +532,14 @@ impl Widget<ViewportMessage> for Viewport {
             "The gain to apply in the viewer.",
             3,
         );
-        let current_gamma: f32 = *self.viewport_primitive.gamma.value();
+        let current_gamma: f32 = self.viewport_primitive.gamma.value();
         let gamma = style.slider(
             "γ",
             0.01..=64.0,
             0.01..,
             current_gamma,
             self.viewport_primitive.gamma.expression(),
-            style.float_input_step,
+            style.float_input_step(),
             move |expression| -> ViewportMessage {
                 ViewportMessage::GammaChanged(Float::new(current_gamma).with_expression(expression))
             },
@@ -557,15 +557,15 @@ impl Widget<ViewportMessage> for Viewport {
         )
         .on_scroll(|scroll_delta| {
             PanZoomMessage::Zoom(match scroll_delta {
-                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,
-                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity,
+                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity(),
+                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity(),
             })
             .into()
         });
 
         iced::widget::column![toolbar, shader]
-            .spacing(style.spacing)
-            .padding(style.padding)
+            .spacing(style.spacing())
+            .padding(style.padding())
             .into()
     }
 }

@@ -9,7 +9,7 @@ use iced;
 use macro_rules_attribute::derive;
 use strum::IntoEnumIterator;
 
-use damascus::Enumerator;
+use damascus::{Enumerator, data_types::ExpressionData};
 
 use crate::{
     EnumTraits,
@@ -251,7 +251,7 @@ impl Panel {
                 None
             },
         ]
-        .spacing(style.spacing)
+        .spacing(style.spacing.value())
         .into()
     }
 }
@@ -425,13 +425,13 @@ impl Widget<PanelMessage> for Panel {
                         })
                         .tab_width(iced::Length::Shrink)
                         .width(iced::Length::Shrink)
-                        .spacing(style.spacing)
-                        .padding(style.padding)
-                        .text_size(style.text_size)
+                        .spacing(style.spacing.value())
+                        .padding(style.padding.value())
+                        .text_size(style.text_size.value())
                         .minimum_height(style.icon_size as f32)
-                        .close_size(style.text_size as f32 * 0.69),
+                        .close_size(style.text_size.value() * 0.69),
                 ]
-                .spacing(style.spacing),
+                .spacing(style.spacing.value()),
             )
             .controls(iced::widget::pane_grid::Controls::dynamic(
                 Self::view_controls(style, id, total_panes, is_maximized),
@@ -442,10 +442,10 @@ impl Widget<PanelMessage> for Panel {
                 }),
             ))
             .padding(iced::Padding {
-                top: style.border_width + style.padding,
-                right: style.border_width + style.padding,
-                bottom: style.border_width,
-                left: style.border_width + style.padding,
+                top: style.border_width.value() + style.padding.value(),
+                right: style.border_width.value() + style.padding.value(),
+                bottom: style.border_width.value(),
+                left: style.border_width.value() + style.padding.value(),
             })
             .style(move |_theme| {
                 if is_focused {
@@ -470,10 +470,10 @@ impl Widget<PanelMessage> for Panel {
         })
         .width(iced::Fill)
         .height(iced::Fill)
-        .spacing(style.spacing)
+        .spacing(style.spacing.value())
         .on_click(PanelMessage::Clicked)
         .on_drag(PanelMessage::Dragged)
-        .on_resize(style.leeway, PanelMessage::Resized);
+        .on_resize(style.leeway.value(), PanelMessage::Resized);
 
         iced::widget::container(pane_grid).into()
     }

@@ -428,8 +428,8 @@ impl NodeGraph {
         };
 
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
-        let input_path_radius: f32 = self.style.node_input_radius + self.style.leeway;
-        let output_path_radius: f32 = self.style.node_output_radius + self.style.leeway;
+        let input_path_radius: f32 = self.style.node_input_radius() + self.style.leeway();
+        let output_path_radius: f32 = self.style.node_output_radius() + self.style.leeway();
 
         for (node_id, node_context) in node_graph.context.iter() {
             let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
@@ -474,8 +474,8 @@ impl NodeGraph {
         };
 
         let cursor_position: Vec2 = self.pan_zoom.local_cursor_position();
-        let input_path_radius: f32 = self.style.node_input_radius + self.style.leeway;
-        let output_path_radius: f32 = self.style.node_output_radius + self.style.leeway;
+        let input_path_radius: f32 = self.style.node_input_radius() + self.style.leeway();
+        let output_path_radius: f32 = self.style.node_output_radius() + self.style.leeway();
 
         for (node_id, node_context) in node_graph.context.iter() {
             if let Some(input_id) = self.connection_in_progress.0 {
@@ -825,12 +825,12 @@ impl NodeGraph {
             theme
                 .palette()
                 .primary
-                .scale_alpha(self.style.selection_box_alpha),
+                .scale_alpha(self.style.selection_box_alpha()),
         );
         frame.stroke(
             &selection_box,
             iced::widget::canvas::Stroke::default()
-                .with_width(self.style.selection_box_border_width)
+                .with_width(self.style.selection_box_border_width())
                 .with_color(theme.palette().primary),
         );
     }
@@ -848,7 +848,8 @@ impl NodeGraph {
             return;
         }
 
-        let input_path_radius: f32 = self.style.node_input_radius * self.pan_zoom.reciprocal_zoom();
+        let input_path_radius: f32 =
+            self.style.node_input_radius() * self.pan_zoom.reciprocal_zoom();
 
         for input_index in 0..connectable_input_count {
             let input = iced::widget::canvas::Path::circle(
@@ -876,7 +877,7 @@ impl NodeGraph {
         }
 
         let output_path_radius: f32 =
-            self.style.node_output_radius * self.pan_zoom.reciprocal_zoom();
+            self.style.node_output_radius() * self.pan_zoom.reciprocal_zoom();
 
         for output_index in 0..output_count {
             let output = iced::widget::canvas::Path::circle(
@@ -896,11 +897,11 @@ impl NodeGraph {
         node_graph: &NodeGraphContext,
         theme: &iced::theme::Theme,
     ) {
-        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
-        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+        let text_size = iced::Pixels(self.style.text_size() * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff();
 
         let node_selected_border_width =
-            self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
+            self.style.node_selected_border_width() * self.pan_zoom.reciprocal_zoom();
 
         let palette = theme.extended_palette();
 
@@ -949,11 +950,11 @@ impl NodeGraph {
         viewports: &Viewports,
         theme: &iced::theme::Theme,
     ) {
-        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
-        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+        let text_size = iced::Pixels(self.style.text_size() * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff();
 
         let node_selected_border_width =
-            self.style.node_selected_border_width * self.pan_zoom.reciprocal_zoom();
+            self.style.node_selected_border_width() * self.pan_zoom.reciprocal_zoom();
 
         let palette = theme.extended_palette();
 
@@ -999,14 +1000,14 @@ impl NodeGraph {
             return;
         }
 
-        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
-        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+        let text_size = iced::Pixels(self.style.text_size() * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff();
 
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
 
         let connection_line_width: f32 =
-            self.style.connection_line_width * self.pan_zoom.reciprocal_zoom();
+            self.style.connection_line_width() * self.pan_zoom.reciprocal_zoom();
 
         let connection_stroke = iced::widget::canvas::Stroke::default()
             .with_width(connection_line_width)
@@ -1048,7 +1049,7 @@ impl NodeGraph {
                     connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), input_index),
-                    self.style.text_size,
+                    self.style.text_size(),
                 ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[input_id].name),
@@ -1100,7 +1101,7 @@ impl NodeGraph {
                     connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), output_index),
-                    self.style.text_size,
+                    self.style.text_size(),
                 ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[output_id].name),
@@ -1124,14 +1125,14 @@ impl NodeGraph {
         node_graph: &NodeGraphContext,
         theme: &iced::theme::Theme,
     ) {
-        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
-        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+        let text_size = iced::Pixels(self.style.text_size() * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff();
 
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
 
         let connection_line_width: f32 =
-            self.style.connection_line_width * self.pan_zoom.reciprocal_zoom();
+            self.style.connection_line_width() * self.pan_zoom.reciprocal_zoom();
 
         let connection_stroke = iced::widget::canvas::Stroke::default()
             .with_width(connection_line_width)
@@ -1192,7 +1193,7 @@ impl NodeGraph {
                 connection_vector,
                 self.style
                     .node_text_orbit_distance(connection_vector.length(), input_index),
-                self.style.text_size,
+                self.style.text_size(),
             ) {
                 frame.fill_text(iced::widget::canvas::Text {
                     content: snake_from_pascal(&node_graph.graph[*input_id].name),
@@ -1221,7 +1222,7 @@ impl NodeGraph {
                 connection_vector,
                 self.style
                     .node_text_orbit_distance(connection_vector.length(), output_index),
-                self.style.text_size,
+                self.style.text_size(),
             ) {
                 frame.fill_text(iced::widget::canvas::Text {
                     content: snake_from_pascal(&node_graph.graph[*output_id].name),
@@ -1245,8 +1246,8 @@ impl NodeGraph {
         viewports: &Viewports,
         theme: &iced::theme::Theme,
     ) {
-        let text_size = iced::Pixels(self.style.text_size * self.pan_zoom.reciprocal_zoom());
-        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff;
+        let text_size = iced::Pixels(self.style.text_size() * self.pan_zoom.reciprocal_zoom());
+        let render_text: bool = self.pan_zoom.zoom() <= self.style.text_zoom_cutoff();
 
         let primary_colour: iced::Color = theme.palette().primary;
         let text_colour: iced::Color = theme.palette().text;
@@ -1308,7 +1309,7 @@ impl NodeGraph {
                 let mut connection_vector: Vec2 = output_position - viewport_center;
                 let mut ray = Ray2d::new(viewport_center, connection_vector);
                 ray.advance_in_direction(
-                    self.style.text_size,
+                    self.style.text_size(),
                     if ray.direction().y > 0. {
                         ray.perpendicular_direction_ccw()
                     } else {
@@ -1359,7 +1360,7 @@ impl NodeGraph {
                     connection_vector,
                     self.style
                         .node_text_orbit_distance(connection_vector.length(), output_index),
-                    self.style.text_size,
+                    self.style.text_size(),
                 ) {
                     frame.fill_text(iced::widget::canvas::Text {
                         content: snake_from_pascal(&node_graph.graph[*output_id].name),
@@ -1711,8 +1712,8 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         .on_double_click(NodeGraphMessage::DoubleClick)
         .on_scroll(|scroll_delta| {
             PanZoomMessage::Zoom(match scroll_delta {
-                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity,
-                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity,
+                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity(),
+                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity(),
             })
             .into()
         })

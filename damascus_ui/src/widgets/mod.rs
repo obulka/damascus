@@ -7,6 +7,8 @@ use std::fmt::Debug;
 
 use iced;
 
+use damascus::data_types::ExpressionData;
+
 use crate::app::Context;
 
 pub mod dialog;
@@ -84,7 +86,7 @@ where
                     ])
                 .style(|theme: &iced::Theme| {
                     let mut background_colour: iced::Color = theme.palette().background;
-                    background_colour.a = style.modal_opacity;
+                    background_colour.a = style.modal_opacity.value();
                     iced::widget::container::Style {
                         background: Some(background_colour.into()),
                         ..iced::widget::container::Style::default()

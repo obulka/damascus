@@ -158,7 +158,7 @@ impl Properties {
                 InputData::Float(Float::new(new_value as f32)),
             )
         };
-        let current_value: f32 = *value.value();
+        let current_value: f32 = value.value();
         let on_input = move |expression| -> PropertiesMessage {
             PropertiesMessage::InputDataChanged(
                 input_id,
@@ -173,7 +173,7 @@ impl Properties {
                 range,
                 current_value as f64,
                 value.expression(),
-                style.float_input_step as f64,
+                style.float_input_step() as f64,
                 on_input,
                 on_change,
                 tooltip,
@@ -186,7 +186,7 @@ impl Properties {
                 ..,
                 current_value as f64,
                 value.expression(),
-                style.float_input_step as f64,
+                style.float_input_step() as f64,
                 on_input,
                 on_change,
                 tooltip,
@@ -301,7 +301,7 @@ impl Properties {
             )),
             ..iced::widget::container::Style::default()
         })
-        .padding(style.padding)
+        .padding(style.padding())
         .into()
     }
 
@@ -329,17 +329,17 @@ impl Properties {
         iced::widget::container(iced::widget::column(
             std::iter::once(self.node_title_bar(style, *node_id, label)).chain(std::iter::once(
                 iced::widget::column(Self::input_widgets_for_node(style, &node_graph, node_id))
-                    .padding(style.padding)
-                    .spacing(style.spacing)
+                    .padding(style.padding())
+                    .spacing(style.spacing())
                     .into(),
             )),
         ))
-        .padding(style.border_width)
+        .padding(style.border_width())
         .style(move |theme| iced::widget::container::Style {
             border: if node_is_selected {
                 iced::Border::default()
                     .color(theme.palette().primary)
-                    .width(style.border_width)
+                    .width(style.border_width())
             } else {
                 iced::Border::default()
             },
@@ -434,10 +434,10 @@ impl Widget<PropertiesMessage> for Properties {
                             iced::widget::column![self.widgets_for_node(style, node_id)].into()
                         }),
                     || -> iced::Element<'a, PropertiesMessage> {
-                        iced::widget::rule::horizontal(style.border_width)
+                        iced::widget::rule::horizontal(style.border_width())
                             .style(|theme: &iced::Theme| iced::widget::rule::Style {
                                 color: theme.extended_palette().background.strong.color,
-                                radius: (0.5 * style.border_width).into(),
+                                radius: (0.5 * style.border_width()).into(),
                                 fill_mode: iced::widget::rule::FillMode::Full,
                                 snap: false,
                             })
@@ -447,10 +447,10 @@ impl Widget<PropertiesMessage> for Properties {
             } else {
                 iced::widget::column![]
             }
-            .padding(style.padding)
-            .spacing(style.spacing),
+            .padding(style.padding())
+            .spacing(style.spacing()),
         )
-        .spacing(style.spacing)
+        .spacing(style.spacing())
         .into()
     }
 }

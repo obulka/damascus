@@ -465,35 +465,30 @@ impl Style {
     {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
-            iced::widget::TextInput::new(&format!("{:}", value), expression)
-                .size(self.text_size)
-                .width(iced::Length::FillPortion(scale_portion))
-                .font(iced::Font::MONOSPACE)
-                .padding(self.padding)
-                .on_input(on_input)
-                .style(|theme: &iced::Theme, status| {
-                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
-                    let mut background_colour: iced::Color = palette.background.base.color;
-                    background_colour.a = 1.0;
-                    iced::widget::text_input::Style {
-                        background: background_colour.into(),
-                        placeholder: palette.secondary.strong.color,
-                        ..iced::widget::text_input::default(theme, status)
-                    }
-                }),
-            iced::widget::row![
-                self.text(if expression.is_empty() {
-                    String::new()
-                } else {
-                    format!("={:.2}", value)
-                }),
-                iced::widget::slider(suggested_range, value, on_change)
-                    .step(step)
-                    .width(iced::Length::Fill)
-                    .height(self.text_size + 2. * self.padding),
-            ]
-            .spacing(self.spacing)
-            .width(iced::Length::FillPortion(3 * scale_portion)),
+            self.tooltip(
+                iced::widget::TextInput::new(&format!("{:}", value), expression)
+                    .size(self.text_size)
+                    .width(iced::Length::FillPortion(scale_portion))
+                    .font(iced::Font::MONOSPACE)
+                    .padding(self.padding)
+                    .on_input(on_input)
+                    .style(|theme: &iced::Theme, status| {
+                        let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                        let mut background_colour: iced::Color = palette.background.base.color;
+                        background_colour.a = 1.0;
+
+                        let mut style: iced::widget::text_input::Style =
+                            iced::widget::text_input::default(theme, status);
+                        style.background = background_colour.into();
+                        style.placeholder = style.value;
+                        style
+                    }),
+                format!("={:.3}", value)
+            ),
+            iced::widget::slider(suggested_range, value, on_change)
+                .step(step)
+                .width(iced::Length::FillPortion(3 * scale_portion))
+                .height(self.text_size + 2. * self.padding),
         ]
         .align_y(iced::Alignment::Center)
         .spacing(self.spacing)

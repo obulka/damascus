@@ -539,7 +539,7 @@ impl Style {
             self.tooltip_label(name, tooltip),
             self.tooltip(
                 iced::widget::TextInput::new(
-                    &placeholder,
+                    "",
                     if expression.is_empty() {
                         &placeholder
                     } else {

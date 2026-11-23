@@ -6,12 +6,16 @@
 use std::{
     any::type_name,
     collections::HashMap,
+    fmt::Debug,
     ops::{Range, RangeInclusive},
 };
 
 use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
 use indoc::indoc;
 use macro_rules_attribute::derive;
+use meval;
+use num_traits::AsPrimitive;
+use num_traits::FromPrimitive;
 
 use crate::{
     Enum, EnumTraits, Enumerator,
@@ -29,6 +33,72 @@ use crate::{
     textures::evaluators::TextureEvaluatorId,
 };
 
+pub mod float;
+
+use float::Float;
+
+pub trait InputDataExpression<T>: Default
+where
+    T: FromPrimitive + Copy + Debug + 'static,
+    f64: AsPrimitive<T> + From<T>,
+{
+    fn new(value: T) -> Self;
+
+    fn evaluate(equation: &str) -> Option<T> {
+        if let Ok(expression) = equation.parse::<meval::Expr>()
+            // TODO && let Ok(function) = expression.bind("frame")
+            && let Ok(evaluation) = expression.eval()
+        {
+            Some(evaluation.as_())
+        } else {
+            None
+        }
+    }
+
+    fn reevaluate(&mut self) {
+        if self.has_expression()
+            && let Some(new_value) = Self::evaluate(self.expression())
+        {
+            self.set_value(new_value);
+        }
+    }
+
+    fn deref(self) -> T;
+
+    fn value(&self) -> &T;
+    fn set_value(&mut self, new_value: T);
+
+    fn with_value(mut self, new_value: T) -> Self
+    where
+        Self: Sized,
+    {
+        self.set_value(new_value);
+        self
+    }
+
+    fn has_expression(&self) -> bool {
+        !self.expression().is_empty()
+    }
+
+    fn expression(&self) -> &str {
+        ""
+    }
+
+    fn set_expression(&mut self, new_expression: String) {
+        if let Some(value) = Self::evaluate(&new_expression) {
+            self.set_value(value);
+        }
+    }
+
+    fn with_expression(mut self, new_expression: String) -> Self
+    where
+        Self: Sized,
+    {
+        self.set_expression(new_expression);
+        self
+    }
+}
+
 #[derive(Default, EnumTraits!)]
 pub enum InputData {
     #[default]
@@ -39,7 +109,7 @@ pub enum InputData {
     UInt(u32),
     UVec2(UVec2),
     UVec3(UVec3),
-    Float(f32),
+    Float(Float),
     Vec2(Vec2),
     Vec3(Vec3),
     Vec4(Vec4),
@@ -88,7 +158,7 @@ impl From<UVec3> for InputData {
 
 impl From<f32> for InputData {
     fn from(value: f32) -> Self {
-        Self::Float(value)
+        Self::float(value)
     }
 }
 
@@ -135,6 +205,10 @@ impl From<SceneGraphId> for InputData {
 }
 
 impl InputData {
+    pub fn float(value: f32) -> Self {
+        Self::Float(Float::new(value))
+    }
+
     pub fn is_evaluable(&self) -> bool {
         match self {
             InputData::SceneGraphId(scene_graph_id) => match scene_graph_id {
@@ -237,7 +311,7 @@ impl InputData {
 
     pub fn try_to_float(self) -> NodeResult<f32> {
         match self {
-            InputData::Float(value) => Ok(value),
+            InputData::Float(value) => Ok(value.deref()),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
                 conversion_to: type_name::<f32>().to_string(),

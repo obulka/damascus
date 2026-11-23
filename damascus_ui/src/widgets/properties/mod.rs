@@ -17,7 +17,11 @@ use slotmap::SlotMap;
 use damascus::{
     Enumerator,
     graph::node_graph::{
-        inputs::{InputId, input::Input, input_data::InputData},
+        inputs::{
+            InputId,
+            input::Input,
+            input_data::{InputData, InputDataExpression, float::Float},
+        },
         nodes::NodeId,
     },
     naming_convensions::label_from_pascal,
@@ -147,36 +151,49 @@ impl Properties {
         tooltip: String,
         suggested_range: Option<RangeInclusive<f64>>,
         range: Option<Range<f64>>,
-        value: f32,
+        value: &Float,
     ) -> iced::Element<'a, PropertiesMessage> {
         let suggested_range: RangeInclusive<f64> = suggested_range.unwrap_or(0.0..=1.0);
 
-        let on_change = move |value| -> PropertiesMessage {
-            PropertiesMessage::InputDataChanged(input_id, InputData::Float(value as f32))
+        let on_change = move |new_value| -> PropertiesMessage {
+            PropertiesMessage::InputDataChanged(
+                input_id,
+                InputData::Float(Float::new(new_value as f32)),
+            )
         };
-        let on_release = PropertiesMessage::InputDataChanged(input_id, InputData::Float(value));
+        let current_value: f32 = *value.value();
+        let on_input = move |expression| -> PropertiesMessage {
+            PropertiesMessage::InputDataChanged(
+                input_id,
+                InputData::Float(Float::new(current_value).with_expression(expression)),
+            )
+        };
 
         if let Some(range) = range {
             style.slider(
                 label,
                 suggested_range,
                 range,
-                value.into(),
-                style.float_input_step.into(),
+                current_value as f64,
+                value.expression(),
+                style.float_input_step as f64,
+                on_input,
                 on_change,
-                on_release,
                 tooltip,
+                1,
             )
         } else {
             style.slider(
                 label,
                 suggested_range,
                 ..,
-                value.into(),
-                style.float_input_step.into(),
+                current_value as f64,
+                value.expression(),
+                style.float_input_step as f64,
+                on_input,
                 on_change,
-                on_release,
                 tooltip,
+                1,
             )
         }
     }
@@ -209,7 +226,7 @@ impl Properties {
             // InputData::UVec3(value) => {
             //     Self::uvec3_widget(style, label, &value)
             // }
-            InputData::Float(value) => Self::float_widget(
+            InputData::Float(ref value) => Self::float_widget(
                 style,
                 input_id,
                 label,

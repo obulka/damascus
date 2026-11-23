@@ -88,11 +88,11 @@ pub trait TextureEvaluator:
     }
 
     fn update_reset_hash(&mut self) -> bool {
-        if let Ok(reset_hash) = self.create_reset_hash() {
-            if reset_hash != self.hashes().reset {
-                self.hashes_mut().reset = reset_hash;
-                return true;
-            }
+        if let Ok(reset_hash) = self.create_reset_hash()
+            && reset_hash != self.hashes().reset
+        {
+            self.hashes_mut().reset = reset_hash;
+            return true;
         }
         false
     }
@@ -229,22 +229,22 @@ pub trait GPUTextureEvaluator<Directives: PreprocessorDirectives>:
 
     fn update_recompilation_hash(&mut self) -> bool {
         let mut hash_changed = self.dynamic_recompilation_enabled() && self.update_directives();
-        if let Ok(recompilation_hash) = self.create_recompilation_hash() {
-            if recompilation_hash != self.hashes().recompile {
-                self.hashes_mut().recompile = recompilation_hash;
-                hash_changed = true;
-            }
+        if let Ok(recompilation_hash) = self.create_recompilation_hash()
+            && recompilation_hash != self.hashes().recompile
+        {
+            self.hashes_mut().recompile = recompilation_hash;
+            hash_changed = true;
         }
 
         hash_changed
     }
 
     fn update_reconstruction_hash(&mut self) -> bool {
-        if let Ok(reconstruction_hash) = self.create_reconstruction_hash() {
-            if reconstruction_hash != self.hashes().reconstruct {
-                self.hashes_mut().reconstruct = reconstruction_hash;
-                return true;
-            }
+        if let Ok(reconstruction_hash) = self.create_reconstruction_hash()
+            && reconstruction_hash != self.hashes().reconstruct
+        {
+            self.hashes_mut().reconstruct = reconstruction_hash;
+            return true;
         }
         false
     }

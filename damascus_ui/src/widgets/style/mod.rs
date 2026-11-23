@@ -434,16 +434,18 @@ impl Style {
         .into()
     }
 
-    pub fn slider<'a, T, F, Message>(
+    pub fn slider<'a, T, Message>(
         &'a self,
         name: impl iced::widget::text::IntoFragment<'a>,
         suggested_range: RangeInclusive<T>,
         _limit_range: impl RangeBounds<T>,
         value: T,
+        expression: &str,
         step: T,
-        on_change: F,
-        on_release: Message,
+        on_input: impl Fn(String) -> Message + 'a,
+        on_change: impl Fn(T) -> Message + 'static,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
+        scale_portion: u16,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -458,33 +460,40 @@ impl Style {
             + Copy
             + 'static,
         <T as FromStr>::Err: std::fmt::Debug,
-        F: Fn(T) -> Message + Copy + 'static,
         Message: Clone + Default + 'a,
         f64: AsPrimitive<T> + From<T> + 'a,
     {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
-            iced::widget::TextInput::new("", &format!("{:}", value)) // TODO this is broken
+            iced::widget::TextInput::new(&format!("{:}", value), expression)
                 .size(self.text_size)
-                .width(iced::Length::FillPortion(1))
+                .width(iced::Length::FillPortion(scale_portion))
                 .font(iced::Font::MONOSPACE)
                 .padding(self.padding)
-                // .on_input(move |new_value| on_change(new_value.as_()))
-                .on_submit(on_release.clone())
+                .on_input(on_input)
                 .style(|theme: &iced::Theme, status| {
-                    let mut background_colour: iced::Color =
-                        theme.extended_palette().background.base.color;
+                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                    let mut background_colour: iced::Color = palette.background.base.color;
                     background_colour.a = 1.0;
                     iced::widget::text_input::Style {
                         background: background_colour.into(),
+                        placeholder: palette.secondary.strong.color,
                         ..iced::widget::text_input::default(theme, status)
                     }
                 }),
-            iced::widget::slider(suggested_range, value, on_change)
-                .step(step)
-                .width(iced::Length::FillPortion(3))
-                .height(self.text_size + 2. * self.padding)
-                .on_release(on_release),
+            iced::widget::row![
+                self.text(if expression.is_empty() {
+                    String::new()
+                } else {
+                    format!("={:.2}", value)
+                }),
+                iced::widget::slider(suggested_range, value, on_change)
+                    .step(step)
+                    .width(iced::Length::Fill)
+                    .height(self.text_size + 2. * self.padding),
+            ]
+            .spacing(self.spacing)
+            .width(iced::Length::FillPortion(3 * scale_portion)),
         ]
         .align_y(iced::Alignment::Center)
         .spacing(self.spacing)

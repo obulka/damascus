@@ -1484,7 +1484,7 @@ mod tests {
                     .set_input_data(
                         &primary_axis_id,
                         &AxisInputData::Translate,
-                        InputData::Float(1.5),
+                        InputData::float(1.5),
                     )
                     .is_err(),
             );
@@ -1732,7 +1732,7 @@ mod tests {
                 .set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::BlendStrength,
-                    InputData::Float(0.5),
+                    InputData::float(0.5),
                 )
                 .is_ok(),
         );
@@ -1890,7 +1890,7 @@ mod tests {
 
         assert!(
             graph
-                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(0.5))
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::float(0.5))
                 .is_ok(),
         );
 
@@ -1925,7 +1925,7 @@ mod tests {
 
         assert!(
             graph
-                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::Float(2.))
+                .set_input_data(&grade_id, &GradeInputData::Gain, InputData::float(2.))
                 .is_ok(),
         );
 

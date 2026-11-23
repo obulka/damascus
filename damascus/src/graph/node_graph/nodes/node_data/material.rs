@@ -55,32 +55,32 @@ impl NodeInputData for MaterialInputData {
         match self {
             Self::DiffuseColour => InputData::Vec3(default_material.diffuse_colour),
             Self::DiffuseColourTexture => InputData::SceneGraphId(SceneGraphId::None),
-            Self::SpecularProbability => InputData::Float(default_material.specular_probability),
+            Self::SpecularProbability => InputData::float(default_material.specular_probability),
             Self::SpecularProbabilityTexture => InputData::SceneGraphId(SceneGraphId::None),
-            Self::SpecularRoughness => InputData::Float(default_material.specular_roughness),
+            Self::SpecularRoughness => InputData::float(default_material.specular_roughness),
             Self::SpecularRoughnessTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::SpecularColour => InputData::Vec3(default_material.specular_colour),
             Self::SpecularColourTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::TransmissiveProbability => {
-                InputData::Float(default_material.transmissive_probability)
+                InputData::float(default_material.transmissive_probability)
             }
             Self::TransmissiveProbabilityTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::TransmissiveRoughness => {
-                InputData::Float(default_material.transmissive_roughness)
+                InputData::float(default_material.transmissive_roughness)
             }
             Self::TransmissiveRoughnessTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::ExtinctionCoefficient => {
-                InputData::Float(default_material.extinction_coefficient)
+                InputData::float(default_material.extinction_coefficient)
             }
             Self::TransmissiveColour => InputData::Vec3(default_material.transmissive_colour),
             Self::TransmissiveColourTexture => InputData::SceneGraphId(SceneGraphId::None),
-            Self::EmissiveIntensity => InputData::Float(default_material.emissive_intensity),
+            Self::EmissiveIntensity => InputData::float(default_material.emissive_intensity),
             Self::EmissiveColour => InputData::Vec3(default_material.emissive_colour),
             Self::EmissiveColourTexture => InputData::SceneGraphId(SceneGraphId::None),
-            Self::RefractiveIndex => InputData::Float(default_material.refractive_index),
+            Self::RefractiveIndex => InputData::float(default_material.refractive_index),
             Self::RefractiveIndexTexture => InputData::SceneGraphId(SceneGraphId::None),
             Self::ScatteringCoefficient => {
-                InputData::Float(default_material.scattering_coefficient)
+                InputData::float(default_material.scattering_coefficient)
             }
             Self::ScatteringColour => InputData::Vec3(default_material.scattering_colour),
             Self::ScatteringColourTexture => InputData::SceneGraphId(SceneGraphId::None),

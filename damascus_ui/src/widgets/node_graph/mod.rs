@@ -1683,7 +1683,7 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 let _ = node_graph.graph.set_input_data(
                     &primitive_id,
                     &PrimitiveInputData::BlendStrength,
-                    InputData::Float(0.5),
+                    InputData::float(0.5),
                 );
 
                 node_graph.context.insert(

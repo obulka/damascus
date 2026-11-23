@@ -40,11 +40,11 @@ impl NodeInputData for GradeInputData {
         let default_grade = Grade::default();
         match self {
             Self::Texture => InputData::SceneGraphId(SceneGraphId::None),
-            Self::BlackPoint => InputData::Float(default_grade.black_point),
-            Self::WhitePoint => InputData::Float(default_grade.white_point),
-            Self::Lift => InputData::Float(default_grade.lift),
-            Self::Gain => InputData::Float(default_grade.gain),
-            Self::Gamma => InputData::Float(default_grade.gamma),
+            Self::BlackPoint => InputData::float(default_grade.black_point),
+            Self::WhitePoint => InputData::float(default_grade.white_point),
+            Self::Lift => InputData::float(default_grade.lift),
+            Self::Gain => InputData::float(default_grade.gain),
+            Self::Gamma => InputData::float(default_grade.gamma),
             Self::Invert => InputData::Bool(default_grade.invert),
             Self::Transform => InputData::Mat4(default_grade.transform),
         }

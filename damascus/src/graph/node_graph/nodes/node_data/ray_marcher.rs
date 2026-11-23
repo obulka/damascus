@@ -52,9 +52,9 @@ impl NodeInputData for RayMarcherInputData {
             Self::SceneRoot => InputData::SceneGraphId(SceneGraphId::None),
             Self::MaxRaySteps => InputData::UInt(default_ray_marcher.max_ray_steps),
             Self::MaxBounces => InputData::UInt(default_ray_marcher.max_bounces),
-            Self::HitTolerance => InputData::Float(default_ray_marcher.hit_tolerance),
-            Self::ShadowBias => InputData::Float(default_ray_marcher.shadow_bias),
-            Self::MaxBrightness => InputData::Float(default_ray_marcher.max_brightness),
+            Self::HitTolerance => InputData::float(default_ray_marcher.hit_tolerance),
+            Self::ShadowBias => InputData::float(default_ray_marcher.shadow_bias),
+            Self::MaxBrightness => InputData::float(default_ray_marcher.max_brightness),
             Self::Seed => InputData::UInt(default_ray_marcher.seed),
             Self::DynamicLevelOfDetail => {
                 InputData::Bool(default_ray_marcher.dynamic_level_of_detail)
@@ -65,7 +65,7 @@ impl NodeInputData for RayMarcherInputData {
                 InputData::UInt(default_ray_marcher.max_light_sampling_bounces)
             }
             Self::SampleAtmosphere => InputData::Bool(default_ray_marcher.sample_atmosphere),
-            Self::LightSamplingBias => InputData::Float(default_ray_marcher.light_sampling_bias),
+            Self::LightSamplingBias => InputData::float(default_ray_marcher.light_sampling_bias),
             Self::SecondarySampling => InputData::Bool(default_ray_marcher.secondary_sampling),
             Self::OutputAOV => InputData::Enum(default_ray_marcher.output_aov.into()),
         }

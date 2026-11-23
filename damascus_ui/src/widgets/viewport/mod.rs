@@ -18,7 +18,10 @@ use damascus::{
     Enumerator,
     geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
-    graph::node_graph::outputs::OutputId,
+    graph::node_graph::{
+        inputs::input_data::{InputDataExpression, float::Float},
+        outputs::OutputId,
+    },
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
@@ -80,8 +83,8 @@ pub type TextureViewers = SecondaryMap<ViewportId, TextureViewer>;
 pub enum ViewportMessage {
     PanZoom(PanZoomMessage),
     Resize(Vec2),
-    GainChanged(f32),
-    GammaChanged(f32),
+    GainChanged(Float),
+    GammaChanged(Float),
     #[serde(skip)]
     ProgramEvent(iced::Event),
     #[default]
@@ -116,8 +119,8 @@ pub struct ViewportPrimitive {
     active_output_id: Option<OutputId>,
     zoom: f32,
     pan: Vec2,
-    gain: f32,
-    gamma: f32,
+    gain: Float,
+    gamma: Float,
 }
 
 impl Default for ViewportPrimitive {
@@ -128,8 +131,8 @@ impl Default for ViewportPrimitive {
             active_output_id: None,
             zoom: 1.0,
             pan: Vec2::ZERO,
-            gain: 1.0,
-            gamma: 1.0,
+            gain: Float::new(1.0),
+            gamma: Float::new(1.0),
         }
     }
 }
@@ -172,8 +175,8 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
 
         texture_viewer.zoom = self.zoom;
         texture_viewer.pan = self.pan;
-        texture_viewer.grade.gain = self.gain;
-        texture_viewer.grade.gamma = self.gamma;
+        texture_viewer.grade.gain = *self.gain.value();
+        texture_viewer.grade.gamma = *self.gamma.value();
 
         let mut encoder: wgpu::CommandEncoder =
             device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
@@ -516,25 +519,35 @@ impl Widget<ViewportMessage> for Viewport {
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, ViewportMessage> {
+        let current_gain: f32 = *self.viewport_primitive.gain.value();
         let gain = style.slider(
             "f/4",
             0.0..=64.0,
             ..,
-            self.viewport_primitive.gain,
+            current_gain,
+            self.viewport_primitive.gain.expression(),
             style.float_input_step,
-            |value| -> ViewportMessage { ViewportMessage::GainChanged(value) },
-            ViewportMessage::GainChanged(self.viewport_primitive.gain),
+            move |expression| -> ViewportMessage {
+                ViewportMessage::GainChanged(Float::new(current_gain).with_expression(expression))
+            },
+            |value| -> ViewportMessage { ViewportMessage::GainChanged(Float::new(value)) },
             "The gain to apply in the viewer.",
+            3,
         );
+        let current_gamma: f32 = *self.viewport_primitive.gamma.value();
         let gamma = style.slider(
             "γ",
             0.01..=64.0,
             0.01..,
-            self.viewport_primitive.gamma,
+            current_gamma,
+            self.viewport_primitive.gamma.expression(),
             style.float_input_step,
-            |value| -> ViewportMessage { ViewportMessage::GammaChanged(value) },
-            ViewportMessage::GammaChanged(self.viewport_primitive.gamma),
+            move |expression| -> ViewportMessage {
+                ViewportMessage::GammaChanged(Float::new(current_gamma).with_expression(expression))
+            },
+            |value| -> ViewportMessage { ViewportMessage::GammaChanged(Float::new(value)) },
             "The gamma to apply in the viewer.",
+            3,
         );
 
         let toolbar = iced::widget::row![gain, gamma];
@@ -552,7 +565,8 @@ impl Widget<ViewportMessage> for Viewport {
             .into()
         });
 
-        iced::widget::container(iced::widget::column![toolbar, shader])
+        iced::widget::column![toolbar, shader]
+            .spacing(style.spacing)
             .padding(style.padding)
             .into()
     }

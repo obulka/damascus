@@ -36,7 +36,7 @@ impl NodeInputData for AxisInputData {
             Self::Axis => InputData::Mat4(Mat4::IDENTITY),
             Self::Translate => InputData::Vec3(Vec3::ZERO),
             Self::Rotate => InputData::Vec3(Vec3::ZERO),
-            Self::UniformScale => InputData::Float(1.),
+            Self::UniformScale => InputData::float(1.),
         }
     }
 

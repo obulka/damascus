@@ -282,235 +282,253 @@ impl Widget<StyleEditorMessage> for StyleEditor {
             |theme| -> StyleEditorMessage { StyleEditorData::Theme(theme).into() },
             "The colour scheme of the UI",
         );
-        let text_size = style.slider(
-            StyleEditorFields::TextSize.variant_label(),
-            6.0..=36.0,
-            ..,
-            style.text_size,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
-            StyleEditorData::TextSize(style.text_size).into(),
-            "The default global text size",
-        );
-        let scale = style.slider(
-            StyleEditorFields::Scale.variant_label(),
-            0.25..=5.0,
-            style.float_input_step..,
-            style.scale,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
-            StyleEditorData::Scale(style.scale).into(),
-            "Scale the UI up or down",
-        );
-        let border_width = style.slider(
-            StyleEditorFields::BorderWidth.variant_label(),
-            0.0..=10.0,
-            ..,
-            style.border_width,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
-            StyleEditorData::BorderWidth(style.border_width).into(),
-            "The width of borders in the UI",
-        );
-        let spacing = style.slider(
-            StyleEditorFields::Spacing.variant_label(),
-            0.0..=10.0,
-            ..,
-            style.spacing,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
-            StyleEditorData::Spacing(style.spacing).into(),
-            "The spacing between UI elements",
-        );
-        let padding = style.slider(
-            StyleEditorFields::Padding.variant_label(),
-            0.0..=10.0,
-            ..,
-            style.padding,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
-            StyleEditorData::Padding(style.padding).into(),
-            "The padding around UI elements",
-        );
-        let icon_size = style.slider(
-            StyleEditorFields::IconSize.variant_label(),
-            4..=36,
-            ..,
-            style.icon_size,
-            1,
-            |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
-            StyleEditorData::IconSize(style.icon_size).into(),
-            "The size of icon buttons",
-        );
-        let leeway = style.slider(
-            StyleEditorFields::Leeway.variant_label(),
-            1.0..=100.0,
-            ..,
-            style.leeway,
-            1.,
-            |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
-            StyleEditorData::Leeway(style.leeway).into(),
-            "The tolerance around grabbable elements",
-        );
-        let modal_opacity = style.slider(
-            StyleEditorFields::ModalOpacity.variant_label(),
-            0.0..=1.0,
-            ..,
-            style.modal_opacity,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
-            StyleEditorData::ModalOpacity(style.modal_opacity).into(),
-            "The opacity of the background when in a modal context",
-        );
-        let viewer_zoom_sensitivity = style.slider(
-            StyleEditorFields::ViewerZoomSensitivity.variant_label(),
-            1e-3..=2.0,
-            ..,
-            style.viewer_zoom_sensitivity,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::ViewerZoomSensitivity(value).into() },
-            StyleEditorData::ViewerZoomSensitivity(style.viewer_zoom_sensitivity).into(),
-            "The sensitivity of the mouse scroll wheel when zooming in the viewer",
-        );
-        let float_input_step = style.slider(
-            StyleEditorFields::FloatInputStep.variant_label(),
-            1e-32..=1e-1,
-            ..,
-            style.float_input_step,
-            1e-32,
-            |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
-            StyleEditorData::FloatInputStep(style.float_input_step).into(),
-            "The minimum step between floating point numbers when dragging sliders",
-        );
-        // let example_colour = style.colour_picker(
-        //     StyleEditorFields::ExampleColour.variant_label(),
-        //     style.picking_example_colour,
-        //     iced::Color::from_rgba(
-        //         style.example_colour.x,
-        //         style.example_colour.y,
-        //         style.example_colour.z,
-        //         style.example_colour.w,
-        //     ),
-        //     StyleEditorMessage::Toggle(StyleEditorFields::ExampleColour),
-        //     |colour| -> StyleEditorMessage {
-        //         StyleEditorData::ExampleColour(Vec4::new(
-        //             colour.r, colour.g, colour.b, colour.a,
-        //         ))
-        //         .into()
+        // let text_size = style.slider(
+        //     StyleEditorFields::TextSize.variant_label(),
+        //     6.0..=36.0,
+        //     ..,
+        //     style.text_size,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::TextSize(value).into() },
+        //     StyleEditorData::TextSize(style.text_size).into(),
+        //     "The default global text size",
+        // );
+        // let scale = style.slider(
+        //     StyleEditorFields::Scale.variant_label(),
+        //     0.25..=5.0,
+        //     style.float_input_step..,
+        //     style.scale,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::Scale(value).into() },
+        //     StyleEditorData::Scale(style.scale).into(),
+        //     "Scale the UI up or down",
+        // );
+        // let border_width = style.slider(
+        //     StyleEditorFields::BorderWidth.variant_label(),
+        //     0.0..=10.0,
+        //     ..,
+        //     style.border_width,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::BorderWidth(value).into() },
+        //     StyleEditorData::BorderWidth(style.border_width).into(),
+        //     "The width of borders in the UI",
+        // );
+        // let spacing = style.slider(
+        //     StyleEditorFields::Spacing.variant_label(),
+        //     0.0..=10.0,
+        //     ..,
+        //     style.spacing,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::Spacing(value).into() },
+        //     StyleEditorData::Spacing(style.spacing).into(),
+        //     "The spacing between UI elements",
+        // );
+        // let padding = style.slider(
+        //     StyleEditorFields::Padding.variant_label(),
+        //     0.0..=10.0,
+        //     ..,
+        //     style.padding,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::Padding(value).into() },
+        //     StyleEditorData::Padding(style.padding).into(),
+        //     "The padding around UI elements",
+        // );
+        // let icon_size = style.slider(
+        //     StyleEditorFields::IconSize.variant_label(),
+        //     4..=36,
+        //     ..,
+        //     style.icon_size,
+        //     1,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::IconSize(value).into() },
+        //     StyleEditorData::IconSize(style.icon_size).into(),
+        //     "The size of icon buttons",
+        // );
+        // let leeway = style.slider(
+        //     StyleEditorFields::Leeway.variant_label(),
+        //     1.0..=100.0,
+        //     ..,
+        //     style.leeway,
+        //     1.,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::Leeway(value).into() },
+        //     StyleEditorData::Leeway(style.leeway).into(),
+        //     "The tolerance around grabbable elements",
+        // );
+        // let modal_opacity = style.slider(
+        //     StyleEditorFields::ModalOpacity.variant_label(),
+        //     0.0..=1.0,
+        //     ..,
+        //     style.modal_opacity,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::ModalOpacity(value).into() },
+        //     StyleEditorData::ModalOpacity(style.modal_opacity).into(),
+        //     "The opacity of the background when in a modal context",
+        // );
+        // let viewer_zoom_sensitivity = style.slider(
+        //     StyleEditorFields::ViewerZoomSensitivity.variant_label(),
+        //     1e-3..=2.0,
+        //     ..,
+        //     style.viewer_zoom_sensitivity,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::ViewerZoomSensitivity(value).into() },
+        //     StyleEditorData::ViewerZoomSensitivity(style.viewer_zoom_sensitivity).into(),
+        //     "The sensitivity of the mouse scroll wheel when zooming in the viewer",
+        // );
+        // let float_input_step = style.slider(
+        //     StyleEditorFields::FloatInputStep.variant_label(),
+        //     1e-32..=1e-1,
+        //     ..,
+        //     style.float_input_step,
+        //     1e-32,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::FloatInputStep(value).into() },
+        //     StyleEditorData::FloatInputStep(style.float_input_step).into(),
+        //     "The minimum step between floating point numbers when dragging sliders",
+        // );
+        // // let example_colour = style.colour_picker(
+        // //     StyleEditorFields::ExampleColour.variant_label(),
+        // //     style.picking_example_colour,
+        // //     iced::Color::from_rgba(
+        // //         style.example_colour.x,
+        // //         style.example_colour.y,
+        // //         style.example_colour.z,
+        // //         style.example_colour.w,
+        // //     ),
+        // //     StyleEditorMessage::Toggle(StyleEditorFields::ExampleColour),
+        // //     |colour| -> StyleEditorMessage {
+        // //         StyleEditorData::ExampleColour(Vec4::new(
+        // //             colour.r, colour.g, colour.b, colour.a,
+        // //         ))
+        // //         .into()
+        // //     },
+        // //     "An example colour",
+        // // );
+
+        // let text_zoom_cutoff = style.slider(
+        //     StyleEditorFields::TextZoomCutoff.variant_label(),
+        //     1.0..=10.,
+        //     ..,
+        //     style.text_zoom_cutoff,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::TextZoomCutoff(value).into() },
+        //     StyleEditorData::TextZoomCutoff(style.text_zoom_cutoff).into(),
+        //     "If you zoom out past this value, text will stop rendering in the node graph",
+        // );
+        // let connection_line_width = style.slider(
+        //     StyleEditorFields::ConnectionLineWidth.variant_label(),
+        //     0.5..=10.,
+        //     ..,
+        //     style.connection_line_width,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::ConnectionLineWidth(value).into() },
+        //     StyleEditorData::ConnectionLineWidth(style.connection_line_width).into(),
+        //     "The width of the lines representing connections between nodes",
+        // );
+        // let inactive_connection_line_scale = style.slider(
+        //     StyleEditorFields::InactiveConnectionLineScale.variant_label(),
+        //     0.1..=1.0,
+        //     ..,
+        //     style.inactive_connection_line_scale,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage {
+        //         StyleEditorData::InactiveConnectionLineScale(value).into()
         //     },
-        //     "An example colour",
+        //     StyleEditorData::InactiveConnectionLineScale(style.inactive_connection_line_scale)
+        //         .into(),
+        //     "The width of lines representing the inactive viewport connections",
+        // );
+        // let node_input_radius = style.slider(
+        //     StyleEditorFields::NodeInputRadius.variant_label(),
+        //     1.0..=10.0,
+        //     ..,
+        //     style.node_input_radius,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::NodeInputRadius(value).into() },
+        //     StyleEditorData::NodeInputRadius(style.node_input_radius).into(),
+        //     "The radius of the circular inputs on nodes",
+        // );
+        // let node_output_radius = style.slider(
+        //     StyleEditorFields::NodeOutputRadius.variant_label(),
+        //     1.0..=10.0,
+        //     ..,
+        //     style.node_output_radius,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::NodeOutputRadius(value).into() },
+        //     StyleEditorData::NodeOutputRadius(style.node_output_radius).into(),
+        //     "The radius of the circular outputs on nodes",
+        // );
+        // let node_selected_border_width = style.slider(
+        //     StyleEditorFields::NodeSelectedBorderWidth.variant_label(),
+        //     1.0..=10.0,
+        //     ..,
+        //     style.node_selected_border_width,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage {
+        //         StyleEditorData::NodeSelectedBorderWidth(value).into()
+        //     },
+        //     StyleEditorData::NodeSelectedBorderWidth(style.node_selected_border_width).into(),
+        //     "The width of the border that is drawn on selected nodes",
         // );
 
-        let text_zoom_cutoff = style.slider(
-            StyleEditorFields::TextZoomCutoff.variant_label(),
-            1.0..=10.,
-            ..,
-            style.text_zoom_cutoff,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::TextZoomCutoff(value).into() },
-            StyleEditorData::TextZoomCutoff(style.text_zoom_cutoff).into(),
-            "If you zoom out past this value, text will stop rendering in the node graph",
-        );
-        let connection_line_width = style.slider(
-            StyleEditorFields::ConnectionLineWidth.variant_label(),
-            0.5..=10.,
-            ..,
-            style.connection_line_width,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::ConnectionLineWidth(value).into() },
-            StyleEditorData::ConnectionLineWidth(style.connection_line_width).into(),
-            "The width of the lines representing connections between nodes",
-        );
-        let inactive_connection_line_scale = style.slider(
-            StyleEditorFields::InactiveConnectionLineScale.variant_label(),
-            0.1..=1.0,
-            ..,
-            style.inactive_connection_line_scale,
-            style.float_input_step,
-            |value| -> StyleEditorMessage {
-                StyleEditorData::InactiveConnectionLineScale(value).into()
-            },
-            StyleEditorData::InactiveConnectionLineScale(style.inactive_connection_line_scale)
-                .into(),
-            "The width of lines representing the inactive viewport connections",
-        );
-        let node_input_radius = style.slider(
-            StyleEditorFields::NodeInputRadius.variant_label(),
-            1.0..=10.0,
-            ..,
-            style.node_input_radius,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::NodeInputRadius(value).into() },
-            StyleEditorData::NodeInputRadius(style.node_input_radius).into(),
-            "The radius of the circular inputs on nodes",
-        );
-        let node_output_radius = style.slider(
-            StyleEditorFields::NodeOutputRadius.variant_label(),
-            1.0..=10.0,
-            ..,
-            style.node_output_radius,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::NodeOutputRadius(value).into() },
-            StyleEditorData::NodeOutputRadius(style.node_output_radius).into(),
-            "The radius of the circular outputs on nodes",
-        );
-        let node_selected_border_width = style.slider(
-            StyleEditorFields::NodeSelectedBorderWidth.variant_label(),
-            1.0..=10.0,
-            ..,
-            style.node_selected_border_width,
-            style.float_input_step,
-            |value| -> StyleEditorMessage {
-                StyleEditorData::NodeSelectedBorderWidth(value).into()
-            },
-            StyleEditorData::NodeSelectedBorderWidth(style.node_selected_border_width).into(),
-            "The width of the border that is drawn on selected nodes",
-        );
-
-        let selection_box_border_width = style.slider(
-            StyleEditorFields::SelectionBoxBorderWidth.variant_label(),
-            0.0..=10.0,
-            ..,
-            style.selection_box_border_width,
-            style.float_input_step,
-            |value| -> StyleEditorMessage {
-                StyleEditorData::SelectionBoxBorderWidth(value).into()
-            },
-            StyleEditorData::SelectionBoxBorderWidth(style.selection_box_border_width).into(),
-            "The opaque border width of any selection boxes",
-        );
-        let selection_box_alpha = style.slider(
-            StyleEditorFields::SelectionBoxAlpha.variant_label(),
-            0.0..=1.0,
-            ..,
-            style.selection_box_alpha,
-            style.float_input_step,
-            |value| -> StyleEditorMessage { StyleEditorData::SelectionBoxAlpha(value).into() },
-            StyleEditorData::SelectionBoxAlpha(style.selection_box_alpha).into(),
-            "The opacity of any selection boxes",
-        );
+        // let selection_box_border_width = style.slider(
+        //     StyleEditorFields::SelectionBoxBorderWidth.variant_label(),
+        //     0.0..=10.0,
+        //     ..,
+        //     style.selection_box_border_width,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage {
+        //         StyleEditorData::SelectionBoxBorderWidth(value).into()
+        //     },
+        //     StyleEditorData::SelectionBoxBorderWidth(style.selection_box_border_width).into(),
+        //     "The opaque border width of any selection boxes",
+        // );
+        // let selection_box_alpha = style.slider(
+        //     StyleEditorFields::SelectionBoxAlpha.variant_label(),
+        //     0.0..=1.0,
+        //     ..,
+        //     style.selection_box_alpha,
+        //     style.float_input_step,
+        //     |_value| { },
+        //     |value| -> StyleEditorMessage { StyleEditorData::SelectionBoxAlpha(value).into() },
+        //     StyleEditorData::SelectionBoxAlpha(style.selection_box_alpha).into(),
+        //     "The opacity of any selection boxes",
+        // );
         iced::widget::scrollable(
             iced::widget::column![
-                text_size,
-                scale,
+                // text_size,
+                // scale,
                 theme,
-                border_width,
-                spacing,
-                padding,
-                icon_size,
-                leeway,
-                modal_opacity,
-                viewer_zoom_sensitivity,
-                float_input_step,
-                // example_colour,
-                text_zoom_cutoff,
-                connection_line_width,
-                inactive_connection_line_scale,
-                node_input_radius,
-                node_output_radius,
-                node_selected_border_width,
-                selection_box_border_width,
-                selection_box_alpha,
+                // border_width,
+                // spacing,
+                // padding,
+                // icon_size,
+                // leeway,
+                // modal_opacity,
+                // viewer_zoom_sensitivity,
+                // float_input_step,
+                // // example_colour,
+                // text_zoom_cutoff,
+                // connection_line_width,
+                // inactive_connection_line_scale,
+                // node_input_radius,
+                // node_output_radius,
+                // node_selected_border_width,
+                // selection_box_border_width,
+                // selection_box_alpha,
             ]
             .spacing(style.spacing),
         )

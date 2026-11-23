@@ -68,11 +68,11 @@ pub fn primary(theme: &iced::Theme, status: Status) -> Style {
 
     match status {
         Status::Inactive => {
-            base.text_colour = palette.background.weakest.text;
+            base.text_colour = palette.secondary.strong.color;
             base.background = iced::Background::Color(palette.background.weakest.color);
         }
         Status::Hovered => {
-            base.text_colour = palette.background.weaker.text;
+            base.text_colour = palette.background.base.text;
             base.background = iced::Background::Color(palette.background.weaker.color);
         }
         _ => {

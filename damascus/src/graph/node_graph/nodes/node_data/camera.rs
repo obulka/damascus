@@ -40,12 +40,12 @@ impl NodeInputData for CameraInputData {
     fn default_data(&self) -> InputData {
         let default_camera = Camera::default();
         match self {
-            Self::FocalLength => InputData::Float(default_camera.focal_length),
-            Self::FocalDistance => InputData::Float(default_camera.focal_distance),
-            Self::FStop => InputData::Float(default_camera.f_stop),
-            Self::HorizontalAperture => InputData::Float(default_camera.horizontal_aperture),
-            Self::NearPlane => InputData::Float(default_camera.near_plane),
-            Self::FarPlane => InputData::Float(default_camera.far_plane),
+            Self::FocalLength => InputData::float(default_camera.focal_length),
+            Self::FocalDistance => InputData::float(default_camera.focal_distance),
+            Self::FStop => InputData::float(default_camera.f_stop),
+            Self::HorizontalAperture => InputData::float(default_camera.horizontal_aperture),
+            Self::NearPlane => InputData::float(default_camera.near_plane),
+            Self::FarPlane => InputData::float(default_camera.far_plane),
             Self::SensorResolution => InputData::UVec2(default_camera.sensor_resolution),
             Self::EnableDepthOfField => InputData::Bool(default_camera.enable_depth_of_field),
             Self::Latlong => InputData::Bool(default_camera.latlong),

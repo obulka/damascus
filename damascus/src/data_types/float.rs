@@ -3,7 +3,7 @@
 // This source code is licensed under the BSD-style license found in the
 // LICENSE file in the root directory of this source tree.
 
-use super::InputDataExpression;
+use super::ExpressionData;
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Float {
@@ -17,7 +17,7 @@ impl Default for Float {
     }
 }
 
-impl InputDataExpression<f32> for Float {
+impl ExpressionData<f32> for Float {
     fn new(value: f32) -> Self {
         Self {
             value,

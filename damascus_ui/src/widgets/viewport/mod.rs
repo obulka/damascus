@@ -16,12 +16,10 @@ use wgpu;
 
 use damascus::{
     Enumerator,
+    data_types::{ExpressionData, Float},
     geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
-    graph::node_graph::{
-        inputs::input_data::{InputDataExpression, float::Float},
-        outputs::OutputId,
-    },
+    graph::node_graph::outputs::OutputId,
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 

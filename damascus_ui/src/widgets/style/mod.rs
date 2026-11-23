@@ -14,7 +14,7 @@ use iced;
 use macro_rules_attribute::derive;
 use num_traits::{AsPrimitive, Bounded, FromPrimitive, Num, NumAssignOps};
 
-use damascus::Enumerator;
+use damascus::{Enumerator, data_types::ExpressionData};
 
 use crate::{icons::Icons, widgets::menu};
 

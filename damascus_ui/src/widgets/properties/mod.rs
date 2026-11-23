@@ -16,12 +16,9 @@ use slotmap::SlotMap;
 
 use damascus::{
     Enumerator,
+    data_types::{ExpressionData, Float},
     graph::node_graph::{
-        inputs::{
-            InputId,
-            input::Input,
-            input_data::{InputData, InputDataExpression, float::Float},
-        },
+        inputs::{InputId, input::Input, input_data::InputData},
         nodes::NodeId,
     },
     naming_convensions::label_from_pascal,

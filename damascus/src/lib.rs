@@ -20,6 +20,7 @@ use macro_rules_attribute::derive_alias;
 use strum::{EnumCount, IntoEnumIterator};
 
 pub mod camera;
+pub mod data_types;
 pub mod geometry;
 pub mod gpu;
 pub mod graph;

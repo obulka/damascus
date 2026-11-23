@@ -153,10 +153,7 @@ impl Properties {
         let suggested_range: RangeInclusive<f64> = suggested_range.unwrap_or(0.0..=1.0);
 
         let on_change = move |new_value| -> PropertiesMessage {
-            PropertiesMessage::InputDataChanged(
-                input_id,
-                InputData::Float(Float::new(new_value as f32)),
-            )
+            PropertiesMessage::InputDataChanged(input_id, InputData::float(new_value as f32))
         };
         let current_value: f32 = value.value();
         let on_input = move |expression| -> PropertiesMessage {

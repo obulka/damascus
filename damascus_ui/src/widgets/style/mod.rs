@@ -534,26 +534,34 @@ impl Style {
         Message: Clone + Default + 'a,
         f64: AsPrimitive<T> + From<T> + 'a,
     {
+        let placeholder: String = format!("{:}", value);
         iced::widget::row![
             self.tooltip_label(name, tooltip),
             self.tooltip(
-                iced::widget::TextInput::new(&format!("{:}", value), expression)
-                    .size(self.text_size())
-                    .width(iced::Length::FillPortion(scale_portion))
-                    .font(iced::Font::MONOSPACE)
-                    .padding(self.padding())
-                    .on_input(on_input)
-                    .style(|theme: &iced::Theme, status| {
-                        let palette: &iced::theme::palette::Extended = theme.extended_palette();
-                        let mut background_colour: iced::Color = palette.background.base.color;
-                        background_colour.a = 1.0;
+                iced::widget::TextInput::new(
+                    &placeholder,
+                    if expression.is_empty() {
+                        &placeholder
+                    } else {
+                        expression
+                    }
+                )
+                .size(self.text_size())
+                .width(iced::Length::FillPortion(scale_portion))
+                .font(iced::Font::MONOSPACE)
+                .padding(self.padding())
+                .on_input(on_input)
+                .style(|theme: &iced::Theme, status| {
+                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                    let mut background_colour: iced::Color = palette.background.base.color;
+                    background_colour.a = 1.0;
 
-                        let mut style: iced::widget::text_input::Style =
-                            iced::widget::text_input::default(theme, status);
-                        style.background = background_colour.into();
-                        style.placeholder = style.value;
-                        style
-                    }),
+                    let mut style: iced::widget::text_input::Style =
+                        iced::widget::text_input::default(theme, status);
+                    style.background = background_colour.into();
+                    style.placeholder = style.value;
+                    style
+                }),
                 format!("={:.3}", value)
             ),
             iced::widget::slider(suggested_range, value, on_change)

@@ -17,6 +17,7 @@ pub mod node_graph;
 pub mod pan_zoom;
 pub mod panel;
 pub mod properties;
+pub mod search;
 pub mod selection_box;
 pub mod style;
 pub mod tab_bar;

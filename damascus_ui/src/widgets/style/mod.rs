@@ -453,30 +453,30 @@ impl Style {
         .padding(self.padding())
     }
 
-    pub fn pick_list<'a, T, F, Message>(
+    pub fn pick_list<'a, E, F, Message>(
         &'a self,
         name: impl iced::widget::text::IntoFragment<'a>,
-        picked: T,
+        picked: E,
         on_change: F,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
     ) -> iced::Element<'a, Message>
     where
-        T: Enumerator,
-        F: Fn(T) -> Message + Copy + 'static,
+        E: Enumerator,
+        F: Fn(E) -> Message + Copy + 'static,
         Message: Clone + 'a,
     {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
             iced::widget::pick_list(
-                T::iter()
+                E::iter()
                     .map(|variant| variant.variant_pascal_label())
                     .collect::<Vec<String>>(),
                 Some(picked.variant_pascal_label()),
                 move |mut value| -> Message {
                     value = value.chars().filter(|c| !c.is_whitespace()).collect();
-                    on_change(match T::from_str(&value) {
+                    on_change(match E::from_str(&value) {
                         Ok(variant) => variant,
-                        Err(_parse_error) => T::default(),
+                        Err(_parse_error) => E::default(),
                     })
                 },
             )
@@ -503,6 +503,32 @@ impl Style {
         .align_y(iced::Alignment::Center)
         .spacing(self.spacing())
         .into()
+    }
+
+    pub fn text_input<'a, Message>(
+        &'a self,
+        placeholder: &str,
+        value: &str,
+        on_input: impl Fn(String) -> Message + 'a,
+    ) -> iced::widget::TextInput<'a, Message>
+    where
+        Message: Clone + 'a,
+    {
+        iced::widget::TextInput::new(placeholder, value)
+            .size(self.text_size())
+            .padding(self.padding())
+            .on_input(on_input)
+            .style(|theme: &iced::Theme, status| {
+                let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                let mut background_colour: iced::Color = palette.background.base.color;
+                background_colour.a = 1.0;
+
+                let mut style: iced::widget::text_input::Style =
+                    iced::widget::text_input::default(theme, status);
+                style.background = background_colour.into();
+                style.placeholder = style.value;
+                style
+            })
     }
 
     pub fn slider<'a, T, Message>(
@@ -538,30 +564,17 @@ impl Style {
         iced::widget::row![
             self.tooltip_label(name, tooltip),
             self.tooltip(
-                iced::widget::TextInput::new(
+                self.text_input(
                     "",
                     if expression.is_empty() {
                         &default_expression
                     } else {
                         expression
-                    }
+                    },
+                    on_input,
                 )
-                .size(self.text_size())
                 .width(iced::Length::FillPortion(scale_portion))
-                .font(iced::Font::MONOSPACE)
-                .padding(self.padding())
-                .on_input(on_input)
-                .style(|theme: &iced::Theme, status| {
-                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
-                    let mut background_colour: iced::Color = palette.background.base.color;
-                    background_colour.a = 1.0;
-
-                    let mut style: iced::widget::text_input::Style =
-                        iced::widget::text_input::default(theme, status);
-                    style.background = background_colour.into();
-                    style.placeholder = style.value;
-                    style
-                }),
+                .font(iced::Font::MONOSPACE),
                 format!("={:.3}", value)
             ),
             iced::widget::slider(suggested_range, value, on_change)
@@ -649,13 +662,13 @@ impl Style {
             .into()
     }
 
-    pub fn horizontal_spacer<'a, Message: 'a>() -> iced::Element<'a, Message> {
+    pub fn horizontal_spacer<'a, Message: 'a>() -> iced::widget::Container<'a, Message> {
         iced::widget::container(Self::none())
             .width(iced::Fill)
             .into()
     }
 
-    pub fn vertical_spacer<'a, Message: 'a>() -> iced::Element<'a, Message> {
+    pub fn vertical_spacer<'a, Message: 'a>() -> iced::widget::Container<'a, Message> {
         iced::widget::container(Self::none())
             .height(iced::Fill)
             .into()

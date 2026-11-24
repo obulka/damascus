@@ -29,7 +29,7 @@ pub struct PanZoom {
     pub pan: Vec2,
     pub previous_cursor_position: Vec2,
     pub cursor_position: Vec2,
-    pub bounds: Rectangle,
+    bounds: Rectangle,
 }
 
 impl Default for PanZoom {
@@ -53,6 +53,10 @@ impl PanZoom {
 
     pub fn reciprocal_zoom(&self) -> f32 {
         self.reciprocal_zoom
+    }
+
+    pub fn bounds(&self) -> &Rectangle {
+        &self.bounds
     }
 
     pub fn local_cursor_velocity(&self) -> Vec2 {

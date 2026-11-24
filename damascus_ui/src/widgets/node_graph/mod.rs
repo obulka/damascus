@@ -42,6 +42,7 @@ use crate::{
 use super::{
     Widget,
     pan_zoom::{PanZoom, PanZoomMessage},
+    search::{Search, SearchMessage},
     selection_box::{SelectionBox, SelectionBoxMessage},
 };
 
@@ -85,6 +86,7 @@ pub enum NodeGraphMessage {
     ViewportCreated(ViewportId),
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
+    NodeSearch(SearchMessage),
     ClearSelection,
     UpdateStyle,
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
@@ -125,6 +127,7 @@ pub struct NodeGraph {
     viewport_context: Arc<Mutex<Viewports>>,
     pan_zoom: PanZoom,
     selection_box: SelectionBox,
+    node_search: Search<NodeData>,
     #[serde(skip)]
     connection_in_progress: (Option<InputId>, Option<OutputId>),
     #[serde(skip)]
@@ -142,6 +145,7 @@ impl Default for NodeGraph {
             viewport_context: Arc::default(),
             pan_zoom: PanZoom::default(),
             selection_box: SelectionBox::default(),
+            node_search: Search::default(),
             connection_in_progress: (None, None),
             dragging_nodes: false,
             dragged_nodes: false,
@@ -1701,22 +1705,34 @@ impl Widget<NodeGraphMessage> for NodeGraph {
 
     fn view<'a>(
         &'a self,
-        _window_id: iced::window::Id,
+        window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, NodeGraphMessage> {
-        iced::widget::mouse_area(
-            iced::widget::canvas::Canvas::new(self)
-                .width(iced::Length::Fill)
-                .height(iced::Length::Fill),
-        )
-        .on_double_click(NodeGraphMessage::DoubleClick)
-        .on_scroll(|scroll_delta| {
-            PanZoomMessage::Zoom(match scroll_delta {
-                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity(),
-                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity(),
-            })
-            .into()
-        })
+        iced::widget::stack![
+            iced::widget::mouse_area(
+                iced::widget::canvas::Canvas::new(self)
+                    .width(iced::Length::Fill)
+                    .height(iced::Length::Fill),
+            )
+            .on_double_click(NodeGraphMessage::DoubleClick)
+            .on_scroll(|scroll_delta| {
+                PanZoomMessage::Zoom(match scroll_delta {
+                    iced::mouse::ScrollDelta::Lines { y, .. } => {
+                        y * style.viewer_zoom_sensitivity()
+                    }
+                    iced::mouse::ScrollDelta::Pixels { y, .. } => {
+                        y * style.viewer_zoom_sensitivity()
+                    }
+                })
+                .into()
+            }),
+            iced::widget::float(
+                self.node_search
+                    .view(window_id, style)
+                    .map(|message| NodeGraphMessage::NodeSearch(message))
+            )
+            .translate(|_, _| { iced::Vector::from_glam(&self.pan_zoom.bounds().half_size()) }),
+        ]
         .into()
     }
 }

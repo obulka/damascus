@@ -36,6 +36,18 @@ impl FromGlam<Vec2> for iced::Size {
     }
 }
 
+impl FromGlam<Vec2> for iced::Vector {
+    #[inline]
+    fn to_glam(&self) -> Vec2 {
+        Vec2::new(self.x, self.y)
+    }
+
+    #[inline]
+    fn from_glam(glam_type: &Vec2) -> Self {
+        Self::new(glam_type.x, glam_type.y)
+    }
+}
+
 impl FromGlam<Vec3> for iced::Color {
     #[inline]
     fn to_glam(&self) -> Vec3 {

@@ -112,6 +112,12 @@ impl From<SelectionBoxMessage> for NodeGraphMessage {
     }
 }
 
+impl From<SearchMessage> for NodeGraphMessage {
+    fn from(search_message: SearchMessage) -> Self {
+        Self::NodeSearch(search_message)
+    }
+}
+
 impl From<NodeGraphMessage> for iced::Task<NodeGraphMessage> {
     fn from(message: NodeGraphMessage) -> Self {
         iced::Task::done(message)
@@ -713,6 +719,13 @@ impl NodeGraph {
                 iced::keyboard::Key::Named(key) => match key {
                     iced::keyboard::key::Named::Delete | iced::keyboard::key::Named::Backspace => {
                         self.remove_selected()
+                    }
+                    iced::keyboard::key::Named::Tab => {
+                        iced::Task::done(if self.node_search.visible() {
+                            NodeGraphMessage::NodeSearch(SearchMessage::Close)
+                        } else {
+                            NodeGraphMessage::NodeSearch(SearchMessage::Open)
+                        })
                     }
                     _ => iced::Task::none(),
                 },
@@ -1500,6 +1513,10 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .selection_box
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
+            NodeGraphMessage::NodeSearch(search_message) => self
+                .node_search
+                .update(context, search_message)
+                .map(|search_message| search_message.into()),
             NodeGraphMessage::DoubleClick => self.handle_double_click_event(context),
             NodeGraphMessage::ClearSelection => {
                 let Ok(mut node_graph) = self.context.lock() else {
@@ -1726,12 +1743,9 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 })
                 .into()
             }),
-            iced::widget::float(
-                self.node_search
-                    .view(window_id, style)
-                    .map(|message| NodeGraphMessage::NodeSearch(message))
-            )
-            .translate(|_, _| { iced::Vector::from_glam(&self.pan_zoom.bounds().half_size()) }),
+            self.node_search
+                .view(window_id, style)
+                .map(|message| NodeGraphMessage::NodeSearch(message)),
         ]
         .into()
     }

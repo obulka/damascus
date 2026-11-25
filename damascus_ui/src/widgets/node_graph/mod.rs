@@ -726,51 +726,49 @@ impl NodeGraph {
                     _ => iced::Task::none(),
                 },
                 iced::keyboard::Key::Character(character) => {
-                    if let Ok(digits) = character.as_str().parse() {
-                        if let Ok(mut node_graph) = self.context.lock() {
-                            let task: iced::Task<NodeGraphMessage> =
-                                if node_graph.active_viewport.is_none() {
-                                    if let Ok(viewports) = context.viewports.lock()
-                                        && let Some(id) = viewports.keys().next()
-                                    {
-                                        node_graph.active_viewport = Some(id);
-                                        iced::Task::none()
-                                    } else {
-                                        node_graph.active_viewport = self.create_viewport(context);
-                                        if let Some(new_viewport) = node_graph.active_viewport {
-                                            iced::Task::done(NodeGraphMessage::NewViewport(
-                                                new_viewport,
-                                            ))
-                                        } else {
-                                            iced::Task::none()
-                                        }
-                                    }
+                    if let Ok(digits) = character.as_str().parse()
+                        && let Ok(mut node_graph) = self.context.lock()
+                    {
+                        let task: iced::Task<NodeGraphMessage> = if node_graph
+                            .active_viewport
+                            .is_none()
+                        {
+                            if let Ok(viewports) = context.viewports.lock()
+                                && let Some(id) = viewports.keys().next()
+                            {
+                                node_graph.active_viewport = Some(id);
+                                iced::Task::none()
+                            } else {
+                                node_graph.active_viewport = self.create_viewport(context);
+                                if let Some(new_viewport) = node_graph.active_viewport {
+                                    iced::Task::done(NodeGraphMessage::NewViewport(new_viewport))
                                 } else {
                                     iced::Task::none()
-                                };
-                            iced::Task::batch(std::iter::once(task).chain(std::iter::once(
-                                iced::Task::done(
-                                    if let Some(node_id) = node_graph.selected_nodes.iter().next()
-                                        && let Some(output_id) =
-                                            node_graph.graph.nodes_first_output_id(node_id)
-                                    {
-                                        NodeGraphMessage::ViewNodeOutput(
-                                            node_graph.active_viewport,
-                                            digits,
-                                            Some(*output_id),
-                                        )
-                                    } else {
-                                        NodeGraphMessage::ViewNodeOutput(
-                                            node_graph.active_viewport,
-                                            digits,
-                                            None,
-                                        )
-                                    },
-                                ),
-                            )))
+                                }
+                            }
                         } else {
                             iced::Task::none()
-                        }
+                        };
+                        iced::Task::batch(std::iter::once(task).chain(std::iter::once(
+                            iced::Task::done(
+                                if let Some(node_id) = node_graph.selected_nodes.iter().next()
+                                    && let Some(output_id) =
+                                        node_graph.graph.nodes_first_output_id(node_id)
+                                {
+                                    NodeGraphMessage::ViewNodeOutput(
+                                        node_graph.active_viewport,
+                                        digits,
+                                        Some(*output_id),
+                                    )
+                                } else {
+                                    NodeGraphMessage::ViewNodeOutput(
+                                        node_graph.active_viewport,
+                                        digits,
+                                        None,
+                                    )
+                                },
+                            ),
+                        )))
                     } else {
                         iced::Task::none()
                     }

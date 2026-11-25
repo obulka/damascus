@@ -324,8 +324,15 @@ impl GPUTextureEvaluator<TextureViewerPreprocessorDirectives> for TextureViewer 
         ]
     }
 
-    fn create_texture_views(&self, _device: &wgpu::Device) -> Vec<TextureView> {
-        self.input_texture_views()
+    fn create_texture_views(&self, device: &wgpu::Device) -> Vec<TextureView> {
+        let input_texture_views: Vec<TextureView> = self.input_texture_views();
+        if input_texture_views.is_empty()
+            && let Some(input_texture_view) = self.create_output_texture_view(device)
+        {
+            vec![input_texture_view]
+        } else {
+            input_texture_views
+        }
     }
 
     fn update_for_reevaluation(&mut self, device: &wgpu::Device) {

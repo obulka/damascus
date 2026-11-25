@@ -19,7 +19,7 @@ use damascus::{
     data_types::{ExpressionData, Float},
     geometry::rectangle::Rectangle,
     gpu::resources::BufferData,
-    graph::node_graph::outputs::OutputId,
+    graph::node_graph::{inputs::input_data::InputData, nodes::NodeErrors, outputs::OutputId},
     textures::evaluators::{GPUTextureEvaluator, TextureEvaluator, view::TextureViewer},
 };
 
@@ -188,11 +188,21 @@ impl iced::widget::shader::Primitive for ViewportPrimitive {
         {
             queue.submit(Some(encoder.finish()));
 
-            if let Ok(texture_evaluator_id) = input_data.try_to_texture_evaluator_id()
-                && let Some(input_texture) =
-                    node_graph.graph.scene_graph()[texture_evaluator_id].output_texture_view()
-            {
-                texture_viewer.set_input_texture_view(input_texture.clone());
+            match input_data.try_to_texture_evaluator_id() {
+                Ok(texture_evaluator_id) => {
+                    if let Some(input_texture) =
+                        node_graph.graph.scene_graph()[texture_evaluator_id].output_texture_view()
+                    {
+                        texture_viewer.set_input_texture_view(input_texture.clone());
+                    }
+                }
+                Err(NodeErrors::InputDowncastError { data, .. }) => match data {
+                    InputData::Mat4(_matrix) => {
+                        // TODO could draw an axis overlay if viewing a matrix
+                    }
+                    _ => {}
+                },
+                _ => {}
             }
         }
 

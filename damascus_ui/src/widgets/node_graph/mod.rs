@@ -86,7 +86,7 @@ pub enum NodeGraphMessage {
     ViewportCreated(ViewportId),
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
-    NodeSearch(SearchMessage),
+    NodeSearch(SearchMessage<NodeData>),
     ClearSelection,
     UpdateStyle,
     ViewNodeOutput(Option<ViewportId>, u32, Option<OutputId>),
@@ -112,8 +112,8 @@ impl From<SelectionBoxMessage> for NodeGraphMessage {
     }
 }
 
-impl From<SearchMessage> for NodeGraphMessage {
-    fn from(search_message: SearchMessage) -> Self {
+impl From<SearchMessage<NodeData>> for NodeGraphMessage {
+    fn from(search_message: SearchMessage<NodeData>) -> Self {
         Self::NodeSearch(search_message)
     }
 }
@@ -1513,10 +1513,15 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .selection_box
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
-            NodeGraphMessage::NodeSearch(search_message) => self
-                .node_search
-                .update(context, search_message)
-                .map(|search_message| search_message.into()),
+            NodeGraphMessage::NodeSearch(search_message) => match search_message {
+                SearchMessage::VariantSelected(node_data) => {
+                    iced::Task::done(NodeGraphMessage::CreateNode(node_data))
+                }
+                _ => self
+                    .node_search
+                    .update(context, search_message)
+                    .map(|search_message| search_message.into()),
+            },
             NodeGraphMessage::DoubleClick => self.handle_double_click_event(context),
             NodeGraphMessage::ClearSelection => {
                 let Ok(mut node_graph) = self.context.lock() else {

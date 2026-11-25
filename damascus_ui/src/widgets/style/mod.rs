@@ -518,17 +518,6 @@ impl Style {
             .size(self.text_size())
             .padding(self.padding())
             .on_input(on_input)
-            .style(|theme: &iced::Theme, status| {
-                let palette: &iced::theme::palette::Extended = theme.extended_palette();
-                let mut background_colour: iced::Color = palette.background.base.color;
-                background_colour.a = 1.0;
-
-                let mut style: iced::widget::text_input::Style =
-                    iced::widget::text_input::default(theme, status);
-                style.background = background_colour.into();
-                style.placeholder = style.value;
-                style
-            })
     }
 
     pub fn slider<'a, T, Message>(
@@ -574,7 +563,18 @@ impl Style {
                     on_input,
                 )
                 .width(iced::Length::FillPortion(scale_portion))
-                .font(iced::Font::MONOSPACE),
+                .font(iced::Font::MONOSPACE)
+                .style(|theme: &iced::Theme, status| {
+                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                    let mut background_colour: iced::Color = palette.background.base.color;
+                    background_colour.a = 1.0;
+
+                    let mut style: iced::widget::text_input::Style =
+                        iced::widget::text_input::default(theme, status);
+                    style.background = background_colour.into();
+                    style.placeholder = style.value;
+                    style
+                }),
                 format!("={:.3}", value)
             ),
             iced::widget::slider(suggested_range, value, on_change)

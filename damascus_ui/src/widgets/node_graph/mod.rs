@@ -37,7 +37,7 @@ use crate::{
 };
 
 use super::{
-    Widget,
+    Widget, modal,
     pan_zoom::{PanZoom, PanZoomMessage},
     search::{Search, SearchMessage},
     selection_box::{SelectionBox, SelectionBoxMessage},
@@ -89,6 +89,8 @@ pub enum NodeGraphMessage {
     RemovedViewports(HashSet<ViewportId>),
     NewViewport(ViewportId),
     OpenProperties(Option<PropertiesId>, NodeId),
+    CloseNodeSearch,
+    OpenNodeSearch,
     DoubleClick,
     #[serde(skip)]
     CanvasEvent(iced::Event),
@@ -137,6 +139,8 @@ pub struct NodeGraph {
     #[serde(skip)]
     dragged_nodes: bool,
     #[serde(skip)]
+    searching_for_node: bool,
+    #[serde(skip)]
     style: Style,
 }
 
@@ -151,6 +155,7 @@ impl Default for NodeGraph {
             connection_in_progress: (None, None),
             dragging_nodes: false,
             dragged_nodes: false,
+            searching_for_node: false,
             style: Style::default(),
         }
     }
@@ -717,11 +722,18 @@ impl NodeGraph {
                         self.remove_selected()
                     }
                     iced::keyboard::key::Named::Tab => {
-                        iced::Task::done(if self.node_search.visible() {
-                            NodeGraphMessage::NodeSearch(SearchMessage::Close)
+                        iced::Task::done(if self.searching_for_node {
+                            NodeGraphMessage::CloseNodeSearch
                         } else {
-                            NodeGraphMessage::NodeSearch(SearchMessage::Open)
+                            NodeGraphMessage::OpenNodeSearch
                         })
+                    }
+                    iced::keyboard::key::Named::Enter => {
+                        if self.searching_for_node {
+                            iced::Task::done(SearchMessage::SubmitSearch.into())
+                        } else {
+                            iced::Task::none()
+                        }
                     }
                     _ => iced::Task::none(),
                 },
@@ -1482,12 +1494,26 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         message: NodeGraphMessage,
     ) -> iced::Task<NodeGraphMessage> {
         match message {
+            NodeGraphMessage::CloseNodeSearch => {
+                self.searching_for_node = false;
+                iced::Task::none()
+            }
+            NodeGraphMessage::OpenNodeSearch => {
+                self.searching_for_node = true;
+                iced::widget::operation::focus(self.node_search.id().clone())
+            }
             NodeGraphMessage::UpdateStyle => {
                 self.style = context.default_style.clone();
                 iced::Task::none()
             }
             NodeGraphMessage::CanvasEvent(event) => match event {
-                iced::Event::Mouse(mouse_event) => self.handle_mouse_event(context, &mouse_event),
+                iced::Event::Mouse(mouse_event) => {
+                    if self.searching_for_node {
+                        iced::Task::none()
+                    } else {
+                        self.handle_mouse_event(context, &mouse_event)
+                    }
+                }
                 iced::Event::Keyboard(keyboard_event) => {
                     if self.pan_zoom.cursor_in_bounds() {
                         self.handle_keyboard_event(context, &keyboard_event)
@@ -1506,9 +1532,11 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 .update(context, selection_box_message)
                 .map(|selection_box_message| selection_box_message.into()),
             NodeGraphMessage::NodeSearch(search_message) => match search_message {
-                SearchMessage::VariantSelected(node_data) => {
-                    iced::Task::done(NodeGraphMessage::CreateNode(node_data))
-                }
+                SearchMessage::VariantSelected(node_data) => iced::Task::batch(
+                    std::iter::once(NodeGraphMessage::CreateNode(node_data))
+                        .chain(std::iter::once(NodeGraphMessage::CloseNodeSearch))
+                        .map(|message| iced::Task::done(message)),
+                ),
                 _ => self
                     .node_search
                     .update(context, search_message)
@@ -1562,28 +1590,37 @@ impl Widget<NodeGraphMessage> for NodeGraph {
         window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, NodeGraphMessage> {
-        iced::widget::stack![
-            iced::widget::mouse_area(
-                iced::widget::canvas::Canvas::new(self)
-                    .width(iced::Length::Fill)
-                    .height(iced::Length::Fill),
+        let node_graph: iced::Element<'a, NodeGraphMessage> = iced::widget::mouse_area(
+            iced::widget::canvas::Canvas::new(self)
+                .width(iced::Length::Fill)
+                .height(iced::Length::Fill),
+        )
+        .on_double_click(NodeGraphMessage::DoubleClick)
+        .on_scroll(|scroll_delta| {
+            PanZoomMessage::Zoom(match scroll_delta {
+                iced::mouse::ScrollDelta::Lines { y, .. } => y * style.viewer_zoom_sensitivity(),
+                iced::mouse::ScrollDelta::Pixels { y, .. } => y * style.viewer_zoom_sensitivity(),
+            })
+            .into()
+        })
+        .into();
+
+        iced::widget::container(if self.searching_for_node {
+            modal(
+                style,
+                node_graph,
+                iced::widget::column![
+                    self.node_search
+                        .view(window_id, style)
+                        .map(|message| NodeGraphMessage::NodeSearch(message)),
+                    Style::vertical_spacer(),
+                ],
+                NodeGraphMessage::CloseNodeSearch,
             )
-            .on_double_click(NodeGraphMessage::DoubleClick)
-            .on_scroll(|scroll_delta| {
-                PanZoomMessage::Zoom(match scroll_delta {
-                    iced::mouse::ScrollDelta::Lines { y, .. } => {
-                        y * style.viewer_zoom_sensitivity()
-                    }
-                    iced::mouse::ScrollDelta::Pixels { y, .. } => {
-                        y * style.viewer_zoom_sensitivity()
-                    }
-                })
-                .into()
-            }),
-            self.node_search
-                .view(window_id, style)
-                .map(|message| NodeGraphMessage::NodeSearch(message)),
-        ]
+        } else {
+            node_graph
+        })
+        .padding(style.border_width())
         .into()
     }
 }

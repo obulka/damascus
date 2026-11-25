@@ -11,33 +11,58 @@ use damascus::Enumerator;
 
 use crate::app::Context;
 
-use super::{Style, Widget, modal};
+use super::{Style, Widget};
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub enum SearchMessage<E: Enumerator> {
-    Close,
-    Open,
     UpdateSearch(String),
     VariantSelected(E),
+    SubmitSearch,
+    ClearSearch,
     None,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(default)]
 pub struct Search<E: Enumerator> {
     search: String,
-    visible: bool,
+    #[serde(skip)]
+    text_input_id: iced::widget::Id,
     _search_results: PhantomData<E>,
 }
 
+impl<E: Enumerator> Default for Search<E> {
+    fn default() -> Self {
+        Self {
+            search: String::new(),
+            text_input_id: iced::widget::Id::unique(),
+            _search_results: PhantomData::<E>::default(),
+        }
+    }
+}
+
 impl<E: Enumerator> Search<E> {
-    pub fn visible(&self) -> bool {
-        self.visible
+    pub fn id(&self) -> &iced::widget::Id {
+        &self.text_input_id
+    }
+
+    pub fn search_results(&self) -> impl Iterator<Item = E> {
+        E::iter().filter(|variant| {
+            let variant_label: String = variant.to_string();
+            variant_label
+                .to_lowercase()
+                .starts_with(&self.search.to_lowercase())
+        })
     }
 }
 
 impl<E> Widget<SearchMessage<E>> for Search<E>
 where
-    E: Enumerator + for<'de> serde::Deserialize<'de> + serde::Serialize,
+    E: Enumerator
+        + for<'de> serde::Deserialize<'de>
+        + serde::Serialize
+        + std::marker::Send
+        + 'static,
 {
     fn update(
         &mut self,
@@ -45,18 +70,27 @@ where
         message: SearchMessage<E>,
     ) -> iced::Task<SearchMessage<E>> {
         match message {
-            SearchMessage::Open => {
-                self.visible = true;
-            }
-            SearchMessage::Close => {
-                self.visible = false;
-            }
             SearchMessage::UpdateSearch(new_search) => {
                 self.search = new_search;
+                iced::Task::none()
             }
-            _ => {}
+            SearchMessage::SubmitSearch => {
+                if let Some(search_result) = self.search_results().next() {
+                    iced::Task::batch(
+                        std::iter::once(SearchMessage::VariantSelected(search_result))
+                            .chain(std::iter::once(SearchMessage::ClearSearch))
+                            .map(|message| iced::Task::done(message)),
+                    )
+                } else {
+                    iced::Task::none()
+                }
+            }
+            SearchMessage::ClearSearch => {
+                self.search.clear();
+                iced::Task::none()
+            }
+            _ => iced::Task::none(),
         }
-        iced::Task::none()
     }
 
     fn view<'a>(
@@ -64,49 +98,29 @@ where
         _window_id: iced::window::Id,
         style: &'a Style,
     ) -> iced::Element<'a, SearchMessage<E>> {
-        if self.visible {
-            iced::widget::container(modal(
-                style,
-                None::<iced::Element<'a, SearchMessage<E>>>,
-                iced::widget::column![
-                    style.text_input(
-                        "Search for a node",
-                        &self.search,
-                        |new_search| -> SearchMessage<E> {
-                            SearchMessage::UpdateSearch(new_search)
-                        },
-                    ),
-                    iced::widget::scrollable(
-                        iced::widget::column(E::iter().filter_map(|variant| {
-                            let variant_label: String = variant.to_string();
-                            if variant_label
-                                .to_lowercase()
-                                .starts_with(&self.search.to_lowercase())
-                            {
-                                Some(
-                                    style
-                                        .button(variant.to_string())
-                                        .style(iced::widget::button::text)
-                                        .on_press(SearchMessage::VariantSelected(variant))
-                                        .into(),
-                                )
-                            } else {
-                                None
-                            }
-                        }))
-                        .align_x(iced::alignment::Horizontal::Center)
-                        .spacing(style.spacing())
-                    ),
-                ]
+        iced::widget::column![
+            style
+                .text_input(
+                    "Search for a node",
+                    &self.search,
+                    |new_search| -> SearchMessage<E> { SearchMessage::UpdateSearch(new_search) },
+                )
+                .id(self.text_input_id.clone()),
+            iced::widget::scrollable(
+                iced::widget::column(self.search_results().map(|variant| {
+                    style
+                        .button(variant.to_string())
+                        .style(iced::widget::button::text)
+                        .on_press(SearchMessage::VariantSelected(variant))
+                        .into()
+                }))
                 .align_x(iced::alignment::Horizontal::Center)
                 .spacing(style.spacing())
-                .padding(style.padding()),
-                SearchMessage::Close,
-            ))
-            .padding(style.border_width())
-            .into()
-        } else {
-            None::<iced::Element<'a, SearchMessage<E>>>.into()
-        }
+            ),
+        ]
+        .align_x(iced::alignment::Horizontal::Center)
+        .spacing(style.spacing())
+        .padding(style.padding())
+        .into()
     }
 }

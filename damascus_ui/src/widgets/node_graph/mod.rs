@@ -8,21 +8,18 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use glam::{UVec2, Vec2, Vec3};
+use glam::Vec2;
 use slotmap::SparseSecondaryMap;
 
 use damascus::{
-    geometry::{primitives::Shapes, ray::Ray2d, rectangle::Rectangle},
+    geometry::{ray::Ray2d, rectangle::Rectangle},
     graph::node_graph::{
         NodeGraph as Graph,
         inputs::{InputId, input_data::InputData},
         nodes::{
             NodeId,
             node::Node,
-            node_data::{
-                AxisInputData, CameraInputData, LightInputData, MaterialInputData, NodeData,
-                PrimitiveInputData, RayMarcherInputData, SceneInputData, TextureReadInputData,
-            },
+            node_data::{NodeData, TextureReadInputData},
         },
         outputs::OutputId,
     },
@@ -82,7 +79,6 @@ impl NodeGraphContext {
 pub enum NodeGraphMessage {
     InputValueChanged(NodeId, String),
     CreateNode(NodeData),
-    CreateLiveNode,
     ViewportCreated(ViewportId),
     PanZoom(PanZoomMessage),
     SelectionBox(SelectionBoxMessage),
@@ -793,8 +789,6 @@ impl NodeGraph {
                         iced::Task::done(NodeGraphMessage::CreateNode(NodeData::TextureRead))
                     } else if character == "g" {
                         iced::Task::done(NodeGraphMessage::CreateNode(NodeData::Grade))
-                    } else if character == "l" {
-                        iced::Task::done(NodeGraphMessage::CreateLiveNode)
                     } else {
                         iced::Task::none()
                     }
@@ -1556,166 +1550,6 @@ impl Widget<NodeGraphMessage> for NodeGraph {
                 node_graph.context.insert(
                     node_id,
                     NodeContext::new(format!("{}{}", node_data, node_id))
-                        .position(self.pan_zoom.local_cursor_position()),
-                );
-
-                iced::Task::none()
-            }
-            NodeGraphMessage::CreateLiveNode => {
-                let Ok(mut node_graph) = self.context.lock() else {
-                    return iced::Task::none();
-                };
-
-                let primary_camera_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
-                let secondary_camera_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
-                let camera_id: NodeId = node_graph.graph.add_node(NodeData::Camera);
-
-                let light_id: NodeId = node_graph.graph.add_node(NodeData::Light);
-
-                let primitive_id: NodeId = node_graph.graph.add_node(NodeData::Primitive);
-                let primitive_axis_id: NodeId = node_graph.graph.add_node(NodeData::Axis);
-                let primitive_material_id: NodeId = node_graph.graph.add_node(NodeData::Material);
-
-                let scene_id: NodeId = node_graph.graph.add_node(NodeData::Scene);
-
-                let ray_marcher_id: NodeId = node_graph.graph.add_node(NodeData::RayMarcher);
-
-                // Connect camera to scene
-                // /ray_marcher/scene/camera/secondary_axis/primary_axis
-
-                let secondary_camera_axis_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&secondary_camera_axis_id, &AxisInputData::Axis)
-                    .unwrap();
-                node_graph.graph.connect_node_to_input(
-                    &primary_camera_axis_id,
-                    &secondary_camera_axis_input_id,
-                );
-
-                let camera_axis_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&camera_id, &CameraInputData::Axis)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&secondary_camera_axis_id, &camera_axis_input_id);
-
-                let scene_render_camera_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&scene_id, &SceneInputData::RenderCamera)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&camera_id, &scene_render_camera_input_id);
-
-                // Connect light to scene
-                // /ray_marcher/scene/camera/secondary_axis/primary_axis
-                // |           |     /light
-
-                let scene_light_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&scene_id, &SceneInputData::Scene)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&light_id, &scene_light_input_id);
-
-                // Connect primitives to scene
-                // /ray_marcher/scene/camera/secondary_axis/primary_axis
-                // |           |     /light
-                // |           |     /primitive/axis
-                // |           |     |         /material
-                // |           |     |         /primitive2/axis2
-                // |           |     |                    /material1
-                // |           |     /primitive1/axis1
-                // |           |     |          /material1
-
-                let primitive_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&primitive_id, &PrimitiveInputData::Axis)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&primitive_axis_id, &primitive_input_id);
-
-                let primitive_material_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&primitive_id, &PrimitiveInputData::Material)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&primitive_material_id, &primitive_material_input_id);
-
-                let scene_primitive_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id_from_str(&scene_id, "Scene1")
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&primitive_id, &scene_primitive_input_id);
-
-                // Connect scene to ray marcher
-
-                let ray_marcher_scene_input_id: InputId = node_graph
-                    .graph
-                    .node_input_id(&ray_marcher_id, &RayMarcherInputData::SceneRoot)
-                    .unwrap();
-
-                node_graph
-                    .graph
-                    .connect_node_to_input(&scene_id, &ray_marcher_scene_input_id);
-
-                // Modify camera data
-
-                let _ = node_graph.graph.set_input_data(
-                    &camera_id,
-                    &CameraInputData::SensorResolution,
-                    InputData::UVec2(UVec2::new(2048u32, 1024u32)),
-                );
-
-                let _ = node_graph.graph.set_input_data(
-                    &secondary_camera_axis_id,
-                    &AxisInputData::Translate,
-                    InputData::Vec3(Vec3::Z * 10.),
-                );
-
-                // Modify light data
-
-                let _ = node_graph.graph.set_input_data(
-                    &light_id,
-                    &LightInputData::Colour,
-                    InputData::Vec3(Vec3::new(1., 0.1, 0.1)),
-                );
-
-                // Modify primitive data
-
-                let _ = node_graph.graph.set_input_data(
-                    &primitive_material_id,
-                    &MaterialInputData::DiffuseColour,
-                    InputData::Vec3(Vec3::new(0.1, 0.1, 1.)),
-                );
-
-                let _ = node_graph.graph.set_input_data(
-                    &primitive_id,
-                    &PrimitiveInputData::Shape,
-                    InputData::Enum(Shapes::Capsule.into()),
-                );
-
-                let _ = node_graph.graph.set_input_data(
-                    &primitive_id,
-                    &PrimitiveInputData::BlendStrength,
-                    InputData::float(0.5),
-                );
-
-                node_graph.context.insert(
-                    ray_marcher_id,
-                    NodeContext::new(format!("RayMarcher{}", ray_marcher_id))
                         .position(self.pan_zoom.local_cursor_position()),
                 );
 

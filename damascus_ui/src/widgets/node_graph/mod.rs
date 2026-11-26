@@ -443,7 +443,7 @@ impl NodeGraph {
         let output_path_radius: f32 = self.style.node_output_radius() + self.style.leeway();
 
         for (node_id, node_context) in node_graph.context.iter() {
-            let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(&node_id);
+            let connectable_input_count: usize = node_graph.graph.outputable_input_count(&node_id);
             for input_index in 0..connectable_input_count {
                 let input_position =
                     node_context.input_position(input_index as f32, connectable_input_count as f32);
@@ -511,7 +511,7 @@ impl NodeGraph {
                 }
             } else if let Some(output_id) = self.connection_in_progress.1 {
                 let connectable_input_count: usize =
-                    node_graph.graph.scene_graph_input_count(&node_id);
+                    node_graph.graph.outputable_input_count(&node_id);
 
                 if connectable_input_count == 0 {
                     continue;
@@ -864,7 +864,7 @@ impl NodeGraph {
         node_context: &NodeContext,
         theme: &iced::theme::Theme,
     ) {
-        let connectable_input_count: usize = node_graph.graph.scene_graph_input_count(node_id);
+        let connectable_input_count: usize = node_graph.graph.outputable_input_count(node_id);
         if connectable_input_count == 0 {
             return;
         }
@@ -1044,13 +1044,13 @@ impl NodeGraph {
                 return;
             };
 
-            let Some(input_index) = node_graph.graph.scene_graph_input_index(&input_id) else {
+            let Some(input_index) = node_graph.graph.outputable_input_index(&input_id) else {
                 return;
             };
 
             let input_position = node_context.input_position(
                 input_index as f32,
-                node_graph.graph.scene_graph_input_count(&node_id) as f32,
+                node_graph.graph.outputable_input_count(&node_id) as f32,
             );
             let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
 
@@ -1173,13 +1173,13 @@ impl NodeGraph {
                 continue;
             };
 
-            let Some(input_index) = node_graph.graph.scene_graph_input_index(&input_id) else {
+            let Some(input_index) = node_graph.graph.outputable_input_index(&input_id) else {
                 continue;
             };
 
             let input_position = input_node_context.input_position(
                 input_index as f32,
-                node_graph.graph.scene_graph_input_count(&input_node_id) as f32,
+                node_graph.graph.outputable_input_count(&input_node_id) as f32,
             );
             let canvas_input_position: Vec2 = self.pan_zoom.local_to_canvas(input_position);
 

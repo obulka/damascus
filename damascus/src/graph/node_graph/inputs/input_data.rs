@@ -23,6 +23,7 @@ use crate::{
         node_graph::{
             NodeGraph,
             nodes::{NodeErrors, NodeId, NodeResult},
+            outputs::output_data::OutputData,
         },
         scene_graph::{RootId, SceneGraphId},
     },
@@ -137,6 +138,19 @@ impl From<SceneGraphId> for InputData {
 }
 
 impl InputData {
+    pub fn try_to_output_data(&self) -> NodeResult<OutputData> {
+        match self {
+            Self::Mat4(_matrix) => Ok(OutputData::Mat4),
+            Self::SceneGraphId(scenegraph_id) => {
+                Ok(OutputData::SceneGraphId((*scenegraph_id).into()))
+            }
+            _ => Err(NodeErrors::InputDowncastError {
+                data: self.clone(),
+                conversion_to: type_name::<OutputData>().to_string(),
+            }),
+        }
+    }
+
     pub fn float(value: f32) -> Self {
         Self::Float(Float::new(value))
     }

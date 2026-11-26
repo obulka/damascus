@@ -676,6 +676,20 @@ impl NodeGraph {
         }
     }
 
+    pub fn outputable_input_count(&self, node_id: &NodeId) -> usize {
+        self.outputable_inputs(node_id).count()
+    }
+
+    pub fn outputable_input_index(&self, input_id: &InputId) -> Option<usize> {
+        self.outputable_inputs(&self[*input_id].node_id)
+            .position(|(id, _)| id == input_id)
+    }
+
+    pub fn outputable_inputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
+        self.node_inputs(node_id)
+            .filter(|(_input_id, input)| input.data.try_to_output_data().is_ok())
+    }
+
     pub fn non_scene_graph_input_count(&self, node_id: &NodeId) -> usize {
         self.non_scene_graph_inputs(node_id).count()
     }
@@ -693,23 +707,6 @@ impl NodeGraph {
             .filter(|(_input_id, input)| match input.data {
                 InputData::SceneGraphId(_id) => false,
                 _ => true,
-            })
-    }
-
-    pub fn scene_graph_input_count(&self, node_id: &NodeId) -> usize {
-        self.scene_graph_inputs(node_id).count()
-    }
-
-    pub fn scene_graph_input_index(&self, input_id: &InputId) -> Option<usize> {
-        self.scene_graph_inputs(&self[*input_id].node_id)
-            .position(|(id, _)| id == input_id)
-    }
-
-    pub fn scene_graph_inputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
-        self.node_inputs(node_id)
-            .filter(|(_input_id, input)| match input.data {
-                InputData::SceneGraphId(_id) => true,
-                _ => false,
             })
     }
 

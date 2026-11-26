@@ -1441,11 +1441,11 @@ mod tests {
 
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
-                Ok(InputData::Mat4(Mat4::IDENTITY))
+                Ok(InputData::mat4(Mat4::IDENTITY))
             );
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &secondary_axis_output_id),
-                Ok(InputData::Mat4(Mat4::IDENTITY))
+                Ok(InputData::mat4(Mat4::IDENTITY))
             );
 
             let primary_translation = Vec3::new(1., 2., 3.);
@@ -1521,11 +1521,11 @@ mod tests {
 
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &primary_axis_output_id),
-                Ok(InputData::Mat4(primary_matrix))
+                Ok(InputData::mat4(primary_matrix))
             );
             assert_eq!(
                 graph.evaluate_output(&device, &queue, &mut encoder, &secondary_axis_output_id),
-                Ok(InputData::Mat4(primary_matrix * secondary_matrix))
+                Ok(InputData::mat4(primary_matrix * secondary_matrix))
             );
         }
     }

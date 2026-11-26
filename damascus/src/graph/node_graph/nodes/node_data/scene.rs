@@ -35,7 +35,7 @@ impl NodeInputData for SceneInputData {
             Self::Scene => InputData::SceneGraphId(SceneGraphId::None),
             Self::RenderCamera => InputData::SceneGraphId(SceneGraphId::None),
             Self::Atmosphere => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Axis => InputData::Mat4(Mat4::IDENTITY),
+            Self::Axis => InputData::mat4(Mat4::IDENTITY),
         }
     }
 

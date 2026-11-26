@@ -49,7 +49,7 @@ impl NodeInputData for CameraInputData {
             Self::SensorResolution => InputData::UVec2(default_camera.sensor_resolution),
             Self::EnableDepthOfField => InputData::Bool(default_camera.enable_depth_of_field),
             Self::Latlong => InputData::Bool(default_camera.latlong),
-            Self::Axis => InputData::Mat4(default_camera.camera_to_world),
+            Self::Axis => InputData::mat4(default_camera.camera_to_world),
         }
     }
 

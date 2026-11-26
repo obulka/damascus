@@ -122,7 +122,7 @@ impl NodeInputData for PrimitiveInputData {
             Self::WallThickness => InputData::float(default_primitive.wall_thickness),
             Self::Elongate => InputData::Bool(default_primitive.elongate),
             Self::Elongation => InputData::Vec3(default_primitive.elongation),
-            Self::Axis => InputData::Mat4(default_primitive.local_to_world),
+            Self::Axis => InputData::mat4(default_primitive.local_to_world),
         }
     }
 

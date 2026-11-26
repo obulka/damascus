@@ -33,7 +33,7 @@ pub enum AxisInputData {
 impl NodeInputData for AxisInputData {
     fn default_data(&self) -> InputData {
         match self {
-            Self::Axis => InputData::Mat4(Mat4::IDENTITY),
+            Self::Axis => InputData::mat4(Mat4::IDENTITY),
             Self::Translate => InputData::Vec3(Vec3::ZERO),
             Self::Rotate => InputData::Vec3(Vec3::ZERO),
             Self::UniformScale => InputData::float(1.),
@@ -122,7 +122,7 @@ impl EvaluableNode for AxisNode {
         };
 
         match output {
-            Self::Outputs::Axis => Ok(InputData::Mat4(axis)),
+            Self::Outputs::Axis => Ok(InputData::mat4(axis)),
         }
     }
 }

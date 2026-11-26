@@ -5,7 +5,7 @@
 
 use std::{
     borrow::Borrow,
-    fmt::Display,
+    fmt::{Debug, Display},
     ops::{RangeBounds, RangeInclusive},
     str::FromStr,
 };
@@ -16,7 +16,7 @@ use num_traits::{AsPrimitive, Bounded, FromPrimitive, Num, NumAssignOps};
 
 use damascus::{
     Enumerator,
-    data_types::{ExpressionData, Float},
+    data_types::{ExpressionData, Float, Mat4, Vec4},
 };
 
 use crate::{icons::Icons, widgets::menu};
@@ -520,6 +520,198 @@ impl Style {
             .on_input(on_input)
     }
 
+    pub fn number_input<'a, T, Message>(
+        &'a self,
+        value: T,
+        expression: &str,
+        on_input: impl Fn(String) -> Message + 'a,
+        fill_portion: u16,
+    ) -> iced::widget::Tooltip<'a, Message>
+    where
+        T: Num
+            + NumAssignOps
+            + PartialOrd
+            + Display
+            + Debug
+            + FromStr
+            + Clone
+            + Bounded
+            + FromPrimitive
+            + From<u8>
+            + Copy
+            + 'static,
+        <T as FromStr>::Err: std::fmt::Debug,
+        Message: Clone + Default + 'a,
+        f64: AsPrimitive<T> + From<T> + 'a,
+    {
+        let default_expression: String = format!("{:}", value);
+        self.tooltip(
+            self.text_input(
+                "",
+                if expression.is_empty() {
+                    &default_expression
+                } else {
+                    expression
+                },
+                on_input,
+            )
+            .font(iced::Font::MONOSPACE)
+            .width(iced::Length::FillPortion(fill_portion))
+            .style(|theme: &iced::Theme, status| {
+                let palette: &iced::theme::palette::Extended = theme.extended_palette();
+                let mut background_colour: iced::Color = palette.background.base.color;
+                background_colour.a = 1.0;
+
+                let mut style: iced::widget::text_input::Style =
+                    iced::widget::text_input::default(theme, status);
+                style.background = background_colour.into();
+                style.placeholder = style.value;
+                style
+            }),
+            format!("={:.3}", value),
+        )
+    }
+
+    pub fn vec4<'a, T, Message>(
+        &'a self,
+        name: impl iced::widget::text::IntoFragment<'a>,
+        value: &impl Vec4<T>,
+        on_input: impl Fn(usize, String) -> Message + 'a + Clone,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::Element<'a, Message>
+    where
+        T: Num
+            + NumAssignOps
+            + PartialOrd
+            + Display
+            + Debug
+            + FromStr
+            + Clone
+            + Bounded
+            + FromPrimitive
+            + From<u8>
+            + Copy
+            + 'static,
+        <T as FromStr>::Err: std::fmt::Debug,
+        Message: Clone + Default + 'a,
+        f64: AsPrimitive<T> + From<T> + 'a,
+    {
+        iced::widget::row![
+            self.tooltip_label(name, tooltip),
+            self.number_input(
+                value.x().value(),
+                value.x().expression(),
+                {
+                    let on_input_clone = on_input.clone();
+                    move |value| on_input_clone.clone()(0, value)
+                },
+                1
+            ),
+            self.number_input(
+                value.y().value(),
+                value.y().expression(),
+                {
+                    let on_input_clone = on_input.clone();
+                    move |value| on_input_clone.clone()(1, value)
+                },
+                1
+            ),
+            self.number_input(
+                value.z().value(),
+                value.z().expression(),
+                {
+                    let on_input_clone = on_input.clone();
+                    move |value| on_input_clone.clone()(2, value)
+                },
+                1
+            ),
+            self.number_input(
+                value.w().value(),
+                value.w().expression(),
+                {
+                    let on_input_clone = on_input.clone();
+                    move |value| on_input_clone.clone()(3, value)
+                },
+                1
+            ),
+        ]
+        .align_y(iced::Alignment::Center)
+        .spacing(self.spacing())
+        .into()
+    }
+
+    pub fn mat4<'a, T, Message>(
+        &'a self,
+        name: impl iced::widget::text::IntoFragment<'a>,
+        value: &impl Mat4<T>,
+        on_input: impl Fn(usize, usize, String) -> Message + 'a + Clone,
+        tooltip: impl iced::widget::text::IntoFragment<'a>,
+    ) -> iced::Element<'a, Message>
+    where
+        T: Num
+            + NumAssignOps
+            + PartialOrd
+            + Display
+            + Debug
+            + FromStr
+            + Clone
+            + Bounded
+            + FromPrimitive
+            + From<u8>
+            + Copy
+            + 'static,
+        <T as FromStr>::Err: std::fmt::Debug,
+        Message: Clone + Default + 'a,
+        f64: AsPrimitive<T> + From<T> + 'a,
+    {
+        // TODO Transpose
+        iced::widget::row![
+            self.tooltip_label(name, tooltip),
+            iced::widget::column![
+                self.vec4(
+                    "x",
+                    value.x_axis(),
+                    {
+                        let on_input_clone = on_input.clone();
+                        move |row, value| on_input_clone(0, row, value)
+                    },
+                    "first column"
+                ),
+                self.vec4(
+                    "y",
+                    value.y_axis(),
+                    {
+                        let on_input_clone = on_input.clone();
+                        move |row, value| on_input_clone(1, row, value)
+                    },
+                    "second column"
+                ),
+                self.vec4(
+                    "z",
+                    value.z_axis(),
+                    {
+                        let on_input_clone = on_input.clone();
+                        move |row, value| on_input_clone(2, row, value)
+                    },
+                    "third column"
+                ),
+                self.vec4(
+                    "w",
+                    value.w_axis(),
+                    {
+                        let on_input_clone = on_input.clone();
+                        move |row, value| on_input_clone(3, row, value)
+                    },
+                    "fourth column"
+                ),
+            ]
+            .width(iced::Length::FillPortion(5)),
+        ]
+        .align_y(iced::Alignment::Center)
+        .spacing(self.spacing())
+        .into()
+    }
+
     pub fn slider<'a, T, Message>(
         &'a self,
         name: impl iced::widget::text::IntoFragment<'a>,
@@ -538,6 +730,7 @@ impl Style {
             + NumAssignOps
             + PartialOrd
             + Display
+            + Debug
             + FromStr
             + Clone
             + Bounded
@@ -549,34 +742,9 @@ impl Style {
         Message: Clone + Default + 'a,
         f64: AsPrimitive<T> + From<T> + 'a,
     {
-        let default_expression: String = format!("{:}", value);
         iced::widget::row![
             self.tooltip_label(name, tooltip),
-            self.tooltip(
-                self.text_input(
-                    "",
-                    if expression.is_empty() {
-                        &default_expression
-                    } else {
-                        expression
-                    },
-                    on_input,
-                )
-                .width(iced::Length::FillPortion(scale_portion))
-                .font(iced::Font::MONOSPACE)
-                .style(|theme: &iced::Theme, status| {
-                    let palette: &iced::theme::palette::Extended = theme.extended_palette();
-                    let mut background_colour: iced::Color = palette.background.base.color;
-                    background_colour.a = 1.0;
-
-                    let mut style: iced::widget::text_input::Style =
-                        iced::widget::text_input::default(theme, status);
-                    style.background = background_colour.into();
-                    style.placeholder = style.value;
-                    style
-                }),
-                format!("={:.3}", value)
-            ),
+            self.number_input(value, expression, on_input, scale_portion),
             iced::widget::slider(suggested_range, value, on_change)
                 .step(step)
                 .width(iced::Length::FillPortion(3 * scale_portion))

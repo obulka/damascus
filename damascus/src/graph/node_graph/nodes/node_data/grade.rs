@@ -46,7 +46,7 @@ impl NodeInputData for GradeInputData {
             Self::Gain => InputData::float(default_grade.gain),
             Self::Gamma => InputData::float(default_grade.gamma),
             Self::Invert => InputData::Bool(default_grade.invert),
-            Self::Transform => InputData::Mat4(default_grade.transform),
+            Self::Transform => InputData::mat4(default_grade.transform),
         }
     }
 

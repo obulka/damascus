@@ -10,14 +10,14 @@ use std::{
     ops::{Range, RangeInclusive},
 };
 
-use glam::{BVec3, Mat3, Mat4, UVec2, UVec3, Vec2, Vec3, Vec4};
+use glam::{BVec3, Mat3, UVec2, UVec3, Vec2, Vec3};
 use indoc::indoc;
 use macro_rules_attribute::derive;
 
 use crate::{
     Enum, EnumTraits, Enumerator,
     camera::CameraId,
-    data_types::{ExpressionData, Float},
+    data_types::{ExpressionData, Float, Mat4f, Vec4f},
     geometry::primitives::PrimitiveId,
     graph::{
         node_graph::{
@@ -45,9 +45,9 @@ pub enum InputData {
     Float(Float),
     Vec2(Vec2),
     Vec3(Vec3),
-    Vec4(Vec4),
+    Vec4(Vec4f),
     Mat3(Mat3),
-    Mat4(Mat4),
+    Mat4(Mat4f),
     Enum(Enum),
     Filepath(String),
     SceneGraphId(SceneGraphId),
@@ -107,9 +107,9 @@ impl From<Vec3> for InputData {
     }
 }
 
-impl From<Vec4> for InputData {
-    fn from(value: Vec4) -> Self {
-        Self::Vec4(value)
+impl From<glam::Vec4> for InputData {
+    fn from(value: glam::Vec4) -> Self {
+        Self::vec4(value)
     }
 }
 
@@ -119,9 +119,9 @@ impl From<Mat3> for InputData {
     }
 }
 
-impl From<Mat4> for InputData {
-    fn from(value: Mat4) -> Self {
-        Self::Mat4(value)
+impl From<glam::Mat4> for InputData {
+    fn from(value: glam::Mat4) -> Self {
+        Self::mat4(value)
     }
 }
 
@@ -153,6 +153,14 @@ impl InputData {
 
     pub fn float(value: f32) -> Self {
         Self::Float(Float::new(value))
+    }
+
+    pub fn vec4(value: glam::Vec4) -> Self {
+        Self::Vec4(value.into())
+    }
+
+    pub fn mat4(value: glam::Mat4) -> Self {
+        Self::Mat4(value.into())
     }
 
     pub fn is_evaluable(&self) -> bool {
@@ -285,12 +293,12 @@ impl InputData {
         }
     }
 
-    pub fn try_to_vec4(self) -> NodeResult<Vec4> {
+    pub fn try_to_vec4(self) -> NodeResult<glam::Vec4> {
         match self {
-            InputData::Vec4(value) => Ok(value),
+            InputData::Vec4(value) => Ok(value.into()),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<Vec4>().to_string(),
+                conversion_to: type_name::<glam::Vec4>().to_string(),
             }),
         }
     }
@@ -305,12 +313,12 @@ impl InputData {
         }
     }
 
-    pub fn try_to_mat4(self) -> NodeResult<Mat4> {
+    pub fn try_to_mat4(self) -> NodeResult<glam::Mat4> {
         match self {
-            InputData::Mat4(value) => Ok(value),
+            InputData::Mat4(value) => Ok(value.into()),
             _ => Err(NodeErrors::InputDowncastError {
                 data: self,
-                conversion_to: type_name::<Mat4>().to_string(),
+                conversion_to: type_name::<glam::Mat4>().to_string(),
             }),
         }
     }

@@ -16,7 +16,7 @@ use slotmap::SlotMap;
 
 use damascus::{
     Enumerator,
-    data_types::{ExpressionData, Float},
+    data_types::{ExpressionData, Float, Mat4f},
     graph::node_graph::{
         inputs::{InputId, input::Input, input_data::InputData},
         nodes::NodeId,
@@ -192,6 +192,18 @@ impl Properties {
         }
     }
 
+    pub fn mat4_widget<'a>(
+        style: &'a Style,
+        input_id: InputId,
+        label: String,
+        tooltip: String,
+        value: &Mat4f,
+    ) -> iced::Element<'a, PropertiesMessage> {
+        let on_input = |_, _, _expression| -> PropertiesMessage { PropertiesMessage::None };
+
+        style.mat4(label, value, on_input, tooltip)
+    }
+
     pub fn widget_for_input<'a>(
         style: &'a Style,
         node_graph: &NodeGraphContext,
@@ -241,9 +253,7 @@ impl Properties {
             // InputData::Mat3(value) => {
             //     Self::mat3_widget(style, label, &value)
             // }
-            // InputData::Mat4(value) => {
-            //     Self::mat4_widget(style, label, &value)
-            // }
+            InputData::Mat4(ref value) => Self::mat4_widget(style, input_id, label, tooltip, value),
             // InputData::Enum(value) => {
             //     Self::enum_widget(style, label, &value)
             // }

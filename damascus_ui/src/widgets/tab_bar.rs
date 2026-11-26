@@ -733,9 +733,9 @@ mod tests {
         assert_eq!(tab_bar.tab_indices.len(), 0);
         assert_eq!(tab_bar.width, iced::Length::Fill);
         assert_eq!(tab_bar.height, iced::Length::Shrink);
-        assert!((tab_bar.minimum_height - default_style.icon_size as f32).abs() < f32::EPSILON);
-        assert!((tab_bar.text_size - default_style.text_size).abs() < f32::EPSILON);
-        assert!((tab_bar.close_size - default_style.icon_size as f32).abs() < f32::EPSILON);
+        assert!((tab_bar.minimum_height - default_style.icon_size() as f32).abs() < f32::EPSILON);
+        assert!((tab_bar.text_size - default_style.text_size()).abs() < f32::EPSILON);
+        assert!((tab_bar.close_size - default_style.icon_size() as f32).abs() < f32::EPSILON);
     }
 
     #[test]

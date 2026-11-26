@@ -12,8 +12,12 @@ use meval;
 use num_traits::{AsPrimitive, FromPrimitive};
 
 mod float;
+mod mat4;
+mod vec4;
 
 pub use float::Float;
+pub use mat4::{Mat4, Mat4f};
+pub use vec4::{Vec4, Vec4f};
 
 pub trait ExpressionData<T>:
     Add

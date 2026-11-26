@@ -52,7 +52,7 @@ impl NodeInputData for LightInputData {
             Self::Colour => InputData::Vec3(default_light.colour),
             Self::ShadowHardness => InputData::float(default_light.shadow_hardness),
             Self::SoftenShadows => InputData::Bool(default_light.soften_shadows),
-            Self::Axis => InputData::Mat4(Mat4::IDENTITY),
+            Self::Axis => InputData::mat4(Mat4::IDENTITY),
         }
     }
 

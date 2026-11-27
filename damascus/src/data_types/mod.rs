@@ -84,17 +84,17 @@ where
         ""
     }
 
-    fn set_expression(&mut self, new_expression: String) {
-        if let Some(value) = Self::evaluate(&new_expression) {
+    fn set_expression(&mut self, expression: String) {
+        if let Some(value) = Self::evaluate(&expression) {
             self.set_value(value);
         }
     }
 
-    fn with_expression(mut self, new_expression: String) -> Self
+    fn with_expression(mut self, expression: String) -> Self
     where
         Self: Sized,
     {
-        self.set_expression(new_expression);
+        self.set_expression(expression);
         self
     }
 }

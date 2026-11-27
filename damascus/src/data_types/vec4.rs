@@ -26,6 +26,31 @@ where
     fn y_mut(&mut self) -> &mut impl ExpressionData<T>;
     fn z_mut(&mut self) -> &mut impl ExpressionData<T>;
     fn w_mut(&mut self) -> &mut impl ExpressionData<T>;
+
+    fn value(&self, index: usize) -> T {
+        match index {
+            0 => self.x().value(),
+            1 => self.y().value(),
+            2 => self.z().value(),
+            3 => self.w().value(),
+            _ => panic!("index out of bounds"),
+        }
+    }
+
+    fn set_expression(&mut self, index: usize, expression: String) {
+        match index {
+            0 => self.x_mut().set_expression(expression),
+            1 => self.y_mut().set_expression(expression),
+            2 => self.z_mut().set_expression(expression),
+            3 => self.w_mut().set_expression(expression),
+            _ => {}
+        }
+    }
+
+    fn with_expression(mut self, index: usize, expression: String) -> Self {
+        self.set_expression(index, expression);
+        self
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]

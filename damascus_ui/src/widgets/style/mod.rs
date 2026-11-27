@@ -578,6 +578,7 @@ impl Style {
         value: &impl Vec4<T>,
         on_input: impl Fn(usize, String) -> Message + 'a + Clone,
         tooltip: impl iced::widget::text::IntoFragment<'a>,
+        scale_portion: u16,
     ) -> iced::Element<'a, Message>
     where
         T: Num
@@ -605,7 +606,7 @@ impl Style {
                     let on_input_clone = on_input.clone();
                     move |value| on_input_clone.clone()(0, value)
                 },
-                1
+                scale_portion,
             ),
             self.number_input(
                 value.y().value(),
@@ -614,7 +615,7 @@ impl Style {
                     let on_input_clone = on_input.clone();
                     move |value| on_input_clone.clone()(1, value)
                 },
-                1
+                scale_portion,
             ),
             self.number_input(
                 value.z().value(),
@@ -623,7 +624,7 @@ impl Style {
                     let on_input_clone = on_input.clone();
                     move |value| on_input_clone.clone()(2, value)
                 },
-                1
+                scale_portion,
             ),
             self.number_input(
                 value.w().value(),
@@ -632,7 +633,7 @@ impl Style {
                     let on_input_clone = on_input.clone();
                     move |value| on_input_clone.clone()(3, value)
                 },
-                1
+                scale_portion,
             ),
         ]
         .align_y(iced::Alignment::Center)
@@ -675,7 +676,8 @@ impl Style {
                         let on_input_clone = on_input.clone();
                         move |row, value| on_input_clone(0, row, value)
                     },
-                    "first column"
+                    "first column",
+                    4,
                 ),
                 self.vec4(
                     "y",
@@ -684,7 +686,8 @@ impl Style {
                         let on_input_clone = on_input.clone();
                         move |row, value| on_input_clone(1, row, value)
                     },
-                    "second column"
+                    "second column",
+                    4,
                 ),
                 self.vec4(
                     "z",
@@ -693,7 +696,8 @@ impl Style {
                         let on_input_clone = on_input.clone();
                         move |row, value| on_input_clone(2, row, value)
                     },
-                    "third column"
+                    "third column",
+                    4,
                 ),
                 self.vec4(
                     "w",
@@ -702,10 +706,11 @@ impl Style {
                         let on_input_clone = on_input.clone();
                         move |row, value| on_input_clone(3, row, value)
                     },
-                    "fourth column"
+                    "fourth column",
+                    4,
                 ),
             ]
-            .width(iced::Length::FillPortion(5)),
+            .width(iced::Length::FillPortion(4)),
         ]
         .align_y(iced::Alignment::Center)
         .spacing(self.spacing())

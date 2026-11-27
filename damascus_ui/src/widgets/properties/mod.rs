@@ -16,7 +16,7 @@ use slotmap::SlotMap;
 
 use damascus::{
     Enumerator,
-    data_types::{ExpressionData, Float, Mat4f},
+    data_types::{ExpressionData, Float, Mat4, Mat4f},
     graph::node_graph::{
         inputs::{InputId, input::Input, input_data::InputData},
         nodes::NodeId,
@@ -67,6 +67,8 @@ pub enum PropertiesMessage {
     CloseNodeProperties(Option<PropertiesId>, NodeId),
     OpenNodeProperties(NodeId),
     InputDataChanged(InputId, InputData),
+    InputDataChangedAtIndex(InputId, usize, String),
+    InputDataChangedAtPosition(InputId, usize, usize, String),
     #[default]
     None,
 }
@@ -199,7 +201,9 @@ impl Properties {
         tooltip: String,
         value: &Mat4f,
     ) -> iced::Element<'a, PropertiesMessage> {
-        let on_input = |_, _, _expression| -> PropertiesMessage { PropertiesMessage::None };
+        let on_input = move |column, row, expression| -> PropertiesMessage {
+            PropertiesMessage::InputDataChangedAtPosition(input_id, column, row, expression)
+        };
 
         style.mat4(label, value, on_input, tooltip)
     }
@@ -415,6 +419,24 @@ impl Widget<PropertiesMessage> for Properties {
                 }
 
                 node_graph.graph[input_id].data = input_data;
+
+                iced::Task::none()
+            }
+            PropertiesMessage::InputDataChangedAtPosition(input_id, column, row, expression) => {
+                let Ok(mut node_graph) = self.node_graph_context.lock() else {
+                    return iced::Task::none();
+                };
+
+                if !node_graph.graph.input_id_is_valid(input_id) {
+                    return iced::Task::none();
+                }
+
+                match node_graph.graph[input_id].data {
+                    InputData::Mat4(ref mut matrix) => {
+                        matrix.set_expression(column, row, expression)
+                    }
+                    _ => {}
+                }
 
                 iced::Task::none()
             }

@@ -43,6 +43,31 @@ where
     fn y_axis_mut(&mut self) -> &mut impl Vec4<T>;
     fn z_axis_mut(&mut self) -> &mut impl Vec4<T>;
     fn w_axis_mut(&mut self) -> &mut impl Vec4<T>;
+
+    fn value(&self, column: usize, row: usize) -> T {
+        match column {
+            0 => self.x_axis().value(row),
+            1 => self.y_axis().value(row),
+            2 => self.z_axis().value(row),
+            3 => self.w_axis().value(row),
+            _ => panic!("index out of bounds"),
+        }
+    }
+
+    fn set_expression(&mut self, column: usize, row: usize, expression: String) {
+        match column {
+            0 => self.x_axis_mut().set_expression(row, expression),
+            1 => self.y_axis_mut().set_expression(row, expression),
+            2 => self.z_axis_mut().set_expression(row, expression),
+            3 => self.w_axis_mut().set_expression(row, expression),
+            _ => {}
+        }
+    }
+
+    fn with_expression(mut self, column: usize, row: usize, expression: String) -> Self {
+        self.set_expression(column, row, expression);
+        self
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq, serde::Serialize, serde::Deserialize)]

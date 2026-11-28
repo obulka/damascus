@@ -449,11 +449,16 @@ impl NodeGraph {
                     node_context.input_position(input_index as f32, connectable_input_count as f32);
 
                 if (input_position - cursor_position).length() <= input_path_radius {
-                    let input_id: InputId = node_graph.graph[node_id].input_ids[input_index];
-                    if let Some(output_id) = node_graph.graph.disconnect_input_id(&input_id) {
+                    let input_id: Option<InputId> = node_graph
+                        .graph
+                        .outputable_input_id_at_index(&node_id, input_index)
+                        .copied();
+                    if let Some(input_id) = input_id
+                        && let Some(output_id) = node_graph.graph.disconnect_input_id(&input_id)
+                    {
                         self.connection_in_progress = (None, Some(output_id));
                     } else {
-                        self.connection_in_progress = (Some(input_id), None);
+                        self.connection_in_progress = (input_id, None);
                     }
                     return true;
                 }

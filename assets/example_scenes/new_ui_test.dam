@@ -1,24 +1,75 @@
 {
   "default_style": {
-    "text_size": 14.0,
-    "scale": 1.0,
-    "border_width": 2.0,
+    "text_size": {
+      "value": 14.0,
+      "expression": ""
+    },
+    "scale": {
+      "value": 1.0,
+      "expression": ""
+    },
+    "border_width": {
+      "value": 2.0,
+      "expression": ""
+    },
     "theme": "Dracula",
-    "spacing": 3.0,
-    "padding": 3.0,
+    "spacing": {
+      "value": 3.0,
+      "expression": ""
+    },
+    "padding": {
+      "value": 3.0,
+      "expression": ""
+    },
     "icon_size": 14,
-    "leeway": 5.0,
-    "modal_opacity": 0.69,
-    "float_input_step": 0.0001,
-    "viewer_zoom_sensitivity": 0.1,
-    "text_zoom_cutoff": 2.0,
-    "connection_line_width": 3.5,
-    "inactive_connection_line_scale": 0.5,
-    "node_input_radius": 5.0,
-    "node_output_radius": 5.0,
-    "node_selected_border_width": 3.0,
-    "selection_box_border_width": 2.0,
-    "selection_box_alpha": 0.1
+    "leeway": {
+      "value": 5.0,
+      "expression": ""
+    },
+    "modal_opacity": {
+      "value": 0.69,
+      "expression": ""
+    },
+    "float_input_step": {
+      "value": 0.0001,
+      "expression": ""
+    },
+    "viewer_zoom_sensitivity": {
+      "value": 0.1,
+      "expression": ""
+    },
+    "text_zoom_cutoff": {
+      "value": 2.0,
+      "expression": ""
+    },
+    "connection_line_width": {
+      "value": 3.5,
+      "expression": ""
+    },
+    "inactive_connection_line_scale": {
+      "value": 0.5,
+      "expression": ""
+    },
+    "node_input_radius": {
+      "value": 5.0,
+      "expression": ""
+    },
+    "node_output_radius": {
+      "value": 5.0,
+      "expression": ""
+    },
+    "node_selected_border_width": {
+      "value": 3.0,
+      "expression": ""
+    },
+    "selection_box_border_width": {
+      "value": 2.0,
+      "expression": ""
+    },
+    "selection_box_alpha": {
+      "value": 0.1,
+      "expression": ""
+    }
   },
   "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
   "working_file_hash": null,
@@ -27,30 +78,81 @@
       {
         "position": null,
         "size": [
-          1750.0,
-          768.0
+          2397.0,
+          1405.0
         ],
         "title": "damascus",
         "style": {
-          "text_size": 14.0,
-          "scale": 1.0,
-          "border_width": 2.0,
+          "text_size": {
+            "value": 14.0,
+            "expression": ""
+          },
+          "scale": {
+            "value": 1.0,
+            "expression": ""
+          },
+          "border_width": {
+            "value": 2.0,
+            "expression": ""
+          },
           "theme": "Dracula",
-          "spacing": 3.0,
-          "padding": 3.0,
+          "spacing": {
+            "value": 3.0,
+            "expression": ""
+          },
+          "padding": {
+            "value": 3.0,
+            "expression": ""
+          },
           "icon_size": 14,
-          "leeway": 5.0,
-          "modal_opacity": 0.69,
-          "float_input_step": 0.0001,
-          "viewer_zoom_sensitivity": 0.1,
-          "text_zoom_cutoff": 2.0,
-          "connection_line_width": 3.5,
-          "inactive_connection_line_scale": 0.5,
-          "node_input_radius": 5.0,
-          "node_output_radius": 5.0,
-          "node_selected_border_width": 3.0,
-          "selection_box_border_width": 2.0,
-          "selection_box_alpha": 0.1
+          "leeway": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "modal_opacity": {
+            "value": 0.69,
+            "expression": ""
+          },
+          "float_input_step": {
+            "value": 0.0001,
+            "expression": ""
+          },
+          "viewer_zoom_sensitivity": {
+            "value": 0.1,
+            "expression": ""
+          },
+          "text_zoom_cutoff": {
+            "value": 2.0,
+            "expression": ""
+          },
+          "connection_line_width": {
+            "value": 3.5,
+            "expression": ""
+          },
+          "inactive_connection_line_scale": {
+            "value": 0.5,
+            "expression": ""
+          },
+          "node_input_radius": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "node_output_radius": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "node_selected_border_width": {
+            "value": 3.0,
+            "expression": ""
+          },
+          "selection_box_border_width": {
+            "value": 2.0,
+            "expression": ""
+          },
+          "selection_box_alpha": {
+            "value": 0.1,
+            "expression": ""
+          }
         },
         "panel": {
           "Split": {
@@ -77,8 +179,14 @@
                               0.0,
                               0.0
                             ],
-                            "gain": 1.0,
-                            "gamma": 1.0
+                            "gain": {
+                              "value": 1.0,
+                              "expression": ""
+                            },
+                            "gamma": {
+                              "value": 1.0,
+                              "expression": ""
+                            }
                           },
                           "pan_zoom": {
                             "panning": false,
@@ -89,21 +197,21 @@
                               0.0
                             ],
                             "previous_cursor_position": [
-                              350.27344,
-                              268.86328
+                              42.609375,
+                              67.02344
                             ],
                             "cursor_position": [
-                              351.30078,
-                              268.86328
+                              42.609375,
+                              66.30469
                             ],
                             "bounds": {
                               "center": [
-                                585.5,
-                                236.9
+                                802.0,
+                                397.9
                               ],
                               "size": [
-                                1165.0,
-                                308.59998
+                                1598.0,
+                                624.6
                               ]
                             }
                           }
@@ -120,41 +228,45 @@
                         "NodeGraph": {
                           "pan_zoom": {
                             "panning": false,
-                            "zoom": 1.0,
-                            "reciprocal_zoom": 1.0,
+                            "zoom": 0.9999997,
+                            "reciprocal_zoom": 1.0000004,
                             "pan": [
-                              0.0,
-                              0.0
+                              -89.87018,
+                              -134.16982
                             ],
                             "previous_cursor_position": [
-                              350.27344,
-                              268.86328
+                              42.609375,
+                              67.02344
                             ],
                             "cursor_position": [
-                              351.30078,
-                              268.86328
+                              42.609375,
+                              66.30469
                             ],
                             "bounds": {
                               "center": [
-                                585.5,
-                                598.2
+                                802.0,
+                                1076.2001
                               ],
                               "size": [
-                                1171.0,
-                                339.59998
+                                1600.0,
+                                653.60004
                               ]
                             }
                           },
                           "selection_box": {
                             "selecting": false,
                             "initial_cursor_position": [
-                              385.01562,
-                              59.551575
+                              -7.9930725,
+                              285.7839
                             ],
                             "current_cursor_position": [
-                              385.01562,
-                              59.551575
+                              -7.9930725,
+                              285.7839
                             ]
+                          },
+                          "node_search": {
+                            "search": "",
+                            "_search_results": null
                           }
                         }
                       }
@@ -164,39 +276,18 @@
               }
             },
             "b": {
-              "Split": {
-                "axis": "Vertical",
-                "ratio": 0.5,
-                "a": {
-                  "Pane": {
-                    "active_tab": 0,
-                    "tabs": [
-                      {
-                        "Properties": {
-                          "properties_id": {
-                            "idx": 1,
-                            "version": 1
-                          }
-                        }
+              "Pane": {
+                "active_tab": 0,
+                "tabs": [
+                  {
+                    "Properties": {
+                      "properties_id": {
+                        "idx": 1,
+                        "version": 1
                       }
-                    ]
+                    }
                   }
-                },
-                "b": {
-                  "Pane": {
-                    "active_tab": 0,
-                    "tabs": [
-                      {
-                        "Properties": {
-                          "properties_id": {
-                            "idx": 2,
-                            "version": 1
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
+                ]
               }
             }
           }
@@ -214,11 +305,11 @@
       },
       {
         "value": {
-          "label": "TextureRead1v1",
+          "label": "Axis1v1",
           "shape": {
             "center": [
-              -191.60547,
-              52.34845
+              -278.3875,
+              142.10818
             ],
             "size": [
               100.0,
@@ -230,11 +321,107 @@
       },
       {
         "value": {
-          "label": "Grade2v1",
+          "label": "Primitive2v1",
           "shape": {
             "center": [
-              -38.578125,
-              75.61017
+              -155.82898,
+              131.52614
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "Axis3v1",
+          "shape": {
+            "center": [
+              -484.6648,
+              236.99486
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "Grade4v1",
+          "shape": {
+            "center": [
+              -192.47739,
+              285.20578
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "Scene5v1",
+          "shape": {
+            "center": [
+              69.96784,
+              199.6394
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "RayMarcher6v1",
+          "shape": {
+            "center": [
+              -15.325096,
+              113.092545
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "TextureRead7v1",
+          "shape": {
+            "center": [
+              -68.24696,
+              371.50653
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "Light8v1",
+          "shape": {
+            "center": [
+              73.47956,
+              293.2878
             ],
             "size": [
               100.0,
@@ -257,21 +444,7 @@
               {
                 "idx": 1,
                 "version": 1
-              }
-            ],
-            "output_ids": [
-              {
-                "idx": 1,
-                "version": 1
-              }
-            ],
-            "data": "TextureRead"
-          },
-          "version": 1
-        },
-        {
-          "value": {
-            "input_ids": [
+              },
               {
                 "idx": 2,
                 "version": 1
@@ -283,7 +456,21 @@
               {
                 "idx": 4,
                 "version": 1
-              },
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 1,
+                "version": 1
+              }
+            ],
+            "data": "Axis"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
               {
                 "idx": 5,
                 "version": 1
@@ -303,6 +490,166 @@
               {
                 "idx": 9,
                 "version": 1
+              },
+              {
+                "idx": 10,
+                "version": 1
+              },
+              {
+                "idx": 11,
+                "version": 1
+              },
+              {
+                "idx": 12,
+                "version": 1
+              },
+              {
+                "idx": 13,
+                "version": 1
+              },
+              {
+                "idx": 14,
+                "version": 1
+              },
+              {
+                "idx": 15,
+                "version": 1
+              },
+              {
+                "idx": 16,
+                "version": 1
+              },
+              {
+                "idx": 17,
+                "version": 1
+              },
+              {
+                "idx": 18,
+                "version": 1
+              },
+              {
+                "idx": 19,
+                "version": 1
+              },
+              {
+                "idx": 20,
+                "version": 1
+              },
+              {
+                "idx": 21,
+                "version": 1
+              },
+              {
+                "idx": 22,
+                "version": 1
+              },
+              {
+                "idx": 23,
+                "version": 1
+              },
+              {
+                "idx": 24,
+                "version": 1
+              },
+              {
+                "idx": 25,
+                "version": 1
+              },
+              {
+                "idx": 26,
+                "version": 1
+              },
+              {
+                "idx": 27,
+                "version": 1
+              },
+              {
+                "idx": 28,
+                "version": 1
+              },
+              {
+                "idx": 29,
+                "version": 1
+              },
+              {
+                "idx": 30,
+                "version": 1
+              },
+              {
+                "idx": 31,
+                "version": 1
+              },
+              {
+                "idx": 32,
+                "version": 1
+              },
+              {
+                "idx": 33,
+                "version": 1
+              },
+              {
+                "idx": 34,
+                "version": 1
+              },
+              {
+                "idx": 35,
+                "version": 1
+              },
+              {
+                "idx": 36,
+                "version": 1
+              },
+              {
+                "idx": 37,
+                "version": 1
+              },
+              {
+                "idx": 38,
+                "version": 1
+              },
+              {
+                "idx": 39,
+                "version": 1
+              },
+              {
+                "idx": 40,
+                "version": 1
+              },
+              {
+                "idx": 41,
+                "version": 1
+              },
+              {
+                "idx": 42,
+                "version": 1
+              },
+              {
+                "idx": 43,
+                "version": 1
+              },
+              {
+                "idx": 44,
+                "version": 1
+              },
+              {
+                "idx": 45,
+                "version": 1
+              },
+              {
+                "idx": 46,
+                "version": 1
+              },
+              {
+                "idx": 47,
+                "version": 1
+              },
+              {
+                "idx": 48,
+                "version": 1
+              },
+              {
+                "idx": 49,
+                "version": 1
               }
             ],
             "output_ids": [
@@ -311,7 +658,263 @@
                 "version": 1
               }
             ],
+            "data": "Primitive"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 50,
+                "version": 1
+              },
+              {
+                "idx": 51,
+                "version": 1
+              },
+              {
+                "idx": 52,
+                "version": 1
+              },
+              {
+                "idx": 53,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 3,
+                "version": 1
+              }
+            ],
+            "data": "Axis"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 54,
+                "version": 1
+              },
+              {
+                "idx": 55,
+                "version": 1
+              },
+              {
+                "idx": 56,
+                "version": 1
+              },
+              {
+                "idx": 57,
+                "version": 1
+              },
+              {
+                "idx": 58,
+                "version": 1
+              },
+              {
+                "idx": 59,
+                "version": 1
+              },
+              {
+                "idx": 60,
+                "version": 1
+              },
+              {
+                "idx": 61,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 4,
+                "version": 1
+              }
+            ],
             "data": "Grade"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 62,
+                "version": 1
+              },
+              {
+                "idx": 63,
+                "version": 1
+              },
+              {
+                "idx": 64,
+                "version": 1
+              },
+              {
+                "idx": 65,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 5,
+                "version": 1
+              }
+            ],
+            "data": "Scene"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 66,
+                "version": 1
+              },
+              {
+                "idx": 67,
+                "version": 1
+              },
+              {
+                "idx": 68,
+                "version": 1
+              },
+              {
+                "idx": 69,
+                "version": 1
+              },
+              {
+                "idx": 70,
+                "version": 1
+              },
+              {
+                "idx": 71,
+                "version": 1
+              },
+              {
+                "idx": 72,
+                "version": 1
+              },
+              {
+                "idx": 73,
+                "version": 1
+              },
+              {
+                "idx": 74,
+                "version": 1
+              },
+              {
+                "idx": 75,
+                "version": 1
+              },
+              {
+                "idx": 76,
+                "version": 1
+              },
+              {
+                "idx": 77,
+                "version": 1
+              },
+              {
+                "idx": 78,
+                "version": 1
+              },
+              {
+                "idx": 79,
+                "version": 1
+              },
+              {
+                "idx": 80,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 6,
+                "version": 1
+              }
+            ],
+            "data": "RayMarcher"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 81,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 7,
+                "version": 1
+              }
+            ],
+            "data": "TextureRead"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 82,
+                "version": 1
+              },
+              {
+                "idx": 83,
+                "version": 1
+              },
+              {
+                "idx": 84,
+                "version": 1
+              },
+              {
+                "idx": 85,
+                "version": 1
+              },
+              {
+                "idx": 86,
+                "version": 1
+              },
+              {
+                "idx": 87,
+                "version": 1
+              },
+              {
+                "idx": 88,
+                "version": 1
+              },
+              {
+                "idx": 89,
+                "version": 1
+              },
+              {
+                "idx": 90,
+                "version": 1
+              },
+              {
+                "idx": 91,
+                "version": 1
+              },
+              {
+                "idx": 92,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 8,
+                "version": 1
+              }
+            ],
+            "data": "Light"
           },
           "version": 1
         }
@@ -327,9 +930,132 @@
               "idx": 1,
               "version": 1
             },
-            "name": "Filepath",
+            "name": "Axis",
             "data": {
-              "Filepath": "/home/ob1/software/rust/damascus/damascus/image.exr"
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 1,
+              "version": 1
+            },
+            "name": "Translate",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 1,
+              "version": 1
+            },
+            "name": "Rotate",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 1,
+              "version": 1
+            },
+            "name": "UniformScale",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
             }
           },
           "version": 1
@@ -340,7 +1066,7 @@
               "idx": 2,
               "version": 1
             },
-            "name": "Texture",
+            "name": "Child",
             "data": {
               "SceneGraphId": "None"
             }
@@ -353,9 +1079,9 @@
               "idx": 2,
               "version": 1
             },
-            "name": "BlackPoint",
+            "name": "Material",
             "data": {
-              "Float": 0.0
+              "SceneGraphId": "None"
             }
           },
           "version": 1
@@ -366,9 +1092,38 @@
               "idx": 2,
               "version": 1
             },
-            "name": "WhitePoint",
+            "name": "Shape",
             "data": {
-              "Float": 1.0
+              "Enum": {
+                "variant": "Sphere",
+                "variants": [
+                  "CappedCone",
+                  "CappedTorus",
+                  "Capsule",
+                  "Cone",
+                  "CutSphere",
+                  "Cylinder",
+                  "DeathStar",
+                  "Ellipsoid",
+                  "HexagonalPrism",
+                  "HollowSphere",
+                  "InfiniteCone",
+                  "InfiniteCylinder",
+                  "Link",
+                  "Mandelbox",
+                  "Mandelbulb",
+                  "Octahedron",
+                  "Plane",
+                  "RectangularPrism",
+                  "RectangularPrismFrame",
+                  "Rhombus",
+                  "RoundedCone",
+                  "SolidAngle",
+                  "Sphere",
+                  "Torus",
+                  "TriangularPrism"
+                ]
+              }
             }
           },
           "version": 1
@@ -379,9 +1134,12 @@
               "idx": 2,
               "version": 1
             },
-            "name": "Lift",
+            "name": "Radius",
             "data": {
-              "Float": 0.0
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
             }
           },
           "version": 1
@@ -392,9 +1150,13 @@
               "idx": 2,
               "version": 1
             },
-            "name": "Gain",
+            "name": "Radii",
             "data": {
-              "Float": 4.69
+              "Vec3": [
+                0.5,
+                0.5,
+                0.5
+              ]
             }
           },
           "version": 1
@@ -405,9 +1167,12 @@
               "idx": 2,
               "version": 1
             },
-            "name": "Gamma",
+            "name": "Height",
             "data": {
-              "Float": 1.0
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
             }
           },
           "version": 1
@@ -418,7 +1183,489 @@
               "idx": 2,
               "version": 1
             },
-            "name": "Invert",
+            "name": "HollowRadius",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "HollowHeight",
+            "data": {
+              "Float": {
+                "value": 0.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "SolidAngle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Width",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Depth",
+            "data": {
+              "Float": {
+                "value": 0.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Thickness",
+            "data": {
+              "Float": {
+                "value": 0.05,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "CornerRadius",
+            "data": {
+              "Float": {
+                "value": 0.05,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Base",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Normal",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "NegativeHeight",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "PositiveHeight",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Angle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "LowerRadius",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "UpperRadius",
+            "data": {
+              "Float": {
+                "value": 0.125,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "RingRadius",
+            "data": {
+              "Float": {
+                "value": 0.3,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "TubeRadius",
+            "data": {
+              "Float": {
+                "value": 0.2,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "CapAngle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "RadialExtent",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Power",
+            "data": {
+              "Float": {
+                "value": 8.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Iterations",
+            "data": {
+              "UInt": 10
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "MaxSquareRadius",
+            "data": {
+              "Float": {
+                "value": 4.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Scale",
+            "data": {
+              "Float": {
+                "value": -1.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "MinSquareRadius",
+            "data": {
+              "Float": {
+                "value": 0.001,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "FoldingLimit",
+            "data": {
+              "Float": {
+                "value": 0.8,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "EnableOrbitTrapColour",
+            "data": {
+              "Bool": true
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "EdgeRadius",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Repetition",
+            "data": {
+              "Enum": {
+                "variant": "None",
+                "variants": [
+                  "None",
+                  "Finite",
+                  "Infinite"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "NegativeRepetitions",
+            "data": {
+              "UVec3": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "PositiveRepetitions",
+            "data": {
+              "UVec3": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Spacing",
+            "data": {
+              "Vec3": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "BoundingVolume",
             "data": {
               "Bool": false
             }
@@ -431,26 +1678,1120 @@
               "idx": 2,
               "version": 1
             },
+            "name": "BlendType",
+            "data": {
+              "Enum": {
+                "variant": "Union",
+                "variants": [
+                  "Union",
+                  "Subtraction",
+                  "Intersection"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "BlendStrength",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Mirror",
+            "data": {
+              "BVec3": [
+                false,
+                false,
+                false
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Hollow",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "WallThickness",
+            "data": {
+              "Float": {
+                "value": 0.01,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Elongate",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Elongation",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": {
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 3,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": {
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 3,
+              "version": 1
+            },
+            "name": "Translate",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 3,
+              "version": 1
+            },
+            "name": "Rotate",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 3,
+              "version": 1
+            },
+            "name": "UniformScale",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Texture",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "BlackPoint",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "WhitePoint",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Lift",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Gain",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Gamma",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Invert",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
             "name": "Transform",
             "data": {
-              "Mat4": [
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 1
+            },
+            "name": "Scene",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 1
+            },
+            "name": "RenderCamera",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 1
+            },
+            "name": "Atmosphere",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": {
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "SceneRoot",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "MaxRaySteps",
+            "data": {
+              "UInt": 1000
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "MaxBounces",
+            "data": {
+              "UInt": 1
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "HitTolerance",
+            "data": {
+              "Float": {
+                "value": 0.0001,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "ShadowBias",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "MaxBrightness",
+            "data": {
+              "Float": {
+                "value": 1000000000.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "Seed",
+            "data": {
+              "UInt": 42
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "DynamicLevelOfDetail",
+            "data": {
+              "Bool": true
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "EquiangularSamples",
+            "data": {
+              "UInt": 0
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "LightSampling",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "MaxLightSamplingBounces",
+            "data": {
+              "UInt": 1
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "SampleAtmosphere",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "LightSamplingBias",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "SecondarySampling",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "OutputAOV",
+            "data": {
+              "Enum": {
+                "variant": "Beauty",
+                "variants": [
+                  "Beauty",
+                  "WorldPosition",
+                  "LocalPosition",
+                  "Normals",
+                  "Depth",
+                  "Cryptomatte",
+                  "Stats"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 7,
+              "version": 1
+            },
+            "name": "Filepath",
+            "data": {
+              "Filepath": "/home/ob1/software/rust/damascus/damascus/image.exr"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Child",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "LightType",
+            "data": {
+              "Enum": {
+                "variant": "AmbientOcclusion",
+                "variants": [
+                  "Directional",
+                  "Point",
+                  "Ambient",
+                  "AmbientOcclusion"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Direction",
+            "data": {
+              "Vec3": [
+                0.0,
+                -1.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Position",
+            "data": {
+              "Vec3": [
+                0.0,
                 1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Iterations",
+            "data": {
+              "UInt": 1
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Intensity",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Falloff",
+            "data": {
+              "UInt": 2
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Colour",
+            "data": {
+              "Vec3": [
                 1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
                 1.0,
-                0.0,
-                0.0,
-                0.0,
-                0.0,
                 1.0
               ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "ShadowHardness",
+            "data": {
+              "Float": {
+                "value": 1.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "SoftenShadows",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 8,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": {
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
             }
           },
           "version": 1
@@ -467,6 +2808,80 @@
               "idx": 1,
               "version": 1
             },
+            "name": "Axis",
+            "data": "Mat4"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 2,
+              "version": 1
+            },
+            "name": "Id",
+            "data": {
+              "SceneGraphId": "Primitive"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 3,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": "Mat4"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 4,
+              "version": 1
+            },
+            "name": "Grade",
+            "data": {
+              "SceneGraphId": "TextureEvaluator"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 1
+            },
+            "name": "RootId",
+            "data": {
+              "SceneGraphId": "Root"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 6,
+              "version": 1
+            },
+            "name": "Render",
+            "data": {
+              "SceneGraphId": "TextureEvaluator"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 7,
+              "version": 1
+            },
             "name": "Texture",
             "data": {
               "SceneGraphId": "TextureEvaluator"
@@ -477,12 +2892,12 @@
         {
           "value": {
             "node_id": {
-              "idx": 2,
+              "idx": 8,
               "version": 1
             },
-            "name": "Grade",
+            "name": "Id",
             "data": {
-              "SceneGraphId": "TextureEvaluator"
+              "SceneGraphId": "Light"
             }
           },
           "version": 1
@@ -539,18 +2954,11 @@
       "value": {
         "open_properties": [
           {
-            "idx": 2,
+            "idx": 1,
             "version": 1
-          }
-        ]
-      },
-      "version": 1
-    },
-    {
-      "value": {
-        "open_properties": [
+          },
           {
-            "idx": 2,
+            "idx": 4,
             "version": 1
           }
         ]

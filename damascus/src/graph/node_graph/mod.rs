@@ -685,6 +685,14 @@ impl NodeGraph {
             .position(|(id, _)| id == input_id)
     }
 
+    pub fn outputable_input_id_at_index(&self, node_id: &NodeId, index: usize) -> Option<&InputId> {
+        if let Some((input_id, _input)) = self.outputable_inputs(node_id).nth(index) {
+            Some(input_id)
+        } else {
+            None
+        }
+    }
+
     pub fn outputable_inputs(&self, node_id: &NodeId) -> impl Iterator<Item = (&InputId, &Input)> {
         self.node_inputs(node_id)
             .filter(|(_input_id, input)| input.data.try_to_output_data().is_ok())

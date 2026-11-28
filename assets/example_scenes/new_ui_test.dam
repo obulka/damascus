@@ -71,17 +71,16 @@
       "expression": ""
     }
   },
-  "working_file": "/home/ob1/software/rust/damascus/assets/example_scenes/new_ui_test.dam",
-  "working_file_hash": null,
-  "window_manager_context": {
+  "working_file": "assets/example_scenes/new_ui_test.dam",
+  "working_file_hash": {
     "windows": [
       {
         "position": null,
         "size": [
-          2397.0,
-          1405.0
+          1040.0,
+          778.0
         ],
-        "title": "damascus",
+        "title": "damascus - assets/example_scenes/new_ui_test.dam",
         "style": {
           "text_size": {
             "value": 14.0,
@@ -193,25 +192,25 @@
                             "zoom": 1.0,
                             "reciprocal_zoom": 1.0,
                             "pan": [
-                              0.0,
-                              0.0
+                              -488.03516,
+                              144.6914
                             ],
                             "previous_cursor_position": [
-                              42.609375,
-                              67.02344
+                              510.23047,
+                              602.90625
                             ],
                             "cursor_position": [
-                              42.609375,
-                              66.30469
+                              514.2578,
+                              602.90625
                             ],
                             "bounds": {
                               "center": [
-                                802.0,
-                                397.9
+                                347.5,
+                                240.9
                               ],
                               "size": [
-                                1598.0,
-                                624.6
+                                689.0,
+                                310.59998
                               ]
                             }
                           }
@@ -231,37 +230,261 @@
                             "zoom": 0.9999997,
                             "reciprocal_zoom": 1.0000004,
                             "pan": [
-                              -89.87018,
-                              -134.16982
+                              31.844648,
+                              -234.96669
                             ],
                             "previous_cursor_position": [
-                              42.609375,
-                              67.02344
+                              510.23047,
+                              602.90625
                             ],
                             "cursor_position": [
-                              42.609375,
-                              66.30469
+                              514.2578,
+                              602.90625
                             ],
                             "bounds": {
                               "center": [
-                                802.0,
-                                1076.2001
+                                347.5,
+                                605.7
                               ],
                               "size": [
-                                1600.0,
-                                653.60004
+                                691.0,
+                                340.59998
                               ]
                             }
                           },
                           "selection_box": {
                             "selecting": false,
                             "initial_cursor_position": [
-                              -7.9930725,
-                              285.7839
+                              12.319403,
+                              272.5534
                             ],
                             "current_cursor_position": [
-                              -7.9930725,
-                              285.7839
+                              11.366278,
+                              272.5534
+                            ]
+                          },
+                          "node_search": {
+                            "search": "",
+                            "_search_results": null
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "b": {
+              "Pane": {
+                "active_tab": 0,
+                "tabs": [
+                  {
+                    "Properties": {
+                      "properties_id": {
+                        "idx": 1,
+                        "version": 1
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "style_editor": {},
+        "style_editor_visible": false
+      }
+    ]
+  },
+  "window_manager_context": {
+    "windows": [
+      {
+        "position": null,
+        "size": [
+          1124.0,
+          820.0
+        ],
+        "title": "damascus - assets/example_scenes/new_ui_test.dam",
+        "style": {
+          "text_size": {
+            "value": 14.0,
+            "expression": ""
+          },
+          "scale": {
+            "value": 1.0,
+            "expression": ""
+          },
+          "border_width": {
+            "value": 2.0,
+            "expression": ""
+          },
+          "theme": "Dracula",
+          "spacing": {
+            "value": 3.0,
+            "expression": ""
+          },
+          "padding": {
+            "value": 3.0,
+            "expression": ""
+          },
+          "icon_size": 14,
+          "leeway": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "modal_opacity": {
+            "value": 0.69,
+            "expression": ""
+          },
+          "float_input_step": {
+            "value": 0.0001,
+            "expression": ""
+          },
+          "viewer_zoom_sensitivity": {
+            "value": 0.1,
+            "expression": ""
+          },
+          "text_zoom_cutoff": {
+            "value": 2.0,
+            "expression": ""
+          },
+          "connection_line_width": {
+            "value": 3.5,
+            "expression": ""
+          },
+          "inactive_connection_line_scale": {
+            "value": 0.5,
+            "expression": ""
+          },
+          "node_input_radius": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "node_output_radius": {
+            "value": 5.0,
+            "expression": ""
+          },
+          "node_selected_border_width": {
+            "value": 3.0,
+            "expression": ""
+          },
+          "selection_box_border_width": {
+            "value": 2.0,
+            "expression": ""
+          },
+          "selection_box_alpha": {
+            "value": 0.1,
+            "expression": ""
+          }
+        },
+        "panel": {
+          "Split": {
+            "axis": "Vertical",
+            "ratio": 0.67,
+            "a": {
+              "Split": {
+                "axis": "Horizontal",
+                "ratio": 0.5,
+                "a": {
+                  "Pane": {
+                    "active_tab": 0,
+                    "tabs": [
+                      {
+                        "Viewport": {
+                          "viewport_primitive": {
+                            "viewport_id": {
+                              "idx": 1,
+                              "version": 1
+                            },
+                            "active_output_id": null,
+                            "zoom": 1.0,
+                            "pan": [
+                              0.0,
+                              0.0
+                            ],
+                            "gain": {
+                              "value": 1.0,
+                              "expression": ""
+                            },
+                            "gamma": {
+                              "value": 1.0,
+                              "expression": ""
+                            }
+                          },
+                          "pan_zoom": {
+                            "panning": false,
+                            "zoom": 1.0,
+                            "reciprocal_zoom": 1.0,
+                            "pan": [
+                              -488.03516,
+                              144.6914
+                            ],
+                            "previous_cursor_position": [
+                              550.91797,
+                              687.5742
+                            ],
+                            "cursor_position": [
+                              550.91797,
+                              686.58594
+                            ],
+                            "bounds": {
+                              "center": [
+                                376.0,
+                                251.4
+                              ],
+                              "size": [
+                                746.0,
+                                331.59998
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "b": {
+                  "Pane": {
+                    "active_tab": 0,
+                    "tabs": [
+                      {
+                        "NodeGraph": {
+                          "pan_zoom": {
+                            "panning": false,
+                            "zoom": 0.9999997,
+                            "reciprocal_zoom": 1.0000004,
+                            "pan": [
+                              31.844648,
+                              -234.96669
+                            ],
+                            "previous_cursor_position": [
+                              550.91797,
+                              687.5742
+                            ],
+                            "cursor_position": [
+                              550.91797,
+                              686.58594
+                            ],
+                            "bounds": {
+                              "center": [
+                                376.0,
+                                637.2
+                              ],
+                              "size": [
+                                748.0,
+                                361.59998
+                              ]
+                            }
+                          },
+                          "selection_box": {
+                            "selecting": false,
+                            "initial_cursor_position": [
+                              12.319403,
+                              272.5534
+                            ],
+                            "current_cursor_position": [
+                              11.366278,
+                              272.5534
                             ]
                           },
                           "node_search": {
@@ -324,8 +547,8 @@
           "label": "Primitive2v1",
           "shape": {
             "center": [
-              -155.82898,
-              131.52614
+              121.49124,
+              308.3542
             ],
             "size": [
               100.0,
@@ -369,11 +592,11 @@
       },
       {
         "value": {
-          "label": "Scene5v1",
+          "label": "Scene5v3",
           "shape": {
             "center": [
-              69.96784,
-              199.6394
+              149.17873,
+              141.65501
             ],
             "size": [
               100.0,
@@ -381,7 +604,7 @@
             ]
           }
         },
-        "version": 1
+        "version": 3
       },
       {
         "value": {
@@ -420,8 +643,24 @@
           "label": "Light8v1",
           "shape": {
             "center": [
-              73.47956,
-              293.2878
+              -242.69223,
+              354.8386
+            ],
+            "size": [
+              100.0,
+              33.0
+            ]
+          }
+        },
+        "version": 1
+      },
+      {
+        "value": {
+          "label": "Primitive9v1",
+          "shape": {
+            "center": [
+              -3.489191,
+              291.1081
             ],
             "size": [
               100.0,
@@ -742,31 +981,31 @@
           "value": {
             "input_ids": [
               {
-                "idx": 62,
-                "version": 1
-              },
-              {
-                "idx": 63,
-                "version": 1
+                "idx": 65,
+                "version": 3
               },
               {
                 "idx": 64,
-                "version": 1
+                "version": 3
               },
               {
-                "idx": 65,
-                "version": 1
+                "idx": 63,
+                "version": 3
+              },
+              {
+                "idx": 62,
+                "version": 5
               }
             ],
             "output_ids": [
               {
                 "idx": 5,
-                "version": 1
+                "version": 3
               }
             ],
             "data": "Scene"
           },
-          "version": 1
+          "version": 3
         },
         {
           "value": {
@@ -915,6 +1154,200 @@
               }
             ],
             "data": "Light"
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "input_ids": [
+              {
+                "idx": 94,
+                "version": 1
+              },
+              {
+                "idx": 95,
+                "version": 1
+              },
+              {
+                "idx": 96,
+                "version": 1
+              },
+              {
+                "idx": 97,
+                "version": 1
+              },
+              {
+                "idx": 98,
+                "version": 1
+              },
+              {
+                "idx": 99,
+                "version": 1
+              },
+              {
+                "idx": 100,
+                "version": 1
+              },
+              {
+                "idx": 101,
+                "version": 1
+              },
+              {
+                "idx": 102,
+                "version": 1
+              },
+              {
+                "idx": 103,
+                "version": 1
+              },
+              {
+                "idx": 104,
+                "version": 1
+              },
+              {
+                "idx": 105,
+                "version": 1
+              },
+              {
+                "idx": 106,
+                "version": 1
+              },
+              {
+                "idx": 107,
+                "version": 1
+              },
+              {
+                "idx": 108,
+                "version": 1
+              },
+              {
+                "idx": 109,
+                "version": 1
+              },
+              {
+                "idx": 110,
+                "version": 1
+              },
+              {
+                "idx": 111,
+                "version": 1
+              },
+              {
+                "idx": 112,
+                "version": 1
+              },
+              {
+                "idx": 113,
+                "version": 1
+              },
+              {
+                "idx": 114,
+                "version": 1
+              },
+              {
+                "idx": 115,
+                "version": 1
+              },
+              {
+                "idx": 116,
+                "version": 1
+              },
+              {
+                "idx": 117,
+                "version": 1
+              },
+              {
+                "idx": 118,
+                "version": 1
+              },
+              {
+                "idx": 119,
+                "version": 1
+              },
+              {
+                "idx": 120,
+                "version": 1
+              },
+              {
+                "idx": 121,
+                "version": 1
+              },
+              {
+                "idx": 122,
+                "version": 1
+              },
+              {
+                "idx": 123,
+                "version": 1
+              },
+              {
+                "idx": 124,
+                "version": 1
+              },
+              {
+                "idx": 125,
+                "version": 1
+              },
+              {
+                "idx": 126,
+                "version": 1
+              },
+              {
+                "idx": 127,
+                "version": 1
+              },
+              {
+                "idx": 128,
+                "version": 1
+              },
+              {
+                "idx": 129,
+                "version": 1
+              },
+              {
+                "idx": 130,
+                "version": 1
+              },
+              {
+                "idx": 131,
+                "version": 1
+              },
+              {
+                "idx": 132,
+                "version": 1
+              },
+              {
+                "idx": 133,
+                "version": 1
+              },
+              {
+                "idx": 134,
+                "version": 1
+              },
+              {
+                "idx": 135,
+                "version": 1
+              },
+              {
+                "idx": 136,
+                "version": 1
+              },
+              {
+                "idx": 137,
+                "version": 1
+              },
+              {
+                "idx": 138,
+                "version": 1
+              }
+            ],
+            "output_ids": [
+              {
+                "idx": 9,
+                "version": 1
+              }
+            ],
+            "data": "Primitive"
           },
           "version": 1
         }
@@ -2202,46 +2635,46 @@
           "value": {
             "node_id": {
               "idx": 5,
-              "version": 1
+              "version": 3
             },
             "name": "Scene",
             "data": {
               "SceneGraphId": "None"
             }
           },
-          "version": 1
+          "version": 5
         },
         {
           "value": {
             "node_id": {
               "idx": 5,
-              "version": 1
-            },
-            "name": "RenderCamera",
-            "data": {
-              "SceneGraphId": "None"
-            }
-          },
-          "version": 1
-        },
-        {
-          "value": {
-            "node_id": {
-              "idx": 5,
-              "version": 1
+              "version": 3
             },
             "name": "Atmosphere",
             "data": {
               "SceneGraphId": "None"
             }
           },
-          "version": 1
+          "version": 3
         },
         {
           "value": {
             "node_id": {
               "idx": 5,
-              "version": 1
+              "version": 3
+            },
+            "name": "RenderCamera",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 3
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 5,
+              "version": 3
             },
             "name": "Axis",
             "data": {
@@ -2321,7 +2754,7 @@
               }
             }
           },
-          "version": 1
+          "version": 3
         },
         {
           "value": {
@@ -2795,6 +3228,820 @@
             }
           },
           "version": 1
+        },
+        {
+          "value": null,
+          "version": 2
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Child",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Material",
+            "data": {
+              "SceneGraphId": "None"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Shape",
+            "data": {
+              "Enum": {
+                "variant": "Sphere",
+                "variants": [
+                  "CappedCone",
+                  "CappedTorus",
+                  "Capsule",
+                  "Cone",
+                  "CutSphere",
+                  "Cylinder",
+                  "DeathStar",
+                  "Ellipsoid",
+                  "HexagonalPrism",
+                  "HollowSphere",
+                  "InfiniteCone",
+                  "InfiniteCylinder",
+                  "Link",
+                  "Mandelbox",
+                  "Mandelbulb",
+                  "Octahedron",
+                  "Plane",
+                  "RectangularPrism",
+                  "RectangularPrismFrame",
+                  "Rhombus",
+                  "RoundedCone",
+                  "SolidAngle",
+                  "Sphere",
+                  "Torus",
+                  "TriangularPrism"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Radius",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Radii",
+            "data": {
+              "Vec3": [
+                0.5,
+                0.5,
+                0.5
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Height",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "HollowRadius",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "HollowHeight",
+            "data": {
+              "Float": {
+                "value": 0.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "SolidAngle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Width",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Depth",
+            "data": {
+              "Float": {
+                "value": 0.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Thickness",
+            "data": {
+              "Float": {
+                "value": 0.05,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "CornerRadius",
+            "data": {
+              "Float": {
+                "value": 0.05,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Base",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Normal",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "NegativeHeight",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "PositiveHeight",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Angle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "LowerRadius",
+            "data": {
+              "Float": {
+                "value": 0.25,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "UpperRadius",
+            "data": {
+              "Float": {
+                "value": 0.125,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "RingRadius",
+            "data": {
+              "Float": {
+                "value": 0.3,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "TubeRadius",
+            "data": {
+              "Float": {
+                "value": 0.2,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "CapAngle",
+            "data": {
+              "Float": {
+                "value": 30.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "RadialExtent",
+            "data": {
+              "Float": {
+                "value": 0.5,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Power",
+            "data": {
+              "Float": {
+                "value": 8.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Iterations",
+            "data": {
+              "UInt": 10
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "MaxSquareRadius",
+            "data": {
+              "Float": {
+                "value": 4.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Scale",
+            "data": {
+              "Float": {
+                "value": -1.75,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "MinSquareRadius",
+            "data": {
+              "Float": {
+                "value": 0.001,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "FoldingLimit",
+            "data": {
+              "Float": {
+                "value": 0.8,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "EnableOrbitTrapColour",
+            "data": {
+              "Bool": true
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "EdgeRadius",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Repetition",
+            "data": {
+              "Enum": {
+                "variant": "None",
+                "variants": [
+                  "None",
+                  "Finite",
+                  "Infinite"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "NegativeRepetitions",
+            "data": {
+              "UVec3": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "PositiveRepetitions",
+            "data": {
+              "UVec3": [
+                1,
+                1,
+                1
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Spacing",
+            "data": {
+              "Vec3": [
+                1.0,
+                1.0,
+                1.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "BoundingVolume",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "BlendType",
+            "data": {
+              "Enum": {
+                "variant": "Union",
+                "variants": [
+                  "Union",
+                  "Subtraction",
+                  "Intersection"
+                ]
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "BlendStrength",
+            "data": {
+              "Float": {
+                "value": 0.0,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Mirror",
+            "data": {
+              "BVec3": [
+                false,
+                false,
+                false
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Hollow",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "WallThickness",
+            "data": {
+              "Float": {
+                "value": 0.01,
+                "expression": ""
+              }
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Elongate",
+            "data": {
+              "Bool": false
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Elongation",
+            "data": {
+              "Vec3": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Axis",
+            "data": {
+              "Mat4": {
+                "x_axis": {
+                  "x": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "y_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "z_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 1.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 0.0,
+                    "expression": ""
+                  }
+                },
+                "w_axis": {
+                  "x": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "y": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "z": {
+                    "value": 0.0,
+                    "expression": ""
+                  },
+                  "w": {
+                    "value": 1.0,
+                    "expression": ""
+                  }
+                }
+              }
+            }
+          },
+          "version": 1
         }
       ],
       "outputs": [
@@ -2854,14 +4101,14 @@
           "value": {
             "node_id": {
               "idx": 5,
-              "version": 1
+              "version": 3
             },
             "name": "RootId",
             "data": {
               "SceneGraphId": "Root"
             }
           },
-          "version": 1
+          "version": 3
         },
         {
           "value": {
@@ -2898,6 +4145,19 @@
             "name": "Id",
             "data": {
               "SceneGraphId": "Light"
+            }
+          },
+          "version": 1
+        },
+        {
+          "value": {
+            "node_id": {
+              "idx": 9,
+              "version": 1
+            },
+            "name": "Id",
+            "data": {
+              "SceneGraphId": "Primitive"
             }
           },
           "version": 1

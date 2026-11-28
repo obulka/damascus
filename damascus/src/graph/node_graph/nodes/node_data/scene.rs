@@ -22,31 +22,31 @@ use crate::{
 
 #[derive(Copy, Default, EnumHashTraits!)]
 pub enum SceneInputData {
-    #[default]
-    Scene,
+    Axis,
     RenderCamera,
     Atmosphere,
-    Axis,
+    #[default]
+    Scene,
 }
 
 impl NodeInputData for SceneInputData {
     fn default_data(&self) -> InputData {
         match self {
-            Self::Scene => InputData::SceneGraphId(SceneGraphId::None),
+            Self::Axis => InputData::mat4(Mat4::IDENTITY),
             Self::RenderCamera => InputData::SceneGraphId(SceneGraphId::None),
             Self::Atmosphere => InputData::SceneGraphId(SceneGraphId::None),
-            Self::Axis => InputData::mat4(Mat4::IDENTITY),
+            Self::Scene => InputData::SceneGraphId(SceneGraphId::None),
         }
     }
 
     fn help(&self) -> &str {
         match self {
-            Self::Scene => "The children scenes to merge.",
+            Self::Axis => "A global transform to apply to the entire scene.",
             Self::RenderCamera => "The camera to render the scene through.",
             Self::Atmosphere => {
                 "The material to apply to the atmosphere (smoke, extinction, hdri, etc.)."
             }
-            Self::Axis => "A global transform to apply to the entire scene.",
+            Self::Scene => "The children scenes to merge.",
         }
     }
 }
@@ -86,17 +86,17 @@ impl EvaluableNode for SceneNode {
         input: &Self::Inputs,
     ) -> bool {
         match input {
-            Self::Inputs::Scene => match *output_data {
-                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
-                _ => false,
-            },
+            Self::Inputs::Axis => *output_data == OutputData::Mat4,
             Self::Inputs::RenderCamera => {
                 *output_data == OutputData::SceneGraphId(SceneGraphIdType::Camera)
             }
             Self::Inputs::Atmosphere => {
                 *output_data == OutputData::SceneGraphId(SceneGraphIdType::Material)
             }
-            Self::Inputs::Axis => *output_data == OutputData::Mat4,
+            Self::Inputs::Scene => match *output_data {
+                OutputData::SceneGraphId(location_type) => location_type.has_transform(),
+                _ => false,
+            },
         }
     }
 

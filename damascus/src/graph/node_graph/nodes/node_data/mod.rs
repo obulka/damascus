@@ -115,32 +115,38 @@ pub trait EvaluableNode {
     fn dynamic_input_disconnected(node_graph: &mut NodeGraph, input_id: InputId) {
         for input in Self::dynamic_inputs() {
             let input_name: String = input.name();
-            if let Some(input_number_as_str) = node_graph[input_id].name.strip_prefix(&input_name)
-                && (input_number_as_str.is_empty() || input_number_as_str.parse::<usize>().is_ok())
-            {
-                node_graph.remove_input(input_id);
+            let mut dynamic_name: String = node_graph[input_id].name.clone();
 
-                let node_id: NodeId = node_graph[input_id].node_id;
-                for next_input_index in
-                    node_graph.input_index(&node_id, &input_id)..node_graph[node_id].input_ids.len()
-                {
-                    let next_input_id: InputId = node_graph[node_id].input_ids[next_input_index];
-                    if let Some(next_input_number_as_str) =
-                        node_graph[next_input_id].name.strip_prefix(&input_name)
-                        && let Ok(next_input_number) = next_input_number_as_str.parse::<usize>()
-                    {
-                        if next_input_number > 1 {
-                            let new_input_number: usize = next_input_number - 1;
-                            node_graph[next_input_id].name =
-                                format!("{input_name}{new_input_number}");
-                        } else {
-                            node_graph[next_input_id].name = input.name();
-                        }
-                    } else {
-                        break;
-                    }
-                }
+            let Some(input_number_as_str) = dynamic_name.strip_prefix(&input_name) else {
+                continue;
+            };
+
+            if !input_number_as_str.is_empty() && input_number_as_str.parse::<usize>().is_err() {
+                continue;
             }
+
+            let dynamic_input_ids: Vec<InputId> = node_graph
+                .input_ids_after(&input_id)
+                .take_while(|&dynamic_input_id| {
+                    if let Some(next_input_number_as_str) =
+                        node_graph[*dynamic_input_id].name.strip_prefix(&input_name)
+                        && next_input_number_as_str.parse::<usize>().is_ok()
+                    {
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .copied()
+                .collect();
+
+            for dynamic_input_id in dynamic_input_ids.into_iter() {
+                let next_dynamic_name: String = node_graph[dynamic_input_id].name.clone();
+                node_graph[dynamic_input_id].name = dynamic_name;
+                dynamic_name = next_dynamic_name;
+            }
+
+            node_graph.remove_input(input_id);
         }
     }
 

@@ -458,6 +458,14 @@ impl NodeGraph {
         other_to_new_node_ids
     }
 
+    pub fn input_ids_after(&self, input_id: &InputId) -> impl Iterator<Item = &InputId> {
+        self[self[*input_id].node_id]
+            .input_ids
+            .iter()
+            .skip_while(|&&id| id != *input_id)
+            .skip(1)
+    }
+
     pub fn input_index(&self, node_id: &NodeId, input_id: &InputId) -> usize {
         self[*node_id]
             .input_ids
